@@ -446,7 +446,8 @@ def sqlhtml_validators(field):
     elif field_type == 'datetime':
         requires.append(validators.IS_DATETIME())
     elif field._db and field_type[:9] == 'reference' and \
-            field_type.find('.')<0:
+            field_type.find('.')<0 and \
+            field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
         if hasattr(referenced,'_format') and referenced._format:
             def f(r,id):
@@ -3057,7 +3058,7 @@ class Set(object):
                         (h, mi, s) = time_items + [0]
                     colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
                 elif field.type[:7] == 'decimal' and value != None:
-                    decimals = [int(x) for x in field.type[9:-1].split(',')][-1]
+                    decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
                         value = ('%.'+str(decimals)+'f') % value
                     if not isinstance(value,decimal.Decimal):
