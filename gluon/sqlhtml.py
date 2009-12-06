@@ -777,7 +777,7 @@ class SQLFORM(FORM):
             )
 
         if not ret and self.record and self.errors:
-            for key in self.errors.keys():
+            for key in self.errors:
                 if not request_vars.get(key, None) \
                         and self.table[key].type=='upload' \
                         and self.record[key] \

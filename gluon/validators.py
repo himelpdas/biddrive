@@ -403,7 +403,7 @@ class IS_NOT_IN_DB(Validator):
         rows = self.dbset(field == value).select(limitby=(0, 1))
         if len(rows) > 0:
             if isinstance(self.record_id, dict):
-                for f in self.record_id.keys():
+                for f in self.record_id:
                     if str(getattr(rows[0], f)) != str(self.record_id[f]):
                         return (value, self.error_message)
             elif str(rows[0].id) != str(self.record_id):

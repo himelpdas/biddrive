@@ -1,0 +1,42 @@
+# use glob syntax.
+syntax: glob
+
+.*
+*.pyc
+*.pyo
+*~
+#*
+*.1
+*.bak
+*.svn
+*.w2p
+*.class
+.DS_Store
+index.yaml
+./httpserver.log
+./httpserver.pid
+./parameters*.py
+./deposit
+./benchmark
+./build
+./dist*
+./tests
+./optional_contrib
+./ssl
+./docs
+./*.zip
+./gluon/*.1
+./gluon/*.txt
+./admin.w2p
+./examples.w2p
+applicaitons/*/databases/*
+applicaitons/*/sessions/*
+applicaitons/*/errors/*
+applicaitons/*/cache/*
+applicaitons/*/uploads/*
+applications/examples/static/epydoc
+applications/admin/cron/cron.master
+
+syntax: re
+^applications/(?!(admin|examples|welcome|__init__)).*$
+
