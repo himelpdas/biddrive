@@ -124,11 +124,11 @@ def filter_out(url):
     return url
 
 
-def try_redirect_on_error(http_object, application, ticket=None):
+def try_redirect_on_error(http_object, request, ticket=None):
     status = int(str(http_object.status).split()[0])
     if status>399 and params.routes_onerror:        
-        keys=set(('%s/%s' % (application, status),
-                  '%s/*' % (application),
+        keys=set(('%s/%s' % (request.application, status),
+                  '%s/*' % (request.application),
                   '*/%s' % (status),
                   '*/*'))
         for (key,redir) in params.routes_onerror:
@@ -136,9 +136,9 @@ def try_redirect_on_error(http_object, application, ticket=None):
                 if redir == '!':
                     break
                 elif '?' in redir:
-                    url = redir + '&' + 'code=%s&ticket=%s' % (status,ticket)
+                    url = redir + '&' + 'code=%s&ticket=%s&requested_uri=%s' % (status,ticket, request.env.request_uri)
                 else:
-                    url = redir + '?' + 'code=%s&ticket=%s' % (status,ticket)
+                    url = redir + '?' + 'code=%s&ticket=%s&requested_uri=%s' % (status,ticket, request.env.request_uri)
                 return HTTP(303,
                             'You are being redirected <a href="%s">here</a>' % url,
                             Location=url)

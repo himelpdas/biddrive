@@ -438,7 +438,7 @@ def sqlhtml_validators(field):
     elif field_type == 'integer':
         requires.append(validators.IS_INT_IN_RANGE(-1e100, 1e100))
     elif field_type[:7] == 'decimal':
-        requires.append(validators.IS_DECIMAL_IN_RANGE(0, 10**10))
+        requires.append(validators.IS_DECIMAL_IN_RANGE(-10**10, 10**10))
     elif field_type == 'date':
         requires.append(validators.IS_DATE())
     elif field_type == 'time':

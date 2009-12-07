@@ -29,11 +29,11 @@ index.yaml
 ./gluon/*.txt
 ./admin.w2p
 ./examples.w2p
-applicaitons/*/databases/*
-applicaitons/*/sessions/*
-applicaitons/*/errors/*
-applicaitons/*/cache/*
-applicaitons/*/uploads/*
+applications/*/databases/*
+applications/*/sessions/*
+applications/*/errors/*
+applications/*/cache/*
+applications/*/uploads/*
 applications/examples/static/epydoc
 applications/admin/cron/cron.master
 

@@ -540,7 +540,7 @@ def wsgibase(environ, responder):
                  web2py_error='ticket %s' % ticket)
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,
-                                                  request.application, 
+                                                  request, 
                                                   ticket)
     return http_response.to(responder)
 
