@@ -90,7 +90,7 @@ def get_query(request):
         return None
 
 
-def query_by_table_type(tablename,db=db,request=request):
+def query_by_table_type(tablename,db,request=request):
     keyed = hasattr(db[tablename],'_primarykey')
     if keyed:
         firstkey = db[tablename][db[tablename]._primarykey[0]]
@@ -259,14 +259,14 @@ def update():
             except:
                 pass
         else:
-            qry = query_by_table_type(table)
+            qry = query_by_table_type(table, db)
     else:
         try:
             id = int(request.args[2])
             record = db(db[table].id == id).select()[0]
             norec = False
         except:
-            qry = query_by_table_type(table)
+            qry = query_by_table_type(table, db)
 
     if norec:
         session.flash = T('record does not exist')
@@ -285,7 +285,7 @@ def update():
 
     if form.accepts(request.vars, session):
         session.flash = T('done!')
-        qry = query_by_table_type(table)
+        qry = query_by_table_type(table, db)
         redirect(URL(r=request, f='select', args=request.args[:1],
                  vars=dict(query=qry)))
     return dict(form=form,table=db[table])
