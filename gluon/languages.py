@@ -118,7 +118,7 @@ class translator(object):
         self.http_current_languages = languages
         self.force(self.http_accept_language)
 
-    def force(self, *languages): 
+    def force(self, *languages):
         if not languages or languages[0]==None:
             languages = []
         elif len(languages)==1 and isinstance(languages[0],(list,tuple)):

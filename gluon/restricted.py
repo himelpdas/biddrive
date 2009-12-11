@@ -134,24 +134,24 @@ class RestrictedError:
         try:
 
             a = request.application
-            
+
             d = {
                 'layer': str(self.layer),
                 'code': str(self.code),
                 'output': str(self.output),
                 'traceback': str(self.traceback),
                 }
-            
+
             f = '%s.%s.%s' % (request.client.replace(':', '_'),
                               datetime.datetime.now()\
                                   .strftime('%Y-%m-%d.%H-%M-%S'),
                               uuid.uuid4())
-            
+
             ticket_storage = TicketStorage(db=request.tickets_db)
             ticket_storage.store(request, f, d)
             return '%s/%s' % (a, f)
         except:
-            logging.error(self.traceback)        
+            logging.error(self.traceback)
             return None
 
 

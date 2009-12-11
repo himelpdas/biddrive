@@ -192,7 +192,7 @@ def w2p_unpack(filename, path, delete_tar=True):
 
 
 def w2p_pack_plugin(filename, path, plugin_name):
-    """Pack the given plugin into a w2p file.    
+    """Pack the given plugin into a w2p file.
     Will match files at:
         <path>/*/plugin_[name].*
         <path>/*/plugin_[name]/*
@@ -210,7 +210,7 @@ def w2p_pack_plugin(filename, path, plugin_name):
     plugin_tarball.close()
 
 
-def w2p_unpack_plugin(filename, path, delete_tar=True):    
+def w2p_unpack_plugin(filename, path, delete_tar=True):
     if not os.path.basename(filename).startswith('web2py.plugin.'):
         raise Exception, "Not a web2py plugin"
     w2p_unpack(filename,path,delete_tar)

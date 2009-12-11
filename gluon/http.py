@@ -95,7 +95,7 @@ class HTTP(BaseException):
         if hasattr(body, '__iter__') and not isinstance(self.body, str):
             return body
         return [str(body)]
-    
+
 
 def redirect(location, how=303):
     location = location.replace('\r', '%0D').replace('\n', '%0A')

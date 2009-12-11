@@ -3,11 +3,11 @@ Experimetal multi-threaded web server created by Massimo Di Pierro
 For lack of a better we'll call it Sneaky.
 License: GPL2
 
-This code would have not been possible without CherryPy wsgiserver, 
+This code would have not been possible without CherryPy wsgiserver,
 a great example of Python web server.
 
 - This code implements WSGI
-- This code is API compatible with cherrypy 
+- This code is API compatible with cherrypy
 - It consists of less than 260 lines of code
 - It is multi-threaded
 - The number of threads changes dynamically between a min and a max
@@ -24,79 +24,79 @@ Benchmark = `ab -t 10 -c <number of concurrent requests>-r http://localhost`
 
 100 Concurrent Requests
 -----------------------
-=============== 
-App Server         RPS   
+===============
+App Server         RPS
 ==============
-Fapws             7174          
-Landshark         4479          
-PHP-5             4191  
-modwsgi           3651         
-Tomcat 6          3554          
-Tornado           2641          
-Sneaky WSGI(*)    2372          
-CherryPy WSGI     2102          
-Phusion           1873 
-Jetty 6            937             
-Django WSGI        785         
-WEBrick             43        
-=============== 
+Fapws             7174
+Landshark         4479
+PHP-5             4191
+modwsgi           3651
+Tomcat 6          3554
+Tornado           2641
+Sneaky WSGI(*)    2372
+CherryPy WSGI     2102
+Phusion           1873
+Jetty 6            937
+Django WSGI        785
+WEBrick             43
+===============
 
 1,000 Concurrent Requests
 -------------------------
-=============== 
-App Server         RPS   
 ===============
-Fapws             5359      
-Landshark         4477 
-modwsgi           3449  
-PHP 5             3062      
-Tomcat 6          3014   
-Tornado           2452   
+App Server         RPS
+===============
+Fapws             5359
+Landshark         4477
+modwsgi           3449
+PHP 5             3062
+Tomcat 6          3014
+Tornado           2452
 Sneaky WSGI(*)    2415
 CherryPy WSGI     2126
-Phusion           1585  
-Jetty 6           1095      
-Django WSGI        953 
-WEBrick             50     
+Phusion           1585
+Jetty 6           1095
+Django WSGI        953
+WEBrick             50
 ===============
 
 10,000 Concurrent Requests
 --------------------------
 ===============
-App Server         RPS   
+App Server         RPS
 ===============
-Fapws             5213      
-Landshark         4239   
-Tomcat 6          2369   
-Tornado           2265   
-PHP 5             2239     
+Fapws             5213
+Landshark         4239
+Tomcat 6          2369
+Tornado           2265
+PHP 5             2239
 Sneaky WSGI (*)   2225
-modwsgi           2115 
+modwsgi           2115
 CherryPy WSGI     1731
-Phusion           1247 
-Jetty 6            794       
-Django WSGI        890 
-WEBrick             84     
+Phusion           1247
+Jetty 6            794
+Django WSGI        890
+WEBrick             84
 ===============
 
 20,000 Concurrent Requests
 --------------------------
-=============== 
-App Server         RPS   
-=============== 
-Fapws             4788       
-Landshark         2936    
-Tornado           2153     
+===============
+App Server         RPS
+===============
+Fapws             4788
+Landshark         2936
+Tornado           2153
 Sneaky WSGI(*)    2130
-PHP 5             1728  
-modwsgi           1374     
-Tomcat 6          1362    
-CherryPy WSGI     1294 
+PHP 5             1728
+modwsgi           1374
+Tomcat 6          1362
+CherryPy WSGI     1294
 Phusion            961
-Django WSGI        790  
-Jetty 6            616       
-WEBrick             63     
-=============== 
+Django WSGI        790
+Jetty 6            616
+WEBrick             63
+===============
 
 """
 
@@ -123,13 +123,13 @@ SERVER_NAME = 'Sneaky'
 
 def formatdateRFC822():
     t=time.gmtime(time.time())
-    w=("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[t[6]]    
+    w=("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[t[6]]
     return w+time.strftime(", %d %b %Y %H:%M%S GMT",t)
 
 class ChunkedReader:
     """ class used to read chunked input """
     def __init__(self,stream):
-        self.stream = stream        
+        self.stream = stream
         self.buffer = None
 
     def __chunk_read(self):
@@ -162,7 +162,7 @@ class ChunkedReader:
 
     def readlines(self):
         yield self.readline()
-      
+
 def errors_numbers(errnames):
     """utility to build a list of socket errors"""
     return set([getattr(errno, k) for k in errnames if hasattr(errno,k)])
@@ -184,11 +184,11 @@ class Worker(threading.Thread):
     queue = Queue()               # queue of requests to process (socket,address)
     threads = set()               # set of threads (instances or Worker class
     wsgi_apps = []                # [the_wsgi_app]
-    server_name = SERVER_NAME 
+    server_name = SERVER_NAME
     min_threads = 10
     max_threads = 10
 
-    def run(self):  
+    def run(self):
         """runs the thread:
         - pick a request from queue
         - parse input
@@ -201,18 +201,18 @@ class Worker(threading.Thread):
             if not self.client_socket:
                 return self.die()
             if hasattr(self.client_socket,'settimeout'):
-                self.client_socket.settimeout(self.timeout)            
+                self.client_socket.settimeout(self.timeout)
             while True:
                 wsgi_file = self.client_socket.makefile('rb',BUF_SIZE)
                 try:
                     environ = self.build_environ(wsgi_file)
-                    data_items = self.wsgi_apps[0](environ,self.start_response)                    
+                    data_items = self.wsgi_apps[0](environ,self.start_response)
                     if self.respond(environ, data_items):
                         break
                 except:
                     logging.warn(str(traceback.format_exc()))
                     self.try_error_response()
-                    break            
+                    break
             wsgi_file.close()
             self.client_socket.close()
             self.resize_thread_pool()
@@ -221,11 +221,11 @@ class Worker(threading.Thread):
         """kills this thread, must be called by run()"""
         self.threads.remove(self)
         return
-            
+
     def build_environ(self,wsgi_file):
         """parse request and build WSGI environ"""
         first_line = wsgi_file.readline()
-        match = regex_head.match(first_line)        
+        match = regex_head.match(first_line)
         self.request_method = match.group('method')
         uri = match.group('uri')
         request_protocol = match.group('protocol')
@@ -240,14 +240,14 @@ class Worker(threading.Thread):
                    'wsgi.url_scheme': 'http',
                    'wsgi.errors': sys.stderr,
                    'ACTUAL_SERVER_PROTOCOL': actual_server_protocol,
-                   'REMOTE_ADDR': self.client_address[0],                 
+                   'REMOTE_ADDR': self.client_address[0],
                    'REMOTE_PORT': self.client_address[1],
                    'SERVER_PORT': self.server_port,
                    'PATH_INFO': path_info,
                    'REQUEST_URI': uri,
                    'REQUEST_METHOD': self.request_method,
                    'PATH_INFO': path_info,
-                   'SCRIPT_NAME': '',                 
+                   'SCRIPT_NAME': '',
                    'QUERY_STRING': query_string}
         for line in wsgi_file:
             if line == '\r\n':
@@ -294,14 +294,14 @@ class Worker(threading.Thread):
             headers.append(('Connection','keep-alive'))
             break_loop = False
         else:
-            headers.append(('Connection','close'))        
+            headers.append(('Connection','close'))
             break_loop = True
         serialized_headers = \
-            ''.join(['%s: %s\r\n' % (k,v) for (k,v) in headers])                 
+            ''.join(['%s: %s\r\n' % (k,v) for (k,v) in headers])
         data = "HTTP/1.1 %s\r\n%s\r\n" % (self.status, serialized_headers)
         self.client_socket.sendall(data)
         if self.request_method != 'HEAD':
-            for data in data_items:                   
+            for data in data_items:
                 try:
                     if chunked:
                         self.client_socket.sendall('%x\r\n%s\r\n' % (len(data),data))
@@ -313,8 +313,8 @@ class Worker(threading.Thread):
             if chunked:
                 self.client_socket.sendall('0\r\n')
         return break_loop
-    
-    def try_error_response(self, status = "500 INTERNAL SERVER ERROR"):        
+
+    def try_error_response(self, status = "500 INTERNAL SERVER ERROR"):
         """called if thread fails"""
         try:
             self.client_socket.sendall(
@@ -334,19 +334,19 @@ class Worker(threading.Thread):
                     new_worker = Worker()
                     Worker.threads.add(new_worker)
                     new_worker.start()
-                    
+
 class Sneaky:
     """the actual web server"""
-    def __init__(self,  bind_addr, wsgi_app, 
-                 numthreads = 10, 
+    def __init__(self,  bind_addr, wsgi_app,
+                 numthreads = 10,
                  server_name = SERVER_NAME,
                  max_threads = None,
-                 request_queue_size = None, 
-                 timeout = 10, 
+                 request_queue_size = None,
+                 timeout = 10,
                  shutdown_timeout = 5):
         """
         Example::
-        
+
         s = Sneaky('127.0.0.1:8000',test_wsgi_app,100)
         s.start()
 
@@ -395,7 +395,7 @@ class Sneaky:
             thread.start()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if not self.socket:
-            raise IOException # unable to connect        
+            raise IOException # unable to connect
         try:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
@@ -432,7 +432,7 @@ class Sneaky:
         sys.exit(1)
 
     def stop(self):
-        """tries to gracefully quit the server"""        
+        """tries to gracefully quit the server"""
         for k in range(len(Worker.threads)):
             Worker.queue.put((None,None))
         while len(Worker.threads):
@@ -460,7 +460,7 @@ if __name__ == '__main__':
     print 'serving from: '+address
 
     server = Sneaky(address, # the ip:port
-                    test_wsgi_app,  # the SWGI application 
+                    test_wsgi_app,  # the SWGI application
                     numthreads = 100, # min number of threads
                     max_threads = 100 # max number of threads
                     )

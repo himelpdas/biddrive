@@ -123,7 +123,7 @@ class LoadFactory:
     def __init__(self,environment):
         self.environment = environment
     def __call__(self, plugin=None, function='index', args=[], vars={},
-                 target=None,ajax=False,ajax_trap=False, url=None):        
+                 target=None,ajax=False,ajax_trap=False, url=None):
         import globals
         import html
         target = target or str(random.random())[2:]
@@ -150,7 +150,7 @@ class LoadFactory:
             other_response._view_environment = other_environment
             other_request.env.http_web2py_component_location = request.env.path_info
             other_request.env.http_web2py_component_element = target
-            page = run_controller_in(plugin, function, 
+            page = run_controller_in(plugin, function,
                                      other_environment)
             other_response.view = '%s/%s.%s' % (plugin,function,other_request.extension)
             if isinstance(page, dict):
@@ -182,11 +182,11 @@ def local_import_aux(name, force=False, app='welcome'):
 
     you should do::
 
-       d = local_import('a.b.c') 
+       d = local_import('a.b.c')
 
     or (to force a reload):
 
-       d = local_import('a.b.c', reload=True) 
+       d = local_import('a.b.c', reload=True)
 
     This prevents conflict between applications and un-necessary execs.
     It can be used to import any module, including regular Python modules.

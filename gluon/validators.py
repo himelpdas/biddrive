@@ -613,7 +613,7 @@ class IS_EMAIL(Validator):
     Checks if field's value is a valid email address. Can be set to disallow
     or force addresses from certain domain(s).
 
-    Email regex adapted from 
+    Email regex adapted from
     http://haacked.com/archive/2007/08/21/i-knew-how-to-validate-an-email-address-until-i.aspx,
     generally following the RFCs, except that we disallow quoted strings
     and permit underscores and leading numerics in subdomain labels
@@ -1924,7 +1924,7 @@ class CLEANUP(Validator):
     def __init__(self, regex='[^ \n\w]'):
         self.regex = re.compile(regex)
 
-    def __call__(self, value):        
+    def __call__(self, value):
         v = self.regex.sub('',str(value).strip())
         return (v, None)
 
@@ -1936,7 +1936,7 @@ class CRYPT(object):
         INPUT(_type='text', _name='name', requires=CRYPT())
 
     encodes the value on validation with a digest.
-    
+
     If no arguments are provided CRYPT uses the MD5 algorithm.
     If the key argument is provided the HMAC+MD5 algorithm is used.
     If the digest_alg is specified this is used to replace the

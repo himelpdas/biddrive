@@ -74,7 +74,7 @@ if os_locking == 'windows':
         hfile = win32file._get_osfhandle(file.fileno())
         win32file.UnlockFileEx(hfile, 0, 0x7fff0000, __overlapped)
 
-        
+
 elif os_locking == 'posix':
     LOCK_EX = fcntl.LOCK_EX
     LOCK_SH = fcntl.LOCK_SH

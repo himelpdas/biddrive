@@ -35,7 +35,7 @@ re_extend = re.compile('\{\{\s*extend\s+(?P<name>.+?)\s*\}\}',
 def __re_strings(text):
     ''''
     expose re_strings regex for doctest
-    
+
     >>> __re_strings('"abc"')
     ['"abc"']
     >>> __re_strings(r'"abc\\"" "x"')
@@ -190,7 +190,7 @@ def render(content='hello world',stream=None,filename=None,path=None,context={})
         if filename:
             stream = open(filename,'rb')
         if content:
-            stream = cStringIO.StringIO(content)    
+            stream = cStringIO.StringIO(content)
     context['response'] = globals.Response()
     exec(parse_template(stream,path=path)) in context
     return context['response'].body.getvalue()

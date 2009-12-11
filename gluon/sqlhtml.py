@@ -250,7 +250,7 @@ class RadioWidget(OptionsWidget):
                           requires=attr.get('requires',None),
                           hideerror=True, _value=k,
                           value=value), v) for (k, v) in options]
-        if opts: 
+        if opts:
             opts[-1][0][0]['hideerror'] = False
         return TABLE(*opts, **attr)
 
@@ -277,10 +277,10 @@ class CheckboxesWidget(OptionsWidget):
 
         opts += [TR(INPUT(_type='checkbox', _name=field.name,
                           requires=attr.get('requires',None),
-                          hideerror=True, _value=k, 
+                          hideerror=True, _value=k,
                           value=(k in values)), v) \
                      for (k, v) in options]
-        if opts: 
+        if opts:
             opts[-1][0][0]['hideerror'] = False
         return TABLE(*opts, **attr)
 
@@ -486,7 +486,7 @@ class SQLFORM(FORM):
                labels={'name': 'Your name'},
                linkto=URL(r=request, f='table/db/')
         """
-        
+
         ID_LABEL_SUFFIX = 'label'
         ID_ROW_SUFFIX = 'row'
 
@@ -506,7 +506,7 @@ class SQLFORM(FORM):
         # make sure we have an id
         if self.fields[0] != table.fields[0] and \
                 isinstance(table,Table) and not keyed:
-            self.fields.insert(0, table.fields[0]) 
+            self.fields.insert(0, table.fields[0])
 
         self.table = table
 
@@ -651,7 +651,7 @@ class SQLFORM(FORM):
         if record and linkto:
             for (rtable, rfield) in table._referenced_by:
                 if keyed:
-                    rfld = table._db[rtable][rfield] 
+                    rfld = table._db[rtable][rfield]
                     query = urllib.quote(str(rfld == record[rfld.type[10:].split('.')[1]]))
                 else:
 #                 <block>
@@ -856,7 +856,7 @@ class SQLFORM(FORM):
                     (source_file, original_filename) = \
                         (cStringIO.StringIO(f), 'file.txt')
                 newfilename = field.store(source_file, original_filename)
-                self.vars['%s_newfilename' % fieldname] = fields[fieldname] = newfilename 
+                self.vars['%s_newfilename' % fieldname] = fields[fieldname] = newfilename
                 if field.uploadfield and not field.uploadfield==True:
                     fields[field.uploadfield] = source_file.read()
                 continue
@@ -881,7 +881,7 @@ class SQLFORM(FORM):
                  and not fieldname in fields and not fieldname\
                  in request_vars:
                 fields[fieldname] = self.vars[fieldname]
-        
+
         if dbio:
             if keyed:
                 if reduce(lambda x,y: x and y, record_id.values()): # if record_id
@@ -1038,14 +1038,14 @@ class SQLTABLE(TABLE):
                             tref,fref = ref.split('.')
                             if hasattr(sqlrows.db[tref],'_primarykey'):
                                 href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:ur}))
-                            
+
                     row.append(TD(A(r, _href=href)))
                 elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \
                                 ((tablename in record \
                                       and isinstance(record, Row) \
-                                      and isinstance(record[tablename], Row)) and 
+                                      and isinstance(record[tablename], Row)) and
                                  (k, record[tablename][k])) or (k, record[k]) \
                                     for k in field._table._primarykey ] ))
                     row.append(TD(A(r, _href='%s/%s?%s' % (linkto, tablename, key))))

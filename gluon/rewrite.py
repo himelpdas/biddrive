@@ -126,7 +126,7 @@ def filter_out(url):
 
 def try_redirect_on_error(http_object, request, ticket=None):
     status = int(str(http_object.status).split()[0])
-    if status>399 and params.routes_onerror:        
+    if status>399 and params.routes_onerror:
         keys=set(('%s/%s' % (request.application, status),
                   '%s/*' % (request.application),
                   '*/%s' % (status),
@@ -173,7 +173,7 @@ def filter_url(url, method='get', remote='0.0.0.0'):
 
 def filter_err(status, application='app', ticket='tkt'):
     "doctest interface to routes_onerror"
-    if status > 399 and params.routes_onerror:        
+    if status > 399 and params.routes_onerror:
         keys = set(('%s/%s' % (application, status),
                   '%s/*' % (application),
                   '*/%s' % (status),

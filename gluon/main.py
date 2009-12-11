@@ -130,7 +130,7 @@ def get_client(env):
 
 def copystream_progress(request, chunk_size= 10**5):
     """
-    copies request.env.wsgi_input into request.body 
+    copies request.env.wsgi_input into request.body
     and stores progress upload status in cache.ram
     X-Progress-ID:length and X-Progress-ID:uploaded
     """
@@ -212,7 +212,7 @@ def serve_controller(request, response, session):
 def start_response_aux(status, headers, exc_info, response=None):
     """
     in controller you can use::
-    
+
     - request.wsgi.environ
     - request.wsgi.start_response
 
@@ -223,7 +223,7 @@ def start_response_aux(status, headers, exc_info, response=None):
     return functools.partial(response.write, escape=False)
 
 
-def middleware_aux(request, response, *middleware_apps): 
+def middleware_aux(request, response, *middleware_apps):
     """
     In you controller use::
 
@@ -466,7 +466,7 @@ def wsgibase(environ, responder):
 
             # ##################################################
             # on success, try store session in database
-            # ##################################################            
+            # ##################################################
             session._try_store_in_db(request, response)
 
             # ##################################################
@@ -540,7 +540,7 @@ def wsgibase(environ, responder):
                  web2py_error='ticket %s' % ticket)
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,
-                                                  request, 
+                                                  request,
                                                   ticket)
     return http_response.to(responder)
 

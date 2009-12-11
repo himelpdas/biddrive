@@ -456,8 +456,8 @@ def sqlhtml_validators(field):
                     return id
                 else:
                     return r._format % row
-            field.represent = lambda id, r=referenced, f=f: f(r,id)            
-            requires = validators.IS_IN_DB(field._db,referenced.id, 
+            field.represent = lambda id, r=referenced, f=f: f(r,id)
+            requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)
             return requires
     if field.unique:
@@ -470,7 +470,7 @@ def sqlhtml_validators(field):
     return requires
 
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
-    if type(obj) in (types.LambdaType, types.FunctionType): 
+    if type(obj) in (types.LambdaType, types.FunctionType):
         obj = obj()
     if isinstance(obj, (Expression, Field)):
         return obj
@@ -647,7 +647,7 @@ class Row(dict):
     def __getitem__(self, key):
         key=str(key)
         if key in self.get('_extra',{}):
-            return self._extra[key]    
+            return self._extra[key]
         return dict.__getitem__(self, key)
 
     def __setitem__(self, key, value):
@@ -689,7 +689,7 @@ class Row(dict):
                 del d[k]
         return d
 
-    
+
 def Row_unpickler(data):
     return Row(marshal.loads(data))
 def Row_pickler(data):
@@ -1005,17 +1005,17 @@ class SQLDB(dict):
                     raise SyntaxError, 'Database name required'
                 port = m.group('port') or '1433'
 
-                # Parse the optional url name-value arg pairs after the '?' 
+                # Parse the optional url name-value arg pairs after the '?'
                 # (in the form of arg1=value1&arg2=value2&...)
                 # Default values (drivers like FreeTDS insist on uppercase parameter keys)
-                argsdict = { 'DRIVER':'{SQL Server}' } 
+                argsdict = { 'DRIVER':'{SQL Server}' }
 
                 urlargs = m.group('urlargs') or ''
                 argpattern = re.compile('(?P<argkey>[^=]+)=(?P<argvalue>[^&]*)')
                 for argmatch in argpattern.finditer(urlargs):
                     argsdict[str(argmatch.group('argkey')).upper()] = argmatch.group('argvalue')
                 urlargs = ';'.join(['%s=%s' % (ak, av) for (ak, av) in argsdict.items()])
-                
+
                 cnxn = \
                     'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
                     % (host, port, db, user, passwd, urlargs)
@@ -1161,7 +1161,7 @@ class SQLDB(dict):
 
                     ingres://LOCAL_DATABASE_NAME
 
-            NOTE may also use: "ingres:LOCAL_DATABASE_NAME" 
+            NOTE may also use: "ingres:LOCAL_DATABASE_NAME"
             and avoid the slashes "/".
             """
             self._dbname, connstr = self._uri.split(':', 1)
@@ -1169,7 +1169,7 @@ class SQLDB(dict):
             connstr=connstr.lstrip()
             while connstr.startswith('/'):
                 connstr = connstr[1:]
-            
+
             database_name=connstr # Assume only (local) dbname is passed in
             vnode='(local)'
             servertype='ingres'
@@ -1177,8 +1177,8 @@ class SQLDB(dict):
             self._pool_connection(lambda : \
                                     ingresdbi.connect(
                                         database=database_name,
-                                        vnode=vnode, 
-                                        servertype=servertype,  
+                                        vnode=vnode,
+                                        servertype=servertype,
                                         trace=trace))
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
@@ -1222,7 +1222,7 @@ class SQLDB(dict):
             if key not in ['migrate','primarykey','fake_migrate','format']:
                 raise SyntaxError, 'invalid table \'%s\' attribute: %s' % (tablename, key)
         migrate = args.get('migrate',True)
-        fake_migrate = args.get('fake_migrate', False)        
+        fake_migrate = args.get('fake_migrate', False)
         format = args.get('format',None)
         tablename = cleanup(tablename)
         if hasattr(self,tablename) or tablename[0] == '_':
@@ -1230,7 +1230,7 @@ class SQLDB(dict):
         if tablename in self.tables:
             raise SyntaxError, 'table already defined: %s' % tablename
         if 'primarykey' in args:
-            t = self[tablename] = KeyedTable(self, tablename, *fields, 
+            t = self[tablename] = KeyedTable(self, tablename, *fields,
                                              **dict(primarykey=args['primarykey']))
         else:
             t = self[tablename] = Table(self, tablename, *fields)
@@ -1287,26 +1287,26 @@ class SQLDB(dict):
         self._connection.rollback()
 
     def executesql(self, query, placeholders=None, as_dict=False):
-        """                                                                                       
-        placeholders is optional and will always be None when using DAL                           
-        if using raw SQL with placeholders, placeholders may be                                   
-        a sequence of values to be substituted in                                                 
-        or, *if supported by the DB driver*, a dictionary with keys                               
-        matching named placeholders in your SQL.                                                  
-                                                                                                  
-        Added 2009-12-05 "as_dict" optional argument. Will always be                             
-        None when using DAL. If using raw SQL can be set to True                                  
-        and the results cursor returned by the DB driver will be                                  
-        converted to a sequence of dictionaries keyed with the db                                 
-        field names. Tested with SQLite but should work with any database                         
-        since the cursor.description used to get field names is part of the                       
-        Python dbi 2.0 specs. Results returned with as_dict = True are                             
-        the same as those returned when applying .to_list() to a DAL query.                       
-                                                                                                  
-        [{field1: value1, field2: value2}, {field1: value1b, field2: value2b}]                    
-                                                                                                  
-        --bmeredyk                                                                                
-        """  
+        """
+        placeholders is optional and will always be None when using DAL
+        if using raw SQL with placeholders, placeholders may be
+        a sequence of values to be substituted in
+        or, *if supported by the DB driver*, a dictionary with keys
+        matching named placeholders in your SQL.
+
+        Added 2009-12-05 "as_dict" optional argument. Will always be
+        None when using DAL. If using raw SQL can be set to True
+        and the results cursor returned by the DB driver will be
+        converted to a sequence of dictionaries keyed with the db
+        field names. Tested with SQLite but should work with any database
+        since the cursor.description used to get field names is part of the
+        Python dbi 2.0 specs. Results returned with as_dict = True are
+        the same as those returned when applying .to_list() to a DAL query.
+
+        [{field1: value1, field2: value2}, {field1: value1b, field2: value2b}]
+
+        --bmeredyk
+        """
         self['_lastsql'] = query
         if placeholders:
             self['_lastsql'] +="  with "+str(placeholders)
@@ -1327,7 +1327,7 @@ class SQLDB(dict):
             # convert the list for each row into a dictionary so it's
             # easier to work with. row['field_name'] rather than row[0]
             return [dict(zip(fields,row)) for row in data]
-        # see if any results returned from database        
+        # see if any results returned from database
         try:
             return self._cursor.fetchall()
         except:
@@ -1626,7 +1626,7 @@ class Table(dict):
                             constraint_name=constraint_name,
                             foreign_key=referenced + ('(%s)' % self._db[referenced].fields[0]),
                             on_delete_action=field.ondelete)
-            elif field.type[:7] == 'decimal':                
+            elif field.type[:7] == 'decimal':
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
                 ftype = self._db._translator[field.type[:7]] % \
                     dict(precision=precision,scale=scale)
@@ -1660,7 +1660,7 @@ class Table(dict):
         if self._db._dbname == 'mysql':
             fields.append('PRIMARY KEY(%s)' % self.fields[0])
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
-        
+
         fields = ',\n    '.join(fields)
         query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
            (self._tablename, fields, other)
@@ -1770,11 +1770,11 @@ class Table(dict):
                  not (self[key].type[:10]=='reference ' and \
                       sql_fields[key][:4]=='INT,' and \
                       sql_fields_old[key][:13]=='INT NOT NULL,'):
- 
+
                 # ## FIX THIS WHEN DIFFERENCES IS ONLY IN DEFAULT
                 # 2
- 
-                t = self._tablename                
+
+                t = self._tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
                 query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
                          'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
@@ -1931,7 +1931,7 @@ class Table(dict):
         'unique' argument is a field which must be unique
         (typically a uuid field)
         """
-        
+
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
@@ -2015,28 +2015,28 @@ class KeyedTable(Table):
     Example::
 
         db = DAL(...)
-        db.define_table('account', 
+        db.define_table('account',
           Field('accnum','integer'),
           Field('acctype'),
           Field('accdesc'),
           primarykey=['accnum','acctype'])
         db.users.insert(accnum=1000,acctype='A',accdesc='Assets')
         db.users.drop()
-        
+
         db.define_table('subacct',
           Field('sanum','integer'),
           Field('refnum','reference account.accnum'),
           Field('reftype','reference account.acctype'),
           Field('sadesc','string'),
           primarykey=['sanum']))
-        
+
     Notes:
     1) primarykey is a list of the field names that make up the primary key
     2) all primarykey fields will have NOT NULL set even if not specified
     3) references are to other keyed tables only
     4) references must use tablename.fieldname format, as shown above
     5) update_record function is not available
-    
+
     """
 
     def __init__(
@@ -2044,7 +2044,7 @@ class KeyedTable(Table):
         db,
         tablename,
         *fields,
-        **args        
+        **args
         ):
         """
         Initializes the table and performs checking on the provided fields.
@@ -2064,7 +2064,7 @@ class KeyedTable(Table):
                 raise SyntaxError, 'primarykey must be a list of fields from table \'%s\' ' %tablename
 
         new_fields = []
-        
+
         for field in fields:
             if hasattr(field,'_db'):
                 field = copy.copy(field)
@@ -2092,7 +2092,7 @@ class KeyedTable(Table):
             if field.requires == '<default>':
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
-        
+
         for k in self._primarykey:
             if k not in self.fields:
                 raise SyntaxError,\
@@ -2129,8 +2129,8 @@ class KeyedTable(Table):
                     raise SyntaxError,\
                     "invalid field '%s' for referenced table '%s' in table '%s'" %(rfieldname, rtablename, self._tablename)
                 rtable._referenced_by.append((self._tablename, field.name))
-    
-    
+
+
     # KeyedTable
     def _build_query(self,key):
         query = None
@@ -2140,7 +2140,7 @@ class KeyedTable(Table):
                     query = query & (self[k] == v)
                 else:
                     query = (self[k] == v)
-            else: 
+            else:
                 raise SyntaxError,\
                 'Field %s is not part of the primary key of %s'%\
                 (k,self._tablename)
@@ -2182,7 +2182,7 @@ class KeyedTable(Table):
 #                 'key must be a dictionary with primary key fields: %s'%\
 #                 self._primarykey
             dict.__setitem__(self, str(key), value)
-            
+
     # KeyedTable
     def __delitem__(self, key):
         if isinstance(key, dict):
@@ -2274,7 +2274,7 @@ class KeyedTable(Table):
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
 
         fields = ',\n    '.join(fields)
-        
+
         for rtablename in TFK:
             rfields = TFK[rtablename]
             pkeys = self._db[rtablename]._primarykey
@@ -2286,7 +2286,7 @@ class KeyedTable(Table):
                      foreign_table=rtablename,
                      foreign_key=', '.join(pkeys),
                      on_delete_action=field.ondelete)
-        
+
         if self._primarykey:
             query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
                (self._tablename, fields, self._db._translator['primarykey']%', '.join(self._primarykey),other)
@@ -2944,7 +2944,7 @@ class Set(object):
             # oracle does not support limitby
             (lmin, lmax) = attributes['limitby']
             if self._db._dbname in ['oracle']:
-                if not attributes.get('orderby', None) and w2p_tablenames:                    
+                if not attributes.get('orderby', None) and w2p_tablenames:
                     sql_o += ' ORDER BY %s' % ', '.join([t + '.id'
                             for t in w2p_tablenames])
                 if len(sql_w) > 1:
@@ -2984,7 +2984,7 @@ class Set(object):
                 dbms_version = int(self._db._connection.dbms_version.split('.')[0])
                 if lmin and (dbms_version >= 10):
                     # Requires Informix 10.0+
-                    sql_s += ' SKIP %d' % (lmin, )                    
+                    sql_s += ' SKIP %d' % (lmin, )
                 if fetch_amt and (dbms_version >= 9):
                     # Requires Informix 9.0+
                     sql_s += ' FIRST %d' % (fetch_amt, )
@@ -2997,7 +2997,7 @@ class Set(object):
         """
         Always returns a Rows object, even if it may be empty
         """
-        
+
         db=self._db
         def response(query):
             db['_lastsql'] = query
@@ -3209,14 +3209,14 @@ class Set(object):
                     continue
                 if upload_fields and oldname == upload_fields[fieldname]:
                     continue
-                uploadfolder = table[fieldname].uploadfolder                
+                uploadfolder = table[fieldname].uploadfolder
                 if not uploadfolder:
                     uploadfolder = os.path.join(self._db._folder, '..', 'uploads')
                 oldpath = os.path.join(uploadfolder, oldname)
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)
 
-def update_record(colset, table, id, a={}):    
+def update_record(colset, table, id, a={}):
     b = a or dict(colset)
     c = dict([(k,v) for (k,v) in b.items() \
                   if k in table.fields and not k=='id'])
@@ -3324,7 +3324,7 @@ class Rows(object):
                 del self.records[i]
             else:
                 i += 1
-        return Rows(self.db,removed,self.colnames) 
+        return Rows(self.db,removed,self.colnames)
 
     def sort(self,f,reverse=False):
         """
@@ -3348,7 +3348,7 @@ class Rows(object):
         :param storage_to_dict: when True returns a dict, otherwise a list(default True)
         :param datetime_to_str: convert datetime fields as strings (default True)
         """
-        (oc, self.compact) = (self.compact, compact)        
+        (oc, self.compact) = (self.compact, compact)
         if storage_to_dict:
             items = [item.as_dict(datetime_to_str) for item in self]
         else:
@@ -3372,7 +3372,7 @@ class Rows(object):
         """
         rows = self.as_list(compact, storage_to_dict, datetime_to_str)
         if isinstance(key,str) and key.count('.')==1:
-            (table, field) = key.split('.')        
+            (table, field) = key.split('.')
             return dict([(r[table][field],r) for r in rows])
         elif isinstance(key,str):
             return dict([(r[key],r) for r in rows])
@@ -3398,9 +3398,9 @@ class Rows(object):
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
         represent = kwargs.get('represent', False)
-        
+
         writer = csv.writer(ofile, delimiter=delimiter, quotechar=quotechar, quoting=quoting)
-        
+
         # a proper csv starting with the column names
         writer.writerow(self.colnames)
 
@@ -3653,7 +3653,7 @@ def test_all():
     >>> set = (1, 2, 3)
     >>> rows = db(db.paper.id.belongs(set)).select(db.paper.ALL)
     >>> print rows[0].title
-    QCD   
+    QCD
 
     Example of search condition using nested select
 

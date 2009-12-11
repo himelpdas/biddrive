@@ -172,7 +172,7 @@ def URL(
             function = f
         else:
             function = f.__name__
-        
+
     if not (application and controller and function):
         raise SyntaxError, 'not enough information to build the url'
 
@@ -537,12 +537,12 @@ class DIV(XmlComponent):
         """
         find all component that match the supplied attribute dictionary,
         or None if nothing could be found
-  
+
         All components of the components are searched.
         """
         # make a copy of the components
         components = [self]
-        matches = [] 
+        matches = []
         first_only = False
         if kargs.has_key("first_only"):
             first_only = kargs["first_only"]
@@ -561,7 +561,7 @@ class DIV(XmlComponent):
                         check = False
                 for (key, value) in kargs.items():
                     if c[key] != value:
-                            check = False                       
+                            check = False
                 # if found, return the component
                 if check:
                     matches.append(c)
@@ -578,7 +578,7 @@ class DIV(XmlComponent):
         Also the components of the components are searched.
         """
         kargs['first_only'] = True
-        elements = self.elements(*args, **kargs)        
+        elements = self.elements(*args, **kargs)
         if not elements:
             # we found nothing
             return None

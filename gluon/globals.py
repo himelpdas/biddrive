@@ -154,7 +154,7 @@ class Response(Storage):
         """
 
         if isinstance(stream, str):
-            stream_file_or_304_or_206(stream, request=request, 
+            stream_file_or_304_or_206(stream, request=request,
                                       headers=self.headers)
 
         # ## the following is for backward compatibility
@@ -199,7 +199,7 @@ class Response(Storage):
         (t, f) = (items.group('table'), items.group('field'))
         field = db[t][f]
         (filename, stream) = field.retrieve(name)
-        self.headers['Content-Type'] = c.contenttype(name)        
+        self.headers['Content-Type'] = c.contenttype(name)
         if attachment:
             self.headers['Content-Disposition'] = \
                 "attachment; filename=%s" % filename

@@ -303,7 +303,7 @@ def plugin_install(app, fobj, request, filename):
     """
 
     upname = apath('../deposit/%s' % filename, request)
-    
+
     try:
         upfile = open(upname, 'wb')
         upfile.write(fobj.read())
