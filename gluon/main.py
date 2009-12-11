@@ -29,7 +29,7 @@ import socket
 import stat
 import tempfile
 import logging
-import sneaky
+#import sneaky
 import rewrite
 import functools
 import string
@@ -252,6 +252,60 @@ def environ_aux(environ,request):
     new_environ['wsgi.version'] = 1
     return new_environ
 
+def parse_get_post_vars(request, environ):
+
+    # always parse variables in URL for GET, POST, PUT, DELETE, etc. in get_vars
+    dget = cgi.parse_qsl(request.env.query_string, keep_blank_values=1)
+    for (key, value) in dget:
+        if key in request.get_vars:
+            if isinstance(request.get_vars[key], list):
+                request.get_vars[key] += list(value)
+            else:
+                request.get_vars[key] = [request.get_vars[key]] + list(value)
+        else:
+            request.get_vars[key] = value
+
+    # parse POST variables on POST, PUT, BOTH only in post_vars
+
+    request.body = copystream_progress(request) ### stores request body
+    if not (request.body and request.env.request_method in ('POST', 'PUT', 'BOTH')):
+        request.vars = request.get_vars
+    else:
+        dpost = cgi.FieldStorage(fp=request.body,environ=environ,keep_blank_values=1)
+        request.body.seek(0)
+        isle25 = sys.version_info[1] == 5
+        tempvars = Storage()
+
+        def listify(a):
+            return (not isinstance(a,list) and [a]) or a
+        try:
+            keys = sorted(dpost)
+        except TypeError:
+            keys = []
+        for key in keys:
+            dpk = dpost[key]
+            # if en element is not a file replace it with its value else leave it alone
+            if isinstance(dpk, list):                
+                if not dpk[0].filename:
+                    value = [x.value for x in dpk]
+                else:
+                    value = [x for x in dpk]
+            elif not dpk.filename:
+                value = dpk.value
+            else:
+                value = dpk
+
+            pvalue = value
+            if key in request.get_vars:
+                if isle25:
+                    value = listify(value) + listify(request.get_vars[key])
+                else:
+                    pvalue = [x for x in listify(value) \
+                                  if not x in listify(request.get_vars[key])]
+            request.vars[key] = value
+            if pvalue:
+                request.post_vars[key] = (len(pvalue)>1 and pvalue) or pvalue[0]
+
 def wsgibase(environ, responder):
     """
     this is the gluon wsgi application. the first function called when a page
@@ -374,47 +428,10 @@ def wsgibase(environ, responder):
                                    extension=raw_extension)
 
             # ##################################################
-            # get the GET and POST data -DONE
+            # get the GET and POST data
             # ##################################################
 
-            # ## parse GET vars, even if POST
-
-            dget = cgi.parse_qsl(request.env.query_string,
-                                 keep_blank_values=1)
-            for (key, value) in dget:
-                if key in request.vars:
-                    if isinstance(request.vars[key], list):
-                        request.vars[key].append(value)
-                    else:
-                        request.vars[key] = [request.vars[key], value]
-                else:
-                    request.vars[key] = value
-                request.get_vars[key] = request.vars[key]
-
-            # ## parse POST vars if any
-
-            request.body = copystream_progress(request) ### stores request body
-            if request.body and request.env.request_method in ('POST', 'PUT', 'BOTH'):
-                dpost = cgi.FieldStorage(fp=request.body,
-                                         environ=environ,
-                                         keep_blank_values=1)
-                request.body.seek(0)
-                try:
-                    keys = sorted(dpost)
-                except TypeError:
-                    keys = []
-                for key in keys:
-                    dpk = dpost[key]
-                    if isinstance(dpk, list):
-                        if not dpk[0].filename:
-                            value = [x.value for x in dpk]
-                        else:
-                            value = [x for x in dpk]
-                    elif not dpk.filename:
-                        value = dpk.value
-                    else:
-                        value = dpk
-                    request.post_vars[key] = request.vars[key] = value
+            parse_get_post_vars(request, environ)
 
             # ##################################################
             # expose wsgi hooks for convenience
@@ -539,9 +556,7 @@ def wsgibase(environ, responder):
                  rewrite.params.error_message_ticket % dict(ticket=ticket),
                  web2py_error='ticket %s' % ticket)
     session._unlock(response)
-    http_response = rewrite.try_redirect_on_error(http_response,
-                                                  request,
-                                                  ticket)
+    http_response = rewrite.try_redirect_on_error(http_response,request,ticket)
     return http_response.to(responder)
 
 def save_password(password, port):
