@@ -78,9 +78,9 @@ def populate(table, n, default=True):
                     datetime.datetime(2009,1,1) - \
                     datetime.timedelta(days=random.randint(0,10000))
             elif field.type == 'time':
-                record[fieldname] = \
-                    datetime.time(0,0,0) +\
-                    datetime.timedelta(seconds=random.random()*24*3600)
+                h = random.randint(0,23)
+                m = 15*random.randint(0,3)
+                record[fieldname] = datetime.time(h,m,0)
             elif field.type == 'password':
                 record[fieldname] = ''
             elif field.type == 'upload':
