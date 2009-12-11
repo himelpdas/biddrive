@@ -272,9 +272,10 @@ def parse_get_post_vars(request, environ):
         request.vars = request.get_vars
     else:
         dpost = cgi.FieldStorage(fp=request.body,environ=environ,keep_blank_values=1)
+        # The same detection used by FieldStorage to detect multipart POSTs
+        is_multipart = dpost.type[:10] == 'multipart/'
         request.body.seek(0)
         isle25 = sys.version_info[1] == 5
-        tempvars = Storage()
 
         def listify(a):
             return (not isinstance(a,list) and [a]) or a
@@ -299,9 +300,10 @@ def parse_get_post_vars(request, environ):
             if key in request.get_vars:
                 if isle25:
                     value = listify(value) + listify(request.get_vars[key])
+                elif is_multipart:
+                    pvalue = listify(value)[len(listify(request.get_vars[key])):]
                 else:
-                    pvalue = [x for x in listify(value) \
-                                  if not x in listify(request.get_vars[key])]
+                    pvalue = listify(value)[:-len(listify(request.get_vars[key]))]
             request.vars[key] = value
             if pvalue:
                 request.post_vars[key] = (len(pvalue)>1 and pvalue) or pvalue[0]
