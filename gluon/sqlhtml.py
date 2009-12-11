@@ -862,7 +862,7 @@ class SQLFORM(FORM):
                 continue
             elif fieldname in self.vars:
                 fields[fieldname] = self.vars[fieldname]
-            elif field.default == None:
+            elif field.default == None and field.writable and field.readable:
                 self.errors[fieldname] = 'no data'
                 return False
 
