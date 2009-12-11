@@ -917,7 +917,7 @@ class SQLDB(dict):
                     ))
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-            self._execute('SET FOREIGN_KEY_CHECKS=0;')
+            self._execute('SET FOREIGN_KEY_CHECKS=1;')
             self._execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
         elif not is_jdbc and self._uri[:11] == 'postgres://':
             self._dbname = 'postgres'
@@ -1286,21 +1286,48 @@ class SQLDB(dict):
     def rollback(self):
         self._connection.rollback()
 
-    def executesql(self, query, placeholders=None):
-        """
-        placeholders is optional and will always be None when using DAL
-        if using raw SQL with placeholders, placeholders may be
-        a sequence of values to be substituted in
-        or, *if supported by the DB driver*, a dictionary with keys
-        matching named placeholders in your SQL.
-        """
+    def executesql(self, query, placeholders=None, as_dict=False):
+        """                                                                                       
+        placeholders is optional and will always be None when using DAL                           
+        if using raw SQL with placeholders, placeholders may be                                   
+        a sequence of values to be substituted in                                                 
+        or, *if supported by the DB driver*, a dictionary with keys                               
+        matching named placeholders in your SQL.                                                  
+                                                                                                  
+        Added 2009-12-05 "as_dict" optional argument. Will always be                             
+        None when using DAL. If using raw SQL can be set to True                                  
+        and the results cursor returned by the DB driver will be                                  
+        converted to a sequence of dictionaries keyed with the db                                 
+        field names. Tested with SQLite but should work with any database                         
+        since the cursor.description used to get field names is part of the                       
+        Python dbi 2.0 specs. Results returned with as_dict = True are                             
+        the same as those returned when applying .to_list() to a DAL query.                       
+                                                                                                  
+        [{field1: value1, field2: value2}, {field1: value1b, field2: value2b}]                    
+                                                                                                  
+        --bmeredyk                                                                                
+        """  
         self['_lastsql'] = query
         if placeholders:
             self['_lastsql'] +="  with "+str(placeholders)
             self._execute(query, placeholders)
         else:
             self._execute(query)
-        # see if any results returned from database
+        if as_dict:
+            if not hasattr(self._cursor,'description'):
+                raise RuntimeError, "database does not support executesql(...,as_dict=True)"
+            # Non-DAL legacy db query, converts cursor results to dict.
+            # sequence of 7-item sequences. each sequence tells about a column.
+            # first item is always the field name according to Python Database API specs
+            columns = self._cursor.description
+            # reduce the column info down to just the field names
+            fields = [f[0] for f in columns]
+            # will hold our finished resultset in a list
+            data = self._cursor.fetchall()
+            # convert the list for each row into a dictionary so it's
+            # easier to work with. row['field_name'] rather than row[0]
+            return [dict(zip(fields,row)) for row in data]
+        # see if any results returned from database        
         try:
             return self._cursor.fetchall()
         except:
@@ -1795,6 +1822,9 @@ class Table(dict):
         elif self._db._dbname == 'firebird':
             return ['DROP TABLE %s %s;' % (t, c), 'DROP GENERATOR GENID_%s;'
                      % t]
+        elif self._db._dbname == 'mysql':
+            # breaks db integrity but without this mysql does not drop table
+            return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % t,'SET FOREIGN_KEY_CHECKS=1;']
         return ['DROP TABLE %s;' % t]
 
     def drop(self, mode = None):
