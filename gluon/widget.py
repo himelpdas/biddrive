@@ -27,9 +27,8 @@ from textwrap import dedent
 import contrib.cron
 
 from main import HttpServer, save_password
-from fileutils import tar, untar
+from fileutils import tar, untar, w2p_pack
 from shell import run, test
-from admin import w2p_unpack
 
 try:
     import contrib.taskbar_widget
@@ -687,33 +686,20 @@ def console():
     if not os.path.exists('deposit'):
         os.mkdir('deposit')
 
+    if not os.path.exists('site-packages'):
+        os.mkdir('site-packages')
+
+    sys.path.append(os.path.join(os.getcwd(),'site-packages'))
+
     # If we have the applications package or if we should upgrade
-    have_applications = os.path.exists('applications/__init__.py')
-    should_upgrade = options.upgrade == 'yes'
-
-    if not have_applications or should_upgrade:
-        print 'unpacking apps; this may take a few seconds...'
-
-        if not os.path.exists('applications/admin'):
-            os.mkdir('applications/admin')
-        w2p_unpack('admin.w2p', 'applications/admin/')
-
-        if not os.path.exists('applications/welcome'):
-            os.mkdir('applications/welcome')
-        w2p_unpack('welcome.w2p', 'applications/welcome/')
-
-        if not os.path.exists('applications/examples'):
-            os.mkdir('applications/examples')
-        w2p_unpack('examples.w2p', 'applications/examples/')
-
+    if not os.path.exists('applications/__init__.py'):
         fp = open('applications/__init__.py', 'w')
         fp.write('')
         fp.close()
-        print 'default applications are now installed'
-    else:
-        print 'default applications appear to be installed already'
-    if should_upgrade:
-        sys.exit()
+
+    if not os.path.exists('welcome.w2p') or os.path.exists('NEWINSTALL'):
+        w2p_pack('welcome.w2p','applications/welcome')
+        os.unlink('NEWINSTALL')
 
     return (options, args)
 

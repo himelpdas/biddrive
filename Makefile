@@ -19,7 +19,7 @@ epydoc:
 	epydoc --config epydoc.conf
 	cp applications/examples/static/title.png applications/examples/static/epydoc
 src:
-	echo 'Version 1.73.1 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
+	echo 'Version 1.74.0rc1 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files
 	make clean
 	### clean up baisc apps
@@ -43,16 +43,9 @@ src:
 	cp ABOUT applications/examples/
 	cp LICENSE applications/admin/
 	cp LICENSE applications/examples/
-	### build the basic apps
-	cd applications/admin/ ; tar zcvf admin.w2p *
-	mv applications/admin/admin.w2p ./
-	cd applications/welcome/ ; tar zcvf welcome.w2p *
-	mv applications/welcome/welcome.w2p ./
-	cd applications/examples/ ; tar zcvf examples.w2p *
-	mv applications/examples/examples.w2p ./
 	### build web2py_src.zip
 	mv web2py_src.zip web2py_src_old.zip | echo 'no old'
-	cd ..; zip -r web2py/web2py_src.zip web2py/gluon/*.py web2py/gluon/contrib/* web2py/*.py web2py/*.w2p web2py/ABOUT  web2py/LICENSE web2py/README web2py/VERSION web2py/Makefile web2py/epydoc.css web2py/epydoc.conf web2py/app.yaml web2py/queue.yaml web2py/scripts/*.sh web2py/scripts/*.py
+	cd ..; zip -r web2py/web2py_src.zip web2py/gluon/*.py web2py/gluon/contrib/* web2py/*.py web2py/*.w2p web2py/ABOUT  web2py/LICENSE web2py/README web2py/NEWINSTALL web2py/VERSION web2py/Makefile web2py/epydoc.css web2py/epydoc.conf web2py/app.yaml web2py/queue.yaml web2py/scripts/*.sh web2py/scripts/*.py web2py/applications/admin web2py/applications/examples/ web2py/applications/welcome web2py/applicaitons/__init__.py
 
 mdp:
 	make epydoc
@@ -67,9 +60,14 @@ app:
 	mv ../web2py_osx/site-packages.zip ../web2py_osx/web2py/web2py.app/Contents/Resources/lib/python2.5
 	cp *.w2p ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp ABOUT ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp NEWINSTALL ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp LICENSE ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp VERSION ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp README ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp -r applications/admin ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
+	cp -r applications/welcome ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
+	cp -r applications/examples ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
+	cp applications/__init__.py ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
 	cd ../web2py_osx; zip -r web2py_osx.zip web2py
 	mv ../web2py_osx/web2py_osx.zip .
 win:
@@ -79,9 +77,14 @@ win:
 	mv ../web2py_win/library.zip ../web2py_win/web2py
 	cp *.w2p ../web2py_win/web2py/
 	cp ABOUT ../web2py_win/web2py/
+	cp NEWINSTALL ../web2py_win/web2py/
 	cp LICENSE ../web2py_win/web2py/
 	cp VERSION ../web2py_win/web2py/
 	cp README ../web2py_win/web2py/
+	cp -r applications/admin ../web2py_win/web2py/applications
+	cp -r applications/welcome ../web2py_win/web2py/applications
+	cp -r applications/examples ../web2py_win/web2py/applications
+	cp applications/__init__.py ../web2py_win/web2py/applications
 	cd ../web2py_win; zip -r web2py_win.zip web2py
 	mv ../web2py_win/web2py_win.zip .
 war:
