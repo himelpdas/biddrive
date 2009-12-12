@@ -492,12 +492,6 @@ def console():
                       dest='password',
                       help=msg)
 
-    parser.add_option('-u',
-                      '--upgrade',
-                      default='no',
-                      dest='upgrade',
-                      help='-u yes: upgrade applications and exit')
-
     parser.add_option('-c',
                       '--ssl_certificate',
                       default='',

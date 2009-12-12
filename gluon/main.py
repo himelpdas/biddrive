@@ -305,7 +305,7 @@ def parse_get_post_vars(request, environ):
                 else:
                     pvalue = listify(value)[:-len(listify(request.get_vars[key]))]
             request.vars[key] = value
-            if pvalue:
+            if len(pvalue):
                 request.post_vars[key] = (len(pvalue)>1 and pvalue) or pvalue[0]
 
 def wsgibase(environ, responder):

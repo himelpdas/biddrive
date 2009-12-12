@@ -600,3 +600,10 @@ Size of input/textarea set by CSS no more by jQuery  (thanks Iceberg)
 Customizable CSV  (thanks Thandeus)
 More bug fixed (thanks Thandeus)
 Better regex for template fixed Jython problem (thank Jonathan)
+
+#1.74.0
+Moved to mercurial
+Default validators use the new define_table(....,format='...')
+New get_vars and post_vars compatible in 2.5 and 2.6 (thanks Tim)
+Major rewrite of gql.py extends DAL syntax on GAE
+No more *.w2p, welcome.w2p is create automatically, base apps are always upgraded
