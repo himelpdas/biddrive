@@ -70,10 +70,10 @@ def cleanup(text):
 
 def assert_filter_fields(*fields):
     for field in fields:
-        if isinstance(field, (Field, Expression)) and field.type\
-             in ['text', 'blob']:
-            raise SyntaxError, 'AppEngine does not index by: %s'\
-                 % field.type
+        if isinstance(field, (Field, Expression)) \
+                and field.type in ['text', 'blob']:
+            raise SyntaxError, \
+                  'AppEngine does not index by: %s' % field.type
 
 
 def dateobj_to_datetime(obj):
@@ -304,7 +304,7 @@ class Expression(object):
         return Query(self, '>=', value)
 
     def belongs(self, value):
-        return Query(self, ' IN ', value)
+        return Query(self, 'IN', value)
 
     # def like(self, value): return Query(self, ' LIKE ', value)
     # for use in both Query and sortby
@@ -467,14 +467,17 @@ def obj_represent(obj, fieldtype, db):
             obj = obj.decode('utf8')
         elif not isinstance(obj, unicode):
             obj = unicode(obj)
-
     return obj
 
-class QueryException:
-
-    def __init__(self, **a):
-        self.__dict__ = a
-
+class Filter:
+    def __init__(self,left,op,right):
+        (self.left, self.op, self.right) = (left, op, right)
+    def one(self):
+        return self.left.type == 'id' and self.op == '='
+    def all(self):
+        return self.left.type == 'id' and self.op == '>' and self.right == 0
+    def __str__(self):
+        return '%s %s %s' % (self.left.name, self.op, self.right)
 
 class Query(object):
 
@@ -494,54 +497,56 @@ class Query(object):
         op=None,
         right=None,
         ):
-        if op is None and right is None and isinstance(left, list):
-            self.left = left
+        self.get_all =  self.get_one = None
+        if isinstance(left, list):
+            self.filters = left
             return
         if isinstance(right, (Field, Expression)):
             raise SyntaxError, \
                 'Query: right side of filter must be a value or entity: %s' \
-                % right
-        if isinstance(left, Field) and left.name == 'id':
-            if not right:
-                right = 0
-            try:
-                value = long(right)
-            except:
-                raise SyntaxError, 'id value must be integer: %s' % id
-            if op == '=':
-                self.get_one = \
-                    QueryException(tablename=left._tablename, id=value)
-                return
-            if op == '>' and value == 0:
-                self.get_all = left._tablename
-                return
-            else:
-                raise SyntaxError, 'not supported'
+                % right       
         if isinstance(left, Field):
-
             # normal filter: field op value
-
             assert_filter_fields(left)
-            right = obj_represent(right, left.type, left._db)
-
-            # filter dates/times need to be datetimes for GAE
-
-            right = dateobj_to_datetime(right)
-            self.left = [(left, op, right)]
+            if left.type == 'id':
+                try:
+                    right = long(right or 0)
+                except ValueError:
+                    raise SyntaxError, 'id value must be integer: %s' % id
+                if not (op == '=' or (op == '>' and right == 0)):
+                    raise RuntumeError, '(field.id <op> value) is not supported on GAE'
+            elif op=='IN':
+                right = [dateobj_to_datetime(obj_represent(r, left.type, left._db)) \
+                             for r in right]
+            else:
+                # filter dates/times need to be datetimes for GAE
+                right = dateobj_to_datetime(obj_represent(right, left.type, left._db))
+            self.filters = [Filter(left, op, right)]
             return
         raise SyntaxError, 'not supported'
 
     def __and__(self, other):
 
         # concatenate list of filters
+        # make sure all and one appear at the beginning
+        if other.filters[0].one():
+            return Query(other.filters+self.filters)
+        return Query(self.filters + other.filters)
 
-        return Query(self.left + other.left)
+    def __or__(self):
+        raise RuntimeError, 'OR is not supported on GAE'    
 
-    # def __or__(self, other): return Query('(%s) OR (%s)'%(self, other))
-    # def __invert__(self): return Query('(NOT %s)'%self)
+    def __invert__(self):        
+        if len(self.filters)!=1:
+            raise RuntimeError, 'NOT (... AND ...) is not supported on GAE'
+        filter = self.filters[0]
+        if filter.op == 'IN':
+            raise RuntimeError, 'NOT (... IN ...) is not supported on GAE'
+        new_op = {'<':'>','>':'<','=':'!=','!=':'=','<=':'>=','>=':'<='}[filter.op]
+        return Query(filter.left, new_op, filter.right)
 
     def __str__(self):
-        return str(self.left)
+        return ' AND '.join([str(filter) for filter in self.filters])
 
 
 class Set(gluon.sql.Set):
@@ -563,28 +568,14 @@ class Set(gluon.sql.Set):
 
     def __init__(self, db, where=None):
         self._db = db
-        self._tables = []
-        self.filters = []
-        if hasattr(where, 'get_all'):
+        if where:
             self.where = where
-            self._tables.insert(0, where.get_all)
-        elif hasattr(where, 'get_one') and isinstance(where.get_one,
-                QueryException):
-            self.where = where.get_one
+            self._tables = [filter.left._tablename for filter in where.filters]
         else:
-
-            # find out which tables are involved
-
-            if isinstance(where, Query):
-                self.filters = where.left
-            self.where = where
-            self._tables = [field._tablename for (field, op, val) in
-                            self.filters]
+            self._tables = []
+            self.where = None
 
     def __call__(self, where):
-        if isinstance(self.where, QueryException) or isinstance(where,
-                QueryException):
-            raise SyntaxError, "Neither self.where nor where can't be a QueryException instance"
         if self.where:
             return Set(self._db, self.where & where)
         else:
@@ -617,49 +608,41 @@ class Set(gluon.sql.Set):
         table = self._get_table_or_raise()
         tablename = table.kind()
         items = google_db.Query(table)
-        for filter in self.filters:
-            (left, op, val) = filter
-            cond = '%s %s' % (left.name, op)
-            items = items.filter(cond, val)
-        if attributes.get('left', None):
-            raise SyntaxError, 'Set: no left join in appengine'
-        if attributes.get('groupby', None):
-            raise SyntaxError, 'Set: no groupby in appengine'
-        orderby = attributes.get('orderby', False)
-        if orderby:
-            if isinstance(orderby, (list, tuple)):
-                orderby = gluon.sql.xorify(orderby)
-            assert_filter_fields(orderby)
-            orders = orderby.name.split('|')
-            for order in orders:
-                items = items.order(order)
-        if attributes.get('limitby', None):
-            (lmin, lmax) = attributes['limitby']
-            (limit, offset) = (lmax - lmin, lmin)
-            items = items.fetch(limit, offset=offset)
-        return (items, tablename, self._db[tablename].fields)
-
-    def _getitem_exception(self):
-        (tablename, id) = (self.where.tablename, self.where.id)
-        fields = self._db[tablename].fields
-        self.colnames = ['%s.%s' % (tablename, t) for t in fields]
-        item = self._db[tablename]._tableobj.get_by_id(long(id))
-        return (item, tablename, fields)
-
-    def _select_except(self):
-        if not self.where.id:
-            return Rows(self.db, [], [])
-        (item, tablename, fields) = self._getitem_exception()
-        if not item:
-            return []
-        new_item = []
-        for t in fields:
-            if t == 'id':
-                new_item.append(int(item.key().id()))
+        if not self.where:
+            self.where = Query(fields[0].table.id,'>',0)
+        for filter in self.where.filters:
+            if filter.all():
+                continue
+            elif filter.one():
+                items = [self._db[tablename]._tableobj.get_by_id(filter.right)]
+            elif isinstance(items,list):
+                (name, op, value) = (filter.left.name, filter.op, filter.right)
+                if op == '=': op = '=='                
+                if op == 'IN': op = 'in'                
+                items = [item for item in items \
+                             if eval("getattr(item,'%s') %s %s" % (name, op, repr(value)))]
             else:
-                new_item.append(getattr(item, t))
-        r = [new_item]
-        return self.parse(self._db, r, self.colnames, False)
+                (name, op, value) = (filter.left.name, filter.op, filter.right)
+                items = items.filter('%s %s' % (name, op), value)
+        if not isinstance(items,list):
+            if attributes.get('left', None):
+                raise SyntaxError, 'Set: no left join in appengine'
+            if attributes.get('groupby', None):
+                raise SyntaxError, 'Set: no groupby in appengine'
+            orderby = attributes.get('orderby', False)
+            if orderby:
+                if isinstance(orderby, (list, tuple)):
+                    orderby = gluon.sql.xorify(orderby)
+                assert_filter_fields(orderby)
+                orders = orderby.name.split('|')
+                for order in orders:
+                    items = items.order(order)
+            if attributes.get('limitby', None):
+                (lmin, lmax) = attributes['limitby']
+                (limit, offset) = (lmax - lmin, lmin)
+                items = items.fetch(limit, offset=offset)
+        fields = self._db[tablename].fields
+        return (items, tablename, fields)
 
     def select(self, *fields, **attributes):
         """
@@ -667,13 +650,9 @@ class Set(gluon.sql.Set):
         cache attribute ignored on GAE
         """
 
-        if isinstance(self.where, QueryException):
-            return self._select_except()
         (items, tablename, fields) = self._select(*fields, **attributes)
-        self.colnames = ['%s.%s' % (tablename, t) for t in fields]
-        self._db['_lastsql'] = 'select'
-        r = []
-
+        self._db['_lastsql'] = 'SELECT WHERE %s' % self.where
+        rows = []
         for item in items:
             new_item = []
             for t in fields:
@@ -681,65 +660,44 @@ class Set(gluon.sql.Set):
                     new_item.append(int(item.key().id()))
                 else:
                     new_item.append(getattr(item, t))
-            r.append(new_item)
-        return self.parse(self._db, r, self.colnames, False)
+            rows.append(new_item)
+        colnames = ['%s.%s' % (tablename, t) for t in fields]
+        return self.parse(self._db, rows, colnames, False)
 
     def count(self):
-        self._db['_lastsql'] = 'count'
-        return len(self.select())
+        (items, tablename, fields) = self._select()
+        self._db['_lastsql'] = 'COUNT WHERE %s' % self.where
+        return len([x for x in items])
 
     def delete(self):
-        self._db['_lastsql'] = 'delete'
-        if isinstance(self.where, QueryException):
-            (item, tablename, fields) = self._getitem_exception()
-            if not item:
-                return 0
-            item.delete()
-            return 1
-        else:
-            (items, tablename, fields) = self._select()
-            tableobj = self._db[tablename]._tableobj
-            counter = 0
-            for item in items:
-                tableobj.get(item.key()).delete()
-                counter += 1
-            return counter
+        self._db['_lastsql'] = 'DELETE WHERE %s' % self.where
+        (items, tablename, fields) = self._select()
+        tableobj = self._db[tablename]._tableobj
+        counter = 0
+        for item in items:
+            tableobj.get(item.key()).delete()
+            counter += 1
+        return counter
 
     def update(self, **update_fields):
-        self._db['_lastsql'] = 'update'
+        self._db['_lastsql'] = 'UPDATE WHERE %s' % self.where
         db = self._db
-        if isinstance(self.where, QueryException):
-            (item, tablename, fields) = self._getitem_exception()
-            table = db[tablename]
-            update_fields.update(dict([(fieldname, table[fieldname].update) \
-                                       for fieldname in table.fields \
-                                           if not fieldname in update_fields \
-                                           and table[fieldname].update != None]))
-            if not item:
-                return 0
+        (items, tablename, fields) = self._select()
+        table = db[tablename]
+        update_fields.update(dict([(field, table[field].update) \
+                                   for field in table.fields if not field \
+                                   in update_fields \
+                                   and table[field].update != None]))
+        tableobj = table._tableobj
+        counter = 0
+        for item in items:
             for (field, value) in update_fields.items():
                 value = obj_represent(update_fields[field],
-                        table[field].type, db)
+                                      table[field].type, db)
                 setattr(item, field, value)
             item.put()
-            return 1
-        else:
-            (items, tablename, fields) = self._select()
-            table = db[tablename]
-            update_fields.update(dict([(field, table[field].update)
-                                 for field in table.fields if not field
-                                  in update_fields
-                                  and table[field].update != None]))
-            tableobj = table._tableobj
-            counter = 0
-            for item in items:
-                for (field, value) in update_fields.items():
-                    value = obj_represent(update_fields[field],
-                            table[field].type, db)
-                    setattr(item, field, value)
-                item.put()
-                counter += 1
-            return counter
+            counter += 1
+        return counter
 
 
 def test_all():
