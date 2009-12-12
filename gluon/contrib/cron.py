@@ -237,7 +237,7 @@ class cronlauncher(threading.Thread):
         self.cmd = cmdline
         self.shell = shell
 
-    def run_popen(self):        
+    def run_popen(self):
         if os.name == 'nt':
             proc = Popen(self.cmd, stdin=PIPE, stdout=PIPE,
                          stderr=PIPE, shell=self.shell)
@@ -249,7 +249,7 @@ class cronlauncher(threading.Thread):
                 stderr=PIPE,
                 shell=self.shell
                 #close_fds=self.shell
-                )        
+                )
         (stdoutdata,stderrdata) = proc.communicate()
         if proc.returncode != 0:
             logging.warning(
@@ -259,7 +259,7 @@ class cronlauncher(threading.Thread):
             logging.debug('WEB2PY CRON Call retruned success:\n%s' % stdoutdata)
 
 
-    def run(self):        
+    def run(self):
         try:
             self.run_popen()
         except KeyError, e:
@@ -291,9 +291,9 @@ def crondance(apppath, ctype='soft',startup=False):
                                         not x.strip().startswith('#')\
                                         and len(x.strip()) > 0, cronlines):
                     task = parsecronline(cline)
-                    go = True                  
+                    go = True
                     if 'min' in task and not now_s.tm_min in task['min']:
-                        if task['min'] > -1 or ctype == 'ext': 
+                        if task['min'] > -1 or ctype == 'ext':
                             go = False
                     elif 'hr' in task and not now_s.tm_hour in task['hr']:
                         go = False
@@ -331,7 +331,7 @@ def crondance(apppath, ctype='soft',startup=False):
                                     % (mainrun,models,app,command)
                                 cronlauncher(shell_command,
                                              shell=True).start()
-                                
+
                             else:
                                 cronlauncher(command).start()
                         except Exception, e:

@@ -30,7 +30,7 @@ class Learner:
         key=keys[random.randint(0,len(keys)-1)]
         words=key
         words=words.capitalize()
-        regex=re.compile('[a-z]+')        
+        regex=re.compile('[a-z]+')
         for i in range(length):
             okey=key
             if not key in self.db: break # should not happen
@@ -59,8 +59,8 @@ def da_du_ma(n=4):
 def populate(table, n, default=True):
     ell=Learner()
     #ell.learn(open('20417.txt','r').read())
-    #ell.save('frequencies.pickle')      
-    #ell.load('frequencies.pickle')      
+    #ell.save('frequencies.pickle')
+    #ell.load('frequencies.pickle')
     ell.loadd(IUP)
     for i in range(n):
         record={}

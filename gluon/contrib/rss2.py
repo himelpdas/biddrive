@@ -569,7 +569,7 @@ class RSSItem(WriteXmlMixin):
 def dumps(rss, encoding='utf-8'):
     s = cStringIO.StringIO()
     rss.write_xml(s, encoding)
-    return s.getvalue() 
+    return s.getvalue()
 
 
 def test():

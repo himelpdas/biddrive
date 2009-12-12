@@ -27,7 +27,7 @@ def ldap_auth(server='ldap', port=None,
         auth.settings.login_methods.append(ldap_auth(
             mode='uid_r', server='my.ldap.server',
             base_dn=['ou=Users,dc=domain,dc=com','ou=Staff,dc=domain,dc=com']))
-                        
+
     or (if using CN)::
 
         auth.settings.login_methods.append(ldap_auth(
@@ -35,7 +35,7 @@ def ldap_auth(server='ldap', port=None,
             base_dn='ou=Users,dc=domain,dc=com'))
 
     If using secure ldaps:// pass secure=True
-    
+
     If you need to bind to the directory with an admin account in order to search it then specify bind_dn & bind_pw to use for this.
     - currently only implemented for Active Directory
     """
@@ -60,7 +60,7 @@ def ldap_auth(server='ldap', port=None,
                     ldap_port = 389
                 con = ldap.initialize(
                     "ldap://" + ldap_server + ":" + str(ldap_port))
-            
+
             if ldap_mode == 'ad':
                 # Microsoft Active Directory
                 con.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
@@ -81,23 +81,23 @@ def ldap_auth(server='ldap', port=None,
                     # We know the user exists & is in the correct OU
                     # so now we just check the password
                     con.simple_bind_s(username, password)
-                    
+
             if ldap_mode == 'domino':
                 # Notes Domino
                 if "@" in username:
                     username = username.split("@")[0]
                 con.simple_bind_s(username, password)
-                
+
             if ldap_mode == 'cn':
                 # OpenLDAP (CN)
                 dn = "cn=" + username + "," + ldap_basedn
                 con.simple_bind_s(dn, password)
-                
+
             if ldap_mode == 'uid':
                 # OpenLDAP (UID)
                 dn = "uid=" + username + "," + ldap_basedn
                 con.simple_bind_s(dn, password)
-                
+
             if ldap_mode == 'company':
                 # no DNs or password needed to search directory
                 dn = ""
@@ -110,12 +110,12 @@ def ldap_auth(server='ldap', port=None,
                 attrs = ['uid']
                 # perform the actual search
                 company_search_result=con.search_s(ldap_basedn,
-                                                   ldap.SCOPE_SUBTREE, 
+                                                   ldap.SCOPE_SUBTREE,
                                                    filter, attrs)
                 dn = company_search_result[0][0]
                 # perform the real authentication test
                 con.simple_bind_s(dn, password)
-            
+
             if ldap_mode == 'uid_r':
                 # OpenLDAP (UID) with subtree search and multiple DNs
                 if type(ldap_basedn) == type([]):

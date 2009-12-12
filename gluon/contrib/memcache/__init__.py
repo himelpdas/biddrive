@@ -19,14 +19,14 @@ def MemcacheClient(*a, **b):
     locker.release()
     return MemcacheClient.__mc_instance
 
-class _MemcacheClient(Client): 
+class _MemcacheClient(Client):
     def __init__(self, request, servers, debug=0, pickleProtocol=0,
                  pickler=pickle.Pickler, unpickler=pickle.Unpickler,
                  pload=None, pid=None):
         self.request=request
         Client.__init__(self,servers,debug,pickleProtocol,
                         pickler,unpickler,pload,pid)
-    
+
     def __call__(self,key,f,time_expire=300):
         #key=self.__keyFormat__(key)
         value=None
@@ -39,7 +39,7 @@ class _MemcacheClient(Client):
             value=f()
             self.set(key,value,time_expire)
         return value
-    
+
     def increment(self,key,value=1,time_expire=300):
         newKey=self.__keyFormat__(key)
         obj=self.get(newKey)
@@ -48,19 +48,19 @@ class _MemcacheClient(Client):
         else:
             self.set(newKey,value,time_expire)
             return value
-    
+
     def set(self,key,value,time_expire=300):
         newKey = self.__keyFormat__(key)
         return Client.set(self,newKey,value,time_expire)
-    
+
     def get(self,key):
         newKey = self.__keyFormat__(key)
         return Client.get(self,newKey)
-    
+
     def delete(self,key):
         newKey = self.__keyFormat__(key)
         return Client.delete(self,newKey)
-    
+
     def __keyFormat__(self,key):
         return '%s/%s' % (self.request.application,key.replace(' ','_'))
-        
+

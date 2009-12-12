@@ -260,7 +260,7 @@ class Table(gluon.sql.Table):
         rid = Reference(tmp.key().id())
         (rid._table, rid._record) = (self, None)
         return rid
-        
+
 
 class Expression(object):
 
@@ -504,7 +504,7 @@ class Query(object):
         if isinstance(right, (Field, Expression)):
             raise SyntaxError, \
                 'Query: right side of filter must be a value or entity: %s' \
-                % right       
+                % right
         if isinstance(left, Field):
             # normal filter: field op value
             assert_filter_fields(left)
@@ -534,9 +534,9 @@ class Query(object):
         return Query(self.filters + other.filters)
 
     def __or__(self):
-        raise RuntimeError, 'OR is not supported on GAE'    
+        raise RuntimeError, 'OR is not supported on GAE'
 
-    def __invert__(self):        
+    def __invert__(self):
         if len(self.filters)!=1:
             raise RuntimeError, 'NOT (... AND ...) is not supported on GAE'
         filter = self.filters[0]
@@ -617,8 +617,8 @@ class Set(gluon.sql.Set):
                 items = [self._db[tablename]._tableobj.get_by_id(filter.right)]
             elif isinstance(items,list):
                 (name, op, value) = (filter.left.name, filter.op, filter.right)
-                if op == '=': op = '=='                
-                if op == 'IN': op = 'in'                
+                if op == '=': op = '=='
+                if op == 'IN': op = 'in'
                 items = [item for item in items \
                              if eval("getattr(item,'%s') %s %s" % (name, op, repr(value)))]
             else:
