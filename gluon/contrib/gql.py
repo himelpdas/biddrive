@@ -614,7 +614,8 @@ class Set(gluon.sql.Set):
             if filter.all():
                 continue
             elif filter.one():
-                items = [self._db[tablename]._tableobj.get_by_id(filter.right)]
+                item = self._db[tablename]._tableobj.get_by_id(filter.right)
+                items = (item and [item]) or []
             elif isinstance(items,list):
                 (name, op, value) = (filter.left.name, filter.op, filter.right)
                 if op == '=': op = '=='
