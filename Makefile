@@ -45,7 +45,7 @@ src:
 	cp LICENSE applications/examples/
 	### build web2py_src.zip
 	mv web2py_src.zip web2py_src_old.zip | echo 'no old'
-	cd ..; zip -r web2py/web2py_src.zip web2py/gluon/*.py web2py/gluon/contrib/* web2py/*.py web2py/*.w2p web2py/ABOUT  web2py/LICENSE web2py/README web2py/NEWINSTALL web2py/VERSION web2py/Makefile web2py/epydoc.css web2py/epydoc.conf web2py/app.yaml web2py/queue.yaml web2py/scripts/*.sh web2py/scripts/*.py web2py/applications/admin web2py/applications/examples/ web2py/applications/welcome web2py/applicaitons/__init__.py
+	cd ..; zip -r web2py/web2py_src.zip web2py/gluon/*.py web2py/gluon/contrib/* web2py/*.py web2py/ABOUT  web2py/LICENSE web2py/README web2py/NEWINSTALL web2py/VERSION web2py/Makefile web2py/epydoc.css web2py/epydoc.conf web2py/app.yaml web2py/queue.yaml web2py/scripts/*.sh web2py/scripts/*.py web2py/applications/admin web2py/applications/examples/ web2py/applications/welcome web2py/applicaitons/__init__.py
 
 mdp:
 	make epydoc
@@ -58,7 +58,6 @@ app:
 	find gluon -path '*.pyc' -exec cp {} ../web2py_osx/site-packages/{} \;
 	cd ../web2py_osx/site-packages/; zip -r ../site-packages.zip *
 	mv ../web2py_osx/site-packages.zip ../web2py_osx/web2py/web2py.app/Contents/Resources/lib/python2.5
-	cp *.w2p ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp ABOUT ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp NEWINSTALL ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp LICENSE ../web2py_osx/web2py/web2py.app/Contents/Resources
@@ -75,7 +74,6 @@ win:
 	find gluon -path '*.pyc' -exec cp {} ../web2py_win/library/{} \;
 	cd ../web2py_win/library/; zip -r ../library.zip *
 	mv ../web2py_win/library.zip ../web2py_win/web2py
-	cp *.w2p ../web2py_win/web2py/
 	cp ABOUT ../web2py_win/web2py/
 	cp NEWINSTALL ../web2py_win/web2py/
 	cp LICENSE ../web2py_win/web2py/
@@ -87,38 +85,11 @@ win:
 	cp applications/__init__.py ../web2py_win/web2py/applications
 	cd ../web2py_win; zip -r web2py_win.zip web2py
 	mv ../web2py_win/web2py_win.zip .
-war:
-	python2.5 -c 'import compileall; compileall.compile_dir("gluon/")'
-	cp -r gluon ../web2py_war/web2py/
-	cp *.py ../web2py_war/web2py/
-	cp *.w2p ../web2py_win/web2py/
-	cp ABOUT ../web2py_win/web2py/
-	cp LICENSE ../web2py_win/web2py/
-	cp VERSION ../web2py_win/web2py/
-	cp README ../web2py_win/web2py/
-	cd ../web2py_war; zip -r web2py.war web2py
-	mv ../web2py_war/web2py.war .
-post:
-	rsync -avz --partial --progress -e ssh web2py_src.zip web2py_osx.zip web2py_win.zip user@www.web2py.com:~/
 run:
 	python2.5 web2py.py -a hello
-launchpad:
+push:
+	less .hg/hgrc
+	hg push
 	bzr push bzr+ssh://mdipierro@bazaar.launchpad.net/~mdipierro/web2py/devel --use-existing-dir
-svn:
-	make clean
-	find gluon -path '*.py' -exec cp {} ../web2py_svn/{} \;
-	cp Makefile ../web2py_svn/
-	cp welcome.w2p ../web2py_svn/
-	cp VERSION ../web2py_svn/
-	cp LICENSE ../web2py_svn/
-	cp ABOUT ../web2py_svn/
-	cp README ../web2py_svn/
-	cp *.yaml ../web2py_svn/
-	cp *.py ../web2py_svn/
-	cp epydoc.conf ../web2py_svn/
-	cp epydoc.css ../web2py_svn/
-	cp scripts/* ../web2py_svn/scripts/
-	cp -r doc/* ../web2py_svn/doc/
-	cp -r applications/examples/* ../web2py_svn/applications/examples
-	cp -r applications/welcome/* ../web2py_svn/applications/welcome
-	cp -r applications/admin/* ../web2py_svn/applications/admin
+post:
+	rsync -avz --partial --progress -e ssh web2py_src.zip web2py_osx.zip web2py_win.zip user@www.web2py.com:~/
