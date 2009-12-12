@@ -47,7 +47,6 @@ from serializers import json
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
 table_field = re.compile('[\w_]+\.[\w_]+')
-oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
 regex_content = re.compile('([\w\-]+\.){3}(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
 
@@ -135,8 +134,93 @@ def gen_ingres_sequencename(table_name):
 
 # mapping of the field types and some constructs
 # per database
-SQL_DIALECTS = {
-    'sqlite': {
+
+class BaseAdapter(object):
+    def __init__(self,db_codec ='UTF-8'):
+        self.db_codec = db_codec
+    def lower(self,fieldname):
+        return 'LOWER(%s)' % fieldname
+    def upper(self,fieldname):
+        return 'UPPER(%s)' % fieldname
+    def null():
+        return 'NULL'
+    def is_null(self):
+        return 'IS NULL'
+    def is_not_null(self):
+        return 'IS NOT NULL'
+    def extract(self,name,fieldname):
+        return "EXTRACT(%s FROM %s)" % (name, fieldname)
+    def left_join(self):
+        return 'LEFT JOIN'
+    def random(self):
+        return 'Random()'
+    def notnull(self,default):
+        return 'NOT NULL DEFAULT %s' % default 
+    def substring(self,fieldname,pos,lenght):
+        return 'SUBSTR(%s,%s,%s)' % (fieldname, pos, length)
+    def primarykey(self,key):
+        return 'PRIMARY KEY(%s)' % key
+
+    def represent(self, obj, fieldtype):
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(obj, (Expression, Field)):
+            return obj
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if obj is None:
+            return self.null()
+        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+            return self.null()
+        if fieldtype == 'boolean':
+            if obj and not str(obj)[0].upper() == 'F':
+                return "'T'"
+            else:
+                return "'F'"
+        if fieldtype[0] == 'i':
+            return str(int(obj))
+        if fieldtype[:7] == 'decimal':
+            return str(obj)
+        elif fieldtype[0] == 'r': # reference
+            if fieldtype.find('.')>0:
+                return repr(obj)
+            elif isinstance(obj, (Row, Reference)):
+                return str(obj['id'])
+            return str(int(obj))
+        elif fieldtype == 'double':
+            return repr(float(obj))
+        if isinstance(obj, unicode):
+            obj = obj.encode(self.db_codec)
+        if fieldtype == 'blob':
+            obj = base64.b64encode(str(obj))
+        elif fieldtype == 'date':
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):
+                obj = obj.isoformat()[:19].replace('T',' ')
+            elif isinstance(obj, datetime.date):
+                obj = obj.isoformat()[:10]+' 00:00:00'
+            else:
+                obj = str(obj)
+        elif fieldtype == 'time':
+            if isinstance(obj, datetime.time):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+        if not isinstance(obj,str):
+            obj = str(obj)
+        try:
+            obj.decode(self.db_codec)
+        except:
+            obj = obj.decode('latin1').encode(self.db_codec)
+        return "'%s'" % obj.replace("'", "''")
+
+
+class SQLiteAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'CHAR(%(length)s)',
         'text': 'TEXT',
@@ -151,18 +235,27 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
         'reference': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': "web2py_extract('%(name)s',%(field)s)",
-        'left join': 'LEFT JOIN',
-        'random': 'Random()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY (%s)'
-        },
-    'mysql': {
+        }
+    def extract(self,name,fieldname): return "web2py_extract('%s',%s)" % (name, fieldname)
+    @staticmethod
+    def web2py_extract(lookup, s):
+        table = {
+            'year': (0, 4),
+            'month': (5, 7),
+            'day': (8, 10),
+            'hour': (11, 13),
+            'minute': (14, 16),
+            'second': (17, 19),
+            }
+        try:
+            (i, j) = table[lookup]
+            return int(s[i:j])
+        except:
+            return None
+
+
+class MySQLAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'LONGTEXT',
@@ -177,17 +270,14 @@ SQL_DIALECTS = {
         'datetime': 'DATETIME',
         'id': 'INT AUTO_INCREMENT NOT NULL',
         'reference': 'INT, INDEX %(field_name)s__idx (%(field_name)s), FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RAND()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        },
-    'postgres': {
+        }
+    def random(self):
+        return 'RAND()'
+    def substring(self,fieldname,pos,lenght):
+        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+
+class PostgreSQLAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'TEXT',
@@ -202,17 +292,12 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'SERIAL PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RANDOM()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        },
-    'oracle': {
+        }
+    def random(self):
+        return 'RANDOM()'
+
+class OracleAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR2(%(length)s)',
         'text': 'CLOB',
@@ -227,17 +312,59 @@ SQL_DIALECTS = {
         'datetime': 'DATE',
         'id': 'NUMBER PRIMARY KEY',
         'reference': 'NUMBER, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'dbms_random.value',
-        'notnull': 'DEFAULT %(default)s NOT NULL',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        },
-    'mssql': {
+        }
+    def left_join(self):
+        return 'LEFT OUTER JOIN'
+    def random(self):
+        return 'dbms_random.value'
+    def notnull(self,default):
+        return 'DEFAULT %s NOT NULL', default 
+    def represent(self, obj, fieldtype):
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(obj, (Expression, Field)):
+            return obj
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if obj is None:
+            return self.null()
+        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+            return self.null()
+        if fieldtype == 'blob':
+            obj = base64.b64encode(str(obj))
+            return ":CLOB('%s')" % obj
+        elif fieldtype == 'date':
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd')" % obj
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):
+                obj = obj.isoformat()[:19].replace('T',' ')
+            elif isinstance(obj, datetime.date):
+                obj = obj.isoformat()[:10]+' 00:00:00'
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
+        return BaseAdapter.represent(self,obj,fieldtype)
+    oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
+    @staticmethod
+    def web2py_fix_execute(command, execute):
+        args = []
+        i = 1
+        while True:
+            m = self.oracle_fix.match(command)
+            if not m:
+                break
+            command = command[:m.start('clob')] + str(i) + command[m.end('clob'):]
+            args.append(m.group('clob')[6:-2].replace("''", "'"))
+            i += 1
+        return execute(command[:-1], args)
+
+
+class MSSQLAdapter(BaseAdapter):
+    types = {
         'boolean': 'BIT',
         'string': 'VARCHAR(%(length)s)',
         'text': 'TEXT',
@@ -254,19 +381,38 @@ SQL_DIALECTS = {
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'DATEPART(%(name)s,%(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'NEWID()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY CLUSTERED (%s)'
-        #' WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)'
-        },
-    'mssql2': { # MS SQL unicode
+        }
+    def extract(self,name,fieldname):
+        return "DATEPART(%s FROM %s)" % (name, fieldname)
+    def left_join(self):
+        return 'LEFT OUTER JOIN'
+    def random(self):
+        return 'NEWID()'
+    def substring(self,fieldname,pos,lenght):
+        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def primarykey(self,key):
+        return 'PRIMARY KEY CLUSTERED (%s)' % key
+    def represent(self, obj, fieldtype):
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(obj, (Expression, Field)):
+            return obj
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if obj is None:
+            return self.null()
+        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+            return self.null()
+        if obj and fieldtype == 'boolean' and \
+                isinstance(obj, (int, long, str, bool)):
+            if obj and not str(obj)[0].upper() == 'F':
+                return '1'
+            else:
+                return '0'
+        return BaseAdapter.represent(self, obj, fieldtype)
+
+class MSSQLAdapter2(MSSQLAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'NVARCHAR(%(length)s)',
         'text': 'NTEXT',
@@ -283,17 +429,16 @@ SQL_DIALECTS = {
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'DATEPART(%(name)s,%(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'NEWID()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        },
-    'firebird': {
+        }
+    def represent(self, obj, fieldtype):
+        value = BaseAdapter.represent(self, obj, fieldtype)
+        if fieldtype == 'string' or fieldtype == 'text' and value[:1]=="'":
+            value = 'N'+value
+        return value
+
+
+class FireBirdAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'BLOB SUB_TYPE 1',
@@ -308,17 +453,16 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RAND()',
-        'notnull': 'DEFAULT %(default)s NOT NULL',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        },
-    'informix': {
+        }
+    def random(self):
+        return 'RAND()'
+    def notnull(self,default):
+        return 'DEFAULT %s NOT NULL', default 
+    def substring(self,fieldname,pos,lenght):
+        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+
+class InformixAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'BLOB SUB_TYPE 1',
@@ -335,17 +479,41 @@ SQL_DIALECTS = {
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s CONSTRAINT FK_%(table_name)s_%(field_name)s',
         'reference TFK': 'FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s CONSTRAINT TFK_%(table_name)s_%(field_name)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(field)s(%(name)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RANDOM()',
-        'notnull': 'DEFAULT %(default)s NOT NULL',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        },
-    'db2': {
+        }
+    def random(self):
+        return 'Random()'
+    def notnull(self,default):
+        return 'DEFAULT %s NOT NULL', default 
+    def represent(self, obj, fieldtype):
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(obj, (Expression, Field)):
+            return obj
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if obj is None:
+            return self.null()
+        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+            return self.null()
+        if fieldtype == 'date':                
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd')" % obj
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):
+                obj = obj.isoformat()[:19].replace('T',' ')
+            elif isinstance(obj, datetime.date):
+                obj = obj.isoformat()[:10]+' 00:00:00'
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
+        return BaseAdapter.represent(self, obj, fieldtype)
+
+
+class DB2Adapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'CLOB',
@@ -362,18 +530,36 @@ SQL_DIALECTS = {
         'reference': 'INT, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'RAND()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY(%s)',
-        },
-    'ingres': {
+        }
+    def left_join(self):
+        return 'LEFT OUTER JOIN'
+    def random(self):
+        return 'RAND()'
+    def represent(self, obj, fieldtype):
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(obj, (Expression, Field)):
+            return obj
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if obj is None:
+            return self.null()
+        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+            return self.null()
+        if fieldtype == 'blob':
+            obj = base64.b64encode(str(obj))
+            return "BLOB('%s')" % obj
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):            
+                return "'%s'" % obj.isoformat()[:19].replace('T','-').replace(':','.')
+            elif isinstance(obj, datetime.date):
+                return "'%s'" % obj.isoformat()[:10]+'-00.00.00'
+            else:
+                obj = str(obj)
+        return BaseAdapter.represent(self, obj, fieldtype)
+
+class IngresAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'CLOB',
@@ -390,19 +576,26 @@ SQL_DIALECTS = {
         'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)', # Date/time/timestamp related. Use DatePart for older Ingres releases
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'RANDOM()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY(%s)',
-        },
-    }
+        }
+    def left_join(self):
+        return 'LEFT OUTER JOIN'
+    def random(self):
+        return 'RANDOM()'
 
+ADAPTERS = {
+    'sqlite': SQLiteAdapter,
+    'mysql': MySQLAdapter,
+    'postgres': PostgreSQLAdapter,
+    'oracle': OracleAdapter,
+    'mssql': MSSQLAdapter,
+    'mssql2': MSSQLAdapter2,
+    'db2': DB2Adapter,    
+    'informix': InformixAdapter,
+    'firebird': FireBirdAdapter,
+    'ingres': IngresAdapter,
+}
+
+'''
 INGRES_USE_UNICODE_STRING_TYPES=True
 if INGRES_USE_UNICODE_STRING_TYPES:
     """convert type VARCHAR -> NVARCHAR, i.e. use UCS2/UTF16 support/storage
@@ -411,7 +604,8 @@ if INGRES_USE_UNICODE_STRING_TYPES:
     to use for storage, this gives the option.
     """
     for x in ['string', 'password', 'text']:
-        SQL_DIALECTS['ingres'][x] = 'N' + SQL_DIALECTS['ingres'][x]
+        SQL_DIALECTS['ingres'][x] = 'N' + SQL_DIALECTS['ingres'][x] # <<<<<<<<<<<<
+'''
 
 def sqlhtml_validators(field):
     """
@@ -469,92 +663,6 @@ def sqlhtml_validators(field):
         requires[-1]=validators.IS_EMPTY_OR(requires[-1])
     return requires
 
-def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
-    if type(obj) in (types.LambdaType, types.FunctionType):
-        obj = obj()
-    if isinstance(obj, (Expression, Field)):
-        return obj
-    if isinstance(fieldtype, SQLCustomType):
-        return fieldtype.encoder(obj)
-    if obj is None:
-        return 'NULL'
-    if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-        return 'NULL'
-    if fieldtype == 'boolean':
-        if dbname == 'mssql':
-            if obj and not str(obj)[0].upper() == 'F':
-                return '1'
-            else:
-                return '0'
-        else:
-            if obj and not str(obj)[0].upper() == 'F':
-                return "'T'"
-            else:
-                return "'F'"
-    if fieldtype[0] == 'i':
-        return str(int(obj))
-    if fieldtype[:7] == 'decimal':
-        return str(obj)
-    elif fieldtype[0] == 'r': # reference
-        if fieldtype.find('.')>0:
-            return repr(obj)
-        elif isinstance(obj, (Row, Reference)):
-            return str(obj['id'])
-        return str(int(obj))
-    elif fieldtype == 'double':
-        return repr(float(obj))
-    if isinstance(obj, unicode):
-        obj = obj.encode(db_codec)
-    if fieldtype == 'blob':
-        obj = base64.b64encode(str(obj))
-        if dbname == 'db2':
-            return "BLOB('%s')" % obj
-        if dbname == 'oracle':
-            return ":CLOB('%s')" % obj
-    # FIXME: remove comment lines?
-    #elif fieldtype == 'text':
-    #    if dbname == 'oracle':
-    #        return ":CLOB('%s')" % obj.replace("'","?") ### FIX THIS
-    elif fieldtype == 'date':
-        # FIXME: remove comment lines?
-        # if dbname=='postgres': return "'%s'::bytea" % obj.replace("'","''")
-
-        if isinstance(obj, (datetime.date, datetime.datetime)):
-            obj = obj.isoformat()[:10]
-        else:
-            obj = str(obj)
-        if dbname in ['oracle', 'informix']:
-            return "to_date('%s','yyyy-mm-dd')" % obj
-    elif fieldtype == 'datetime':
-        if isinstance(obj, datetime.datetime):
-            if dbname == 'db2':
-                return "'%s'" % obj.isoformat()[:19].replace('T','-').replace(':','.')
-            else:
-                obj = obj.isoformat()[:19].replace('T',' ')
-        elif isinstance(obj, datetime.date):
-            if dbname == 'db2':
-                return "'%s'" % obj.isoformat()[:10]+'-00.00.00'
-            else:
-                obj = obj.isoformat()[:10]+' 00:00:00'
-        else:
-            obj = str(obj)
-        if dbname in ['oracle', 'informix']:
-            return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
-    elif fieldtype == 'time':
-        if isinstance(obj, datetime.time):
-            obj = obj.isoformat()[:10]
-        else:
-            obj = str(obj)
-    if not isinstance(obj,str):
-        obj = str(obj)
-    try:
-        obj.decode(db_codec)
-    except:
-        obj = obj.decode('latin1').encode(db_codec)
-    if dbname == 'mssql2' and (fieldtype == 'string' or fieldtype == 'text'):
-        return "N'%s'" % obj.replace("'", "''")
-    return "'%s'" % obj.replace("'", "''")
-
 
 def cleanup(text):
     """
@@ -567,33 +675,6 @@ def cleanup(text):
             % text
     return text
 
-
-def sqlite3_web2py_extract(lookup, s):
-    table = {
-        'year': (0, 4),
-        'month': (5, 7),
-        'day': (8, 10),
-        'hour': (11, 13),
-        'minute': (14, 16),
-        'second': (17, 19),
-        }
-    try:
-        (i, j) = table[lookup]
-        return int(s[i:j])
-    except:
-        return None
-
-def oracle_fix_execute(command, execute):
-    args = []
-    i = 1
-    while True:
-        m = oracle_fix.match(command)
-        if not m:
-            break
-        command = command[:m.start('clob')] + str(i) + command[m.end('clob'):]
-        args.append(m.group('clob')[6:-2].replace("''", "'"))
-        i += 1
-    return execute(command[:-1], args)
 
 
 def autofields(db, text):
@@ -833,7 +914,6 @@ class SQLDB(dict):
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8'):
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
-        self._db_codec = db_codec
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
         pid = thread.get_ident()
@@ -863,7 +943,7 @@ class SQLDB(dict):
                     sqlite3.Connection(':memory:',
                                        check_same_thread=False))
             self._connection.create_function('web2py_extract', 2,
-                    sqlite3_web2py_extract)
+                    SQLiteAdapter.web2py_extract)
             # self._connection.row_factory = sqlite3.Row
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
@@ -880,7 +960,7 @@ class SQLDB(dict):
             self._pool_connection(lambda : sqlite3.Connection(dbpath,
                                            check_same_thread=False))
             self._connection.create_function('web2py_extract', 2,
-                                             sqlite3_web2py_extract)
+                                             SQLiteAdapter.web2py_extract)
             # self._connection.row_factory = sqlite3.Row
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
@@ -957,7 +1037,7 @@ class SQLDB(dict):
                                   cx_Oracle.connect(self._uri[9:]))
             self._cursor = self._connection.cursor()
             self._execute = lambda a: \
-                oracle_fix_execute(a,self._cursor.execute)
+                OracleAdapter.web2py_fix_execute(a,self._cursor.execute)
             self._execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
             self._execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
         elif self._uri[:8] == 'mssql://' or self._uri[:9] == 'mssql2://':
@@ -1200,7 +1280,8 @@ class SQLDB(dict):
         else:
             raise SyntaxError, \
                 'database type not supported: %s' % self._uri
-        self._translator = SQL_DIALECTS[self._dbname]
+        
+        self._adapter = ADAPTERS[self._dbname](db_codec)
 
         # ## register this instance of SQLDB
 
@@ -1620,7 +1701,7 @@ class Table(dict):
                 constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
                 if self._db._dbname == 'oracle' and len(constraint_name)>30:
                     constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
-                ftype = self._db._translator[field.type[:9]]\
+                ftype = self._db._adapter.types[field.type[:9]]\
                      % dict(table_name=self._tablename,
                             field_name=field.name,
                             constraint_name=constraint_name,
@@ -1628,13 +1709,13 @@ class Table(dict):
                             on_delete_action=field.ondelete)
             elif field.type[:7] == 'decimal':
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
-                ftype = self._db._translator[field.type[:7]] % \
+                ftype = self._db._adapter.types[field.type[:7]] % \
                     dict(precision=precision,scale=scale)
-            elif not field.type in self._db._translator:
+            elif not field.type in self._db._adapter.types:
                 raise SyntaxError, 'Field: unknown field type: %s for %s' % \
                     (field.type, field.name)
             else:
-                ftype = self._db._translator[field.type]\
+                ftype = self._db._adapter.types[field.type]\
                      % dict(length=field.length)
             if not field.type[:10] in ['id', 'reference ']:
                 if field.notnull:
@@ -1646,10 +1727,9 @@ class Table(dict):
             sql_fields[field.name] = ftype
 
             if field.default:
+                default = self._db._adapter.represent(field.default, field.type)
                 sql_fields_aux[field.name] = ftype.replace('NOT NULL',
-                        self._db._translator['notnull']
-                         % dict(default=sql_represent(field.default,
-                        field.type, self._db._dbname, self._db._db_codec)))
+                        self._db._adapter.notnull(default))
             else:
                 sql_fields_aux[field.name] = ftype
 
@@ -1862,10 +1942,10 @@ class Table(dict):
                     value = value.id
                 elif ft == 'string' and isinstance(value,(str,unicode)):
                     value = value[:field.length]
-                vs.append(sql_represent(value, ft, fd, self._db._db_codec))
+                vs.append(self._db._adapter.represent(value, ft))
             elif field.default != None:
                 fs.append(fieldname)
-                vs.append(sql_represent(field.default, ft, fd, self._db._db_codec))
+                vs.append(self._db._adapter.represent(field.default, ft))
             elif field.required is True:
                 raise SyntaxError,'Table: missing required field: %s'%field
         sql_f = ', '.join(fs)
@@ -2224,7 +2304,7 @@ class KeyedTable(Table):
                 rfield = rtable[rfieldname]
                 # must be PK reference or unique
                 if rfieldname in rtable._primarykey or rfield.unique:
-                    ftype = self._db._translator[rfield.type[:9]] %dict(length=rfield.length)
+                    ftype = self._db._adapter.types[rfield.type[:9]] %dict(length=rfield.length)
                     # multicolumn primary key reference?
                     if not rfield.unique and len(rtable._primarykey)>1 :
                         # then it has to be a table level FK
@@ -2233,7 +2313,7 @@ class KeyedTable(Table):
                         TFK[rtablename][rfieldname] = field.name
                     else:
                         ftype = ftype + \
-                                self._db._translator['reference FK'] %dict(\
+                                self._db._adapter.types['reference FK'] %dict(\
                                 constraint_name=constraint_name,
                                 table_name=self._tablename,
                                 field_name=field.name,
@@ -2243,11 +2323,11 @@ class KeyedTable(Table):
                     raise SyntaxError,\
                     'primary key or unique field required in reference %s' %ref
 
-            elif not field.type in self._db._translator:
+            elif not field.type in self._db._adapter.types:
                 raise SyntaxError, 'Field: unknown field type: %s for %s' % \
                     (field.type, field.name)
             else:
-                ftype = self._db._translator[field.type]\
+                ftype = self._db._adapter.types[field.type]\
                      % dict(length=field.length)
             if not field.type[:10] in ['id', 'reference ']:
                 if field.notnull:
@@ -2259,10 +2339,9 @@ class KeyedTable(Table):
             sql_fields[field.name] = ftype
 
             if field.default:
+                default = self._db._adapter.represent(field.default,field.type)
                 sql_fields_aux[field.name] = ftype.replace('NOT NULL',
-                        self._db._translator['notnull']
-                         % dict(default=sql_represent(field.default,
-                        field.type, self._db._dbname, self._db._db_codec)))
+                    self._db._adapter.notnull(default))
             else:
                 sql_fields_aux[field.name] = ftype
 
@@ -2280,7 +2359,7 @@ class KeyedTable(Table):
             pkeys = self._db[rtablename]._primarykey
             fkeys = [ rfields[k] for k in pkeys ]
             fields = fields + ',\n    ' + \
-                     self._db._translator['reference TFK'] %\
+                     self._db._adapter.types['reference TFK'] %\
                      dict(table_name=self._tablename,
                      field_name=', '.join(fkeys),
                      foreign_table=rtablename,
@@ -2289,7 +2368,7 @@ class KeyedTable(Table):
 
         if self._primarykey:
             query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
-               (self._tablename, fields, self._db._translator['primarykey']%', '.join(self._primarykey),other)
+               (self._tablename, fields, self._db._adapter.primarykey(', '.join(self._primarykey),other))
         else:
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
                (self._tablename, fields, other)
@@ -2435,24 +2514,16 @@ class Expression(object):
     # for use in both Query and sortby
 
     def __add__(self, other):
-        return Expression('(%s+%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s+%s)' % (self, self._db._adapter.represent(other,self.type)))
 
     def __sub__(self, other):
-        return Expression('(%s-%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s-%s)' % (self, self._db._adapter.represent(other,self.type)))
 
     def __mul__(self, other):
-        return Expression('(%s*%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s*%s)' % (self, self._db._adapter.represent(other,self.type)))
 
     def __div__(self, other):
-        return Expression('(%s/%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s/%s)' % (self, self._db._adapter.represent(other,self.type)))
 
 
 class SQLCustomType:
@@ -2674,41 +2745,35 @@ class Field(Expression):
         return (value, None)
 
     def lower(self):
-        s = self._db._translator['lower'] % dict(field=str(self))
+        s = self._db._adapter.lower(self)
         return Expression(s, 'string', self._db)
 
     def upper(self):
-        s = self._db._translator['upper'] % dict(field=str(self))
+        s = self._db._adapter.upper(self)
         return Expression(s, 'string', self._db)
 
     def year(self):
-        s = self._db._translator['extract'] % dict(name='year',
-                field=str(self))
+        s = self._db._adapter.extract('year',self)
         return Expression(s, 'integer', self._db)
 
     def month(self):
-        s = self._db._translator['extract'] % dict(name='month',
-                field=str(self))
+        s = self._db._adapter.extract('month',self)
         return Expression(s, 'integer', self._db)
 
     def day(self):
-        s = self._db._translator['extract'] % dict(name='day',
-                field=str(self))
+        s = self._db._adapter.extract('day',self)
         return Expression(s, 'integer', self._db)
 
     def hour(self):
-        s = self._db._translator['extract'] % dict(name='hour',
-                field=str(self))
+        s = self._db._adapter.extract('hour',self)
         return Expression(s, 'integer', self._db)
 
     def minutes(self):
-        s = self._db._translator['extract'] % dict(name='minute',
-                field=str(self))
+        s = self._db._adapter.extract('minute',self)
         return Expression(s, 'integer', self._db)
 
     def seconds(self):
-        s = self._db._translator['extract'] % dict(name='second',
-                field=str(self))
+        s = self._db._adapter.extract('second',self)
         return Expression(s, 'integer', self._db)
 
     def count(self):
@@ -2727,7 +2792,7 @@ class Field(Expression):
         if start < 0 or stop < start:
             raise SyntaxError, 'not supported: %s - %s' % (start, stop)
         d = dict(field=str(self), pos=start + 1, length=stop - start)
-        s = self._db._translator['substring'] % d
+        s = self._db._adapter.substring(d)
         return Expression(s, 'string', self._db)
 
     def __getitem__(self, i):
@@ -2769,26 +2834,23 @@ class Query(object):
             self.sql = left
         elif right is None:
             if op == '=':
-                self.sql = '%s %s' % (left,
-                        left._db._translator['is null'])
+                self.sql = '%s %s' % (left, left._db._adapter.is_null())
             elif op == '<>':
-                self.sql = '%s %s' % (left,
-                        left._db._translator['is not null'])
+                self.sql = '%s %s' % (left, left._db._adapter.is_not_null())
             else:
                 raise SyntaxError, 'Operation %s can\'t be used with None' % op
         elif op == ' IN ':
             if isinstance(right, str):
                 self.sql = '%s%s(%s)' % (left, op, right[:-1])
             elif hasattr(right, '__iter__'):
-                r = ','.join([sql_represent(i, left.type, left._db, left._db._db_codec)
-                             for i in right])
+                r = ','.join([left._db._adapter.represent(i, left.type) for i in right])
                 self.sql = '%s%s(%s)' % (left, op, r)
             else:
                 raise SyntaxError, 'Right argument of \'IN\' is not suitable'
         elif isinstance(right, (Field, Expression)):
             self.sql = '%s%s%s' % (left, op, right)
         else:
-            right = sql_represent(right, left.type, left._db._dbname, left._db._db_codec)
+            right = left._db._adapter.represent(right, left.type)
             self.sql = '%s%s%s' % (left, op, right)
 
     def __and__(self, other):
@@ -2912,7 +2974,7 @@ class Set(object):
             sql_s += ' DISTINCT ON %s' % distinct
         if attributes.get('left', False):
             join = attributes['left']
-            command = self._db._translator['left join']
+            command = self._db._adapter.left_join()
             if not isinstance(join, (tuple, list)):
                 join = [join]
             joint = [t._tablename for t in join if not isinstance(t,
@@ -2937,7 +2999,7 @@ class Set(object):
             if isinstance(orderby, (list, tuple)):
                 orderby = xorify(orderby)
             if str(orderby) == '<random>':
-                sql_o += ' ORDER BY %s' % self._db._translator['random']
+                sql_o += ' ORDER BY %s' % self._db._adapter.random()
             else:
                 sql_o += ' ORDER BY %s' % orderby
         if attributes.get('limitby', False):
@@ -3168,8 +3230,7 @@ class Set(object):
                                        if not fieldname in update_fields \
                                        and table[fieldname].update != None]))
         sql_v = 'SET ' + ', '.join(['%s=%s' % (field,
-                                   sql_represent(value,
-                                   table[field].type, dbname, self._db._db_codec))
+                                   self._db._adapter.represent(value, table[field].type))
                                    for (field, value) in
                                    update_fields.items()])
         if self.sql_w:

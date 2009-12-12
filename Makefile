@@ -3,8 +3,9 @@ clean:
 	rm -f parameters*.py 
 	rm -f -r applications/*/compiled     	
 	find ./ -name '*~' -exec rm -f {} \; 
-	find ./ -name '#*' -exec rm -f {} \; 
-	find ./gluon/ -name '.*' -exec rm -f {} \; 
+	find ./ -name '#*' -exec rm -f {} \;
+	find ./gluon/ -name '.*' -exec rm -f {} \;
+	find ./gluon/ -name '*class' -exec rm -f {} \; 
 	find ./applications/admin/ -name '.*' -exec rm -f {} \; 
 	find ./applications/examples/ -name '.*' -exec rm -f {} \; 
 	find ./applications/welcome/ -name '.*' -exec rm -f {} \; 
