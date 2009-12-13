@@ -151,16 +151,30 @@ class BaseAdapter(object):
         return 'Random()'
     def NOT_NULL(self,default):
         return 'NOT NULL DEFAULT %s' % default 
-    def SUBSTRING(self,fieldname,pos,lenght):
+    def SUBSTRING(self,fieldname,pos,length):
         return 'SUBSTR(%s,%s,%s)' % (fieldname, pos, length)
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY(%s)' % key
     def DROP(self,table,mode):
         return ['DROP TABLE %s;' % table]
+    def INSERT(self,table,fields):
+        keys = ','.join([x[0] for x in fields])
+        values = ','.join([self.represent(x[1],x[2]) for x in fields])
+        return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
     def commit(self):
         return self.connection.commit()
     def rollback(self):
         return self.connection.rollback()
+    def support_distributed_transaction(self):
+        return False
+    def distributed_transaction_begin(self,key):
+        return
+    def prepare(self,key):
+        self.connection.prepare()
+    def commit_prepared(self,key):
+        self.connection.commit()
+    def rollback_prepared(self,key):
+        self.connection.rollback()
     def concat_add(self,table):
         return ', ADD '
     def contraint_name(self, table, fieldname):
@@ -229,6 +243,9 @@ class BaseAdapter(object):
         return "'%s'" % obj.replace("'", "''")
     def lastrowid(self,tablename):
         return None
+    def rowslice(self,rows,minimum=0,maximum=None):
+        """ by default this function does nothing, oreload when db does no do slicing """
+        return rows
 
     #
     # The following code is for connection pooling do not touch
@@ -386,11 +403,22 @@ class MySQLAdapter(BaseAdapter):
         }
     def RANDOM(self):
         return 'RAND()'
-    def SUBSTRING(self,fieldname,pos,lenght):
+    def SUBSTRING(self,fieldname,pos,length):
         return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
     def DROP(self,table,mode):
         # breaks db integrity but without this mysql does not drop table
         return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % table,'SET FOREIGN_KEY_CHECKS=1;']
+    def support_distributed_transaction(self):
+        return True
+    def distributed_transaction_begin(self,key):
+        self.execute('XA START;')
+    def prepare(self,key):
+        self.execute("XA END;")
+        self.execute("XA PREPARE;")
+    def commit_prepared(self,ley):
+        self.execute("XA COMMIT;")
+    def rollback_prepared(self,key):
+        self.execute("XA ROLLBACK;")
     def concat_add(self,table):
         return '; ALTER TABLE %s ADD ' % table
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
@@ -454,6 +482,16 @@ class PostgreSQLAdapter(BaseAdapter):
         }
     def RANDOM(self):
         return 'RANDOM()'
+    def support_distributed_transaction(self):
+        return True
+    def distributed_transaction_begin(self,key):
+        return
+    def prepare(self,key):
+        self.execute("PREPARE TRANSACTION '%s';" % key)
+    def commit_prepared(self,key):
+        self.execute("COMMIT PREPARED '%s';" % key)
+    def rollback_prepared(self,key):        
+        self.execute("ROLLBACK PREPARED '%s';" % keys[i])
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -605,7 +643,7 @@ class MSSQLAdapter(BaseAdapter):
         return 'LEFT OUTER JOIN'
     def RANDOM(self):
         return 'NEWID()'
-    def SUBSTRING(self,fieldname,pos,lenght):
+    def SUBSTRING(self,fieldname,pos,length):
         return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY CLUSTERED (%s)' % key
@@ -681,7 +719,11 @@ class MSSQLAdapter(BaseAdapter):
     def lastrowid(self,tablename):
         self.execute('SELECT @@IDENTITY;')
         return int(self.cursor.fetchone()[0])
-
+    def rowslice(self,rows,minimum=0,maximum=None):
+        if maximum==None:
+            return rows[minimum:]
+        return rows[minimum:maximum]
+    
 
 class MSSQLAdapter2(MSSQLAdapter):
     types = {
@@ -731,10 +773,12 @@ class FireBirdAdapter(BaseAdapter):
         return 'RAND()'
     def NOT_NULL(self,default):
         return 'DEFAULT %s NOT NULL', default 
-    def SUBSTRING(self,fieldname,pos,lenght):
+    def SUBSTRING(self,fieldname,pos,length):
         return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
     def DROP(self,table,mode):
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR GENID_%s;' % table]
+    def support_distributed_transaction(self):
+        return True
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -952,7 +996,10 @@ class DB2Adapter(BaseAdapter):
     def lastrowid(self,tablename):
         self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % tablename)
         return int(self._db._adapter.cursor.fetchone()[0])
-        
+    def rowslice(self,rows,minimum=0,maximum=None):
+        if maximum==None:
+            return rows[minimum:]
+        return rows[minimum:maximum]        
 
 INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name 
                                        # (ANSI-SQL wants this form of name 
@@ -1254,15 +1301,15 @@ class SQLDB(dict):
     def distributed_transaction_begin(*instances):
         if not instances:
             return
+        thread_key = '%s.%i' % (socket.gethostname(), thread.get_ident())
+        keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         instances = enumerate(instances)
         for (i, db) in instances:
-            if db._dbname == 'mysql':
-                db._adapter.execute('XA START;')
-            elif db._dbname == 'postgres':
-                pass
-            else:
+            if not db._adapter.support_distributed_transaction():
                 raise SyntaxError, \
-                    'distributed transaction only supported by postgresql'
+                    'distributed transaction not suported by %s' % db._dbname
+        for (i, db) in instances:
+            db._adapter.distributed_transaction_begin(keys[i])
 
     @staticmethod
     def distributed_transaction_commit(*instances):
@@ -1272,35 +1319,19 @@ class SQLDB(dict):
         thread_key = '%s.%i' % (socket.gethostname(), thread.get_ident())
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         for (i, db) in instances:
-            if not db._dbname in ['postgres', 'mysql', 'firebird']:
+            if not db._adapter.support_distributed_transaction():
                 raise SyntaxError, \
-                    'distributed transaction only supported by postgresql, firebir'
+                    'distributed transaction not suported by %s' % db._dbanme
         try:
             for (i, db) in instances:
-                if db._dbname == 'postgres':
-                    db._adapter.execute("PREPARE TRANSACTION '%s';" % keys[i])
-                elif db._dbname == 'mysql':
-                    db._adapter.execute("XA END;")
-                    db._adapter.execute("XA PREPARE;")
-                elif db._dbname == 'firebird':
-                    db.prepare()
+                db._adapter.prepare(keys[i])
         except:
             for (i, db) in instances:
-                if db._dbname == 'postgres':
-                    db._adapter.execute("ROLLBACK PREPARED '%s';" % keys[i])
-                elif db._dbname == 'mysql':
-                    db._adapter.execute("XA ROLLBACK;")
-                elif db._dbname == 'firebird':
-                    db.rollback()
+                db._adapter.rollback_prepared(keys[i])
             raise Exception, 'failure to commit distributed transaction'
         else:
             for (i, db) in instances:
-                if db._dbname == 'postgres':
-                    db._adapter.execute("COMMIT PREPARED '%s';" % keys[i])
-                elif db._dbname == 'mysql':
-                    db._adapter.execute("XA COMMIT;")
-                elif db._dbname == 'firebird':
-                    db.commit()
+                db._adapter.commit_prepared(keys[i])
         return
 
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8'):
@@ -1381,8 +1412,8 @@ class SQLDB(dict):
     def __call__(self, where=None):
         return Set(self, where)
 
-    def prepare(self): # <<<<< FIX THIS
-        self._adapter.connection.prepare()
+    def prepare(self, key):
+        self._adapter.prepare(key)
 
     def commit(self):
         self._adapter.commit()
@@ -1903,33 +1934,19 @@ class Table(dict):
             logfile.write('success!\n')
 
     def _insert(self, **fields):
-        (fs, vs) = ([], [])
-        invalid_fieldnames = [key for key in fields if not key in self.fields]
-        if invalid_fieldnames:
-            raise SyntaxError, 'invalid field names: %s' \
-                % repr(invalid_fieldnames)
-        for fieldname in self.fields:
-            if fieldname == 'id':
-                continue
-            field = self[fieldname]
-            (ft, fd) = (field.type, field._db._dbname)
-            if fieldname in fields:
-                fs.append(fieldname)
-                value = fields[fieldname]
-                if hasattr(value,'id'):
-                    value = value.id
-                elif ft == 'string' and isinstance(value,(str,unicode)):
-                    value = value[:field.length]
-                vs.append(self._db._adapter.represent(value, ft))
-            elif field.default != None:
-                fs.append(fieldname)
-                vs.append(self._db._adapter.represent(field.default, ft))
-            elif field.required is True:
+        new_fields = []
+        for fieldname in fields:
+            if not fieldname in self.fields:
+                raise SyntaxError, 'Field %s does not belong to the table' % fieldname
+        for field in self:
+            if field.name in fields:
+                new_fields.append((field.name,fields[field.name],field.type))
+            elif field.default:
+                new_fields.append((field.name,field.default,field.type))
+            elif field.required:
                 raise SyntaxError,'Table: missing required field: %s'%field
-        sql_f = ', '.join(fs)
-        sql_v = ', '.join(vs)
-        sql_t = self._tablename
-        return 'INSERT INTO %s(%s) VALUES (%s);' % (sql_t, sql_f, sql_v)
+        return self._db._adapter.INSERT(self,new_fields)
+
 
     def insert(self, **fields):
         query = self._insert(**fields)
@@ -2738,8 +2755,8 @@ class Field(Expression):
     def __getslice__(self, start, stop):
         if start < 0 or stop < start:
             raise SyntaxError, 'not supported: %s - %s' % (start, stop)
-        d = dict(field=str(self), pos=start + 1, length=stop - start)
-        s = self._db._adapter.SUBSTRING(d)
+        d = dict(fieldname=str(self), pos=start + 1, length=stop - start)
+        s = self._db._adapter.SUBSTRING(**d)
         return Expression(s, 'string', self._db)
 
     def __getitem__(self, i):
@@ -3025,8 +3042,8 @@ class Set(object):
 
         if isinstance(rows,tuple):
             rows = list(rows)
-        if db._dbname in ['mssql', 'mssql2', 'db2']:
-            rows = rows[(attributes.get('limitby', None) or (0,))[0]:]
+            
+        rows = db._adapter.rowslice(rows,attributes.get('limitby',(0,))[0],None)
         return self.parse(db,rows,self.colnames)
 
     @staticmethod
@@ -3171,7 +3188,7 @@ class Set(object):
         if len(tablenames) != 1:
             raise SyntaxError, 'Set: unable to determine what to do'
         sql_t = tablenames[0]
-        (table, dbname) = (self._db[sql_t], self._db._dbname)
+        table = self._db[sql_t]
         update_fields.update(dict([(fieldname, table[fieldname].update) \
                                    for fieldname in table.fields \
                                        if not fieldname in update_fields \
@@ -3183,7 +3200,7 @@ class Set(object):
         if self.sql_w:
             sql_w = ' WHERE ' + self.sql_w
         else:
-            sql_w = ''
+            sql_w = ''        
         return 'UPDATE %s %s%s;' % (sql_t, sql_v, sql_w)
 
     def update(self, **update_fields):
