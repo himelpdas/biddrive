@@ -296,14 +296,15 @@ def parse_get_post_vars(request, environ):
             else:
                 value = dpk
 
-            pvalue = value
+            pvalue = listify(value)
             if key in request.get_vars:
+                gvalue = listify(request.get_vars[key])
                 if isle25:
-                    value = listify(value) + listify(request.get_vars[key])
+                    value = pvalue + gvalue
                 elif is_multipart:
-                    pvalue = listify(value)[len(listify(request.get_vars[key])):]
+                    pvalue = pvalue[len(gvalue):]
                 else:
-                    pvalue = listify(value)[:-len(listify(request.get_vars[key]))]
+                    pvalue = pvalue[:-len(gvalue)]
             request.vars[key] = value
             if len(pvalue):
                 request.post_vars[key] = (len(pvalue)>1 and pvalue) or pvalue[0]
