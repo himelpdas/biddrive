@@ -400,7 +400,7 @@ class MySQLAdapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         uri = uri.split('://')[1]
-        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<database>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
             raise SyntaxError, \
                 "Invalid URI string in SQLDB: %s" % self.uri
@@ -413,13 +413,13 @@ class MySQLAdapter(BaseAdapter):
         host = m.group('host')
         if not host:
             raise SyntaxError, 'Host name required'
-        database = m.group('db')
-        if not database:
+        db = m.group('db')
+        if not db:
             raise SyntaxError, 'Database name required'
         port = m.group('port') or '3306'        
         charset = m.group('charset') or 'utf8'
         self.pool_connection(lambda : MySQLdb.Connection(
-                db=database,
+                db=db,
                 user=user,
                 passwd=passwd,
                 host=host,
