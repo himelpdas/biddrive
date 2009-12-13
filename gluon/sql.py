@@ -1306,10 +1306,13 @@ class SQLDB(dict):
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8'):
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!        
         self._pool_size = pool_size
-        self._dbname = uri.split(':')[0]
+        if uri and uri.find(':')>=0:
+            self._dbname = uri.split(':')[0]
+            self._adapter = ADAPTERS[self._dbname](uri,pool_size,folder,db_codec)
+        else:
+            self._adapter = BaseAdapter(uri)
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
-        self._adapter = ADAPTERS[self._dbname](uri,pool_size,folder,db_codec)
 
     def define_table(
         self,
