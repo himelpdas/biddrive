@@ -11,11 +11,12 @@ Thanks to
     * Marcel Leuthi <mluethi@mlsystems.ch> for Oracle support
     * Denes
     * Chris Clark
-
+    * clach05
+    
 This file contains the DAL support for many relational databases,
-including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase.
-Adding Ingres - clach04
+including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase, Ingres
 
+Completely refactored by MDP on Dec 12, 2009
 
 TODO:
 - port JDBC sqlite and postgres
@@ -142,12 +143,6 @@ class BaseAdapter(object):
         return 'LOWER(%s)' % fieldname
     def UPPER(self,fieldname):
         return 'UPPER(%s)' % fieldname
-    def NULL(self):
-        return 'NULL'
-    def IS_NULL(self):
-        return 'IS NULL'
-    def IS_NOT_NULL(self):
-        return 'IS NOT NULL'
     def EXTRACT(self,name,fieldname):
         return "EXTRACT(%s FROM %s)" % (name, fieldname)
     def LEFT_JOIN(self):
@@ -166,8 +161,8 @@ class BaseAdapter(object):
         return ', ADD '
     def contraint_name(self, table, fieldname):
         return '%s_%s__constraint' % (table,fieldname)
-    def create_sequence_and_triggers(self, tablename):
-        return None
+    def create_sequence_and_triggers(self, query, tablename):
+        self.execute(query)
     def commit_on_alter_table(self):        
         return False
     def execute(self,*a,**b):
@@ -180,9 +175,9 @@ class BaseAdapter(object):
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
         if obj is None:
-            return self.NULL()
+            return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return self.NULL()
+            return 'NULL'
         if fieldtype == 'boolean':
             if obj and not str(obj)[0].upper() == 'F':
                 return "'T'"
@@ -527,9 +522,9 @@ class OracleAdapter(BaseAdapter):
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
         if obj is None:
-            return self.NULL()
+            return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return self.NULL()
+            return 'NULL'
         if fieldtype == 'blob':
             obj = base64.b64encode(str(obj))
             return ":CLOB('%s')" % obj
@@ -570,7 +565,8 @@ class OracleAdapter(BaseAdapter):
             args.append(m.group('clob')[6:-2].replace("''", "'"))
             i += 1
         return self.cursor.execute(command[:-1], args)
-    def create_sequence_and_triggers(self, tablename):        
+    def create_sequence_and_triggers(self, query, tablename):
+        self.execute(query)
         self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
         self.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n' % (tablename, tablename, tablename))
     def commit_on_alter_table(self):        
@@ -617,9 +613,9 @@ class MSSQLAdapter(BaseAdapter):
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
         if obj is None:
-            return self.NULL()
+            return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return self.NULL()
+            return 'NULL'
         if obj and fieldtype == 'boolean' and \
                 isinstance(obj, (int, long, str, bool)):
             if obj and not str(obj)[0].upper() == 'F':
@@ -765,7 +761,8 @@ class FireBirdAdapter(BaseAdapter):
                                                      user=user,
                                                      password=passwd,
                                                      charset=charset))
-    def create_sequence_and_triggers(self, tablename):        
+    def create_sequence_and_triggers(self, query, tablename):       
+        self.execute(query)
         self.execute('create generator GENID_%s;' % t)
         self.execute('set generator GENID_%s to 0;' % t)
         self.execute('create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;' % (tablename,tablename,tablename))
@@ -837,9 +834,9 @@ class InformixAdapter(BaseAdapter):
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
         if obj is None:
-            return self.NULL()
+            return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return self.NULL()
+            return 'NULL'
         if fieldtype == 'date':                
             if isinstance(obj, (datetime.date, datetime.datetime)):
                 obj = obj.isoformat()[:10]
@@ -922,9 +919,9 @@ class DB2Adapter(BaseAdapter):
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
         if obj is None:
-            return self.NULL()
+            return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return self.NULL()
+            return 'NULL'
         if fieldtype == 'blob':
             obj = base64.b64encode(str(obj))
             return "BLOB('%s')" % obj
@@ -1001,10 +998,14 @@ class IngresAdapter(BaseAdapter):
                 vnode=vnode,
                 servertype=servertype,
                 trace=trace))
-    def create_sequence_and_triggers(self, tablename):
+    def create_sequence_and_triggers(self, query, tablename):
         # post create table auto inc code (if needed)
         # modify table to btree for performance....
         # Older Ingres releases could use rule/trigger like Oracle above.
+        tmp_seqname='%s_iisq' % tablename
+        query=query.replace(INGRES_SEQNAME, tmp_seqname)
+        self.execute('create sequence %s' % tmp_seqname)
+        self.execute(query)
         self.execute('modify %s to btree unique on %s' % (tablename, 'id'))
     def lastrowid(self,tablename):
         tmp_seqname=gen_ingres_sequencename(tablename)
@@ -1779,13 +1780,8 @@ class Table(dict):
                                % datetime.datetime.today().isoformat())
                 logfile.write(query + '\n')
             if not fake_migrate:
-                if self._db._dbname=='ingres':
-                    tmp_seqname='%s_iisq' % tablename
-                    query=query.replace(INGRES_SEQNAME, tmp_seqname)
-                    self.execute('create sequence %s' % tmp_seqname)
                 self._db['_lastsql'] = query
-                self._db._adapter.execute(query)
-                self._db._adapter.create_sequence_and_triggers(self)
+                self._db._adapter.create_sequence_and_triggers(query,self)
                 self._db.commit()
             if self._dbt:
                 tfile = open(self._dbt, 'w')
@@ -2336,13 +2332,9 @@ class KeyedTable(Table):
                                % datetime.datetime.today().isoformat())
                 logfile.write(query + '\n')
             self._db['_lastsql'] = query
-            if self._db._dbname == 'ingres':
-                # pre-create table auto inc code (if needed)
-                # keyed table already handled
-                pass
             if not fake_migrate:
                 self._db._adapter.execute(query)
-                ### user this? self._db._adapter.create_sequence_and_triggers(self) <<<<<<
+                ### <<<<<<<<<<<<< NEEDS WORK !!!
                 if self._db._dbname in ['oracle']:
                     t = self._tablename
                     self._db._adapter.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
@@ -2777,9 +2769,9 @@ class Query(object):
             self.sql = left
         elif right is None:
             if op == '=':
-                self.sql = '%s %s' % (left, left._db._adapter.IS_NULL())
+                self.sql = '%s IS NULL' % left
             elif op == '<>':
-                self.sql = '%s %s' % (left, left._db._adapter.IS_NOT_NULL())
+                self.sql = '%s IS NOT NULL' % left
             else:
                 raise SyntaxError, 'Operation %s can\'t be used with None' % op
         elif op == ' IN ':
