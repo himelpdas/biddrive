@@ -400,7 +400,7 @@ class MySQLAdapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         uri = uri.split('://')[1]
-        m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<database>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<database>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
             raise SyntaxError, \
                 "Invalid URI string in SQLDB: %s" % self.uri
@@ -634,7 +634,7 @@ class MSSQLAdapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         # ## read: http://bytes.com/groups/python/460325-cx_oracle-utf8        
-        uri = uri.find('://')[1]
+        uri = uri.split('://')[1]
         if '@' not in uri:
             try:
                 m = re.compile('^(?P<dsn>.+)$').match(uri)
@@ -1306,7 +1306,7 @@ class SQLDB(dict):
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8'):
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!        
         self._pool_size = pool_size
-        self._dbname = uri[:uri.find(':')]
+        self._dbname = uri.split(':')[0]
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
         self._adapter = ADAPTERS[self._dbname](uri,pool_size,folder,db_codec)
