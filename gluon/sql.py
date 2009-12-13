@@ -129,14 +129,6 @@ import validators
 
 sql_locker = thread.allocate_lock()
 
-INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name (ANSI-SQL wants this form of name to be a delimited identifier)
-def gen_ingres_sequencename(table_name):
-    """Generate Ingres specific sequencename, pass in self._tablename
-    """
-    result='%s_iisq' % (table_name)
-    # if result len too long, hash and use hexhash?
-    return result
-
 # mapping of the field types and some constructs
 # per database
 
@@ -168,6 +160,16 @@ class BaseAdapter(object):
         return 'SUBSTR(%s,%s,%s)' % (fieldname, pos, length)
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY(%s)' % key
+    def DROP(self,table,mode):
+        return ['DROP TABLE %s;' % table]
+    def concat_add(self,table):
+        return ', ADD '
+    def contraint_name(self, table, fieldname):
+        return '%s_%s__constraint' % (table,fieldname)
+    def create_sequence_and_triggers(self, tablename):
+        return None
+    def commit_on_alter_table(self):        
+        return False
     def execute(self,*a,**b):
         return self.cursor.execute(*a, **b)
     def represent(self, obj, fieldtype):
@@ -226,6 +228,8 @@ class BaseAdapter(object):
         except:
             obj = obj.decode('latin1').encode(self.db_codec)
         return "'%s'" % obj.replace("'", "''")
+    def lastrowid(self,tablename):
+        return None
 
     #
     # The following code is for connection pooling do not touch
@@ -360,6 +364,8 @@ class SQLiteAdapter(BaseAdapter):
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         self.pool_connection(lambda: sqlite3.Connection(dbpath, check_same_thread=False))
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
+    def lastrowid(self,tablename):
+        return self.cursor.lastrowid
 
 
 class MySQLAdapter(BaseAdapter):
@@ -383,6 +389,11 @@ class MySQLAdapter(BaseAdapter):
         return 'RAND()'
     def SUBSTRING(self,fieldname,pos,lenght):
         return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def DROP(self,table,mode):
+        # breaks db integrity but without this mysql does not drop table
+        return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % table,'SET FOREIGN_KEY_CHECKS=1;']
+    def concat_add(self,table):
+        return '; ALTER TABLE %s ADD ' % table
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -418,6 +429,11 @@ class MySQLAdapter(BaseAdapter):
                 ))
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
+    def commit_on_alter_table(self):        
+        return True
+    def lastrowid(self,tablename):
+        self.execute('select last_insert_id();')
+        return int(self.cursor.fetchone()[0])
 
 
 class PostgreSQLAdapter(BaseAdapter):
@@ -468,6 +484,9 @@ class PostgreSQLAdapter(BaseAdapter):
         self.connection.set_client_encoding('UTF8')
         self.execute('BEGIN;')
         self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
+    def lastrowid(self,tablename):
+        self.execute("select currval('%s_id_Seq')" % tablename)
+        return int(self.cursor.fetchone()[0])
 
 
 class OracleAdapter(BaseAdapter):
@@ -493,6 +512,13 @@ class OracleAdapter(BaseAdapter):
         return 'dbms_random.value'
     def NOT_NULL(self,default):
         return 'DEFAULT %s NOT NULL', default 
+    def DROP(self,table,mode):
+        return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s_sequence;' % table]
+    def contraint_name(self, table, fieldname):
+        constraint_name = BaseAdapter.contraint_name(self, table, fieldname)
+        if len(constraint_name)>30:
+            constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
+        return constraint_name
     def represent(self, obj, fieldtype):
         if type(obj) in (types.LambdaType, types.FunctionType):
             obj = obj()
@@ -544,6 +570,14 @@ class OracleAdapter(BaseAdapter):
             args.append(m.group('clob')[6:-2].replace("''", "'"))
             i += 1
         return self.cursor.execute(command[:-1], args)
+    def create_sequence_and_triggers(self, tablename):        
+        self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
+        self.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n' % (tablename, tablename, tablename))
+    def commit_on_alter_table(self):        
+        return True
+    def lastrowid(self,tablename):
+        self.execute('SELECT %s_sequence.currval FROM dual;' % tablename)
+        return int(self.cursor.fetchone()[0])
 
 
 class MSSQLAdapter(BaseAdapter):
@@ -644,6 +678,10 @@ class MSSQLAdapter(BaseAdapter):
             cnxn = 'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
                 % (host, port, db, user, passwd, urlargs)
         self.pool_connection(lambda : pyodbc.connect(cnxn))
+    def lastrowid(self,tablename):
+        self.execute('SELECT @@IDENTITY;')
+        return int(self.cursor.fetchone()[0])
+
 
 class MSSQLAdapter2(MSSQLAdapter):
     types = {
@@ -695,6 +733,8 @@ class FireBirdAdapter(BaseAdapter):
         return 'DEFAULT %s NOT NULL', default 
     def SUBSTRING(self,fieldname,pos,lenght):
         return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def DROP(self,table,mode):
+        return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR GENID_%s;' % table]
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -725,6 +765,14 @@ class FireBirdAdapter(BaseAdapter):
                                                      user=user,
                                                      password=passwd,
                                                      charset=charset))
+    def create_sequence_and_triggers(self, tablename):        
+        self.execute('create generator GENID_%s;' % t)
+        self.execute('set generator GENID_%s to 0;' % t)
+        self.execute('create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;' % (tablename,tablename,tablename))
+    def lastrowid(self,tablename):
+        self.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database' % tablename)
+        return int(self._db._adapter.cursor.fetchone()[0])
+
 
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
@@ -839,6 +887,9 @@ class InformixAdapter(BaseAdapter):
         if command[-1:]==';':
             command = command[:-1]
         return self.cursor.execute(command)
+    def lastrowid(self,tablename):
+        return self.cursor.sqlerrd[1]
+
 
 class DB2Adapter(BaseAdapter):
     types = {
@@ -897,9 +948,14 @@ class DB2Adapter(BaseAdapter):
         if command[-1:]==';':
             command = command[:-1]
         return self.cursor.execute(command)
+    def lastrowid(self,tablename):
+        self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % tablename)
+        return int(self._db._adapter.cursor.fetchone()[0])
         
 
-
+INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name 
+                                       # (ANSI-SQL wants this form of name 
+                                       # to be a delimited identifier)
 
 class IngresAdapter(BaseAdapter):
     types = {
@@ -915,7 +971,7 @@ class IngresAdapter(BaseAdapter):
         'date': 'ANSIDATE',
         'time': 'TIME WITHOUT TIME ZONE',
         'datetime': 'TIMESTAMP WITHOUT TIME ZONE',
-        'id': 'integer4 not null unique with default next value for %s'%INGRES_SEQNAME,
+        'id': 'integer4 not null unique with default next value for %s' % INGRES_SEQNAME,
         'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
@@ -945,6 +1001,16 @@ class IngresAdapter(BaseAdapter):
                 vnode=vnode,
                 servertype=servertype,
                 trace=trace))
+    def create_sequence_and_triggers(self, tablename):
+        # post create table auto inc code (if needed)
+        # modify table to btree for performance....
+        # Older Ingres releases could use rule/trigger like Oracle above.
+        self.execute('modify %s to btree unique on %s' % (tablename, 'id'))
+    def lastrowid(self,tablename):
+        tmp_seqname=gen_ingres_sequencename(tablename)
+        self.execute('select current value for %s' % tmp_seqname)
+        return int(self.cursor.fetchone()[0]) # don't really need int type cast here...
+
 
 class IngresUnicodeAdapter(BaseAdapter):
     types = {
@@ -960,7 +1026,7 @@ class IngresUnicodeAdapter(BaseAdapter):
         'date': 'ANSIDATE',
         'time': 'TIME WITHOUT TIME ZONE',
         'datetime': 'TIMESTAMP WITHOUT TIME ZONE',
-        'id': 'integer4 not null unique with default next value for %s'%INGRES_SEQNAME,
+        'id': 'integer4 not null unique with default next value for %s'% INGRES_SEQNAME,
         'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
@@ -1641,9 +1707,7 @@ class Table(dict):
                 ftype = field.type.native or field.type.type
             elif field.type[:10] == 'reference ':
                 referenced = field.type[10:].strip()
-                constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
-                if self._db._dbname == 'oracle' and len(constraint_name)>30:
-                    constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
+                constraint_name = self._db._adapter.contraint_name(self, field.name)
                 ftype = self._db._adapter.types[field.type[:9]]\
                      % dict(table_name=self._tablename,
                             field_name=field.name,
@@ -1714,32 +1778,14 @@ class Table(dict):
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
                 logfile.write(query + '\n')
-            self._db['_lastsql'] = query
-            if self._db._dbname == 'ingres':
-                # pre-create table auto inc code (if needed)
-                tmp_seqname=gen_ingres_sequencename(self._tablename)
-                query=query.replace(INGRES_SEQNAME, tmp_seqname)
-                self._db._adapter.execute('create sequence %s' % tmp_seqname)
             if not fake_migrate:
+                if self._db._dbname=='ingres':
+                    tmp_seqname='%s_iisq' % tablename
+                    query=query.replace(INGRES_SEQNAME, tmp_seqname)
+                    self.execute('create sequence %s' % tmp_seqname)
+                self._db['_lastsql'] = query
                 self._db._adapter.execute(query)
-                if self._db._dbname in ['oracle']:
-                    t = self._tablename
-                    self._db._adapter.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
-                                   % t)
-                    self._db._adapter.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
-                                   % (t, t, t))
-                elif self._db._dbname == 'firebird':
-                    t = self._tablename
-                    self._db._adapter.execute('create generator GENID_%s;' % t)
-                    self._db._adapter.execute('set generator GENID_%s to 0;' % t)
-                    self._db._adapter.execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
-''' % (t, t, t))
-                elif self._db._dbname == 'ingres':
-                    # post create table auto inc code (if needed)
-                    # modify table to btree for performance....
-                    # Older Ingres releases could use rule/trigger like Oracle above.
-                    modify_tbl_sql='modify %s to btree unique on %s' % (self._tablename, 'id') # hard coded id column
-                    self._db._adapter.execute(modify_tbl_sql)
+                self._db._adapter.create_sequence_and_triggers(self)
                 self._db.commit()
             if self._dbt:
                 tfile = open(self._dbt, 'w')
@@ -1777,10 +1823,7 @@ class Table(dict):
         for key in sql_fields_old:
             if not key in keys:
                 keys.append(key)
-        if self._db._dbname == 'mssql':
-            new_add = '; ALTER TABLE %s ADD ' % self._tablename
-        else:
-            new_add = ', ADD '
+        new_add = self._db._adapter.concat_add(self)
         for key in keys:
             if not key in sql_fields_old:
                 query = ['ALTER TABLE %s ADD %s %s;' % \
@@ -1816,7 +1859,7 @@ class Table(dict):
                     logfile.write(sub_query + '\n')
                     if not fake_migrate:
                         self._db._adapter.execute(sub_query)
-                        if self._db._dbname in ['mysql', 'oracle']:
+                        if self._db._adapter.commit_on_alter_table():
                             self._db.commit()
                             logfile.write('success!\n')
                     else:
@@ -1831,24 +1874,8 @@ class Table(dict):
         portalocker.unlock(tfile)
         tfile.close()
 
-    def create(self):
-        """nothing to do; here for backward compatibility"""
-
-        pass
-
-    def _drop(self, mode = None):
-        t = self._tablename
-        c = mode or ''
-        if self._db._dbname in ['oracle']:
-            return ['DROP TABLE %s %s;' % (t, c), 'DROP SEQUENCE %s_sequence;'
-                     % t]
-        elif self._db._dbname == 'firebird':
-            return ['DROP TABLE %s %s;' % (t, c), 'DROP GENERATOR GENID_%s;'
-                     % t]
-        elif self._db._dbname == 'mysql':
-            # breaks db integrity but without this mysql does not drop table
-            return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % t,'SET FOREIGN_KEY_CHECKS=1;']
-        return ['DROP TABLE %s;' % t]
+    def _drop(self, mode = ''):
+        return self._db._adapter.DROP(self, mode = '')
 
     def drop(self, mode = None):
         if self._dbt:
@@ -1900,44 +1927,13 @@ class Table(dict):
         query = self._insert(**fields)
         self._db['_lastsql'] = query
         self._db._adapter.execute(query)
-        if self._db._dbname == 'sqlite':
-            id = self._db._adapter.cursor.lastrowid
-        elif self._db._dbname == 'postgres':
-            self._db._adapter.execute("select currval('%s_id_Seq')"
-                               % self._tablename)
-            id = int(self._db._adapter.cursor.fetchone()[0])
-        elif self._db._dbname == 'mysql':
-            self._db._adapter.execute('select last_insert_id();')
-            id = int(self._db._adapter.cursor.fetchone()[0])
-        elif self._db._dbname in ['oracle']:
-            t = self._tablename
-            self._db._adapter.execute('SELECT %s_sequence.currval FROM dual;'
-                               % t)
-            id = int(self._db._adapter.cursor.fetchone()[0])
-        elif self._db._dbname == 'mssql' or self._db._dbname\
-             == 'mssql2':
-            self._db._adapter.execute('SELECT @@IDENTITY;')
-            id = int(self._db._adapter.cursor.fetchone()[0])
-        elif self._db._dbname == 'firebird':
-            self._db._adapter.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database'
-                               % self._tablename)
-            id = int(self._db._adapter.cursor.fetchone()[0])
-        elif self._db._dbname == 'informix':
-            id = self._db._adapter.cursor.sqlerrd[1]
-        elif self._db._dbname == 'db2':
-            self._db._adapter.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;'%self._tablename)
-            id = int(self._db._adapter.cursor.fetchone()[0])
-        elif self._db._dbname == 'ingres':
-            tmp_seqname=gen_ingres_sequencename(self._tablename)
-            self._db._adapter.execute('select current value for %s' % tmp_seqname)
-            id = int(self._db._adapter.cursor.fetchone()[0]) # don't really need int type cast here...
-        else:
-            id = None
+        id = self._db._adapter.lastrowid(self._tablename)
         if not isinstance(id,int):
             return id
         rid = Reference(id)
         (rid._table, rid._record) = (self, None)
         return rid
+        
 
     def import_from_csv_file(
         self,
@@ -2239,9 +2235,7 @@ class KeyedTable(Table):
                 ftype = field.type.native or field.type.type
             elif field.type[:10] == 'reference ':
                 ref = field.type[10:].strip()
-                constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
-                if self._db._dbname == 'oracle' and len(constraint_name)>30:
-                    constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
+                constraint_name = self._db._adapter.contraint_name(self,field.name)
                 rtablename,rfieldname = ref.split('.')
                 rtable = self._db[rtablename]
                 rfield = rtable[rfieldname]
@@ -2348,6 +2342,7 @@ class KeyedTable(Table):
                 pass
             if not fake_migrate:
                 self._db._adapter.execute(query)
+                ### user this? self._db._adapter.create_sequence_and_triggers(self) <<<<<<
                 if self._db._dbname in ['oracle']:
                     t = self._tablename
                     self._db._adapter.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
