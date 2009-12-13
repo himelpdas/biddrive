@@ -157,6 +157,10 @@ class BaseAdapter(object):
         return 'PRIMARY KEY(%s)' % key
     def DROP(self,table,mode):
         return ['DROP TABLE %s;' % table]
+    def commit(self):
+        return self.connection.commit()
+    def rollback(self):
+        return self.connection.rollback()
     def concat_add(self,table):
         return ', ADD '
     def contraint_name(self, table, fieldname):
@@ -262,11 +266,11 @@ class BaseAdapter(object):
                 if instance.pool_size:
                     pool = BaseAdapter._connection_pools[instance.uri]
                     if len(pool) < instance.pool_size:
-                        pool.append(instance._connection)
+                        pool.append(instance.connection)
                         really = False
                 if really:
                     sql_locker.release()
-                    instance._connection.close()
+                    instance.connection.close()
                     sql_locker.acquire()
             del BaseAdapter._instances[pid]
         sql_locker.release()
@@ -1243,6 +1247,10 @@ class SQLDB(dict):
     # ## this allows gluon to comunite a folder for this thread
 
     @staticmethod
+    def _set_thread_folder(folder):
+        BaseAdapter.set_thread_folder(folder)
+
+    @staticmethod
     def distributed_transaction_begin(*instances):
         if not instances:
             return
@@ -1369,14 +1377,14 @@ class SQLDB(dict):
     def __call__(self, where=None):
         return Set(self, where)
 
-    def prepare(self):
+    def prepare(self): # <<<<< FIX THIS
         self._adapter.connection.prepare()
 
     def commit(self):
-        self._adapter.connection.commit()
+        self._adapter.commit()
 
     def rollback(self):
-        self._adapter.connection.rollback()
+        self._adapter.rollback()
 
     def executesql(self, query, placeholders=None, as_dict=False):
         """

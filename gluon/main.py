@@ -46,7 +46,7 @@ from compileapp import build_environment, run_models_in, \
 from fileutils import listdir, copystream
 from contenttype import contenttype
 from xmlrpc import handler
-from sql import SQLDB
+from sql import BaseAdapter
 from settings import settings
 from validators import CRYPT
 from cache import Cache
@@ -495,7 +495,7 @@ def wsgibase(environ, responder):
             if response._custom_commit:
                 response._custom_commit()
             else:
-                SQLDB.close_all_instances(SQLDB.commit)
+                BaseAdapter.close_all_instances(BaseAdapter.commit)
 
             # ##################################################
             # if session not in db try store session on filesystem
@@ -528,7 +528,7 @@ def wsgibase(environ, responder):
             if response._custom_rollback:
                 response._custom_rollback()
             else:
-                SQLDB.close_all_instances(SQLDB.rollback)
+                BaseAdapter.close_all_instances(BaseAdapter.rollback)
 
             http_response = \
                 HTTP(500,
@@ -548,7 +548,7 @@ def wsgibase(environ, responder):
             if response._custom_rollback:
                 response._custom_rollback()
             else:
-                SQLDB.close_all_instances(SQLDB.rollback)
+                BaseAdapter.close_all_instances(BaseAdapter.rollback)
         except:
             pass
         e = RestrictedError('Framework', '', '', locals())
