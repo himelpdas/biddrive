@@ -15,43 +15,35 @@ Contains:
 import cgi
 import cStringIO
 import Cookie
-import cPickle
 import os
 import re
 import copy
 import sys
-import types
 import time
 import thread
 import datetime
 import signal
 import socket
-import stat
 import tempfile
 import logging
+import random
 #import sneaky
 import rewrite
 import functools
 import string
-
-# from wsgiref.simple_server import make_server, demo_app
-
-from random import random, choice
-from storage import List, Storage, load_storage, save_storage
 from restricted import RestrictedError
 from http import HTTP, redirect
 from globals import Request, Response, Session
 from compileapp import build_environment, run_models_in, \
     run_controller_in, run_view_in
-from fileutils import listdir, copystream
+from fileutils import copystream
 from contenttype import contenttype
-from xmlrpc import handler
 from sql import BaseAdapter
 from settings import settings
 from validators import CRYPT
 from cache import Cache
 from html import URL
-import myregex
+from storage import List
 try:
     import wsgiserver
 except:
@@ -348,8 +340,6 @@ def wsgibase(environ, responder):
     session = Session()
     try:
         try:
-            session_file = None
-            session_new = False
 
             # ##################################################
             # parse the environment variables
@@ -581,7 +571,7 @@ def save_password(password, port):
     password_file='parameters_%i.py' % port
     if password == '<random>':
         chars = string.letters + string.digits
-        password = ''.join([choice(chars) for i in range(8)])
+        password = ''.join([random.choice(chars) for i in range(8)])
         print '******************* INPORTANT!!! ************************'
         print 'you admin password is "%"' % password
         print '*********************************************************'

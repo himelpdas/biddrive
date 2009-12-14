@@ -58,7 +58,7 @@ class Storage(dict):
     def __getattr__(self, key):
         try:
             return self[key]
-        except KeyError, k:
+        except KeyError:
             return None
 
     def __setattr__(self, key, value):

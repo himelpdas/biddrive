@@ -10,7 +10,6 @@ License: GPL v2
 import os
 import re
 import logging
-import urllib
 from storage import Storage
 from http import HTTP
 

@@ -18,11 +18,12 @@ import base64
 import cPickle
 import datetime
 import email
+import sys
 import os
 import re
 import smtplib
-import socket
 import urllib
+import urllib2
 import uuid
 
 import sql
@@ -346,8 +347,6 @@ class Recaptcha(DIV):
 
         # for local testing:
 
-        import urllib2
-        import urllib
         recaptcha_challenge_field = \
             self.request_vars.recaptcha_challenge_field
         recaptcha_response_field = \
@@ -512,7 +511,6 @@ class Auth(object):
         self.db = db
         request = self.environment.request
         session = self.environment.session
-        app = request.application
         auth = session.auth
         if auth and auth.last_visit and auth.last_visit\
              + datetime.timedelta(days=0, seconds=auth.expiration)\
@@ -890,7 +888,6 @@ class Auth(object):
         return user
 
     def basic(self):
-        request = self.environment.request
         if not self.settings.allow_basic_login:
             return False
         basic = self.environment.request.env.http_authorization
@@ -1409,7 +1406,7 @@ class Auth(object):
             elif next and not next[0] == '/' and next[:4] != 'http':
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
-        old_requires = user.email.requires
+        user.email.requires = old_requires
         return form
 
     def change_password(
@@ -1912,7 +1909,6 @@ class Crud(object):
     def __init__(self, environment, db):
         self.environment = Storage(environment)
         self.db = db
-        request = self.environment.request
         self.settings = Settings()
         self.settings.auth = None
         self.settings.logger = None
@@ -2119,8 +2115,6 @@ class Crud(object):
             table = self.db[table]
         if not self.has_permission('read', table, record):
             redirect(self.settings.auth.settings.on_failed_authorization)
-        request = self.environment.request
-        session = self.environment.session
         form = SQLFORM(
             table,
             record,
@@ -2129,7 +2123,7 @@ class Crud(object):
             upload=self.settings.download_url,
             showid=self.settings.showid,
             )
-        if request.extension != 'html':
+        if self.environment.request.extension != 'html':
             return table._filter_fields(form.record, id=True)
         return form
 
@@ -2217,8 +2211,6 @@ regex_geocode = \
 
 
 def geocode(address):
-    import re
-    import urllib
     try:
         a = urllib.quote(address)
         txt = fetch('http://maps.google.com/maps/geo?q=%s&output=xml'
@@ -2516,8 +2508,7 @@ class Service:
             args = request.args
         d = dict(request.vars)
         if args and args[0] in self.json_procedures:
-            s = universal_caller(self.json_procedures[args[0]],
-                                 *args[1:], **dict(request.vars))
+            s = universal_caller(self.json_procedures[args[0]],*args[1:],**d)
             if hasattr(s, 'as_list'):
                 s = s.as_list()
             return response.json(s)
@@ -2525,9 +2516,6 @@ class Service:
 
     def serve_jsonrpc(self):
         import contrib.simplejson as simplejson
-        import types
-        import sys
-
         def return_response(id, result):
             return simplejson.dumps({'version': '1.1',
                 'id': id, 'result': result, 'error': None})
@@ -2540,7 +2528,6 @@ class Service:
                                      })
 
         request = self.environment['request']
-        response = self.environment['response']
         methods = self.jsonrpc_procedures
         data = simplejson.loads(request.body.read())
         id, method, params = data["id"], data["method"], data["params"]

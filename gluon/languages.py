@@ -7,7 +7,6 @@ Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
 License: GPL v2
 """
 
-import sys
 import os
 import re
 import cgi

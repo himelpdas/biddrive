@@ -496,7 +496,7 @@ class PostgreSQLAdapter(BaseAdapter):
     def commit_prepared(self,key):
         self.execute("COMMIT PREPARED '%s';" % key)
     def rollback_prepared(self,key):        
-        self.execute("ROLLBACK PREPARED '%s';" % keys[i])
+        self.execute("ROLLBACK PREPARED '%s';" % key)
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -556,10 +556,10 @@ class OracleAdapter(BaseAdapter):
         return 'DEFAULT %s NOT NULL', default 
     def DROP(self,table,mode):
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s_sequence;' % table]
-    def contraint_name(self, table, fieldname):
-        constraint_name = BaseAdapter.contraint_name(self, table, fieldname)
+    def contraint_name(self, tablename, fieldname):
+        constraint_name = BaseAdapter.contraint_name(self, tablename, fieldname)
         if len(constraint_name)>30:
-            constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
+            constraint_name = '%s_%s__constraint' % (tablename[:10], fieldname[:7])
         return constraint_name
     def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'blob':
@@ -785,8 +785,6 @@ class FireBirdAdapter(BaseAdapter):
         db = m.group('db')
         if not db:
             raise SyntaxError, 'Database name required'
-        port = m.group('port') or '3050'
-
         charset = m.group('charset') or 'UTF8'
         self.pool_connection(lambda : \
                                  kinterbasdb.connect(dsn='%s:%s' % (host, db),
@@ -795,8 +793,8 @@ class FireBirdAdapter(BaseAdapter):
                                                      charset=charset))
     def create_sequence_and_triggers(self, query, tablename):       
         self.execute(query)
-        self.execute('create generator GENID_%s;' % t)
-        self.execute('set generator GENID_%s to 0;' % t)
+        self.execute('create generator GENID_%s;' % tablename)
+        self.execute('set generator GENID_%s to 0;' % tablename)
         self.execute('create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;' % (tablename,tablename,tablename))
     def lastrowid(self,tablename):
         self.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database' % tablename)
@@ -897,12 +895,10 @@ class InformixAdapter(BaseAdapter):
         db = m.group('db')
         if not db:
             raise SyntaxError, 'Database name required'
-        port = m.group('port') or '3050'
-
         self.pool_connection(lambda : informixdb.connect('%s@%s'
                                                          % (db, host), user=user,
                                                          password=passwd, autocommit=False))
-    def execute(self,comment):
+    def execute(self,command):
         if command[-1:]==';':
             command = command[:-1]
         return self.cursor.execute(command)
@@ -1022,7 +1018,7 @@ class IngresAdapter(BaseAdapter):
         self.execute(query)
         self.execute('modify %s to btree unique on %s' % (tablename, 'id'))
     def lastrowid(self,tablename):
-        tmp_seqname=gen_ingres_sequencename(tablename)
+        tmp_seqname='%s_iisq' % tablename
         self.execute('select current value for %s' % tmp_seqname)
         return int(self.cursor.fetchone()[0]) # don't really need int type cast here...
 
@@ -1132,7 +1128,6 @@ def cleanup(text):
     return text
 
 
-
 def autofields(db, text):
     raise SyntaxError, "work in progress"
     m = re.compile('(?P<i>\w+)')
@@ -1155,7 +1150,7 @@ def autofields(db, text):
             (unique, items) = (True, items[:-1])
         if items[-1] in ['text', 'date', 'datetime', 'time', 'blob', 'upload', 'password',
                          'integer', 'double', 'boolean', 'string']:
-            (items, t) = (item[:-1], items[-1])
+            (items, t) = (items[:-1], items[-1])
         elif items[-1] in db.tables:
             t = 'reference %s' % items[-1]
             requires = validators.IS_IN_DB(db, '%s.%s' % (items[-1], db.tables[items[-1]].id.name), keys)
@@ -1341,7 +1336,7 @@ class SQLDB(dict):
         if migrate:
             sql_locker.acquire()
             try:
-                query = t._create(migrate=migrate, fake_migrate=fake_migrate)
+                t._create(migrate=migrate, fake_migrate=fake_migrate)
             finally:
                 sql_locker.release()
         else:
@@ -1455,43 +1450,6 @@ class SQLDB(dict):
             else:
                 tablename = line[6:]
                 self[tablename].import_from_csv_file(ifile, id_map, null, unique, *args, **kwargs)
-
-    @staticmethod
-    def __unpickle__(state):
-        logging.warning('unpickling SQLDB objects is experimental')
-        db = SQLDB(state['uri'])
-        for (k, d) in state['tables']:
-            db.define_table(k, *[Field(**i) for i in d],
-                            **dict(migrate=False))
-        return db
-
-    def __pickle__(db):
-        logging.warning('pickling SQLDB objects is experimental')
-        tables = []
-        for k in db.values():
-            if not isinstance(k, Table):
-                continue
-            fields = []
-            for f in k.values():
-                if not isinstance(f, Field) or f.name == 'id':
-                    continue
-                fields.append(dict(
-                        fieldname=f.name,
-                        type=f.type,
-                        length=f.length,
-                        default=f.default,
-                        required=f.required,
-                        requires=f.requires,
-                        ondelete=f.ondelete,
-                        notnull=f.notnull,
-                        unique=f.notnull,
-                        uploadfield=f.uploadfield,
-                        uploadfolder=f.uploadfolder,
-                        ))
-            tables.append((k._tablename, fields))
-        return (unpickle_SQLDB, (dict(uri=db._uri, tables=tables), ))
-
-# copy_reg.pickle(SQLDB, SQLDB.__pickle__, SQLDB.__unpickle__)
 
 
 class SQLALL(object):
@@ -1714,7 +1672,7 @@ class Table(dict):
                 ftype = field.type.native or field.type.type
             elif field.type[:10] == 'reference ':
                 referenced = field.type[10:].strip()
-                constraint_name = self._db._adapter.contraint_name(self, field.name)
+                constraint_name = self._db._adapter.contraint_name(self._tablename, field.name)
                 ftype = self._db._adapter.types[field.type[:9]]\
                      % dict(table_name=self._tablename,
                             field_name=field.name,
@@ -2170,7 +2128,7 @@ class KeyedTable(Table):
     def __setitem__(self, key, value):
         # ??? handle special case where primarykey has all fields ???
         if isinstance(key, dict) and isinstance(value, dict):
-            if setsSet(key.keys())==setsSet(self._primarykey):
+            if set(key.keys()) == set(self._primarykey):
                 value = self._filter_fields(value)
                 kv = {}
                 kv.update(value)
@@ -2180,14 +2138,12 @@ class KeyedTable(Table):
                     self._db(query).update(**self._filter_fields(value))
             else:
                 raise SyntaxError,\
-                'key must have all fields from primary key: %s'%\
-                (self._primarykey)
+                    'key must have all fields from primary key: %s'%\
+                    (self._primarykey)
         else:
             if isinstance(key, dict):
                 raise SyntaxError,\
-                'value must be a dictionary: %s'%value
-#                 'key must be a dictionary with primary key fields: %s'%\
-#                 self._primarykey
+                    'value must be a dictionary: %s' % value
             dict.__setitem__(self, str(key), value)
 
     # KeyedTable
@@ -2618,12 +2574,13 @@ class Field(Expression):
         return newfilename
 
     def retrieve(self, name, path=None):
+        import http
         if self.authorize or isinstance(self.uploadfield, str):
             row = self._db(self == name).select().first()
             if not row:
-                raise HTTP(404)
+                raise http.HTTP(404)
         if self.authorize and not self.authorize(row):
-            raise HTTP(403)
+            raise http.HTTP(403)
         try:
             m = regex_content.match(name)
             if not m or not self.isattachment:
@@ -3385,8 +3342,6 @@ class Rows(object):
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
-        represent = kwargs.get('represent', False)
-
         writer = csv.writer(ofile, delimiter=delimiter, quotechar=quotechar, quoting=quoting)
 
         # a proper csv starting with the column names

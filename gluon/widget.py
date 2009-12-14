@@ -26,8 +26,8 @@ from textwrap import dedent
 
 import contrib.cron
 
-from main import HttpServer, save_password
-from fileutils import tar, untar, w2p_pack
+from main import HttpServer
+from fileutils import w2p_pack
 from shell import run, test
 
 try:
@@ -445,7 +445,7 @@ class web2pyDialog(object):
                                     c[2],
                                     self.p0[i + 1]))
             self.t0 = t1
-        except BaseException, e:
+        except BaseException:
             self.t0 = time.time()
             self.t0 = t1
             self.p0 = [100] * 300

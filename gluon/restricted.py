@@ -9,19 +9,14 @@ License: GPL v2
 
 import uuid
 import sys
-import cStringIO
 import cPickle
 import traceback
-import copy
-import cgi
 import types
-import time
 import os
 import datetime
 import logging
 
 from storage import Storage
-from html import BEAUTIFY
 from http import HTTP
 
 __all__ = ['RestrictedError', 'restricted', 'TicketStorage']
@@ -129,19 +124,16 @@ class RestrictedError:
         """
 
         try:
-
             a = request.application
-
             d = {
                 'layer': str(self.layer),
                 'code': str(self.code),
                 'output': str(self.output),
                 'traceback': str(self.traceback),
                 }
-
+            fmt = '%Y-%m-%d.%H-%M-%S'
             f = '%s.%s.%s' % (request.client.replace(':', '_'),
-                              datetime.datetime.now()\
-                                  .strftime('%Y-%m-%d.%H-%M-%S'),
+                              datetime.datetime.now().strftime(fmt),
                               uuid.uuid4())
 
             ticket_storage = TicketStorage(db=request.tickets_db)
@@ -181,7 +173,7 @@ def restricted(code, environment={}, layer='Unknown'):
         exec ccode in environment
     except HTTP:
         raise
-    except Exception, exception:
+    except Exception:
         # XXX Show exception in Wing IDE if running in debugger
         if __debug__ and 'WINGDB_ACTIVE' in os.environ:
             etype, evalue, tb = sys.exc_info()

@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import time
 import os
 import sys
-import logging
 import wsgiref.handlers
 
 sys.path.insert(0, '')

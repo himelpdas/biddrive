@@ -11,9 +11,6 @@ Thanks to ga2arch for help with IS_IN_DB and IS_NOT_IN_DB on GAE
 
 import os
 import re
-import copy
-import sys
-import types
 import datetime
 import time
 import cgi
@@ -22,7 +19,6 @@ import urllib
 import struct
 import decimal
 from cStringIO import StringIO
-from storage import Storage
 from utils import hash, get_digest
 
 
@@ -1660,7 +1656,7 @@ class IS_URL(Validator):
         else:
             try:
                 asciiValue = unicode_to_ascii_url(value, self.prepend_scheme)
-            except Exception, e:
+            except Exception:
                 #If we are not able to convert the unicode url into a
                 # US-ASCII URL, then the URL is not valid
                 return (value, self.error_message)

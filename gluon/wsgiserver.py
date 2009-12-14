@@ -89,8 +89,6 @@ import threading
 import time
 import traceback
 from urllib import unquote
-from urlparse import urlparse
-import warnings
 import platform
 
 import errno
@@ -1477,7 +1475,7 @@ class ThreadPool(object):
                 except (AssertionError,
                         # Ignore repeated Ctrl-C.
                         # See http://www.cherrypy.org/ticket/691.
-                        KeyboardInterrupt), exc1:
+                        KeyboardInterrupt):
                     pass
 
 

@@ -139,7 +139,7 @@ def app_compile(app, request):
     try:
         compile_application(folder)
         return True
-    except (Exception, RestrictedError), e:
+    except (Exception, RestrictedError):
         remove_compiled_application(folder)
         return False
 
@@ -274,7 +274,7 @@ def plugin_pack(app, plugin_name, request):
         filename = apath('../deposit/web2py.plugin.%s.w2p' % plugin_name, request)
         w2p_pack_plugin(filename, apath(app, request), plugin_name)
         return filename
-    except Exception,e:
+    except Exception:
         return False
 
 def plugin_install(app, fobj, request, filename):

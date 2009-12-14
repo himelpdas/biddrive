@@ -11,13 +11,9 @@ import uuid
 import cgi
 import os
 import re
-import random
 import copy
-import sys
 import types
 import urllib
-import tokenize
-import keyword
 import base64
 import sanitizer
 import rewrite
@@ -1331,7 +1327,6 @@ class BEAUTIFY(DIV):
         if '_class' in attributes:
             attributes['_class'] += 'i'
         for c in self.components:
-            t = type(c)
             s = dir(c)  # this really has to be fixed!!!!
             if 'xml' in s:  # assume c has a .xml()
                 components.append(c)

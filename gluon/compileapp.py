@@ -21,7 +21,7 @@ import copy
 import random
 from storage import Storage, List
 from template import parse_template
-from restricted import restricted, TicketStorage
+from restricted import restricted
 from fileutils import listdir
 from myregex import regex_expose
 from languages import translator
@@ -34,7 +34,6 @@ import validators
 from http import HTTP, redirect
 import marshal
 import imp
-import types
 import logging
 
 try:

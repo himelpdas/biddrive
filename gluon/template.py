@@ -8,7 +8,6 @@ License: GPL v2
 """
 
 import re
-import sys
 import os
 import cStringIO
 

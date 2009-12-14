@@ -20,14 +20,9 @@ from validators import *
 from sql import SQLDB, Table, KeyedTable, Row
 from storage import Storage
 
-import logging
 import urllib
 import re
-import sys
-import os
 import cStringIO
-import copy
-import base64
 
 table_field = re.compile('[\w_]+\.[\w_]+')
 

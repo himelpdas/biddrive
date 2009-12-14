@@ -17,7 +17,6 @@ import types
 import re
 import optparse
 import glob
-import main
 
 import fileutils
 from compileapp import *

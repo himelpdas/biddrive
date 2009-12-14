@@ -11,7 +11,6 @@ import storage
 import os
 import re
 import tarfile
-import sys
 import glob
 from http import HTTP
 from gzip import open as gzopen

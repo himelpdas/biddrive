@@ -21,26 +21,19 @@ from xmlrpc import handler
 from contenttype import contenttype
 from html import xmlescape
 from http import HTTP
-from sql import SQLField
 from fileutils import up
 from serializers import json
 from settings import settings
 
 import uuid
 import portalocker
-import sys
 import cPickle
 import cStringIO
-import thread
-import time
-import shelve
-import os
 import stat
 import datetime
 import re
-import logging
-import base64
 import Cookie
+import os
 
 regex_session_id = re.compile('^[\w\-]+$')
 
@@ -168,7 +161,8 @@ class Response(Storage):
             self.headers['Content-Type'] = contenttype(filename)
         if filename and not 'content-length' in keys:
             try:
-                self.headers['Content-Length'] = os.stat(filename)[stat.ST_SIZE]
+                self.headers['Content-Length'] = \
+                    os.stat(filename)[stat.ST_SIZE]
             except OSError:
                 pass
         if request and request.env.web2py_use_wsgi_file_wrapper:
@@ -313,12 +307,12 @@ class Session(Storage):
 
                 session_data = cPickle.loads(rows[0].session_data)
                 self.update(session_data)
-            except Exception, e:
-                (record_id, unique_key, session_data) = \
-                    (None, str(uuid.uuid4()), {})
+            except Exception:
+                record_id = None
+                unique_key = str(uuid.uuid4())
+                session_data = {}
             response._dbtable_and_field = \
-                (response.session_id_name, table, record_id,
-                 unique_key)
+                (response.session_id_name, table, record_id, unique_key)
             response.session_id = '%s:%s' % (record_id, unique_key)
         response.cookies[response.session_id_name] = response.session_id
         response.cookies[response.session_id_name]['path'] = '/'

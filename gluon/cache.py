@@ -20,20 +20,13 @@ caching will be provided by the GAE memcache
 (see gluon.contrib.gae_memcache)
 """
 
-import copy
 import time
 import portalocker
 import shelve
 import thread
-import cPickle
 import os
 import logging
 import re
-try:
-    # in case of GAE?
-    import dbhash
-except:
-    logging.warning('unable to import dbhash')
 
 __all__ = ['Cache']
 

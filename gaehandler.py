@@ -20,7 +20,6 @@ import logging
 import cPickle
 import pickle
 import wsgiref.handlers
-import google
 import datetime
 
 
