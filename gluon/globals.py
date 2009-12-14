@@ -375,10 +375,6 @@ class Session(Storage):
         if response.session_new:
             # Tests if the session folder exists, if not, create it
             session_folder = os.path.dirname(response.session_filename)
-
-            if not os.path.exists(session_folder):
-                os.mkdir(session_folder)
-
             response.session_file = open(response.session_filename, 'wb')
             portalocker.lock(response.session_file, portalocker.LOCK_EX)
 

@@ -65,9 +65,6 @@ class TicketStorage(Storage):
         if app:
             root = os.path.join(os.path.join(root, '..'), app)
         errors_folder = os.path.join(root, 'errors') #.replace('\\', '/')
-        if not os.path.exists(errors_folder) and mode == 'wb':
-            os.mkdir(errors_folder)
-
         return open(os.path.join(errors_folder, ticket_id), mode)
 
     def _get_table(self, db, tablename, app):

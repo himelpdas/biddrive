@@ -196,8 +196,11 @@ class BaseAdapter(object):
             return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
             return 'NULL'
+        r = BaseAdapter.represent_exceptions(self,obj,fieldtype)
+        if r != None:
+            return r
         if fieldtype == 'boolean':
-            if obj and not str(obj)[0].upper() == 'F':
+            if obj and not str(obj)[0].upper() in ['F', '0']:
                 return "'T'"
             else:
                 return "'F'"
@@ -240,7 +243,9 @@ class BaseAdapter(object):
             obj.decode(self.db_codec)
         except:
             obj = obj.decode('latin1').encode(self.db_codec)
-        return "'%s'" % obj.replace("'", "''")
+        return "'%s'" % obj.replace("'", "''")    
+    def represent_exceptions(self, obj, fieldtype):
+        return None
     def lastrowid(self,tablename):
         return None
     def rowslice(self,rows,minimum=0,maximum=None):
@@ -556,17 +561,7 @@ class OracleAdapter(BaseAdapter):
         if len(constraint_name)>30:
             constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
         return constraint_name
-    def represent(self, obj, fieldtype):
-        if type(obj) in (types.LambdaType, types.FunctionType):
-            obj = obj()
-        if isinstance(obj, (Expression, Field)):
-            return obj
-        if isinstance(fieldtype, SQLCustomType):
-            return fieldtype.encoder(obj)
-        if obj is None:
-            return 'NULL'
-        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return 'NULL'
+    def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'blob':
             obj = base64.b64encode(str(obj))
             return ":CLOB('%s')" % obj
@@ -584,7 +579,7 @@ class OracleAdapter(BaseAdapter):
             else:
                 obj = str(obj)
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
-        return BaseAdapter.represent(self,obj,fieldtype)
+        return None
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -647,24 +642,13 @@ class MSSQLAdapter(BaseAdapter):
         return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY CLUSTERED (%s)' % key
-    def represent(self, obj, fieldtype):
-        if type(obj) in (types.LambdaType, types.FunctionType):
-            obj = obj()
-        if isinstance(obj, (Expression, Field)):
-            return obj
-        if isinstance(fieldtype, SQLCustomType):
-            return fieldtype.encoder(obj)
-        if obj is None:
-            return 'NULL'
-        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return 'NULL'
-        if obj and fieldtype == 'boolean' and \
-                isinstance(obj, (int, long, str, bool)):
+    def represent_exceptions(self, obj, fieldtype):
+        if fieldtype == 'boolean':
             if obj and not str(obj)[0].upper() == 'F':
                 return '1'
             else:
                 return '0'
-        return BaseAdapter.represent(self, obj, fieldtype)
+        return None
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -874,17 +858,7 @@ class InformixAdapter(BaseAdapter):
         return 'Random()'
     def NOT_NULL(self,default):
         return 'DEFAULT %s NOT NULL', default 
-    def represent(self, obj, fieldtype):
-        if type(obj) in (types.LambdaType, types.FunctionType):
-            obj = obj()
-        if isinstance(obj, (Expression, Field)):
-            return obj
-        if isinstance(fieldtype, SQLCustomType):
-            return fieldtype.encoder(obj)
-        if obj is None:
-            return 'NULL'
-        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return 'NULL'
+    def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'date':                
             if isinstance(obj, (datetime.date, datetime.datetime)):
                 obj = obj.isoformat()[:10]
@@ -899,7 +873,7 @@ class InformixAdapter(BaseAdapter):
             else:
                 obj = str(obj)
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
-        return BaseAdapter.represent(self, obj, fieldtype)
+        return None
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size
@@ -959,28 +933,17 @@ class DB2Adapter(BaseAdapter):
         return 'LEFT OUTER JOIN'
     def RANDOM(self):
         return 'RAND()'
-    def represent(self, obj, fieldtype):
-        if type(obj) in (types.LambdaType, types.FunctionType):
-            obj = obj()
-        if isinstance(obj, (Expression, Field)):
-            return obj
-        if isinstance(fieldtype, SQLCustomType):
-            return fieldtype.encoder(obj)
-        if obj is None:
-            return 'NULL'
-        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-            return 'NULL'
+    def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'blob':
             obj = base64.b64encode(str(obj))
             return "BLOB('%s')" % obj
         elif fieldtype == 'datetime':
             if isinstance(obj, datetime.datetime):            
-                return "'%s'" % obj.isoformat()[:19].replace('T','-').replace(':','.')
+                obj = obj.isoformat()[:19].replace('T','-').replace(':','.')
             elif isinstance(obj, datetime.date):
-                return "'%s'" % obj.isoformat()[:10]+'-00.00.00'
-            else:
-                obj = str(obj)
-        return BaseAdapter.represent(self, obj, fieldtype)
+                obj = obj.isoformat()[:10]+'-00.00.00'
+            return "'%s'" % obj
+        return None
     def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.uri = uri
         self.pool_size = pool_size

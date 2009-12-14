@@ -431,6 +431,17 @@ def wsgibase(environ, responder):
                                    extension=raw_extension)
 
             # ##################################################
+            # build missing folder
+            # ##################################################
+            
+            for subfolder in ['models','views','controllers',
+                              'modules','cron','errors','sessions',
+                              'languages','static','private','uploads']:
+                path =  os.path.join(request.folder,subfolder)
+                if not os.path.exists(path):
+                    os.mkdir(path)
+
+            # ##################################################
             # get the GET and POST data
             # ##################################################
 
