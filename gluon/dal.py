@@ -11,10 +11,16 @@ Thanks to
     * Marcel Leuthi <mluethi@mlsystems.ch> for Oracle support
     * Denes
     * Chris Clark
-
+    * clach05
+    
 This file contains the DAL support for many relational databases,
-including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase.
-Adding Ingres - clach04
+including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase, Ingres
+
+Completely refactored by MDP on Dec 12, 2009
+
+TODO:
+- port JDBC sqlite and postgres
+- create more funcitons in adaptors to abstract more
 """
 
 __all__ = ['DAL', 'Field']
@@ -42,12 +48,15 @@ import struct
 
 from utils import md5_hash
 from serializers import json
+import portalocker
+import validators
+
+sql_locker = thread.allocate_lock()
 
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
 table_field = re.compile('[\w_]+\.[\w_]+')
-oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
 regex_content = re.compile('([\w\-]+\.){3}(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
 
@@ -120,23 +129,231 @@ except:
     # NOTE could try JDBC.......
 
 
-import portalocker
-import validators
-
-sql_locker = thread.allocate_lock()
-
-INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name (ANSI-SQL wants this form of name to be a delimited identifier)
-def gen_ingres_sequencename(table_name):
-    """Generate Ingres specific sequencename, pass in self._tablename
-    """
-    result='%s_iisq' % (table_name)
-    # if result len too long, hash and use hexhash?
-    return result
-
 # mapping of the field types and some constructs
 # per database
-SQL_DIALECTS = {
-    'sqlite': {
+
+class BaseAdapter(object):
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+    def LOWER(self,fieldname):
+        return 'LOWER(%s)' % fieldname
+    def UPPER(self,fieldname):
+        return 'UPPER(%s)' % fieldname
+    def EXTRACT(self,name,fieldname):
+        return "EXTRACT(%s FROM %s)" % (name, fieldname)
+    def LEFT_JOIN(self):
+        return 'LEFT JOIN'
+    def RANDOM(self):
+        return 'Random()'
+    def NOT_NULL(self,default):
+        return 'NOT NULL DEFAULT %s' % default 
+    def SUBSTRING(self,fieldname,pos,length):
+        return 'SUBSTR(%s,%s,%s)' % (fieldname, pos, length)
+    def PRIMARY_KEY(self,key):
+        return 'PRIMARY KEY(%s)' % key
+    def DROP(self,table,mode):
+        return ['DROP TABLE %s;' % table]
+    def INSERT(self,table,fields):
+        keys = ','.join([x[0] for x in fields])
+        values = ','.join([self.represent(x[1],x[2]) for x in fields])
+        return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
+    def WHERE(self,where):
+        if len(where)==1:
+            return where[0]
+        elif where[0] == 'NOT':
+            return '(NOT %s)' % self.WHERE(where[1])
+        (op, first, second) = where
+        if op == 'AND':
+            return '(%s AND %s)' % (self.WHERE(first), self.WHERE(second))
+        elif op == 'OR':
+            return '(%s OR %s)' % (self.WHERE(first), self.WHERE(second))
+        elif op == 'IN':
+            values = [self.represent(value,first.type) for value in second]
+            return '(%s IN (%s))' % (first, ','.join(values))
+        elif op in ('=','<>','<','>','<=','>=','LIKE'):
+            value = self.represent(second,first.type)
+            return '(%s %s %s)' % (first, op, value)
+    def commit(self):
+        return self.connection.commit()
+    def rollback(self):
+        return self.connection.rollback()
+    def support_distributed_transaction(self):
+        return False
+    def distributed_transaction_begin(self,key):
+        return
+    def prepare(self,key):
+        self.connection.prepare()
+    def commit_prepared(self,key):
+        self.connection.commit()
+    def rollback_prepared(self,key):
+        self.connection.rollback()
+    def concat_add(self,table):
+        return ', ADD '
+    def contraint_name(self, table, fieldname):
+        return '%s_%s__constraint' % (table,fieldname)
+    def create_sequence_and_triggers(self, query, tablename):
+        self.execute(query)
+    def commit_on_alter_table(self):        
+        return False
+    def execute(self,*a,**b):
+        return self.cursor.execute(*a, **b)
+    def represent(self, obj, fieldtype):
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(obj, (Expression, Field)):
+            return obj
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if obj is None:
+            return 'NULL'
+        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+            return 'NULL'
+        r = BaseAdapter.represent_exceptions(self,obj,fieldtype)
+        if r != None:
+            return r
+        if fieldtype == 'boolean':
+            if obj and not str(obj)[0].upper() in ['F', '0']:
+                return "'T'"
+            else:
+                return "'F'"
+        if fieldtype == 'id' or fieldtype == 'integer':
+            return str(int(obj))
+        if fieldtype[:7] == 'decimal':
+            return str(obj)
+        elif fieldtype[0] == 'r': # reference
+            if fieldtype.find('.')>0:
+                return repr(obj)
+            elif isinstance(obj, (Row, Reference)):
+                return str(obj['id'])
+            return str(int(obj))
+        elif fieldtype == 'double':
+            return repr(float(obj))
+        if isinstance(obj, unicode):
+            obj = obj.encode(self.db_codec)
+        if fieldtype == 'blob':
+            obj = base64.b64encode(str(obj))
+        elif fieldtype == 'date':
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):
+                obj = obj.isoformat()[:19].replace('T',' ')
+            elif isinstance(obj, datetime.date):
+                obj = obj.isoformat()[:10]+' 00:00:00'
+            else:
+                obj = str(obj)
+        elif fieldtype == 'time':
+            if isinstance(obj, datetime.time):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+        if not isinstance(obj,str):
+            obj = str(obj)
+        try:
+            obj.decode(self.db_codec)
+        except:
+            obj = obj.decode('latin1').encode(self.db_codec)
+        return "'%s'" % obj.replace("'", "''")    
+    def represent_exceptions(self, obj, fieldtype):
+        return None
+    def lastrowid(self,tablename):
+        return None
+    def rowslice(self,rows,minimum=0,maximum=None):
+        """ by default this function does nothing, oreload when db does no do slicing """
+        return rows
+
+    #
+    # The following code is for connection pooling do not touch
+    #
+
+    _folders = {}
+    _connection_pools = {}
+    _instances = {}
+
+    @staticmethod
+    def set_thread_folder(folder):
+        sql_locker.acquire()
+        BaseAdapter._folders[thread.get_ident()] = folder
+        sql_locker.release()
+
+    # ## this allows gluon to commit/rollback all dbs in this thread
+
+    @staticmethod
+    def close_all_instances(action):
+        """ to close cleanly databases in a multithreaded environment """
+        sql_locker.acquire()
+        pid = thread.get_ident()
+        if pid in BaseAdapter._folders:
+            del BaseAdapter._folders[pid]
+        if pid in BaseAdapter._instances:
+            instances = BaseAdapter._instances[pid]
+            while instances:
+                instance = instances.pop()
+                sql_locker.release()
+                action(instance)
+                sql_locker.acquire()
+
+                # ## if you want pools, recycle this connection
+                really = True
+                if instance.pool_size:
+                    pool = BaseAdapter._connection_pools[instance.uri]
+                    if len(pool) < instance.pool_size:
+                        pool.append(instance.connection)
+                        really = False
+                if really:
+                    sql_locker.release()
+                    instance.connection.close()
+                    sql_locker.acquire()
+            del BaseAdapter._instances[pid]
+        sql_locker.release()
+        return
+
+    def find_or_make_work_folder(self):
+        pid = thread.get_ident()
+        if not self.folder:
+            sql_locker.acquire()
+            if pid in self._folders:
+                self.folder = self._folders[pid]
+            else:
+                self.folder = self._folders[pid] = ''
+            sql_locker.release()
+
+        # Creating the folder if it does not exist
+        if self.folder and not os.path.exists(self.folder):
+            os.mkdir(self._folder)
+
+    def pool_connection(self, f):
+        pid = thread.get_ident()
+        if not self.pool_size:
+            self.connection = f()
+        else:
+            uri = self.uri
+            sql_locker.acquire()
+            if not uri in BaseAdapter._connection_pools:
+                BaseAdapter._connection_pools[uri] = []
+            if BaseAdapter._connection_pools[uri]:
+                self.connection = BaseAdapter._connection_pools[uri].pop()
+                sql_locker.release()
+            else:
+                sql_locker.release()
+                self.connection = f()
+
+        sql_locker.acquire()
+        if not pid in self._instances:
+            self._instances[pid] = []
+        self._instances[pid].append(self)
+        sql_locker.release()
+
+        self.cursor = self.connection.cursor()
+
+
+class SQLiteAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'CHAR(%(length)s)',
         'text': 'TEXT',
@@ -151,19 +368,44 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
         'reference': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        }
+    def EXTRACT(self,name,fieldname): return "web2py_extract('%s',%s)" % (name, fieldname)
+    @staticmethod
+    def web2py_extract(lookup, s):
+        table = {
+            'year': (0, 4),
+            'month': (5, 7),
+            'day': (8, 10),
+            'hour': (11, 13),
+            'minute': (14, 16),
+            'second': (17, 19),
+            }
+        try:
+            (i, j) = table[lookup]
+            return int(s[i:j])
+        except:
+            return None
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        path_encoding = sys.getfilesystemencoding() or locale.getdefaultlocale()[1]
+        if uri=='sqlite:memory:':
+            dbpath = ':memory:'
+        else:
+            dbpath = uri.split('://')[1]
+            if dbpath[0] != '/':
+                dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
+        self.pool_connection(lambda: sqlite3.Connection(dbpath, check_same_thread=False))
+        self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
+    def lastrowid(self,tablename):
+        return self.cursor.lastrowid
 
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': "web2py_extract('%(name)s',%(field)s)",
-        'left join': 'LEFT JOIN',
-        'random': 'Random()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY (%s)'
-        },
-    'mysql': {
+
+class MySQLAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'LONGTEXT',
@@ -178,17 +420,71 @@ SQL_DIALECTS = {
         'datetime': 'DATETIME',
         'id': 'INT AUTO_INCREMENT NOT NULL',
         'reference': 'INT, INDEX %(field_name)s__idx (%(field_name)s), FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RAND()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        },
-    'postgres': {
+        }
+    def RANDOM(self):
+        return 'RAND()'
+    def SUBSTRING(self,fieldname,pos,length):
+        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def DROP(self,table,mode):
+        # breaks db integrity but without this mysql does not drop table
+        return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % table,'SET FOREIGN_KEY_CHECKS=1;']
+    def support_distributed_transaction(self):
+        return True
+    def distributed_transaction_begin(self,key):
+        self.execute('XA START;')
+    def prepare(self,key):
+        self.execute("XA END;")
+        self.execute("XA PREPARE;")
+    def commit_prepared(self,ley):
+        self.execute("XA COMMIT;")
+    def rollback_prepared(self,key):
+        self.execute("XA ROLLBACK;")
+    def concat_add(self,table):
+        return '; ALTER TABLE %s ADD ' % table
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1]
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
+        if not m:
+            raise SyntaxError, \
+                "Invalid URI string in SQLDB: %s" % self.uri
+        user = m.group('user')
+        if not user:
+            raise SyntaxError, 'User required'
+        passwd = m.group('passwd')
+        if not passwd:
+            passwd = ''
+        host = m.group('host')
+        if not host:
+            raise SyntaxError, 'Host name required'
+        db = m.group('db')
+        if not db:
+            raise SyntaxError, 'Database name required'
+        port = m.group('port') or '3306'        
+        charset = m.group('charset') or 'utf8'
+        self.pool_connection(lambda : MySQLdb.Connection(
+                db=db,
+                user=user,
+                passwd=passwd,
+                host=host,
+                port=int(port),
+                charset=charset,
+                ))
+        self.execute('SET FOREIGN_KEY_CHECKS=1;')
+        self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
+    def commit_on_alter_table(self):        
+        return True
+    def lastrowid(self,tablename):
+        self.execute('select last_insert_id();')
+        return int(self.cursor.fetchone()[0])
+
+
+class PostgreSQLAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'TEXT',
@@ -203,17 +499,55 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'SERIAL PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RANDOM()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        },
-    'oracle': {
+        }
+    def RANDOM(self):
+        return 'RANDOM()'
+    def support_distributed_transaction(self):
+        return True
+    def distributed_transaction_begin(self,key):
+        return
+    def prepare(self,key):
+        self.execute("PREPARE TRANSACTION '%s';" % key)
+    def commit_prepared(self,key):
+        self.execute("COMMIT PREPARED '%s';" % key)
+    def rollback_prepared(self,key):        
+        self.execute("ROLLBACK PREPARED '%s';" % key)
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1]
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
+        if not m:
+            raise SyntaxError, "Invalid URI string in SQLDB"
+        user = m.group('user')
+        if not user:
+            raise SyntaxError, 'User required'
+        passwd = m.group('passwd')
+        if not passwd:
+            passwd = ''
+        host = m.group('host')
+        if not host:
+            raise SyntaxError, 'Host name required'
+        db = m.group('db')
+        if not db:
+            raise SyntaxError, 'Database name required'
+        port = m.group('port') or '5432'
+        msg = "dbname='%s' user='%s' host='%s' port=%s password='%s'"\
+            % (db, user, host, port, passwd)
+        self.pool_connection(lambda : psycopg2.connect(msg))
+        self.connection.set_client_encoding('UTF8')
+        self.execute('BEGIN;')
+        self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
+    def lastrowid(self,tablename):
+        self.execute("select currval('%s_id_Seq')" % tablename)
+        return int(self.cursor.fetchone()[0])
+
+
+class OracleAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR2(%(length)s)',
         'text': 'CLOB',
@@ -228,17 +562,74 @@ SQL_DIALECTS = {
         'datetime': 'DATE',
         'id': 'NUMBER PRIMARY KEY',
         'reference': 'NUMBER, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'dbms_random.value',
-        'notnull': 'DEFAULT %(default)s NOT NULL',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        },
-    'mssql': {
+        }
+    def LEFT_JOIN(self):
+        return 'LEFT OUTER JOIN'
+    def RANDOM(self):
+        return 'dbms_random.value'
+    def NOT_NULL(self,default):
+        return 'DEFAULT %s NOT NULL', default 
+    def DROP(self,table,mode):
+        return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s_sequence;' % table]
+    def contraint_name(self, tablename, fieldname):
+        constraint_name = BaseAdapter.contraint_name(self, tablename, fieldname)
+        if len(constraint_name)>30:
+            constraint_name = '%s_%s__constraint' % (tablename[:10], fieldname[:7])
+        return constraint_name
+    def represent_exceptions(self, obj, fieldtype):
+        if fieldtype == 'blob':
+            obj = base64.b64encode(str(obj))
+            return ":CLOB('%s')" % obj
+        elif fieldtype == 'date':
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd')" % obj
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):
+                obj = obj.isoformat()[:19].replace('T',' ')
+            elif isinstance(obj, datetime.date):
+                obj = obj.isoformat()[:10]+' 00:00:00'
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
+        return None
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1]
+        self.pool_connection(lambda: cx_Oracle.connect(uri))
+        self.execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
+        self.execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
+    oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
+    def execute(self, command):
+        args = []
+        i = 1
+        while True:
+            m = self.oracle_fix.match(command)
+            if not m:
+                break
+            command = command[:m.start('clob')] + str(i) + command[m.end('clob'):]
+            args.append(m.group('clob')[6:-2].replace("''", "'"))
+            i += 1
+        return self.cursor.execute(command[:-1], args)
+    def create_sequence_and_triggers(self, query, tablename):
+        self.execute(query)
+        self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
+        self.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n' % (tablename, tablename, tablename))
+    def commit_on_alter_table(self):        
+        return True
+    def lastrowid(self,tablename):
+        self.execute('SELECT %s_sequence.currval FROM dual;' % tablename)
+        return int(self.cursor.fetchone()[0])
+
+
+class MSSQLAdapter(BaseAdapter):
+    types = {
         'boolean': 'BIT',
         'string': 'VARCHAR(%(length)s)',
         'text': 'TEXT',
@@ -255,19 +646,86 @@ SQL_DIALECTS = {
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'DATEPART(%(name)s,%(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'NEWID()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY CLUSTERED (%s)'
-        #' WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)'
-        },
-    'mssql2': { # MS SQL unicode
+        }
+    def EXTRACT(self,name,fieldname):
+        return "DATEPART(%s FROM %s)" % (name, fieldname)
+    def LEFT_JOIN(self):
+        return 'LEFT OUTER JOIN'
+    def RANDOM(self):
+        return 'NEWID()'
+    def SUBSTRING(self,fieldname,pos,length):
+        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def PRIMARY_KEY(self,key):
+        return 'PRIMARY KEY CLUSTERED (%s)' % key
+    def represent_exceptions(self, obj, fieldtype):
+        if fieldtype == 'boolean':
+            if obj and not str(obj)[0].upper() == 'F':
+                return '1'
+            else:
+                return '0'
+        return None
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        # ## read: http://bytes.com/groups/python/460325-cx_oracle-utf8        
+        uri = uri.split('://')[1]
+        if '@' not in uri:
+            try:
+                m = re.compile('^(?P<dsn>.+)$').match(uri)
+                if not m:
+                    raise SyntaxError, \
+                        'Parsing uri string(%s) has no result' % self.uri
+                dsn = m.group('dsn')
+                if not dsn:
+                    raise SyntaxError, 'DSN required'
+            except SyntaxError, e:
+                logging.error('NdGpatch error')
+                raise e
+            cnxn = 'DSN=%s' % dsn
+        else:
+            m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?(?P<urlargs>.*))?$').match(uri)
+            if not m:
+                raise SyntaxError, \
+                    "Invalid URI string in SQLDB: %s" % uri
+            user = m.group('user')
+            if not user:
+                raise SyntaxError, 'User required'
+            passwd = m.group('passwd')
+            if not passwd:
+                passwd = ''
+            host = m.group('host')
+            if not host:
+                raise SyntaxError, 'Host name required'
+            db = m.group('db')
+            if not db:
+                raise SyntaxError, 'Database name required'
+            port = m.group('port') or '1433'
+            # Parse the optional url name-value arg pairs after the '?'        
+            # (in the form of arg1=value1&arg2=value2&...)                     
+            # Default values (drivers like FreeTDS insist on uppercase parameter keys)
+            argsdict = { 'DRIVER':'{SQL Server}' }
+            urlargs = m.group('urlargs') or ''
+            argpattern = re.compile('(?P<argkey>[^=]+)=(?P<argvalue>[^&]*)')
+            for argmatch in argpattern.finditer(urlargs):
+                argsdict[str(argmatch.group('argkey')).upper()] = argmatch.group('argvalue')
+            urlargs = ';'.join(['%s=%s' % (ak, av) for (ak, av) in argsdict.items()])
+            cnxn = 'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
+                % (host, port, db, user, passwd, urlargs)
+        self.pool_connection(lambda : pyodbc.connect(cnxn))
+    def lastrowid(self,tablename):
+        self.execute('SELECT @@IDENTITY;')
+        return int(self.cursor.fetchone()[0])
+    def rowslice(self,rows,minimum=0,maximum=None):
+        if maximum==None:
+            return rows[minimum:]
+        return rows[minimum:maximum]
+    
+
+class MSSQLAdapter2(MSSQLAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'NVARCHAR(%(length)s)',
         'text': 'NTEXT',
@@ -284,17 +742,17 @@ SQL_DIALECTS = {
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'DATEPART(%(name)s,%(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'NEWID()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        },
-    'firebird': {
+        }
+    def represent(self, obj, fieldtype):
+        value = BaseAdapter.represent(self, obj, fieldtype)
+        if fieldtype == 'string' or fieldtype == 'text' and value[:1]=="'":
+            value = 'N'+value
+        return value
+    def execute(self,a):
+        return self.cursor.execute(a,'utf8')
+
+class FireBirdAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'BLOB SUB_TYPE 1',
@@ -309,17 +767,89 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RAND()',
-        'notnull': 'DEFAULT %(default)s NOT NULL',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
-        },
-    'informix': {
+        }
+    def RANDOM(self):
+        return 'RAND()'
+    def NOT_NULL(self,default):
+        return 'DEFAULT %s NOT NULL', default 
+    def SUBSTRING(self,fieldname,pos,length):
+        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def DROP(self,table,mode):
+        return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR GENID_%s;' % table]
+    def support_distributed_transaction(self):
+        return True
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1]
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+?)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
+        if not m:
+            raise SyntaxError, "Invalid URI string in SQLDB: %s" % uri
+        user = m.group('user')
+        if not user:
+            raise SyntaxError, 'User required'
+        passwd = m.group('passwd')
+        if not passwd:
+            passwd = ''
+        host = m.group('host')
+        if not host:
+            raise SyntaxError, 'Host name required'
+        db = m.group('db')
+        if not db:
+            raise SyntaxError, 'Database name required'
+        charset = m.group('charset') or 'UTF8'
+        self.pool_connection(lambda : \
+                                 kinterbasdb.connect(dsn='%s:%s' % (host, db),
+                                                     user=user,
+                                                     password=passwd,
+                                                     charset=charset))
+    def create_sequence_and_triggers(self, query, tablename):       
+        self.execute(query)
+        self.execute('create generator GENID_%s;' % tablename)
+        self.execute('set generator GENID_%s to 0;' % tablename)
+        self.execute('create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;' % (tablename,tablename,tablename))
+    def lastrowid(self,tablename):
+        self.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database' % tablename)
+        return int(self._db._adapter.cursor.fetchone()[0])
+
+
+class FireBirdEmbeddedAdapter(FireBirdAdapter):
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1] 
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<path>[^\?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
+        if not m:
+            raise SyntaxError, \
+                "Invalid URI string in SQLDB: %s" % self.uri  #### <<< TODO
+        user = m.group('user')
+        if not user:
+            raise SyntaxError, 'User required'
+        passwd = m.group('passwd')
+        if not passwd:
+            passwd = ''
+        pathdb = m.group('path')
+        if not pathdb:
+            raise SyntaxError, 'Path required'
+        charset = m.group('charset')
+        if not charset:
+            charset = 'UTF8'
+        self.pool_connection(lambda : \
+                                 kinterbasdb.connect(host='',
+                                                     database=pathdb,
+                                                     user=user,
+                                                     password=passwd,
+                                                     charset=charset))
+        
+
+class InformixAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'BLOB SUB_TYPE 1',
@@ -336,17 +866,63 @@ SQL_DIALECTS = {
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s CONSTRAINT FK_%(table_name)s_%(field_name)s',
         'reference TFK': 'FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s CONSTRAINT TFK_%(table_name)s_%(field_name)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(field)s(%(name)s)',
-        'left join': 'LEFT JOIN',
-        'random': 'RANDOM()',
-        'notnull': 'DEFAULT %(default)s NOT NULL',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        },
-    'db2': {
+        }
+    def RANDOM(self):
+        return 'Random()'
+    def NOT_NULL(self,default):
+        return 'DEFAULT %s NOT NULL', default 
+    def represent_exceptions(self, obj, fieldtype):
+        if fieldtype == 'date':                
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                obj = obj.isoformat()[:10]
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd')" % obj
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):
+                obj = obj.isoformat()[:19].replace('T',' ')
+            elif isinstance(obj, datetime.date):
+                obj = obj.isoformat()[:10]+' 00:00:00'
+            else:
+                obj = str(obj)
+            return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
+        return None
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1]
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
+        if not m:
+            raise SyntaxError, \
+                "Invalid URI string in SQLDB: %s" % self.uri
+        user = m.group('user')
+        if not user:
+            raise SyntaxError, 'User required'
+        passwd = m.group('passwd')
+        if not passwd:
+            passwd = ''
+        host = m.group('host')
+        if not host:
+            raise SyntaxError, 'Host name required'
+        db = m.group('db')
+        if not db:
+            raise SyntaxError, 'Database name required'
+        self.pool_connection(lambda : informixdb.connect('%s@%s'
+                                                         % (db, host), user=user,
+                                                         password=passwd, autocommit=False))
+    def execute(self,command):
+        if command[-1:]==';':
+            command = command[:-1]
+        return self.cursor.execute(command)
+    def lastrowid(self,tablename):
+        return self.cursor.sqlerrd[1]
+
+
+class DB2Adapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'CLOB',
@@ -363,18 +939,48 @@ SQL_DIALECTS = {
         'reference': 'INT, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)',
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'RAND()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY(%s)',
-        },
-    'ingres': {
+        }
+    def LEFT_JOIN(self):
+        return 'LEFT OUTER JOIN'
+    def RANDOM(self):
+        return 'RAND()'
+    def represent_exceptions(self, obj, fieldtype):
+        if fieldtype == 'blob':
+            obj = base64.b64encode(str(obj))
+            return "BLOB('%s')" % obj
+        elif fieldtype == 'datetime':
+            if isinstance(obj, datetime.datetime):            
+                obj = obj.isoformat()[:19].replace('T','-').replace(':','.')
+            elif isinstance(obj, datetime.date):
+                obj = obj.isoformat()[:10]+'-00.00.00'
+            return "'%s'" % obj
+        return None
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        cnxn = uri.split(':', 1)[1]
+        self.pool_connection(lambda : pyodbc.connect(cnxn))
+    def execute(self,command):
+        if command[-1:]==';':
+            command = command[:-1]
+        return self.cursor.execute(command)
+    def lastrowid(self,tablename):
+        self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % tablename)
+        return int(self._db._adapter.cursor.fetchone()[0])
+    def rowslice(self,rows,minimum=0,maximum=None):
+        if maximum==None:
+            return rows[minimum:]
+        return rows[minimum:maximum]        
+
+INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name 
+                                       # (ANSI-SQL wants this form of name 
+                                       # to be a delimited identifier)
+
+class IngresAdapter(BaseAdapter):
+    types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
         'text': 'CLOB',
@@ -387,32 +993,86 @@ SQL_DIALECTS = {
         'date': 'ANSIDATE',
         'time': 'TIME WITHOUT TIME ZONE',
         'datetime': 'TIMESTAMP WITHOUT TIME ZONE',
-        'id': 'integer4 not null unique with default next value for %s'%INGRES_SEQNAME,
+        'id': 'integer4 not null unique with default next value for %s' % INGRES_SEQNAME,
         'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
-        'lower': 'LOWER(%(field)s)',
-        'upper': 'UPPER(%(field)s)',
-        'is null': 'IS NULL',
-        'is not null': 'IS NOT NULL',
-        'extract': 'EXTRACT(%(name)s FROM %(field)s)', # Date/time/timestamp related. Use DatePart for older Ingres releases
-        'left join': 'LEFT OUTER JOIN',
-        'random': 'RANDOM()',
-        'notnull': 'NOT NULL DEFAULT %(default)s',
-        'substring': 'SUBSTR(%(field)s,%(pos)s,%(length)s)',
-        'primarykey': 'PRIMARY KEY(%s)',
-        },
-    }
+        }
+    def LEFT_JOIN(self):
+        return 'LEFT OUTER JOIN'
+    def RANDOM(self):
+        return 'RANDOM()'
+    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        connstr = self._uri.split(':', 1)[1]
+        # Simple URI processing                                                
+        connstr=connstr.lstrip()
+        while connstr.startswith('/'):
+            connstr = connstr[1:]
+        database_name=connstr # Assume only (local) dbname is passed in        
+        vnode='(local)'
+        servertype='ingres'
+        trace=(0, None) # No tracing                                           
+        self.pool_connection(lambda : \
+                                 ingresdbi.connect(
+                database=database_name,
+                vnode=vnode,
+                servertype=servertype,
+                trace=trace))
+    def create_sequence_and_triggers(self, query, tablename):
+        # post create table auto inc code (if needed)
+        # modify table to btree for performance....
+        # Older Ingres releases could use rule/trigger like Oracle above.
+        tmp_seqname='%s_iisq' % tablename
+        query=query.replace(INGRES_SEQNAME, tmp_seqname)
+        self.execute('create sequence %s' % tmp_seqname)
+        self.execute(query)
+        self.execute('modify %s to btree unique on %s' % (tablename, 'id'))
+    def lastrowid(self,tablename):
+        tmp_seqname='%s_iisq' % tablename
+        self.execute('select current value for %s' % tmp_seqname)
+        return int(self.cursor.fetchone()[0]) # don't really need int type cast here...
 
-INGRES_USE_UNICODE_STRING_TYPES=True
-if INGRES_USE_UNICODE_STRING_TYPES:
-    """convert type VARCHAR -> NVARCHAR, i.e. use UCS2/UTF16 support/storage
-    leaving as VARCHAR means need to use UTF8 encoding.
-    Some people are very passionate about which encoding
-    to use for storage, this gives the option.
-    """
-    for x in ['string', 'password', 'text']:
-        SQL_DIALECTS['ingres'][x] = 'N' + SQL_DIALECTS['ingres'][x]
+
+class IngresUnicodeAdapter(BaseAdapter):
+    types = {
+        'boolean': 'CHAR(1)',
+        'string': 'NVARCHAR(%(length)s)',
+        'text': 'NCLOB',
+        'password': 'NVARCHAR(%(length)s)',  ## Not sure what this contains utf8 or nvarchar. Or even bytes?
+        'blob': 'BLOB',
+        'upload': 'VARCHAR(%(length)s)',  ## FIXME utf8 or nvarchar... or blob? what is this type?
+        'integer': 'INTEGER4', # or int8...
+        'double': 'FLOAT8',
+        'decimal': 'NUMERIC(%(precision)s,%(scale)s)',
+        'date': 'ANSIDATE',
+        'time': 'TIME WITHOUT TIME ZONE',
+        'datetime': 'TIMESTAMP WITHOUT TIME ZONE',
+        'id': 'integer4 not null unique with default next value for %s'% INGRES_SEQNAME,
+        'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
+        }
+
+ADAPTERS = {
+    'sqlite': SQLiteAdapter,
+    'mysql': MySQLAdapter,
+    'postgres': PostgreSQLAdapter,
+    'oracle': OracleAdapter,
+    'mssql': MSSQLAdapter,
+    'mssql2': MSSQLAdapter2,
+    'db2': DB2Adapter,    
+    'informix': InformixAdapter,
+    'firebird': FireBirdAdapter,
+    'firebird_embedded': FireBirdAdapter,
+    'ingres': IngresAdapter,
+    'ingresu': IngresUnicodeAdapter,
+}
+
 
 def sqlhtml_validators(field):
     """
@@ -470,92 +1130,6 @@ def sqlhtml_validators(field):
         requires[-1]=validators.IS_EMPTY_OR(requires[-1])
     return requires
 
-def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
-    if type(obj) in (types.LambdaType, types.FunctionType):
-        obj = obj()
-    if isinstance(obj, (Expression, Field)):
-        return obj
-    if isinstance(fieldtype, SQLCustomType):
-        return fieldtype.encoder(obj)
-    if obj is None:
-        return 'NULL'
-    if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
-        return 'NULL'
-    if fieldtype == 'boolean':
-        if dbname == 'mssql':
-            if obj and not str(obj)[0].upper() == 'F':
-                return '1'
-            else:
-                return '0'
-        else:
-            if obj and not str(obj)[0].upper() == 'F':
-                return "'T'"
-            else:
-                return "'F'"
-    if fieldtype[0] == 'i':
-        return str(int(obj))
-    if fieldtype[:7] == 'decimal':
-        return str(obj)
-    elif fieldtype[0] == 'r': # reference
-        if fieldtype.find('.')>0:
-            return repr(obj)
-        elif isinstance(obj, (Row, Reference)):
-            return str(obj['id'])
-        return str(int(obj))
-    elif fieldtype == 'double':
-        return repr(float(obj))
-    if isinstance(obj, unicode):
-        obj = obj.encode(db_codec)
-    if fieldtype == 'blob':
-        obj = base64.b64encode(str(obj))
-        if dbname == 'db2':
-            return "BLOB('%s')" % obj
-        if dbname == 'oracle':
-            return ":CLOB('%s')" % obj
-    # FIXME: remove comment lines?
-    #elif fieldtype == 'text':
-    #    if dbname == 'oracle':
-    #        return ":CLOB('%s')" % obj.replace("'","?") ### FIX THIS
-    elif fieldtype == 'date':
-        # FIXME: remove comment lines?
-        # if dbname=='postgres': return "'%s'::bytea" % obj.replace("'","''")
-
-        if isinstance(obj, (datetime.date, datetime.datetime)):
-            obj = obj.isoformat()[:10]
-        else:
-            obj = str(obj)
-        if dbname in ['oracle', 'informix']:
-            return "to_date('%s','yyyy-mm-dd')" % obj
-    elif fieldtype == 'datetime':
-        if isinstance(obj, datetime.datetime):
-            if dbname == 'db2':
-                return "'%s'" % obj.isoformat()[:19].replace('T','-').replace(':','.')
-            else:
-                obj = obj.isoformat()[:19].replace('T',' ')
-        elif isinstance(obj, datetime.date):
-            if dbname == 'db2':
-                return "'%s'" % obj.isoformat()[:10]+'-00.00.00'
-            else:
-                obj = obj.isoformat()[:10]+' 00:00:00'
-        else:
-            obj = str(obj)
-        if dbname in ['oracle', 'informix']:
-            return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
-    elif fieldtype == 'time':
-        if isinstance(obj, datetime.time):
-            obj = obj.isoformat()[:10]
-        else:
-            obj = str(obj)
-    if not isinstance(obj,str):
-        obj = str(obj)
-    try:
-        obj.decode(db_codec)
-    except:
-        obj = obj.decode('latin1').encode(db_codec)
-    if dbname == 'mssql2' and (fieldtype == 'string' or fieldtype == 'text'):
-        return "N'%s'" % obj.replace("'", "''")
-    return "'%s'" % obj.replace("'", "''")
-
 
 def cleanup(text):
     """
@@ -567,34 +1141,6 @@ def cleanup(text):
             'only [0-9a-zA-Z_] allowed in table and field names, received %s' \
             % text
     return text
-
-
-def sqlite3_web2py_extract(lookup, s):
-    table = {
-        'year': (0, 4),
-        'month': (5, 7),
-        'day': (8, 10),
-        'hour': (11, 13),
-        'minute': (14, 16),
-        'second': (17, 19),
-        }
-    try:
-        (i, j) = table[lookup]
-        return int(s[i:j])
-    except:
-        return None
-
-def oracle_fix_execute(command, execute):
-    args = []
-    i = 1
-    while True:
-        m = oracle_fix.match(command)
-        if not m:
-            break
-        command = command[:m.start('clob')] + str(i) + command[m.end('clob'):]
-        args.append(m.group('clob')[6:-2].replace("''", "'"))
-        i += 1
-    return execute(command[:-1], args)
 
 
 def autofields(db, text):
@@ -619,7 +1165,7 @@ def autofields(db, text):
             (unique, items) = (True, items[:-1])
         if items[-1] in ['text', 'date', 'datetime', 'time', 'blob', 'upload', 'password',
                          'integer', 'double', 'boolean', 'string']:
-            (items, t) = (item[:-1], items[-1])
+            (items, t) = (items[:-1], items[-1])
         elif items[-1] in db.tables:
             t = 'reference %s' % items[-1]
             requires = validators.IS_IN_DB(db, '%s.%s' % (items[-1], db.tables[items[-1]].id.name), keys)
@@ -693,14 +1239,18 @@ class Row(dict):
 
 def Row_unpickler(data):
     return Row(marshal.loads(data))
+
 def Row_pickler(data):
     return Row_unpickler, (marshal.dumps(data.as_dict()),)
+
 copy_reg.pickle(Row, Row_pickler, Row_unpickler)
+
 
 class SQLCallableList(list):
 
     def __call__(self):
         return copy.copy(self)
+
 
 class SQLDB(dict):
 
@@ -712,67 +1262,27 @@ class SQLDB(dict):
        db = SQLDB('sqlite://test.db')
        db.define_table('tablename', Field('fieldname1'),
                                    Field('fieldname2'))
-
     """
 
     # ## this allows gluon to comunite a folder for this thread
 
-    _folders = {}
-    _connection_pools = {}
-    _instances = {}
-
     @staticmethod
     def _set_thread_folder(folder):
-        sql_locker.acquire()
-        SQLDB._folders[thread.get_ident()] = folder
-        sql_locker.release()
-
-    # ## this allows gluon to commit/rollback all dbs in this thread
-
-    @staticmethod
-    def close_all_instances(action):
-        """ to close cleanly databases in a multithreaded environment """
-
-        sql_locker.acquire()
-        pid = thread.get_ident()
-        if pid in SQLDB._folders:
-            del SQLDB._folders[pid]
-        if pid in SQLDB._instances:
-            instances = SQLDB._instances[pid]
-            while instances:
-                instance = instances.pop()
-                sql_locker.release()
-                action(instance)
-                sql_locker.acquire()
-
-                # ## if you want pools, recycle this connection
-                really = True
-                if instance._pool_size:
-                    pool = SQLDB._connection_pools[instance._uri]
-                    if len(pool) < instance._pool_size:
-                        pool.append(instance._connection)
-                        really = False
-                if really:
-                    sql_locker.release()
-                    instance._connection.close()
-                    sql_locker.acquire()
-            del SQLDB._instances[pid]
-        sql_locker.release()
-        return
+        BaseAdapter.set_thread_folder(folder)
 
     @staticmethod
     def distributed_transaction_begin(*instances):
         if not instances:
             return
+        thread_key = '%s.%i' % (socket.gethostname(), thread.get_ident())
+        keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         instances = enumerate(instances)
         for (i, db) in instances:
-            if db._dbname == 'mysql':
-                db._execute('XA START;')
-            elif db._dbname == 'postgres':
-                pass
-            else:
+            if not db._adapter.support_distributed_transaction():
                 raise SyntaxError, \
-                    'distributed transaction only supported by postgresql'
+                    'distributed transaction not suported by %s' % db._dbname
+        for (i, db) in instances:
+            db._adapter.distributed_transaction_begin(keys[i])
 
     @staticmethod
     def distributed_transaction_commit(*instances):
@@ -782,435 +1292,32 @@ class SQLDB(dict):
         thread_key = '%s.%i' % (socket.gethostname(), thread.get_ident())
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         for (i, db) in instances:
-            if not db._dbname in ['postgres', 'mysql', 'firebird']:
+            if not db._adapter.support_distributed_transaction():
                 raise SyntaxError, \
-                    'distributed transaction only supported by postgresql, firebir'
+                    'distributed transaction not suported by %s' % db._dbanme
         try:
             for (i, db) in instances:
-                if db._dbname == 'postgres':
-                    db._execute("PREPARE TRANSACTION '%s';" % keys[i])
-                elif db._dbname == 'mysql':
-                    db._execute("XA END;")
-                    db._execute("XA PREPARE;")
-                elif db._dbname == 'firebird':
-                    db.prepare()
+                db._adapter.prepare(keys[i])
         except:
             for (i, db) in instances:
-                if db._dbname == 'postgres':
-                    db._execute("ROLLBACK PREPARED '%s';" % keys[i])
-                elif db._dbname == 'mysql':
-                    db._execute("XA ROLLBACK;")
-                elif db._dbname == 'firebird':
-                    db.rollback()
+                db._adapter.rollback_prepared(keys[i])
             raise Exception, 'failure to commit distributed transaction'
         else:
             for (i, db) in instances:
-                if db._dbname == 'postgres':
-                    db._execute("COMMIT PREPARED '%s';" % keys[i])
-                elif db._dbname == 'mysql':
-                    db._execute("XA COMMIT;")
-                elif db._dbname == 'firebird':
-                    db.commit()
+                db._adapter.commit_prepared(keys[i])
         return
 
-    def _pool_connection(self, f):
-
-        # ## deal with particular case first:
-
-        if not self._pool_size:
-            self._connection = f()
-            return
-        uri = self._uri
-        sql_locker.acquire()
-        if not uri in self._connection_pools:
-            self._connection_pools[uri] = []
-        if self._connection_pools[uri]:
-            self._connection = self._connection_pools[uri].pop()
-            sql_locker.release()
-        else:
-            sql_locker.release()
-            self._connection = f()
-
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8'):
-        self._uri = str(uri) # NOTE: assuming it is in utf8!!!
+        self._uri = str(uri) # NOTE: assuming it is in utf8!!!        
         self._pool_size = pool_size
         self._db_codec = db_codec
+        if uri and uri.find(':')>=0:
+            self._dbname = uri.split(':')[0]
+            self._adapter = ADAPTERS[self._dbname](uri,pool_size,folder,db_codec)
+        else:
+            self._adapter = BaseAdapter(uri)
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
-        pid = thread.get_ident()
-
-        # Check if there is a folder for this thread else use ''
-
-        if folder:
-            self._folder = folder
-        else:
-            sql_locker.acquire()
-            if pid in self._folders:
-                self._folder = self._folders[pid]
-            else:
-                self._folder = self._folders[pid] = ''
-            sql_locker.release()
-
-        # Creating the folder if it does not exist
-        if self._folder:
-            if not os.path.exists(self._folder):
-                os.mkdir(self._folder)
-
-        # Now connect to database
-
-        if self._uri[:14] == 'sqlite:memory:':
-            self._dbname = 'sqlite'
-            self._pool_connection(lambda: \
-                    sqlite3.Connection(':memory:',
-                                       check_same_thread=False))
-            self._connection.create_function('web2py_extract', 2,
-                    sqlite3_web2py_extract)
-            # self._connection.row_factory = sqlite3.Row
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif not is_jdbc and self._uri[:9] == 'sqlite://':
-            self._dbname = 'sqlite'
-            path_encoding = sys.getfilesystemencoding() or \
-                locale.getdefaultlocale()[1]
-            if uri[9] != '/':
-                dbpath = os.path.join(
-                  self._folder.decode(path_encoding).encode('utf8'),
-                  uri[9:])
-            else:
-                dbpath = uri[9:]
-            self._pool_connection(lambda : sqlite3.Connection(dbpath,
-                                           check_same_thread=False))
-            self._connection.create_function('web2py_extract', 2,
-                                             sqlite3_web2py_extract)
-            # self._connection.row_factory = sqlite3.Row
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif self._uri[:8] == 'mysql://':
-            self._dbname = 'mysql'
-            m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$'
-                ).match(self._uri[8:])
-            if not m:
-                raise SyntaxError, \
-                    "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
-            if not user:
-                raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
-            if not passwd:
-                passwd = ''
-            host = m.group('host')
-            if not host:
-                raise SyntaxError, 'Host name required'
-            db = m.group('db')
-            if not db:
-                raise SyntaxError, 'Database name required'
-            port = m.group('port') or '3306'
-
-            charset = m.group('charset') or 'utf8'
-
-            self._pool_connection(lambda : MySQLdb.Connection(
-                    db=db,
-                    user=user,
-                    passwd=passwd,
-                    host=host,
-                    port=int(port),
-                    charset=charset,
-                    ))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-            self._execute('SET FOREIGN_KEY_CHECKS=1;')
-            self._execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
-        elif not is_jdbc and self._uri[:11] == 'postgres://':
-            self._dbname = 'postgres'
-            m = \
-                re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$'
-                           ).match(self._uri[11:])
-            if not m:
-                raise SyntaxError, "Invalid URI string in SQLDB"
-            user = m.group('user')
-            if not user:
-                raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
-            if not passwd:
-                passwd = ''
-            host = m.group('host')
-            if not host:
-                raise SyntaxError, 'Host name required'
-            db = m.group('db')
-            if not db:
-                raise SyntaxError, 'Database name required'
-            port = m.group('port') or '5432'
-
-            msg = \
-                "dbname='%s' user='%s' host='%s' port=%s password='%s'"\
-                 % (db, user, host, port, passwd)
-            self._pool_connection(lambda : psycopg2.connect(msg))
-            self._connection.set_client_encoding('UTF8')
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-            query = 'BEGIN;'
-            self['_lastsql'] = query
-            self._execute(query)
-            self._execute("SET CLIENT_ENCODING TO 'UNICODE';")  # ## not completely sure but should work
-        elif self._uri[:9] == 'oracle://':
-            self._dbname = 'oracle'
-            self._pool_connection(lambda : \
-                                  cx_Oracle.connect(self._uri[9:]))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda a: \
-                oracle_fix_execute(a,self._cursor.execute)
-            self._execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
-            self._execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
-        elif self._uri[:8] == 'mssql://' or self._uri[:9] == 'mssql2://':
-
-            # ## read: http://bytes.com/groups/python/460325-cx_oracle-utf8
-
-            if self._uri[:8] == 'mssql://':
-                skip = 8
-                self._dbname = 'mssql'
-            elif self._uri[:9] == 'mssql2://':
-                skip = 9
-                self._dbname = 'mssql2'
-            if '@' not in self._uri[skip:]:
-                try:
-                    m = re.compile('^(?P<dsn>.+)$'
-                                   ).match(self._uri[skip:])
-                    if not m:
-                        raise SyntaxError, \
-                            'Parsing uri string(%s) has no result' % (self._uri[skip:])
-                    dsn = m.group('dsn')
-                    if not dsn:
-                        raise SyntaxError, 'DSN required'
-                except SyntaxError, e:
-                    logging.error('NdGpatch error')
-                    raise e
-                cnxn = 'DSN=%s' % dsn
-            else:
-                m = \
-                    re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?(?P<urlargs>.*))?$'
-                               ).match(self._uri[skip:])
-                if not m:
-                    raise SyntaxError, \
-                        "Invalid URI string in SQLDB: %s" % self._uri
-                user = m.group('user')
-                if not user:
-                    raise SyntaxError, 'User required'
-                passwd = m.group('passwd')
-                if not passwd:
-                    passwd = ''
-                host = m.group('host')
-                if not host:
-                    raise SyntaxError, 'Host name required'
-                db = m.group('db')
-                if not db:
-                    raise SyntaxError, 'Database name required'
-                port = m.group('port') or '1433'
-
-                # Parse the optional url name-value arg pairs after the '?'
-                # (in the form of arg1=value1&arg2=value2&...)
-                # Default values (drivers like FreeTDS insist on uppercase parameter keys)
-                argsdict = { 'DRIVER':'{SQL Server}' }
-
-                urlargs = m.group('urlargs') or ''
-                argpattern = re.compile('(?P<argkey>[^=]+)=(?P<argvalue>[^&]*)')
-                for argmatch in argpattern.finditer(urlargs):
-                    argsdict[str(argmatch.group('argkey')).upper()] = argmatch.group('argvalue')
-                urlargs = ';'.join(['%s=%s' % (ak, av) for (ak, av) in argsdict.items()])
-
-                cnxn = \
-                    'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
-                    % (host, port, db, user, passwd, urlargs)
-            self._pool_connection(lambda : pyodbc.connect(cnxn))
-            self._cursor = self._connection.cursor()
-            if self._uri[:8] == 'mssql://':
-                self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-            elif self._uri[:9] == 'mssql2://':
-                self._execute = lambda a: \
-                    self._cursor.execute(unicode(a, 'utf8'))
-        elif self._uri[:11] == 'firebird://':
-            self._dbname = 'firebird'
-            m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+?)(\?set_encoding=(?P<charset>\w+))?$').match(self._uri[11:])
-            if not m:
-                raise SyntaxError, \
-                    "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
-            if not user:
-                raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
-            if not passwd:
-                passwd = ''
-            host = m.group('host')
-            if not host:
-                raise SyntaxError, 'Host name required'
-            db = m.group('db')
-            if not db:
-                raise SyntaxError, 'Database name required'
-            port = m.group('port') or '3050'
-
-            charset = m.group('charset') or 'UTF8'
-
-            self._pool_connection(lambda : \
-                    kinterbasdb.connect(dsn='%s:%s' % (host, db),
-                                        user=user,
-                                        password=passwd,
-                                        charset=charset))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif self._uri[:20] == 'firebird_embedded://':
-            self._dbname = 'firebird'
-            m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<path>[^\?]+)(\?set_encoding=(?P<charset>\w+))?$').match(self._uri[20:])
-            if not m:
-                raise SyntaxError, \
-                    "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
-            if not user:
-                raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
-            if not passwd:
-                passwd = ''
-            pathdb = m.group('path')
-            if not pathdb:
-                raise SyntaxError, 'Path required'
-            charset = m.group('charset')
-            if not charset:
-                charset = 'UTF8'
-            self._pool_connection(lambda : \
-                    kinterbasdb.connect(host='',
-                                        database=pathdb,
-                                        user=user,
-                                        password=passwd,
-                                        charset=charset))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif self._uri[:11] == 'informix://':
-            self._dbname = 'informix'
-            m = \
-                re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$'
-                           ).match(self._uri[11:])
-            if not m:
-                raise SyntaxError, \
-                    "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
-            if not user:
-                raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
-            if not passwd:
-                passwd = ''
-            host = m.group('host')
-            if not host:
-                raise SyntaxError, 'Host name required'
-            db = m.group('db')
-            if not db:
-                raise SyntaxError, 'Database name required'
-            port = m.group('port') or '3050'
-
-            self._pool_connection(lambda : informixdb.connect('%s@%s'
-                                   % (db, host), user=user,
-                                  password=passwd, autocommit=False))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda a: self._cursor.execute(a[:-1])
-        elif self._uri[:4] == 'db2:':
-            self._dbname, cnxn = self._uri.split(':', 1)
-            self._pool_connection(lambda : pyodbc.connect(cnxn))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda a: self._cursor.execute(a[:-1])
-        elif is_jdbc and self._uri[:9] == 'sqlite://':
-            self._dbname='sqlite'
-            if uri[9] != '/':
-                dbpath = os.path.join(self._folder, uri[14:])
-            else:
-                dbpath = uri[14:]
-            self._pool_connection(lambda dbpath=dbpath: zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath)))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda a: self._cursor.execute(a[:-1])
-        elif is_jdbc and self._uri[:11] == 'postgres://':
-            self._dbname = 'postgres'
-            m = \
-                re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$'
-                           ).match(self._uri[11:])
-            if not m:
-                raise SyntaxError, "Invalid URI string in SQLDB"
-            user = m.group('user')
-            if not user:
-                raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
-            if not passwd:
-                passwd = ''
-            host = m.group('host')
-            if not host:
-                raise SyntaxError, 'Host name required'
-            db = m.group('db')
-            if not db:
-                raise SyntaxError, 'Database name required'
-            port = m.group('port') or '5432'
-
-            msg = \
-                "dbname='%s' user='%s' host='%s' port=%s password='%s'"\
-                 % (db, user, host, port, passwd)
-            params = ('jdbc:postgresql://%s:%s/%s' % (host, port, db),
-                      user,passwd)
-            self._pool_connection(lambda params=params:zxJDBC.connect(*params))
-            self._connection.set_client_encoding('UTF8')
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-            query = 'BEGIN;'
-            self['_lastsql'] = query
-            self._execute(query)
-            self._execute("SET CLIENT_ENCODING TO 'UNICODE';")  # ## not completely sure but should work
-        elif self._uri.startswith('ingres:'):
-            """Currently only one URI form supported:
-
-                    ingres://LOCAL_DATABASE_NAME
-
-            NOTE may also use: "ingres:LOCAL_DATABASE_NAME"
-            and avoid the slashes "/".
-            """
-            self._dbname, connstr = self._uri.split(':', 1)
-            # Simple URI processing
-            connstr=connstr.lstrip()
-            while connstr.startswith('/'):
-                connstr = connstr[1:]
-
-            database_name=connstr # Assume only (local) dbname is passed in
-            vnode='(local)'
-            servertype='ingres'
-            trace=(0, None) # No tracing
-            self._pool_connection(lambda : \
-                                    ingresdbi.connect(
-                                        database=database_name,
-                                        vnode=vnode,
-                                        servertype=servertype,
-                                        trace=trace))
-            self._cursor = self._connection.cursor()
-            self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif self._uri == 'None':
-
-
-            class Dummy:
-
-                lastrowid = 1
-
-                def __getattr__(self, value):
-                    return lambda *a, **b: ''
-
-
-            self._dbname = 'sqlite'
-            self._connection = Dummy()
-            self._cursor = Dummy()
-            self._execute = lambda a: []
-        else:
-            raise SyntaxError, \
-                'database type not supported: %s' % self._uri
-        self._translator = SQL_DIALECTS[self._dbname]
-
-        # ## register this instance of SQLDB
-
-        sql_locker.acquire()
-        if not pid in self._instances:
-            self._instances[pid] = []
-        self._instances[pid].append(self)
-        sql_locker.release()
-        pass
 
     def define_table(
         self,
@@ -1244,7 +1351,7 @@ class SQLDB(dict):
         if migrate:
             sql_locker.acquire()
             try:
-                query = t._create(migrate=migrate, fake_migrate=fake_migrate)
+                t._create(migrate=migrate, fake_migrate=fake_migrate)
             finally:
                 sql_locker.release()
         else:
@@ -1278,14 +1385,14 @@ class SQLDB(dict):
     def __call__(self, where=None):
         return Set(self, where)
 
-    def prepare(self):
-        self._connection.prepare()
+    def prepare(self, key):
+        self._adapter.prepare(key)
 
     def commit(self):
-        self._connection.commit()
+        self._adapter.commit()
 
     def rollback(self):
-        self._connection.rollback()
+        self._adapter.rollback()
 
     def executesql(self, query, placeholders=None, as_dict=False):
         """
@@ -1311,9 +1418,9 @@ class SQLDB(dict):
         self['_lastsql'] = query
         if placeholders:
             self['_lastsql'] +="  with "+str(placeholders)
-            self._execute(query, placeholders)
+            self._adapter.execute(query, placeholders)
         else:
-            self._execute(query)
+            self._adapter.execute(query)
         if as_dict:
             if not hasattr(self._cursor,'description'):
                 raise RuntimeError, "database does not support executesql(...,as_dict=True)"
@@ -1359,44 +1466,6 @@ class SQLDB(dict):
                 tablename = line[6:]
                 self[tablename].import_from_csv_file(ifile, id_map, null, unique, *args, **kwargs)
 
-    @staticmethod
-    def __unpickle__(state):
-        logging.warning('unpickling SQLDB objects is experimental')
-        db = SQLDB(state['uri'])
-        for (k, d) in state['tables']:
-            db.define_table(k, *[Field(**i) for i in d],
-                            **dict(migrate=False))
-        return db
-
-    def __pickle__(db):
-        logging.warning('pickling SQLDB objects is experimental')
-        tables = []
-        for k in db.values():
-            if not isinstance(k, Table):
-                continue
-            fields = []
-            for f in k.values():
-                if not isinstance(f, Field) or f.name == 'id':
-                    continue
-                fields.append(dict(
-                        fieldname=f.name,
-                        type=f.type,
-                        length=f.length,
-                        default=f.default,
-                        required=f.required,
-                        requires=f.requires,
-                        ondelete=f.ondelete,
-                        notnull=f.notnull,
-                        unique=f.notnull,
-                        uploadfield=f.uploadfield,
-                        uploadfolder=f.uploadfolder,
-                        ))
-            tables.append((k._tablename, fields))
-        return (unpickle_SQLDB, (dict(uri=db._uri, tables=tables), ))
-
-
-# copy_reg.pickle(SQLDB, SQLDB.__pickle__, SQLDB.__unpickle__)
-
 
 class SQLALL(object):
     """
@@ -1410,9 +1479,7 @@ class SQLALL(object):
         self.table = table
 
     def __str__(self):
-        s = ['%s.%s' % (self.table._tablename, name) for name in
-             self.table.fields]
-        return ', '.join(s)
+        return ', '.join([str(field) for field in self.table])
 
 
 class SQLJoin(object):
@@ -1463,6 +1530,7 @@ class Reference(int):
 
 def Reference_unpickler(data):
     return marshal.loads(data)
+
 def Reference_pickler(data):
     try:
         marshal_dump = marshal.dumps(int(data))
@@ -1471,6 +1539,7 @@ def Reference_pickler(data):
         return (Reference_unpickler, (marshal_dump,))
 
 copy_reg.pickle(Reference, Reference_pickler, Reference_unpickler)
+
 
 class Table(dict):
 
@@ -1618,10 +1687,8 @@ class Table(dict):
                 ftype = field.type.native or field.type.type
             elif field.type[:10] == 'reference ':
                 referenced = field.type[10:].strip()
-                constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
-                if self._db._dbname == 'oracle' and len(constraint_name)>30:
-                    constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
-                ftype = self._db._translator[field.type[:9]]\
+                constraint_name = self._db._adapter.contraint_name(self._tablename, field.name)
+                ftype = self._db._adapter.types[field.type[:9]]\
                      % dict(table_name=self._tablename,
                             field_name=field.name,
                             constraint_name=constraint_name,
@@ -1629,13 +1696,13 @@ class Table(dict):
                             on_delete_action=field.ondelete)
             elif field.type[:7] == 'decimal':
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
-                ftype = self._db._translator[field.type[:7]] % \
+                ftype = self._db._adapter.types[field.type[:7]] % \
                     dict(precision=precision,scale=scale)
-            elif not field.type in self._db._translator:
+            elif not field.type in self._db._adapter.types:
                 raise SyntaxError, 'Field: unknown field type: %s for %s' % \
                     (field.type, field.name)
             else:
-                ftype = self._db._translator[field.type]\
+                ftype = self._db._adapter.types[field.type]\
                      % dict(length=field.length)
             if not field.type[:10] in ['id', 'reference ']:
                 if field.notnull:
@@ -1647,10 +1714,9 @@ class Table(dict):
             sql_fields[field.name] = ftype
 
             if field.default:
+                default = self._db._adapter.represent(field.default, field.type)
                 sql_fields_aux[field.name] = ftype.replace('NOT NULL',
-                        self._db._translator['notnull']
-                         % dict(default=sql_represent(field.default,
-                        field.type, self._db._dbname, self._db._db_codec)))
+                        self._db._adapter.NOT_NULL(default))
             else:
                 sql_fields_aux[field.name] = ftype
 
@@ -1672,7 +1738,7 @@ class Table(dict):
             dbpath = self._db._uri[9:self._db._uri.rfind('/')]\
                 .decode('utf8').encode(path_encoding)
         else:
-            dbpath = self._db._folder
+            dbpath = self._db._adapter.folder
         if not migrate:
             return query
         elif self._db._uri[:14] == 'sqlite:memory:':
@@ -1692,32 +1758,9 @@ class Table(dict):
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
                 logfile.write(query + '\n')
-            self._db['_lastsql'] = query
-            if self._db._dbname == 'ingres':
-                # pre-create table auto inc code (if needed)
-                tmp_seqname=gen_ingres_sequencename(self._tablename)
-                query=query.replace(INGRES_SEQNAME, tmp_seqname)
-                self._db._execute('create sequence %s' % tmp_seqname)
             if not fake_migrate:
-                self._db._execute(query)
-                if self._db._dbname in ['oracle']:
-                    t = self._tablename
-                    self._db._execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
-                                   % t)
-                    self._db._execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
-                                   % (t, t, t))
-                elif self._db._dbname == 'firebird':
-                    t = self._tablename
-                    self._db._execute('create generator GENID_%s;' % t)
-                    self._db._execute('set generator GENID_%s to 0;' % t)
-                    self._db._execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
-''' % (t, t, t))
-                elif self._db._dbname == 'ingres':
-                    # post create table auto inc code (if needed)
-                    # modify table to btree for performance....
-                    # Older Ingres releases could use rule/trigger like Oracle above.
-                    modify_tbl_sql='modify %s to btree unique on %s' % (self._tablename, 'id') # hard coded id column
-                    self._db._execute(modify_tbl_sql)
+                self._db['_lastsql'] = query
+                self._db._adapter.create_sequence_and_triggers(query,self)
                 self._db.commit()
             if self._dbt:
                 tfile = open(self._dbt, 'w')
@@ -1755,10 +1798,7 @@ class Table(dict):
         for key in sql_fields_old:
             if not key in keys:
                 keys.append(key)
-        if self._db._dbname == 'mssql':
-            new_add = '; ALTER TABLE %s ADD ' % self._tablename
-        else:
-            new_add = ', ADD '
+        new_add = self._db._adapter.concat_add(self)
         for key in keys:
             if not key in sql_fields_old:
                 query = ['ALTER TABLE %s ADD %s %s;' % \
@@ -1793,8 +1833,8 @@ class Table(dict):
                 for sub_query in query:
                     logfile.write(sub_query + '\n')
                     if not fake_migrate:
-                        self._db._execute(sub_query)
-                        if self._db._dbname in ['mysql', 'oracle']:
+                        self._db._adapter.execute(sub_query)
+                        if self._db._adapter.commit_on_alter_table():
                             self._db.commit()
                             logfile.write('success!\n')
                     else:
@@ -1809,24 +1849,8 @@ class Table(dict):
         portalocker.unlock(tfile)
         tfile.close()
 
-    def create(self):
-        """nothing to do; here for backward compatibility"""
-
-        pass
-
-    def _drop(self, mode = None):
-        t = self._tablename
-        c = mode or ''
-        if self._db._dbname in ['oracle']:
-            return ['DROP TABLE %s %s;' % (t, c), 'DROP SEQUENCE %s_sequence;'
-                     % t]
-        elif self._db._dbname == 'firebird':
-            return ['DROP TABLE %s %s;' % (t, c), 'DROP GENERATOR GENID_%s;'
-                     % t]
-        elif self._db._dbname == 'mysql':
-            # breaks db integrity but without this mysql does not drop table
-            return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % t,'SET FOREIGN_KEY_CHECKS=1;']
-        return ['DROP TABLE %s;' % t]
+    def _drop(self, mode = ''):
+        return self._db._adapter.DROP(self, mode = '')
 
     def drop(self, mode = None):
         if self._dbt:
@@ -1836,7 +1860,7 @@ class Table(dict):
         for query in queries:
             if self._dbt:
                 logfile.write(query + '\n')
-            self._db._execute(query)
+            self._db._adapter.execute(query)
         self._db.commit()
         del self._db[self._tablename]
         del self._db.tables[self._db.tables.index(self._tablename)]
@@ -1846,76 +1870,31 @@ class Table(dict):
             logfile.write('success!\n')
 
     def _insert(self, **fields):
-        (fs, vs) = ([], [])
-        invalid_fieldnames = [key for key in fields if not key in self.fields]
-        if invalid_fieldnames:
-            raise SyntaxError, 'invalid field names: %s' \
-                % repr(invalid_fieldnames)
-        for fieldname in self.fields:
-            if fieldname == 'id':
-                continue
-            field = self[fieldname]
-            (ft, fd) = (field.type, field._db._dbname)
-            if fieldname in fields:
-                fs.append(fieldname)
-                value = fields[fieldname]
-                if hasattr(value,'id'):
-                    value = value.id
-                elif ft == 'string' and isinstance(value,(str,unicode)):
-                    value = value[:field.length]
-                vs.append(sql_represent(value, ft, fd, self._db._db_codec))
-            elif field.default != None:
-                fs.append(fieldname)
-                vs.append(sql_represent(field.default, ft, fd, self._db._db_codec))
-            elif field.required is True:
+        new_fields = []
+        for fieldname in fields:
+            if not fieldname in self.fields:
+                raise SyntaxError, 'Field %s does not belong to the table' % fieldname
+        for field in self:
+            if field.name in fields:
+                new_fields.append((field.name,fields[field.name],field.type))
+            elif field.default:
+                new_fields.append((field.name,field.default,field.type))
+            elif field.required:
                 raise SyntaxError,'Table: missing required field: %s'%field
-        sql_f = ', '.join(fs)
-        sql_v = ', '.join(vs)
-        sql_t = self._tablename
-        return 'INSERT INTO %s(%s) VALUES (%s);' % (sql_t, sql_f, sql_v)
+        return self._db._adapter.INSERT(self,new_fields)
+
 
     def insert(self, **fields):
         query = self._insert(**fields)
         self._db['_lastsql'] = query
-        self._db._execute(query)
-        if self._db._dbname == 'sqlite':
-            id = self._db._cursor.lastrowid
-        elif self._db._dbname == 'postgres':
-            self._db._execute("select currval('%s_id_Seq')"
-                               % self._tablename)
-            id = int(self._db._cursor.fetchone()[0])
-        elif self._db._dbname == 'mysql':
-            self._db._execute('select last_insert_id();')
-            id = int(self._db._cursor.fetchone()[0])
-        elif self._db._dbname in ['oracle']:
-            t = self._tablename
-            self._db._execute('SELECT %s_sequence.currval FROM dual;'
-                               % t)
-            id = int(self._db._cursor.fetchone()[0])
-        elif self._db._dbname == 'mssql' or self._db._dbname\
-             == 'mssql2':
-            self._db._execute('SELECT @@IDENTITY;')
-            id = int(self._db._cursor.fetchone()[0])
-        elif self._db._dbname == 'firebird':
-            self._db._execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database'
-                               % self._tablename)
-            id = int(self._db._cursor.fetchone()[0])
-        elif self._db._dbname == 'informix':
-            id = self._db._cursor.sqlerrd[1]
-        elif self._db._dbname == 'db2':
-            self._db._execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;'%self._tablename)
-            id = int(self._db._cursor.fetchone()[0])
-        elif self._db._dbname == 'ingres':
-            tmp_seqname=gen_ingres_sequencename(self._tablename)
-            self._db._execute('select current value for %s' % tmp_seqname)
-            id = int(self._db._cursor.fetchone()[0]) # don't really need int type cast here...
-        else:
-            id = None
+        self._db._adapter.execute(query)
+        id = self._db._adapter.lastrowid(self._tablename)
         if not isinstance(id,int):
             return id
         rid = Reference(id)
         (rid._table, rid._record) = (self, None)
         return rid
+        
 
     def import_from_csv_file(
         self,
@@ -2001,7 +1980,7 @@ class Table(dict):
         for query in queries:
             if self._dbt:
                 logfile.write(query + '\n')
-            self._db._execute(query)
+            self._db._adapter.execute(query)
         self._db.commit()
         if self._dbt:
             logfile.write('success!\n')
@@ -2164,7 +2143,7 @@ class KeyedTable(Table):
     def __setitem__(self, key, value):
         # ??? handle special case where primarykey has all fields ???
         if isinstance(key, dict) and isinstance(value, dict):
-            if setsSet(key.keys())==setsSet(self._primarykey):
+            if set(key.keys()) == set(self._primarykey):
                 value = self._filter_fields(value)
                 kv = {}
                 kv.update(value)
@@ -2174,14 +2153,12 @@ class KeyedTable(Table):
                     self._db(query).update(**self._filter_fields(value))
             else:
                 raise SyntaxError,\
-                'key must have all fields from primary key: %s'%\
-                (self._primarykey)
+                    'key must have all fields from primary key: %s'%\
+                    (self._primarykey)
         else:
             if isinstance(key, dict):
                 raise SyntaxError,\
-                'value must be a dictionary: %s'%value
-#                 'key must be a dictionary with primary key fields: %s'%\
-#                 self._primarykey
+                    'value must be a dictionary: %s' % value
             dict.__setitem__(self, str(key), value)
 
     # KeyedTable
@@ -2217,15 +2194,13 @@ class KeyedTable(Table):
                 ftype = field.type.native or field.type.type
             elif field.type[:10] == 'reference ':
                 ref = field.type[10:].strip()
-                constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
-                if self._db._dbname == 'oracle' and len(constraint_name)>30:
-                    constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
+                constraint_name = self._db._adapter.contraint_name(self,field.name)
                 rtablename,rfieldname = ref.split('.')
                 rtable = self._db[rtablename]
                 rfield = rtable[rfieldname]
                 # must be PK reference or unique
                 if rfieldname in rtable._primarykey or rfield.unique:
-                    ftype = self._db._translator[rfield.type[:9]] %dict(length=rfield.length)
+                    ftype = self._db._adapter.types[rfield.type[:9]] %dict(length=rfield.length)
                     # multicolumn primary key reference?
                     if not rfield.unique and len(rtable._primarykey)>1 :
                         # then it has to be a table level FK
@@ -2234,7 +2209,7 @@ class KeyedTable(Table):
                         TFK[rtablename][rfieldname] = field.name
                     else:
                         ftype = ftype + \
-                                self._db._translator['reference FK'] %dict(\
+                                self._db._adapter.types['reference FK'] %dict(\
                                 constraint_name=constraint_name,
                                 table_name=self._tablename,
                                 field_name=field.name,
@@ -2244,11 +2219,11 @@ class KeyedTable(Table):
                     raise SyntaxError,\
                     'primary key or unique field required in reference %s' %ref
 
-            elif not field.type in self._db._translator:
+            elif not field.type in self._db._adapter.types:
                 raise SyntaxError, 'Field: unknown field type: %s for %s' % \
                     (field.type, field.name)
             else:
-                ftype = self._db._translator[field.type]\
+                ftype = self._db._adapter.types[field.type]\
                      % dict(length=field.length)
             if not field.type[:10] in ['id', 'reference ']:
                 if field.notnull:
@@ -2260,10 +2235,9 @@ class KeyedTable(Table):
             sql_fields[field.name] = ftype
 
             if field.default:
+                default = self._db._adapter.represent(field.default,field.type)
                 sql_fields_aux[field.name] = ftype.replace('NOT NULL',
-                        self._db._translator['notnull']
-                         % dict(default=sql_represent(field.default,
-                        field.type, self._db._dbname, self._db._db_codec)))
+                    self._db._adapter.NOT_NULL(default))
             else:
                 sql_fields_aux[field.name] = ftype
 
@@ -2281,7 +2255,7 @@ class KeyedTable(Table):
             pkeys = self._db[rtablename]._primarykey
             fkeys = [ rfields[k] for k in pkeys ]
             fields = fields + ',\n    ' + \
-                     self._db._translator['reference TFK'] %\
+                     self._db._adapter.types['reference TFK'] %\
                      dict(table_name=self._tablename,
                      field_name=', '.join(fkeys),
                      foreign_table=rtablename,
@@ -2290,7 +2264,7 @@ class KeyedTable(Table):
 
         if self._primarykey:
             query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
-               (self._tablename, fields, self._db._translator['primarykey']%', '.join(self._primarykey),other)
+               (self._tablename, fields, self._db._adapter.PRIMARY_KEY(', '.join(self._primarykey),other))
         else:
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
                (self._tablename, fields, other)
@@ -2300,7 +2274,7 @@ class KeyedTable(Table):
             dbpath = self._db._uri[9:self._db._uri.rfind('/')]\
                 .decode('utf8').encode(path_encoding)
         else:
-            dbpath = self._db._folder
+            dbpath = self._db._adapter.folder
         if not migrate:
             return query
         elif self._db._uri[:14] == 'sqlite:memory:':
@@ -2321,29 +2295,26 @@ class KeyedTable(Table):
                                % datetime.datetime.today().isoformat())
                 logfile.write(query + '\n')
             self._db['_lastsql'] = query
-            if self._db._dbname == 'ingres':
-                # pre-create table auto inc code (if needed)
-                # keyed table already handled
-                pass
             if not fake_migrate:
-                self._db._execute(query)
+                self._db._adapter.execute(query)
+                ### <<<<<<<<<<<<< NEEDS WORK !!!
                 if self._db._dbname in ['oracle']:
                     t = self._tablename
-                    self._db._execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
+                    self._db._adapter.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
                                       % t)
-                    self._db._execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
+                    self._db._adapter.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
                                       % (t, t, t))
                 elif self._db._dbname == 'firebird':
                     t = self._tablename
-                    self._db._execute('create generator GENID_%s;' % t)
-                    self._db._execute('set generator GENID_%s to 0;' % t)
-                    self._db._execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
+                    self._db._adapter.execute('create generator GENID_%s;' % t)
+                    self._db._adapter.execute('set generator GENID_%s to 0;' % t)
+                    self._db._adapter.execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
 ''' % (t, t, t))
                 elif self._db._dbname == 'ingres':
                     # post create table auto inc code (if needed)
                     # modify table to btree for performance.... NOT sure if this will be faster or not.
                     modify_tbl_sql='modify %s to btree unique on %s' % (self._tablename, ', '.join(['"%s"'%x for x in self._primarykey])) # could use same code for Table (with id column, if _primarykey is defined as ['id']
-                    self._db._execute(modify_tbl_sql)
+                    self._db._adapter.execute(modify_tbl_sql)
                 self._db.commit()
             if self._dbt:
                 tfile = open(self._dbt, 'w')
@@ -2374,7 +2345,7 @@ class KeyedTable(Table):
             query = self._insert(**fields)
             self._db['_lastsql'] = query
             try:
-                self._db._execute(query)
+                self._db._adapter.execute(query)
             except Exception, e:
                 if 'ingresdbi' in globals() and isinstance(e,ingresdbi.IntegrityError):
                     return None
@@ -2436,24 +2407,20 @@ class Expression(object):
     # for use in both Query and sortby
 
     def __add__(self, other):
-        return Expression('(%s+%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s+%s)' % (self, self._db._adapter.represent(other,self.type)),
+                          self.type, self._db)
 
     def __sub__(self, other):
-        return Expression('(%s-%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s-%s)' % (self, self._db._adapter.represent(other,self.type)),
+                          self.type, self._db)
 
     def __mul__(self, other):
-        return Expression('(%s*%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s*%s)' % (self, self._db._adapter.represent(other,self.type)),
+                          self.type, self._db)
 
     def __div__(self, other):
-        return Expression('(%s/%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), self.type,
-                          self._db)
+        return Expression('(%s/%s)' % (self, self._db._adapter.represent(other,self.type)),
+                          self.type, self._db)
 
 
 class SQLCustomType:
@@ -2507,6 +2474,7 @@ class SQLCustomType:
 
     def __str__(self):
         return self._class
+
 
 class Field(Expression):
 
@@ -2613,7 +2581,7 @@ class Field(Expression):
             elif self.uploadfolder:
                 path = self.uploadfolder
             else:
-                path = os.path.join(self._db._folder, '..', 'uploads')
+                path = os.path.join(self._db._adapter.folder, '..', 'uploads')
             pathfilename = os.path.join(path, newfilename)
             dest_file = open(pathfilename, 'wb')
             shutil.copyfileobj(file, dest_file)
@@ -2621,12 +2589,13 @@ class Field(Expression):
         return newfilename
 
     def retrieve(self, name, path=None):
+        import http
         if self.authorize or isinstance(self.uploadfield, str):
             row = self._db(self == name).select().first()
             if not row:
-                raise HTTP(404)
+                raise http.HTTP(404)
         if self.authorize and not self.authorize(row):
-            raise HTTP(403)
+            raise http.HTTP(403)
         try:
             m = regex_content.match(name)
             if not m or not self.isattachment:
@@ -2644,7 +2613,7 @@ class Field(Expression):
             elif self.uploadfolder:
                 path = self.uploadfolder
             else:
-                path = os.path.join(self._db._folder, '..', 'uploads')
+                path = os.path.join(self._db._adapter.folder, '..', 'uploads')
             return (filename, open(os.path.join(path, name), 'rb'))
 
     def formatter(self, value):
@@ -2675,41 +2644,35 @@ class Field(Expression):
         return (value, None)
 
     def lower(self):
-        s = self._db._translator['lower'] % dict(field=str(self))
+        s = self._db._adapter.LOWER(self)
         return Expression(s, 'string', self._db)
 
     def upper(self):
-        s = self._db._translator['upper'] % dict(field=str(self))
+        s = self._db._adapter.UPPER(self)
         return Expression(s, 'string', self._db)
 
     def year(self):
-        s = self._db._translator['extract'] % dict(name='year',
-                field=str(self))
+        s = self._db._adapter.EXTRACT('year',self)
         return Expression(s, 'integer', self._db)
 
     def month(self):
-        s = self._db._translator['extract'] % dict(name='month',
-                field=str(self))
+        s = self._db._adapter.EXTRACT('month',self)
         return Expression(s, 'integer', self._db)
 
     def day(self):
-        s = self._db._translator['extract'] % dict(name='day',
-                field=str(self))
+        s = self._db._adapter.EXTRACT('day',self)
         return Expression(s, 'integer', self._db)
 
     def hour(self):
-        s = self._db._translator['extract'] % dict(name='hour',
-                field=str(self))
+        s = self._db._adapter.EXTRACT('hour',self)
         return Expression(s, 'integer', self._db)
 
     def minutes(self):
-        s = self._db._translator['extract'] % dict(name='minute',
-                field=str(self))
+        s = self._db._adapter.EXTRACT('minute',self)
         return Expression(s, 'integer', self._db)
 
     def seconds(self):
-        s = self._db._translator['extract'] % dict(name='second',
-                field=str(self))
+        s = self._db._adapter.EXTRACT('second',self)
         return Expression(s, 'integer', self._db)
 
     def count(self):
@@ -2727,8 +2690,8 @@ class Field(Expression):
     def __getslice__(self, start, stop):
         if start < 0 or stop < start:
             raise SyntaxError, 'not supported: %s - %s' % (start, stop)
-        d = dict(field=str(self), pos=start + 1, length=stop - start)
-        s = self._db._translator['substring'] % d
+        d = dict(fieldname=str(self), pos=start + 1, length=stop - start)
+        s = self._db._adapter.SUBSTRING(**d)
         return Expression(s, 'string', self._db)
 
     def __getitem__(self, i):
@@ -2770,26 +2733,23 @@ class Query(object):
             self.sql = left
         elif right is None:
             if op == '=':
-                self.sql = '%s %s' % (left,
-                        left._db._translator['is null'])
+                self.sql = '%s IS NULL' % left
             elif op == '<>':
-                self.sql = '%s %s' % (left,
-                        left._db._translator['is not null'])
+                self.sql = '%s IS NOT NULL' % left
             else:
                 raise SyntaxError, 'Operation %s can\'t be used with None' % op
         elif op == ' IN ':
             if isinstance(right, str):
                 self.sql = '%s%s(%s)' % (left, op, right[:-1])
             elif hasattr(right, '__iter__'):
-                r = ','.join([sql_represent(i, left.type, left._db, left._db._db_codec)
-                             for i in right])
+                r = ','.join([left._db._adapter.represent(i, left.type) for i in right])
                 self.sql = '%s%s(%s)' % (left, op, r)
             else:
                 raise SyntaxError, 'Right argument of \'IN\' is not suitable'
         elif isinstance(right, (Field, Expression)):
             self.sql = '%s%s%s' % (left, op, right)
         else:
-            right = sql_represent(right, left.type, left._db._dbname, left._db._db_codec)
+            right = left._db._adapter.represent(right, left.type)
             self.sql = '%s%s%s' % (left, op, right)
 
     def __and__(self, other):
@@ -2913,7 +2873,7 @@ class Set(object):
             sql_s += ' DISTINCT ON %s' % distinct
         if attributes.get('left', False):
             join = attributes['left']
-            command = self._db._translator['left join']
+            command = self._db._adapter.LEFT_JOIN()
             if not isinstance(join, (tuple, list)):
                 join = [join]
             joint = [t._tablename for t in join if not isinstance(t,
@@ -2938,7 +2898,7 @@ class Set(object):
             if isinstance(orderby, (list, tuple)):
                 orderby = xorify(orderby)
             if str(orderby) == '<random>':
-                sql_o += ' ORDER BY %s' % self._db._translator['random']
+                sql_o += ' ORDER BY %s' % self._db._adapter.RANDOM()
             else:
                 sql_o += ' ORDER BY %s' % orderby
         if attributes.get('limitby', False):
@@ -2982,7 +2942,7 @@ class Set(object):
                     sql_o += ' OFFSET %d' % (lmin, )
             elif self._db._dbname == 'informix':
                 fetch_amt = lmax - lmin
-                dbms_version = int(self._db._connection.dbms_version.split('.')[0])
+                dbms_version = int(self._db._adapter.connection.dbms_version.split('.')[0])
                 if lmin and (dbms_version >= 10):
                     # Requires Informix 10.0+
                     sql_s += ' SKIP %d' % (lmin, )
@@ -3002,8 +2962,8 @@ class Set(object):
         db=self._db
         def response(query):
             db['_lastsql'] = query
-            db._execute(query)
-            return db._cursor.fetchall()
+            db._adapter.execute(query)
+            return db._adapter.cursor.fetchall()
 
         if not attributes.get('cache', None):
             query = self._select(*fields, **attributes)
@@ -3017,8 +2977,8 @@ class Set(object):
 
         if isinstance(rows,tuple):
             rows = list(rows)
-        if db._dbname in ['mssql', 'mssql2', 'db2']:
-            rows = rows[(attributes.get('limitby', None) or (0,))[0]:]
+            
+        rows = db._adapter.rowslice(rows,attributes.get('limitby',(0,))[0],None)
         return self.parse(db,rows,self.colnames)
 
     @staticmethod
@@ -3144,9 +3104,9 @@ class Set(object):
             deleted = [x.id for x in self.select(db[t].id)]
         ### end special code to handle CASCADE in SQLite
         self._db['_lastsql'] = query
-        self._db._execute(query)
+        self._db._adapter.execute(query)
         try:
-            counter = self._db._cursor.rowcount
+            counter = self._db._adapter.cursor.rowcount
         except:
             counter =  None
         ### special code to handle CASCADE in SQLite
@@ -3163,29 +3123,28 @@ class Set(object):
         if len(tablenames) != 1:
             raise SyntaxError, 'Set: unable to determine what to do'
         sql_t = tablenames[0]
-        (table, dbname) = (self._db[sql_t], self._db._dbname)
+        table = self._db[sql_t]
         update_fields.update(dict([(fieldname, table[fieldname].update) \
                                    for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].update != None]))
         sql_v = 'SET ' + ', '.join(['%s=%s' % (field,
-                                   sql_represent(value,
-                                   table[field].type, dbname, self._db._db_codec))
+                                   self._db._adapter.represent(value, table[field].type))
                                    for (field, value) in
                                    update_fields.items()])
         if self.sql_w:
             sql_w = ' WHERE ' + self.sql_w
         else:
-            sql_w = ''
+            sql_w = ''        
         return 'UPDATE %s %s%s;' % (sql_t, sql_v, sql_w)
 
     def update(self, **update_fields):
         query = self._update(**update_fields)
         self.delete_uploaded_files(update_fields)
         self._db['_lastsql'] = query
-        self._db._execute(query)
+        self._db._adapter.execute(query)
         try:
-            return self._db._cursor.rowcount
+            return self._db._adapter.cursor.rowcount
         except:
             return None
 
@@ -3212,7 +3171,7 @@ class Set(object):
                     continue
                 uploadfolder = table[fieldname].uploadfolder
                 if not uploadfolder:
-                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')
+                    uploadfolder = os.path.join(self._db._adapter.folder, '..', 'uploads')
                 oldpath = os.path.join(uploadfolder, oldname)
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)
@@ -3398,8 +3357,6 @@ class Rows(object):
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
-        represent = kwargs.get('represent', False)
-
         writer = csv.writer(ofile, delimiter=delimiter, quotechar=quotechar, quoting=quoting)
 
         # a proper csv starting with the column names
@@ -3697,7 +3654,6 @@ SQLQuery = Query
 SQLSet = Set
 SQLRows = Rows
 SQLStorage = Row
-BaseAdapter = SQLDB
 
 def DAL(uri='sqlite:memory:', pool_size=0, folder=None, db_codec='UTF-8'):
     if uri == 'gae':
