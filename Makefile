@@ -20,7 +20,7 @@ epydoc:
 	epydoc --config epydoc.conf
 	cp applications/examples/static/title.png applications/examples/static/epydoc
 src:
-	echo 'Version 1.74.0rc2 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
+	echo 'Version 1.74.1 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files
 	make clean
 	### clean up baisc apps
@@ -45,6 +45,7 @@ src:
 	cp LICENSE applications/admin/
 	cp LICENSE applications/examples/
 	### build web2py_src.zip
+	echo '' > NEWINSTALL
 	mv web2py_src.zip web2py_src_old.zip | echo 'no old'
 	cd ..; zip -r web2py/web2py_src.zip web2py/gluon/*.py web2py/gluon/contrib/* web2py/*.py web2py/ABOUT  web2py/LICENSE web2py/README web2py/NEWINSTALL web2py/VERSION web2py/Makefile web2py/epydoc.css web2py/epydoc.conf web2py/app.yaml web2py/queue.yaml web2py/scripts/*.sh web2py/scripts/*.py web2py/applications/admin web2py/applications/examples/ web2py/applications/welcome web2py/applicaitons/__init__.py
 
@@ -89,6 +90,8 @@ win:
 run:
 	python2.5 web2py.py -a hello
 push:
+	make clean
+	echo '' > NEWINSTALL
 	less .hg/hgrc
 	hg push
 	bzr push bzr+ssh://mdipierro@bazaar.launchpad.net/~mdipierro/web2py/devel --use-existing-dir

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This file is part of web2py Web Framework (Copyrighted, 2007-2009).
+This file is part of web2py Web Framework (Copyrighted, 2007-2010).
 Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
 License: GPL v2
 
@@ -619,7 +619,7 @@ def autofields(db, text):
             (unique, items) = (True, items[:-1])
         if items[-1] in ['text', 'date', 'datetime', 'time', 'blob', 'upload', 'password',
                          'integer', 'double', 'boolean', 'string']:
-            (items, t) = (item[:-1], items[-1])
+            (items, t) = (items[:-1], items[-1])
         elif items[-1] in db.tables:
             t = 'reference %s' % items[-1]
             requires = validators.IS_IN_DB(db, '%s.%s' % (items[-1], db.tables[items[-1]].id.name), keys)
@@ -1244,7 +1244,7 @@ class SQLDB(dict):
         if migrate:
             sql_locker.acquire()
             try:
-                query = t._create(migrate=migrate, fake_migrate=fake_migrate)
+                t._create(migrate=migrate, fake_migrate=fake_migrate)
             finally:
                 sql_locker.release()
         else:
@@ -1358,45 +1358,6 @@ class SQLDB(dict):
             else:
                 tablename = line[6:]
                 self[tablename].import_from_csv_file(ifile, id_map, null, unique, *args, **kwargs)
-
-    @staticmethod
-    def __unpickle__(state):
-        logging.warning('unpickling SQLDB objects is experimental')
-        db = SQLDB(state['uri'])
-        for (k, d) in state['tables']:
-            db.define_table(k, *[Field(**i) for i in d],
-                            **dict(migrate=False))
-        return db
-
-    def __pickle__(db):
-        logging.warning('pickling SQLDB objects is experimental')
-        tables = []
-        for k in db.values():
-            if not isinstance(k, Table):
-                continue
-            fields = []
-            for f in k.values():
-                if not isinstance(f, Field) or f.name == 'id':
-                    continue
-                fields.append(dict(
-                        fieldname=f.name,
-                        type=f.type,
-                        length=f.length,
-                        default=f.default,
-                        required=f.required,
-                        requires=f.requires,
-                        ondelete=f.ondelete,
-                        notnull=f.notnull,
-                        unique=f.notnull,
-                        uploadfield=f.uploadfield,
-                        uploadfolder=f.uploadfolder,
-                        ))
-            tables.append((k._tablename, fields))
-        return (unpickle_SQLDB, (dict(uri=db._uri, tables=tables), ))
-
-
-# copy_reg.pickle(SQLDB, SQLDB.__pickle__, SQLDB.__unpickle__)
-
 
 class SQLALL(object):
     """
@@ -2164,7 +2125,7 @@ class KeyedTable(Table):
     def __setitem__(self, key, value):
         # ??? handle special case where primarykey has all fields ???
         if isinstance(key, dict) and isinstance(value, dict):
-            if setsSet(key.keys())==setsSet(self._primarykey):
+            if set(key.keys())==set(self._primarykey):
                 value = self._filter_fields(value)
                 kv = {}
                 kv.update(value)
@@ -2621,12 +2582,13 @@ class Field(Expression):
         return newfilename
 
     def retrieve(self, name, path=None):
+        import http
         if self.authorize or isinstance(self.uploadfield, str):
             row = self._db(self == name).select().first()
             if not row:
-                raise HTTP(404)
+                raise http.HTTP(404)
         if self.authorize and not self.authorize(row):
-            raise HTTP(403)
+            raise http.HTTP(403)
         try:
             m = regex_content.match(name)
             if not m or not self.isattachment:
@@ -3398,10 +3360,8 @@ class Rows(object):
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
-        represent = kwargs.get('represent', False)
-
-        writer = csv.writer(ofile, delimiter=delimiter, quotechar=quotechar, quoting=quoting)
-
+        writer = csv.writer(ofile, delimiter=delimiter,
+                            quotechar=quotechar, quoting=quoting)
         # a proper csv starting with the column names
         writer.writerow(self.colnames)
 
