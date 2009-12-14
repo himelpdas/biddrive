@@ -48,6 +48,10 @@ import struct
 
 from utils import md5_hash
 from serializers import json
+import portalocker
+import validators
+
+sql_locker = thread.allocate_lock()
 
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
@@ -125,11 +129,6 @@ except:
     # NOTE could try JDBC.......
 
 
-import portalocker
-import validators
-
-sql_locker = thread.allocate_lock()
-
 # mapping of the field types and some constructs
 # per database
 
@@ -161,6 +160,22 @@ class BaseAdapter(object):
         keys = ','.join([x[0] for x in fields])
         values = ','.join([self.represent(x[1],x[2]) for x in fields])
         return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
+    def WHERE(self,where):
+        if len(where)==1:
+            return where[0]
+        elif where[0] == 'NOT':
+            return '(NOT %s)' % self.WHERE(where[1])
+        (op, first, second) = where
+        if op == 'AND':
+            return '(%s AND %s)' % (self.WHERE(first), self.WHERE(second))
+        elif op == 'OR':
+            return '(%s OR %s)' % (self.WHERE(first), self.WHERE(second))
+        elif op == 'IN':
+            values = [self.represent(value,first.type) for value in second]
+            return '(%s IN (%s))' % (first, ','.join(values))
+        elif op in ('=','<>','<','>','<=','>=','LIKE'):
+            value = self.represent(second,first.type)
+            return '(%s %s %s)' % (first, op, value)
     def commit(self):
         return self.connection.commit()
     def rollback(self):
@@ -204,7 +219,7 @@ class BaseAdapter(object):
                 return "'T'"
             else:
                 return "'F'"
-        if fieldtype[0] == 'i':
+        if fieldtype == 'id' or fieldtype == 'integer':
             return str(int(obj))
         if fieldtype[:7] == 'decimal':
             return str(obj)
@@ -946,7 +961,7 @@ class DB2Adapter(BaseAdapter):
         self.folder = folder
         self.db_codec = db_codec
         self.find_or_make_work_folder()
-        cnxn = self._uri.split(':', 1)[1]
+        cnxn = uri.split(':', 1)[1]
         self.pool_connection(lambda : pyodbc.connect(cnxn))
     def execute(self,command):
         if command[-1:]==';':
