@@ -2869,7 +2869,7 @@ class Set(object):
         sql_o = ''
         sql_s = 'SELECT'
         distinct = attributes.get('distinct', False)
-        if distinct == True:
+        if distinct is True:
             sql_s += ' DISTINCT'
         elif distinct:
             sql_s += ' DISTINCT ON %s' % distinct
