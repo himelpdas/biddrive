@@ -573,6 +573,7 @@ class Auth(object):
         self.settings.login_onaccept = None
         self.settings.login_methods = [self]
         self.settings.login_form = self
+        self.settings.login_email_validate = True
 
         self.settings.logout_next = self.url('index')
 
@@ -811,7 +812,7 @@ class Auth(object):
             table.group_id.requires = IS_IN_DB(db, '%s.id' %
                     self.settings.table_group._tablename,
                     '%(role)s (%(id)s)')
-            table.name.requires = IS_NOT_EMPTY()
+            table.name.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.table_name.requires = IS_IN_SET(self.db.tables)
             table.record_id.requires = IS_INT_IN_RANGE(0, 10 ** 9)
         if not self.settings.table_event:
@@ -835,8 +836,8 @@ class Auth(object):
             table.user_id.requires = IS_IN_DB(db, '%s.id' %
                     self.settings.table_user._tablename,
                     '%(first_name)s %(last_name)s (%(id)s)')
-            table.origin.requires = IS_NOT_EMPTY()
-            table.description.requires = IS_NOT_EMPTY()
+            table.origin.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
+            table.description.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
 
     def log_event(self, description, origin='auth'):
         """
@@ -939,10 +940,12 @@ class Auth(object):
         table_user = self.settings.table_user
         if 'username' in table_user.fields:
             username = 'username'
-            tmpvalidator = IS_NOT_EMPTY(self.messages.is_empty)
         else:
             username = 'email'
-            tmpvalidator = IS_EMAIL(self.messages.invalid_email)
+        if 'username' in table_user.fields or not self.settings.login_email_validate:
+            tmpvalidator = IS_NOT_EMPTY(error_message=self.messages.is_empty)
+        else:
+            tmpvalidator = IS_EMAIL(error_message=self.messages.invalid_email)
         old_requires = table_user[username].requires
         table_user[username].requires = tmpvalidator
         request = self.environment.request

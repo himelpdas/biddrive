@@ -256,13 +256,11 @@ def parse_get_post_vars(request, environ):
                 request.get_vars[key] = [request.get_vars[key]] + list(value)
         else:
             request.get_vars[key] = value
+        request.vars[key] = request.get_vars[key]
 
     # parse POST variables on POST, PUT, BOTH only in post_vars
-
     request.body = copystream_progress(request) ### stores request body
-    if not (request.body and request.env.request_method in ('POST', 'PUT', 'BOTH')):
-        request.vars = request.get_vars
-    else:
+    if (request.body and request.env.request_method in ('POST', 'PUT', 'BOTH')):
         dpost = cgi.FieldStorage(fp=request.body,environ=environ,keep_blank_values=1)
         # The same detection used by FieldStorage to detect multipart POSTs
         is_multipart = dpost.type[:10] == 'multipart/'
@@ -287,10 +285,9 @@ def parse_get_post_vars(request, environ):
                 value = dpk.value
             else:
                 value = dpk
-
             pvalue = listify(value)
-            if key in request.get_vars:
-                gvalue = listify(request.get_vars[key])
+            if key in request.vars:
+                gvalue = listify(request.vars[key])
                 if isle25:
                     value = pvalue + gvalue
                 elif is_multipart:
