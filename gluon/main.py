@@ -421,13 +421,14 @@ def wsgibase(environ, responder):
             # build missing folder
             # ##################################################
             
-            for subfolder in ['models','views','controllers',
-                              'modules','cron','errors','sessions',
-                              'languages','static','private','uploads']:
-                path =  os.path.join(request.folder,subfolder)
-                if not os.path.exists(path):
-                    os.mkdir(path)
-
+            if not request.env.web2py_runtime_gae:
+                for subfolder in ['models','views','controllers',
+                                  'modules','cron','errors','sessions',
+                                  'languages','static','private','uploads']:
+                    path =  os.path.join(request.folder,subfolder)
+                    if not os.path.exists(path):
+                        os.mkdir(path)
+                        
             # ##################################################
             # get the GET and POST data
             # ##################################################
