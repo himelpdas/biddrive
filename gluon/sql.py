@@ -693,8 +693,10 @@ class Row(dict):
 
 def Row_unpickler(data):
     return Row(marshal.loads(data))
+
 def Row_pickler(data):
     return Row_unpickler, (marshal.dumps(data.as_dict()),)
+
 copy_reg.pickle(Row, Row_pickler, Row_unpickler)
 
 class SQLCallableList(list):
@@ -1424,12 +1426,13 @@ class Reference(int):
 
 def Reference_unpickler(data):
     return marshal.loads(data)
+
 def Reference_pickler(data):
     try:
         marshal_dump = marshal.dumps(int(data))
     except AttributeError:
-        marshal_dump = 'i%s' % struct.pack('<i',int(data))
-        return (Reference_unpickler, (marshal_dump,))
+        marshal_dump = 'i%s' % struct.pack('<i',int(data))        
+    return (Reference_unpickler, (marshal_dump,))
 
 copy_reg.pickle(Reference, Reference_pickler, Reference_unpickler)
 

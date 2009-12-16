@@ -2886,10 +2886,10 @@ class Set(object):
         sql_o = ''
         sql_s = 'SELECT'
         distinct = attributes.get('distinct', False)
-        if distinct == True:
+        if distinct is True:
             sql_s += ' DISTINCT'
         elif distinct:
-            sql_s += ' DISTINCT ON %s' % distinct
+            sql_s += ' DISTINCT ON (%s)' % distinct
         if attributes.get('left', False):
             join = attributes['left']
             command = self._db._adapter.LEFT_JOIN()
