@@ -2872,7 +2872,7 @@ class Set(object):
         if distinct is True:
             sql_s += ' DISTINCT'
         elif distinct:
-            sql_s += ' DISTINCT ON %s' % distinct
+            sql_s += ' DISTINCT ON (%s)' % distinct
         if attributes.get('left', False):
             join = attributes['left']
             command = self._db._translator['left join']
