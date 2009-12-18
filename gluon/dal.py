@@ -1590,7 +1590,7 @@ def Reference_pickler(data):
         marshal_dump = marshal.dumps(int(data))
     except AttributeError:
         marshal_dump = 'i%s' % struct.pack('<i',int(data))
-        return (Reference_unpickler, (marshal_dump,))
+    return (Reference_unpickler, (marshal_dump,))
 
 copy_reg.pickle(Reference, Reference_pickler, Reference_unpickler)
 

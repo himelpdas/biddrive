@@ -125,7 +125,7 @@ class Mail(object):
             self.set_payload(payload)
             self['Content-Disposition'] = 'attachment; filename="%s"' % filename
             if content_id != None:
-                self['Content-Id'] = '<%s>' % content_id.encode(ecoding)
+                self['Content-Id'] = '<%s>' % content_id.encode(encoding)
             email.Encoders.encode_base64(self)
 
     def __init__(self, server=None, sender=None, login=None, tls=True):
@@ -238,7 +238,7 @@ class Mail(object):
         Before return, method updates two object's fields:
         self.result: return value of smtplib.SMTP.sendmail() or GAE's
                      mail.send_mail() method
-        self.error: Exception message or None if above was successfull
+        self.error: Exception message or None if above was successful
         """
 
         if not isinstance(self.settings.server, str):
@@ -254,7 +254,7 @@ class Mail(object):
         payload = email.MIMEMultipart.MIMEMultipart('related')
         payload['To'] = ', '.join(to).encode(encoding)
         if reply_to != None:
-            payload['Reply-To'] = reply_to.encode(ecoding)
+            payload['Reply-To'] = reply_to.encode(encoding)
         payload['Subject'] = subject.encode(encoding)
         if cc != None:
             if not isinstance(cc, (list, tuple)):
@@ -439,7 +439,7 @@ class Auth(object):
     - http://.../{application}/{controller}/authentication/login
     - http://.../{application}/{controller}/authentication/logout
     - http://.../{application}/{controller}/authentication/register
-    - http://.../{application}/{controller}/authentication/veryfy_email
+    - http://.../{application}/{controller}/authentication/verify_email
     - http://.../{application}/{controller}/authentication/retrieve_username
     - http://.../{application}/{controller}/authentication/retrieve_password
     - http://.../{application}/{controller}/authentication/profile
@@ -1423,7 +1423,7 @@ class Auth(object):
         returns a form that lets the user change password
 
         .. method:: Auth.change_password([next=DEFAULT[, onvalidation=DEFAULT[,
-            onaccepet=DEFAULT[, log=DEFAULT]]]])
+            onaccept=DEFAULT[, log=DEFAULT]]]])
         """
 
         if not self.is_logged_in():
@@ -2263,7 +2263,7 @@ class Service:
 
         Then call it with::
 
-            wget http://..../app/default/call/run/myfunc?a=3&b=4
+            wget http://..../app/default/call/run/myfunction?a=3&b=4
 
         """
         self.run_procedures[f.__name__] = f
@@ -2282,7 +2282,7 @@ class Service:
 
         Then call it with::
 
-            wget http://..../app/default/call/csv/myfunc?a=3&b=4
+            wget http://..../app/default/call/csv/myfunction?a=3&b=4
 
         """
         self.run_procedures[f.__name__] = f
@@ -2301,7 +2301,7 @@ class Service:
 
         Then call it with::
 
-            wget http://..../app/default/call/xml/myfunc?a=3&b=4
+            wget http://..../app/default/call/xml/myfunction?a=3&b=4
 
         """
         self.run_procedures[f.__name__] = f
@@ -2322,7 +2322,7 @@ class Service:
 
         Then call it with::
 
-            wget http://..../app/default/call/rss/myfunc
+            wget http://..../app/default/call/rss/myfunction
 
         """
         self.rss_procedures[f.__name__] = f
@@ -2379,7 +2379,7 @@ class Service:
 
         The call it with::
 
-            wget http://..../app/default/call/xmlrpc/myfunc?a=hello&b=world
+            wget http://..../app/default/call/xmlrpc/myfunction?a=hello&b=world
 
         """
         self.xmlrpc_procedures[f.__name__] = f
@@ -2398,7 +2398,7 @@ class Service:
 
         The call it with::
 
-            wget http://..../app/default/call/amfrpc/myfunc?a=hello&b=world
+            wget http://..../app/default/call/amfrpc/myfunction?a=hello&b=world
 
         """
         self.amfrpc_procedures[f.__name__] = f
@@ -2417,7 +2417,7 @@ class Service:
 
         The call it with::
 
-            wget http://..../app/default/call/amfrpc/myfunc?a=hello&b=world
+            wget http://..../app/default/call/amfrpc3/myfunction?a=hello&b=world
 
         """
         if not isinstance(domain, str):
