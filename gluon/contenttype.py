@@ -690,6 +690,7 @@ CONTENT_TYPE = {
     '.xwd': 'image/x-xwindowdump',
     '.xyz': 'chemical/x-pdb',
     '.xz': 'application/x-xz',
+    '.w2p': 'application/w2p',
     '.z': 'application/x-compress',
     '.zabw': 'application/x-abiword',
     '.zip': 'application/zip',
