@@ -240,7 +240,7 @@ class BaseAdapter(ConnectionPool):
         return ['DROP TABLE %s;' % table]
     def INSERT(self,table,fields):
         keys = ','.join([x[0] for x in fields])
-        values = ','.join([self.represent(x[1],x[2]) for x in fields])
+        values = ','.join([self.EXPRESS(x[1],x[2]) for x in fields])
         return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
     def VERBATIM(self,first,second):
         return first
@@ -252,37 +252,60 @@ class BaseAdapter(ConnectionPool):
         return '(%s OR %s)' % (self.WHERE(first),self.WHERE(second))
     def BELONGS(self,first,second):
         if isinstance(second,(list,tuple)):
-            values = [self.represent(value,first.type) \
+            values = [self.EXPRESS(value,first.type) \
                           for value in second]
-            return '(%s IN (%s))' % (first, ','.join(values))
+            return '(%s IN (%s))' % (self.EXPRESS(first), ','.join(values))
+        elif isinstance(second,str):
+            return '(%s IN (%s))' % (self.EXPRESS(first), second[:-1])
         else:
-            return '(%s IN (%s))' % (first, second)
+            raise RuntimeError, "not supported"
     def LIKE(self,first,second):
-        return '(%s LIKE %s)' % (first, self.represent(second,first.type))
+        return '(%s LIKE %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
     def EQ(self,first,second):
         if second is None:
             return '(%s IS NULL)' % first
-        return '(%s = %s)' % (first, self.represent(second,first.type))
+        return '(%s = %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
     def NE(self,first,second): 
         if second==None:
-            return '(%s IS NOT NULL)' % first
-        return '(%s <> %s)' % (first, self.represent(second,first.type))
+            return '(%s IS NOT NULL)' % self.EXPRESS(first)
+        return '(%s <> %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
     def LT(self,first,second):
-        return '(%s < %s)' % (first, self.represent(second,first.type))
+        return '(%s < %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
     def LE(self,first,second):
-        return '(%s <= %s)' % (first, self.represent(second,first.type))
+        return '(%s <= %s)' % (self.EXRESS(first), self.EXPRESS(second,first.type))
     def GT(self,first,second):
-        return '(%s > %s)' % (first, self.represent(second,first.type))
+        return '(%s > %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
     def GE(self,first,second):
-        return '(%s >= %s)' % (first, self.represent(second,first.type))
+        return '(%s >= %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+
+    def ADD(self,first,second):
+        return '(%s + %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+    def SUB(self,first,second):
+        return '(%s - %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+    def MUL(self,first,second):
+        return '(%s * %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+    def DIV(self,first,second):
+        return '(%s / %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+    def DESC(self,first,second):
+        return '%s DESC' % (self.EXPRESS(first))
+    def COMMA(self,first,second):
+        return '%s, %s' % (self.EXPRESS(first),self.EXPRESS(second))
+
     def WHERE(self,query):
-        return query.op(query.first,query.second)
+        return query._op(query._first,query._second)
+    def EXPRESS(self,expression, field_type = None):
+        if isinstance(expression,Field):
+            return expression
+        elif isinstance(expression, Expression):
+            return expression._op(expression._first, expression._second)
+        else:
+            return self.represent(expression,field_type)
     def UPDATE(self,query,tablename,fields):
         if query:
             sql_w = ' WHERE ' + self.WHERE(query)
         else:
             sql_w = ''
-        sql_v = ','.join(['%s=%s' % (key, self.represent(value,type)) \
+        sql_v = ','.join(['%s=%s' % (key, self.EXPRESS(value,type)) \
                               for (key,value,type) in fields])
         return 'UPDATE %s SET %s%s;' % (tablename, sql_v, sql_w)
     def DELETE(self,query,tablename):
@@ -302,19 +325,19 @@ class BaseAdapter(ConnectionPool):
         self.execute(self.COUNT(query,tablenames))
         return self.cursor.fetchone()[0]
     def tables(self,query):
-        if not isinstance(query,Query):
-            return []
-        if query.op == self.NOT:
-            return self.tables(query.first)
-        if query.op == self.AND or query.op == self.OR:
-            tables = self.tables(query.first)
-            tables = tables + \
-                [t for t in self.tables(query.second) if not t in tables]
+        tables = []
+        if not isinstance(query,(Query,Expression,Field)):
             return tables
-        tables = [query.first._tablename]
-        if hasattr(query.second,'_tablename') and \
-                not query.second._tablename in tables:
-            tables.append(query.second._tablename)
+        if query._op == self.NOT:
+            return self.tables(query._first)
+        if query._op in (self.AND, self.OR, self.ADD, self.SUB, self.MUL, self.DIV):
+            tables = self.tables(query._first)
+            tables = tables + [t for t in self.tables(query._second) if not t in tables]
+            return tables
+        if hasattr(query._first,'_tablename'):
+            tables = [query._first._tablename]
+        if hasattr(query._second,'_tablename') and  not query._second._tablename in tables:
+            tables.append(query._second._tablename)
         return tables
     def commit(self):
         return self.connection.commit()
@@ -344,8 +367,6 @@ class BaseAdapter(ConnectionPool):
     def represent(self, obj, fieldtype):        
         if type(obj) in (types.LambdaType, types.FunctionType):
             obj = obj()
-        if isinstance(obj, (Expression, Field)):
-            return obj
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
         if obj is None:
@@ -407,6 +428,101 @@ class BaseAdapter(ConnectionPool):
     def rowslice(self,rows,minimum=0,maximum=None):
         """ by default this function does nothing, oreload when db does no do slicing """
         return rows
+    def parse(self,rows,colnames,blob_decode=True):
+        virtualtables = []
+        new_rows = []
+        for (i,row) in enumerate(rows):
+            new_row = Row()
+            for j in xrange(len(colnames)):
+                value = row[j]
+                if isinstance(value, str):
+                    value = value.decode(self._db_codec)
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
+                if not table_field.match(colnames[j]):
+                    if not '_extra' in new_row:
+                        new_row['_extra'] = Row()
+                    new_row['_extra'][colnames[j]] = value
+                    continue
+                (tablename, fieldname) = colnames[j].split('.')
+                table = self._db[tablename]
+                field = table[fieldname]
+                if not tablename in new_row:
+                    colset = new_row[tablename] = Row()
+                    virtualtables.append((tablename,self._db[tablename].virtualfields))
+                else:
+                    colset = new_row[tablename]
+                if field.type[:10] == 'reference ':
+                    referee = field.type[10:].strip()
+                    if not value:
+                        colset[fieldname] = value
+                    elif not '.' in referee:
+                        colset[fieldname] = rid = Reference(value)
+                        (rid._table, rid._record) = (self._db[referee], None)
+                    else: ### reference not by id
+                        colset[fieldname] = value
+                elif field.type == 'blob' and value != None and blob_decode:
+                    colset[fieldname] = base64.b64decode(str(value))
+                elif field.type == 'boolean' and value != None:
+                    if value == True or value == 'T' or value == 't':
+                        colset[fieldname] = True
+                    else:
+                        colset[fieldname] = False
+                elif field.type == 'date' and value != None\
+                        and (not isinstance(value, datetime.date)\
+                                 or isinstance(value, datetime.datetime)):
+                    (y, m, d) = [int(x) for x in
+                                 str(value)[:10].strip().split('-')]
+                    colset[fieldname] = datetime.date(y, m, d)
+                elif field.type == 'time' and value != None\
+                        and not isinstance(value, datetime.time):
+                    time_items = [int(x) for x in
+                                  str(value)[:8].strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
+                    else:
+                        (h, mi, s) = time_items + [0]
+                    colset[fieldname] = datetime.time(h, mi, s)
+                elif field.type == 'datetime' and value != None\
+                        and not isinstance(value, datetime.datetime):
+                    (y, m, d) = [int(x) for x in
+                                 str(value)[:10].strip().split('-')]
+                    time_items = [int(x) for x in
+                                  str(value)[11:19].strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
+                    else:
+                        (h, mi, s) = time_items + [0]
+                    colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
+                elif field.type[:7] == 'decimal' and value != None:
+                    decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
+                    if field._db._dbname == 'sqlite':
+                        value = ('%.'+str(decimals)+'f') % value
+                    if not isinstance(value,decimal.Decimal):
+                        value = decimal.Decimal(value)
+                    colset[fieldname] = value
+                elif isinstance(field.type,SQLCustomType) and value != None:
+                    colset[fieldname] = field.type.decoder(value)
+                else:
+                    colset[fieldname] = value
+                if field.type == 'id':
+                    id = colset[field.name]
+                    colset.update_record = lambda c = colset, t = table, \
+                        i = id, **a: update_record(c, t, i, a)
+                    colset.delete_record = lambda t = table, i = id: \
+                        t._db(t.id==i).delete()
+                    for (referee_table, referee_name) in \
+                            table._referenced_by:
+                        s = self._db[referee_table][referee_name]
+                        colset[referee_table] = Set(self._db, s == id)
+                    colset['id'] = id
+            new_rows.append(new_row)
+        rowsobj = Rows(self._db, new_rows, colnames)
+        for table, virtualfields in virtualtables:
+            for item in virtualfields:
+                rowsobj = rowsobj.setvirtualfields(**{table:item})
+        return rowsobj
+
 
 
 class SQLiteAdapter(BaseAdapter):
@@ -1373,6 +1489,7 @@ class SQLDB(dict):
             self._adapter = ADAPTERS[self._dbname](uri,pool_size,folder,db_codec)
         else:
             self._adapter = BaseAdapter(uri)
+        self._adapter._db = self # <<< FIX THIS
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
 
@@ -1682,7 +1799,7 @@ class Table(dict):
         if not key:
             return None
         elif str(key).isdigit():
-            return self._db(self.id == key).select().first()
+            return self._db(self.id == key).select()._first()
         else:
             return dict.__getitem__(self, str(key))
 
@@ -2417,22 +2534,43 @@ class Expression(object):
 
     def __init__(
         self,
-        name,
-        type='string',
-        db=None,
+        db,
+        op,
+        first=None,
+        second=None,
+        type=None,
         ):
-        (self.name, self.type, self._db) = (name, type, db)
+        
+        self._db = db
+        self._op = op
+        self._first = first
+        self._second = second
+        if first:
+            self.type = first.type
+        else:
+            self.type = None
+        
 
     def __str__(self):
-        return self.name
+        return '(%s %s %s)' % (self._op, self._first, self._second)
 
     def __or__(self, other):  # for use in sortby
-        return Expression(str(self) + ', ' + str(other), None, None)
+        return Expression(self._db,self._db._adapter.COMMA,self,other)
 
     def __invert__(self):
-        return Expression(str(self) + ' DESC', None, None)
+        return Expression(self._db,self._db._adapter.DESC,self)
 
-    # for use in Query
+    def __add__(self, other):
+        return Expression(self._db,self._db._adapter.ADD,self,other)
+
+    def __sub__(self, other):
+        return Expression(self._db,self._db._adapter.SUB,self,other)
+
+    def __mul__(self, other):
+        return Expression(self._db,self._db._adapter.MUL,self,other)
+
+    def __div__(self, other):
+        return Expression(self._db,self._db._adapter.DIV,self,other)
 
     def __eq__(self, value):
         return Query(self._db, self._db._adapter.EQ, self, value)
@@ -2459,22 +2597,6 @@ class Expression(object):
         return Query(self._db, self._db._adapter.BELONGS, self, value)
 
     # for use in both Query and sortby
-
-    def __add__(self, other):
-        return Expression('(%s+%s)' % (self, self._db._adapter.represent(other,self.type)),
-                          self.type, self._db)
-
-    def __sub__(self, other):
-        return Expression('(%s-%s)' % (self, self._db._adapter.represent(other,self.type)),
-                          self.type, self._db)
-
-    def __mul__(self, other):
-        return Expression('(%s*%s)' % (self, self._db._adapter.represent(other,self.type)),
-                          self.type, self._db)
-
-    def __div__(self, other):
-        return Expression('(%s/%s)' % (self, self._db._adapter.represent(other,self.type)),
-                          self.type, self._db)
 
 
 class SQLCustomType:
@@ -2582,7 +2704,10 @@ class Field(Expression):
         represent=None,
         uploadfolder=None,
         ):
-
+        self._db=None
+        self._op=None
+        self._first=None
+        self._second=None
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
@@ -2645,7 +2770,7 @@ class Field(Expression):
     def retrieve(self, name, path=None):
         import http
         if self.authorize or isinstance(self.uploadfield, str):
-            row = self._db(self == name).select().first()
+            row = self._db(self == name).select()._first()
             if not row:
                 raise http.HTTP(404)
         if self.authorize and not self.authorize(row):
@@ -2785,9 +2910,9 @@ class Query(object):
         second=None,
         ):
         self._db = db
-        self.op = op
-        self.first = first
-        self.second = second
+        self._op = op
+        self._first = first
+        self._second = second
 
     def __and__(self, other):
         return Query(self._db,self._db._adapter.AND,self,other)
@@ -2799,7 +2924,7 @@ class Query(object):
         return Query(self._db,self._db._adapter.NOT,self)
 
     def __str__(self):
-        return "(%s %s %s)" % (self.op, self.first, self.second)
+        return "(%s %s %s)" % (self._op, self._first, self._second)
 
 
 regex_quotes = re.compile("'[^']*'")
@@ -2873,8 +2998,9 @@ class Set(object):
                 for field in self._db[table]:
                     fields.append(field)
         else:
-            tablenames += \
-                [f._tablename for f in fields if not f in tablenames]
+            for f in fields:
+                if not f in tablenames:
+                    tablenames.append(f._tablename)
         if len(tablenames) < 1:
             raise SyntaxError, 'Set: no tables selected'
         sql_f = ', '.join([str(f) for f in fields])
@@ -2919,7 +3045,7 @@ class Set(object):
             if str(orderby) == '<random>':
                 sql_o += ' ORDER BY %s' % self._db._adapter.RANDOM()
             else:
-                sql_o += ' ORDER BY %s' % orderby
+                sql_o += ' ORDER BY %s' % self._db._adapter.EXPRESS(orderby)
         if attributes.get('limitby', False):
             # oracle does not support limitby
             (lmin, lmax) = attributes['limitby']
@@ -2998,103 +3124,9 @@ class Set(object):
             rows = list(rows)
             
         rows = db._adapter.rowslice(rows,attributes.get('limitby',(0,))[0],None)
-        return self.parse(db,rows,self.colnames)
+        return self._db._adapter.parse(rows,self.colnames)
 
-    @staticmethod
-    def parse(db,rows,colnames,blob_decode=True):
-        virtualtables = []
-        new_rows = []
-        for (i,row) in enumerate(rows):
-            new_row = Row()
-            for j in xrange(len(colnames)):
-                value = row[j]
-                if isinstance(value, str):
-                    value = value.decode(db._db_codec)
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
-                if not table_field.match(colnames[j]):
-                    if not '_extra' in new_row:
-                        new_row['_extra'] = Row()
-                    new_row['_extra'][colnames[j]] = value
-                    continue
-                (tablename, fieldname) = colnames[j].split('.')
-                table = db[tablename]
-                field = table[fieldname]
-                if not tablename in new_row:
-                    colset = new_row[tablename] = Row()
-                    virtualtables.append((tablename,db[tablename].virtualfields))
-                else:
-                    colset = new_row[tablename]
-                if field.type[:10] == 'reference ':
-                    referee = field.type[10:].strip()
-                    if not value:
-                        colset[fieldname] = value
-                    elif not '.' in referee:
-                        colset[fieldname] = rid = Reference(value)
-                        (rid._table, rid._record) = (db[referee], None)
-                    else: ### reference not by id
-                        colset[fieldname] = value
-                elif field.type == 'blob' and value != None and blob_decode:
-                    colset[fieldname] = base64.b64decode(str(value))
-                elif field.type == 'boolean' and value != None:
-                    if value == True or value == 'T' or value == 't':
-                        colset[fieldname] = True
-                    else:
-                        colset[fieldname] = False
-                elif field.type == 'date' and value != None\
-                        and (not isinstance(value, datetime.date)\
-                                 or isinstance(value, datetime.datetime)):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
-                    colset[fieldname] = datetime.date(y, m, d)
-                elif field.type == 'time' and value != None\
-                        and not isinstance(value, datetime.time):
-                    time_items = [int(x) for x in
-                                  str(value)[:8].strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
-                    else:
-                        (h, mi, s) = time_items + [0]
-                    colset[fieldname] = datetime.time(h, mi, s)
-                elif field.type == 'datetime' and value != None\
-                        and not isinstance(value, datetime.datetime):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
-                    time_items = [int(x) for x in
-                                  str(value)[11:19].strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
-                    else:
-                        (h, mi, s) = time_items + [0]
-                    colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
-                elif field.type[:7] == 'decimal' and value != None:
-                    decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
-                    if field._db._dbname == 'sqlite':
-                        value = ('%.'+str(decimals)+'f') % value
-                    if not isinstance(value,decimal.Decimal):
-                        value = decimal.Decimal(value)
-                    colset[fieldname] = value
-                elif isinstance(field.type,SQLCustomType) and value != None:
-                    colset[fieldname] = field.type.decoder(value)
-                else:
-                    colset[fieldname] = value
-                if field.type == 'id':
-                    id = colset[field.name]
-                    colset.update_record = lambda c = colset, t = table, \
-                        i = id, **a: update_record(c, t, i, a)
-                    colset.delete_record = lambda t = table, i = id: \
-                        t._db(t.id==i).delete()
-                    for (referee_table, referee_name) in \
-                            table._referenced_by:
-                        s = db[referee_table][referee_name]
-                        colset[referee_table] = Set(db, s == id)
-                    colset['id'] = id
-            new_rows.append(new_row)
-        rowsobj = Rows(db, new_rows, colnames)
-        for table, virtualfields in virtualtables:
-            for item in virtualfields:
-                rowsobj = rowsobj.setvirtualfields(**{table:item})
-        return rowsobj
+    #@staticmethod
 
     def _count(self):
         tablenames = self._db._adapter.tables(self._query)
@@ -3539,10 +3571,10 @@ def test_all():
 
     Examples of search conditions using extract from date/datetime/time
 
-    # >>> len(db(db.person.birth.month()==12).select())
-    # 1
-    # >>> len(db(db.person.birth.year()>1900).select())
-    # 1
+    >>> len(db(db.person.birth.month()==12).select())
+    1
+    >>> len(db(db.person.birth.year()>1900).select())
+    1
 
     Example of usage of NULL
 
@@ -3553,14 +3585,14 @@ def test_all():
 
     Examples of search consitions using lower, upper, and like
 
-    # >>> len(db(db.person.name.upper()=='MAX').select())
-    # 1
-    # >>> len(db(db.person.name.like('%ax')).select())
-    # 1
-    # >>> len(db(db.person.name.upper().like('%AX')).select())
-    # 1
-    # >>> len(db(~db.person.name.upper().like('%AX')).select())
-    # 0
+    >>> len(db(db.person.name.upper()=='MAX').select())
+    1
+    >>> len(db(db.person.name.like('%ax')).select())
+    1
+    >>> len(db(db.person.name.upper().like('%AX')).select())
+    1
+    >>> len(db(~db.person.name.upper().like('%AX')).select())
+    0
 
     orderby, groupby and limitby
 
@@ -3639,8 +3671,8 @@ def test_all():
     >>> db(mynumber.id>0).select(mynumber.x.sum())[0]._extra[mynumber.x.sum()]
     45
     
-    # >>> db(mynumber.x+2==5).select(mynumber.x + 2)[0]._extra[mynumber.x + 2]
-    # 5
+    >>> db(mynumber.x+2==5).select(mynumber.x + 2)[0]._extra[mynumber.x + 2]
+    5
 
     Output in csv
 
@@ -3650,7 +3682,7 @@ def test_all():
 
     Delete all leftover tables
 
-    # >>> SQLDB.distributed_transaction_commit(db)
+    >>> SQLDB.distributed_transaction_commit(db)
 
     >>> db.mynumber.drop()
     >>> db.authorship.drop()
@@ -3677,15 +3709,22 @@ if __name__ == '__main__':
     import doctest
     doctest.testmod()
     print 'done!'
+
     """
+    os.system('rm *.table *.db *.sqlite *.log') 
     db=DAL('sqlite://test.db')
     db.define_table('person',Field('name'))
     me = db.person.insert(name='Max')
     db.person.insert(name='Max1')
     db.person.insert(name='Max2')
+    print db().select(db.person.ALL)
     db(db.person.id==1).update(name='Massimo')
     db(db.person.id>10).delete()
     print db(db.person.id>0).count()
+    print db((db.person.name + 10< 100) | (db.person.name == (db.person.name+'')-db.person.id))._select()
+    print db()._select(db.person.name,orderby=db.person.name|~db.person.id)
+    print db().select(db.person.name,orderby=db.person.name|~db.person.id)
+    print db(db.person.id.belongs(db(db.person.id>0)._select(db.person.id)))._select(db.person.ALL)
     import time
     t = time.time()
     for i in range(1):
