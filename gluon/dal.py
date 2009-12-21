@@ -220,103 +220,108 @@ class BaseAdapter(ConnectionPool):
         self.pool_size = pool_size
         self.folder = folder
         self.db_codec = db_codec
-    def LOWER(self,fieldname):
-        return 'LOWER(%s)' % fieldname
-    def UPPER(self,fieldname):
-        return 'UPPER(%s)' % fieldname
-    def EXTRACT(self,name,fieldname):
-        return "EXTRACT(%s FROM %s)" % (name, fieldname)
+    def LOWER(self,first):
+        return 'LOWER(%s)' % self.expand(first)
+    def UPPER(self,first):
+        return 'UPPER(%s)' % self.expand(first)
+    def EXTRACT(self,first,what):
+        return "EXTRACT('%s' FROM %s)" % (what, self.expand(first))
+    def AGGREGATE(self,first,what):
+        return "%s(%s)" % (what,self.expand(first))
     def LEFT_JOIN(self):
         return 'LEFT JOIN'
     def RANDOM(self):
         return 'Random()'
-    def NOT_NULL(self,default):
-        return 'NOT NULL DEFAULT %s' % default 
-    def SUBSTRING(self,fieldname,pos,length):
-        return 'SUBSTR(%s,%s,%s)' % (fieldname, pos, length)
+    def NOT_NULL(self,default,field_type):
+        return 'NOT NULL DEFAULT %s' % self.represent(default,field_type)
+    def SUBSTRING(self,field,parameters):
+        return 'SUBSTR(%s,%s,%s)' % (self.expand(field), paramters[0], parameters[1])
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY(%s)' % key
     def DROP(self,table,mode):
         return ['DROP TABLE %s;' % table]
     def INSERT(self,table,fields):
         keys = ','.join([x[0] for x in fields])
-        values = ','.join([self.EXPRESS(x[1],x[2]) for x in fields])
+        values = ','.join([self.expand(x[1],x[2]) for x in fields])
         return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
-    def VERBATIM(self,first,second):
+    def VERBATIM(self,first):
         return first
-    def NOT(self,first,second):
-        return '(NOT %s)' % self.WHERE(first) 
+    def NOT(self,first):
+        return '(NOT %s)' % self.expand(first)
     def AND(self,first,second):
-        return '(%s AND %s)' % (self.WHERE(first),self.WHERE(second))
+        return '(%s AND %s)' % (self.expand(first),self.expand(second))
     def OR(self,first,second):
-        return '(%s OR %s)' % (self.WHERE(first),self.WHERE(second))
+        return '(%s OR %s)' % (self.expand(first),self.expand(second))
     def BELONGS(self,first,second):
-        if isinstance(second,(list,tuple)):
-            values = [self.EXPRESS(value,first.type) \
-                          for value in second]
-            return '(%s IN (%s))' % (self.EXPRESS(first), ','.join(values))
-        elif isinstance(second,str):
-            return '(%s IN (%s))' % (self.EXPRESS(first), second[:-1])
-        else:
-            raise RuntimeError, "not supported"
+        if isinstance(second,str):
+            return '(%s IN (%s))' % (self.expand(first),second[:-1])
+        return '(%s IN (%s))' % (self.expand(first),self.expand(second,first.type))
     def LIKE(self,first,second):
-        return '(%s LIKE %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
-    def EQ(self,first,second):
+        return '(%s LIKE %s)' % (self.expand(first),self.expand(second,'string'))
+    def EQ(self,first,second=None):
         if second is None:
-            return '(%s IS NULL)' % first
-        return '(%s = %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
-    def NE(self,first,second): 
+            return '(%s IS NULL)' % self.expand(first)
+        return '(%s = %s)' % (self.expand(first),self.expand(second,first.type))
+    def NE(self,first,second=None): 
         if second==None:
-            return '(%s IS NOT NULL)' % self.EXPRESS(first)
-        return '(%s <> %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
-    def LT(self,first,second):
-        return '(%s < %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
-    def LE(self,first,second):
-        return '(%s <= %s)' % (self.EXRESS(first), self.EXPRESS(second,first.type))
-    def GT(self,first,second):
-        return '(%s > %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
-    def GE(self,first,second):
-        return '(%s >= %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+            return '(%s IS NOT NULL)' % self.expand(first)
+        return '(%s <> %s)' % (self.expand(first),self.expand(second,first.type))
+    def LT(self,first,second=None):
+        return '(%s < %s)' % (self.expand(first),self.expand(second,first.type))
+    def LE(self,first,second=None):
+        return '(%s <= %s)' % (self.expand(first),self.expand(second,first.type))
+    def GT(self,first,second=None):
+        return '(%s > %s)' % (self.expand(first),self.expand(second,first.type))
+    def GE(self,first,second=None):
+        return '(%s >= %s)' % (self.expand(first),self.expand(second,first.type))
 
     def ADD(self,first,second):
-        return '(%s + %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+        return '(%s + %s)' % (self.expand(first),self.expand(second,first.type))
     def SUB(self,first,second):
-        return '(%s - %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+        return '(%s - %s)' % (self.expand(first),self.expand(second,first.type))
     def MUL(self,first,second):
-        return '(%s * %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
+        return '(%s * %s)' % (self.expand(first),self.expand(second,first.type))
     def DIV(self,first,second):
-        return '(%s / %s)' % (self.EXPRESS(first), self.EXPRESS(second,first.type))
-    def DESC(self,first,second):
-        return '%s DESC' % (self.EXPRESS(first))
+        return '(%s / %s)' % (self.expand(first),self.expand(second,first.type))
+    def DESC(self,first):
+        return '%s DESC' % self.expand(first)
     def COMMA(self,first,second):
-        return '%s, %s' % (self.EXPRESS(first),self.EXPRESS(second))
-
-    def WHERE(self,query):
-        return query._op(query._first,query._second)
-    def EXPRESS(self,expression, field_type = None):
+        return '%s, %s' % (self.expand(first),self.expand(second))
+    def VERBATIM(self,first):
+        return str(first)
+    def expand(self,expression,field_type=None):
         if isinstance(expression,Field):
-            return expression
-        elif isinstance(expression, Expression):
-            return expression._op(expression._first, expression._second)
-        else:
+            return str(expression)
+        elif isinstance(expression, (Expression, Query)):
+            if not expression._second is None:
+                return expression._op(expression._first, expression._second)
+            elif not expression._first is None:
+                return expression._op(expression._first)
+            else:
+                return expression._op()
+        elif isinstance(expression,(list,tuple)):
+            return ','.join([self.represent(item,field_type) for item in expression])
+        elif field_type:
             return self.represent(expression,field_type)
+        else:
+            return str(expression)
     def UPDATE(self,query,tablename,fields):
         if query:
-            sql_w = ' WHERE ' + self.WHERE(query)
+            sql_w = ' WHERE ' + self.expand(query)
         else:
             sql_w = ''
-        sql_v = ','.join(['%s=%s' % (key, self.EXPRESS(value,type)) \
+        sql_v = ','.join(['%s=%s' % (key, self.expand(value,type)) \
                               for (key,value,type) in fields])
         return 'UPDATE %s SET %s%s;' % (tablename, sql_v, sql_w)
     def DELETE(self,query,tablename):
         if query:
-            sql_w = ' WHERE ' + self.WHERE(query)
+            sql_w = ' WHERE ' + self.expand(query)
         else:
             sql_w = ''
         return 'DELETE FROM %s%s;' % (tablename, sql_w)
     def COUNT(self,query, tablenames):
         if query:
-            sql_w = ' WHERE ' + self.WHERE(query)
+            sql_w = ' WHERE ' + self.expand(query)
         else:
             sql_w = ''
         sql_t = ','.join(tablenames)
@@ -324,20 +329,23 @@ class BaseAdapter(ConnectionPool):
     def count(self,query,tablenames):
         self.execute(self.COUNT(query,tablenames))
         return self.cursor.fetchone()[0]
-    def tables(self,query):
+    def tables(self,query):        
         tables = []
         if not isinstance(query,(Query,Expression,Field)):
             return tables
-        if query._op == self.NOT:
-            return self.tables(query._first)
-        if query._op in (self.AND, self.OR, self.ADD, self.SUB, self.MUL, self.DIV):
-            tables = self.tables(query._first)
-            tables = tables + [t for t in self.tables(query._second) if not t in tables]
-            return tables
-        if hasattr(query._first,'_tablename'):
-            tables = [query._first._tablename]
-        if hasattr(query._second,'_tablename') and  not query._second._tablename in tables:
-            tables.append(query._second._tablename)
+        if query._first:
+            if hasattr(query._first,'_tablename'):
+                tables = [query._first._tablename]    
+            else:
+                tables = self.tables(query._first)
+        if query._second:
+            if hasattr(query._second,'_tablename'):
+                if not query._second._tablename in tables:
+                    tables.append(query._second._tablename)
+            else:
+                tables = tables + [t for t in self.tables(query._second) if not t in tables]
+        return tables
+
         return tables
     def commit(self):
         return self.connection.commit()
@@ -542,7 +550,8 @@ class SQLiteAdapter(BaseAdapter):
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
         'reference': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
-    def EXTRACT(self,name,fieldname): return "web2py_extract('%s',%s)" % (name, fieldname)
+    def EXTRACT(self,field,what):
+        return "web2py_extract('%s',%s)" % (what,self.expand(field))
     @staticmethod
     def web2py_extract(lookup, s):
         table = {
@@ -596,8 +605,8 @@ class MySQLAdapter(BaseAdapter):
         }
     def RANDOM(self):
         return 'RAND()'
-    def SUBSTRING(self,fieldname,pos,length):
-        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def SUBSTRING(self,field,parameters):
+        return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), paramters[0], parameters[1])
     def DROP(self,table,mode):
         # breaks db integrity but without this mysql does not drop table
         return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % table,'SET FOREIGN_KEY_CHECKS=1;']
@@ -740,8 +749,8 @@ class OracleAdapter(BaseAdapter):
         return 'LEFT OUTER JOIN'
     def RANDOM(self):
         return 'dbms_random.value'
-    def NOT_NULL(self,default):
-        return 'DEFAULT %s NOT NULL', default 
+    def NOT_NULL(self,default,field_type):
+        return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
     def DROP(self,table,mode):
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s_sequence;' % table]
     def contraint_name(self, tablename, fieldname):
@@ -820,14 +829,14 @@ class MSSQLAdapter(BaseAdapter):
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
         }
-    def EXTRACT(self,name,fieldname):
-        return "DATEPART(%s FROM %s)" % (name, fieldname)
+    def EXTRACT(self,field,what):
+        return "DATEPART('%s' FROM %s)" % (what, self.expand(field))
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
     def RANDOM(self):
         return 'NEWID()'
-    def SUBSTRING(self,fieldname,pos,length):
-        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def SUBSTRING(self,field,parameters):
+        return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY CLUSTERED (%s)' % key
     def represent_exceptions(self, obj, fieldtype):
@@ -943,10 +952,10 @@ class FireBirdAdapter(BaseAdapter):
         }
     def RANDOM(self):
         return 'RAND()'
-    def NOT_NULL(self,default):
-        return 'DEFAULT %s NOT NULL', default 
-    def SUBSTRING(self,fieldname,pos,length):
-        return 'SUBSTRING(%s,%s,%s)' % (fieldname, pos, length)
+    def NOT_NULL(self,default,field_type):
+        return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
+    def SUBSTRING(self,field,parameters):
+        return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
     def DROP(self,table,mode):
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR GENID_%s;' % table]
     def support_distributed_transaction(self):
@@ -1042,8 +1051,8 @@ class InformixAdapter(BaseAdapter):
         }
     def RANDOM(self):
         return 'Random()'
-    def NOT_NULL(self,default):
-        return 'DEFAULT %s NOT NULL', default 
+    def NOT_NULL(self,default,field_type):
+        return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
     def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'date':                
             if isinstance(obj, (datetime.date, datetime.datetime)):
@@ -1885,9 +1894,8 @@ class Table(dict):
             sql_fields[field.name] = ftype
 
             if field.default:
-                default = self._db._adapter.represent(field.default, field.type)
-                sql_fields_aux[field.name] = ftype.replace('NOT NULL',
-                        self._db._adapter.NOT_NULL(default))
+                not_null = self._db._adapter.NOT_NULL(field.default,field.type)
+                sql_fields_aux[field.name] = ftype.replace('NOT NULL',not_null)
             else:
                 sql_fields_aux[field.name] = ftype
 
@@ -2406,9 +2414,8 @@ class KeyedTable(Table):
             sql_fields[field.name] = ftype
 
             if field.default:
-                default = self._db._adapter.represent(field.default,field.type)
-                sql_fields_aux[field.name] = ftype.replace('NOT NULL',
-                    self._db._adapter.NOT_NULL(default))
+                not_null = self._db._adapter.NOT_NULL(field.default,field.type)
+                sql_fields_aux[field.name] = ftype.replace('NOT NULL',not_null)
             else:
                 sql_fields_aux[field.name] = ftype
 
@@ -2545,32 +2552,32 @@ class Expression(object):
         self._op = op
         self._first = first
         self._second = second
-        if first:
+        if not type and first and hasattr(first,type):
             self.type = first.type
         else:
-            self.type = None
+            self.type = type
         
 
     def __str__(self):
-        return '(%s %s %s)' % (self._op, self._first, self._second)
+        return self._db._adapter.expand(self,self.type)
 
     def __or__(self, other):  # for use in sortby
-        return Expression(self._db,self._db._adapter.COMMA,self,other)
+        return Expression(self._db,self._db._adapter.COMMA,self,other,self.type)
 
     def __invert__(self):
-        return Expression(self._db,self._db._adapter.DESC,self)
+        return Expression(self._db,self._db._adapter.DESC,self,type=self.type)
 
     def __add__(self, other):
-        return Expression(self._db,self._db._adapter.ADD,self,other)
+        return Expression(self._db,self._db._adapter.ADD,self,other,self.type)
 
     def __sub__(self, other):
-        return Expression(self._db,self._db._adapter.SUB,self,other)
+        return Expression(self._db,self._db._adapter.SUB,self,other,self.type)
 
     def __mul__(self, other):
-        return Expression(self._db,self._db._adapter.MUL,self,other)
+        return Expression(self._db,self._db._adapter.MUL,self,other,self.type)
 
     def __div__(self, other):
-        return Expression(self._db,self._db._adapter.DIV,self,other)
+        return Expression(self._db,self._db._adapter.DIV,self,other,self.type)
 
     def __eq__(self, value):
         return Query(self._db, self._db._adapter.EQ, self, value)
@@ -2823,55 +2830,47 @@ class Field(Expression):
         return (value, None)
 
     def lower(self):
-        s = self._db._adapter.LOWER(self)
-        return Expression(s, 'string', self._db)
+        return Expression(self._db, self._db._adapter.LOWER, self, None, self.type)
 
     def upper(self):
-        s = self._db._adapter.UPPER(self)
-        return Expression(s, 'string', self._db)
+        return Expression(self._db, self._db._adapter.UPPER, self, None, self.type)
 
     def year(self):
-        s = self._db._adapter.EXTRACT('year',self)
-        return Expression(s, 'integer', self._db)
+        return Expression(self._db, self._db._adapter.EXTRACT, self, 'year', 'integer')
 
     def month(self):
-        s = self._db._adapter.EXTRACT('month',self)
-        return Expression(s, 'integer', self._db)
+        return Expression(self._db, self._db._adapter.EXTRACT, self, 'month', 'integer')
 
     def day(self):
-        s = self._db._adapter.EXTRACT('day',self)
-        return Expression(s, 'integer', self._db)
+        return Expression(self._db, self._db._adapter.EXTRACT, self, 'day', 'integer')
 
     def hour(self):
-        s = self._db._adapter.EXTRACT('hour',self)
-        return Expression(s, 'integer', self._db)
+        return Expression(self._db, self._db._adapter.EXTRACT, self, 'hour', 'integer')
 
     def minutes(self):
-        s = self._db._adapter.EXTRACT('minute',self)
-        return Expression(s, 'integer', self._db)
+        return Expression(self._db, self._db._adapter.EXTRACT, self, 'minute', 'integer')
 
     def seconds(self):
-        s = self._db._adapter.EXTRACT('second',self)
-        return Expression(s, 'integer', self._db)
+        return Expression(self._db, self._db._adapter.EXTRACT, self, 'second', 'integer')
 
     def count(self):
-        return Expression('COUNT(%s)' % str(self), 'integer', self._db)
+        return Expression(self._db, self._db._adapter.AGGREGATE, self, 'count', 'integer')
 
     def sum(self):
-        return Expression('SUM(%s)' % str(self), 'integer', self._db)
+        return Expression(self._db, self._db._adapter.AGGREGATE, self, 'sum', self.type)
 
-    def max(self):
-        return Expression('MAX(%s)' % str(self), 'integer', self._db)
+    def max(self): 
+        return Expression(self._db, self._db._adapter.AGGREGATE, self, 'max', self.type)
 
     def min(self):
-        return Expression('MIN(%s)' % str(self), 'integer', self._db)
+        return Expression(self._db, self._db._adapter.AGGREGATE, self, 'min', self.type)
 
     def __getslice__(self, start, stop):
         if start < 0 or stop < start:
             raise SyntaxError, 'not supported: %s - %s' % (start, stop)
-        d = dict(fieldname=str(self), pos=start + 1, length=stop - start)
-        s = self._db._adapter.SUBSTRING(**d)
-        return Expression(s, 'string', self._db)
+        pos=start + 1
+        length=stop - start
+        s = self._db._adapter.Expression(self._db,seld._db._adapter.SUBSTRING, self, (pos, length), self.type)
 
     def __getitem__(self, i):
         return self[i:i + 1]
@@ -2914,6 +2913,9 @@ class Query(object):
         self._first = first
         self._second = second
 
+    def __str__(self):
+        return self._db._adapter.expand(self)
+
     def __and__(self, other):
         return Query(self._db,self._db._adapter.AND,self,other)
 
@@ -2922,9 +2924,6 @@ class Query(object):
 
     def __invert__(self):
         return Query(self._db,self._db._adapter.NOT,self)
-
-    def __str__(self):
-        return "(%s %s %s)" % (self._op, self._first, self._second)
 
 
 regex_quotes = re.compile("'[^']*'")
@@ -3003,10 +3002,10 @@ class Set(object):
                     tablenames.append(f._tablename)
         if len(tablenames) < 1:
             raise SyntaxError, 'Set: no tables selected'
-        sql_f = ', '.join([str(f) for f in fields])
+        sql_f = ', '.join([self._db._adapter.expand(f) for f in fields])
         self.colnames = [c.strip() for c in sql_f.split(', ')]
         if self._query:
-            sql_w = ' WHERE ' + self._db._adapter.WHERE(self._query)
+            sql_w = ' WHERE ' + self._db._adapter.expand(self._query)
         else:
             sql_w = ''
         sql_o = ''
@@ -3045,7 +3044,7 @@ class Set(object):
             if str(orderby) == '<random>':
                 sql_o += ' ORDER BY %s' % self._db._adapter.RANDOM()
             else:
-                sql_o += ' ORDER BY %s' % self._db._adapter.EXPRESS(orderby)
+                sql_o += ' ORDER BY %s' % self._db._adapter.expand(orderby)
         if attributes.get('limitby', False):
             # oracle does not support limitby
             (lmin, lmax) = attributes['limitby']
@@ -3709,11 +3708,12 @@ if __name__ == '__main__':
     import doctest
     doctest.testmod()
     print 'done!'
-
     """
     os.system('rm *.table *.db *.sqlite *.log') 
     db=DAL('sqlite://test.db')
-    db.define_table('person',Field('name'))
+    db.define_table('person',Field('name'),Field('birth','datetime'))
+    print db(db.person.birth.month()==12)._select()
+
     me = db.person.insert(name='Max')
     db.person.insert(name='Max1')
     db.person.insert(name='Max2')
@@ -3725,6 +3725,7 @@ if __name__ == '__main__':
     print db()._select(db.person.name,orderby=db.person.name|~db.person.id)
     print db().select(db.person.name,orderby=db.person.name|~db.person.id)
     print db(db.person.id.belongs(db(db.person.id>0)._select(db.person.id)))._select(db.person.ALL)
+    print db(db.person.id>0)._select(db.person.name.count(),groupby=db.person.name)
     import time
     t = time.time()
     for i in range(1):
