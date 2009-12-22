@@ -276,7 +276,7 @@ class Mail(object):
         if text != None or html != None:
             attachment = email.MIMEMultipart.MIMEMultipart('alternative')
             if text != None:
-                if isinstance(text, str):
+                if isinstance(text, (str,unicode)):
                     attachment.attach(email.MIMEText.MIMEText(text.encode(encoding)))
                 else:
                     attachment.attach(email.MIMEText.MIMEText(text.read().encode(encoding)))
