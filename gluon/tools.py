@@ -252,19 +252,19 @@ class Mail(object):
         if len(to) == 0:
             raise Exception('Target receiver address not specified')
         payload = email.MIMEMultipart.MIMEMultipart('related')
-        payload['To'] = ', '.join(to).encode(encoding)
+        payload['To'] = ', '.join(to).decode(encoding).encode('utf-8')
         if reply_to != None:
-            payload['Reply-To'] = reply_to.encode(encoding)
-        payload['Subject'] = subject.encode(encoding)
+            payload['Reply-To'] = reply_to.decode(encoding).encode('utf-8')
+        payload['Subject'] = subject.decode(encoding).encode('utf-8')
         if cc != None:
             if not isinstance(cc, (list, tuple)):
                 cc = [cc]
-            payload['Cc'] = ', '.join(cc).encode(encoding)
+            payload['Cc'] = ', '.join(cc).decode(encoding).encode('utf-8')
             to.extend(cc)
         if bcc != None:
             if not isinstance(bcc, (list, tuple)):
                 bcc = [bcc]
-            payload['Bcc'] = ', '.join(bcc).encode(encoding)
+            payload['Bcc'] = ', '.join(bcc).decode(encoding).encode('utf-8')
             to.extend(bcc)
         if message == None:
             text = html = None
@@ -276,15 +276,17 @@ class Mail(object):
         if text != None or html != None:
             attachment = email.MIMEMultipart.MIMEMultipart('alternative')
             if text != None:
-                if isinstance(text, (str,unicode)):
-                    attachment.attach(email.MIMEText.MIMEText(text.encode(encoding)))
+                if isinstance(text, str):
+                    text = text.decode(encoding).encode('utf-8')
                 else:
-                    attachment.attach(email.MIMEText.MIMEText(text.read().encode(encoding)))
+                    text = text.read().decode(encoding).encode('utf-8')
+                attachment.attach(email.MIMEText.MIMEText(text))
             if html != None:
                 if isinstance(html, str):
-                    attachment.attach(email.MIMEText.MIMEText(html.encode(encoding), 'html'))
+                    html = html.decode(encoding).encode('utf-8')
                 else:
-                    attachment.attach(email.MIMEText.MIMEText(html.read().encode(encoding), 'html'))
+                    html = html.read().decode(encoding).encode('utf-8')
+                attachment.attach(email.MIMEText.MIMEText(html, 'html'))
             payload.attach(attachment)
         if attachments == None:
             pass
