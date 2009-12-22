@@ -2993,19 +2993,19 @@ class Set(object):
         for (i,row) in enumerate(rows):
             new_row = Row()
             for j,colname in enumerate(colnames):
-                (tablename, fieldname) = colname.split('.')
-                table = db[tablename]
-                field = table[fieldname]
                 value = row[j]
-                if field.type != 'blob' and isinstance(value, str):
-                    value = value.decode(db._db_codec)
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
                 if not table_field.match(colnames[j]):
                     if not '_extra' in new_row:
                         new_row['_extra'] = Row()
                     new_row['_extra'][colnames[j]] = value
                     continue
+                (tablename, fieldname) = colname.split('.')
+                table = db[tablename]
+                field = table[fieldname]
+                if field.type != 'blob' and isinstance(value, str):
+                    value = value.decode(db._db_codec)
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
                 if not tablename in new_row:
                     colset = new_row[tablename] = Row()
                     virtualtables.append((tablename,db[tablename].virtualfields))
