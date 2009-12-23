@@ -20,6 +20,7 @@ def xml_rec(value, key):
     else:
         return str(value)
 
+
 def xml(value, encoding='UTF-8', key='document'):
     return ('<?xml version="1.0" encoding="%s"?>' % encoding) + str(xml_rec(value,key))
 
