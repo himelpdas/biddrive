@@ -608,3 +608,7 @@ New get_vars and post_vars compatible in 2.5 and 2.6 (thanks Tim)
 Major rewrite of gql.py extends DAL syntax on GAE
 No more *.w2p, welcome.w2p is create automatically, base apps are always upgraded
 export_to_csv(delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL), thanks Thadeus 
+
+#1.74.2-4
+Fix bugs including including unicode in emails and blobs on GAE
+
