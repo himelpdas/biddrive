@@ -1,18 +1,25 @@
 #!/bin/bash
 #
 #  update-web2py.sh
-#  2009-12-15
+#  2009-12-16
 #
-#  install in tne parent directory of web2py/ as update-web2py.sh 
+#  install in web2py/.. or web2py/ or web2py/scripts as update-web2py.sh 
 #  make executable: chmod +x web2py.sh
 #
-#  save a snapshot of current web2py/ as web2py-version.zip
-#  download the current released version of web2py
+#  save a snapshot of current web2py/ as web2py/../web2py-version.zip
+#  download the current stable version of web2py
 #  unzip downloaded version over web2py/
 #
 TARGET=web2py
-if [ ! -d $TARGET -a -d ../$TARGET ]; then
-	cd ..
+
+if [ ! -d $TARGET ]; then
+	# in case we're in web2py/
+	if [ -f ../$TARGET/VERSION ]; then
+		cd ..
+	# in case we're in web2py/scripts
+	elif [ -f ../../$TARGET/VERSION ]; then
+		cd ../..
+	fi
 fi
 read a VERSION c < $TARGET/VERSION
 SAVE=$TARGET-$VERSION
