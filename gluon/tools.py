@@ -518,9 +518,11 @@ class Auth(object):
              + datetime.timedelta(days=0, seconds=auth.expiration)\
              > request.now:
             self.user = auth.user
-            auth.last_visit = request.now
+            self.user_id = self.user.id
+            auth.last_visit = request.now            
         else:
             self.user = None
+            self.user_id = None
             session.auth = None
         self.settings = Settings()
 

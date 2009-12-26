@@ -466,7 +466,7 @@ def sqlhtml_validators(field):
     sff=['in','do','da','ti','de']
     if field.notnull and not field_type[:2] in sff:
         requires.insert(0,validators.IS_NOT_EMPTY())
-    elif not field.notnull and field_type[:2] in sff:
+    elif not field.notnull and field_type[:2] in sff and requires:
         requires[-1]=validators.IS_EMPTY_OR(requires[-1])
     return requires
 
