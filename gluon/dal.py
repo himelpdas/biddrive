@@ -443,11 +443,7 @@ class BaseAdapter(ConnectionPool):
             new_row = Row()
             for j in xrange(len(colnames)):
                 value = row[j]
-                if isinstance(value, str):
-                    value = value.decode(self._db_codec)
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
-                if not table_field.match(colnames[j]):
+                 if not table_field.match(colnames[j]):
                     if not '_extra' in new_row:
                         new_row['_extra'] = Row()
                     new_row['_extra'][colnames[j]] = value
@@ -455,7 +451,11 @@ class BaseAdapter(ConnectionPool):
                 (tablename, fieldname) = colnames[j].split('.')
                 table = self._db[tablename]
                 field = table[fieldname]
-                if not tablename in new_row:
+                if field.type != 'blob' and isinstance(value, str):
+                    value = value.decode(self._db_codec)
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
+               if not tablename in new_row:
                     colset = new_row[tablename] = Row()
                     virtualtables.append((tablename,self._db[tablename].virtualfields))
                 else:

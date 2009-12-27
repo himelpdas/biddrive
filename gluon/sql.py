@@ -1831,8 +1831,11 @@ class Table(dict):
             elif field.default != None:
                 fs.append(fieldname)
                 vs.append(sql_represent(field.default, ft, fd, self._db._db_codec))
+            elif field.compute != None:
+                fs.append(fieldname)
+                vs.append(sql_represent(field.compute(fields), ft, fd, self._db._db_codec))
             elif field.required is True:
-                raise SyntaxError,'Table: missing required field: %s'%field
+                raise SyntaxError,'Table: missing required field: %s'%field            
         sql_f = ', '.join(fs)
         sql_v = ', '.join(vs)
         sql_t = self._tablename
@@ -2523,6 +2526,7 @@ class Field(Expression):
         autodelete=False,
         represent=None,
         uploadfolder=None,
+        compute=None,
         ):
 
         self.name = fieldname = cleanup(fieldname)
@@ -2550,6 +2554,7 @@ class Field(Expression):
         self.authorize = authorize
         self.autodelete = autodelete
         self.represent = represent
+        self.compute = compute
         self.isattachment = True
         if self.label == None:
             self.label = ' '.join([x.capitalize() for x in
@@ -3130,9 +3135,12 @@ class Set(object):
         sql_t = tablenames[0]
         (table, dbname) = (self._db[sql_t], self._db._dbname)
         update_fields.update(dict([(fieldname, table[fieldname].update) \
-                                   for fieldname in table.fields \
+                                       for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].update != None]))
+        update_fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
+                                       for filedname in table.fields \
+                                       if table[fieldname].compute!=None]))
         sql_v = 'SET ' + ', '.join(['%s=%s' % (field,
                                    sql_represent(value,
                                    table[field].type, dbname, self._db._db_codec))

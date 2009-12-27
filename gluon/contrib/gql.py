@@ -249,9 +249,10 @@ class Table(gluon.sql.Table):
     def insert(self, **fields):
         self._db['_lastsql'] = 'insert'
         for field in self.fields:
-            if not field in fields and self[field].default\
-                 != None:
+            if not field in fields and self[field].default != None:
                 fields[field] = self[field].default
+            elif not field in fields and self[field].compute != None:
+                fields[field] = self[field].compute(fields)
             if field in fields:
                 fields[field] = obj_represent(fields[field],
                         self[field].type, self._db)
@@ -369,6 +370,7 @@ class Field(Expression, gluon.sql.Field):
         autodelete=False,
         represent=None,
         uploadfolder=None,
+        compute=None
         ):
 
         self.name = fieldname = cleanup(fieldname)
@@ -396,6 +398,7 @@ class Field(Expression, gluon.sql.Field):
         self.authorize = authorize
         self.autodelete = autodelete
         self.represent = represent
+        self.compute = compute
         self.isattachment = True
         if self.label == None:
             self.label = ' '.join([x.capitalize() for x in
@@ -685,10 +688,13 @@ class Set(gluon.sql.Set):
         db = self._db
         (items, tablename, fields) = self._select()
         table = db[tablename]
-        update_fields.update(dict([(field, table[field].update) \
-                                   for field in table.fields if not field \
-                                   in update_fields \
-                                   and table[field].update != None]))
+        update_fields.update(dict([(fieldname, table[fieldname].update) \
+                                       for fieldname in table.fields \
+                                       if not fieldname in update_fields \
+                                       and table[fieldname].update != None]))
+        update_fields.update(dict([(fieldname, table[fieldame].compute(update_fields)) \
+                                       for fieldname in table.fields \
+                                       if table[fieldname].compute != None]))
         tableobj = table._tableobj
         counter = 0
         for item in items:
