@@ -3140,7 +3140,8 @@ class Set(object):
                                        and table[fieldname].update != None]))
         update_fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
                                        for filedname in table.fields \
-                                       if table[fieldname].compute!=None]))
+                                       if not fieldname in update_fields \
+                                       and table[fieldname].compute != None]))
         sql_v = 'SET ' + ', '.join(['%s=%s' % (field,
                                    sql_represent(value,
                                    table[field].type, dbname, self._db._db_codec))

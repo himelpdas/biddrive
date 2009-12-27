@@ -694,7 +694,8 @@ class Set(gluon.sql.Set):
                                        and table[fieldname].update != None]))
         update_fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
                                        for fieldname in table.fields \
-                                       if table[fieldname].compute != None]))
+                                       if not fieldname in update_fields \
+                                       and table[fieldname].compute != None]))
         tableobj = table._tableobj
         counter = 0
         for item in items:
