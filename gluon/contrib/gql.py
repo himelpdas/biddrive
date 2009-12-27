@@ -692,7 +692,7 @@ class Set(gluon.sql.Set):
                                        for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].update != None]))
-        update_fields.update(dict([(fieldname, table[fieldame].compute(update_fields)) \
+        update_fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
                                        for fieldname in table.fields \
                                        if table[fieldname].compute != None]))
         tableobj = table._tableobj
