@@ -20,6 +20,7 @@ Completely refactored by MDP on Dec 12, 2009
 
 TODO:
 - create more funcitons in adapters to abstract more
+- check logger and folder interaction not sure it works
 """
 
 __all__ = ['DAL', 'Field']
@@ -37,6 +38,7 @@ import csv
 import copy
 import socket
 import logging
+import traceback
 import copy_reg
 import base64
 import uuid
@@ -131,6 +133,24 @@ except:
 # mapping of the field types and some constructs
 # per database
 
+class Logger(object):
+    def __init__(self,folder,name='sql.log'):
+        if isinstance(folder,(str,unicode)):
+            print os.path.join(folder,name)
+            self.file = open(os.path.join(folder,name),'a')
+        else:
+            self.file = None
+        self.active = False
+    def write(self,data):
+        if not self.active or not self.file:
+            return
+        portalocker.lock(self.file,portalocker.LOCK_EX)
+        ret = self.file.write(data)
+        portalocker.unlock(self.file)
+        return ret
+    def __zero__(self):
+        return not self.active
+
 class ConnectionPool(object):
     _folders = {}
     _connection_pools = {}
@@ -139,7 +159,7 @@ class ConnectionPool(object):
     @staticmethod
     def set_thread_folder(folder):
         sql_locker.acquire()
-        BaseAdapter._folders[thread.get_ident()] = folder
+        ConnectionPool._folders[thread.get_ident()] = folder
         sql_locker.release()
 
     # ## this allows gluon to commit/rollback all dbs in this thread
@@ -149,10 +169,10 @@ class ConnectionPool(object):
         """ to close cleanly databases in a multithreaded environment """
         sql_locker.acquire()
         pid = thread.get_ident()
-        if pid in BaseAdapter._folders:
-            del BaseAdapter._folders[pid]
-        if pid in BaseAdapter._instances:
-            instances = BaseAdapter._instances[pid]
+        if pid in ConnectionPool._folders:
+            del ConnectionPool._folders[pid]
+        if pid in ConnectionPool._instances:
+            instances = ConnectionPool._instances[pid]
             while instances:
                 instance = instances.pop()
                 sql_locker.release()
@@ -162,7 +182,7 @@ class ConnectionPool(object):
                 # ## if you want pools, recycle this connection
                 really = True
                 if instance.pool_size:
-                    pool = BaseAdapter._connection_pools[instance.uri]
+                    pool = ConnectionPool._connection_pools[instance.uri]
                     if len(pool) < instance.pool_size:
                         pool.append(instance.connection)
                         really = False
@@ -170,7 +190,7 @@ class ConnectionPool(object):
                     sql_locker.release()
                     instance.connection.close()
                     sql_locker.acquire()
-            del BaseAdapter._instances[pid]
+            del ConnectionPool._instances[pid]
         sql_locker.release()
         return
 
@@ -195,10 +215,10 @@ class ConnectionPool(object):
         else:
             uri = self.uri
             sql_locker.acquire()
-            if not uri in BaseAdapter._connection_pools:
-                BaseAdapter._connection_pools[uri] = []
-            if BaseAdapter._connection_pools[uri]:
-                self.connection = BaseAdapter._connection_pools[uri].pop()
+            if not uri in ConnectionPool._connection_pools:
+                ConnectionPool._connection_pools[uri] = []
+            if ConnectionPool._connection_pools[uri]:
+                self.connection = ConnectionPool._connection_pools[uri].pop()
                 sql_locker.release()
             else:
                 sql_locker.release()
@@ -209,12 +229,11 @@ class ConnectionPool(object):
             self._instances[pid] = []
         self._instances[pid].append(self)
         sql_locker.release()
-
         self.cursor = self.connection.cursor()
 
-
 class BaseAdapter(ConnectionPool):
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -341,7 +360,7 @@ class BaseAdapter(ConnectionPool):
         tablenames = self.tables(query)
         if not fields:
             for table in tablenames:
-                for field in self._db[table]:
+                for field in self.db[table]:
                     fields.append(field)
         else:
             for f in fields:
@@ -369,7 +388,7 @@ class BaseAdapter(ConnectionPool):
             sql_s += 'DISTINCT ON (%s)' % distinct
         if left:
             join = attributes['left']
-            command = self._db._adapter.LEFT_JOIN()
+            command = self.db._adapter.LEFT_JOIN()
             if not isinstance(join, (tuple, list)):
                 join = [join]
             joint = [t._tablename for t in join if not isinstance(t,SQLJoin)]
@@ -391,12 +410,12 @@ class BaseAdapter(ConnectionPool):
             if isinstance(orderby, (list, tuple)):
                 orderby = xorify(orderby)
             if str(orderby) == '<random>':
-                sql_o += ' ORDER BY %s' % self._db._adapter.RANDOM()
+                sql_o += ' ORDER BY %s' % self.db._adapter.RANDOM()
             else:
-                sql_o += ' ORDER BY %s' % self._db._adapter.expand(orderby)
+                sql_o += ' ORDER BY %s' % self.db._adapter.expand(orderby)
         if limitby:
             if not orderby and tablenames:
-                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in (self._db[t]._primarykey if hasattr(self._db[t],'_primarykey') else ['id'])])
+                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in (self.db[t]._primarykey if hasattr(self.db[t],'_primarykey') else ['id'])])
             # oracle does not support limitby
         return self.SELECT_LIMITBY(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
@@ -404,8 +423,26 @@ class BaseAdapter(ConnectionPool):
             (lmin, lmax) = limitby
             sql_o += ' LIMIT %i OFFSET %i' % (lmax - lmin, lmin)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
-
-
+    def select(self,query,*fields,**attributes):
+        """
+        Always returns a Rows object, even if it may be empty
+        """
+        db=self.db
+        def response(query):
+            self.execute(query)
+            return self.cursor.fetchall()
+        query = self.SELECT(query,*fields, **attributes)
+        if not attributes.get('cache', None):
+            rows = response(query)
+        else:
+            (cache_model, time_expire) = attributes['cache']
+            del attributes['cache']
+            key = self._uri + '/' + query
+            rows = cache_model(key, lambda : response(query), time_expire)
+        if isinstance(rows,tuple):
+            rows = list(rows)            
+        rows = self.rowslice(rows,attributes.get('limitby',(0,))[0],None)
+        return self.parse(rows,self._colnames)
     def tables(self,query):        
         tables = []
         if not isinstance(query,(Query,Expression,Field)):
@@ -425,9 +462,19 @@ class BaseAdapter(ConnectionPool):
 
         return tables
     def commit(self):
-        return self.connection.commit()
+        self.db._logger.write('commit\n');
+        try:
+            ret = self.connection.commit()
+        finally :
+            self.db._logger.write(traceback.format_exc());
+        return ret
     def rollback(self):
-        return self.connection.rollback()
+        self.db._logger.write('rollback\n');
+        try:
+            ret = self.connection.rollback()
+        finally:
+            self.db._logger.write(traceback.format_exc());
+        return ret
     def support_distributed_transaction(self):
         return False
     def distributed_transaction_begin(self,key):
@@ -446,9 +493,16 @@ class BaseAdapter(ConnectionPool):
         self.execute(query)
     def commit_on_alter_table(self):        
         return False
+    def log_execute(self,*a,**b):
+        self.db._lastsql = a[0]
+        self.db._logger.write(datetime.datetime.now().isoformat()+'\n'+a[0]+'\n')
+        try:
+            ret = self.cursor.execute(*a,**b)
+        finally:
+            self.db._logger.write(traceback.format_exc())
+        return ret
     def execute(self,*a,**b):
-        #print '>>>',a[0]
-        return self.cursor.execute(*a, **b)
+        return self.log_execute(*a, **b)
     def represent(self, obj, fieldtype):        
         if type(obj) in (types.LambdaType, types.FunctionType):
             obj = obj()
@@ -526,15 +580,15 @@ class BaseAdapter(ConnectionPool):
                     new_row['_extra'][colnames[j]] = value
                     continue
                 (tablename, fieldname) = colnames[j].split('.')
-                table = self._db[tablename]
+                table = self.db[tablename]
                 field = table[fieldname]
                 if field.type != 'blob' and isinstance(value, str):
-                    value = value.decode(self._db_codec)
+                    value = value.decode(self.db_codec)
                 if isinstance(value, unicode):
                     value = value.encode('utf-8')
                 if not tablename in new_row:
                     colset = new_row[tablename] = Row()
-                    virtualtables.append((tablename,self._db[tablename].virtualfields))
+                    virtualtables.append((tablename,self.db[tablename].virtualfields))
                 else:
                     colset = new_row[tablename]
                 if field.type[:10] == 'reference ':
@@ -543,7 +597,7 @@ class BaseAdapter(ConnectionPool):
                         colset[fieldname] = value
                     elif not '.' in referee:
                         colset[fieldname] = rid = Reference(value)
-                        (rid._table, rid._record) = (self._db[referee], None)
+                        (rid._table, rid._record) = (self.db[referee], None)
                     else: ### reference not by id
                         colset[fieldname] = value
                 elif field.type == 'blob' and value != None and blob_decode:
@@ -598,11 +652,11 @@ class BaseAdapter(ConnectionPool):
                         t._db(t.id==i).delete()
                     for (referee_table, referee_name) in \
                             table._referenced_by:
-                        s = self._db[referee_table][referee_name]
-                        colset[referee_table] = Set(self._db, s == id)
+                        s = self.db[referee_table][referee_name]
+                        colset[referee_table] = Set(self.db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
-        rowsobj = Rows(self._db, new_rows, colnames)
+        rowsobj = Rows(self.db, new_rows, colnames)
         for table, virtualfields in virtualtables:
             for item in virtualfields:
                 rowsobj = rowsobj.setvirtualfields(**{table:item})
@@ -644,7 +698,8 @@ class SQLiteAdapter(BaseAdapter):
             return int(s[i:j])
         except:
             return None
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -663,7 +718,8 @@ class SQLiteAdapter(BaseAdapter):
         return self.cursor.lastrowid
 
 class JDBCSQLiteAdapter(SQLiteAdapter):
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -679,8 +735,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
         self.pool_connection(lambda dbpath=dbpath: zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath)))
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
     def execute(self,a):
-        #print '>>>',a[0]
-        return self.cursor.execute(a[:-1])
+        return self.log_execute(a[:-1])
 
 class MySQLAdapter(BaseAdapter):
     types = {
@@ -719,7 +774,8 @@ class MySQLAdapter(BaseAdapter):
         self.execute("XA ROLLBACK;")
     def concat_add(self,table):
         return '; ALTER TABLE %s ADD ' % table
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -729,7 +785,7 @@ class MySQLAdapter(BaseAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
             raise SyntaxError, \
-                "Invalid URI string in SQLDB: %s" % self.uri
+                "Invalid URI string in DAL: %s" % self.uri
         user = m.group('user')
         if not user:
             raise SyntaxError, 'User required'
@@ -794,7 +850,8 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute("COMMIT PREPARED '%s';" % key)
     def rollback_prepared(self,key):        
         self.execute("ROLLBACK PREPARED '%s';" % key)
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -803,7 +860,7 @@ class PostgreSQLAdapter(BaseAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
         if not m:
-            raise SyntaxError, "Invalid URI string in SQLDB"
+            raise SyntaxError, "Invalid URI string in DAL"
         user = m.group('user')
         if not user:
             raise SyntaxError, 'User required'
@@ -828,7 +885,8 @@ class PostgreSQLAdapter(BaseAdapter):
         return int(self.cursor.fetchone()[0])
 
 class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -837,7 +895,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
         if not m:
-            raise SyntaxError, "Invalid URI string in SQLDB"
+            raise SyntaxError, "Invalid URI string in DAL"
         user = m.group('user')
         if not user:
             raise SyntaxError, 'User required'
@@ -915,7 +973,8 @@ class OracleAdapter(BaseAdapter):
                 obj = str(obj)
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
         return None
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -936,7 +995,7 @@ class OracleAdapter(BaseAdapter):
             command = command[:m.start('clob')] + str(i) + command[m.end('clob'):]
             args.append(m.group('clob')[6:-2].replace("''", "'"))
             i += 1
-        return self.cursor.execute(command[:-1], args)
+        return self.log_execute(command[:-1], args)
     def create_sequence_and_triggers(self, query, tablename):
         self.execute(query)
         self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
@@ -989,7 +1048,8 @@ class MSSQLAdapter(BaseAdapter):
             else:
                 return '0'
         return None
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1014,7 +1074,7 @@ class MSSQLAdapter(BaseAdapter):
             m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?(?P<urlargs>.*))?$').match(uri)
             if not m:
                 raise SyntaxError, \
-                    "Invalid URI string in SQLDB: %s" % uri
+                    "Invalid URI string in DAL: %s" % uri
             user = m.group('user')
             if not user:
                 raise SyntaxError, 'User required'
@@ -1074,7 +1134,7 @@ class MSSQLAdapter2(MSSQLAdapter):
             value = 'N'+value
         return value
     def execute(self,a):
-        return self.cursor.execute(a,'utf8')
+        return self.log_execute(a,'utf8')
 
 class FireBirdAdapter(BaseAdapter):
     types = {
@@ -1109,7 +1169,8 @@ class FireBirdAdapter(BaseAdapter):
 
     def support_distributed_transaction(self):
         return True
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1118,7 +1179,7 @@ class FireBirdAdapter(BaseAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+?)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
-            raise SyntaxError, "Invalid URI string in SQLDB: %s" % uri
+            raise SyntaxError, "Invalid URI string in DAL: %s" % uri
         user = m.group('user')
         if not user:
             raise SyntaxError, 'User required'
@@ -1147,11 +1208,12 @@ class FireBirdAdapter(BaseAdapter):
         self.execute('create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;' % (tablename,tablename,tablename))
     def lastrowid(self,tablename):
         self.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database' % tablename)
-        return int(self._db._adapter.cursor.fetchone()[0])
+        return int(self.db._adapter.cursor.fetchone()[0])
 
 
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1161,7 +1223,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<path>[^\?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
             raise SyntaxError, \
-                "Invalid URI string in SQLDB: %s" % self.uri  #### <<< TODO
+                "Invalid URI string in DAL: %s" % self.uri  #### <<< TODO
         user = m.group('user')
         if not user:
             raise SyntaxError, 'User required'
@@ -1238,7 +1300,8 @@ class InformixAdapter(BaseAdapter):
                 obj = str(obj)
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
         return None
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1248,7 +1311,7 @@ class InformixAdapter(BaseAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
         if not m:
             raise SyntaxError, \
-                "Invalid URI string in SQLDB: %s" % self.uri
+                "Invalid URI string in DAL: %s" % self.uri
         user = m.group('user')
         if not user:
             raise SyntaxError, 'User required'
@@ -1266,7 +1329,7 @@ class InformixAdapter(BaseAdapter):
     def execute(self,command):
         if command[-1:]==';':
             command = command[:-1]
-        return self.cursor.execute(command)
+        return self.log_execute(command)
     def lastrowid(self,tablename):
         return self.cursor.sqlerrd[1]
 
@@ -1311,7 +1374,8 @@ class DB2Adapter(BaseAdapter):
                 obj = obj.isoformat()[:10]+'-00.00.00'
             return "'%s'" % obj
         return None
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1322,10 +1386,10 @@ class DB2Adapter(BaseAdapter):
     def execute(self,command):
         if command[-1:]==';':
             command = command[:-1]
-        return self.cursor.execute(command)
+        return self.log_execute(command)
     def lastrowid(self,tablename):
         self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % tablename)
-        return int(self._db._adapter.cursor.fetchone()[0])
+        return int(self.db._adapter.cursor.fetchone()[0])
     def rowslice(self,rows,minimum=0,maximum=None):
         if maximum==None:
             return rows[minimum:]
@@ -1368,7 +1432,8 @@ class IngresAdapter(BaseAdapter):
                 # Requires Ingres 9.2+
                 sql_o += ' OFFSET %d' % (lmin, )
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
-    def __init__(self,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+        self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1622,16 +1687,16 @@ class SQLCallableList(list):
         return copy.copy(self)
 
 
-class SQLDB(dict):
+class DAL(dict):
 
     """
     an instance of this class represents a database connection
 
     Example::
 
-       db = SQLDB('sqlite://test.db')
+       db = DAL('sqlite://test.db')
        db.define_table('tablename', Field('fieldname1'),
-                                   Field('fieldname2'))
+                                    Field('fieldname2'))
     """
 
     # ## this allows gluon to comunite a folder for this thread
@@ -1681,17 +1746,17 @@ class SQLDB(dict):
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!        
         self._pool_size = pool_size
         self._db_codec = db_codec
+        self._lastsql = ''        
+        self._logger = Logger(folder)
         if is_jdbc:
             prefix = 'jdbc:'
         else:
             prefix = ''
         if uri and uri.find(':')>=0:
             self._dbname = uri.split(':')[0]
-            self._adapter = ADAPTERS[prefix+self._dbname](uri,pool_size,folder,db_codec)
+            self._adapter = ADAPTERS[prefix+self._dbname](self,uri,pool_size,folder,db_codec)
         else:
-            self._adapter = BaseAdapter(uri)
-        self._adapter._db = self # <<< FIX THIS
-        self['_lastsql'] = ''
+            self._adapter = BaseAdapter(self,uri)
         self.tables = SQLCallableList()
 
     def define_table(
@@ -1749,13 +1814,13 @@ class SQLDB(dict):
         return dict.__getitem__(self,key)
 
     def __setattr__(self, key, value):
-        if key in self:
+        if key[:1]!='_' and key in self:
             raise SyntaxError, \
                 'Object %s exists and cannot be redefined' % key
         self[key] = value
 
     def __repr__(self):
-        return '<SQLDB ' + dict.__repr__(self) + '>'
+        return '<DAL ' + dict.__repr__(self) + '>'
 
     def __call__(self, query=None):
         return Set(self, query)
@@ -1787,9 +1852,7 @@ class SQLDB(dict):
 
         --bmeredyk
         """
-        self['_lastsql'] = query
         if placeholders:
-            self['_lastsql'] +="  with "+str(placeholders)
             self._adapter.execute(query, placeholders)
         else:
             self._adapter.execute(query)
@@ -1920,7 +1983,7 @@ class Table(dict):
 
     Example::
 
-        db = SQLDB(...)
+        db = DAL(...)
         db.define_table('users', Field('name'))
         db.users.insert(name='me') # print db.users._insert(...) to see SQL
         db.users.drop()
@@ -2120,8 +2183,8 @@ class Table(dict):
             self._dbt = os.path.join(dbpath, '%s_%s.table' \
                      % (md5_hash(self._db._uri), self._tablename))
         if self._dbt:
-            self._logfilename = os.path.join(dbpath, 'sql.log')
-            logfile = open(self._logfilename, 'a')
+            self._loggername = os.path.join(dbpath, 'sql.log')
+            logfile = open(self._loggername, 'a')
         else:
             logfile = None
         if not self._dbt or not os.path.exists(self._dbt):
@@ -2130,7 +2193,6 @@ class Table(dict):
                                % datetime.datetime.today().isoformat())
                 logfile.write(query + '\n')
             if not fake_migrate:
-                self._db['_lastsql'] = query
                 self._db._adapter.create_sequence_and_triggers(query,self)
                 self._db.commit()
             if self._dbt:
@@ -2200,7 +2262,6 @@ class Table(dict):
             if query:
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
-                self._db['_lastsql'] = '\n'.join(query)
                 for sub_query in query:
                     logfile.write(sub_query + '\n')
                     if not fake_migrate:
@@ -2221,13 +2282,12 @@ class Table(dict):
         tfile.close()
 
     def _drop(self, mode = ''):
-        return self._db._adapter.DROP(self, mode = '')
+        return self._db._adapter.DROP(self, mode)
 
-    def drop(self, mode = None):
+    def drop(self, mode = ''):
         if self._dbt:
-            logfile = open(self._logfilename, 'a')
+            logfile = open(self._loggername, 'a')
         queries = self._drop(mode = mode)
-        self._db['_lastsql'] = '\n'.join(queries)
         for query in queries:
             if self._dbt:
                 logfile.write(query + '\n')
@@ -2259,7 +2319,6 @@ class Table(dict):
 
     def insert(self, **fields):
         query = self._insert(**fields)
-        self._db['_lastsql'] = query
         self._db._adapter.execute(query)
         id = self._db._adapter.lastrowid(self._tablename)
         if not isinstance(id,int):
@@ -2347,9 +2406,8 @@ class Table(dict):
 
     def truncate(self, mode = None):
         if self._dbt:
-            logfile = open(self._logfilename, 'a')
+            logfile = open(self._loggername, 'a')
         queries = self._truncate(mode = mode)
-        self._db['_lastsql'] = '\n'.join(queries)
         for query in queries:
             if self._dbt:
                 logfile.write(query + '\n')
@@ -2657,8 +2715,8 @@ class KeyedTable(Table):
             self._dbt = os.path.join(dbpath, '%s_%s.table' \
                      % (md5_hash(self._db._uri), self._tablename))
         if self._dbt:
-            self._logfilename = os.path.join(dbpath, 'sql.log')
-            logfile = open(self._logfilename, 'a')
+            self._loggername = os.path.join(dbpath, 'sql.log')
+            logfile = open(self._loggername, 'a')
         else:
             logfile = None
         if not self._dbt or not os.path.exists(self._dbt):
@@ -2666,7 +2724,6 @@ class KeyedTable(Table):
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
                 logfile.write(query + '\n')
-            self._db['_lastsql'] = query
             if not fake_migrate:
                 self._db._adapter.execute(query)
                 ### <<<<<<<<<<<<< NEEDS WORK !!!
@@ -2715,7 +2772,6 @@ class KeyedTable(Table):
     def insert(self, **fields):
         if self._db._dbname in ['mssql', 'mssql2', 'db2', 'ingres', 'informix']:
             query = self._insert(**fields)
-            self._db['_lastsql'] = query
             try:
                 self._db._adapter.execute(query)
             except Exception, e:
@@ -2870,7 +2926,7 @@ class Field(Expression):
             writable=True, readable=True, update=None, authorize=None,
             autodelete=False, represent=None, uploadfolder=None)
 
-    to be used as argument of SQLDB.define_table
+    to be used as argument of DAL.define_table
 
     allowed field types:
     string, boolean, integer, double, text, blob,
@@ -3078,15 +3134,15 @@ class Field(Expression):
             return '<no table>.%s' % self.name
 
 
-SQLDB.Field = Field  # necessary in gluon/globals.py session.connect
-SQLDB.Table = Table  # necessary in gluon/globals.py session.connect
+DAL.Field = Field  # necessary in gluon/globals.py session.connect
+DAL.Table = Table  # necessary in gluon/globals.py session.connect
 
 
 class Query(object):
 
     """
     a query object necessary to define a set.
-    t can be stored or can be passed to SQLDB.__call__() to obtain a Set
+    t can be stored or can be passed to DAL.__call__() to obtain a Set
 
     Example::
 
@@ -3139,7 +3195,7 @@ class Set(object):
     """
     a Set represents a set of records in the database,
     the records are identified by the where=Query(...) object.
-    normally the Set is generated by SQLDB.__call__(Query(...))
+    normally the Set is generated by DAL.__call__(Query(...))
 
     given a set, for example
        set = db(db.users.name=='Max')
@@ -3165,31 +3221,7 @@ class Set(object):
         return self._db._adapter.SELECT(self._query,*fields,**attributes)
 
     def select(self, *fields, **attributes):
-        """
-        Always returns a Rows object, even if it may be empty
-        """
-
-        db=self._db
-        def response(query):
-            db['_lastsql'] = query
-            db._adapter.execute(query)
-            return db._adapter.cursor.fetchall()
-
-        if not attributes.get('cache', None):
-            query = self._select(*fields, **attributes)
-            rows = response(query)
-        else:
-            (cache_model, time_expire) = attributes['cache']
-            del attributes['cache']
-            query = self._select(*fields, **attributes)
-            key = self._db._uri + '/' + query
-            rows = cache_model(key, lambda : response(query), time_expire)
-
-        if isinstance(rows,tuple):
-            rows = list(rows)
-            
-        rows = db._adapter.rowslice(rows,attributes.get('limitby',(0,))[0],None)
-        return self._db._adapter.parse(rows,self._db._adapter._colnames)
+        return self._db._adapter.select(self._query,*fields,**attributes)
 
     #@staticmethod
 
@@ -3217,7 +3249,6 @@ class Set(object):
         if db._dbname=='sqlite' and db[t]._referenced_by:
             deleted = [x.id for x in self.select(db[t].id)]
         ### end special code to handle CASCADE in SQLite
-        self._db['_lastsql'] = query
         self._db._adapter.execute(query)
         try:
             counter = self._db._adapter.cursor.rowcount
@@ -3249,7 +3280,6 @@ class Set(object):
     def update(self, **update_fields):
         query = self._update(**update_fields)
         self.delete_uploaded_files(update_fields)
-        self._db['_lastsql'] = query
         self._db._adapter.execute(query)
         try:
             return self._db._adapter.cursor.rowcount
@@ -3571,8 +3601,8 @@ def test_all():
     'informix://user:password@server:3050/database'
     'gae' # for google app engine
 
-    >>> if len(sys.argv)<2: db = SQLDB(\"sqlite://test.db\")
-    >>> if len(sys.argv)>1: db = SQLDB(sys.argv[1])
+    >>> if len(sys.argv)<2: db = DAL(\"sqlite://test.db\")
+    >>> if len(sys.argv)>1: db = DAL(sys.argv[1])
     >>> tmp = db.define_table('users',\
               Field('stringf', 'string', length=32, required=True),\
               Field('booleanf', 'boolean', default=False),\
@@ -3750,7 +3780,7 @@ def test_all():
 
     Delete all leftover tables
 
-    >>> SQLDB.distributed_transaction_commit(db)
+    >>> DAL.distributed_transaction_commit(db)
 
     >>> db.mynumber.drop()
     >>> db.authorship.drop()
@@ -3765,13 +3795,9 @@ SQLQuery = Query
 SQLSet = Set
 SQLRows = Rows
 SQLStorage = Row
+SQLDB = DAL
+GQLDB = DAL
 
-def DAL(uri='sqlite:memory:', pool_size=0, folder=None, db_codec='UTF-8'):
-    if uri == 'gae':
-        import gluon.contrib.gql
-        return gluon.contrib.gql.GQLDB()
-    else:
-        return SQLDB(uri, pool_size=pool_size, folder=folder, db_codec=db_codec)
 
 if __name__ == '__main__':
     import doctest
