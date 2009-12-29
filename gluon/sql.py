@@ -2930,7 +2930,7 @@ class Set(object):
                 if not attributes.get('orderby', None) and w2p_tablenames:
 #                     sql_o += ' ORDER BY %s' % ', '.join([t + '.id'
 #                             for t in w2p_tablenames ])
-                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in (self._db[t]._primarykey if hasattr(self._db[t],'_primarykey') else ['id'])])
+                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or ['id'])])
                 sql_s += ' TOP %i' % lmax
             elif self._db._dbname == 'firebird':
                 if not attributes.get('orderby', None) and w2p_tablenames:
@@ -2941,7 +2941,7 @@ class Set(object):
                 if not attributes.get('orderby', None) and w2p_tablenames:
 #                     sql_o += ' ORDER BY %s' % ', '.join([t + '.id'
 #                             for t in w2p_tablenames])
-                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in (self._db[t]._primarykey if hasattr(self._db[t],'_primarykey') else ['id'])])
+                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or ['id'])])
                 sql_o += ' FETCH FIRST %i ROWS ONLY' % lmax
             elif self._db._dbname == 'ingres':
                 fetch_amt = lmax - lmin
