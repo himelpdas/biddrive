@@ -786,7 +786,8 @@ def start(cron = True):
 
     if root:
         root.focus_force()
-        presentation(root)
+        if not options.quiet:
+            presentation(root)
         master = web2pyDialog(root, options)
         signal.signal(signal.SIGTERM, lambda a, b: master.quit())
 
