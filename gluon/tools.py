@@ -17,7 +17,7 @@ from http import *
 import base64
 import cPickle
 import datetime
-import email
+from email import *
 import sys
 import os
 import re
@@ -53,7 +53,7 @@ class Mail(object):
     Works with SMTP and Google App Engine.
     """
 
-    class Attachment(email.MIMEBase.MIMEBase):
+    class Attachment(MIMEBase.MIMEBase):
         """
         Email attachment
 
@@ -121,12 +121,12 @@ class Mail(object):
             filename = filename.encode(encoding)
             if content_type == None:
                 content_type = contenttype(filename)
-            email.MIMEBase.MIMEBase.__init__(self, *content_type.split('/', 1))
+            MIMEBase.MIMEBase.__init__(self, *content_type.split('/', 1))
             self.set_payload(payload)
             self['Content-Disposition'] = 'attachment; filename="%s"' % filename
             if content_id != None:
                 self['Content-Id'] = '<%s>' % content_id.encode(encoding)
-            email.Encoders.encode_base64(self)
+            Encoders.encode_base64(self)
 
     def __init__(self, server=None, sender=None, login=None, tls=True):
         """
@@ -251,7 +251,7 @@ class Mail(object):
             to = list(to)
         if len(to) == 0:
             raise Exception('Target receiver address not specified')
-        payload = email.MIMEMultipart.MIMEMultipart('related')
+        payload = MIMEMultipart.MIMEMultipart('related')
         payload['To'] = ', '.join(to).decode(encoding).encode('utf-8')
         if reply_to != None:
             payload['Reply-To'] = reply_to.decode(encoding).encode('utf-8')
@@ -274,19 +274,19 @@ class Mail(object):
             text = message
             html = None
         if text != None or html != None:
-            attachment = email.MIMEMultipart.MIMEMultipart('alternative')
+            attachment = MIMEMultipart.MIMEMultipart('alternative')
             if text != None:
                 if isinstance(text, str):
                     text = text.decode(encoding).encode('utf-8')
                 else:
                     text = text.read().decode(encoding).encode('utf-8')
-                attachment.attach(email.MIMEText.MIMEText(text))
+                attachment.attach(MIMEText.MIMEText(text))
             if html != None:
                 if isinstance(html, str):
                     html = html.decode(encoding).encode('utf-8')
                 else:
                     html = html.read().decode(encoding).encode('utf-8')
-                attachment.attach(email.MIMEText.MIMEText(html, 'html'))
+                attachment.attach(MIMEText.MIMEText(html, 'html'))
             payload.attach(attachment)
         if attachments == None:
             pass

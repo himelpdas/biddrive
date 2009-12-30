@@ -29,7 +29,6 @@ import logging
 import random
 #import sneaky
 import rewrite
-import functools
 import string
 from restricted import RestrictedError
 from http import HTTP, redirect
@@ -212,7 +211,7 @@ def start_response_aux(status, headers, exc_info, response=None):
     """
     response.status = str(status).split(' ',1)[0]
     response.headers = dict(headers)
-    return functools.partial(response.write, escape=False)
+    return lambda *args, **kargs: response.write(escape=False,*args,**kargs) 
 
 
 def middleware_aux(request, response, *middleware_apps):
