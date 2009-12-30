@@ -494,8 +494,7 @@ class SQLFORM(FORM):
         # if no fields are provided, build it from the provided table
         # will only use writable or readable fields, unless forced to ignore
         if fields == None:
-            fields = [f for f in table.fields if \
-                      ignore_rw or table[f].writable or table[f].readable]
+            fields = [f.name for f in table if (ignore_rw or f.writable or f.readable) and not f.compute]
         self.fields = fields
 
         # make sure we have an id
@@ -864,7 +863,7 @@ class SQLFORM(FORM):
             if field.type == 'integer':
                 if fields[fieldname] != None:
                     fields[fieldname] = int(fields[fieldname])
-            elif field.type[:9] == 'reference':
+            elif str(field.type).startswith('reference'):
                 if fields[fieldname] != None and isinstance(self.table,Table) and not keyed:
                     fields[fieldname] = int(fields[fieldname])
             elif field.type == 'double':
@@ -1023,7 +1022,7 @@ class SQLTABLE(TABLE):
                     except TypeError:
                         href = '%s/%s/%s' % (linkto, tablename, r_old)
                     row.append(TD(A(r, _href=href)))
-                elif linkto and field.type[:9] == 'reference':
+                elif linkto and str(field.type).startswith('reference'):
                     ref = field.type[10:]
                     try:
                         href = linkto(r, 'reference', ref)

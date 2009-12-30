@@ -41,6 +41,8 @@ class CacheAbstract(object):
 
     Use CacheInRam or CacheOnDisk instead which are derived from this class.
     """
+    
+    cache_stats_name = 'web2py_cache_statistics'
 
     def __init__(self, request=None):
         """
@@ -51,12 +53,8 @@ class CacheAbstract(object):
         """
         raise NotImplementedError
 
-    def __call__(
-        self,
-        key,
-        f,
-        time_expire = DEFAULT_TIME_EXPIRE,
-        ):
+    def __call__(self, key, f,
+                time_expire = DEFAULT_TIME_EXPIRE):
         """
         Tries retrieve the value corresponding to `key` from the cache of the
         object exists and if it did not expire, else it called the function `f`
@@ -113,7 +111,6 @@ class CacheAbstract(object):
             if r.match(key):
                 del storage[key]
 
-
 class CacheInRam(CacheAbstract):
     """
     Ram based caching
@@ -134,7 +131,10 @@ class CacheInRam(CacheAbstract):
         else:
             app = ''
         if not app in self.meta_storage:
-            self.storage = self.meta_storage[app] = {}
+            self.storage = self.meta_storage[app] = {CacheAbstract.cache_stats_name: {
+                'hit_total': 0,
+                'misses': 0,
+            }}
         else:
             self.storage = self.meta_storage[app]
         self.locker.release()
@@ -146,14 +146,17 @@ class CacheInRam(CacheAbstract):
             storage.clear()
         else:
             self._clear(storage, regex)
+        
+        if not CacheAbstract.cache_stats_name in storage.keys():
+            storage[CacheAbstract.cache_stats_name] = {
+                'hit_total': 0,
+                'misses': 0,
+            }
+            
         self.locker.release()
 
-    def __call__(
-        self,
-        key,
-        f,
-        time_expire = DEFAULT_TIME_EXPIRE,
-        ):
+    def __call__(self, key, f,
+                time_expire = DEFAULT_TIME_EXPIRE):
         """
         Attention! cache.ram does not copy the cached object. It just stores a reference to it.
         Turns out the deepcopying the object has some problems:
@@ -169,6 +172,7 @@ class CacheInRam(CacheAbstract):
         item = self.storage.get(key, None)
         if item and f == None:
             del self.storage[key]
+        self.storage[CacheAbstract.cache_stats_name]['hit_total'] += 1
         self.locker.release()
 
         if f is None:
@@ -179,6 +183,7 @@ class CacheInRam(CacheAbstract):
 
         self.locker.acquire()
         self.storage[key] = (time.time(), value)
+        self.storage[CacheAbstract.cache_stats_name]['misses'] += 1
         self.locker.release()
         return value
 
@@ -225,6 +230,21 @@ class CacheOnDisk(CacheAbstract):
                                         'cache/cache.lock')
         self.shelve_name = os.path.join(request.folder,
                 'cache/cache.shelve')
+                
+        locker = open(self.locker_name, 'a')
+        portalocker.lock(locker, portalocker.LOCK_EX)
+        
+        storage = shelve.open(self.shelve_name)
+        
+        if not storage.has_key(CacheAbstract.cache_stats_name):
+            storage[CacheAbstract.cache_stats_name] = {
+                'hit_total': 0,
+                'misses': 0,
+            }
+            
+        storage.sync()
+        portalocker.unlock(locker)
+        locker.close()
 
     def clear(self, regex=None):
         locker = open(self.locker_name,'a')
@@ -234,36 +254,59 @@ class CacheOnDisk(CacheAbstract):
             storage.clear()
         else:
             self._clear(storage, regex)
+        if not CacheAbstract.cache_stats_name in storage.keys():
+            storage[CacheAbstract.cache_stats_name] = {
+                'hit_total': 0,
+                'misses': 0,
+            }
         storage.sync()
         portalocker.unlock(locker)
         locker.close()
 
-    def __call__(
-        self,
-        key,
-        f,
-        time_expire = DEFAULT_TIME_EXPIRE,
-        ):
+    def __call__(self, key, f,
+                time_expire = DEFAULT_TIME_EXPIRE):
         dt = time_expire
+        
         locker = open(self.locker_name,'a')
         portalocker.lock(locker, portalocker.LOCK_EX)
+        
         storage = shelve.open(self.shelve_name)
+        
         item = storage.get(key, None)
         if item and f == None:
             del storage[key]
+            
+        storage[CacheAbstract.cache_stats_name] = {
+            'hit_total': storage[CacheAbstract.cache_stats_name]['hit_total'] + 1,
+            'misses': storage[CacheAbstract.cache_stats_name]['misses']
+        }
+        
+        storage.sync()
+            
         portalocker.unlock(locker)
         locker.close()
+        
         if f is None:
             return None
         if item and (dt == None or item[0] > time.time() - dt):
             return item[1]
         value = f()
+        
         locker = open(self.locker_name,'a')
         portalocker.lock(locker, portalocker.LOCK_EX)
+        
         storage[key] = (time.time(), value)
+        
+        storage[CacheAbstract.cache_stats_name] = {
+            'hit_total': storage[CacheAbstract.cache_stats_name]['hit_total'],
+            'misses': storage[CacheAbstract.cache_stats_name]['misses'] + 1
+        }
+        
         storage.sync()
+        
         portalocker.unlock(locker)
         locker.close()
+        
         return value
 
     def increment(self, key, value=1):
@@ -318,12 +361,10 @@ class Cache(object):
                 # been accounted for
                 logging.warning('no cache.disk (AttributeError)')
 
-    def __call__(
-        self,
-        key = None,
-        time_expire = DEFAULT_TIME_EXPIRE,
-        cache_model = None,
-        ):
+    def __call__(self,
+                key = None,
+                time_expire = DEFAULT_TIME_EXPIRE,
+                cache_model = None):
         """
         Decorator function that can be used to cache any function/method.
 
