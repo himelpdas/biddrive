@@ -1312,7 +1312,7 @@ class BEAUTIFY(DIV):
     example::
 
         >>> BEAUTIFY(['a', 'b', {'hello': 'world'}]).xml()
-        '<div><table><tr><td><div>a</div></td></tr><tr><td><div>b</div></td></tr><tr><td><div><table><tr><td><b><div>hello</div></b></td><td align=\"top\">:</td><td><div>world</div></td></tr></table></div></td></tr></table></div>'
+        '<div><table><tr><td><div>a</div></td></tr><tr><td><div>b</div></td></tr><tr><td><div><table><tr><td style="font-weight:bold;"><div>hello</div></td><td valign="top">:</td><td><div>world</div></td></tr></table></div></td></tr></table></div>'
 
     turns any list, dictionary, etc into decent looking html.
     """
@@ -1458,7 +1458,7 @@ def test():
     >>> print form.accepts({'myvar':'34'}, formname=None)
     False
     >>> print form.xml()
-    <form action=\"\" enctype=\"multipart/form-data\" method=\"post\"><input name=\"myvar\" type=\"text\" value=\"34\" /><div class=\"error\" id=\"myvar__error\">invalid expression!</div></form>
+    <form action="" enctype="multipart/form-data" method="post"><input name="myvar" type="text" value="34" /><div class="error" id="myvar__error">invalid expression</div></form>
     >>> print form.accepts({'myvar':'4'}, formname=None, keepvalues=True)
     True
     >>> print form.xml()
