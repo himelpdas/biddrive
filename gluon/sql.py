@@ -3369,6 +3369,7 @@ class Rows(object):
         for i in xrange(len(self)):
             yield self[i]
 
+
     def export_to_csv_file(self, ofile, null='<NULL>', *args, **kwargs):
         """
         export data to csv, the first line contains the column names
@@ -3379,6 +3380,7 @@ class Rows(object):
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
+        represent = kwargs.get('represent', False) 
         writer = csv.writer(ofile, delimiter=delimiter,
                             quotechar=quotechar, quoting=quoting)
         # a proper csv starting with the column names
@@ -3409,8 +3411,13 @@ class Rows(object):
                     (t, f) = col.split('.')
                     if isinstance(record.get(t, None), (Row,dict)):
                         row.append(none_exception(record[t][f]))
-                    else:
-                        row.append(none_exception(record[f]))
+                    elif represent:                                                                    
+                        if self.db[t][f].represent:                                                  
+                            row.append(none_exception(self.db[t][f].represent(record[f])))           
+                        else:                                                                        
+                            row.append(none_exception(record[f]))                                    
+                    else:                                                                            
+                        row.append(none_exception(record[f]))   
             writer.writerow(row)
 
     def __str__(self):

@@ -230,19 +230,21 @@ class CacheOnDisk(CacheAbstract):
                                         'cache/cache.lock')
         self.shelve_name = os.path.join(request.folder,
                 'cache/cache.shelve')
-                
-        locker = open(self.locker_name, 'a')
-        portalocker.lock(locker, portalocker.LOCK_EX)
-        
-        storage = shelve.open(self.shelve_name)
-        
-        if not storage.has_key(CacheAbstract.cache_stats_name):
-            storage[CacheAbstract.cache_stats_name] = {
-                'hit_total': 0,
-                'misses': 0,
-            }
+
+        try:
+            locker = open(self.locker_name, 'a')
+            portalocker.lock(locker, portalocker.LOCK_EX)
             
-        storage.sync()
+            storage = shelve.open(self.shelve_name)
+        
+            if not storage.has_key(CacheAbstract.cache_stats_name):
+                storage[CacheAbstract.cache_stats_name] = {
+                    'hit_total': 0,
+                    'misses': 0,
+                    }            
+                storage.sync()
+        except ImportError, e:
+            pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
         portalocker.unlock(locker)
         locker.close()
 
