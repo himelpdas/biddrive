@@ -28,7 +28,6 @@ import gluon.sql
 from new import classobj
 from google.appengine.ext import db as google_db
 
-
 Row = gluon.sql.Row
 Rows = gluon.sql.Rows
 Reference = gluon.sql.Reference
@@ -211,8 +210,9 @@ class Table(gluon.sql.Table):
             field = self[k]
             attr = {}
             if isinstance(field.type, gluon.sql.SQLCustomType):
-                ftype = self._db._translator[field.type.native or \
-                                                 field.type.type](**attr)
+                ftype = self._db._translator[field.type.native or field.type.type](**attr)
+            elif field.type[0]=='.':
+                ftype = eval('google_db'+field.type)
             elif field.type[:2] == 'id':
                 continue
             elif field.type[:10] == 'reference ':
@@ -464,6 +464,8 @@ def obj_represent(obj, fieldtype, db):
                 obj = True
             else:
                 obj = False
+        elif fieldtype[0] == '.':
+            return obj
         elif isinstance(fieldtype, gluon.sql.SQLCustomType):
             obj = fieldtype.encoder(obj)
         elif isinstance(obj, str):
