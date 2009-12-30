@@ -13,22 +13,27 @@
           <td colspan="3"  class="header">
             <h1>
               {{=A(response.title or request.application, _href=URL(request.application,'default','index'))}}
-            </h1>
-            
+            </h1>            
             <h3>{{=response.subtitle or ''}}</h3>
           </td>
         </tr>
         <tr>
           <td colspan="3" class="statusbar">
             {{='/'.join(['',request.application,request.controller,request.function]+request.args)}}
+	    [ {{if not auth.user:}}
+	    <a href="{{=URL(r=request,f='user/login')}}">{{=T('login')}}</a> |
+	    <a href="{{=URL(r=request,f='user/register')}}">{{=T('register')}}</a> |
+	    <a href="{{=URL(r=request,f='user/retrieve_password')}}">{{=T('lost password')}}</a>
+	    {{else:}}
+	    {{=auth.user.first_name}} |
+	    <a href="{{=URL(r=request,f='user/logout')}}">{{=T('logout')}}</a> |
+	    <a href="{{=URL(r=request,f='user/change_password')}}">{{=T('change password')}}</a> |
+	    <a href="{{=URL(r=request,f='user/profile')}}">{{=T('edit profile')}}</a>
+	    {{pass}} ]
           </td>
         </tr>
         <tr>
           <td class="width10em column1">
-            {{if response.menu_auth:}}
-            <h2>{{=T('Authentication')}}</h2>
-            {{=MENU(response.menu_auth)}}
-            {{pass}}
             {{if response.menu:}}
             <h2>{{=T('Main Menu')}}</h2>
             {{=MENU(response.menu)}}
