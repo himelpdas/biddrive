@@ -478,7 +478,8 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if isinstance(obj, (Expression, Field)):
         return obj
     if isinstance(fieldtype, SQLCustomType):
-        return fieldtype.encoder(obj)
+        obj = fieldtype.encoder(obj)
+        fieldtype = fieldtype.type
     if obj is None:
         return 'NULL'
     if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
