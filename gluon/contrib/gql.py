@@ -26,7 +26,7 @@ import gluon.validators as validators
 import gluon.sqlhtml as sqlhtml
 import gluon.sql
 from new import classobj
-from google.appengine.ext import db as google_db
+from google.appengine.ext import db as gae
 
 Row = gluon.sql.Row
 Rows = gluon.sql.Rows
@@ -37,19 +37,19 @@ SQLCallableList = gluon.sql.SQLCallableList
 table_field = re.compile('[\w_]+\.[\w_]+')
 
 SQL_DIALECTS = {'google': {
-    'boolean': google_db.BooleanProperty,
-    'string': google_db.StringProperty,
-    'text': google_db.TextProperty,
-    'password': google_db.StringProperty,
-    'blob': google_db.BlobProperty,
-    'upload': google_db.StringProperty,
-    'integer': google_db.IntegerProperty,
-    'double': google_db.FloatProperty,
-    'date': google_db.DateProperty,
-    'time': google_db.TimeProperty,
-    'datetime': google_db.DateTimeProperty,
+    'boolean': gae.BooleanProperty,
+    'string': gae.StringProperty,
+    'text': gae.TextProperty,
+    'password': gae.StringProperty,
+    'blob': gae.BlobProperty,
+    'upload': gae.StringProperty,
+    'integer': gae.IntegerProperty,
+    'double': gae.FloatProperty,
+    'date': gae.DateProperty,
+    'time': gae.TimeProperty,
+    'datetime': gae.DateTimeProperty,
     'id': None,
-    'reference': google_db.IntegerProperty,
+    'reference': gae.IntegerProperty,
     'lower': None,
     'upper': None,
     'is null': 'IS NULL',
@@ -211,8 +211,8 @@ class Table(gluon.sql.Table):
             attr = {}
             if isinstance(field.type, gluon.sql.SQLCustomType):
                 ftype = self._db._translator[field.type.native or field.type.type](**attr)
-            elif field.type[0]=='.':
-                ftype = eval('google_db'+field.type)
+            elif isinstance(field.type, gae.Property):
+                ftype = field.type
             elif field.type[:2] == 'id':
                 continue
             elif field.type[:10] == 'reference ':
@@ -226,7 +226,7 @@ class Table(gluon.sql.Table):
             else:
                 ftype = self._db._translator[field.type](**attr)
             myfields[field.name] = ftype
-        self._tableobj = classobj(self._tablename, (google_db.Model, ),
+        self._tableobj = classobj(self._tablename, (gae.Model, ),
                                   myfields)
         return None
 
@@ -424,6 +424,8 @@ def obj_represent(obj, fieldtype, db):
         raise SyntaxError, "non supported on GAE"
     if isinstance(fieldtype, gluon.sql.SQLCustomType):
         return fieldtype.encoder(obj)
+    if isinstance(fieldtype, gae.Property):
+        return obj
     if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
         return None
     if obj != None:
@@ -464,10 +466,6 @@ def obj_represent(obj, fieldtype, db):
                 obj = True
             else:
                 obj = False
-        elif fieldtype[0] == '.':
-            return obj
-        elif isinstance(fieldtype, gluon.sql.SQLCustomType):
-            obj = fieldtype.encoder(obj)
         elif isinstance(obj, str):
             obj = obj.decode('utf8')
         elif not isinstance(obj, unicode):
@@ -612,7 +610,7 @@ class Set(gluon.sql.Set):
             self._tables.insert(0, fields[0].table._tablename)
         table = self._get_table_or_raise()
         tablename = table.kind()
-        items = google_db.Query(table)
+        items = gae.Query(table)
         if not self.where:
             self.where = Query(fields[0].table.id,'>',0)
         for filter in self.where.filters:

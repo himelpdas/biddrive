@@ -427,6 +427,8 @@ def sqlhtml_validators(field):
             return field_type.validator
         else:
             field_type = field_type.type
+    elif not isinstance(field_type,str):
+        return []
     requires=[]
     if field_type == 'string':
         requires.append(validators.IS_LENGTH(field_length))
@@ -3006,7 +3008,10 @@ class Set(object):
                     continue
                 (tablename, fieldname) = colname.split('.')
                 table = db[tablename]
-                field = table[fieldname]
+                field = table[fieldname]                
+                field_type = field.type
+                if isinstance(field_type,SQLCustomType):
+                    field_type = field_type.type                
                 if field.type != 'blob' and isinstance(value, str):
                     value = value.decode(db._db_codec)
                 if isinstance(value, unicode):
@@ -3016,7 +3021,9 @@ class Set(object):
                     virtualtables.append((tablename,db[tablename].virtualfields))
                 else:
                     colset = new_row[tablename]
-                if field.type[:10] == 'reference ':
+                if not isinstance(field_type,str):
+                    colset[fieldname] = value
+                elif isinstance(field.type,str) and field.type[:10] == 'reference ':
                     referee = field.type[10:].strip()
                     if not value:
                         colset[fieldname] = value
