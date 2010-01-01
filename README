@@ -612,3 +612,12 @@ export_to_csv(delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL), th
 #1.74.2-4
 Fix bugs including including unicode in emails and blobs on GAE
 
+#1.74.5
+bug fixes
+restored python 2.4 support,thanks ont.rif
+support for native types on Google App Engine
+cache.ram usage statictics, thanks Thadus
+no more auth manu in scaffolding
+no more spash screen with -Q
+fixed doctest in html.py, thanks Anand Vaidya
+export_to_csv_file has represent, thanks Thadeus

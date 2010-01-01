@@ -303,9 +303,9 @@ def crondance(apppath, ctype='soft',startup=False):
                         go = False
                     elif 'dow' in task and not now_s.tm_wday in task['dow']:
                         go = False
-                    if startup and task['min'] == -1:
-                        go = True
-
+                    if startup:                        
+                        go = 'min' in task and task['min'] == -1
+                        
                     if go and 'cmd' in task:
                         logging.info(
                             'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
