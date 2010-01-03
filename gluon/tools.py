@@ -972,7 +972,7 @@ class Auth(object):
             form = SQLFORM(
                 table_user,
                 fields=[username, passfield],
-                hidden=dict(_next=request.vars._next),
+                hidden=dict(_next=next),
                 showid=self.settings.showid,
                 submit_button=self.messages.submit_button,
                 delete_label=self.messages.delete_label,
@@ -1134,7 +1134,7 @@ class Auth(object):
             log = self.messages.register_log
         user = self.settings.table_user
         passfield = self.settings.password_field
-        form = SQLFORM(user, hidden=dict(_next=request.vars._next),
+        form = SQLFORM(user, hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label)
@@ -1289,7 +1289,7 @@ class Auth(object):
         form = SQLFORM(
             user,
             fields=['email'],
-            hidden=dict(_next=request.vars._next),
+            hidden=dict(_next=next),
             showid=self.settings.showid,
             submit_button=self.messages.submit_button,
             delete_label=self.messages.delete_label,
@@ -1372,7 +1372,7 @@ class Auth(object):
         form = SQLFORM(
             user,
             fields=['email'],
-            hidden=dict(_next=request.vars._next),
+            hidden=dict(_next=next),
             showid=self.settings.showid,
             submit_button=self.messages.submit_button,
             delete_label=self.messages.delete_label,
@@ -1514,7 +1514,7 @@ class Auth(object):
         form = SQLFORM(
             self.settings.table_user,
             self.user.id,
-            hidden=dict(_next=request.vars._next),
+            hidden=dict(_next=next),
             showid=self.settings.showid,
             submit_button=self.messages.submit_button,
             delete_label=self.messages.delete_label,
@@ -2044,7 +2044,7 @@ class Crud(object):
         form = SQLFORM(
             table,
             record,
-            hidden=dict(_next=request.vars._next),
+            hidden=dict(_next=next),
             showid=self.settings.showid,
             submit_button=self.messages.submit_button,
             delete_label=self.messages.delete_label,
