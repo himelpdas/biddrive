@@ -219,7 +219,8 @@ class IS_IN_SET(Validator):
     """
     example::
 
-        INPUT(_type='text', _name='name', requires=IS_IN_SET(['max', 'john']))
+        INPUT(_type='text', _name='name', 
+              requires=IS_IN_SET(['max', 'john'],zero=T('choose a value')))
 
     the argument of IS_IN_SET must be a list or set
 
@@ -239,7 +240,7 @@ class IS_IN_SET(Validator):
         labels=None,
         error_message='value not allowed',
         multiple=False,
-        zero=None
+        zero='choose a value',
         ):
         self.multiple = multiple
         self.theset = [str(item) for item in theset]
@@ -255,7 +256,7 @@ class IS_IN_SET(Validator):
             items = [(k, k) for (i, k) in enumerate(self.theset)]
         else:
             items = [(k, self.labels[i]) for (i, k) in enumerate(self.theset)]
-        if self.zero != None:
+        if self.zero != None and not self.multiple:
             items.insert(0,('',self.zero))
         return items
 
@@ -282,7 +283,8 @@ class IS_IN_DB(Validator):
     """
     example::
 
-        INPUT(_type='text', _name='name', requires=IS_IN_DB(db, db.table))
+        INPUT(_type='text', _name='name',
+              requires=IS_IN_DB(db, db.table, zero=T('choose a value')))
 
     used for reference fields, rendered as a dropbox
     """
@@ -296,7 +298,7 @@ class IS_IN_DB(Validator):
         orderby=None,
         cache=None,
         multiple=False,
-        zero=None,
+        zero='choose a value',
         ):
         if hasattr(dbset, 'define_table'):
             self.dbset = dbset()
@@ -343,7 +345,7 @@ class IS_IN_DB(Validator):
     def options(self):
         self.build_set()
         items = [(k, self.labels[i]) for (i, k) in enumerate(self.theset)]
-        if self.zero != None:
+        if self.zero != None and not self.multiple:
             items.insert(0,('',self.zero))
         return items
 
