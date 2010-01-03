@@ -957,7 +957,9 @@ class Auth(object):
         session = self.environment.session
         passfield = self.settings.password_field
         if next == DEFAULT:
-            next = request.vars._next or self.settings.login_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.login_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.login_onvalidation
         if onaccept == DEFAULT:
@@ -1125,7 +1127,9 @@ class Auth(object):
         if self.is_logged_in():
             redirect(self.settings.logged_url)
         if next == DEFAULT:
-            next = request.vars._next or self.settings.register_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.register_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.register_onvalidation
         if onaccept == DEFAULT:
@@ -1276,7 +1280,9 @@ class Auth(object):
             response.flash = self.messages.function_disabled
             return ''
         if next == DEFAULT:
-            next = request.vars._next or self.settings.retrieve_username_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.retrieve_username_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_username_onvalidation
         if onaccept == DEFAULT:
@@ -1359,7 +1365,9 @@ class Auth(object):
             return ''
 
         if next == DEFAULT:
-            next = request.vars._next or self.settings.retrieve_password_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.retrieve_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_password_onvalidation
         if onaccept == DEFAULT:
@@ -1440,7 +1448,9 @@ class Auth(object):
         request = self.environment.request
         session = self.environment.session
         if next == DEFAULT:
-            next = request.vars._next or self.settings.change_password_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.change_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.change_password_onvalidation
         if onaccept == DEFAULT:
@@ -1504,7 +1514,9 @@ class Auth(object):
         request = self.environment.request
         session = self.environment.session
         if next == DEFAULT:
-            next = request.vars._next or self.settings.profile_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.profile_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.profile_onvalidation
         if onaccept == DEFAULT:
@@ -2028,7 +2040,9 @@ class Crud(object):
         if request.extension == 'json' and request.vars.json:
             request.vars.update(simplejson.loads(request.vars.json))
         if next == DEFAULT:
-            next = request.vars._next or self.settings.update_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.update_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.update_onvalidation
         if onaccept == DEFAULT:
@@ -2155,7 +2169,9 @@ class Crud(object):
         request = self.environment.request
         session = self.environment.session
         if next == DEFAULT:
-            next = request.vars._next or self.settings.delete_next
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.delete_next
         if message == DEFAULT:
             message = self.messages.record_deleted
         record = table[record_id]
