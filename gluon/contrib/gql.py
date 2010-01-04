@@ -671,17 +671,15 @@ class Set(gluon.sql.Set):
     def count(self):
         (items, tablename, fields) = self._select()
         self._db['_lastsql'] = 'COUNT WHERE %s' % self.where
-        return len([x for x in items])
+        return items.count()
 
     def delete(self):
         self._db['_lastsql'] = 'DELETE WHERE %s' % self.where
         (items, tablename, fields) = self._select()
         tableobj = self._db[tablename]._tableobj
-        counter = 0
-        for item in items:
-            tableobj.get(item.key()).delete()
-            counter += 1
-        return counter
+        counter = items.count()
+        gae.delete(items)
+        return counter - items.count()
 
     def update(self, **update_fields):
         self._db['_lastsql'] = 'UPDATE WHERE %s' % self.where
