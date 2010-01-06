@@ -3488,14 +3488,23 @@ class Rows(object):
 
         :param ofile: where the csv must be exported to
         :param null: how null values must be represented (default '<NULL>')
+        :param delimiter: delimiter to separate values (default ',')
+        :param quotechar: character to use to quote string values (default '"')
+        :param quoting: quote system, use csv.QUOTE_*** (default csv.QUOTE_MINIMAL)
+        :param represent: use the fields .represent value (default False)
+        :param colnames: list of column names to use (default self.colnames)
+                         This will only work when exporting rows objects!!!!
+                         DO NOT use this with db.export_to_csv()
         """
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
-        writer = csv.writer(ofile, delimiter=delimiter, quotechar=quotechar, quoting=quoting)
-
+        represent = kwargs.get('represent', False)
+        writer = csv.writer(ofile, delimiter=delimiter,
+                            quotechar=quotechar, quoting=quoting)
+        colnames = kwargs.get('colnames', self.colnames)
         # a proper csv starting with the column names
-        writer.writerow(self.colnames)
+        writer.writerow(colnames)
 
         def none_exception(value):
             """
