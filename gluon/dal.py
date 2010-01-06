@@ -432,34 +432,31 @@ class BaseAdapter(ConnectionPool):
             self.execute(query)
             return self.cursor.fetchall()
         query = self.SELECT(query,*fields, **attributes)
-        if not attributes.get('cache', None):
-            rows = response(query)
-        else:
+        if attributes.get('cache', None):
             (cache_model, time_expire) = attributes['cache']
             del attributes['cache']
             key = self._uri + '/' + query
-            rows = cache_model(key, lambda : response(query), time_expire)
+            rows = cache_model(key, lambda: response(query), time_expire)
+        else:
+            rows = response(query)
         if isinstance(rows,tuple):
             rows = list(rows)            
         rows = self.rowslice(rows,attributes.get('limitby',(0,))[0],None)
         return self.parse(rows,self._colnames)
     def tables(self,query):        
         tables = []
-        if not isinstance(query,(Query,Expression,Field)):
-            return tables
-        if query._first:
-            if hasattr(query._first,'_tablename'):
-                tables = [query._first._tablename]    
-            else:
-                tables = self.tables(query._first)
-        if query._second:
-            if hasattr(query._second,'_tablename'):
-                if not query._second._tablename in tables:
-                    tables.append(query._second._tablename)
-            else:
-                tables = tables + [t for t in self.tables(query._second) if not t in tables]
-        return tables
-
+        if isinstance(query, (Query, Expression, Field)):
+            if query._first:
+                if hasattr(query._first, '_tablename'):
+                    tables = [query._first._tablename]
+                else:
+                    tables = self.tables(query._first)
+            if query._second:
+                if hasattr(query._second, '_tablename')
+                    if not query._second._tablename in tables:
+                        tables.append(query._second._tablename)
+                else:
+                    tables = tables + [t for t in self.tables(query._second) if not t in tables]
         return tables
     def commit(self):
         self.db._logger.write('commit\n');
@@ -586,20 +583,20 @@ class BaseAdapter(ConnectionPool):
                     value = value.decode(self.db_codec)
                 if isinstance(value, unicode):
                     value = value.encode('utf-8')
-                if not tablename in new_row:
-                    colset = new_row[tablename] = Row()
-                    virtualtables.append((tablename,self.db[tablename].virtualfields))
-                else:
+                if tablename in new_row:
                     colset = new_row[tablename]
+                else:
+                    colset = new_row[tablename] = Row()
+                    virtualtables.append((tablename, self.db[tablename].virtualfields))
                 if field.type[:10] == 'reference ':
                     referee = field.type[10:].strip()
-                    if not value:
+                    if value and '.' in referee: 
+                        # Reference not by id
                         colset[fieldname] = value
-                    elif not '.' in referee:
+                    else: 
+                        # Reference by id
                         colset[fieldname] = rid = Reference(value)
                         (rid._table, rid._record) = (self.db[referee], None)
-                    else: ### reference not by id
-                        colset[fieldname] = value
                 elif field.type == 'blob' and value != None and blob_decode:
                     colset[fieldname] = base64.b64decode(str(value))
                 elif field.type == 'boolean' and value != None:
@@ -1548,10 +1545,10 @@ def sqlhtml_validators(field):
         if hasattr(referenced,'_format') and referenced._format:
             def f(r,id):
                 row=r[id]
-                if not row:
-                    return id
-                else:
+                if row:
                     return r._format % row
+                else:
+                    return id
             field.represent = lambda id, r=referenced, f=f: f(r,id)
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)
@@ -1890,7 +1887,7 @@ class DAL(dict):
 
     def import_from_csv_file(self, ifile, id_map={}, null='<NULL>', unique='uuid', *args, **kwargs):
         for line in ifile:
-            line = line.strip()
+            line = line.strip()            
             if not line:
                 continue
             elif line == 'END':
@@ -2060,12 +2057,12 @@ class Table(dict):
                      in self.fields and (k!='id' or id)])
 
     def __getitem__(self, key):
-        if not key:
-            return None
-        elif str(key).isdigit():
+        if str(key).isdigit():
             return self._db(self.id == key).select()._first()
-        else:
+        elif key:
             return dict.__getitem__(self, str(key))
+        else:
+            return None
 
     def __setitem__(self, key, value):
         if str(key).isdigit():

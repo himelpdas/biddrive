@@ -3383,7 +3383,7 @@ class Rows(object):
         represent = kwargs.get('represent', False) 
         writer = csv.writer(ofile, delimiter=delimiter,
                             quotechar=quotechar, quoting=quoting)
-        # a proper csv starting with the column names
+        # a proper csv starting with the column names        
         writer.writerow(self.colnames)
 
         def none_exception(value):
