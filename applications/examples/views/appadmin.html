@@ -105,4 +105,90 @@ jQuery(document).ready(function(){
   {{=BEAUTIFY(response)}}
   <br/><h2>{{=T("Current session")}}</h2>
   {{=BEAUTIFY(session)}}
+
+
+{{elif request.function == 'ccache':}}
+<h2>Cache</h2>
+<div class="wrapper">
+<div class="list">
+    <div class="list-header">
+        Statistics
+    </div>
+    <div class="content">
+        <h3>Overview</h3>
+        <p>
+            Hit Ratio: 
+            <strong>{{=total['ratio']}}%</strong> 
+            (<strong>{{=total['hits']}}</strong> hits 
+            and <strong>{{=total['misses']}}</strong> misses)
+        </p>
+        <p>
+            Size of cache: 
+            <strong>{{=total['objects']}}</strong> items, 
+            <strong>{{=total['bytes']}}</strong> bytes 
+            {{if total['bytes'] > 524287:}}
+                (<strong>{{="%.0d" % (total['bytes'] / 1048576)}} MB</strong>)
+            {{pass}}
+        </p>
+        <p>
+            Cache contains items up to 
+            <strong>{{="%02d" % total['oldest'][0]}}</strong> hours 
+            <strong>{{="%02d" % total['oldest'][1]}}</strong> minutes 
+            <strong>{{="%02d" % total['oldest'][2]}}</strong> seconds old.
+        </p>
+        <h3>RAM</h3>
+        <p>
+            Hit Ratio: 
+            <strong>{{=ram['ratio']}}%</strong> 
+            (<strong>{{=ram['hits']}}</strong> hits 
+            and <strong>{{=ram['misses']}}</strong> misses)
+        </p>
+        <p>
+            Size of cache: 
+            <strong>{{=ram['objects']}}</strong> items, 
+            <strong>{{=ram['bytes']}}</strong> bytes 
+            {{if ram['bytes'] > 524287:}}
+                (<strong>{{=ram['bytes'] / 1048576}} MB</strong>)
+            {{pass}}
+        </p>
+        <p>
+            RAM contains items up to 
+            <strong>{{="%02d" % ram['oldest'][0]}}</strong> hours 
+            <strong>{{="%02d" % ram['oldest'][1]}}</strong> minutes 
+            <strong>{{="%02d" % ram['oldest'][2]}}</strong> seconds old.
+        </p>
+        <h3>DISK</h3>
+        <p>
+            Hit Ratio: 
+            <strong>{{=disk['ratio']}}%</strong> 
+            (<strong>{{=disk['hits']}}</strong> hits 
+            and <strong>{{=disk['misses']}}</strong> misses)
+        </p>
+        <p>
+            Size of cache: 
+            <strong>{{=disk['objects']}}</strong> items, 
+            <strong>{{=disk['bytes']}}</strong> bytes 
+            {{if disk['bytes'] > 524287:}}
+                (<strong>{{=disk['bytes'] / 1048576}} MB</strong>)
+            {{pass}}
+        </p>
+        <p>
+            DISK contains items up to 
+            <strong>{{="%02d" % disk['oldest'][0]}}</strong> hours 
+            <strong>{{="%02d" % disk['oldest'][1]}}</strong> minutes 
+            <strong>{{="%02d" % disk['oldest'][2]}}</strong> seconds old.
+        </p>
+    </div>
+    
+    <div class="list-header">
+    Manage Cache
+    </div>
+    <div class="content">
+    <p>
+        {{=form}}
+    </p>
+    </div>
+</div>
+<div class="clear"></div>
+</div>
 {{pass}}
