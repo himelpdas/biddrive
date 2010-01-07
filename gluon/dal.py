@@ -12,7 +12,8 @@ Thanks to
     * Denes
     * Chris Clark
     * clach05
-    
+    * Denes Lengyel
+ 
 This file contains the DAL support for many relational databases,
 including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase, Ingres
 
@@ -415,7 +416,7 @@ class BaseAdapter(ConnectionPool):
                 sql_o += ' ORDER BY %s' % self.db._adapter.expand(orderby)
         if limitby:
             if not orderby and tablenames:
-                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in (self.db[t]._primarykey if hasattr(self.db[t],'_primarykey') else ['id'])])
+                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in (self.db[t]._primarykey or ['id'])])
             # oracle does not support limitby
         return self.SELECT_LIMITBY(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
@@ -452,7 +453,7 @@ class BaseAdapter(ConnectionPool):
                 else:
                     tables = self.tables(query._first)
             if query._second:
-                if hasattr(query._second, '_tablename')
+                if hasattr(query._second, '_tablename'):
                     if not query._second._tablename in tables:
                         tables.append(query._second._tablename)
                 else:
@@ -560,6 +561,8 @@ class BaseAdapter(ConnectionPool):
     def represent_exceptions(self, obj, fieldtype):
         return None
     def lastrowid(self,tablename):
+        return None
+    def integrity_error_class(self):
         return None
     def rowslice(self,rows,minimum=0,maximum=None):
         """ by default this function does nothing, oreload when db does no do slicing """
@@ -1100,6 +1103,8 @@ class MSSQLAdapter(BaseAdapter):
     def lastrowid(self,tablename):
         self.execute('SELECT @@IDENTITY;')
         return int(self.cursor.fetchone()[0])
+    def integrity_error_class(self):
+        return pyodbc.IntegrityError
     def rowslice(self,rows,minimum=0,maximum=None):
         if maximum==None:
             return rows[minimum:]
@@ -1329,6 +1334,8 @@ class InformixAdapter(BaseAdapter):
         return self.log_execute(command)
     def lastrowid(self,tablename):
         return self.cursor.sqlerrd[1]
+    def integrity_error_class(self):
+        return informixdb.IntegrityError
 
 
 class DB2Adapter(BaseAdapter):
@@ -1466,9 +1473,10 @@ class IngresAdapter(BaseAdapter):
         tmp_seqname='%s_iisq' % tablename
         self.execute('select current value for %s' % tmp_seqname)
         return int(self.cursor.fetchone()[0]) # don't really need int type cast here...
+    def integrity_error_class(self):
+        return ingresdbi.IntegrityError
 
-
-class IngresUnicodeAdapter(BaseAdapter):
+class IngresUnicodeAdapter(IngresAdapter):
     types = {
         'boolean': 'CHAR(1)',
         'string': 'NVARCHAR(%(length)s)',
@@ -1774,11 +1782,8 @@ class DAL(dict):
             raise SyntaxError, 'invalid table name: %s' % tablename
         if tablename in self.tables:
             raise SyntaxError, 'table already defined: %s' % tablename
-        if 'primarykey' in args:
-            t = self[tablename] = KeyedTable(self, tablename, *fields,
-                                             **dict(primarykey=args['primarykey']))
-        else:
-            t = self[tablename] = Table(self, tablename, *fields)
+        t = self[tablename] = Table(self, tablename, *fields,
+                                    **dict(primarykey=args.get('primarykey',None)))
         # db magic
         if self._uri == 'None':
             return t
@@ -1990,7 +1995,8 @@ class Table(dict):
         self,
         db,
         tablename,
-        *fields
+        *fields,
+        **args
         ):
         """
         Initializes the table and performs checking on the provided fields.
@@ -2002,7 +2008,13 @@ class Table(dict):
 
         :raises SyntaxError: when a supplied field is of incorrect type.
         """
-        new_fields = [ Field('id', 'id') ]
+        self._primarykey = args.get('primarykey',None)
+        if self._primarykey and not isinstance(self._primarykey,list):
+            raise SyntaxError, "primarykey must be a list of fields from table '%s'" % tablename
+        if self._primarykey:
+            new_fields = []
+        else:
+            new_fields = [ Field('id', 'id') ]
         for field in fields:
             if hasattr(field,'_db'):
                 field = copy.copy(field)
@@ -2014,7 +2026,7 @@ class Table(dict):
                     new_fields.append(field)
             elif isinstance(field, Table):
                 new_fields += [copy.copy(field[f]) for f in
-                               field.fields[1:]]
+                               field.fields if field[f].type!='id']
             else:
                 raise SyntaxError, \
                     'define_table argument is not a Field: %s' % field
@@ -2037,45 +2049,110 @@ class Table(dict):
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
 
+        if self._primarykey:
+            for k in self._primarykey:
+                if k not in self.fields:
+                    raise SyntaxError, \
+                        "primarykey must be a list of fields from table '%s " % tablename
+                else:
+                    self[k].notnull = True
+
     def _create_references(self):
         self._referenced_by = []
         for fieldname in self.fields:
             field=self[fieldname]
             if isinstance(field.type,str) and field.type[:10] == 'reference ':
-                referenced = field.type[10:].strip()
-                if not referenced:
-                    raise SyntaxError, 'Table: reference to nothing: %s' % referenced
-                if not referenced in self._db:
-                    raise SyntaxError, 'Table: table \'%s\'does not exist' % referenced
-                referee = self._db[referenced]
-                if self._tablename in referee.fields:
-                    raise SyntaxError, 'Field: table %s has same name as a field in referenced table %s' % (self._tablename, referee._tablename)
-                referee._referenced_by.append((self._tablename, field.name))
+                ref = field.type[10:].strip()
+                if not ref.split():
+                    raise SyntaxError, 'Table: reference to nothing: %s' %ref
+                refs = ref.split('.')
+                rtablename = refs[0]
+                rtable = self._db[rtablename]
+                if not rtablename in self._db:
+                    raise SyntaxError, "Table: table '%s'does not exist" % rtablename
+                if self._tablename in rtable.fields:
+                    raise SyntaxError, \
+                        'Field: table %s has same name as a field in referenced table %s' \
+                        % (self._tablename, rtablename)
+                elif len(refs)==2:
+                    rfieldname = refs[1]
+                    if not rtable._primarykey:
+                        raise SyntaxError,\
+                            'keyed tables can only reference other keyed tables (for now)'
+                    if rfieldname not in rtable.fields:
+                        raise SyntaxError,\
+                            "invalid field '%s' for referenced table '%s' in table '%s'" \
+                            % (rfieldname, rtablename, self._tablename)
+                rtable._referenced_by.append((self._tablename, field.name))
 
     def _filter_fields(self, record, id=False):
         return dict([(k, v) for (k, v) in record.items() if k
                      in self.fields and (k!='id' or id)])
 
+    def _build_query(self,key):
+        """ for keyed table only """
+        query = None
+        for k,v in key.iteritems():
+            if k in self._primarykey:
+                if query:
+                    query = query & (self[k] == v)
+                else:
+                    query = (self[k] == v)
+            else:
+                raise SyntaxError, \
+                'Field %s is not part of the primary key of %s' % \
+                (k,self._tablename)
+        return query
+
     def __getitem__(self, key):
-        if str(key).isdigit():
+        if not key:
+            return None
+        elif isinstance(key, dict):
+            """ for keyed table """
+            query = self._build_query(key)
+            rows = self._db(query).select()
+            if rows:
+                return rows[0]
+            return None
+        elif str(key).isdigit():
             return self._db(self.id == key).select()._first()
         elif key:
             return dict.__getitem__(self, str(key))
-        else:
-            return None
+
 
     def __setitem__(self, key, value):
-        if str(key).isdigit():
+        if isinstance(key, dict) and isinstance(value, dict):
+            """ option for keyed table """
+            if set(key.keys()) == set(self._primarykey):
+                value = self._filter_fields(value)
+                kv = {}
+                kv.update(value)
+                kv.update(key)
+                if not self.insert(**kv):
+                    query = self._build_query(key)
+                    self._db(query).update(**self._filter_fields(value))
+            else:
+                raise SyntaxError,\
+                    'key must have all fields from primary key: %s'%\
+                    (self._primarykey)
+        elif str(key).isdigit():
             if key == 0:
                 self.insert(**self._filter_fields(value))
             elif not self._db(self.id == key)\
                     .update(**self._filter_fields(value)):
                 raise SyntaxError, 'No such record: %s' % key
         else:
+            if isinstance(key, dict):
+                raise SyntaxError,\
+                    'value must be a dictionary: %s' % value
             dict.__setitem__(self, str(key), value)
 
     def __delitem__(self, key):
-        if not str(key).isdigit() or not self._db(self.id == key).delete():
+        if isinstance(key, dict):
+            query = self._build_query(key)
+            if not self._db(query).delete():
+                raise SyntaxError, 'No such record: %s' % key
+        elif not str(key).isdigit() or not self._db(self.id == key).delete():
             raise SyntaxError, 'No such record: %s' % key
 
     def __getattr__(self, key):
@@ -2113,6 +2190,7 @@ class Table(dict):
         fields = []
         sql_fields = {}
         sql_fields_aux = {}
+        TFK = {}
         for k in self.fields:
             field = self[k]
             if isinstance(field.type,SQLCustomType):
@@ -2120,12 +2198,34 @@ class Table(dict):
             elif field.type[:10] == 'reference ':
                 referenced = field.type[10:].strip()
                 constraint_name = self._db._adapter.contraint_name(self._tablename, field.name)
-                ftype = self._db._adapter.types[field.type[:9]]\
-                     % dict(table_name=self._tablename,
-                            field_name=field.name,
-                            constraint_name=constraint_name,
-                            foreign_key=referenced + ('(%s)' % self._db[referenced].fields[0]),
-                            on_delete_action=field.ondelete)
+                if self._primarykey:
+                    rtablename,rfieldname = ref.split('.')
+                    rtable = self._db[rtablename]
+                    rfield = rtable[rfieldname]
+                    # must be PK reference or unique
+                    if rfieldname in rtable._primarykey or rfield.unique:
+                        ftype = self._db._adapter.types[rfield.type[:9]] %dict(length=rfield.length)
+                        # multicolumn primary key reference?
+                        if not rfield.unique and len(rtable._primarykey)>1 :
+                            # then it has to be a table level FK
+                            if rtablename not in TFK:
+                                TFK[rtablename] = {}
+                            TFK[rtablename][rfieldname] = field.name
+                        else:
+                            ftype = ftype + \
+                                self._db._adapter.types['reference FK'] %dict(\
+                                constraint_name=constraint_name,
+                                table_name=self._tablename,
+                                field_name=field.name,
+                                foreign_key='%s (%s)'%(rtablename, rfieldname),
+                                on_delete_action=field.ondelete)
+                else:
+                    ftype = self._db._adapter.types[field.type[:9]]\
+                        % dict(table_name=self._tablename,
+                               field_name=field.name,
+                               constraint_name=constraint_name,
+                               foreign_key=referenced + ('(%s)' % self._db[referenced].fields[0]),
+                               on_delete_action=field.ondelete)
             elif field.type[:7] == 'decimal':
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
                 ftype = self._db._adapter.types[field.type[:7]] % \
@@ -2156,12 +2256,29 @@ class Table(dict):
 
         # backend-specific extensions to fields
         if self._db._dbname == 'mysql':
-            fields.append('PRIMARY KEY(%s)' % self.fields[0])
+            if not self._primerykey:
+                fields.append('PRIMARY KEY(%s)' % self.fields[0])
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
 
         fields = ',\n    '.join(fields)
-        query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
-           (self._tablename, fields, other)
+        for rtablename in TFK:
+            rfields = TFK[rtablename]
+            pkeys = self._db[rtablename]._primarykey
+            fkeys = [ rfields[k] for k in pkeys ]
+            fields = fields + ',\n    ' + \
+                     self._db._adapter.types['reference TFK'] %\
+                     dict(table_name=self._tablename,
+                     field_name=', '.join(fkeys),
+                     foreign_table=rtablename,
+                     foreign_key=', '.join(pkeys),
+                     on_delete_action=field.ondelete)
+
+        if self._primarykey:
+            query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
+               (self._tablename, fields, self._db._adapter.PRIMARY_KEY(', '.join(self._primarykey),other))
+        else:
+            query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
+                (self._tablename, fields, other)
 
         if self._db._uri[:10] == 'sqlite:///':
             path_encoding = sys.getfilesystemencoding() or \
@@ -2191,6 +2308,26 @@ class Table(dict):
                 logfile.write(query + '\n')
             if not fake_migrate:
                 self._db._adapter.create_sequence_and_triggers(query,self)
+                """
+                ### <<<<<<<<<<<<< NEEDS WORK SINCE above lines should instead do:
+                if self._db._dbname in ['oracle']:
+                    t = self._tablename
+                    self._db._adapter.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
+                                      % t)
+                    self._db._adapter.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
+                                      % (t, t, t))
+                elif self._db._dbname == 'firebird':
+                    t = self._tablename
+                    self._db._adapter.execute('create generator GENID_%s;' % t)
+                    self._db._adapter.execute('set generator GENID_%s to 0;' % t)
+                    self._db._adapter.execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
+''' % (t, t, t))
+                elif self._db._dbname == 'ingres':
+                    # post create table auto inc code (if needed)
+                    # modify table to btree for performance.... NOT sure if this will be faster or not.
+                    modify_tbl_sql='modify %s to btree unique on %s' % (self._tablename, ', '.join(['"%s"'%x for x in self._primarykey])) # could use same code for Table (with id column, if _primarykey is defined as ['id']
+                    self._db._adapter.execute(modify_tbl_sql)
+                """
                 self._db.commit()
             if self._dbt:
                 tfile = open(self._dbt, 'w')
@@ -2316,7 +2453,14 @@ class Table(dict):
 
     def insert(self, **fields):
         query = self._insert(**fields)
-        self._db._adapter.execute(query)
+        try:
+            self._db._adapter.execute(query)
+        except Exception, e:
+            if isinstance(e,self._db._adapter.integrity_error_class()):
+                return None
+            raise e
+        if self._primarykey:
+            return dict( [ (k,fields[k]) for k in self._primarykey ])
         id = self._db._adapter.lastrowid(self._tablename)
         if not isinstance(id,int):
             return id
@@ -2413,377 +2557,6 @@ class Table(dict):
         if self._dbt:
             logfile.write('success!\n')
 
-
-# added by Denes Lengyel (2009)
-class KeyedTable(Table):
-
-    """
-    an instance of this class represents a database keyed table
-
-    Example::
-
-        db = DAL(...)
-        db.define_table('account',
-          Field('accnum','integer'),
-          Field('acctype'),
-          Field('accdesc'),
-          primarykey=['accnum','acctype'])
-        db.users.insert(accnum=1000,acctype='A',accdesc='Assets')
-        db.users.drop()
-
-        db.define_table('subacct',
-          Field('sanum','integer'),
-          Field('refnum','reference account.accnum'),
-          Field('reftype','reference account.acctype'),
-          Field('sadesc','string'),
-          primarykey=['sanum']))
-
-    Notes:
-    1) primarykey is a list of the field names that make up the primary key
-    2) all primarykey fields will have NOT NULL set even if not specified
-    3) references are to other keyed tables only
-    4) references must use tablename.fieldname format, as shown above
-    5) update_record function is not available
-
-    """
-
-    def __init__(
-        self,
-        db,
-        tablename,
-        *fields,
-        **args
-        ):
-        """
-        Initializes the table and performs checking on the provided fields.
-
-        If a field is of type Table, the fields (excluding 'id') from that table
-        will be used instead.
-
-        :raises SyntaxError: when a supplied field is of incorrect type.
-        """
-
-        for k,v in args.iteritems():
-            if k != 'primarykey':
-                raise SyntaxError, 'invalid table \'%s\' attribute: %s' % (tablename, k)
-            elif isinstance(v,list):
-                self._primarykey=v
-            else:
-                raise SyntaxError, 'primarykey must be a list of fields from table \'%s\' ' %tablename
-
-        new_fields = []
-
-        for field in fields:
-            if hasattr(field,'_db'):
-                field = copy.copy(field)
-            if isinstance(field, Field):
-                new_fields.append(field)
-            elif isinstance(field, Table):
-                new_fields += [copy.copy(field[f]) for f in
-                               field.fields if f != 'id']
-            else:
-                raise SyntaxError, \
-                    'define_table argument is not a Field: %s' % field
-        fields = new_fields
-        self._db = db
-        self._tablename = tablename
-        self.fields = SQLCallableList()
-        self.virtualfields = []
-        fields = list(fields)
-
-        for field in fields:
-            self.fields.append(field.name)
-            self[field.name] = field
-            field._tablename = self._tablename
-            field._table = self
-            field._db = self._db
-            if field.requires == '<default>':
-                field.requires = sqlhtml_validators(field)
-        self.ALL = SQLALL(self)
-
-        for k in self._primarykey:
-            if k not in self.fields:
-                raise SyntaxError,\
-                'primarykey must be a list of fields from table \'%s\' ' %\
-                 tablename
-            else:
-                self[k].notnull = True
-
-    # KeyedTable
-    def _create_references(self):
-        self._referenced_by = []
-        for fieldname in self.fields:
-            field=self[fieldname]
-            if isinstance(field.type,str) and field.type[:10] == 'reference ':
-                ref = field.type[10:].strip()
-                refs = ref.split('.')
-                if not ref:
-                    raise SyntaxError, 'Table: reference to nothing: %s' %ref
-                if len(refs)!=2:
-                    raise SyntaxError, 'invalid reference: %s' %ref
-                rtablename,rfieldname = refs
-                if not rtablename in self._db.tables:
-                    raise SyntaxError,\
-                    'Table: table \'%s\'does not exist' %rtablename
-                rtable = self._db[rtablename]
-                if not isinstance(rtable, KeyedTable):
-                    raise SyntaxError,\
-                    'keyed tables can only reference other keyed tables (for now)'
-                if self._tablename in rtable.fields:
-                    raise SyntaxError,\
-                    'Field: table %s has same name as a field in referenced table \'%s\'' %\
-                    (self._tablename, rtablename)
-                if rfieldname not in rtable.fields:
-                    raise SyntaxError,\
-                    "invalid field '%s' for referenced table '%s' in table '%s'" %(rfieldname, rtablename, self._tablename)
-                rtable._referenced_by.append((self._tablename, field.name))
-
-
-    # KeyedTable
-    def _build_query(self,key):
-        query = None
-        for k,v in key.iteritems():
-            if k in self._primarykey:
-                if query:
-                    query = query & (self[k] == v)
-                else:
-                    query = (self[k] == v)
-            else:
-                raise SyntaxError,\
-                'Field %s is not part of the primary key of %s'%\
-                (k,self._tablename)
-        return query
-
-    # KeyedTable ok
-    def __getitem__(self, key):
-        if not key:
-            return None
-        if isinstance(key, dict):
-            query = self._build_query(key)
-            rows = self._db(query).select()
-            if rows:
-                return rows[0]
-            return None
-        else:
-            return dict.__getitem__(self, str(key))
-
-    # KeyedTable ok
-    def __setitem__(self, key, value):
-        # ??? handle special case where primarykey has all fields ???
-        if isinstance(key, dict) and isinstance(value, dict):
-            if set(key.keys()) == set(self._primarykey):
-                value = self._filter_fields(value)
-                kv = {}
-                kv.update(value)
-                kv.update(key)
-                if not self.insert(**kv):
-                    query = self._build_query(key)
-                    self._db(query).update(**self._filter_fields(value))
-            else:
-                raise SyntaxError,\
-                    'key must have all fields from primary key: %s'%\
-                    (self._primarykey)
-        else:
-            if isinstance(key, dict):
-                raise SyntaxError,\
-                    'value must be a dictionary: %s' % value
-            dict.__setitem__(self, str(key), value)
-
-    # KeyedTable
-    def __delitem__(self, key):
-        if isinstance(key, dict):
-            query = self._build_query(key)
-            if not self._db(query).delete():
-                raise SyntaxError, 'No such record: %s' % key
-#             else:
-#                 raise SyntaxError,\
-#                 'key must have all fields from primary key: %s'%\
-#                 (self._primarykey)
-        else:
-            raise SyntaxError,\
-            'key must be a dictionary with primary key fields: %s'%\
-            self._primarykey
-#         if not str(key).isdigit() or not self._db(self.id == key).delete():
-#             raise SyntaxError, 'No such record: %s' % key
-
-    # KeyedTable
-    def __repr__(self):
-        return '<KeyedTable ' + dict.__repr__(self) + '>'
-
-    # KeyedTable
-    def _create(self, migrate=True, fake_migrate=False):
-        fields = []
-        sql_fields = {}
-        sql_fields_aux = {}
-        TFK = {} # table level FK
-        for k in self.fields:
-            field = self[k]
-            if isinstance(field.type,SQLCustomType):
-                ftype = field.type.native or field.type.type
-            elif field.type[:10] == 'reference ':
-                ref = field.type[10:].strip()
-                constraint_name = self._db._adapter.contraint_name(self,field.name)
-                rtablename,rfieldname = ref.split('.')
-                rtable = self._db[rtablename]
-                rfield = rtable[rfieldname]
-                # must be PK reference or unique
-                if rfieldname in rtable._primarykey or rfield.unique:
-                    ftype = self._db._adapter.types[rfield.type[:9]] %dict(length=rfield.length)
-                    # multicolumn primary key reference?
-                    if not rfield.unique and len(rtable._primarykey)>1 :
-                        # then it has to be a table level FK
-                        if rtablename not in TFK:
-                            TFK[rtablename] = {}
-                        TFK[rtablename][rfieldname] = field.name
-                    else:
-                        ftype = ftype + \
-                                self._db._adapter.types['reference FK'] %dict(\
-                                constraint_name=constraint_name,
-                                table_name=self._tablename,
-                                field_name=field.name,
-                                foreign_key='%s (%s)'%(rtablename, rfieldname),
-                                on_delete_action=field.ondelete)
-                else:
-                    raise SyntaxError,\
-                    'primary key or unique field required in reference %s' %ref
-
-            elif not field.type in self._db._adapter.types:
-                raise SyntaxError, 'Field: unknown field type: %s for %s' % \
-                    (field.type, field.name)
-            else:
-                ftype = self._db._adapter.types[field.type]\
-                     % dict(length=field.length)
-            if not field.type[:10] in ['id', 'reference ']:
-                if field.notnull:
-                    ftype += ' NOT NULL'
-                if field.unique:
-                    ftype += ' UNIQUE'
-
-            # add to list of fields
-            sql_fields[field.name] = ftype
-
-            if field.default:
-                not_null = self._db._adapter.NOT_NULL(field.default,field.type)
-                sql_fields_aux[field.name] = ftype.replace('NOT NULL',not_null)
-            else:
-                sql_fields_aux[field.name] = ftype
-
-            fields.append('%s %s' % (field.name, ftype))
-        other = ';'
-
-        # backend-specific extensions to fields
-        if self._db._dbname == 'mysql':
-            other = ' ENGINE=InnoDB CHARACTER SET utf8;'
-
-        fields = ',\n    '.join(fields)
-
-        for rtablename in TFK:
-            rfields = TFK[rtablename]
-            pkeys = self._db[rtablename]._primarykey
-            fkeys = [ rfields[k] for k in pkeys ]
-            fields = fields + ',\n    ' + \
-                     self._db._adapter.types['reference TFK'] %\
-                     dict(table_name=self._tablename,
-                     field_name=', '.join(fkeys),
-                     foreign_table=rtablename,
-                     foreign_key=', '.join(pkeys),
-                     on_delete_action=field.ondelete)
-
-        if self._primarykey:
-            query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
-               (self._tablename, fields, self._db._adapter.PRIMARY_KEY(', '.join(self._primarykey),other))
-        else:
-            query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
-               (self._tablename, fields, other)
-        if self._db._uri[:10] == 'sqlite:///':
-            path_encoding = sys.getfilesystemencoding() or \
-                locale.getdefaultlocale()[1]
-            dbpath = self._db._uri[9:self._db._uri.rfind('/')]\
-                .decode('utf8').encode(path_encoding)
-        else:
-            dbpath = self._db._adapter.folder
-        if not migrate:
-            return query
-        elif self._db._uri[:14] == 'sqlite:memory:':
-            self._dbt = None
-        elif isinstance(migrate, str):
-            self._dbt = os.path.join(dbpath, migrate)
-        else:
-            self._dbt = os.path.join(dbpath, '%s_%s.table' \
-                     % (md5_hash(self._db._uri), self._tablename))
-        if self._dbt:
-            self._loggername = os.path.join(dbpath, 'sql.log')
-            logfile = open(self._loggername, 'a')
-        else:
-            logfile = None
-        if not self._dbt or not os.path.exists(self._dbt):
-            if self._dbt:
-                logfile.write('timestamp: %s\n'
-                               % datetime.datetime.today().isoformat())
-                logfile.write(query + '\n')
-            if not fake_migrate:
-                self._db._adapter.execute(query)
-                ### <<<<<<<<<<<<< NEEDS WORK !!!
-                if self._db._dbname in ['oracle']:
-                    t = self._tablename
-                    self._db._adapter.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
-                                      % t)
-                    self._db._adapter.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
-                                      % (t, t, t))
-                elif self._db._dbname == 'firebird':
-                    t = self._tablename
-                    self._db._adapter.execute('create generator GENID_%s;' % t)
-                    self._db._adapter.execute('set generator GENID_%s to 0;' % t)
-                    self._db._adapter.execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
-''' % (t, t, t))
-                elif self._db._dbname == 'ingres':
-                    # post create table auto inc code (if needed)
-                    # modify table to btree for performance.... NOT sure if this will be faster or not.
-                    modify_tbl_sql='modify %s to btree unique on %s' % (self._tablename, ', '.join(['"%s"'%x for x in self._primarykey])) # could use same code for Table (with id column, if _primarykey is defined as ['id']
-                    self._db._adapter.execute(modify_tbl_sql)
-                self._db.commit()
-            if self._dbt:
-                tfile = open(self._dbt, 'w')
-                portalocker.lock(tfile, portalocker.LOCK_EX)
-                cPickle.dump(sql_fields, tfile)
-                portalocker.unlock(tfile)
-                tfile.close()
-            if self._dbt:
-                if fake_migrate:
-                    logfile.write('faked!\n')
-                else:
-                    logfile.write('success!\n')
-        else:
-            tfile = open(self._dbt, 'r')
-            portalocker.lock(tfile, portalocker.LOCK_SH)
-            sql_fields_old = cPickle.load(tfile)
-            portalocker.unlock(tfile)
-            tfile.close()
-            if sql_fields != sql_fields_old:
-                self._migrate(sql_fields, sql_fields_old,
-                              sql_fields_aux, logfile)
-
-        return query
-
-    # KeyedTable
-    def insert(self, **fields):
-        if self._db._dbname in ['mssql', 'mssql2', 'db2', 'ingres', 'informix']:
-            query = self._insert(**fields)
-            try:
-                self._db._adapter.execute(query)
-            except Exception, e:
-                if 'ingresdbi' in globals() and isinstance(e,ingresdbi.IntegrityError):
-                    return None
-                if 'pyodbc' in globals() and isinstance(e,pyodbc.IntegrityError):
-                    return None
-                if 'informixdb' in globals() and isinstance(e,informixdb.IntegrityError):
-                    return None
-                raise e
-            return dict( [ (k,fields[k]) for k in self._primarykey ])
-        else:
-            return Table.insert(self,**fields)
-
-
 class Expression(object):
 
     def __init__(
@@ -2804,7 +2577,6 @@ class Expression(object):
         else:
             self.type = type
         
-
     def __str__(self):
         return self._db._adapter.expand(self,self.type)
 

@@ -17,7 +17,7 @@ Holds:
 from http import HTTP
 from html import *
 from validators import *
-from sql import SQLDB, Table, KeyedTable, Row
+from sql import SQLDB, Table, Row
 from storage import Storage
 
 import urllib
@@ -489,7 +489,7 @@ class SQLFORM(FORM):
         nbsp = XML('&nbsp;') # Firefox2 does not display fields with blanks
         FORM.__init__(self, *[], **attributes)
         ofields = fields
-        keyed = isinstance(table,KeyedTable)
+        keyed = (table._primarykey!=None)
 
         # if no fields are provided, build it from the provided table
         # will only use writable or readable fields, unless forced to ignore
@@ -724,7 +724,7 @@ class SQLFORM(FORM):
         same as FORM.accepts but also does insert, update or delete in SQLDB.
         """
 
-        keyed = isinstance(self.table,KeyedTable)
+        keyed = (self.table._primarykey!=None)
         if self.record:
             if keyed:
                 formname_id = '.'.join([str(self.record[k]) for k in self.table._primarykey if hasattr(self.record,k)])
