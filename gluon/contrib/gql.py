@@ -120,11 +120,10 @@ class GQLDB(gluon.sql.SQLDB):
         tablename = cleanup(tablename)
         if tablename in dir(self) or tablename[0] == '_':
             raise SyntaxError, 'invalid table name: %s' % tablename
-        if not tablename in self.tables:
-            self.tables.append(tablename)
-        else:
+        if tablename in self.tables:
             raise SyntaxError, 'table already defined: %s'  % tablename
         t = self[tablename] = Table(self, tablename, *fields)
+        self.tables.append(tablename)
         t._create_references()
         t._create()
         t._format = args.get('format', None)
@@ -193,6 +192,7 @@ class Table(gluon.sql.Table):
                  and field.uploadfield == True:
                 tmp = field.uploadfield = '%s_blob' % field.name
                 fields.append(self._db.Field(tmp, 'blob', default=''))
+
         for field in fields:
             self.fields.append(field.name)
             self[field.name] = field
