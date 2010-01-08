@@ -131,10 +131,8 @@ except:
     # NOTE could try JDBC.......
 
 
-# mapping of the field types and some constructs
-# per database
-
 class Logger(object):
+
     def __init__(self,folder,name='sql.log'):
         if isinstance(folder,(str,unicode)):
             print os.path.join(folder,name)
@@ -142,6 +140,7 @@ class Logger(object):
         else:
             self.file = None
         self.active = False
+
     def write(self,data):
         if not self.active or not self.file:
             return
@@ -149,8 +148,10 @@ class Logger(object):
         ret = self.file.write(data)
         portalocker.unlock(self.file)
         return ret
+
     def __zero__(self):
         return not self.active
+
 
 class ConnectionPool(object):
     _folders = {}
@@ -232,83 +233,117 @@ class ConnectionPool(object):
         sql_locker.release()
         self.cursor = self.connection.cursor()
 
+
 class BaseAdapter(ConnectionPool):
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
         self.db_codec = db_codec
+
     def LOWER(self,first):
         return 'LOWER(%s)' % self.expand(first)
+
     def UPPER(self,first):
         return 'UPPER(%s)' % self.expand(first)
+
     def EXTRACT(self,first,what):
         return "EXTRACT('%s' FROM %s)" % (what, self.expand(first))
+
     def AGGREGATE(self,first,what):
         return "%s(%s)" % (what,self.expand(first))
+
     def LEFT_JOIN(self):
         return 'LEFT JOIN'
+
     def RANDOM(self):
         return 'Random()'
+
     def NOT_NULL(self,default,field_type):
         return 'NOT NULL DEFAULT %s' % self.represent(default,field_type)
+
     def SUBSTRING(self,field,parameters):
         return 'SUBSTR(%s,%s,%s)' % (self.expand(field), paramters[0], parameters[1])
+
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY(%s)' % key
+
     def DROP(self,table,mode):
         return ['DROP TABLE %s;' % table]
+
     def INSERT(self,table,fields):
         keys = ','.join([field.name for (field,value) in fields])
         values = ','.join([self.expand(value,field.type) for (field,value) in fields])
         return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
+
     def VERBATIM(self,first):
         return first
+
     def NOT(self,first):
         return '(NOT %s)' % self.expand(first)
+
     def AND(self,first,second):
         return '(%s AND %s)' % (self.expand(first),self.expand(second))
+
     def OR(self,first,second):
         return '(%s OR %s)' % (self.expand(first),self.expand(second))
+
     def BELONGS(self,first,second):
         if isinstance(second,str):
             return '(%s IN (%s))' % (self.expand(first),second[:-1])
         return '(%s IN (%s))' % (self.expand(first),self.expand(second,first.type))
+
     def LIKE(self,first,second):
         return '(%s LIKE %s)' % (self.expand(first),self.expand(second,'string'))
+
     def EQ(self,first,second=None):
         if second is None:
             return '(%s IS NULL)' % self.expand(first)
         return '(%s = %s)' % (self.expand(first),self.expand(second,first.type))
+
     def NE(self,first,second=None): 
         if second==None:
             return '(%s IS NOT NULL)' % self.expand(first)
         return '(%s <> %s)' % (self.expand(first),self.expand(second,first.type))
+
     def LT(self,first,second=None):
         return '(%s < %s)' % (self.expand(first),self.expand(second,first.type))
+
     def LE(self,first,second=None):
         return '(%s <= %s)' % (self.expand(first),self.expand(second,first.type))
+
     def GT(self,first,second=None):
         return '(%s > %s)' % (self.expand(first),self.expand(second,first.type))
+
     def GE(self,first,second=None):
         return '(%s >= %s)' % (self.expand(first),self.expand(second,first.type))
+
     def ADD(self,first,second):
         return '(%s + %s)' % (self.expand(first),self.expand(second,first.type))
+
     def SUB(self,first,second):
         return '(%s - %s)' % (self.expand(first),self.expand(second,first.type))
+
     def MUL(self,first,second):
         return '(%s * %s)' % (self.expand(first),self.expand(second,first.type))
+
     def DIV(self,first,second):
         return '(%s / %s)' % (self.expand(first),self.expand(second,first.type))
+
     def ON(self,first,second):
         return '%s ON %s' % (self.expand(first),self.expand(second))
+
     def DESC(self,first):
         return '%s DESC' % self.expand(first)
+
     def COMMA(self,first,second):
         return '%s, %s' % (self.expand(first),self.expand(second))
+
     def VERBATIM(self,first):
         return str(first)
+
     def expand(self,expression,field_type=None):
         if isinstance(expression,Field):
             return str(expression)
@@ -325,6 +360,22 @@ class BaseAdapter(ConnectionPool):
             return self.represent(expression,field_type)
         else:
             return str(expression)
+
+    def alias(self,table,alias):
+        """
+        given a table object, makes a new table object
+        with alias name.
+        """
+        other = copy.copy(table)
+        other['_ot'] = other._tablename
+        other['ALL'] = SQLALL(other)
+        other['_tablename'] = alias
+        for fieldname in other.fields:
+            other[fieldname] = copy.copy(other[fieldname])
+            other[fieldname]._tablename = alias
+        table._db[alias] = table
+        return other
+
     def TRUNCATE(self,table,mode = ''):
         tablename = table._tablename
         return ['TRUNCATE TABLE %s %s;' % (tablename, mode or '')]
@@ -336,12 +387,14 @@ class BaseAdapter(ConnectionPool):
             sql_w = ''
         sql_v = ','.join(['%s=%s' % (field.name, self.expand(value,field.type)) for (field,value) in fields])
         return 'UPDATE %s SET %s%s;' % (tablename, sql_v, sql_w)
+
     def DELETE(self,query,tablename):
         if query:
             sql_w = ' WHERE ' + self.expand(query)
         else:
             sql_w = ''
         return 'DELETE FROM %s%s;' % (tablename, sql_w)
+
     def COUNT(self,query, tablenames):
         if query:
             sql_w = ' WHERE ' + self.expand(query)
@@ -349,9 +402,11 @@ class BaseAdapter(ConnectionPool):
             sql_w = ''
         sql_t = ','.join(tablenames)
         return 'SELECT count(*) FROM %s%s' % (sql_t, sql_w)
+
     def count(self,query,tablenames):
         self.execute(self.COUNT(query,tablenames))
         return self.cursor.fetchone()[0]
+
     def SELECT(self, query, *fields, **attributes):
         for key in set(attributes.keys())-set(('orderby','groupby','limitby',
                                                'required','cache','left','distinct','having')):
@@ -425,16 +480,19 @@ class BaseAdapter(ConnectionPool):
                 sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in (self.db[t]._primarykey or ['id'])])
             # oracle does not support limitby
         return self.SELECT_LIMITBY(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
+
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             sql_o += ' LIMIT %i OFFSET %i' % (lmax - lmin, lmin)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
+
     def select(self,query,*fields,**attributes):
         """
         Always returns a Rows object, even if it may be empty
         """
         db=self.db
+
         def response(query):
             self.execute(query)
             return self.cursor.fetchall()
@@ -450,6 +508,7 @@ class BaseAdapter(ConnectionPool):
             rows = list(rows)            
         rows = self.rowslice(rows,attributes.get('limitby',(0,))[0],None)
         return self.parse(rows,self._colnames)
+
     def tables(self,query):        
         tables = []
         if isinstance(query, (Query, Expression, Field)):
@@ -465,6 +524,7 @@ class BaseAdapter(ConnectionPool):
                 else:
                     tables = tables + [t for t in self.tables(query._second) if not t in tables]
         return tables
+
     def commit(self):
         self.db._logger.write('commit\n');
         try:
@@ -472,6 +532,7 @@ class BaseAdapter(ConnectionPool):
         finally :
             self.db._logger.write(traceback.format_exc());
         return ret
+
     def rollback(self):
         self.db._logger.write('rollback\n');
         try:
@@ -479,24 +540,34 @@ class BaseAdapter(ConnectionPool):
         finally:
             self.db._logger.write(traceback.format_exc());
         return ret
+
     def support_distributed_transaction(self):
         return False
+
     def distributed_transaction_begin(self,key):
         return
+
     def prepare(self,key):
         self.connection.prepare()
+
     def commit_prepared(self,key):
         self.connection.commit()
+
     def rollback_prepared(self,key):
         self.connection.rollback()
+
     def concat_add(self,table):
         return ', ADD '
+
     def contraint_name(self, table, fieldname):
         return '%s_%s__constraint' % (table,fieldname)
+
     def create_sequence_and_triggers(self, query, table):
         self.execute(query)
+
     def commit_on_alter_table(self):        
         return False
+
     def log_execute(self,*a,**b):
         self.db._lastsql = a[0]
         self.db._logger.write(datetime.datetime.now().isoformat()+'\n'+a[0]+'\n')
@@ -505,8 +576,10 @@ class BaseAdapter(ConnectionPool):
         finally:
             self.db._logger.write(traceback.format_exc())
         return ret
+
     def execute(self,*a,**b):
         return self.log_execute(*a, **b)
+
     def represent(self, obj, fieldtype):        
         if type(obj) in (types.LambdaType, types.FunctionType):
             obj = obj()
@@ -564,15 +637,20 @@ class BaseAdapter(ConnectionPool):
         except:
             obj = obj.decode('latin1').encode(self.db_codec)
         return "'%s'" % obj.replace("'", "''")    
+
     def represent_exceptions(self, obj, fieldtype):
         return None
+
     def lastrowid(self,tablename):
         return None
+
     def integrity_error_class(self):
         return type(None)
+
     def rowslice(self,rows,minimum=0,maximum=None):
         """ by default this function does nothing, oreload when db does no do slicing """
         return rows
+
     def parse(self,rows,colnames,blob_decode=True):
         virtualtables = []
         new_rows = []
@@ -687,8 +765,10 @@ class SQLiteAdapter(BaseAdapter):
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
         'reference': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
+
     def EXTRACT(self,field,what):
         return "web2py_extract('%s',%s)" % (what,self.expand(field))
+
     @staticmethod
     def web2py_extract(lookup, s):
         table = {
@@ -704,6 +784,7 @@ class SQLiteAdapter(BaseAdapter):
             return int(s[i:j])
         except:
             return None
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -720,6 +801,7 @@ class SQLiteAdapter(BaseAdapter):
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         self.pool_connection(lambda dbpath=dbpath: sqlite3.Connection(dbpath, check_same_thread=False))
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
+
     def TRUNCATE(self,table,mode = ''):
         tablename = table._tablename
         return ['DELETE FROM %s;' % tablename,
@@ -728,7 +810,9 @@ class SQLiteAdapter(BaseAdapter):
     def lastrowid(self,tablename):
         return self.cursor.lastrowid
 
+
 class JDBCSQLiteAdapter(SQLiteAdapter):
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -745,8 +829,10 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         self.pool_connection(lambda dbpath=dbpath: zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath)))
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
+
     def execute(self,a):
         return self.log_execute(a[:-1])
+
 
 class MySQLAdapter(BaseAdapter):
     types = {
@@ -765,26 +851,36 @@ class MySQLAdapter(BaseAdapter):
         'id': 'INT AUTO_INCREMENT NOT NULL',
         'reference': 'INT, INDEX %(field_name)s__idx (%(field_name)s), FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
+
     def RANDOM(self):
         return 'RAND()'
+
     def SUBSTRING(self,field,parameters):
         return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), paramters[0], parameters[1])
+
     def DROP(self,table,mode):
         # breaks db integrity but without this mysql does not drop table
         return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % table,'SET FOREIGN_KEY_CHECKS=1;']
+
     def support_distributed_transaction(self):
         return True
+
     def distributed_transaction_begin(self,key):
         self.execute('XA START;')
+
     def prepare(self,key):
         self.execute("XA END;")
         self.execute("XA PREPARE;")
+
     def commit_prepared(self,ley):
         self.execute("XA COMMIT;")
+
     def rollback_prepared(self,key):
         self.execute("XA ROLLBACK;")
+
     def concat_add(self,table):
         return '; ALTER TABLE %s ADD ' % table
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -825,8 +921,10 @@ class MySQLAdapter(BaseAdapter):
                                                                  ))
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
+
     def commit_on_alter_table(self):        
         return True
+
     def lastrowid(self,tablename):
         self.execute('select last_insert_id();')
         return int(self.cursor.fetchone()[0])
@@ -849,18 +947,25 @@ class PostgreSQLAdapter(BaseAdapter):
         'id': 'SERIAL PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
+
     def RANDOM(self):
         return 'RANDOM()'
+
     def support_distributed_transaction(self):
         return True
+
     def distributed_transaction_begin(self,key):
         return
+
     def prepare(self,key):
         self.execute("PREPARE TRANSACTION '%s';" % key)
+
     def commit_prepared(self,key):
         self.execute("COMMIT PREPARED '%s';" % key)
+
     def rollback_prepared(self,key):        
         self.execute("ROLLBACK PREPARED '%s';" % key)
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -891,11 +996,14 @@ class PostgreSQLAdapter(BaseAdapter):
         self.connection.set_client_encoding('UTF8')
         self.execute('BEGIN;')
         self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
+
     def lastrowid(self,tablename):
         self.execute("select currval('%s_id_Seq')" % tablename)
         return int(self.cursor.fetchone()[0])
 
+
 class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -926,6 +1034,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
         self.execute('BEGIN;')
         self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
 
+
 class OracleAdapter(BaseAdapter):
     types = {
         'boolean': 'CHAR(1)',
@@ -943,14 +1052,19 @@ class OracleAdapter(BaseAdapter):
         'id': 'NUMBER PRIMARY KEY',
         'reference': 'NUMBER, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
+
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
+
     def RANDOM(self):
         return 'dbms_random.value'
+
     def NOT_NULL(self,default,field_type):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
+
     def DROP(self,table,mode):
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s_sequence;' % table]
+
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
@@ -960,11 +1074,13 @@ class OracleAdapter(BaseAdapter):
                 sql_w_row = 'WHERE w_row > %i' % lmin                                                                    
             return 'SELECT %s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
+
     def contraint_name(self, tablename, fieldname):
         constraint_name = BaseAdapter.contraint_name(self, tablename, fieldname)
         if len(constraint_name)>30:
             constraint_name = '%s_%s__constraint' % (tablename[:10], fieldname[:7])
         return constraint_name
+
     def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'blob':
             obj = base64.b64encode(str(obj))
@@ -984,6 +1100,7 @@ class OracleAdapter(BaseAdapter):
                 obj = str(obj)
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
         return None
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -996,6 +1113,7 @@ class OracleAdapter(BaseAdapter):
         self.execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
         self.execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
     oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
+
     def execute(self, command):
         args = []
         i = 1
@@ -1007,13 +1125,16 @@ class OracleAdapter(BaseAdapter):
             args.append(m.group('clob')[6:-2].replace("''", "'"))
             i += 1
         return self.log_execute(command[:-1], args)
+
     def create_sequence_and_triggers(self, query, table):
         tablename = table._tablename
         self.execute(query)
         self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
         self.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n' % (tablename, tablename, tablename))
+
     def commit_on_alter_table(self):        
         return True
+
     def lastrowid(self,tablename):
         self.execute('SELECT %s_sequence.currval FROM dual;' % tablename)
         return int(self.cursor.fetchone()[0])
@@ -1038,21 +1159,28 @@ class MSSQLAdapter(BaseAdapter):
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
         }
+
     def EXTRACT(self,field,what):
         return "DATEPART('%s' FROM %s)" % (what, self.expand(field))
+
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
+
     def RANDOM(self):
         return 'NEWID()'
+
     def SUBSTRING(self,field,parameters):
         return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
+
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY CLUSTERED (%s)' % key
+
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             sql_s += ' TOP %i' % lmax
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
+
     def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'boolean':
             if obj and not str(obj)[0].upper() == 'F':
@@ -1060,6 +1188,7 @@ class MSSQLAdapter(BaseAdapter):
             else:
                 return '0'
         return None
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -1112,11 +1241,14 @@ class MSSQLAdapter(BaseAdapter):
             cnxn = 'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
                 % (host, port, db, user, password, urlargs)
         self.pool_connection(lambda cnxn=cnxn : pyodbc.connect(cnxn))
+
     def lastrowid(self,tablename):
         self.execute('SELECT @@IDENTITY;')
         return int(self.cursor.fetchone()[0])
+
     def integrity_error_class(self):
         return pyodbc.IntegrityError
+
     def rowslice(self,rows,minimum=0,maximum=None):
         if maximum==None:
             return rows[minimum:]
@@ -1142,13 +1274,16 @@ class MSSQLAdapter2(MSSQLAdapter):
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
         }
+
     def represent(self, obj, fieldtype):
         value = BaseAdapter.represent(self, obj, fieldtype)
         if fieldtype == 'string' or fieldtype == 'text' and value[:1]=="'":
             value = 'N'+value
         return value
+
     def execute(self,a):
         return self.log_execute(a,'utf8')
+
 
 class FireBirdAdapter(BaseAdapter):
     types = {
@@ -1167,14 +1302,19 @@ class FireBirdAdapter(BaseAdapter):
         'id': 'INTEGER PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
+
     def RANDOM(self):
         return 'RAND()'
+
     def NOT_NULL(self,default,field_type):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
+
     def SUBSTRING(self,field,parameters):
         return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
+
     def DROP(self,table,mode):
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR GENID_%s;' % table]
+
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
@@ -1183,6 +1323,7 @@ class FireBirdAdapter(BaseAdapter):
 
     def support_distributed_transaction(self):
         return True
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -1215,18 +1356,21 @@ class FireBirdAdapter(BaseAdapter):
                                                      user=user,
                                                      password=password,
                                                      charset=charset))
+
     def create_sequence_and_triggers(self, query, table):       
         tablename = table._tablename
         self.execute(query)
         self.execute('create generator GENID_%s;' % tablename)
         self.execute('set generator GENID_%s to 0;' % tablename)
         self.execute('create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;' % (tablename,tablename,tablename))
+
     def lastrowid(self,tablename):
         self.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database' % tablename)
         return int(self.db._adapter.cursor.fetchone()[0])
 
 
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -1283,10 +1427,13 @@ class InformixAdapter(BaseAdapter):
         'reference FK': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s CONSTRAINT FK_%(table_name)s_%(field_name)s',
         'reference TFK': 'FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s CONSTRAINT TFK_%(table_name)s_%(field_name)s',
         }
+
     def RANDOM(self):
         return 'Random()'
+
     def NOT_NULL(self,default,field_type):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
+
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
@@ -1299,6 +1446,7 @@ class InformixAdapter(BaseAdapter):
                 # Requires Informix 9.0+
                 sql_s += ' FIRST %d' % (fetch_amt, )
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
+
     def represent_exceptions(self, obj, fieldtype):
         if fieldtype == 'date':                
             if isinstance(obj, (datetime.date, datetime.datetime)):
@@ -1315,6 +1463,7 @@ class InformixAdapter(BaseAdapter):
                 obj = str(obj)
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
         return None
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -1341,12 +1490,15 @@ class InformixAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         self.pool_connection(lambda dsn='%s@%s' % (db,user), user=user,password=password:
                                  informixdb.connect(dsn, user=user, password=password, autocommit=True))
+
     def execute(self,command):
         if command[-1:]==';':
             command = command[:-1]
         return self.log_execute(command)
+
     def lastrowid(self,tablename):
         return self.cursor.sqlerrd[1]
+
     def integrity_error_class(self):
         return informixdb.IntegrityError
 
@@ -1370,10 +1522,13 @@ class DB2Adapter(BaseAdapter):
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
         }
+
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
+
     def RANDOM(self):
         return 'RAND()'
+
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
@@ -1391,6 +1546,7 @@ class DB2Adapter(BaseAdapter):
                 obj = obj.isoformat()[:10]+'-00.00.00'
             return "'%s'" % obj
         return None
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -1400,13 +1556,16 @@ class DB2Adapter(BaseAdapter):
         self.find_or_make_work_folder()
         cnxn = uri.split(':', 1)[1]
         self.pool_connection(lambda cnxn=cnxn: pyodbc.connect(cnxn))
+
     def execute(self,command):
         if command[-1:]==';':
             command = command[:-1]
         return self.log_execute(command)
+
     def lastrowid(self,tablename):
         self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % tablename)
         return int(self.db._adapter.cursor.fetchone()[0])
+
     def rowslice(self,rows,minimum=0,maximum=None):
         if maximum==None:
             return rows[minimum:]
@@ -1415,6 +1574,7 @@ class DB2Adapter(BaseAdapter):
 INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name 
                                        # (ANSI-SQL wants this form of name 
                                        # to be a delimited identifier)
+
 
 class IngresAdapter(BaseAdapter):
     types = {
@@ -1435,10 +1595,13 @@ class IngresAdapter(BaseAdapter):
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
         }
+
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
+
     def RANDOM(self):
         return 'RANDOM()'
+
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
@@ -1449,6 +1612,7 @@ class IngresAdapter(BaseAdapter):
                 # Requires Ingres 9.2+
                 sql_o += ' OFFSET %d' % (lmin, )
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
         self.db = db
         self.uri = uri
@@ -1473,6 +1637,7 @@ class IngresAdapter(BaseAdapter):
                                                    vnode=vnode,
                                                    servertype=servertype,
                                                    trace=trace))
+
     def create_sequence_and_triggers(self, query, table):
         # post create table auto inc code (if needed)
         # modify table to btree for performance....
@@ -1494,8 +1659,10 @@ class IngresAdapter(BaseAdapter):
         tmp_seqname='%s_iisq' % tablename
         self.execute('select current value for %s' % tmp_seqname)
         return int(self.cursor.fetchone()[0]) # don't really need int type cast here...
+
     def integrity_error_class(self):
         return ingresdbi.IntegrityError
+
 
 class IngresUnicodeAdapter(IngresAdapter):
     types = {
@@ -1572,6 +1739,7 @@ def sqlhtml_validators(field):
             field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
         if hasattr(referenced,'_format') and referenced._format:
+
             def f(r,id):
                 row=r[id]
                 if row:
@@ -1731,10 +1899,12 @@ class DAL(dict):
                                     Field('fieldname2'))
     """
 
-    # ## this allows gluon to comunite a folder for this thread
-
     @staticmethod
     def _set_thread_folder(folder):
+        """
+        # ## this allows gluon to comunite a folder for this thread 
+        # ## <<<<<<<<< Should go away as new DAL replaces old sql.py
+        """
         BaseAdapter.set_thread_folder(folder)
 
     @staticmethod
@@ -2099,7 +2269,7 @@ class Table(dict):
 
     def _filter_fields(self, record, id=False):
         return dict([(k, v) for (k, v) in record.items() if k
-                     in self.fields and (k!='id' or id)])
+                     in self.fields and (self[k].type!='id' or id)])
 
     def _build_query(self,key):
         """ for keyed table only """
@@ -2188,15 +2358,7 @@ class Table(dict):
         return self._tablename
 
     def with_alias(self, alias):
-        other = copy.copy(self)
-        other['_ot'] = other._tablename
-        other['ALL'] = SQLALL(other)
-        other['_tablename'] = alias
-        for fieldname in other.fields:
-            other[fieldname] = copy.copy(other[fieldname])
-            other[fieldname]._tablename = alias
-        self._db[alias] = self
-        return other
+        return self._db._adapter.alias(self,alias)
 
     def _create(self, migrate=True, fake_migrate=False):
         fields = []
@@ -2544,6 +2706,7 @@ class Table(dict):
         if self._dbt:
             logfile.write('success!\n')
 
+
 class Expression(object):
 
     def __init__(
@@ -2889,6 +3052,7 @@ class Field(Expression):
         except:
             return '<no table>.%s' % self.name
 
+
 class Query(object):
 
     """
@@ -2973,8 +3137,6 @@ class Set(object):
 
     def select(self, *fields, **attributes):
         return self._db._adapter.select(self._query,*fields,**attributes)
-
-    #@staticmethod
 
     def _count(self):
         tablenames = self._db._adapter.tables(self._query)
@@ -3072,6 +3234,7 @@ def update_record(colset, table, id, a={}):
     table._db(table.id==id).update(**c)
     for (k, v) in c.items():
         colset[k] = v
+
 
 class Rows(object):
 
@@ -3341,6 +3504,7 @@ class Rows(object):
 
 def Rows_unpickler(data):
     return marshal.loads(data)
+
 def Rows_pickler(data):
     return Rows_unpickler, (marshal.dumps(data.as_list(storage_to_dict=True)),)
 copy_reg.pickle(Rows, Rows_pickler, Rows_unpickler)
