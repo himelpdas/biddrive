@@ -171,6 +171,9 @@ def run(
         if not plain:
             try:
                 import IPython
+                # following 2 lines fixe a problem with IPython, thanks Michael Toomim
+                if '__builtins__' in _env:
+                    del _env['__builtins__'] 
                 shell = IPython.Shell.IPShell(argv=[], user_ns=_env)
                 shell.mainloop()
                 return
