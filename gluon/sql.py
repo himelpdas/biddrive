@@ -2425,6 +2425,11 @@ class Expression(object):
                           self.type, self._db._dbname, self._db._db_codec)), self.type,
                           self._db)
 
+    def len(self):
+        return Expression('LENGTH(%s)' % self, 'integer', self._db)
+
+    def __nonzero__(self):
+        return True
 
 class SQLCustomType:
     """
@@ -2698,9 +2703,27 @@ class Field(Expression):
         return Expression('MIN(%s)' % str(self), 'integer', self._db)
 
     def __getslice__(self, start, stop):
-        if start < 0 or stop < start:
-            raise SyntaxError, 'not supported: %s - %s' % (start, stop)
-        d = dict(field=str(self), pos=start + 1, length=stop - start)
+        if start < 0:
+            pos0 = '(%s - %d)' % (self.len(), -start)
+        else:
+            pos0 = str(start)
+
+        if stop < 0:
+            length = '(%s - %d - %s)' % (self.len(), -stop, str(pos0))
+        else:
+            length = '(%s - %s)' % (str(stop), str(pos0))
+
+        d = dict(field=str(self), pos=pos0+1, length=length)
+        s = self._db._translator['substring'] % d
+        return Expression(s, 'string', self._db)
+
+    def __getitem__(self, i):
+        if i < 0:
+            pos0 = '(%s - %d)' % (self.len(), -i)
+        else:
+            pos0 = str(i)
+
+        d = dict(field=str(self), pos=pos0+1, length=1)
         s = self._db._translator['substring'] % d
         return Expression(s, 'string', self._db)
 

@@ -3036,13 +3036,34 @@ class Field(Expression):
     def min(self):
         return Expression(self._db, self._db._adapter.AGGREGATE, self, 'min', self.type)
 
+    def len(self):
+        return Expression(self._db, self._db._adapter.AGGREGATE, self, 'length', 'integer')
+
+    def __nonzero__(self):                                                                                    
+        return True 
+
     def __getslice__(self, start, stop):
+        """
+        <<<< THIS IS BROKEN FOR start<0 or stop<0
+        """
         if start < 0 or stop < start:
             raise SyntaxError, 'not supported: %s - %s' % (start, stop)
         pos=start + 1
         length=stop - start
-        s = self._db._adapter.Expression(self._db,seld._db._adapter.SUBSTRING, self, (pos, length), self.type)
 
+        if start < 0:                                                                                         
+            pos0 = '(%s - %d)' % (self.len(), -start)                                                         
+        else:                                                                                                 
+            pos0 = start + 1                                                                                 
+                                                                                                             
+        if stop < 0:                                                                                          
+            length = '(%s - %d - %s)' % (self.len(), -stop, str(pos0))                                        
+        else:                                                                                                 
+            length = '(%s - %s)' % (str(stop), str(pos0))                                                     
+                                                                                                             
+        return self._db._adapter.Expression(self._db,seld._db._adapter.SUBSTRING,
+                                           self, (pos, length), self.type)
+                                                                                                 
     def __getitem__(self, i):
         return self[i:i + 1]
 
