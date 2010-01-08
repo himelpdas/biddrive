@@ -1658,6 +1658,12 @@ class Row(dict):
             return self._extra[key]
         return dict.__getitem__(self, key)
 
+    def __call__(self,key):
+        key=str(key)
+        if key in self.get('_extra',{}):
+            return self._extra[key]
+        return dict.__getitem__(self, key) #### are we sure        
+
     def __setitem__(self, key, value):
         dict.__setitem__(self, str(key), value)
 
@@ -3520,10 +3526,10 @@ def test_all():
     >>> db(mynumber.id>0).delete()
     0
     >>> for i in range(10): tmp = mynumber.insert(x=i)
-    >>> db(mynumber.id>0).select(mynumber.x.sum())[0]._extra[mynumber.x.sum()]
+    >>> db(mynumber.id>0).select(mynumber.x.sum())[0](mynumber.x.sum())
     45
     
-    >>> db(mynumber.x+2==5).select(mynumber.x + 2)[0]._extra[mynumber.x + 2]
+    >>> db(mynumber.x+2==5).select(mynumber.x + 2)[0](mynumber.x + 2)
     5
 
     Output in csv
