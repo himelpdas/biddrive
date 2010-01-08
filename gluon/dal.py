@@ -301,6 +301,8 @@ class BaseAdapter(ConnectionPool):
         return '(%s * %s)' % (self.expand(first),self.expand(second,first.type))
     def DIV(self,first,second):
         return '(%s / %s)' % (self.expand(first),self.expand(second,first.type))
+    def ON(self,first,second):
+        return '%s ON %s' % (self.expand(first),self.expand(second))
     def DESC(self,first):
         return '%s DESC' % self.expand(first)
     def COMMA(self,first,second):
@@ -323,6 +325,10 @@ class BaseAdapter(ConnectionPool):
             return self.represent(expression,field_type)
         else:
             return str(expression)
+    def TRUNCATE(self,table,mode = ''):
+        tablename = table._tablename
+        return ['TRUNCATE TABLE %s %s;' % (tablename, mode or '')]
+
     def UPDATE(self,query,tablename,fields):
         if query:
             sql_w = ' WHERE ' + self.expand(query)
@@ -392,9 +398,9 @@ class BaseAdapter(ConnectionPool):
             command = self.db._adapter.LEFT_JOIN()
             if not isinstance(join, (tuple, list)):
                 join = [join]
-            joint = [t._tablename for t in join if not isinstance(t,SQLJoin)]
-            joinon = [t for t in join if isinstance(t, SQLJoin)]
-            joinont = [t.table._tablename for t in joinon]
+            joint = [t._tablename for t in join if not isinstance(t,Expression)]
+            joinon = [t for t in join if isinstance(t, Expression)]
+            joinont = [t._first._tablename for t in joinon]
             excluded = [t for t in tablenames if not t in joint + joinont]
             sql_t = ', '.join(excluded)
             if joint:
@@ -487,7 +493,7 @@ class BaseAdapter(ConnectionPool):
         return ', ADD '
     def contraint_name(self, table, fieldname):
         return '%s_%s__constraint' % (table,fieldname)
-    def create_sequence_and_triggers(self, query, tablename):
+    def create_sequence_and_triggers(self, query, table):
         self.execute(query)
     def commit_on_alter_table(self):        
         return False
@@ -563,7 +569,7 @@ class BaseAdapter(ConnectionPool):
     def lastrowid(self,tablename):
         return None
     def integrity_error_class(self):
-        return None
+        return type(None)
     def rowslice(self,rows,minimum=0,maximum=None):
         """ by default this function does nothing, oreload when db does no do slicing """
         return rows
@@ -714,6 +720,11 @@ class SQLiteAdapter(BaseAdapter):
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         self.pool_connection(lambda dbpath=dbpath: sqlite3.Connection(dbpath, check_same_thread=False))
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
+    def TRUNCATE(self,table,mode = ''):
+        tablename = table._tablename
+        return ['DELETE FROM %s;' % tablename,
+                "DELETE FROM sqlite_sequence WHERE name='%s';" % tablename]
+
     def lastrowid(self,tablename):
         return self.cursor.lastrowid
 
@@ -996,7 +1007,8 @@ class OracleAdapter(BaseAdapter):
             args.append(m.group('clob')[6:-2].replace("''", "'"))
             i += 1
         return self.log_execute(command[:-1], args)
-    def create_sequence_and_triggers(self, query, tablename):
+    def create_sequence_and_triggers(self, query, table):
+        tablename = table._tablename
         self.execute(query)
         self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
         self.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n' % (tablename, tablename, tablename))
@@ -1203,7 +1215,8 @@ class FireBirdAdapter(BaseAdapter):
                                                      user=user,
                                                      password=password,
                                                      charset=charset))
-    def create_sequence_and_triggers(self, query, tablename):       
+    def create_sequence_and_triggers(self, query, table):       
+        tablename = table._tablename
         self.execute(query)
         self.execute('create generator GENID_%s;' % tablename)
         self.execute('set generator GENID_%s to 0;' % tablename)
@@ -1225,7 +1238,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<path>[^\?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
             raise SyntaxError, \
-                "Invalid URI string in DAL: %s" % self.uri  #### <<< TODO
+                "Invalid URI string in DAL: %s" % self.uri
         user = m.group('user')
         if not user:
             raise SyntaxError, 'User required'
@@ -1460,15 +1473,23 @@ class IngresAdapter(BaseAdapter):
                                                    vnode=vnode,
                                                    servertype=servertype,
                                                    trace=trace))
-    def create_sequence_and_triggers(self, query, tablename):
+    def create_sequence_and_triggers(self, query, table):
         # post create table auto inc code (if needed)
         # modify table to btree for performance....
         # Older Ingres releases could use rule/trigger like Oracle above.
-        tmp_seqname='%s_iisq' % tablename
-        query=query.replace(INGRES_SEQNAME, tmp_seqname)
-        self.execute('create sequence %s' % tmp_seqname)
-        self.execute(query)
-        self.execute('modify %s to btree unique on %s' % (tablename, 'id'))
+        if table._primarykey:
+            modify_tbl_sql = 'modify %s to btree unique on %s' % \
+                (table._tablename,
+                 ', '.join(["'%s'" % x for x in table.primarykey]))
+            self.execute(modify_tbl_sql)
+        else:
+            tmp_seqname='%s_iisq' % table._tablename
+            query=query.replace(INGRES_SEQNAME, tmp_seqname)
+            self.execute('create sequence %s' % tmp_seqname)
+            self.execute(query)
+            self.execute('modify %s to btree unique on %s' % (table._tablename, 'id'))
+
+
     def lastrowid(self,tablename):
         tmp_seqname='%s_iisq' % tablename
         self.execute('select current value for %s' % tmp_seqname)
@@ -1919,21 +1940,6 @@ class SQLALL(object):
         return ', '.join([str(field) for field in self.table])
 
 
-class SQLJoin(object):
-    """
-    Helper class providing the join statement between the given tables/queries.
-
-    Normally only called from gluon.sql
-    """
-
-    def __init__(self, table, query):
-        self.table = table
-        self.query = query
-
-    def __str__(self):
-        return '%s ON %s' % (self.table, self.query)
-
-
 class Reference(int):
 
     def __allocate(self):
@@ -2308,26 +2314,6 @@ class Table(dict):
                 logfile.write(query + '\n')
             if not fake_migrate:
                 self._db._adapter.create_sequence_and_triggers(query,self)
-                """
-                ### <<<<<<<<<<<<< NEEDS WORK SINCE above lines should instead do:
-                if self._db._dbname in ['oracle']:
-                    t = self._tablename
-                    self._db._adapter.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
-                                      % t)
-                    self._db._adapter.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
-                                      % (t, t, t))
-                elif self._db._dbname == 'firebird':
-                    t = self._tablename
-                    self._db._adapter.execute('create generator GENID_%s;' % t)
-                    self._db._adapter.execute('set generator GENID_%s to 0;' % t)
-                    self._db._adapter.execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
-''' % (t, t, t))
-                elif self._db._dbname == 'ingres':
-                    # post create table auto inc code (if needed)
-                    # modify table to btree for performance.... NOT sure if this will be faster or not.
-                    modify_tbl_sql='modify %s to btree unique on %s' % (self._tablename, ', '.join(['"%s"'%x for x in self._primarykey])) # could use same code for Table (with id column, if _primarykey is defined as ['id']
-                    self._db._adapter.execute(modify_tbl_sql)
-                """
                 self._db.commit()
             if self._dbt:
                 tfile = open(self._dbt, 'w')
@@ -2421,7 +2407,7 @@ class Table(dict):
     def drop(self, mode = ''):
         if self._dbt:
             logfile = open(self._loggername, 'a')
-        queries = self._drop(mode = mode)
+        queries = self._db._adapter.DROP(self, mode)
         for query in queries:
             if self._dbt:
                 logfile.write(query + '\n')
@@ -2535,20 +2521,15 @@ class Table(dict):
                     id_map_self[line[cid]] = new_id
 
     def on(self, query):
-        return SQLJoin(self, query)
+        return Expression(self._db,self._db._adapter.ON,self,query)
 
     def _truncate(self, mode = None):
-        t = self._tablename
-        c = mode or ''
-        if self._db._dbname == 'sqlite':
-            return ['DELETE FROM %s;' % t,
-                    "DELETE FROM sqlite_sequence WHERE name='%s';" % t]
-        return ['TRUNCATE TABLE %s %s;' % (t, c)]
+        return self._db._adapter.TRUNCATE(self, mode)
 
     def truncate(self, mode = None):
         if self._dbt:
             logfile = open(self._loggername, 'a')
-        queries = self._truncate(mode = mode)
+        queries = self._db_adapter.TRUNCATE(self, mode)
         for query in queries:
             if self._dbt:
                 logfile.write(query + '\n')
@@ -2572,7 +2553,7 @@ class Expression(object):
         self._op = op
         self._first = first
         self._second = second
-        if not type and first and hasattr(first,type):
+        if not type and first and hasattr(first,'type'):
             self.type = first.type
         else:
             self.type = type
@@ -2901,11 +2882,6 @@ class Field(Expression):
             return '%s.%s' % (self._tablename, self.name)
         except:
             return '<no table>.%s' % self.name
-
-
-DAL.Field = Field  # necessary in gluon/globals.py session.connect
-DAL.Table = Table  # necessary in gluon/globals.py session.connect
-
 
 class Query(object):
 
@@ -3566,6 +3542,7 @@ def test_all():
     >>> db.paper.drop()
     """
 
+# deprecated since the new DAL
 SQLField = Field
 SQLTable = Table
 SQLXorable = Expression
@@ -3575,6 +3552,9 @@ SQLRows = Rows
 SQLStorage = Row
 SQLDB = DAL
 GQLDB = DAL
+DAL.Field = Field  # necessary in gluon/globals.py session.connect
+DAL.Table = Table  # necessary in gluon/globals.py session.connect
+
 
 
 if __name__ == '__main__':
