@@ -197,6 +197,7 @@ class ConnectionPool(object):
         return
 
     def find_or_make_work_folder(self):
+        """ this actually does not make the folder. it has to be there """
         pid = thread.get_ident()
         if not self.folder:
             sql_locker.acquire()
@@ -207,7 +208,7 @@ class ConnectionPool(object):
             sql_locker.release()
 
         # Creating the folder if it does not exist
-        if self.folder and not os.path.exists(self.folder):
+        if False and self.folder and not os.path.exists(self.folder):
             os.mkdir(self._folder)
 
     def pool_connection(self, f):
