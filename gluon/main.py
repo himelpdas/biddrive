@@ -421,7 +421,7 @@ def wsgibase(environ, responder):
             # ##################################################
             
             if not request.env.web2py_runtime_gae:
-                for subfolder in ['models','views','controllers',
+                for subfolder in ['models','views','controllers', 'databases',
                                   'modules','cron','errors','sessions',
                                   'languages','static','private','uploads']:
                     path =  os.path.join(request.folder,subfolder)

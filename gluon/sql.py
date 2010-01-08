@@ -855,11 +855,6 @@ class SQLDB(dict):
                 self._folder = self._folders[pid] = ''
             sql_locker.release()
 
-        # Creating the folder if it does not exist
-        if self._folder:
-            if not os.path.exists(self._folder):
-                os.mkdir(self._folder)
-
         # Now connect to database
 
         if self._uri[:14] == 'sqlite:memory:':
