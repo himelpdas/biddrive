@@ -997,6 +997,7 @@ class PostgreSQLAdapter(BaseAdapter):
         self.connection.set_client_encoding('UTF8')
         self.execute('BEGIN;')
         self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
+        self.execute("SET standard_conforming_strings=on;")
 
     def lastrowid(self,tablename):
         self.execute("select currval('%s_id_Seq')" % tablename)
