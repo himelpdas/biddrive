@@ -457,8 +457,10 @@ def sqlhtml_validators(field):
                 row=r[id]
                 if not row:
                     return id
-                else:
+                elif isinstance(r._format,str):
                     return r._format % row
+                else:
+                    return r._format(row)
             field.represent = lambda id, r=referenced, f=f: f(r,id)
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)

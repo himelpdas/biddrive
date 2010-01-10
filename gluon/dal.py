@@ -1740,18 +1740,23 @@ def sqlhtml_validators(field):
             field_type.find('.')<0 and \
             field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
-        if hasattr(referenced,'_format') and referenced._format:
 
+        if hasattr(referenced,'_format') and referenced._format:
             def f(r,id):
                 row=r[id]
-                if row:
+                if not row:
+                    return id
+                elif isinstance(r._format,str):
                     return r._format % row
                 else:
-                    return id
+                    return r._format(row)
             field.represent = lambda id, r=referenced, f=f: f(r,id)
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)
+            if field.unique:
+                requires._and = validators.IS_NOT_IN_DB(field._db,field)
             return requires
+
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
     sff=['in','do','da','ti','de']
@@ -3469,10 +3474,16 @@ class Rows(object):
                     row.append(record._extra[col])
                 else:
                     (t, f) = col.split('.')
-                    if isinstance(record.get(t, None), (Row,dict)):
+                    if isinstance(record.get(t, None), (Row,dict)):         
                         row.append(none_exception(record[t][f]))
                     else:
-                        row.append(none_exception(record[f]))
+                        if represent:
+                            if self.db[t][f].represent:
+                                row.append(none_exception(self.db[t][f].represent(record[f])))
+                            else:
+                                row.append(none_exception(record[f]))
+                        else:
+                            row.append(none_exception(record[f]))
             writer.writerow(row)
 
     def __str__(self):
