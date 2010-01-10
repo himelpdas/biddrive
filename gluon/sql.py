@@ -1467,7 +1467,6 @@ class Table(dict):
 
         :raises SyntaxError: when a supplied field is of incorrect type.
         """
-        self._primarykey = None
         new_fields = [ Field('id', 'id') ]
         for field in fields:
             if hasattr(field,'_db'):

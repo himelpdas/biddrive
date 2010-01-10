@@ -489,7 +489,7 @@ class SQLFORM(FORM):
         nbsp = XML('&nbsp;') # Firefox2 does not display fields with blanks
         FORM.__init__(self, *[], **attributes)
         ofields = fields
-        keyed = (table._primarykey!=None)
+        keyed = hasattr(table,'_primarykey')
 
         # if no fields are provided, build it from the provided table
         # will only use writable or readable fields, unless forced to ignore
@@ -724,7 +724,7 @@ class SQLFORM(FORM):
         same as FORM.accepts but also does insert, update or delete in SQLDB.
         """
 
-        keyed = (self.table._primarykey!=None)
+        keyed = hasattr(self.table,'_primarykey')
         if self.record:
             if keyed:
                 formname_id = '.'.join([str(self.record[k]) for k in self.table._primarykey if hasattr(self.record,k)])
@@ -1030,11 +1030,11 @@ class SQLTABLE(TABLE):
                         href = '%s/%s/%s' % (linkto, ref, r_old)
                         if ref.find('.') >= 0:
                             tref,fref = ref.split('.')
-                            if sqlrows.db[tref]._primarykey:
+                            if hasattr(sqlrows.db[tref],'_primarykey'):
                                 href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:ur}))
 
                     row.append(TD(A(r, _href=href)))
-                elif linkto and field._table._primarykey and fieldname in field._table._primarykey:
+                elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \
                                 ((tablename in record \

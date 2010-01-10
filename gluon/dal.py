@@ -1644,7 +1644,7 @@ class IngresAdapter(BaseAdapter):
         # post create table auto inc code (if needed)
         # modify table to btree for performance....
         # Older Ingres releases could use rule/trigger like Oracle above.
-        if table._primarykey:
+        if hasattr(table,'_primarykey'):
             modify_tbl_sql = 'modify %s to btree unique on %s' % \
                 (table._tablename,
                  ', '.join(["'%s'" % x for x in table.primarykey]))
@@ -2197,10 +2197,11 @@ class Table(dict):
 
         :raises SyntaxError: when a supplied field is of incorrect type.
         """
-        self._primarykey = args.get('primarykey',None)
-        if self._primarykey and not isinstance(self._primarykey,list):
+        primarykey = args.get('primarykey',None)
+        if primarykey and not isinstance(primarykey,list):
             raise SyntaxError, "primarykey must be a list of fields from table '%s'" % tablename
-        if self._primarykey:
+        elif primarykey:
+            self._primarykey = primarykey
             new_fields = []
         else:
             new_fields = [ Field('id', 'id') ]
@@ -2238,7 +2239,7 @@ class Table(dict):
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
 
-        if self._primarykey:
+        if hasattr(self,'_primarykey'):
             for k in self._primarykey:
                 if k not in self.fields:
                     raise SyntaxError, \
@@ -2265,7 +2266,7 @@ class Table(dict):
                         % (self._tablename, rtablename)
                 elif len(refs)==2:
                     rfieldname = refs[1]
-                    if not rtable._primarykey:
+                    if not hasattr(rtable,'_primarykey'):
                         raise SyntaxError,\
                             'keyed tables can only reference other keyed tables (for now)'
                     if rfieldname not in rtable.fields:
@@ -2379,7 +2380,7 @@ class Table(dict):
             elif field.type[:10] == 'reference ':
                 referenced = field.type[10:].strip()
                 constraint_name = self._db._adapter.contraint_name(self._tablename, field.name)
-                if self._primarykey:
+                if hasattr(self,'_primarykey'):
                     rtablename,rfieldname = ref.split('.')
                     rtable = self._db[rtablename]
                     rfield = rtable[rfieldname]
@@ -2454,7 +2455,7 @@ class Table(dict):
                      foreign_key=', '.join(pkeys),
                      on_delete_action=field.ondelete)
 
-        if self._primarykey:
+        if hasattr(self,'_primarykey'):
             query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
                (self._tablename, fields, self._db._adapter.PRIMARY_KEY(', '.join(self._primarykey),other))
         else:
@@ -2620,7 +2621,7 @@ class Table(dict):
             if isinstance(e,self._db._adapter.integrity_error_class()):
                 return None
             raise e
-        if self._primarykey:
+        if hasattr(self,'_primarykey'):
             return dict( [ (k,fields[k]) for k in self._primarykey ])
         id = self._db._adapter.lastrowid(self._tablename)
         if not isinstance(id,int):
