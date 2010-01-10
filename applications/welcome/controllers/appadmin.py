@@ -92,7 +92,7 @@ def get_query(request):
 
 
 def query_by_table_type(tablename,db,request=request):
-    keyed = hasattr(db[tablename],'_primarykey')
+    keyed = db[tablename]._primarykey
     if keyed:
         firstkey = db[tablename][db[tablename]._primarykey[0]]
         cond = '>0'
@@ -158,7 +158,7 @@ def select():
     db = get_database(request)
     dbname = request.args[0]
     regex = re.compile('(?P<table>\w+)\.(?P<field>\w+)=(?P<value>\d+)')
-    if len(request.args)>1 and hasattr(db[request.args[1]],'_primarykey'):
+    if len(request.args)>1 and db[request.args[1]]._primarykey:
         regex = re.compile('(?P<table>\w+)\.(?P<field>\w+)=(?P<value>.+)')
     if request.vars.query:
         match = regex.match(request.vars.query)
@@ -247,7 +247,7 @@ def select():
 
 def update():
     (db, table) = get_table(request)
-    keyed = hasattr(db[table],'_primarykey')
+    keyed = db[table]._primarykey
     norec = True
     if keyed:
         key = [f for f in request.vars if f in db[table]._primarykey]

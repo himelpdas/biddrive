@@ -299,6 +299,7 @@ class IS_IN_DB(Validator):
         cache=None,
         multiple=False,
         zero='choose a value',
+        _and=None,
         ):
         if hasattr(dbset, 'define_table'):
             self.dbset = dbset()
@@ -308,12 +309,16 @@ class IS_IN_DB(Validator):
         (ktable, kfield) = str(self.field).split('.')
         if not label:
             label = '%%(%s)s' % kfield
-        elif regex1.match(str(label)):
-            label = '%%(%s)s' % str(label).split('.')[-1]
-        ks = regex2.findall(label)
-        if not kfield in ks:
-            ks += [kfield]
-        fields = ['%s.%s' % (ktable, k) for k in ks]
+        if isinstance(label,str): 
+            if regex1.match(str(label)):
+                label = '%%(%s)s' % str(label).split('.')[-1]
+            ks = regex2.findall(label)
+            if not kfield in ks:
+                ks += [kfield]
+            fields = ['%s.%s' % (ktable, k) for k in ks]
+        else:
+            ks = [kfield]
+            fields =[str(f) for f in self.dbset._db[ktable]]
         self.fields = fields
         self.label = label
         self.ktable = ktable
@@ -325,6 +330,7 @@ class IS_IN_DB(Validator):
         self.cache = cache
         self.multiple = multiple
         self.zero = zero
+        self._and = _and
 
     def build_set(self):
         if self.dbset._db._dbname != 'gql':
@@ -340,7 +346,10 @@ class IS_IN_DB(Validator):
             records = \
                 self.dbset.select(self.dbset._db[self.ktable].ALL, **dd)
         self.theset = [str(r[self.kfield]) for r in records]
-        self.labels = [self.label % dict(r) for r in records]
+        if isinstance(self.label,str):
+            self.labels = [self.label % dict(r) for r in records]
+        else:
+            self.labels = [self.label(r) for r in records]
 
     def options(self):
         self.build_set()
@@ -356,12 +365,18 @@ class IS_IN_DB(Validator):
                 return ('|%s|' % '|'.join(values), None)
         elif self.theset:
             if value in self.theset:
-                return (value, None)
+                if self._and:
+                    return self._and(value)
+                else:
+                    return (value, None)
         else:
             (ktable, kfield) = str(self.field).split('.')
             field = self.dbset._db[ktable][kfield]
             if self.dbset(field == value).count():
-                return (value, None)
+                if self._and:
+                    return self._and(value)
+                else:
+                    return (value, None)
         return (value, self.error_message)
 
 

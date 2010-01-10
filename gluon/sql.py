@@ -462,6 +462,8 @@ def sqlhtml_validators(field):
             field.represent = lambda id, r=referenced, f=f: f(r,id)
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)
+            if field.unique:
+                requires._and = validators.IS_NOT_IN_DB(field._db,field)
             return requires
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))

@@ -1030,11 +1030,11 @@ class SQLTABLE(TABLE):
                         href = '%s/%s/%s' % (linkto, ref, r_old)
                         if ref.find('.') >= 0:
                             tref,fref = ref.split('.')
-                            if hasattr(sqlrows.db[tref],'_primarykey'):
+                            if sqlrows.db[tref]._primarykey:
                                 href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:ur}))
 
                     row.append(TD(A(r, _href=href)))
-                elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
+                elif linkto and field._table._primarykey and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \
                                 ((tablename in record \
