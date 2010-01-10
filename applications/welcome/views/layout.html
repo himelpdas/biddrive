@@ -20,6 +20,7 @@
         <tr>
           <td colspan="3" class="statusbar">
             {{='/'.join(['',request.application,request.controller,request.function]+request.args)}}
+	    {{ if 'auth' in globals():}}
 	    [ {{if not auth.user:}}
 	    <a href="{{=URL(r=request,f='user/login')}}">{{=T('login')}}</a> |
 	    <a href="{{=URL(r=request,f='user/register')}}">{{=T('register')}}</a> |
@@ -30,6 +31,7 @@
 	    <a href="{{=URL(r=request,f='user/change_password')}}">{{=T('change password')}}</a> |
 	    <a href="{{=URL(r=request,f='user/profile')}}">{{=T('edit profile')}}</a>
 	    {{pass}} ]
+	    {{pass}}
           </td>
         </tr>
         <tr>
