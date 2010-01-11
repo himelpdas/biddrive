@@ -332,6 +332,10 @@ class IS_IN_DB(Validator):
         self.zero = zero
         self._and = _and
 
+    def set_self_id(self, id):
+        if self._and:
+            self._and.record_id = id
+
     def build_set(self):
         if self.dbset._db._dbname != 'gql':
             orderby = self.orderby or ', '.join(self.fields)
