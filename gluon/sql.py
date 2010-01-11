@@ -955,6 +955,7 @@ class SQLDB(dict):
             self['_lastsql'] = query
             self._execute(query)
             self._execute("SET CLIENT_ENCODING TO 'UNICODE';")  # ## not completely sure but should work
+            self._execute("SET standard_conforming_strings=on;") 
         elif self._uri[:9] == 'oracle://':
             self._dbname = 'oracle'
             self._pool_connection(lambda : \
