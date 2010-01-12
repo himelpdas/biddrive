@@ -2706,14 +2706,14 @@ class Field(Expression):
         if start < 0:
             pos0 = '(%s - %d)' % (self.len(), -start)
         else:
-            pos0 = str(start)
+            pos0 = start
 
         if stop < 0:
-            length = '(%s - %d - %s)' % (self.len(), -stop, str(pos0))
+            length = '(%s - %d - %s)' % (self.len(), -stop, pos0)
         else:
-            length = '(%s - %s)' % (str(stop), str(pos0))
+            length = '(%s - %s)' % (stop, pos0)
 
-        d = dict(field=str(self), pos=pos0+1, length=length)
+        d = dict(field=str(self), pos=int(pos0)+1, length=length)
         s = self._db._translator['substring'] % d
         return Expression(s, 'string', self._db)
 
