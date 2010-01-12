@@ -747,6 +747,8 @@ def create_file():
     try:
         path = apath(request.vars.location, r=request)
         filename = re.sub('[^\w./-]+', '_', request.vars.filename)
+        if request.vars.plugin and not filename.startswith(request.vars.plugin+'/'):
+            filename = '%s/%s' % (request.vars.plugin, filename)
         
         if path[-11:] == '/languages/':
             # Handle language files

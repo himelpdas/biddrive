@@ -12,16 +12,21 @@ def htmleditfile(path,file):
 def editlanguagefile(path,file):
     return A(T('edit'),_href=URL(r=request,f='edit_language/%s/%s/%s' % (app, path, file)))
 def file_upload_form(location):
-    form=FORM(str(T("upload file:"))+" ",INPUT(_type="file",_name="file"),
-              str(T("and rename it:"))+" ", INPUT(_type="text",_name="filename",requires=IS_NOT_EMPTY),
+    form=FORM(T("upload file:")," ",
+              INPUT(_type="file",_name="file"),
+              T("and rename it:")," ",
+              INPUT(_type="text",_name="filename",requires=IS_NOT_EMPTY),
               INPUT(_type="hidden",_name="location",_value=location),
               INPUT(_type="hidden",_name="sender",_value=URL(r=request,f='design/'+app)),
+              INPUT(_type="hidden",_name="plugin",_value=request.args(1)),
               INPUT(_type="submit",_value=T("submit")),_action=URL(r=request,f='upload_file'))
     return form
 def file_create_form(location):
-    form=FORM(str(T("create file with filename:"))+" ", INPUT(_type="text",_name="filename",requires=IS_NOT_EMPTY),
+    form=FORM(T("create file with filename:")," ",
+              INPUT(_type="text",_name="filename",requires=IS_NOT_EMPTY),
               INPUT(_type="hidden",_name="location",_value=location),
               INPUT(_type="hidden",_name="sender",_value=URL(r=request,f='design/'+app)),
+              INPUT(_type="hidden",_name="plugin",_value=request.args(1)),
               INPUT(_type="submit",_value=T("submit")),_action=URL(r=request,f='create_file'))
     return form
 }}
