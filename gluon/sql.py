@@ -3037,7 +3037,10 @@ class Set(object):
                 if isinstance(field_type,SQLCustomType):
                     field_type = field_type.type                
                 if field.type != 'blob' and isinstance(value, str):
-                    value = value.decode(db._db_codec)
+                    try:
+                        value = value.decode(db._db_codec)
+                    except Exception, e:
+                        pass
                 if isinstance(value, unicode):
                     value = value.encode('utf-8')
                 if not tablename in new_row:
