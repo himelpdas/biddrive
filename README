@@ -621,3 +621,12 @@ no more auth manu in scaffolding
 no more spash screen with -Q
 fixed doctest in html.py, thanks Anand Vaidya
 export_to_csv_file has represent, thanks Thadeus
+
+#1.74.6
+bug fixes
+IS_IN_DB(...,_and=IS_NOT_IN_DB)
+Smaller populate, thanks Piotr
+better slicing of fields, thanks Michael Fig
+Cache stats, thanks Thadeus
+Better gql.py
+IS_IN_DB and IS_IN_SET default to zero='', no longer zero=None
