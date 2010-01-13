@@ -58,7 +58,7 @@ def file_create_form(location):
 [ {{=editfile('models',m)}} | <a href="{{=URL(r=request,f='delete',args=[app,'models',m],vars=dict(sender=request.function+'/'+app))}}">{{=T("delete")}}</a> ]
 {{if len(defines[m]):}}{{=T("defines tables")}} {{pass}}{{=XML(', '.join([B(table).xml() for table in defines[m]]))}}
 </li>{{pass}}
-<li>{{=file_create_form('%s/models/' % app)}}</li>
+{{if not models:}}<li>{{=file_create_form('%s/models/' % app)}}</li>{{pass}}
 </ul>
 </div>
 
@@ -82,7 +82,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 {{=testfile('controllers',c)}} ]
 {{if functions[c]:}}{{=T("exposes")}} {{pass}}{{=XML(', '.join([A(f,_href=URL(a=app,c=c[:-3],f=f)).xml() for f in functions[c]]))}}
 </li>{{pass}}
-<li>{{=file_create_form('%s/controllers/' % app)}}</li>
+{{if not controllers:}}<li>{{=file_create_form('%s/controllers/' % app)}}</li>{{pass}}
 </ul>
 </div>
 

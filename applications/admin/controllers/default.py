@@ -747,9 +747,7 @@ def create_file():
     try:
         path = apath(request.vars.location, r=request)
         filename = re.sub('[^\w./-]+', '_', request.vars.filename)
-        if request.vars.plugin and not filename.startswith(request.vars.plugin+'/'):
-            filename = '%s/%s' % (request.vars.plugin, filename)
-        
+
         if path[-11:] == '/languages/':
             # Handle language files
             if len(filename) == 0:
@@ -789,6 +787,8 @@ def create_file():
             text = text % (T('try something like'), filename)
 
         elif path[-7:] == '/views/':
+            if request.vars.plugin and not filename.startswith('plugin_%s/' % request.vars.plugin):
+                filename = 'plugin_%s/%s' % (request.vars.plugin, filename)
             # Handle template (html) views
             if filename.find('.')<0:
                 filename += '.html'
@@ -804,6 +804,8 @@ def create_file():
                    {{=BEAUTIFY(response._vars)}}""" % msg)
 
         elif path[-9:] == '/modules/':
+            if request.vars.plugin and not filename.startswith('plugin_%s/' % request.vars.plugin):
+                filename = 'plugin_%s/%s' % (request.vars.plugin, filename)
             # Handle python module files
             if not filename[-3:] == '.py':
                 filename += '.py'
@@ -822,6 +824,8 @@ def create_file():
                    # must be passed and cannot be imported!""")
 
         elif path[-8:] == '/static/':
+            if request.vars.plugin and not filename.startswith('plugin_%s/' % request.vars.plugin):
+                filename = 'plugin_%s/%s' % (request.vars.plugin, filename)
             text = ''
         else:
             redirect(request.vars.sender)

@@ -220,7 +220,7 @@ class IS_IN_SET(Validator):
     example::
 
         INPUT(_type='text', _name='name', 
-              requires=IS_IN_SET(['max', 'john'],zero=T('choose a value')))
+              requires=IS_IN_SET(['max', 'john'],zero=''))
 
     the argument of IS_IN_SET must be a list or set
 
@@ -240,7 +240,7 @@ class IS_IN_SET(Validator):
         labels=None,
         error_message='value not allowed',
         multiple=False,
-        zero='choose a value',
+        zero='',
         ):
         self.multiple = multiple
         self.theset = [str(item) for item in theset]
@@ -284,7 +284,7 @@ class IS_IN_DB(Validator):
     example::
 
         INPUT(_type='text', _name='name',
-              requires=IS_IN_DB(db, db.table, zero=T('choose a value')))
+              requires=IS_IN_DB(db, db.table, zero=''))
 
     used for reference fields, rendered as a dropbox
     """
@@ -298,7 +298,7 @@ class IS_IN_DB(Validator):
         orderby=None,
         cache=None,
         multiple=False,
-        zero='choose a value',
+        zero='',
         _and=None,
         ):
         if hasattr(dbset, 'define_table'):
