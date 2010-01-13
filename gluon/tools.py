@@ -1393,7 +1393,7 @@ class Auth(object):
                 self.environment.session.flash = \
                     self.messages.invalid_email
                 redirect(self.url(args=request.args))
-            elif users[0].registration_key[:7] in ['pending', 'disabled']:
+            elif users[0].registration_key in ['pending', 'disabled']:
                 self.environment.session.flash = \
                     self.messages.registration_pending
                 redirect(self.url(args=request.args))
