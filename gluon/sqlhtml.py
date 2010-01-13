@@ -244,7 +244,7 @@ class RadioWidget(OptionsWidget):
         opts += [TR(INPUT(_type='radio', _name=field.name,
                           requires=attr.get('requires',None),
                           hideerror=True, _value=k,
-                          value=value), v) for (k, v) in options]
+                          value=value), v) for (k, v) in options if k!='']
         if opts:
             opts[-1][0][0]['hideerror'] = False
         return TABLE(*opts, **attr)
@@ -274,7 +274,7 @@ class CheckboxesWidget(OptionsWidget):
                           requires=attr.get('requires',None),
                           hideerror=True, _value=k,
                           value=(k in values)), v) \
-                     for (k, v) in options]
+                     for (k, v) in options if k!='']
         if opts:
             opts[-1][0][0]['hideerror'] = False
         return TABLE(*opts, **attr)

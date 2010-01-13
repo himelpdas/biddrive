@@ -984,7 +984,7 @@ class Auth(object):
                 form[0].insert(-1, TR('', self.settings.login_captcha, ''))
 
             accepted_form = False
-            if form.accepts(request.vars, session,
+            if form.accepts(request.post_vars, session,
                             formname='login', dbio=False,
                             onvalidation=onvalidation):
                 accepted_form = True
@@ -1157,7 +1157,7 @@ class Auth(object):
             form[0].insert(-1, TR('', self.settings.captcha, ''))
 
         user.registration_key.default = key = str(uuid.uuid4())
-        if form.accepts(request.vars, session, formname='register',
+        if form.accepts(request.post_vars, session, formname='register',
                         onvalidation=onvalidation):
             description = self.messages.group_description % form.vars
             if self.settings.create_user_groups:
@@ -1300,7 +1300,7 @@ class Auth(object):
             submit_button=self.messages.submit_button,
             delete_label=self.messages.delete_label,
             )
-        if form.accepts(request.vars, session,
+        if form.accepts(request.post_vars, session,
                         formname='retrieve_username', dbio=False,
                         onvalidation=onvalidation):
             users = self.db(user.email == form.vars.email).select()
@@ -1385,7 +1385,7 @@ class Auth(object):
             submit_button=self.messages.submit_button,
             delete_label=self.messages.delete_label,
             )
-        if form.accepts(request.vars, session,
+        if form.accepts(request.post_vars, session,
                         formname='retrieve_password', dbio=False,
                         onvalidation=onvalidation):
             users = self.db(user.email == form.vars.email).select()
@@ -1473,7 +1473,7 @@ class Auth(object):
             label=self.messages.verify_password,
             requires=[IS_EXPR('value==%s' % repr(pass1),
                               self.messages.mismatched_password)]))
-        if form.accepts(request.vars, session,
+        if form.accepts(request.post_vars, session,
                         formname='change_password',
                         onvalidation=onvalidation):
             d = {passfield: form.vars.new_password}
@@ -1532,7 +1532,7 @@ class Auth(object):
             delete_label=self.messages.delete_label,
             upload=self.settings.download_url
             )
-        if form.accepts(request.vars, session,
+        if form.accepts(request.post_vars, session,
                         formname='profile',
                         onvalidation=onvalidation):
             self.user.update(form.vars)
@@ -2070,7 +2070,7 @@ class Crud(object):
         else:
             (_session, _formname) = \
                 (session, '%s/%s' % (table._tablename, form.record_id))
-        if form.accepts(request.vars, _session, formname=_formname,
+        if form.accepts(request.post_vars, _session, formname=_formname,
                         onvalidation=onvalidation,
                         keepvalues=self.settings.keepvalues):
             response.flash = message
