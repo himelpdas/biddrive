@@ -83,6 +83,11 @@ class lazyT(object):
     def xml(self):
         return cgi.escape(str(self))
 
+    def encode(self,*a,**b):
+        return str(self).encode(*a,**b)
+
+    def decode(self,*a,**b):
+        return str(self).decode(*a,**b)
 
 class translator(object):
 
