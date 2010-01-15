@@ -715,6 +715,8 @@ class Auth(object):
             return self.retrieve_password()
 	elif args[0] == 'reset_password':
             return self.reset_password()
+	elif args[0] == 'request_reset_password':
+            return self.request_reset_password()
         elif args[0] == 'change_password':
             return self.change_password()
         elif args[0] == 'profile':
