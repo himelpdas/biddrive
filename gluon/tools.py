@@ -593,7 +593,8 @@ class Auth(object):
 
         self.settings.profile_next = self.url('index')
         self.settings.retrieve_username_next = self.url('index')
-        self.settings.retrieve_password_next = self.url('index')
+        self.settings.retrieve_password_next = self.url('index') 
+	self.settings.request_reset_password_next = self.url('user', args='login')
 	self.settings.reset_password_next = self.url('user', args='login')
         self.settings.change_password_next = self.url('index')
 
@@ -634,7 +635,7 @@ class Auth(object):
         self.messages.retrieve_password = 'Your password is: %(password)s'
         self.messages.retrieve_password_subject = 'Password retrieve'
         self.messages.reset_password = \
-            'Click on the link http://...reset_password?key=%(key)s to reset your password'
+            'Click on the link http://...reset_password/%(key)s to reset your password'
         self.messages.reset_password_subject = 'Password reset'
         self.messages.invalid_reset_password = 'Invalid reset password'
         self.messages.profile_updated = 'Profile updated'
@@ -1453,82 +1454,107 @@ class Auth(object):
         if next == DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
-                or self.settings.retrieve_password_next
+                or self.settings.reset_password_next
 
-        key = request.vars.key
-	if key:
-            try:
-                t0 = int(key.split('-')[0])
-                if time.time()-t0 > 60*60*24: raise Exception
-                user = self.db(table_user.reset_password_key == key).select().first()
-                if not user: raise Exception
-            except Exception, e:
-                session.flash = self.messages.invalid_reset_password
-		redirect(next)
-            passfield = self.settings.password_field
-            form = form_factory(
-                Field('new_password', 'password',
-                      label=self.messages.new_password,
-                      requires=self.settings.table_user[passfield].requires),
-                Field('new_password2', 'password',
-                      label=self.messages.verify_password,
-                      requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
-                                        self.messages.mismatched_password)]))
-            if form.accepts(request.post_vars,session):
-                user.update_record(password=form.vars.new_password,reset_password_key='')
-                session.flash='Password was reset'
-                redirect(next)
-        else:
-            if not self.settings.mailer:
-                response.flash = self.messages.function_disabled
-                return ''
-            if onvalidation == DEFAULT:
-                onvalidation = self.settings.reset_password_onvalidation
-            if onaccept == DEFAULT:
-                onaccept = self.settings.reset_password_onaccept
-            if log == DEFAULT:
-                log = self.messages.reset_password_log
-            old_requires = table_user.email.requires
-            table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
+        try:
+            key = request.vars.key or request.args[-1]        
+            t0 = int(key.split('-')[0])
+            if time.time()-t0 > 60*60*24: raise Exception
+            user = self.db(table_user.reset_password_key == key).select().first()
+            if not user: raise Exception
+        except Exception, e:
+            session.flash = self.messages.invalid_reset_password
+            redirect(next)
+        passfield = self.settings.password_field
+        form = form_factory(
+            Field('new_password', 'password',
+                  label=self.messages.new_password,
+                  requires=self.settings.table_user[passfield].requires),
+            Field('new_password2', 'password',
+                  label=self.messages.verify_password,
+                  requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
+                                    self.messages.mismatched_password)]))
+        if form.accepts(request.post_vars,session):
+            user.update_record(password=form.vars.new_password,reset_password_key='')
+            session.flash = self.messages.password_changed
+            redirect(next)
+        return form
+
+    def request_reset_password(
+        self,
+        next=DEFAULT,
+        onvalidation=DEFAULT,
+        onaccept=DEFAULT,
+        log=DEFAULT,
+        ):
+        """
+        returns a form to reset the user password
+
+        .. method:: Auth.reset_password([next=DEFAULT
+            [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
+
+        """
+
+	table_user = self.settings.table_user
+        request = self.environment.request
+        response = self.environment.response
+        session = self.environment.session
+
+        if next == DEFAULT:
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.request_reset_password_next
+
+        if not self.settings.mailer:
+            response.flash = self.messages.function_disabled
+            return ''
+        if onvalidation == DEFAULT:
+            onvalidation = self.settings.reset_password_onvalidation
+        if onaccept == DEFAULT:
+            onaccept = self.settings.reset_password_onaccept
+        if log == DEFAULT:
+            log = self.messages.reset_password_log
+        old_requires = table_user.email.requires
+        table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
                                             error_message=self.messages.invalid_email)]
-            form = SQLFORM(table_user,
-                           fields=['email'],
-                           hidden=dict(_next=next),
-                           showid=self.settings.showid,
-                           submit_button=self.messages.submit_button,
-                           delete_label=self.messages.delete_label)
-            if form.accepts(request.post_vars, session,
-                            formname='reset_password', dbio=False,
-                            onvalidation=onvalidation):
-                user = self.db(table_user.email == form.vars.email).select().first()
-                if not user:
-                    session.flash = self.messages.invalid_email
-                    redirect(self.url(args=request.args))
-                elif user.registration_key in ['pending', 'disabled']:
-                    session.flash = self.messages.registration_pending
-                    redirect(self.url(args=request.args))
-		reset_password_key=str(int(time.time()))+'-'+str(uuid.uuid4())
+        form = SQLFORM(table_user,
+                       fields=['email'],
+                       hidden=dict(_next=next),
+                       showid=self.settings.showid,
+                       submit_button=self.messages.submit_button,
+                       delete_label=self.messages.delete_label)
+        if form.accepts(request.post_vars, session,
+                        formname='reset_password', dbio=False,
+                        onvalidation=onvalidation):
+            user = self.db(table_user.email == form.vars.email).select().first()
+            if not user:
+                session.flash = self.messages.invalid_email
+                redirect(self.url(args=request.args))
+            elif user.registration_key in ['pending', 'disabled']:
+                session.flash = self.messages.registration_pending
+                redirect(self.url(args=request.args))
+            reset_password_key=str(int(time.time()))+'-'+str(uuid.uuid4())
 
-                if self.settings.mailer.send(to=form.vars.email,
-                                             subject=self.messages.reset_password_subject,
-                                             message=self.messages.reset_password % \
-                                                 dict(key=reset_password_key)):
-                    session.flash = self.messages.email_sent
-		    user.update_record(reset_password_key=reset_password_key)
-                else:
-                    session.flash = self.messages.unable_to_send_email
-                if log:
-                    self.log_event(log % user)
-                if onaccept:
-                    onaccept(form)
-                if not next:
-                    next = self.url(args = request.args)
-                elif isinstance(next, (list, tuple)): ### fix issue with 2.6
-                    next = next[0]
-                elif next and not next[0] == '/' and next[:4] != 'http':
-                    next = self.url(next.replace('[id]', str(form.vars.id)))
-                redirect(next)
-            old_requires = table_user.email.requires
+            if self.settings.mailer.send(to=form.vars.email,
+                                         subject=self.messages.reset_password_subject,
+                                         message=self.messages.reset_password % \
+                                             dict(key=reset_password_key)):
+                session.flash = self.messages.email_sent
+                user.update_record(reset_password_key=reset_password_key)
+            else:
+                session.flash = self.messages.unable_to_send_email
+            if log:
+                self.log_event(log % user)
+            if onaccept:
+                onaccept(form)
+            if not next:
+                next = self.url(args = request.args)
+            elif isinstance(next, (list, tuple)): ### fix issue with 2.6
+                next = next[0]
+            elif next and not next[0] == '/' and next[:4] != 'http':
+                next = self.url(next.replace('[id]', str(form.vars.id)))
+            redirect(next)
+        old_requires = table_user.email.requires
         return form
 
     def retrieve_password(
@@ -1539,9 +1565,9 @@ class Auth(object):
         log=DEFAULT,
         ):
         if self.settings.reset_password_requires_verification:
-            return self.reset_password(self,next,onvalidation,onaccept,log)
+            return self.request_reset_password(next,onvalidation,onaccept,log)
         else:
-            return self.reset_password_deprecated(self,next,onvalidation,onaccept,log)
+            return self.reset_password_deprecated(next,onvalidation,onaccept,log)
 
     def change_password(
         self,

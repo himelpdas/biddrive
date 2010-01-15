@@ -24,7 +24,7 @@
 	    [ {{if not auth.user:}}
 	    <a href="{{=URL(r=request,f='user/login')}}">{{=T('login')}}</a> |
 	    <a href="{{=URL(r=request,f='user/register')}}">{{=T('register')}}</a> |
-	    <a href="{{=URL(r=request,f='user/reset_password')}}">{{=T('lost password')}}</a>
+	    <a href="{{=URL(r=request,f='user/request_reset_password')}}">{{=T('lost password')}}</a>
 	    {{else:}}
 	    {{=auth.user.first_name}} |
 	    <a href="{{=URL(r=request,f='user/logout')}}">{{=T('logout')}}</a> |

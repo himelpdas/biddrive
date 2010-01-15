@@ -10,6 +10,7 @@ syntax: glob
 *.bak
 cache/*
 databases/*
+sessions/*
 errors/*
 """
 
