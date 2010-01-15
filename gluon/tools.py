@@ -711,10 +711,7 @@ class Auth(object):
         elif args[0] == 'retrieve_username':
             return self.retrieve_username()
         elif args[0] == 'retrieve_password':
-            if self.settings.reset_password_requires_verification:
-                return self.reset_password()               
-            else:
-                return self.retrieve_password()
+            return self.retrieve_password()
 	elif args[0] == 'reset_password':
             return self.reset_password()
         elif args[0] == 'change_password':
@@ -1353,7 +1350,7 @@ class Auth(object):
             password += random.choice(specials)
         return ''.join(random.sample(password,len(password)))
 
-    def retrieve_password(
+    def reset_password_deprecated(
         self,
         next=DEFAULT,
         onvalidation=DEFAULT,
@@ -1361,9 +1358,9 @@ class Auth(object):
         log=DEFAULT,
         ):
         """
-        returns a form to retrieve the user password
+        returns a form to reset the user password (deprecated)
 
-        .. method:: Auth.retrieve_password([next=DEFAULT
+        .. method:: Auth.reset_password_deprecated([next=DEFAULT
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -1534,6 +1531,17 @@ class Auth(object):
             old_requires = table_user.email.requires
         return form
 
+    def retrieve_password(
+        self,
+        next=DEFAULT,
+        onvalidation=DEFAULT,
+        onaccept=DEFAULT,
+        log=DEFAULT,
+        ):
+        if self.settings.reset_password_requires_verification:
+            return self.reset_password(self,next,onvalidation,onaccept,log)
+        else:
+            return self.reset_password_deprecated(self,next,onvalidation,onaccept,log)
 
     def change_password(
         self,
