@@ -21,14 +21,15 @@ from email import *
 import sys
 import os
 import re
+import time
 import smtplib
 import urllib
 import urllib2
 import uuid
 
-import sql
 import serializers
 import contrib.simplejson as simplejson
+from sql import Field
 
 __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'fetch', 'geocode']
 
@@ -444,6 +445,7 @@ class Auth(object):
     - http://.../{application}/{controller}/authentication/verify_email
     - http://.../{application}/{controller}/authentication/retrieve_username
     - http://.../{application}/{controller}/authentication/retrieve_password
+    - http://.../{application}/{controller}/authentication/reset_password
     - http://.../{application}/{controller}/authentication/profile
     - http://.../{application}/{controller}/authentication/change_password
 
@@ -591,6 +593,7 @@ class Auth(object):
         self.settings.profile_next = self.url('index')
         self.settings.retrieve_username_next = self.url('index')
         self.settings.retrieve_password_next = self.url('index')
+	self.settings.reset_password_next = self.url('user', args='login')
         self.settings.change_password_next = self.url('index')
 
         self.settings.hmac_key = None
@@ -629,6 +632,10 @@ class Auth(object):
         self.messages.retrieve_username_subject = 'Username retrieve'
         self.messages.retrieve_password = 'Your password is: %(password)s'
         self.messages.retrieve_password_subject = 'Password retrieve'
+        self.messages.reset_password = \
+            'Click on the link http://...reset_password?key=%(key)s to reset your password'
+        self.messages.reset_password_subject = 'Password reset'
+        self.messages.invalid_reset_password = 'Invalid reset password'
         self.messages.profile_updated = 'Profile updated'
         self.messages.new_password = 'New password'
         self.messages.old_password = 'Old password'
@@ -642,6 +649,7 @@ class Auth(object):
         self.messages.verify_email_log = 'User %(id)s Verification email sent'
         self.messages.retrieve_username_log = 'User %(id)s Username retrieved'
         self.messages.retrieve_password_log = 'User %(id)s Password retrieved'
+        self.messages.reset_password_log = 'User %(id)s Password reset'
         self.messages.change_password_log = 'User %(id)s Password changed'
         self.messages.add_group_log = 'Group %(group_id)s created'
         self.messages.del_group_log = 'Group %(group_id)s deleted'
@@ -657,6 +665,7 @@ class Auth(object):
         self.messages.label_email = 'E-mail'
         self.messages.label_password = 'Password'
         self.messages.label_registration_key = 'Registration key'
+        self.messages.label_reset_password_key = 'Reset Password key'
         self.messages.label_role = 'Role'
         self.messages.label_description = 'Description'
         self.messages.label_user_id = 'User ID'
@@ -701,7 +710,9 @@ class Auth(object):
         elif args[0] == 'retrieve_username':
             return self.retrieve_username()
         elif args[0] == 'retrieve_password':
-            return self.retrieve_password()
+            return self.reset_password()
+	elif args[0] == 'reset_password':
+            return self.reset_password()
         elif args[0] == 'change_password':
             return self.change_password()
         elif args[0] == 'profile':
@@ -744,18 +755,21 @@ class Auth(object):
             passfield = self.settings.password_field
             self.settings.table_user = db.define_table(
                 self.settings.table_user_name,
-                db.Field('first_name', length=128, default='',
+                Field('first_name', length=128, default='',
                         label=self.messages.label_first_name),
-                db.Field('last_name', length=128, default='',
+                Field('last_name', length=128, default='',
                         label=self.messages.label_last_name),
-                # db.Field('username', length=128, default=''),
-                db.Field('email', length=512, default='',
+                # Field('username', length=128, default=''),
+                Field('email', length=512, default='',
                         label=self.messages.label_email),
-                db.Field(passfield, 'password', length=512,
+                Field(passfield, 'password', length=512,
                          readable=False, label=self.messages.label_password),
-                db.Field('registration_key', length=512,
+                Field('registration_key', length=512,
                         writable=False, readable=False, default='',
                         label=self.messages.label_registration_key),
+	        Field('reset_password_key', length=512,
+                        writable=False, readable=False, default='',
+                        label=self.messages.label_reset_password_key),
                 migrate=\
                     self.__get_migrate(self.settings.table_user_name, migrate),
                 format='%(first_name)s %(last_name)s (%(id)s)')
@@ -773,9 +787,9 @@ class Auth(object):
         if not self.settings.table_group:
             self.settings.table_group = db.define_table(
                 self.settings.table_group_name,
-                db.Field('role', length=512, default='',
+                Field('role', length=512, default='',
                         label=self.messages.label_role),
-                db.Field('description', 'text',
+                Field('description', 'text',
                         label=self.messages.label_description),
                 migrate=self.__get_migrate(
                     self.settings.table_group_name, migrate),
@@ -786,9 +800,9 @@ class Auth(object):
         if not self.settings.table_membership:
             self.settings.table_membership = db.define_table(
                 self.settings.table_membership_name,
-                db.Field('user_id', self.settings.table_user,
+                Field('user_id', self.settings.table_user,
                         label=self.messages.label_user_id),
-                db.Field('group_id', self.settings.table_group,
+                Field('group_id', self.settings.table_group,
                         label=self.messages.label_group_id),
                 migrate=self.__get_migrate(
                     self.settings.table_membership_name, migrate))
@@ -802,13 +816,13 @@ class Auth(object):
         if not self.settings.table_permission:
             self.settings.table_permission = db.define_table(
                 self.settings.table_permission_name,
-                db.Field('group_id', self.settings.table_group,
+                Field('group_id', self.settings.table_group,
                         label=self.messages.label_group_id),
-                db.Field('name', default='default', length=512,
+                Field('name', default='default', length=512,
                         label=self.messages.label_name),
-                db.Field('table_name', length=512,
+                Field('table_name', length=512,
                         label=self.messages.label_table_name),
-                db.Field('record_id', 'integer',
+                Field('record_id', 'integer',
                         label=self.messages.label_record_id),
                 migrate=self.__get_migrate(
                     self.settings.table_permission_name, migrate))
@@ -822,17 +836,17 @@ class Auth(object):
         if not self.settings.table_event:
             self.settings.table_event = db.define_table(
                 self.settings.table_event_name,
-                db.Field('time_stamp', 'datetime',
+                Field('time_stamp', 'datetime',
                         default=self.environment.request.now,
                         label=self.messages.label_time_stamp),
-                db.Field('client_ip',
+                Field('client_ip',
                         default=self.environment.request.client,
                         label=self.messages.label_client_ip),
-                db.Field('user_id', self.settings.table_user, default=None,
+                Field('user_id', self.settings.table_user, default=None,
                         label=self.messages.label_user_id),
-                db.Field('origin', default='auth', length=512,
+                Field('origin', default='auth', length=512,
                         label=self.messages.label_origin),
-                db.Field('description', 'text', default='',
+                Field('description', 'text', default='',
                         label=self.messages.label_description),
                 migrate=self.__get_migrate(
                     self.settings.table_event_name, migrate))
@@ -871,9 +885,8 @@ class Auth(object):
             raise SyntaxError, "user must have username or email"
         table_user = self.settings.table_user
         passfield = self.settings.password_field
-        users = self.db(table_user[username] == keys[username]).select()
-        if users:
-            user = users[0]
+        user = self.db(table_user[username] == keys[username]).select().first()
+        if user:
             if passfield in keys and keys[passfield]:
                 user.update_record(**{passfield: keys[passfield],
                                       'registration_key': ''})
@@ -914,10 +927,9 @@ class Auth(object):
         else:
             userfield = 'email'
         passfield = self.settings.password_field
-        users = self.db(table_user[userfield] == username).select()
+        user = self.db(table_user[userfield] == username).select().first()
         password = table_user[passfield].validate(password)[0]
-        if users:
-            user = users[0]
+        if user:
             if not user.registration_key and user[passfield] == password:
                 user = Storage(table_user._filter_fields(user, id=True))
                 session.auth = Storage(user=user, last_visit=request.now,
@@ -989,10 +1001,10 @@ class Auth(object):
                             onvalidation=onvalidation):
                 accepted_form = True
                 # check for username in db
-                users = self.db(table_user[username] == form.vars[username]).select()
-                if users:
+                user = self.db(table_user[username] == form.vars[username]).select().first()
+                if user:
                     # user in db, check if registration pending or disabled
-                    temp_user = users[0]
+                    temp_user = user
                     if temp_user.registration_key == 'pending':
                         response.flash = self.messages.registration_pending
                         return form
@@ -1121,6 +1133,7 @@ class Auth(object):
 
         """
 
+        table_user = self.settings.table_user
         request = self.environment.request
         response = self.environment.response
         session = self.environment.session
@@ -1136,9 +1149,10 @@ class Auth(object):
             onaccept = self.settings.register_onaccept
         if log == DEFAULT:
             log = self.messages.register_log
-        user = self.settings.table_user
+        
         passfield = self.settings.password_field
-        form = SQLFORM(user, hidden=dict(_next=next),
+        form = SQLFORM(table_user,
+                       hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label)
@@ -1152,11 +1166,11 @@ class Auth(object):
                               requires=IS_EXPR('value==%s' % \
                                repr(request.vars.get(passfield, None)),
                         error_message=self.messages.mismatched_password)),
-                '', _class='%s_%s__row' % (user, 'password_two')))
+                '', _class='%s_%s__row' % (table_user, 'password_two')))
         if self.settings.captcha != None:
             form[0].insert(-1, TR('', self.settings.captcha, ''))
 
-        user.registration_key.default = key = str(uuid.uuid4())
+        table_user.registration_key.default = key = str(uuid.uuid4())
         if form.accepts(request.post_vars, session, formname='register',
                         onvalidation=onvalidation):
             description = self.messages.group_description % form.vars
@@ -1177,16 +1191,14 @@ class Auth(object):
                 user[form.vars.id] = dict(registration_key='pending')
                 session.flash = self.messages.registration_pending
             else:
-                user[form.vars.id] = dict(registration_key='')
+                table_user[form.vars.id] = dict(registration_key='')
                 session.flash = self.messages.registration_successful
                 table_user = self.settings.table_user
                 if 'username' in table_user.fields:
                     username = 'username'
                 else:
                     username = 'email'
-                users = self.db(table_user[username] == form.vars[username])\
-                    .select()
-                user = users[0]
+                user = self.db(table_user[username] == form.vars[username]).select().first()
                 user = Storage(table_user._filter_fields(user, id=True))
                 session.auth = Storage(user=user, last_visit=request.now,
                                    expiration=self.settings.expiration)
@@ -1230,11 +1242,10 @@ class Auth(object):
         """
 
         key = self.environment.request.args[-1]
-        user = self.settings.table_user
-        users = self.db(user.registration_key == key).select()
-        if not users:
+        table_user = self.settings.table_user
+        user = self.db(table_user.registration_key == key).select().first()
+        if not user:
             raise HTTP(404)
-        user = users[0]
         if self.settings.registration_requires_approval:
             user.update_record(registration_key = 'pending')
             self.environment.session.flash = self.messages.registration_pending
@@ -1269,8 +1280,8 @@ class Auth(object):
 
         """
 
-        user = self.settings.table_user
-        if not 'username' in user.fields:
+        table_user = self.settings.table_user
+        if not 'username' in table_user.fields:
             raise HTTP(404)
         request = self.environment.request
         response = self.environment.response
@@ -1289,33 +1300,31 @@ class Auth(object):
             onaccept = self.settings.retrieve_username_onaccept
         if log == DEFAULT:
             log = self.messages.retrieve_username_log
-        old_requires = user.email.requires
-        user.email.requires = [IS_IN_DB(self.db, user.email,
+        old_requires = table_user.email.requires
+        table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
             error_message=self.messages.invalid_email)]
-        form = SQLFORM(
-            user,
-            fields=['email'],
-            hidden=dict(_next=next),
-            showid=self.settings.showid,
-            submit_button=self.messages.submit_button,
-            delete_label=self.messages.delete_label,
-            )
+        form = SQLFORM(table_user,
+                       fields=['email'],
+                       hidden=dict(_next=next),
+                       showid=self.settings.showid,
+                       submit_button=self.messages.submit_button,
+                       delete_label=self.messages.delete_label)
         if form.accepts(request.post_vars, session,
                         formname='retrieve_username', dbio=False,
                         onvalidation=onvalidation):
-            users = self.db(user.email == form.vars.email).select()
-            if not users:
+            user = self.db(table_user.email == form.vars.email).select().first()
+            if not user:
                 self.environment.session.flash = \
                     self.messages.invalid_email
                 redirect(self.url(args=request.args))
-            username = users[0].username
+            username = user.username
             self.settings.mailer.send(to=form.vars.email,
                     subject=self.messages.retrieve_username_subject,
                     message=self.messages.retrieve_username
                      % dict(username=username))
             session.flash = self.messages.email_sent
             if log:
-                self.log_event(log % users[0])
+                self.log_event(log % user)
             if onaccept:
                 onaccept(form)
             if not next:
@@ -1325,7 +1334,7 @@ class Auth(object):
             elif next and not next[0] == '/' and next[:4] != 'http':
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
-        user.email.requires = old_requires
+        table_user.email.requires = old_requires
         return form
 
     def random_password(self):
@@ -1354,16 +1363,14 @@ class Auth(object):
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
-
-        user = self.settings.table_user
+        
+        table_user = self.settings.table_user
         request = self.environment.request
         response = self.environment.response
         session = self.environment.session
-
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
-
         if next == DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
@@ -1374,26 +1381,24 @@ class Auth(object):
             onaccept = self.settings.retrieve_password_onaccept
         if log == DEFAULT:
             log = self.messages.retrieve_password_log
-        old_requires = user.email.requires
-        user.email.requires = [IS_IN_DB(self.db, user.email,
+        old_requires = table_user.email.requires
+        table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
             error_message=self.messages.invalid_email)]
-        form = SQLFORM(
-            user,
-            fields=['email'],
-            hidden=dict(_next=next),
-            showid=self.settings.showid,
-            submit_button=self.messages.submit_button,
-            delete_label=self.messages.delete_label,
-            )
+        form = SQLFORM(table_user,
+                       fields=['email'],
+                       hidden=dict(_next=next),
+                       showid=self.settings.showid,
+                       submit_button=self.messages.submit_button,
+                       delete_label=self.messages.delete_label)
         if form.accepts(request.post_vars, session,
                         formname='retrieve_password', dbio=False,
                         onvalidation=onvalidation):
-            users = self.db(user.email == form.vars.email).select()
-            if not users:
+            user = self.db(table_user.email == form.vars.email).select().first()
+            if not user:
                 self.environment.session.flash = \
                     self.messages.invalid_email
                 redirect(self.url(args=request.args))
-            elif users[0].registration_key in ['pending', 'disabled']:
+            elif user.registration_key in ['pending', 'disabled']:
                 self.environment.session.flash = \
                     self.messages.registration_pending
                 redirect(self.url(args=request.args))
@@ -1401,7 +1406,7 @@ class Auth(object):
             passfield = self.settings.password_field
             d = {passfield: user[passfield].validate(password)[0],
                  'registration_key': ''}
-            users[0].update_record(**d)
+            user.update_record(**d)
             if self.settings.mailer and \
                self.settings.mailer.send(to=form.vars.email,
                         subject=self.messages.retrieve_password_subject,
@@ -1411,7 +1416,7 @@ class Auth(object):
             else:
                 session.flash = self.messages.unable_to_send_email
             if log:
-                self.log_event(log % users[0])
+                self.log_event(log % user)
             if onaccept:
                 onaccept(form)
             if not next:
@@ -1421,8 +1426,109 @@ class Auth(object):
             elif next and not next[0] == '/' and next[:4] != 'http':
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
-        user.email.requires = old_requires
+        table_user.email.requires = old_requires
         return form
+
+    def reset_password(
+        self,
+        next=DEFAULT,
+        onvalidation=DEFAULT,
+        onaccept=DEFAULT,
+        log=DEFAULT,
+        ):
+        """
+        returns a form to reset the user password
+
+        .. method:: Auth.reset_password([next=DEFAULT
+            [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
+
+        """
+
+	table_user = self.settings.table_user
+        request = self.environment.request
+        response = self.environment.response
+        session = self.environment.session
+
+        if next == DEFAULT:
+            next = request.get_vars._next \
+                or request.post_vars._next \
+                or self.settings.retrieve_password_next
+
+        key = request.vars.key
+	if key:
+            try:
+                t0 = int(key.split('-')[0])
+                if time.time()-t0 > 60*60*24: raise Exception
+                user = self.db(table_user.reset_password_key == key).select().first()
+                if not user: raise Exception
+            except Exception, e:
+		redirect(next)
+            passfield = self.settings.password_field
+            form = form_factory(
+                Field('new_password', 'password',
+                      label=self.messages.new_password,
+                      requires=self.settings.table_user[passfield].requires),
+                Field('new_password2', 'password',
+                      label=self.messages.verify_password,
+                      requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
+                                        self.messages.mismatched_password)]))
+            if form.accepts(request.post_vars,session):
+                user.update_record(password=form.vars.new_password,reset_password_key='')
+                session.flash='Password was reset'
+                redirect(next)
+        else:
+            if not self.settings.mailer:
+                response.flash = self.messages.function_disabled
+                return ''
+            if onvalidation == DEFAULT:
+                onvalidation = self.settings.reset_password_onvalidation
+            if onaccept == DEFAULT:
+                onaccept = self.settings.reset_password_onaccept
+            if log == DEFAULT:
+                log = self.messages.reset_password_log
+            old_requires = table_user.email.requires
+            table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
+                                            error_message=self.messages.invalid_email)]
+            form = SQLFORM(table_user,
+                           fields=['email'],
+                           hidden=dict(_next=next),
+                           showid=self.settings.showid,
+                           submit_button=self.messages.submit_button,
+                           delete_label=self.messages.delete_label)
+            if form.accepts(request.post_vars, session,
+                            formname='reset_password', dbio=False,
+                            onvalidation=onvalidation):
+                user = self.db(table_user.email == form.vars.email).select().first()
+                if not user:
+                    session.flash = self.messages.invalid_email
+                    redirect(self.url(args=request.args))
+                elif user.registration_key in ['pending', 'disabled']:
+                    session.flash = self.messages.registration_pending
+                    redirect(self.url(args=request.args))
+		reset_password_key=str(int(time.time()))+'-'+str(uuid.uuid4())
+
+                if self.settings.mailer.send(to=form.vars.email,
+                                             subject=self.messages.reset_password_subject,
+                                             message=self.messages.reset_password % \
+                                                 dict(key=reset_password_key)):
+                    session.flash = self.messages.email_sent
+		    user.update_record(reset_password_key=reset_password_key)
+                else:
+                    session.flash = self.messages.unable_to_send_email
+                if log:
+                    self.log_event(log % user)
+                if onaccept:
+                    onaccept(form)
+                if not next:
+                    next = self.url(args = request.args)
+                elif isinstance(next, (list, tuple)): ### fix issue with 2.6
+                    next = next[0]
+                elif next and not next[0] == '/' and next[:4] != 'http':
+                    next = self.url(next.replace('[id]', str(form.vars.id)))
+                redirect(next)
+            old_requires = table_user.email.requires
+        return form
+
 
     def change_password(
         self,
@@ -1441,10 +1547,10 @@ class Auth(object):
         if not self.is_logged_in():
             redirect(self.settings.login_url)
         db = self.db
-        user = self.settings.table_user
+        table_user = self.settings.table_user
         usern = self.settings.table_user_name
-        s = db(user.email == self.user.email)
-        pass1 = self.environment.request.vars.new_password
+        s = db(table_user.email == self.user.email)
+        
         request = self.environment.request
         session = self.environment.session
         if next == DEFAULT:
@@ -1458,20 +1564,20 @@ class Auth(object):
         if log == DEFAULT:
             log = self.messages.change_password_log
         passfield = self.settings.password_field
-        form = form_factory(sql.SQLField(
+        form = form_factory(Field(
             'old_password',
             'password',
             label=self.messages.old_password,
             requires=validators(
-                     self.settings.table_user[passfield].requires,
+                     table_user[passfield].requires,
                      IS_IN_DB(s, '%s.%s' % (usern, passfield),
                               error_message=self.messages.invalid_password))),
-            sql.SQLField('new_password', 'password',
+            Field('new_password', 'password',
             label=self.messages.new_password,
-            requires=self.settings.table_user[passfield].requires),
-            sql.SQLField('new_password2', 'password',
+            requires=table_user[passfield].requires),
+            Field('new_password2', 'password',
             label=self.messages.verify_password,
-            requires=[IS_EXPR('value==%s' % repr(pass1),
+            requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                               self.messages.mismatched_password)]))
         if form.accepts(request.post_vars, session,
                         formname='change_password',
