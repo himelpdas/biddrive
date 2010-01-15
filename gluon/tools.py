@@ -533,6 +533,7 @@ class Auth(object):
         # ## what happens after registration?
 
         self.settings.actions_disabled = []
+        self.settings.reset_password_requires_verification = False
         self.settings.registration_requires_verification = False
         self.settings.registration_requires_approval = False
         self.settings.alternate_requires_registration = False
@@ -632,8 +633,8 @@ class Auth(object):
         self.messages.retrieve_username_subject = 'Username retrieve'
         self.messages.retrieve_password = 'Your password is: %(password)s'
         self.messages.retrieve_password_subject = 'Password retrieve'
-        self.messages.reset_password = None
-        # or 'Click on the link http://...reset_password?key=%(key)s to reset your password'
+        self.messages.reset_password = \
+            'Click on the link http://...reset_password?key=%(key)s to reset your password'
         self.messages.reset_password_subject = 'Password reset'
         self.messages.invalid_reset_password = 'Invalid reset password'
         self.messages.profile_updated = 'Profile updated'
@@ -710,10 +711,10 @@ class Auth(object):
         elif args[0] == 'retrieve_username':
             return self.retrieve_username()
         elif args[0] == 'retrieve_password':
-            if not self.messages.reset_password:
-                return self.retrieve_password()
+            if self.settings.reset_password_requires_verification:
+                return self.reset_password()               
             else:
-                return self.reset_password()
+                return self.retrieve_password()
 	elif args[0] == 'reset_password':
             return self.reset_password()
         elif args[0] == 'change_password':

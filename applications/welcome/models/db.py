@@ -42,6 +42,7 @@ service=Service(globals())                   # for json, xml, jsonrpc, xmlrpc, a
 # auth.settings.registration_requires_approval = True
 # auth.messages.verify_email = \
 #  'Click on the link http://.../user/verify_email/%(key)s to verify your email'
+# auth.settings.reset_password_requires_verification = True
 # auth.messages.reset_password = \
 #  'Click on the link http://.../user/reset_password?key=%(key)s to reset your password'
 ## more options discussed in gluon/tools.py
