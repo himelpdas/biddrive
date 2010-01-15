@@ -245,6 +245,8 @@ class CacheOnDisk(CacheAbstract):
                 storage.sync()
         except ImportError, e:
             pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
+        except:
+            logging.error('corrupted file: %s' % self.shelve_name)
         portalocker.unlock(locker)
         locker.close()
 
