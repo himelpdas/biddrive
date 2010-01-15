@@ -632,8 +632,8 @@ class Auth(object):
         self.messages.retrieve_username_subject = 'Username retrieve'
         self.messages.retrieve_password = 'Your password is: %(password)s'
         self.messages.retrieve_password_subject = 'Password retrieve'
-        self.messages.reset_password = \
-            'Click on the link http://...reset_password?key=%(key)s to reset your password'
+        self.messages.reset_password = None
+        # or 'Click on the link http://...reset_password?key=%(key)s to reset your password'
         self.messages.reset_password_subject = 'Password reset'
         self.messages.invalid_reset_password = 'Invalid reset password'
         self.messages.profile_updated = 'Profile updated'
@@ -710,7 +710,10 @@ class Auth(object):
         elif args[0] == 'retrieve_username':
             return self.retrieve_username()
         elif args[0] == 'retrieve_password':
-            return self.reset_password()
+            if not self.messages.reset_password:
+                return self.retrieve_password()
+            else:
+                return self.reset_password()
 	elif args[0] == 'reset_password':
             return self.reset_password()
         elif args[0] == 'change_password':
@@ -1462,6 +1465,7 @@ class Auth(object):
                 user = self.db(table_user.reset_password_key == key).select().first()
                 if not user: raise Exception
             except Exception, e:
+                session.flash = self.messages.invalid_reset_password
 		redirect(next)
             passfield = self.settings.password_field
             form = form_factory(
