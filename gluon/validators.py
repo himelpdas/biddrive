@@ -54,6 +54,8 @@ __all__ = [
     'IS_STRONG',
     ]
 
+def options_sorter(x,y):
+    return (str(x[1]).upper()>str(y[1]).upper() and 1) or -1
 
 class Validator(object):
     """
@@ -243,6 +245,7 @@ class IS_IN_SET(Validator):
         error_message='value not allowed',
         multiple=False,
         zero='',
+        sort=False,
         ):
         self.multiple = multiple
         self.theset = [str(item) for item in theset]
@@ -252,12 +255,15 @@ class IS_IN_SET(Validator):
             self.labels = labels
         self.error_message = error_message
         self.zero = zero
+        self.sort = sort
 
     def options(self):
         if not self.labels:
             items = [(k, k) for (i, k) in enumerate(self.theset)]
         else:
             items = [(k, self.labels[i]) for (i, k) in enumerate(self.theset)]
+        if self.sort:
+            items.sort(options_sorter)
         if self.zero != None and not self.multiple:
             items.insert(0,('',self.zero))
         return items
@@ -301,6 +307,7 @@ class IS_IN_DB(Validator):
         cache=None,
         multiple=False,
         zero='',
+        sort=False,
         _and=None,
         ):
         if hasattr(dbset, 'define_table'):
@@ -332,6 +339,7 @@ class IS_IN_DB(Validator):
         self.cache = cache
         self.multiple = multiple
         self.zero = zero
+        self.sort = sort
         self._and = _and
 
     def set_self_id(self, id):
@@ -360,6 +368,8 @@ class IS_IN_DB(Validator):
     def options(self):
         self.build_set()
         items = [(k, self.labels[i]) for (i, k) in enumerate(self.theset)]
+        if self.sort:
+            items.sort(options_sorter)
         if self.zero != None and not self.multiple:
             items.insert(0,('',self.zero))
         return items
@@ -1961,6 +1971,14 @@ class IS_EMPTY_OR(Validator):
             self.empty_regex = None
         if hasattr(other, 'multiple'):
             self.multiple = other.multiple
+        if hasattr(other, 'options'):
+            self.options=self._options
+
+    def _options(self):
+        options = self.other.options()
+        if (not options or options[0][0]!='') and not self.multiple:
+            options.insert(0,('',''))
+        return options
 
     def set_self_id(self, id):
         if hasattr(self.other, 'set_self_id'):

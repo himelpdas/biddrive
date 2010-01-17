@@ -2048,7 +2048,7 @@ class Auth(object):
 
         example::
 
-           db(accessible_query('read', db.mytable)).select(db.mytable.ALL)
+           db(auth.accessible_query('read', db.mytable)).select(db.mytable.ALL)
 
         """
         if not user_id:
