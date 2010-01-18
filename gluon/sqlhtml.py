@@ -229,7 +229,7 @@ class RadioWidget(OptionsWidget):
         opts = [TR(INPUT(_type='radio', _name=field.name,
                          requires=attr.get('requires',None),
                          hideerror=True, _value=k,
-                         value=value), v) for (k, v) in options]
+                         value=value), v) for (k, v) in options if str(v)]
         if opts:
             opts[-1][0][0]['hideerror'] = False
         return TABLE(*opts, **attr)
