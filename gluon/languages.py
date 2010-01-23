@@ -89,6 +89,9 @@ class lazyT(object):
     def decode(self,*a,**b):
         return str(self).decode(*a,**b)
 
+    def __mod__(self,symbols):
+        return self.T.translate(self.m,symbols)
+
 class translator(object):
 
     """
