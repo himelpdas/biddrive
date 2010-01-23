@@ -662,7 +662,19 @@ def console():
                       default=False,
                       help='use web2py gui and run in taskbar (system tray)')
 
+    parser.add_option('-A',
+                      '--args',
+                      action='store',
+                      dest='args',
+                      default='',
+                      help='should be followed by a list of arguments to be passed to script, to be used with -S, -A must be the last option')
+
+    if '-A' in sys.argv: k = sys.argv.index('-A')
+    elif '--args' in sys.argv: k = sys.argv.index('-A')
+    else: k=len(sys.argv)
+    sys.argv, other_args = sys.argv[:k], sys.argv[k+1:]
     (options, args) = parser.parse_args()
+    options.args = [options.run] + other_args
 
     if options.quiet:
         capture = cStringIO.StringIO()
@@ -739,6 +751,7 @@ def start(cron = True):
     # ## if -S start interactive shell
 
     if options.shell:
+        sys.args = options.args
         run(options.shell, plain=options.plain,
             import_models=options.import_models, startfile=options.run)
         return
