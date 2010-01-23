@@ -630,3 +630,8 @@ better slicing of fields, thanks Michael Fig
 Cache stats, thanks Thadeus
 Better gql.py
 IS_IN_DB and IS_IN_SET default to zero='', no longer zero=None
+
+#1.74.7
+request_password_reset and password reset verification
+python web2py.py -S app -M -R script.py -A arg1 arg2 arg3
+T("%(a)s") % dict(a="hello")
