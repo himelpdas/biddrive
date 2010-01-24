@@ -211,7 +211,7 @@ def start_response_aux(status, headers, exc_info, response=None):
     """
     response.status = str(status).split(' ',1)[0]
     response.headers = dict(headers)
-    return lambda *args, **kargs: response.write(escape=False,*args,**kargs) 
+    return lambda *args, **kargs: response.write(escape=False,*args,**kargs)
 
 
 def middleware_aux(request, response, *middleware_apps):
@@ -275,7 +275,7 @@ def parse_get_post_vars(request, environ):
         for key in keys:
             dpk = dpost[key]
             # if en element is not a file replace it with its value else leave it alone
-            if isinstance(dpk, list):                
+            if isinstance(dpk, list):
                 if not dpk[0].filename:
                     value = [x.value for x in dpk]
                 else:
@@ -419,7 +419,7 @@ def wsgibase(environ, responder):
             # ##################################################
             # build missing folder
             # ##################################################
-            
+
             if not request.env.web2py_runtime_gae:
                 for subfolder in ['models','views','controllers', 'databases',
                                   'modules','cron','errors','sessions',
@@ -427,7 +427,7 @@ def wsgibase(environ, responder):
                     path =  os.path.join(request.folder,subfolder)
                     if not os.path.exists(path):
                         os.mkdir(path)
-                        
+
             # ##################################################
             # get the GET and POST data
             # ##################################################

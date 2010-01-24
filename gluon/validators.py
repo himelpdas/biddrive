@@ -225,7 +225,7 @@ class IS_IN_SET(Validator):
     """
     example::
 
-        INPUT(_type='text', _name='name', 
+        INPUT(_type='text', _name='name',
               requires=IS_IN_SET(['max', 'john'],zero=''))
 
     the argument of IS_IN_SET must be a list or set
@@ -320,7 +320,7 @@ class IS_IN_DB(Validator):
         (ktable, kfield) = str(self.field).split('.')
         if not label:
             label = '%%(%s)s' % kfield
-        if isinstance(label,str): 
+        if isinstance(label,str):
             if regex1.match(str(label)):
                 label = '%%(%s)s' % str(label).split('.')[-1]
             ks = regex2.findall(label)
@@ -2000,7 +2000,7 @@ class IS_SLUG(Validator):
     def __call__(self,value):
         if self.check and value != IS_SLUG.urlify(value,self.maxlen):
             return (value,self.error_message)
-        return (IS_SLUG.urlify(value,self.maxlen), None) 
+        return (IS_SLUG.urlify(value,self.maxlen), None)
 
 class IS_EMPTY_OR(Validator):
     """

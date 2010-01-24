@@ -13,7 +13,7 @@ Thanks to
     * Chris Clark
     * clach05
     * Denes Lengyel
- 
+
 This file contains the DAL support for many relational databases,
 including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase, Ingres
 
@@ -304,7 +304,7 @@ class BaseAdapter(ConnectionPool):
             return '(%s IS NULL)' % self.expand(first)
         return '(%s = %s)' % (self.expand(first),self.expand(second,first.type))
 
-    def NE(self,first,second=None): 
+    def NE(self,first,second=None):
         if second==None:
             return '(%s IS NOT NULL)' % self.expand(first)
         return '(%s <> %s)' % (self.expand(first),self.expand(second,first.type))
@@ -506,11 +506,11 @@ class BaseAdapter(ConnectionPool):
         else:
             rows = response(query)
         if isinstance(rows,tuple):
-            rows = list(rows)            
+            rows = list(rows)
         rows = self.rowslice(rows,attributes.get('limitby',(0,))[0],None)
         return self.parse(rows,self._colnames)
 
-    def tables(self,query):        
+    def tables(self,query):
         tables = []
         if isinstance(query, (Query, Expression, Field)):
             if query._first:
@@ -566,7 +566,7 @@ class BaseAdapter(ConnectionPool):
     def create_sequence_and_triggers(self, query, table):
         self.execute(query)
 
-    def commit_on_alter_table(self):        
+    def commit_on_alter_table(self):
         return False
 
     def log_execute(self,*a,**b):
@@ -581,7 +581,7 @@ class BaseAdapter(ConnectionPool):
     def execute(self,*a,**b):
         return self.log_execute(*a, **b)
 
-    def represent(self, obj, fieldtype):        
+    def represent(self, obj, fieldtype):
         if type(obj) in (types.LambdaType, types.FunctionType):
             obj = obj()
         if isinstance(fieldtype, SQLCustomType):
@@ -637,7 +637,7 @@ class BaseAdapter(ConnectionPool):
             obj.decode(self.db_codec)
         except:
             obj = obj.decode('latin1').encode(self.db_codec)
-        return "'%s'" % obj.replace("'", "''")    
+        return "'%s'" % obj.replace("'", "''")
 
     def represent_exceptions(self, obj, fieldtype):
         return None
@@ -678,10 +678,10 @@ class BaseAdapter(ConnectionPool):
                     virtualtables.append((tablename, self.db[tablename].virtualfields))
                 if field.type[:10] == 'reference ':
                     referee = field.type[10:].strip()
-                    if value and '.' in referee: 
+                    if value and '.' in referee:
                         # Reference not by id
                         colset[fieldname] = value
-                    else: 
+                    else:
                         # Reference by id
                         colset[fieldname] = rid = Reference(value)
                         (rid._table, rid._record) = (self.db[referee], None)
@@ -906,7 +906,7 @@ class MySQLAdapter(BaseAdapter):
         db = m.group('db')
         if not db:
             raise SyntaxError, 'Database name required'
-        port = int(m.group('port') or '3306')        
+        port = int(m.group('port') or '3306')
         charset = m.group('charset') or 'utf8'
         self.pool_connection(lambda db=db,
                              user=user,
@@ -923,7 +923,7 @@ class MySQLAdapter(BaseAdapter):
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
 
-    def commit_on_alter_table(self):        
+    def commit_on_alter_table(self):
         return True
 
     def lastrowid(self,tablename):
@@ -964,7 +964,7 @@ class PostgreSQLAdapter(BaseAdapter):
     def commit_prepared(self,key):
         self.execute("COMMIT PREPARED '%s';" % key)
 
-    def rollback_prepared(self,key):        
+    def rollback_prepared(self,key):
         self.execute("ROLLBACK PREPARED '%s';" % key)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
@@ -1070,10 +1070,10 @@ class OracleAdapter(BaseAdapter):
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
-            if len(sql_w) > 1:                                                                                           
-                sql_w_row = sql_w + ' AND w_row > %i' % lmin                                                             
-            else:                                                                                                        
-                sql_w_row = 'WHERE w_row > %i' % lmin                                                                    
+            if len(sql_w) > 1:
+                sql_w_row = sql_w + ' AND w_row > %i' % lmin
+            else:
+                sql_w_row = 'WHERE w_row > %i' % lmin
             return 'SELECT %s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
@@ -1134,7 +1134,7 @@ class OracleAdapter(BaseAdapter):
         self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
         self.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n' % (tablename, tablename, tablename))
 
-    def commit_on_alter_table(self):        
+    def commit_on_alter_table(self):
         return True
 
     def lastrowid(self,tablename):
@@ -1198,7 +1198,7 @@ class MSSQLAdapter(BaseAdapter):
         self.folder = folder
         self.db_codec = db_codec
         self.find_or_make_work_folder()
-        # ## read: http://bytes.com/groups/python/460325-cx_oracle-utf8        
+        # ## read: http://bytes.com/groups/python/460325-cx_oracle-utf8
         uri = uri.split('://')[1]
         if '@' not in uri:
             try:
@@ -1231,8 +1231,8 @@ class MSSQLAdapter(BaseAdapter):
             if not db:
                 raise SyntaxError, 'Database name required'
             port = m.group('port') or '1433'
-            # Parse the optional url name-value arg pairs after the '?'        
-            # (in the form of arg1=value1&arg2=value2&...)                     
+            # Parse the optional url name-value arg pairs after the '?'
+            # (in the form of arg1=value1&arg2=value2&...)
             # Default values (drivers like FreeTDS insist on uppercase parameter keys)
             argsdict = { 'DRIVER':'{SQL Server}' }
             urlargs = m.group('urlargs') or ''
@@ -1255,7 +1255,7 @@ class MSSQLAdapter(BaseAdapter):
         if maximum==None:
             return rows[minimum:]
         return rows[minimum:maximum]
-    
+
 
 class MSSQLAdapter2(MSSQLAdapter):
     types = {
@@ -1320,7 +1320,7 @@ class FireBirdAdapter(BaseAdapter):
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
-            sql_s += ' FIRST %i SKIP %i' % (lmax - lmin, lmin)            
+            sql_s += ' FIRST %i SKIP %i' % (lmax - lmin, lmin)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
     def support_distributed_transaction(self):
@@ -1350,7 +1350,7 @@ class FireBirdAdapter(BaseAdapter):
         if not db:
             raise SyntaxError, 'Database name required'
         charset = m.group('charset') or 'UTF8'
-        self.pool_connection(lambda dsn='%s:%s' % (host,db),                                                   
+        self.pool_connection(lambda dsn='%s:%s' % (host,db),
                              user=user,
                              password=password,
                              charset=charset: \
@@ -1359,7 +1359,7 @@ class FireBirdAdapter(BaseAdapter):
                                                      password=password,
                                                      charset=charset))
 
-    def create_sequence_and_triggers(self, query, table):       
+    def create_sequence_and_triggers(self, query, table):
         tablename = table._tablename
         self.execute(query)
         self.execute('create generator GENID_%s;' % tablename)
@@ -1380,7 +1380,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         self.folder = folder
         self.db_codec = db_codec
         self.find_or_make_work_folder()
-        uri = uri.split('://')[1] 
+        uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<path>[^\?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
             raise SyntaxError, \
@@ -1398,7 +1398,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         if not charset:
             charset = 'UTF8'
         host = ''
-        self.pool_connection(lambda host=host, 
+        self.pool_connection(lambda host=host,
                              database=dbpath,
                              user=user,
                              password=password,
@@ -1408,7 +1408,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
                                                      user=user,
                                                      password=password,
                                                      charset=charset))
-        
+
 
 class InformixAdapter(BaseAdapter):
     types = {
@@ -1450,7 +1450,7 @@ class InformixAdapter(BaseAdapter):
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
     def represent_exceptions(self, obj, fieldtype):
-        if fieldtype == 'date':                
+        if fieldtype == 'date':
             if isinstance(obj, (datetime.date, datetime.datetime)):
                 obj = obj.isoformat()[:10]
             else:
@@ -1542,7 +1542,7 @@ class DB2Adapter(BaseAdapter):
             obj = base64.b64encode(str(obj))
             return "BLOB('%s')" % obj
         elif fieldtype == 'datetime':
-            if isinstance(obj, datetime.datetime):            
+            if isinstance(obj, datetime.datetime):
                 obj = obj.isoformat()[:19].replace('T','-').replace(':','.')
             elif isinstance(obj, datetime.date):
                 obj = obj.isoformat()[:10]+'-00.00.00'
@@ -1571,10 +1571,10 @@ class DB2Adapter(BaseAdapter):
     def rowslice(self,rows,minimum=0,maximum=None):
         if maximum==None:
             return rows[minimum:]
-        return rows[minimum:maximum]        
+        return rows[minimum:maximum]
 
-INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name 
-                                       # (ANSI-SQL wants this form of name 
+INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name
+                                       # (ANSI-SQL wants this form of name
                                        # to be a delimited identifier)
 
 
@@ -1623,14 +1623,14 @@ class IngresAdapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         connstr = self._uri.split(':', 1)[1]
-        # Simple URI processing                                                
+        # Simple URI processing
         connstr=connstr.lstrip()
         while connstr.startswith('/'):
             connstr = connstr[1:]
-        database_name=connstr # Assume only (local) dbname is passed in        
+        database_name=connstr # Assume only (local) dbname is passed in
         vnode='(local)'
         servertype='ingres'
-        trace=(0, None) # No tracing                                           
+        trace=(0, None) # No tracing
         self.pool_connection(lambda database=database_name,
                              vnode=vnode,
                              servertype=serverttype,
@@ -1693,7 +1693,7 @@ ADAPTERS = {
     'oracle': OracleAdapter,
     'mssql': MSSQLAdapter,
     'mssql2': MSSQLAdapter2,
-    'db2': DB2Adapter,    
+    'db2': DB2Adapter,
     'informix': InformixAdapter,
     'firebird': FireBirdAdapter,
     'firebird_embedded': FireBirdAdapter,
@@ -1837,7 +1837,7 @@ class Row(dict):
         key=str(key)
         if key in self.get('_extra',{}):
             return self._extra[key]
-        return dict.__getitem__(self, key) #### are we sure        
+        return dict.__getitem__(self, key) #### are we sure
 
     def __setitem__(self, key, value):
         dict.__setitem__(self, str(key), value)
@@ -1909,7 +1909,7 @@ class DAL(dict):
     @staticmethod
     def _set_thread_folder(folder):
         """
-        # ## this allows gluon to comunite a folder for this thread 
+        # ## this allows gluon to comunite a folder for this thread
         # ## <<<<<<<<< Should go away as new DAL replaces old sql.py
         """
         BaseAdapter.set_thread_folder(folder)
@@ -1952,10 +1952,10 @@ class DAL(dict):
         return
 
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8'):
-        self._uri = str(uri) # NOTE: assuming it is in utf8!!!        
+        self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
         self._db_codec = db_codec
-        self._lastsql = ''        
+        self._lastsql = ''
         self._logger = Logger(folder)
         if is_jdbc:
             prefix = 'jdbc:'
@@ -2096,7 +2096,7 @@ class DAL(dict):
 
     def import_from_csv_file(self, ifile, id_map={}, null='<NULL>', unique='uuid', *args, **kwargs):
         for line in ifile:
-            line = line.strip()            
+            line = line.strip()
             if not line:
                 continue
             elif line == 'END':
@@ -2629,7 +2629,7 @@ class Table(dict):
         rid = Reference(id)
         (rid._table, rid._record) = (self, None)
         return rid
-        
+
 
     def import_from_csv_file(
         self,
@@ -2725,7 +2725,7 @@ class Expression(object):
         second=None,
         type=None,
         ):
-        
+
         self._db = db
         self._op = op
         self._first = first
@@ -2734,7 +2734,7 @@ class Expression(object):
             self.type = first.type
         else:
             self.type = type
-        
+
     def __str__(self):
         return self._db._adapter.expand(self,self.type)
 
@@ -3038,7 +3038,7 @@ class Field(Expression):
     def sum(self):
         return Expression(self._db, self._db._adapter.AGGREGATE, self, 'sum', self.type)
 
-    def max(self): 
+    def max(self):
         return Expression(self._db, self._db._adapter.AGGREGATE, self, 'max', self.type)
 
     def min(self):
@@ -3047,8 +3047,8 @@ class Field(Expression):
     def len(self):
         return Expression(self._db, self._db._adapter.AGGREGATE, self, 'length', 'integer')
 
-    def __nonzero__(self):                                                                                    
-        return True 
+    def __nonzero__(self):
+        return True
 
     def __getslice__(self, start, stop):
         """
@@ -3059,19 +3059,19 @@ class Field(Expression):
         pos=start + 1
         length=stop - start
 
-        if start < 0:                                                                                         
-            pos0 = '(%s - %d)' % (self.len(), -start)                                                         
-        else:                                                                                                 
-            pos0 = start + 1                                                                                 
-                                                                                                             
-        if stop < 0:                                                                                          
-            length = '(%s - %d - %s)' % (self.len(), -stop, str(pos0))                                        
-        else:                                                                                                 
-            length = '(%s - %s)' % (str(stop), str(pos0))                                                     
-                                                                                                             
+        if start < 0:
+            pos0 = '(%s - %d)' % (self.len(), -start)
+        else:
+            pos0 = start + 1
+
+        if stop < 0:
+            length = '(%s - %d - %s)' % (self.len(), -stop, str(pos0))
+        else:
+            length = '(%s - %s)' % (str(stop), str(pos0))
+
         return self._db._adapter.Expression(self._db,seld._db._adapter.SUBSTRING,
                                            self, (pos, length), self.type)
-                                                                                                 
+
     def __getitem__(self, i):
         return self[i:i + 1]
 
@@ -3206,7 +3206,7 @@ class Set(object):
         return counter
 
     def _update(self, **update_fields):
-        tablenames = self._db._adapter.tables(self._query)        
+        tablenames = self._db._adapter.tables(self._query)
         if len(tablenames) != 1:
             raise SyntaxError, 'Query involves multiple tables, do not know which to update'
         table = self._db[tablenames[0]]
@@ -3475,7 +3475,7 @@ class Rows(object):
                     row.append(record._extra[col])
                 else:
                     (t, f) = col.split('.')
-                    if isinstance(record.get(t, None), (Row,dict)):         
+                    if isinstance(record.get(t, None), (Row,dict)):
                         row.append(none_exception(record[t][f]))
                     else:
                         if represent:
@@ -3727,7 +3727,7 @@ def test_all():
     >>> for i in range(10): tmp = mynumber.insert(x=i)
     >>> db(mynumber.id>0).select(mynumber.x.sum())[0](mynumber.x.sum())
     45
-    
+
     >>> db(mynumber.x+2==5).select(mynumber.x + 2)[0](mynumber.x + 2)
     5
 
@@ -3767,7 +3767,7 @@ if __name__ == '__main__':
     doctest.testmod()
     print 'done!'
     """
-    os.system('rm *.table *.db *.sqlite *.log') 
+    os.system('rm *.table *.db *.sqlite *.log')
     db=DAL('sqlite://test.db')
     db.define_table('person',Field('name'),Field('birth','datetime'))
     print db(db.person.birth.month()==12)._select()

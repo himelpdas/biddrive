@@ -955,7 +955,7 @@ class SQLDB(dict):
             self['_lastsql'] = query
             self._execute(query)
             self._execute("SET CLIENT_ENCODING TO 'UNICODE';")  # ## not completely sure but should work
-            self._execute("SET standard_conforming_strings=on;") 
+            self._execute("SET standard_conforming_strings=on;")
         elif self._uri[:9] == 'oracle://':
             self._dbname = 'oracle'
             self._pool_connection(lambda : \
@@ -1161,7 +1161,7 @@ class SQLDB(dict):
             self['_lastsql'] = query
             self._execute(query)
             self._execute("SET CLIENT_ENCODING TO 'UNICODE';")  # ## not completely sure but should work
-            self._execute("SET standard_conforming_strings=on;") 
+            self._execute("SET standard_conforming_strings=on;")
         elif self._uri.startswith('ingres:'):
             """Currently only one URI form supported:
 
@@ -1434,7 +1434,7 @@ def Reference_pickler(data):
     try:
         marshal_dump = marshal.dumps(int(data))
     except AttributeError:
-        marshal_dump = 'i%s' % struct.pack('<i',int(data))        
+        marshal_dump = 'i%s' % struct.pack('<i',int(data))
     return (Reference_unpickler, (marshal_dump,))
 
 copy_reg.pickle(Reference, Reference_pickler, Reference_unpickler)
@@ -1838,7 +1838,7 @@ class Table(dict):
                 fs.append(fieldname)
                 vs.append(sql_represent(field.compute(fields), ft, fd, self._db._db_codec))
             elif field.required is True:
-                raise SyntaxError,'Table: missing required field: %s'%field            
+                raise SyntaxError,'Table: missing required field: %s'%field
         sql_f = ', '.join(fs)
         sql_v = ', '.join(vs)
         sql_t = self._tablename
@@ -3032,10 +3032,10 @@ class Set(object):
                     continue
                 (tablename, fieldname) = colname.split('.')
                 table = db[tablename]
-                field = table[fieldname]                
+                field = table[fieldname]
                 field_type = field.type
                 if isinstance(field_type,SQLCustomType):
-                    field_type = field_type.type                
+                    field_type = field_type.type
                 if field.type != 'blob' and isinstance(value, str):
                     try:
                         value = value.decode(db._db_codec)
@@ -3414,11 +3414,11 @@ class Rows(object):
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
         quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
-        represent = kwargs.get('represent', False) 
+        represent = kwargs.get('represent', False)
         writer = csv.writer(ofile, delimiter=delimiter,
                             quotechar=quotechar, quoting=quoting)
         colnames = kwargs.get('colnames', self.colnames)
-        # a proper csv starting with the column names        
+        # a proper csv starting with the column names
         writer.writerow(colnames)
 
         def none_exception(value):
@@ -3446,13 +3446,13 @@ class Rows(object):
                     (t, f) = col.split('.')
                     if isinstance(record.get(t, None), (Row,dict)):
                         row.append(none_exception(record[t][f]))
-                    elif represent:                                                                    
-                        if self.db[t][f].represent:                                                  
-                            row.append(none_exception(self.db[t][f].represent(record[f])))           
-                        else:                                                                        
-                            row.append(none_exception(record[f]))                                    
-                    else:                                                                            
-                        row.append(none_exception(record[f]))   
+                    elif represent:
+                        if self.db[t][f].represent:
+                            row.append(none_exception(self.db[t][f].represent(record[f])))
+                        else:
+                            row.append(none_exception(record[f]))
+                    else:
+                        row.append(none_exception(record[f]))
             writer.writerow(row)
 
     def __str__(self):

@@ -41,7 +41,7 @@ class CacheAbstract(object):
 
     Use CacheInRam or CacheOnDisk instead which are derived from this class.
     """
-    
+
     cache_stats_name = 'web2py_cache_statistics'
 
     def __init__(self, request=None):
@@ -146,13 +146,13 @@ class CacheInRam(CacheAbstract):
             storage.clear()
         else:
             self._clear(storage, regex)
-        
+
         if not CacheAbstract.cache_stats_name in storage.keys():
             storage[CacheAbstract.cache_stats_name] = {
                 'hit_total': 0,
                 'misses': 0,
             }
-            
+
         self.locker.release()
 
     def __call__(self, key, f,
@@ -237,12 +237,12 @@ class CacheOnDisk(CacheAbstract):
             portalocker.lock(locker, portalocker.LOCK_EX)
             locker_locked = True
             storage = shelve.open(self.shelve_name)
-        
+
             if not storage.has_key(CacheAbstract.cache_stats_name):
                 storage[CacheAbstract.cache_stats_name] = {
                     'hit_total': 0,
                     'misses': 0,
-                    }            
+                    }
                 storage.sync()
         except ImportError, e:
             pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
@@ -273,47 +273,47 @@ class CacheOnDisk(CacheAbstract):
     def __call__(self, key, f,
                 time_expire = DEFAULT_TIME_EXPIRE):
         dt = time_expire
-        
+
         locker = open(self.locker_name,'a')
         portalocker.lock(locker, portalocker.LOCK_EX)
-        
+
         storage = shelve.open(self.shelve_name)
-        
+
         item = storage.get(key, None)
         if item and f == None:
             del storage[key]
-            
+
         storage[CacheAbstract.cache_stats_name] = {
             'hit_total': storage[CacheAbstract.cache_stats_name]['hit_total'] + 1,
             'misses': storage[CacheAbstract.cache_stats_name]['misses']
         }
-        
+
         storage.sync()
-            
+
         portalocker.unlock(locker)
         locker.close()
-        
+
         if f is None:
             return None
         if item and (dt == None or item[0] > time.time() - dt):
             return item[1]
         value = f()
-        
+
         locker = open(self.locker_name,'a')
         portalocker.lock(locker, portalocker.LOCK_EX)
-        
+
         storage[key] = (time.time(), value)
-        
+
         storage[CacheAbstract.cache_stats_name] = {
             'hit_total': storage[CacheAbstract.cache_stats_name]['hit_total'],
             'misses': storage[CacheAbstract.cache_stats_name]['misses'] + 1
         }
-        
+
         storage.sync()
-        
+
         portalocker.unlock(locker)
         locker.close()
-        
+
         return value
 
     def increment(self, key, value=1):

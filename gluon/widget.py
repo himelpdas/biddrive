@@ -31,6 +31,7 @@ from fileutils import w2p_pack
 from shell import run, test
 
 try:
+    import Tkinter, tkMessageBox
     import contrib.taskbar_widget
     from winservice import web2py_windows_service_handler
 except:
@@ -40,14 +41,6 @@ try:
     BaseException
 except NameError:
     BaseException = Exception
-
-try:
-    import tkMessageBox
-    import Tkinter
-    havetk = True
-except:
-    logging.warn('GUI not available because Tk library is not installed')
-    havetk = False
 
 ProgramName = 'web2py Enterprise Web Framework'
 ProgramAuthor = 'Created by Massimo Di Pierro, Copyright 2007-2010'
@@ -662,6 +655,13 @@ def console():
                       default=False,
                       help='use web2py gui and run in taskbar (system tray)')
 
+    parser.add_option('',
+                      '--nogui',
+                      action='store_true',
+                      default=False,
+                      dest='nogui',
+                      help='text-only, no GUI')
+
     parser.add_option('-A',
                       '--args',
                       action='store',
@@ -716,6 +716,7 @@ def start(cron = True):
     # ## get command line arguments
 
     (options, args) = console()
+
     print ProgramName
     print ProgramAuthor
     print ProgramVersion
@@ -795,11 +796,20 @@ def start(cron = True):
 
     root = None
 
-    if options.password == '<ask>' and havetk or options.taskbar and havetk:
+    if not options.nogui:
         try:
-            root = Tkinter.Tk()
-        except:
-            pass
+            import tkMessageBox
+            import Tkinter
+            havetk = True
+        except ImportError:
+            logging.warn('GUI not available because Tk library is not installed')
+            havetk = False
+
+        if options.password == '<ask>' and havetk or options.taskbar and havetk:
+            try:
+                root = Tkinter.Tk()
+            except:
+                pass
 
     if root:
         root.focus_force()
