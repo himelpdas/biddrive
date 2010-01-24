@@ -103,14 +103,14 @@ auth=Auth(globals(),db)
 # define custom tables (table_user_name is 'auth_user')
 auth.settings.table_user = db.define_table(
     auth.settings.table_user_name,
-    Field('first_name', length=128,default=''),
-    Field('last_name', length=128,default=''),
-    Field('email', length=128,default='',
+    Field('first_name', length=512,default=''),
+    Field('last_name', length=512,default=''),
+    Field('email', length=512,default='',
              requires = [IS_EMAIL(),
-                         IS_NOT_IN_DB(db,'%s.email'%self.settings.table_user_name)])
+                         IS_NOT_IN_DB(db,'%s.email'%auth.settings.table_user_name)])
     Field('password', 'password', readable=False,
              label='Password', requires=CRYPT()),
-    Field('registration_key', length=128,
+    Field('registration_key', length=512,
              writable=False, readable=False,default=''))
 
 # define any other requires table
