@@ -18,40 +18,42 @@ import hmac
 import urllib
 import struct
 import decimal
+import unicodedata
 from cStringIO import StringIO
 from utils import hash, get_digest
 
 
 __all__ = [
+    'CLEANUP',
+    'CRYPT',
     'IS_ALPHANUMERIC',
-    'IS_DATE',
     'IS_DATE_IN_RANGE',
-    'IS_DATETIME',
+    'IS_DATE',
     'IS_DATETIME_IN_RANGE',
-    'IS_EMAIL',
-    'IS_EXPR',
-    'IS_UPLOAD_FILENAME',
-    'IS_FLOAT_IN_RANGE',
+    'IS_DATETIME',
     'IS_DECIMAL_IN_RANGE',
+    'IS_EMAIL',
+    'IS_EMPTY_OR',
+    'IS_EXPR',
+    'IS_FLOAT_IN_RANGE',
     'IS_IMAGE',
-    'IS_INT_IN_RANGE',
+    'IS_IN_DB',
     'IS_IN_SET',
+    'IS_INT_IN_RANGE',
     'IS_IPV4',
     'IS_LENGTH',
     'IS_LIST_OF',
     'IS_LOWER',
     'IS_MATCH',
     'IS_NOT_EMPTY',
-    'IS_TIME',
-    'IS_URL',
-    'CLEANUP',
-    'CRYPT',
-    'IS_IN_DB',
     'IS_NOT_IN_DB',
-    'IS_UPPER',
-    'IS_EMPTY_OR',
     'IS_NULL_OR',
+    'IS_SLUG',
     'IS_STRONG',
+    'IS_TIME',
+    'IS_UPLOAD_FILENAME',
+    'IS_UPPER',
+    'IS_URL',
     ]
 
 def options_sorter(x,y):
@@ -528,17 +530,25 @@ class IS_DECIMAL_IN_RANGE(Validator):
         INPUT(_type='text', _name='name', requires=IS_DECIMAL_IN_RANGE(0, 10))
 
         >>> IS_DECIMAL_IN_RANGE(1,5)('4')
-        (4.0, None)
+        ('4', None)
         >>> IS_DECIMAL_IN_RANGE(1,5)(4)
-        (4.0, None)
+        (4, None)
         >>> IS_DECIMAL_IN_RANGE(1,5)(1)
-        (1.0, None)
+        (1, None)
         >>> IS_DECIMAL_IN_RANGE(1,5)(5.1)
-        (5.0999999999999996, 'enter a number between 1.0 and 5.0')
+        (5.0999999999999996, 'enter a number between 1 and 5')
+        >>> IS_DECIMAL_IN_RANGE(5.1,6)(5.1)
+        (5.0999999999999996, None)
+        >>> IS_DECIMAL_IN_RANGE(5.1,6)('5.1')
+        ('5.1', None)
         >>> IS_DECIMAL_IN_RANGE(1,5)(6.0)
-        (6.0, 'enter a number between 1.0 and 5.0')
+        (6.0, 'enter a number between 1 and 5')
         >>> IS_DECIMAL_IN_RANGE(1,5)(3.5)
         (3.5, None)
+        >>> IS_DECIMAL_IN_RANGE(1.5,5.5)(3.5)
+        (3.5, None)
+        >>> IS_DECIMAL_IN_RANGE(1.5,5.5)(6.5)
+        (6.5, 'enter a number between 1.5 and 5.5')
     """
 
     def __init__(
@@ -553,8 +563,8 @@ class IS_DECIMAL_IN_RANGE(Validator):
 
     def __call__(self, value):
         try:
-            value = decimal.Decimal(value)
-            if self.minimum <= value <= self.maximum:
+            v = decimal.Decimal(str(value))
+            if self.minimum <= v <= self.maximum:
                 return (value, None)
         except (ValueError, TypeError):
             pass
@@ -1944,6 +1954,53 @@ class IS_UPPER(Validator):
     def __call__(self, value):
         return (value.decode('utf8').upper().encode('utf8'), None)
 
+
+class IS_SLUG(Validator):
+    """
+    convert arbitrary text string to a slug
+
+    >>> IS_SLUG()('abc123')
+    ('abc123', None)
+    >>> IS_SLUG()('ABC123')
+    ('abc123', None)
+    >>> IS_SLUG()('abc-123')
+    ('abc-123', None)
+    >>> IS_SLUG()('abc--123')
+    ('abc-123', None)
+    >>> IS_SLUG()('abc 123')
+    ('abc-123', None)
+    >>> IS_SLUG()('-abc-')
+    ('abc', None)
+    >>> IS_SLUG()('abc&amp;123')
+    ('abc123', None)
+    >>> IS_SLUG()('abc&amp;123&amp;def')
+    ('abc123def', None)
+    >>> IS_SLUG()('ñ')
+    ('n', None)
+    >>> IS_SLUG(maxlen=4)('abc123')
+    ('abc1', None)
+    """
+
+    def __init__(self, maxlen=80, check=False, error_message='must be slug'):
+        self.maxlen = maxlen
+        self.check = check
+        self.error_message = error_message
+
+    @staticmethod
+    def urlify(value, maxlen=80):
+        s = value.decode('utf-8').lower()    # to lowercase utf-8
+        s = unicodedata.normalize('NFKD', s) # normalize eg è => e, ñ => n
+        s = s.encode('ASCII', 'ignore')      # encode as ASCII
+        s = re.sub('&\w+?;', '', s)          # strip html entities
+        s = re.sub('[^a-z0-9\-\s]', '', s)   # strip all but alphanumeric/hyphen/space
+        s = s.replace(' ', '-')              # spaces to hyphens
+        s = re.sub('--+', '-', s)            # collapse strings of hyphens
+        return s[:maxlen].strip('-')         # enforce maximum length
+
+    def __call__(self,value):
+        if self.check and value != IS_SLUG.urlify(value,self.maxlen):
+            return (value,self.error_message)
+        return (IS_SLUG.urlify(value,self.maxlen), None) 
 
 class IS_EMPTY_OR(Validator):
     """
