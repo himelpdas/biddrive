@@ -670,7 +670,7 @@ def console():
                       help='should be followed by a list of arguments to be passed to script, to be used with -S, -A must be the last option')
 
     if '-A' in sys.argv: k = sys.argv.index('-A')
-    elif '--args' in sys.argv: k = sys.argv.index('-A')
+    elif '--args' in sys.argv: k = sys.argv.index('--args')
     else: k=len(sys.argv)
     sys.argv, other_args = sys.argv[:k], sys.argv[k+1:]
     (options, args) = parser.parse_args()

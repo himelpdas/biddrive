@@ -716,6 +716,7 @@ class SQLFORM(FORM):
             else:
                 (formname_id, record_id) = \
                     (self.record.id, request_vars.get('id', None))
+            keepvalues = True
         else:
             if keyed:
                 formname_id = 'create'
