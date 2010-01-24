@@ -635,3 +635,10 @@ IS_IN_DB and IS_IN_SET default to zero='', no longer zero=None
 request_password_reset and password reset verification
 python web2py.py -S app -M -R script.py -A arg1 arg2 arg3
 T("%(a)s") % dict(a="hello")
+
+#1.74.8
+IS_SLUG, thanks Gustavo and Jonathan
+web2py.py -nogui, thanks Jeff Bauer
+solved a problem with jython, thanks Tim Farrel
+login has "remember be option", thanks Piotr Banasziewicz
+fixed problem with keepvalue in update forms, thanks Miguel Lopez
