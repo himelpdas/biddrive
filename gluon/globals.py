@@ -146,7 +146,7 @@ class Response(Storage):
         the file content will be streamed at 100 bytes at the time
         """
 
-        if isinstance(stream, str):
+        if isinstance(stream, (str, unicode)):
             stream_file_or_304_or_206(stream, request=request,
                                       headers=self.headers)
 

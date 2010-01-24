@@ -762,8 +762,12 @@ def start(cron = True):
         try:
             options = __import__(options.config, [], [], '')
         except Exception:
-            print 'Cannot import config file [%s]' % options.config
-            sys.exit(1)
+            try:
+                # Jython doesn't like the extra stuff
+                options = __import__(options.config)
+            except Exception:
+                print 'Cannot import config file [%s]' % options.config
+                sys.exit(1)
 
     # ## if -C start cron run
     # ## if -N disable cron in this *process*
