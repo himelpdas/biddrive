@@ -521,7 +521,7 @@ class Auth(object):
              > request.now:
             self.user = auth.user
             self.user_id = self.user.id
-            auth.last_visit = request.now            
+            auth.last_visit = request.now
         else:
             self.user = None
             self.user_id = None
@@ -546,7 +546,9 @@ class Auth(object):
         self.settings.mailer = None
         self.settings.captcha = None
         self.settings.login_captcha = None
-        self.settings.expiration = 3600  # seconds
+        self.settings.expiration = 3600         # one day
+        self.settings.long_expiration = 3600*30 # one month
+        self.settings.remember_me_form = True
         self.settings.allow_basic_login = False
 
         self.settings.on_failed_authorization = self.url('user',
@@ -593,9 +595,9 @@ class Auth(object):
 
         self.settings.profile_next = self.url('index')
         self.settings.retrieve_username_next = self.url('index')
-        self.settings.retrieve_password_next = self.url('index') 
-	self.settings.request_reset_password_next = self.url('user', args='login')
-	self.settings.reset_password_next = self.url('user', args='login')
+        self.settings.retrieve_password_next = self.url('index')
+        self.settings.request_reset_password_next = self.url('user', args='login')
+        self.settings.reset_password_next = self.url('user', args='login')
         self.settings.change_password_next = self.url('index')
 
         self.settings.hmac_key = None
@@ -678,8 +680,20 @@ class Auth(object):
         self.messages.label_time_stamp = 'Timestamp'
         self.messages.label_client_ip = 'Client IP'
         self.messages.label_origin = 'Origin'
+        self.messages.label_remember_me = "Remember me (for 30 days)"
         self.messages['T'] = self.environment.T
         self.messages.lock_keys = True
+
+        # for "remember me" option
+        response = self.environment.response
+        if auth  and  auth.remember: #when user wants to be logged in for longer
+            #import time
+            #t = time.strftime(
+            #    "%a, %d-%b-%Y %H:%M:%S %Z",
+            #    time.gmtime(time.time() + auth.expiration) # one month longer
+            #)
+            # sets for appropriate cookie an appropriate expiration time
+            response.cookies[response.session_id_name]["expires"] = auth.expiration
 
     def _HTTP(self, *a, **b):
         """
@@ -713,9 +727,9 @@ class Auth(object):
             return self.retrieve_username()
         elif args[0] == 'retrieve_password':
             return self.retrieve_password()
-	elif args[0] == 'reset_password':
+        elif args[0] == 'reset_password':
             return self.reset_password()
-	elif args[0] == 'request_reset_password':
+        elif args[0] == 'request_reset_password':
             return self.request_reset_password()
         elif args[0] == 'change_password':
             return self.change_password()
@@ -771,7 +785,7 @@ class Auth(object):
                 Field('registration_key', length=512,
                         writable=False, readable=False, default='',
                         label=self.messages.label_registration_key),
-	        Field('reset_password_key', length=512,
+                Field('reset_password_key', length=512,
                         writable=False, readable=False, default='',
                         label=self.messages.label_reset_password_key),
                 migrate=\
@@ -996,6 +1010,24 @@ class Auth(object):
                 delete_label=self.messages.delete_label,
                 )
 
+            if self.settings.remember_me_form:
+                ## adds a new input checkbox "remember me for longer"
+                form[0].insert(-1, TR(
+                    "",
+                    TD(
+                        INPUT(_type='checkbox',
+                            _class='checkbox',
+                            _id="auth_user_remember",
+                            _name="remember",
+                        ),
+                        LABEL(
+                            self.messages.label_remember_me,
+                            _for="auth_user_remember",
+                        ),
+                    ),
+                    ""
+                ))
+
             if self.settings.login_captcha != None:
                 form[0].insert(-1, TR('', self.settings.login_captcha, ''))
 
@@ -1068,8 +1100,24 @@ class Auth(object):
         # process authenticated users
         if user:
             user = Storage(table_user._filter_fields(user, id=True))
-            session.auth = Storage(user=user, last_visit=request.now,
-                                   expiration=self.settings.expiration)
+
+            if request.vars.has_key("remember"):
+                # user wants to be logged in for longer
+                session.auth = Storage(
+                    user = user,
+                    last_visit = request.now,
+                    expiration = self.settings.long_expiration,
+                    remember = True,
+                )
+            else:
+                # user doesn't want to be logged in for longer
+                session.auth = Storage(
+                    user = user,
+                    last_visit = request.now,
+                    expiration = self.settings.expiration,
+                    remember =  False,
+                )
+
             self.user = user
             session.flash = self.messages.logged_in
         if log and self.user:
@@ -1153,7 +1201,7 @@ class Auth(object):
             onaccept = self.settings.register_onaccept
         if log == DEFAULT:
             log = self.messages.register_log
-        
+
         passfield = self.settings.password_field
         form = SQLFORM(table_user,
                        hidden=dict(_next=next),
@@ -1367,7 +1415,7 @@ class Auth(object):
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
-        
+
         table_user = self.settings.table_user
         request = self.environment.request
         response = self.environment.response
@@ -1448,7 +1496,7 @@ class Auth(object):
 
         """
 
-	table_user = self.settings.table_user
+        table_user = self.settings.table_user
         request = self.environment.request
         response = self.environment.response
         session = self.environment.session
@@ -1459,7 +1507,7 @@ class Auth(object):
                 or self.settings.reset_password_next
 
         try:
-            key = request.vars.key or request.args[-1]        
+            key = request.vars.key or request.args[-1]
             t0 = int(key.split('-')[0])
             if time.time()-t0 > 60*60*24: raise Exception
             user = self.db(table_user.reset_password_key == key).select().first()
@@ -1497,7 +1545,7 @@ class Auth(object):
 
         """
 
-	table_user = self.settings.table_user
+        table_user = self.settings.table_user
         request = self.environment.request
         response = self.environment.response
         session = self.environment.session
@@ -1591,7 +1639,7 @@ class Auth(object):
         table_user = self.settings.table_user
         usern = self.settings.table_user_name
         s = db(table_user.email == self.user.email)
-        
+
         request = self.environment.request
         session = self.environment.session
         if next == DEFAULT:
