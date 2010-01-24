@@ -231,10 +231,11 @@ class CacheOnDisk(CacheAbstract):
         self.shelve_name = os.path.join(request.folder,
                 'cache/cache.shelve')
 
+        locker, locker_locked = None, False
         try:
             locker = open(self.locker_name, 'a')
             portalocker.lock(locker, portalocker.LOCK_EX)
-            
+            locker_locked = True
             storage = shelve.open(self.shelve_name)
         
             if not storage.has_key(CacheAbstract.cache_stats_name):
@@ -247,8 +248,10 @@ class CacheOnDisk(CacheAbstract):
             pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
         except:
             logging.error('corrupted file: %s' % self.shelve_name)
-        portalocker.unlock(locker)
-        locker.close()
+        if locker_locked:
+            portalocker.unlock(locker)
+        if locker:
+            locker.close()
 
     def clear(self, regex=None):
         locker = open(self.locker_name,'a')
