@@ -15,13 +15,11 @@ import time
 import sched
 import re
 import datetime
+import traceback
 from subprocess import Popen, PIPE
 
-# crontype can be 'soft', 'hard', None, 'external'
-
-#from gluon import cache
+# crontype can be 'soft', 'hard', 'external', None
 crontype = 'soft'
-
 
 class extcron(threading.Thread):
 
@@ -92,60 +90,54 @@ def tokenmaster(path, action = 'claim', startup = False):
         try:
             os.unlink(tokeninuse)
             return time.time()
-        except:
+        except IOError:
             return 0
 
-    if not startup:
-        try:
-            tokentime = os.stat(token).st_mtime
-            # already ran in this minute?
-            if tokentime - (tokentime % 60) + 60 > time.time():
-                return 0
-        except:
-            pass
+    if not startup and os.path.exists(token):
+        tokentime = os.stat(token).st_mtime
+        # already ran in this minute?
+        if tokentime - (tokentime % 60) + 60 > time.time():
+            return 0
 
-    try:
-        # running now?
-        if os.path.exists(tokeninuse):
-            logging.warning('alreadyrunning')
-            # check if stale, just in case
-            if os.stat(tokeninuse).st_mtime + 60 < time.time():
-                logging.warning('WEB2PY CRON: Stale cron.master detected')
+    # running now?
+    if os.path.exists(tokeninuse):
+        logging.warning('alreadyrunning')
+        # check if stale, just in case
+        if os.stat(tokeninuse).st_mtime + 60 < time.time():
+            logging.warning('WEB2PY CRON: Stale cron.master detected')
+            try:
                 os.unlink(tokeninuse)
-
-        # no tokens, new install ? Need to regenerate anyho
-        if not (os.path.exists(token) or os.path.exists(tokeninuse)):
-            logging.warning(
-                "WEB2PY CRON: cron.master not found at %s. Trying to re-create."
-                % token)
-            try:
-                mfile = open(token, 'wb')
-                mfile.close()
             except:
-                crontype = ''
-                logging.error(
-                    'WEB2PY CRON: Unable to re-create cron.master, ' + \
+                logging.warning('WEB2PY CRON: unable to unlink %s' % tokeninuse)
+
+    # no tokens, new install ? Need to regenerate anyho
+    if not (os.path.exists(token) or os.path.exists(tokeninuse)):
+        logging.warning(
+            "WEB2PY CRON: cron.master not found at %s. Trying to re-create."
+            % token)
+        try:
+            mfile = open(token, 'wb')
+            mfile.close()
+        except IOError:
+            logging.error(
+                'WEB2PY CRON: Unable to re-create cron.master, ' + \
                     'cron functionality likely not available')
-                return 0
+            crontype = None
+            return 0
 
-        # has unclaimed token and not running ?
-        if os.path.exists(token) and not os.path.exists(tokeninuse):
-            logging.debug('WEB2PY CRON: Trying to acquire lock')
-            try:
-                os.rename(token, tokeninuse)
-                # can't rename, must recreate as we need a correct claim time
-                mfile = open(token, 'wb')
-                mfile.close()
-                logging.debug('WEB2PY CRON: Locked')
-                return os.stat(token).st_mtime
-
-            except:
-                logging.info('WEB2PY CRON: Failed to claim %s' % token)
-                return 0
-    except Exception, e:
-        crontype = ''
-        logging.error("WEB2PY CRON: Cron fail, reason: %s" % e)
-        return 0
+    # has unclaimed token and not running ?
+    if os.path.exists(token) and not os.path.exists(tokeninuse):
+        logging.debug('WEB2PY CRON: Trying to acquire lock')
+        try:
+            os.rename(token, tokeninuse)
+            # can't rename, must recreate as we need a correct claim time
+            mfile = open(token, 'wb')
+            mfile.close()
+            logging.debug('WEB2PY CRON: Locked')
+            return os.stat(token).st_mtime
+        except IOError:
+            logging.info('WEB2PY CRON: Failed to claim %s' % token)
+            return 0
 
     logging.debug('WEB2PY CRON: already started from another process')
     return 0
@@ -160,21 +152,21 @@ def apppath(env=None):
     return apppath
 
 
-def rangetolist(str, period='min'):
+def rangetolist(s, period='min'):
     retval = []
-    if str.startswith('*'):
+    if s.startswith('*'):
         if period == 'min':
-            str = str.replace('*', '0-59', 1)
+            s = s.replace('*', '0-59', 1)
         elif period == 'hr':
-            str = str.replace('*', '0-23', 1)
+            s = s.replace('*', '0-23', 1)
         elif period == 'dom':
-            str = str.replace('*', '1-31', 1)
+            s = s.replace('*', '1-31', 1)
         elif period == 'mon':
-            str = str.replace('*', '1-12', 1)
+            s = s.replace('*', '1-12', 1)
         elif period == 'dow':
-            str = str.replace('*', '0-6', 1)
+            s = s.replace('*', '0-6', 1)
     m = re.compile(r'(\d+)-(\d+)/(\d+)')
-    match = m.match(str)
+    match = m.match(s)
     if match:
         for i in range(int(match.group(1)), int(match.group(2)) + 1):
             if i % int(match.group(3)) == 0:
@@ -200,26 +192,25 @@ def parsecronline(line):
         line=line.replace('@midnight', '0 0 * * *')
     elif line.startswith('@hourly'):
         line=line.replace('@hourly', '0 * * * *')
-    params = line.split(None, 6)
-    for (str, id) in zip(params[:5], ['min', 'hr', 'dom', 'mon', 'dow']):
-        if not str in [None, '*']:
+    params = line.strip().split(None, 6)
+    if len(params) < 7:
+        return None
+    for (s, id) in zip(params[:5], ['min', 'hr', 'dom', 'mon', 'dow']):
+        if not s in [None, '*']:
             task[id] = []
-            vals = str.split(',')
+            vals = s.split(',')
             for val in vals:
                 if val.find('/') > -1:
                     task[id] += rangetolist(val, id)
-                else:
-                    try:
-                        task[id].append(int(val))
-                    except ValueError:
-                        pass
-    if len(params) > 5:
-        task['user'] = params[5]
-        task['cmd'] = params[6].strip()
+                elif val.isdigit():
+                    task[id].append(int(val))
+    task['user'] = params[5]
+    task['cmd'] = params[6]
     return task
 
 
 class cronlauncher(threading.Thread):
+
     def __init__(self, cmdline, shell=True):
         threading.Thread.__init__(self)
         self.cmd = cmdline
@@ -235,9 +226,7 @@ class cronlauncher(threading.Thread):
                 stdin=PIPE,
                 stdout=PIPE,
                 stderr=PIPE,
-                shell=self.shell
-                #close_fds=self.shell
-                )
+                shell=self.shell)
         (stdoutdata,stderrdata) = proc.communicate()
         if proc.returncode != 0:
             logging.warning(
@@ -251,7 +240,8 @@ class cronlauncher(threading.Thread):
         try:
             self.run_popen()
         except KeyError, e:
-            logging.error('WEB2PY CRON: Execution error for %s: %s' % (self.cmd, e))
+            logging.error('WEB2PY CRON: Execution error for %s: %s' \
+                              % (self.cmd, e))
 
 
 def crondance(apppath, ctype='soft',startup=False):
@@ -260,77 +250,64 @@ def crondance(apppath, ctype='soft',startup=False):
     if not cronmaster:
         return cronmaster
     if os.path.exists('web2py.py'):
-        mainrun = sys.executable+' web2py.py' # run from source
+        mainrun = sys.executable + ' web2py.py' # run from source
     else:
         mainrun = sys.executable # run windows binary
-    try:
-        now_s = time.localtime()
-        for app in filter(lambda x: os.path.isdir(os.path.join(apppath, x)),
-                os.listdir(apppath)):
-            apath=os.path.join(apppath,app)
-            cronpath = os.path.join(apath, 'cron')
-            # If the cron folder does not exist, we will
-            # create it
-            if not os.path.exists(cronpath):
-                os.mkdir(cronpath)
 
-            crontab = os.path.join(cronpath, 'crontab')
+    now_s = time.localtime()
+    checks={'min':now_s.tm_min,
+            'hr':now_s.tm_hour,
+            'mon':now_s.tm_mon,
+            'dom':now_s.tm_mday,
+            'dow':now_s.tm_wday}
 
-            if os.path.exists(crontab):
-                f = open(crontab, 'rt')
-                cronlines = f.readlines()
-                for cline in filter(lambda x: \
-                                        not x.strip().startswith('#')\
-                                        and len(x.strip()) > 0, cronlines):
-                    task = parsecronline(cline)
-                    go = True
-                    if 'min' in task and not now_s.tm_min in task['min']:
-                        if task['min'] != [-1] or ctype == 'ext':
-                            go = False
-                    elif 'hr' in task and not now_s.tm_hour in task['hr']:
-                        go = False
-                    elif 'mon' in task and not now_s.tm_mon in task['mon']:
-                        go = False
-                    elif 'dom' in task and not now_s.tm_mday in task['dom']:
-                        go = False
-                    elif 'dow' in task and not now_s.tm_wday in task['dow']:
-                        go = False
-                    if startup:
-                        go = 'min' in task and task['min'] == [-1]
+    apps = [x for x in os.listdir(apppath) 
+            if os.path.isdir(os.path.join(apppath, x))]
 
-                    if go and 'cmd' in task:
-                        logging.info(
-                            'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
-                                % (ctype, app, task.get('cmd'),
-                                   os.getcwd(), datetime.datetime.now()))
-                        try:
-                            command = task['cmd']
-                            if command.startswith('**'):
-                                (action,models,command) = (True,'',command[2:])
-                            elif command.startswith('*'):
-                                (action,models,command) = (True,'-M',command[1:])
-                            else:
-                                action=False
-                            if command.endswith('.py'):
-                                shell_command = \
-                                    '%s -P -N %s -S %s -a "<recycle>" -R %s' \
-                                    % (mainrun,models,app,command)
-                                cronlauncher(shell_command,
-                                             shell=True).start()
-                            elif action:
-                                shell_command = \
-                                    '%s -P -N %s -S %s/%s -a "<recycle>"' \
-                                    % (mainrun,models,app,command)
-                                cronlauncher(shell_command,
-                                             shell=True).start()
-                            else:
-                                cronlauncher(command).start()
-                        except Exception, e:
-                            logging.warning(
-                                'WEB2PY CRON: Execution error for %s: %s' \
-                                    % (task.get('cmd'), e))
-    except Exception, e:
-        import traceback
-        logging.warning(traceback.format_exc())
-        logging.warning('WEB2PY CRON: exception: %s', e)
+    for app in apps:
+        apath = os.path.join(apppath,app)
+        cronpath = os.path.join(apath, 'cron')
+        crontab = os.path.join(cronpath, 'crontab')        
+        if not os.path.exists(crontab):
+            continue
+        f = open(crontab, 'rt')
+        cronlines = f.readlines()
+        lines = [x for x in cronlines if x.strip() and x[0]!='#']
+        tasks = [parsecronline(cline) for cline in lines]                
+        
+        for task in tasks:
+            if not task:
+                continue
+            elif not startup and task.get('min',[])==[-1]:
+                continue
+            for key, value in checks.items():
+                if min in task and not value in task[min]:
+                    continue
+            logging.info(
+                'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
+                    % (ctype, app, task.get('cmd'),
+                       os.getcwd(), datetime.datetime.now()))
+            command = task['cmd']
+            if command.startswith('**'):
+                (action,models,command) = (True,'',command[2:])
+            elif command.startswith('*'):
+                (action,models,command) = (True,'-M',command[1:])
+            else:
+                action=False
+            if command.endswith('.py'):
+                command = '%s -P -N %s -S %s -a "<recycle>" -R %s' \
+                    % (mainrun,models,app,command)
+                shell = True
+            elif action:
+                command = '%s -P -N %s -S %s/%s -a "<recycle>"' \
+                    % (mainrun,models,app,command)
+                shell = True
+            else:
+                shell = False
+            try:
+                cronlauncher(command, shell=True).start()
+            except Exception, e:
+                logging.warning(
+                    'WEB2PY CRON: Execution error for %s: %s' \
+                        % (task.get('cmd'), e))
     return tokenmaster(cron_path, action='release', startup=startup)
