@@ -2850,3 +2850,16 @@ class Service:
 
     def error(self):
         raise HTTP(404, "Object does not exist")
+
+
+def completion(callback):
+    def _completion(f):
+        def __completion():
+            d = {}
+            try:
+                d = f()
+                return d
+            finally:
+                callback(d)
+        return __completion
+    return _completion
