@@ -2854,10 +2854,10 @@ class Service:
 
 def completion(callback):
     def _completion(f):
-        def __completion():
-            d = {}
+        def __completion(*a,**b):
+            d = None
             try:
-                d = f()
+                d = f(*a,**b)
                 return d
             finally:
                 callback(d)
