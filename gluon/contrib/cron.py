@@ -233,8 +233,8 @@ class cronlauncher(threading.Thread):
                 'WEB2PY CRON Call returned code %s:\n%s' % \
                     (proc.returncode, stdoutdata+stderrdata))
         else:
-            logging.debug('WEB2PY CRON Call retruned success:\n%s' % stdoutdata)
-
+            logging.debug('WEB2PY CRON Call retruned success:\n%s' \
+                              % stdoutdata)
 
     def run(self):
         try:
@@ -255,11 +255,11 @@ def crondance(apppath, ctype='soft',startup=False):
         mainrun = sys.executable # run windows binary
 
     now_s = time.localtime()
-    checks={'min':now_s.tm_min,
-            'hr':now_s.tm_hour,
-            'mon':now_s.tm_mon,
-            'dom':now_s.tm_mday,
-            'dow':now_s.tm_wday}
+    checks=(('min',now_s.tm_min),
+            ('hr',now_s.tm_hour),
+            ('mon',now_s.tm_mon),
+            ('dom',now_s.tm_mday),
+            ('dow',now_s.tm_wday))
 
     apps = [x for x in os.listdir(apppath) 
             if os.path.isdir(os.path.join(apppath, x))]
@@ -280,7 +280,7 @@ def crondance(apppath, ctype='soft',startup=False):
                 continue
             elif not startup and task.get('min',[])==[-1]:
                 continue
-            for key, value in checks.items():
+            for key, value in checks:
                 if min in task and not value in task[min]:
                     continue
             logging.info(
