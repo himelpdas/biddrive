@@ -28,36 +28,25 @@ class extcron(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.setDaemon(False)
-        self.basedir = os.getcwd()
+        self.path = apppath(dict(web2py_path=os.getcwd()))
 
     def run(self):
         logging.debug('External cron invocation')
-        if tokenmaster(os.path.join(
-                self.basedir, 'applications', 'admin', 'cron')):
-            crondance(apppath({'web2py_path': self.basedir}), 'ext')
-            tokenmaster(os.path.join(
-                self.basedir, 'applications', 'admin', 'cron'),
-            action = 'release')
-
+        crondance(self.path, 'ext')
 
 class hardcron(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.basedir = os.getcwd()
-        hardcron.startup = True
+        self.path = apppath(dict(web2py_path=os.getcwd()))
+        self.startup = True
         self.launch()
-        hardcron.startup = False
+        self.startup = False
 
     def launch(self):
-        path = apppath({'web2py_path': self.basedir})
-        if crontype =='hard' and \
-                tokenmaster(os.path.join(path, 'admin', 'cron'),
-                            startup = hardcron.startup):
-            crondance(path, 'hard', startup = hardcron.startup)
-            tokenmaster(os.path.join(path, 'admin', 'cron'), action = 'release')
-
+        crondance(self.path, 'hard', startup = self.startup)
+        
     def run(self):
         s = sched.scheduler(time.time, time.sleep)
         logging.info('Hard cron daemon started')
@@ -65,7 +54,6 @@ class hardcron(threading.Thread):
             now = time.time()
             s.enter(60 - now % 60, 1, self.launch, ())
             s.run()
-
 
 class softcron(threading.Thread):
 
@@ -75,14 +63,8 @@ class softcron(threading.Thread):
         self.cronmaster = 0
         self.softwindow = 120
         self.path = apppath(self.env)
-        self.cronmaster = tokenmaster(os.path.join(self.path, 'admin', 'cron'),
-                                      startup = True)
-        if self.cronmaster:
-            crondance(self.path, 'soft', starup = True)
-            self.cronmaster = \
-                tokenmaster(os.path.join(self.path, 'admin', 'cron'),
-                            action = 'release')
-
+        self.cronmaster = crondance(self.path, 'soft', starup = True)
+        
     def run(self):
         if crontype != 'soft':
             return
@@ -97,16 +79,10 @@ class softcron(threading.Thread):
         logging.debug('Cronmaster stamp: %s, Now: %s'
                       % (self.cronmaster, now))
         if 60 <= now - self.cronmaster:  # new minute, do the cron dance
-            self.cronmaster = tokenmaster(os.path.join(self.path,
-                                                       'admin', 'cron'))
-            if self.cronmaster:
-                crondance(self.path, 'soft')
-                self.cronmaster = \
-                    tokenmaster(os.path.join(self.path, 'admin', 'cron'),
-                                action = 'release')
+            self.cronmaster = crondance(self.path, 'soft')
 
 
-def tokenmaster(path, db = None, action = 'claim', startup = False):
+def tokenmaster(path, action = 'claim', startup = False):
     token = os.path.join(path, 'cron.master')
     tokeninuse = os.path.join(path, 'cron.running')
     global crontype
@@ -279,6 +255,10 @@ class cronlauncher(threading.Thread):
 
 
 def crondance(apppath, ctype='soft',startup=False):
+    cron_path = os.path.join(apppath,'admin','cron')
+    cronmaster = tokenmaster(cron_path, action='claim', startup=startup)
+    if not cronmaster:
+        return cronmaster
     if os.path.exists('web2py.py'):
         mainrun = sys.executable+' web2py.py' # run from source
     else:
@@ -349,8 +329,8 @@ def crondance(apppath, ctype='soft',startup=False):
                             logging.warning(
                                 'WEB2PY CRON: Execution error for %s: %s' \
                                     % (task.get('cmd'), e))
-
     except Exception, e:
         import traceback
         logging.warning(traceback.format_exc())
         logging.warning('WEB2PY CRON: exception: %s', e)
+    return tokenmaster(cron_path, action='release', startup=startup)
