@@ -46,12 +46,16 @@ class hardcron(threading.Thread):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.basedir = os.getcwd()
+        hardcron.startup = True
+        self.launch()
+        hardcron.startup = False
 
     def launch(self):
         path = apppath({'web2py_path': self.basedir})
-        if crontype =='hard' and tokenmaster(os.path.join(path, 'admin', 'cron')):
-
-            crondance(path, 'hard')
+        if crontype =='hard' and \
+                tokenmaster(os.path.join(path, 'admin', 'cron'),
+                            startup = hardcron.startup):
+            crondance(path, 'hard', startup = hardcron.startup)
             tokenmaster(os.path.join(path, 'admin', 'cron'), action = 'release')
 
     def run(self):
@@ -70,12 +74,18 @@ class softcron(threading.Thread):
         self.env = env
         self.cronmaster = 0
         self.softwindow = 120
+        self.path = apppath(self.env)
+        self.cronmaster = tokenmaster(os.path.join(self.path, 'admin', 'cron'),
+                                      startup = True)
+        if self.cronmaster:
+            crondance(self.path, 'soft', starup = True)
+            self.cronmaster = \
+                tokenmaster(os.path.join(self.path, 'admin', 'cron'),
+                            action = 'release')
 
     def run(self):
         if crontype != 'soft':
             return
-
-        path = apppath(self.env)
         now = time.time()
         # our own thread did a cron check less than a minute ago, don't even
         # bother checking the file
@@ -85,17 +95,18 @@ class softcron(threading.Thread):
             return
 
         logging.debug('Cronmaster stamp: %s, Now: %s'
-                       % (self.cronmaster, now))
+                      % (self.cronmaster, now))
         if 60 <= now - self.cronmaster:  # new minute, do the cron dance
-            self.cronmaster = tokenmaster(os.path.join(path, 'admin', 'cron'))
+            self.cronmaster = tokenmaster(os.path.join(self.path,
+                                                       'admin', 'cron'))
             if self.cronmaster:
-                crondance(path, 'soft')
+                crondance(self.path, 'soft')
                 self.cronmaster = \
-                    tokenmaster(os.path.join(path, 'admin', 'cron'),
-                        action = 'release')
+                    tokenmaster(os.path.join(self.path, 'admin', 'cron'),
+                                action = 'release')
 
 
-def tokenmaster(path, db = None, action = 'claim'):
+def tokenmaster(path, db = None, action = 'claim', startup = False):
     token = os.path.join(path, 'cron.master')
     tokeninuse = os.path.join(path, 'cron.running')
     global crontype
@@ -108,13 +119,14 @@ def tokenmaster(path, db = None, action = 'claim'):
         except:
             return 0
 
-    try:
-        tokentime = os.stat(token).st_mtime
-        # already ran in this minute?
-        if tokentime - (tokentime % 60) + 60 > time.time():
-            return 0
-    except:
-        pass
+    if not startup:
+        try:
+            tokentime = os.stat(token).st_mtime
+            # already ran in this minute?
+            if tokentime - (tokentime % 60) + 60 > time.time():
+                return 0
+        except:
+            pass
 
     try:
         # running now?
@@ -293,7 +305,7 @@ def crondance(apppath, ctype='soft',startup=False):
                     task = parsecronline(cline)
                     go = True
                     if 'min' in task and not now_s.tm_min in task['min']:
-                        if task['min'] > -1 or ctype == 'ext':
+                        if task['min'] != [-1] or ctype == 'ext':
                             go = False
                     elif 'hr' in task and not now_s.tm_hour in task['hr']:
                         go = False
@@ -303,9 +315,9 @@ def crondance(apppath, ctype='soft',startup=False):
                         go = False
                     elif 'dow' in task and not now_s.tm_wday in task['dow']:
                         go = False
-                    if startup:                        
-                        go = 'min' in task and task['min'] == -1
-                        
+                    if startup:
+                        go = 'min' in task and task['min'] == [-1]
+
                     if go and 'cmd' in task:
                         logging.info(
                             'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
@@ -331,15 +343,14 @@ def crondance(apppath, ctype='soft',startup=False):
                                     % (mainrun,models,app,command)
                                 cronlauncher(shell_command,
                                              shell=True).start()
-
                             else:
                                 cronlauncher(command).start()
                         except Exception, e:
                             logging.warning(
                                 'WEB2PY CRON: Execution error for %s: %s' \
                                     % (task.get('cmd'), e))
-    except Exception, e:
 
+    except Exception, e:
         import traceback
         logging.warning(traceback.format_exc())
         logging.warning('WEB2PY CRON: exception: %s', e)
