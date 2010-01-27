@@ -220,7 +220,7 @@ def middleware_aux(request, response, *middleware_apps):
 
         @request.wsgi.middleware(middleware1, middleware2, ...)
 
-    to decorate actions with WSGI middleware. actions must retrun strings.
+    to decorate actions with WSGI middleware. actions must return strings.
     uses a simulated environment so it may have weird behavior in some cases
     """
     def middleware(f):
