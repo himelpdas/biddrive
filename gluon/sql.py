@@ -3413,7 +3413,7 @@ class Rows(object):
         """
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
-        quoting = kwargs.get('quoting', csv.QUOTE_NONNUMERIC)
+        quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
         represent = kwargs.get('represent', False)
         writer = csv.writer(ofile, delimiter=delimiter,
                             quotechar=quotechar, quoting=quoting)
