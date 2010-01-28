@@ -1905,7 +1905,7 @@ class Table(dict):
 
         delimiter = kwargs.get('delimiter', ',')
         quotechar = kwargs.get('quotechar', '"')
-        quoting = kwargs.get('quoting', csv.QUOTE_NONNUMERIC)
+        quoting = kwargs.get('quoting', csv.QUOTE_MINIMAL)
 
         reader = csv.reader(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=quoting)
         colnames = None
