@@ -812,9 +812,9 @@ class SQLFORM(FORM):
                 continue
             if field.type == 'boolean':
                 if self.vars.get(fieldname, False):
-                    fields[fieldname] = True
+                    self.vars[fieldname] = fields[fieldname] = True
                 else:
-                    fields[fieldname] = False
+                    self.vars[fieldname] = fields[fieldname] = False
             elif field.type == 'password' and self.record\
                 and request_vars.get(fieldname, None) == \
                     PasswordWidget.DEFAULT_PASSWORD_DISPLAY:
