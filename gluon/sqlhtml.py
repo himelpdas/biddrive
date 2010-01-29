@@ -891,7 +891,17 @@ class SQLFORM(FORM):
         Internally will build a non-database based data model
         to hold the fields.
         """
-        return SQLFORM(SQLDB(None).define_table('no_table', *fields),
+        # Define a table name, this way it can be logical to our CSS.
+        # And if you switch from using SQLFORM to SQLFORM.factory
+        # your same css definitions will still apply.
+
+        table_name = attributes.get('table_name', 'no_table')
+
+        # So it won't interfear with SQLDB.define_table
+        if 'table_name' in attributes:
+            del attributes['table_name']
+
+        return SQLFORM(SQLDB(None).define_table(table_name, *fields),
                        **attributes)
 
 
