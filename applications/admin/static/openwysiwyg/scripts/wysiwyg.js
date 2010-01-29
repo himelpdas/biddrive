@@ -1594,7 +1594,7 @@ var WYSIWYG = {
 				}
 			}	
 		}
-		
+
 		// strip url of image path
 		if(stripAnchorUrl) {						
 			// escape reserved characters to be a valid regex		

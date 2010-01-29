@@ -120,15 +120,15 @@ class translator(object):
         self.lazy = True
 
     def set_current_languages(self, *languages):
-        if len(languages)==1 and isinstance(languages[0],(list,tuple)):
+        if len(languages)==1 and isinstance(languages[0], (tuple,list)):
             languages=languages[0]
-        self.http_current_languages = languages
+        self.current_languages = languages
         self.force(self.http_accept_language)
 
     def force(self, *languages):
         if not languages or languages[0]==None:
             languages = []
-        elif len(languages)==1 and isinstance(languages[0],(list,tuple)):
+        if len(languages)==1 and isinstance(languages[0], (str, unicode)):
             languages=languages[0]
         if languages:
             if isinstance(languages, (str, unicode)):
@@ -137,6 +137,7 @@ class translator(object):
                 [languages.extend(al.split(',')) for al in accept_languages]
                 languages = [item.strip().lower() for item in languages \
                                  if regex_language.match(item.strip())]
+
             for language in languages:
                 if language in self.current_languages:
                     self.accepted_language = language

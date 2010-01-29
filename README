@@ -642,3 +642,9 @@ web2py.py -nogui, thanks Jeff Bauer
 solved a problem with jython, thanks Tim Farrel
 login has "remember be option", thanks Piotr Banasziewicz
 fixed problem with keepvalue in update forms, thanks Miguel Lopez
+
+#1.74.9
+IS_IN_SET(((0,'label0'),(1,'label1'))), thanks Falko Krause
+SQLFORM(...).accpets stores True or False in boolean types no None, thanks Frederik Wagner
+SQLFORM.factory(...,table_name='no_table'), thanks Thedeus
+jQuery 1.4.1
