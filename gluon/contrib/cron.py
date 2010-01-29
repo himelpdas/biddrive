@@ -16,6 +16,7 @@ import sched
 import re
 import datetime
 import traceback
+import platform
 from subprocess import Popen, PIPE
 
 # crontype can be 'soft', 'hard', 'external', None
@@ -253,6 +254,9 @@ def crondance(apppath, ctype='soft',startup=False):
         mainrun = sys.executable + ' web2py.py' # run from source
     else:
         mainrun = sys.executable # run windows binary
+    if platform.system().lower()=='windows':
+        if re.compile('(?<!\\\\) ').search(mainrun):
+            mainrun = mainrun.replace('\\','/').replace(' ','\\ ')
 
     now_s = time.localtime()
     checks=(('min',now_s.tm_min),

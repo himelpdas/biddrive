@@ -4,6 +4,7 @@ clean:
 	rm -f -r applications/*/compiled     	
 	find ./ -name '*~' -exec rm -f {} \; 
 	find ./ -name '#*' -exec rm -f {} \;
+	find ./ -name 'Thumbs.db' -exec rm -f {} \; 
 	find ./gluon/ -name '.*' -exec rm -f {} \;
 	find ./gluon/ -name '*class' -exec rm -f {} \; 
 	find ./applications/admin/ -name '.*' -exec rm -f {} \; 
