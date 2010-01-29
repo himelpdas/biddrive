@@ -253,7 +253,13 @@ class IS_IN_SET(Validator):
         self.theset = [str(item) for item in theset]
         if isinstance(theset, dict):
             self.labels = theset.values()
+        elif theset and (isinstance(theset[0], list) or  \
+                           isinstance(theset[0], tuple)) \
+                           and len(theset[0])==2:
+            self.theset = [str(item) for item,label in theset]
+            self.labels = [str(label) for item,label in theset]
         else:
+            self.theset = [str(item) for item in theset]
             self.labels = labels
         self.error_message = error_message
         self.zero = zero
