@@ -17,7 +17,7 @@ import re
 import datetime
 import traceback
 import platform
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
 
 # crontype can be 'soft', 'hard', 'external', None
 crontype = 'soft'
@@ -212,22 +212,17 @@ def parsecronline(line):
 
 class cronlauncher(threading.Thread):
 
-    def __init__(self, cmdline, shell=True):
+    def __init__(self, cmd, shell=True):
         threading.Thread.__init__(self)
-        self.cmd = cmdline
+        self.cmd = cmd
         self.shell = shell
 
     def run_popen(self):
-        if os.name == 'nt':
-            proc = Popen(self.cmd, stdin=PIPE, stdout=PIPE,
-                         stderr=PIPE, shell=self.shell)
-        else:
-            proc = Popen(
-                self.cmd,
-                stdin=PIPE,
-                stdout=PIPE,
-                stderr=PIPE,
-                shell=self.shell)
+        proc = Popen(self.cmd, 
+                     stdin=PIPE,
+                     stdout=PIPE,
+                     stderr=PIPE,
+                     shell=self.shell)
         (stdoutdata,stderrdata) = proc.communicate()
         if proc.returncode != 0:
             logging.warning(
@@ -250,13 +245,9 @@ def crondance(apppath, ctype='soft',startup=False):
     cronmaster = tokenmaster(cron_path, action='claim', startup=startup)
     if not cronmaster:
         return cronmaster
+    commands = [sys.executable]
     if os.path.exists('web2py.py'):
-        mainrun = sys.executable + ' web2py.py' # run from source
-    else:
-        mainrun = sys.executable # run windows binary
-    if platform.system().lower()=='windows':
-        if re.compile('(?<!\\\\) ').search(mainrun):
-            mainrun = mainrun.replace('\\','/').replace(' ','\\ ')
+        commands.append('web2py.py')
 
     now_s = time.localtime()
     checks=(('min',now_s.tm_min),
@@ -299,17 +290,23 @@ def crondance(apppath, ctype='soft',startup=False):
             else:
                 action=False
             if command.endswith('.py'):
-                command = '%s -P -N %s -S %s -a "<recycle>" -R %s' \
-                    % (mainrun,models,app,command)
+                commands.extend(('-P',
+                                 '-N',models,
+                                 '-S',app,
+                                 '-a','"<recycle>"',
+                                 '-R',command))
                 shell = True
             elif action:
-                command = '%s -P -N %s -S %s/%s -a "<recycle>"' \
-                    % (mainrun,models,app,command)
+                commands.extend(('-P',
+                                 '-N',models,
+                                 '-S',app+'/'+command,
+                                 '-a','"<recycle>"'))
                 shell = True
             else:
+                commands = command
                 shell = False
             try:
-                cronlauncher(command, shell=True).start()
+                cronlauncher(commands, shell=shell).start()
             except Exception, e:
                 logging.warning(
                     'WEB2PY CRON: Execution error for %s: %s' \

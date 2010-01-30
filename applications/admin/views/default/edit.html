@@ -17,6 +17,9 @@ jQuery(document).ready(function(){
 
 <div style="text-align:left;" id="exposed">
 {{if functions:}}
+  {{if editviewlinks:}}
+  {{=T('edit views:')}} {{=XML(', '.join([v.xml() for v in editviewlinks]))}}<br/>
+  {{pass}}
 {{=T('exposes')}} {{=XML(', '.join([A(f,_href=URL(a=app,c=controller,f=f)).xml() for f in functions]))}}
 {{pass}}
 

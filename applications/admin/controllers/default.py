@@ -1,6 +1,7 @@
 # coding: utf8 
 
 from gluon.admin import *
+from glob import glob
 import shutil
 
 def index():
@@ -341,6 +342,7 @@ def edit():
             response.flash = T('failed to reload module')
 
     edit_controller = None
+    editviewlinks = None
     view_link = None
     if filetype == 'html' and request.args >= 3:
         cfilename = os.path.join(request.args[0], 'controllers',
@@ -349,6 +351,26 @@ def edit():
             edit_controller = URL(r=request, f='edit', args=[cfilename])
             view = request.args[3].replace('.html','')
             view_link = A(T('view'),_href=URL(request.args[0],request.args[2],view))
+    elif filetype == 'python' and request.args[1] == 'controllers':
+        ## it's a controller file.
+        ## Create links to all of the associated view files.
+        app = request.args[0]
+        viewname = os.path.splitext(request.args[2])[0]
+        viewpath = os.path.join(app,'views',viewname)
+        aviewpath = apath(viewpath, r=request)
+        viewlist = []
+        if os.path.exists(aviewpath):
+            if os.path.isdir(aviewpath):
+                viewlist = glob(os.path.join(aviewpath,'*.html'))
+        elif os.path.exists(aviewpath+'.html'):
+            viewlist.append(aviewpath+'.html')
+        if len(viewlist):
+            editviewlinks = []
+            for v in viewlist:
+                vfilepath = v[v.find(viewpath):]
+                vfilebase = os.path.splitext(os.path.basename(vfilepath))[0]
+                editviewlinks.append(A(T(vfilebase),\
+                   _href=URL(r=request,f='edit',args=[vfilepath])))
 
     if len(request.args) > 2 and request.args[1] == 'controllers':
         controller = (request.args[2])[:-3]
@@ -378,7 +400,8 @@ def edit():
                     controller=controller,
                     functions=functions,
                     view_link=view_link,
-                    editarea_preferences=editarea_preferences)
+                    editarea_preferences=editarea_preferences,
+                    editviewlinks=editviewlinks)
 
 def resolve():
     """  """
