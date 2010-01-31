@@ -289,7 +289,7 @@ def crondance(apppath, ctype='soft',startup=False):
                 (action,models,command) = (True,'-M',command[1:])
             else:
                 action=False
-            if command.endswith('.py'):
+            if action and command.endswith('.py'):
                 commands.extend(('-P',
                                  '-N',models,
                                  '-S',app,
