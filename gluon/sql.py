@@ -1844,6 +1844,10 @@ class Table(dict):
         sql_t = self._tablename
         return 'INSERT INTO %s(%s) VALUES (%s);' % (sql_t, sql_f, sql_v)
 
+    def bulk_insert(self, *items):
+        """ this is here for competibility reasons with GAE """
+        return [self.insert(**item) for item in items]
+
     def insert(self, **fields):
         query = self._insert(**fields)
         self._db['_lastsql'] = query
