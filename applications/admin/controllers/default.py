@@ -367,10 +367,10 @@ def edit():
         if len(viewlist):
             editviewlinks = []
             for v in viewlist:
-                vfilepath = v[v.find(viewpath):]
-                vfilebase = os.path.splitext(os.path.basename(vfilepath))[0]
-                editviewlinks.append(A(T(vfilebase),\
-                   _href=URL(r=request,f='edit',args=[vfilepath])))
+                vf = os.path.split(v)[-1]
+                vargs = "/".join([viewpath.replace(os.sep,"/"),vf])
+                editviewlinks.append(A(T(vf.split(".")[0]),\
+                    _href=URL(r=request,f='edit',args=[vargs])))
 
     if len(request.args) > 2 and request.args[1] == 'controllers':
         controller = (request.args[2])[:-3]
