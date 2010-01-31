@@ -203,7 +203,7 @@ def parsecronline(line):
             for val in vals:
                 if val.find('/') > -1:
                     task[id] += rangetolist(val, id)
-                elif val.isdigit():
+                elif val.isdigit() or val=='-1':
                     task[id].append(int(val))
     task['user'] = params[5]
     task['cmd'] = params[6]
