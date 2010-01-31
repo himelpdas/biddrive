@@ -213,7 +213,7 @@ def parsecronline(line):
 class cronlauncher(threading.Thread):
 
     def __init__(self, cmd, shell=True):
-        if platform.systems()=='Windows':
+        if platform.system() == 'Windows':
             shell = False
         threading.Thread.__init__(self)
         self.cmd = cmd
@@ -278,7 +278,7 @@ def crondance(apppath, ctype='soft',startup=False):
             elif not startup and task.get('min',[])==[-1]:
                 continue
             for key, value in checks:
-                if min in task and not value in task[min]:
+                if key in task and not value in task[key]:
                     continue
             logging.info(
                 'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
