@@ -246,6 +246,22 @@ class Table(gluon.sql.Table):
 
         self._db(self.id > 0).delete()
 
+    def bulk_insert(self, *items):
+        parsed_items = []
+        for item in items:
+            fields = {}
+            for field in self.fields:
+                if not field in item and self[field].default != None:
+                    fields[field] = self[field].default
+                elif not field in item and self[field].compute != None:
+                    fields[field] = self[field].compute(item)
+                if field in item:
+                    fields[field] = obj_represent(item[field],
+                                                  self[field].type, self._db)
+            parsed_items.append(fields)
+        gae.put(parsed_items)
+        return True
+
     def insert(self, **fields):
         self._db['_lastsql'] = 'insert'
         for field in self.fields:
