@@ -282,7 +282,7 @@ def crondance(apppath, ctype='soft',startup=False):
                 'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
                     % (ctype, app, task.get('cmd'),
                        os.getcwd(), datetime.datetime.now()))
-            command = task['cmd']
+            action, command, models = False, task['cmd'], ''
             if command.startswith('**'):
                 (action,models,command) = (True,'',command[2:])
             elif command.startswith('*'):
