@@ -213,6 +213,8 @@ def parsecronline(line):
 class cronlauncher(threading.Thread):
 
     def __init__(self, cmd, shell=True):
+        if platform.systems()=='Windows':
+            shell = False
         threading.Thread.__init__(self)
         self.cmd = cmd
         self.shell = shell
