@@ -191,9 +191,9 @@ def compile_app():
     if c:
         session.flash = T('application compiled')
     else:
-        session.flash = T('Cannot compile: there are errors in your app.\
-        Debug it, correct errors and try again.')
-    
+        import traceback
+        tb = traceback.format_exc()
+        session.flash = DIV(T('Cannot compile: there are errors in your app:',CODE(tb)))    
     redirect(URL(r=request, f='site'))
 
 

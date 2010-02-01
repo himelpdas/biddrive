@@ -133,8 +133,7 @@ def app_compile(app, request):
     request:
         the global request object
     """
-    from compileapp import \
-        compile_application, remove_compiled_application
+    from compileapp import compile_application, remove_compiled_application
     folder = apath(app, request)
     try:
         compile_application(folder)
@@ -142,7 +141,6 @@ def app_compile(app, request):
     except (Exception, RestrictedError):
         remove_compiled_application(folder)
         return False
-
 
 def app_create(app, request):
     """

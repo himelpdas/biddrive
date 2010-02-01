@@ -304,7 +304,6 @@ def crondance(apppath, ctype='soft',startup=False):
                 commands = command
                 shell = False
             try:
-                print action, models, shell, commands,'\n\n'
                 cronlauncher(commands, shell=shell).start()
             except Exception, e:
                 logging.warning(
