@@ -213,13 +213,15 @@ def parsecronline(line):
 class cronlauncher(threading.Thread):
 
     def __init__(self, cmd, shell=True):
+        threading.Thread.__init__(self)
         if platform.system() == 'Windows':
             shell = False
-        threading.Thread.__init__(self)
+        elif isinstance(cmd,list):
+            cmd = ' '.join(cmd)
         self.cmd = cmd
         self.shell = shell
 
-    def run_popen(self):
+    def run(self):
         proc = Popen(self.cmd, 
                      stdin=PIPE,
                      stdout=PIPE,
@@ -233,14 +235,6 @@ class cronlauncher(threading.Thread):
         else:
             logging.debug('WEB2PY CRON Call retruned success:\n%s' \
                               % stdoutdata)
-
-    def run(self):
-        try:
-            self.run_popen()
-        except KeyError, e:
-            logging.error('WEB2PY CRON: Execution error for %s: %s' \
-                              % (self.cmd, e))
-
 
 def crondance(apppath, ctype='soft',startup=False):
     cron_path = os.path.join(apppath,'admin','cron')
@@ -271,15 +265,16 @@ def crondance(apppath, ctype='soft',startup=False):
         cronlines = f.readlines()
         lines = [x for x in cronlines if x.strip() and x[0]!='#']
         tasks = [parsecronline(cline) for cline in lines]                
-        
+
         for task in tasks:
             if not task:
                 continue
             elif not startup and task.get('min',[])==[-1]:
                 continue
-            for key, value in checks:
-                if key in task and not value in task[key]:
-                    continue
+            if not task.get('min',[])==[-1]:
+                for key, value in checks:
+                    if key in task and not value in task[key]:
+                        continue
             logging.info(
                 'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
                     % (ctype, app, task.get('cmd'),

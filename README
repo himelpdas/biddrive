@@ -649,3 +649,5 @@ SQLFORM(...).accpets stores True or False in boolean types no None, thanks Frede
 SQLFORM.factory(...,table_name='no_table'), thanks Thedeus
 jQuery 1.4.1
 Fixed major problem with internationalization of multiple languages.
+Fixed a serius security issue with login
+Possibly fixed some issues with cron
