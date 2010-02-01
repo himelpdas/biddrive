@@ -241,9 +241,6 @@ def crondance(apppath, ctype='soft',startup=False):
     cronmaster = tokenmaster(cron_path, action='claim', startup=startup)
     if not cronmaster:
         return cronmaster
-    commands = [sys.executable]
-    if os.path.exists('web2py.py'):
-        commands.append('web2py.py')
 
     now_s = time.localtime()
     checks=(('min',now_s.tm_min),
@@ -267,6 +264,10 @@ def crondance(apppath, ctype='soft',startup=False):
         tasks = [parsecronline(cline) for cline in lines]                
 
         for task in tasks:
+            commands = [sys.executable]
+            if os.path.exists('web2py.py'):
+                commands.append('web2py.py')
+
             if not task:
                 continue
             elif not startup and task.get('min',[])==[-1]:
@@ -303,6 +304,7 @@ def crondance(apppath, ctype='soft',startup=False):
                 commands = command
                 shell = False
             try:
+                print action, models, shell, commands,'\n\n'
                 cronlauncher(commands, shell=shell).start()
             except Exception, e:
                 logging.warning(

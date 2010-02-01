@@ -24,7 +24,7 @@ elif not remote_addr in hosts:
 
 try:
     _config = {}
-    port = int(request.env.server_port)
+    port = int(request.env.server_port or 0)
     restricted(open(apath('../parameters_%i.py' % port, request), 'r').read(), _config)
 
     if not 'password' in _config or not _config['password']:
