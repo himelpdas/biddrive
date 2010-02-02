@@ -860,3 +860,4 @@ def start(cron = True):
         server.start()
     except KeyboardInterrupt:
         server.stop()
+        os.kill(os.getpid(),signal.SIGKILL)
