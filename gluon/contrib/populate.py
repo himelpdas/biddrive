@@ -61,6 +61,7 @@ def populate(table, n, default=True):
     #ell.save('frequencies.pickle')
     #ell.load('frequencies.pickle')
     ell.loadd(IUP)
+    ids={}
     for i in range(n):
         record={}
         for fieldname in table.fields:
@@ -91,12 +92,17 @@ def populate(table, n, default=True):
                 except:
                     record[fieldname] = random.randint(0,1000)
             elif field.type[:10] == 'reference ':
-                if table._db._dbname=='gql':
-                    record[fieldname] = table._db(table._db[field.type[10:]].id>0)\
-                        .select().first()
+                tablename = field.type[10:]
+                if not tablename in ids:
+                    if table._db._dbname=='gql':
+                        ids[tableame] = [x.id for x in table._db(table._db[field.type[10:]].id>0).select()]
+                    else:
+                        ids[tablename] = [x.id for x in table._db(table._db[field.type[10:]].id>0).select()]
+                n = len(ids[tablename])
+                if n:
+                    record[fieldname] = ids[tablename][random.randint(0,n-1)]
                 else:
-                    record[fieldname] = table._db(table._db[field.type[10:]].id>0)\
-                        .select(orderby='<random>').first()
+                    record[fieldname] = 0
             elif field.type=='string' and hasattr(field.requires,'options'):
                 options=field.requires.options()
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
