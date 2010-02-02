@@ -3177,7 +3177,7 @@ class Set(object):
                                        if not fieldname in update_fields \
                                        and table[fieldname].update != None]))
         update_fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
-                                       for filedname in table.fields \
+                                       for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].compute != None]))
         sql_v = 'SET ' + ', '.join(['%s=%s' % (field,
