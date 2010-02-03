@@ -43,6 +43,9 @@ import struct
 from utils import md5_hash
 from serializers import json
 
+
+from gluon.dal import BaseAdapter as NEWDALBaseAdapter
+
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
@@ -1226,7 +1229,7 @@ class SQLDB(dict):
 
         for key in args:
             if key not in ['migrate','primarykey','fake_migrate','format']:
-                raise SyntaxError, 'invalid table \'%s\' attribute: %s' % (tablename, key)
+                raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
         migrate = args.get('migrate',True)
         fake_migrate = args.get('fake_migrate', False)
         format = args.get('format',None)
@@ -1235,6 +1238,11 @@ class SQLDB(dict):
             raise SyntaxError, 'invalid table name: %s' % tablename
         if tablename in self.tables:
             raise SyntaxError, 'table already defined: %s' % tablename
+        if tablename.upper() in NEWDALBaseAdapter.KEYWORDS_COMMON:
+            raise SyntaxError, 'invalid tablename "%s": is a reserved sql keyword' % tablename
+        if tablename.upper() in NEWDALBaseAdapter.KEYWORDS_ALL:
+            logging.warn('tablename "%s" is a reserved sql keyword. it might not work on all databases' % tablename)
+
         if 'primarykey' in args:
             t = self[tablename] = KeyedTable(self, tablename, *fields,
                                              **dict(primarykey=args['primarykey']))
@@ -1512,7 +1520,7 @@ class Table(dict):
                 if not referenced:
                     raise SyntaxError, 'Table: reference to nothing: %s' % referenced
                 if not referenced in self._db:
-                    raise SyntaxError, 'Table: table \'%s\'does not exist' % referenced
+                    raise SyntaxError, 'Table: table "%s" does not exist' % referenced
                 referee = self._db[referenced]
                 if self._tablename in referee.fields:
                     raise SyntaxError, 'Field: table %s has same name as a field in referenced table %s' % (self._tablename, referee._tablename)
@@ -2032,11 +2040,11 @@ class KeyedTable(Table):
 
         for k,v in args.iteritems():
             if k != 'primarykey':
-                raise SyntaxError, 'invalid table \'%s\' attribute: %s' % (tablename, k)
+                raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, k)
             elif isinstance(v,list):
                 self._primarykey=v
             else:
-                raise SyntaxError, 'primarykey must be a list of fields from table \'%s\' ' %tablename
+                raise SyntaxError, 'primarykey must be a list of fields from table "%s" ' %tablename
 
         new_fields = []
 
@@ -2071,7 +2079,7 @@ class KeyedTable(Table):
         for k in self._primarykey:
             if k not in self.fields:
                 raise SyntaxError,\
-                'primarykey must be a list of fields from table \'%s\' ' %\
+                'primarykey must be a list of fields from table "%s" ' %\
                  tablename
             else:
                 self[k].notnull = True
@@ -2091,14 +2099,14 @@ class KeyedTable(Table):
                 rtablename,rfieldname = refs
                 if not rtablename in self._db.tables:
                     raise SyntaxError,\
-                    'Table: table \'%s\'does not exist' %rtablename
+                    'Table: table "%s" does not exist' %rtablename
                 rtable = self._db[rtablename]
                 if not isinstance(rtable, KeyedTable):
                     raise SyntaxError,\
                     'keyed tables can only reference other keyed tables (for now)'
                 if self._tablename in rtable.fields:
                     raise SyntaxError,\
-                    'Field: table %s has same name as a field in referenced table \'%s\'' %\
+                    'Field: table %s has same name as a field in referenced table "%s"' %\
                     (self._tablename, rtablename)
                 if rfieldname not in rtable.fields:
                     raise SyntaxError,\
@@ -2544,6 +2552,11 @@ class Field(Expression):
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
+        if fieldname.upper() in NEWDALBaseAdapter.KEYWORDS_COMMON:
+            raise SyntaxError, 'invalid fieldname "%s": is a reserved sql keyword' % fieldname
+        if fieldname.upper() in NEWDALBaseAdapter.KEYWORDS_ALL:
+            logging.warn('fieldname "%s" is a reserved sql keyword. it might not work on all databases' % fieldname)
+
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
         if length == None:
@@ -2785,7 +2798,7 @@ class Query(object):
                              for i in right])
                 self.sql = '%s%s(%s)' % (left, op, r)
             else:
-                raise SyntaxError, 'Right argument of \'IN\' is not suitable'
+                raise SyntaxError, 'Right argument of "IN" is not suitable'
         elif isinstance(right, (Field, Expression)):
             self.sql = '%s%s%s' % (left, op, right)
         else:
