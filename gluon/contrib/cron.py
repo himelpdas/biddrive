@@ -45,7 +45,7 @@ class hardcron(threading.Thread):
 
     def launch(self):
         crondance(self.path, 'hard', startup = self.startup)
-        
+
     def run(self):
         s = sched.scheduler(time.time, time.sleep)
         logging.info('Hard cron daemon started')
@@ -63,7 +63,7 @@ class softcron(threading.Thread):
         self.softwindow = 120
         self.path = apppath(self.env)
         self.cronmaster = crondance(self.path, 'soft', starup = True)
-        
+
     def run(self):
         if crontype != 'soft':
             return
@@ -222,7 +222,7 @@ class cronlauncher(threading.Thread):
         self.shell = shell
 
     def run(self):
-        proc = Popen(self.cmd, 
+        proc = Popen(self.cmd,
                      stdin=PIPE,
                      stdout=PIPE,
                      stderr=PIPE,
@@ -249,19 +249,19 @@ def crondance(apppath, ctype='soft',startup=False):
             ('dom',now_s.tm_mday),
             ('dow',now_s.tm_wday))
 
-    apps = [x for x in os.listdir(apppath) 
+    apps = [x for x in os.listdir(apppath)
             if os.path.isdir(os.path.join(apppath, x))]
 
     for app in apps:
         apath = os.path.join(apppath,app)
         cronpath = os.path.join(apath, 'cron')
-        crontab = os.path.join(cronpath, 'crontab')        
+        crontab = os.path.join(cronpath, 'crontab')
         if not os.path.exists(crontab):
             continue
         f = open(crontab, 'rt')
         cronlines = f.readlines()
         lines = [x for x in cronlines if x.strip() and x[0]!='#']
-        tasks = [parsecronline(cline) for cline in lines]                
+        tasks = [parsecronline(cline) for cline in lines]
 
         for task in tasks:
             commands = [sys.executable]
