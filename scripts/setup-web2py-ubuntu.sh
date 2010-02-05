@@ -60,7 +60,7 @@ chown -R www-data:www-data web2py
 cd web2py
 killall python2.5
 # starting local web2py (optional) for debugging and tunelling
-sudo -u www-data nohup python2.5 web2py.py -i 127.0.0.1 -p 8123 -a '<random>' &
+# sudo -u www-data nohup python2.5 web2py.py -i 127.0.0.1 -p 8123 -a '<random>' &
 # setup password for remote 443 access to web2py, uncomment file to enable
 # sudo -u www-data cp parameters_8123.py parameters_443.py
 cd ..
@@ -155,3 +155,8 @@ echo "================"
 /etc/init.d/apache2 restart
 
 echo "done!"
+echo ""
+echo "to setup your admin password for HTTPS:"
+echo "> sudo -u www-data bash"
+echo "> cd /home/www-data/web2py"
+echo "> python -c \"from gluon.main import save_password; save_password('hello',443)\""
