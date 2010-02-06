@@ -367,6 +367,49 @@ class UploadWidget(FormWidget):
             return True
         return False
 
+class AutocompleteWidget:
+    def __init__(self,request,field,id_field=None,db=None,orderby=None,limitby=(0,10),keyword='_autocomplete_%s'):
+        self.request = request
+        self.keyword = keyword % field.name
+        self.db = db or field._db
+        fields=[field]
+        if id_field:
+            self.is_reference = True
+            fields.append(id_field)
+        else:
+            self.is_refere
+        if self.keyword in self.request.vars:            
+            rows = self.db(field.like(self.request.vars[self.keyword]+'%'))\
+                .select(orderby=orderby,limitby=limitby,*fields)
+            if rows and not self.is_reference:
+                raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
+                                          *[OPTION(s[field.name]) for s in rows]).xml())
+            elif rows and self.is_reference:
+                raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
+                                      *[OPTION(s[field.name],_value=s[id_field.name]) for s in rows]).xml())
+            else:
+                raise HTTP(200,'')
+    def __call__(self,field,value,**attributes):
+        default = dict(
+            _type = 'text',
+            value = (value!=None and str(value)) or '',
+            )
+        attr = StringWidget._attributes(field, default, **attributes)
+        if self.is_reference:
+            key2 = self.keyword+'_aux'
+            attr['_class']='string'
+            name = attr['_name']
+            attr['_name']= key2
+            attr['_onkeyup'] = "jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(key)s').remove();jQuery('#%(id)s').after(data);jQuery('#%(key)s').click(function(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('input[name=\\'%(name)s\\']').val(jQuery('#%(key)s').val())});});" % \
+                dict(url=URL(r=self.request,args=self.request.args),
+                     key=self.keyword,id=attr['_id'],key2=key2,name=name)            
+            return TAG[''](INPUT(_type='hidden',_name=name),INPUT(**attr))
+        else:
+            attr['_onkeyup'] = "jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(key)s').remove();jQuery('#%(id)s').after(data);jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())});});" % \
+                dict(url=URL(r=self.request,args=self.request.args),
+                     key=self.keyword,id=attr['_id'])
+            return INPUT(**attr)
+
 
 class SQLFORM(FORM):
 

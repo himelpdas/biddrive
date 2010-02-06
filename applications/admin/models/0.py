@@ -10,7 +10,6 @@ WEB2PY_VERSION_URL = 'http://mdp.cti.depaul.edu/examples/default/version'
 # browser.
 
 ## Default editor
-
 TEXT_EDITOR = 'edit_area' or 'amy'
 
 ### edit_area
