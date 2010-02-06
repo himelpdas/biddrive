@@ -62,7 +62,7 @@ class softcron(threading.Thread):
         self.cronmaster = 0
         self.softwindow = 120
         self.path = apppath(self.env)
-        self.cronmaster = crondance(self.path, 'soft', starup = True)
+        self.cronmaster = crondance(self.path, 'soft', startup = True)
 
     def run(self):
         if crontype != 'soft':

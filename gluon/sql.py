@@ -44,8 +44,6 @@ from utils import md5_hash
 from serializers import json
 
 
-from gluon.dal import BaseAdapter as NEWDALBaseAdapter
-
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
@@ -1517,7 +1515,7 @@ class Table(dict):
         fields = list(fields)
 
         for field in fields:
-            if db.check_reserved:
+            if db and db.check_reserved:
                 db.check_reserved_keyword(field.name)
             self.fields.append(field.name)
             self[field.name] = field

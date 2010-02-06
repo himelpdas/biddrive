@@ -1086,6 +1086,10 @@ class IS_GENERIC_URL(Validator):
     but the return value will not be modified.
 
     @author: Jonathan Benn
+
+    >>> IS_GENERIC_URL()('http://user@abc.com')
+    ('http://user@abc.com', None)
+
     """
 
     def __init__(
@@ -1485,6 +1489,22 @@ class IS_HTTP_URL(Validator):
     but the return value will not be modified.
 
     @author: Jonathan Benn
+
+    >>> IS_HTTP_URL()('http://1.2.3.4')
+    ('http://1.2.3.4', None)
+    >>> IS_HTTP_URL()('http://abc.com')
+    ('http://abc.com', None)
+    >>> IS_HTTP_URL()('https://abc.com')
+    ('https://abc.com', None)
+    >>> IS_HTTP_URL()('httpx://abc.com')
+    ('httpx://abc.com', 'enter a valid URL')
+    >>> IS_HTTP_URL()('http://abc.com:80')
+    ('http://abc.com:80', None)
+    >>> IS_HTTP_URL()('http://user@abc.com')
+    ('http://user@abc.com', None)
+    >>> IS_HTTP_URL()('http://user@1.2.3.4')
+    ('http://user@1.2.3.4', None)
+
     """
 
     def __init__(
@@ -1540,18 +1560,18 @@ class IS_HTTP_URL(Validator):
                 if authority:
                     # if authority is a valid IP address
                     if re.compile(
-                        '\d+\.\d+\.\d+\.\d+(:\d*)*$').match(authority):
+                        "([\w.!~*'|;:&=+$,-]+@)?\d+\.\d+\.\d+\.\d+(:\d*)*$").match(authority):
                         # Then this HTTP URL is valid
                         return (value, None)
                     else:
                         # else if authority is a valid domain name
                         domainMatch = \
                             re.compile(
-                                '(([A-Za-z0-9]+[A-Za-z0-9\-]*[A-Za-z0-9]+\.)*([A-Za-z0-9]+\.)*)*([A-Za-z]+[A-Za-z0-9\-]*[A-Za-z0-9]+)\.?(:\d*)*$'
+                                "([\w.!~*'|;:&=+$,-]+@)?(([A-Za-z0-9]+[A-Za-z0-9\-]*[A-Za-z0-9]+\.)*([A-Za-z0-9]+\.)*)*([A-Za-z]+[A-Za-z0-9\-]*[A-Za-z0-9]+)\.?(:\d*)*$"
                                 ).match(authority)
                         if domainMatch:
                             # if the top-level domain really exists
-                            if domainMatch.group(4).lower()\
+                            if domainMatch.group(5).lower()\
                                  in official_top_level_domains:
                                 # Then this HTTP URL is valid
                                 return (value, None)
@@ -1633,14 +1653,30 @@ class IS_URL(Validator):
     Code Examples::
 
         INPUT(_type='text', _name='name', requires=IS_URL())
+        >>> IS_URL()('abc.com')
+        ('http://abc.com', None)
+
         INPUT(_type='text', _name='name', requires=IS_URL(mode='generic'))
+        >>> IS_URL(mode='generic')('abc.com')
+        ('abc.com', None)
+
         INPUT(_type='text', _name='name',
-            requires=IS_URL(allowed_schemes=['https']))
+            requires=IS_URL(allowed_schemes=['https'], prepend_scheme='https'))
+        >>> IS_URL(allowed_schemes=['https'], prepend_scheme='https')('https://abc.com')
+        ('https://abc.com', None)
+
         INPUT(_type='text', _name='name',
             requires=IS_URL(prepend_scheme='https'))
+        >>> IS_URL(prepend_scheme='https')('abc.com')
+        ('https://abc.com', None)
+
         INPUT(_type='text', _name='name',
             requires=IS_URL(mode='generic', allowed_schemes=['ftps', 'https'],
                 prepend_scheme='https'))
+        >>> IS_URL(mode='generic', allowed_schemes=['ftps', 'https'], prepend_scheme='https')('https://abc.com')
+        ('https://abc.com', None)
+        >>> IS_URL(mode='generic', allowed_schemes=['ftps', 'https', None], prepend_scheme='https')('abc.com')
+        ('abc.com', None)
 
     @author: Jonathan Benn
     """
