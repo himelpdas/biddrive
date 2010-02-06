@@ -842,10 +842,14 @@ class SQLDB(dict):
             sql_locker.release()
             self._connection = f()
 
-    def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8'):
+    def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8', check_reserved=None):
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
         self._db_codec = db_codec
+        self.check_reserved = check_reserved
+        if self.check_reserved:
+            from reserved_sql_keywords import ADAPTERS as RSK
+            self.RSK = RSK
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
         pid = thread.get_ident()
@@ -1219,6 +1223,21 @@ class SQLDB(dict):
         self._instances[pid].append(self)
         sql_locker.release()
         pass
+        
+    def check_reserved_keyword(self, name):
+        """
+        Validates ``name`` against SQL keywords
+        Uses self.check_reserve which is a list of
+        operators to use.
+        self.check_reserved
+        ['common', 'postgres', 'mysql']
+        self.check_reserved
+        ['all']
+        """
+        for backend in self.check_reserved:
+            if name.upper() in self.RSK[backend]:
+                logging.warn('invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper()))
+
 
     def define_table(
         self,
@@ -1238,11 +1257,9 @@ class SQLDB(dict):
             raise SyntaxError, 'invalid table name: %s' % tablename
         if tablename in self.tables:
             raise SyntaxError, 'table already defined: %s' % tablename
-        if tablename.upper() in NEWDALBaseAdapter.KEYWORDS_COMMON:
-            raise SyntaxError, 'invalid tablename "%s": is a reserved sql keyword' % tablename
-        if tablename.upper() in NEWDALBaseAdapter.KEYWORDS_ALL:
-            logging.warn('tablename "%s" is a reserved sql keyword. it might not work on all databases' % tablename)
-
+        if self.check_reserved:
+            self.check_reserved_keyword(tablename)
+            
         if 'primarykey' in args:
             t = self[tablename] = KeyedTable(self, tablename, *fields,
                                              **dict(primarykey=args['primarykey']))
@@ -1500,6 +1517,8 @@ class Table(dict):
         fields = list(fields)
 
         for field in fields:
+            if db.check_reserved:
+                db.check_reserved_keyword(field.name)
             self.fields.append(field.name)
             self[field.name] = field
             if field.type == 'id':
@@ -2552,11 +2571,6 @@ class Field(Expression):
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
-        if fieldname.upper() in NEWDALBaseAdapter.KEYWORDS_COMMON:
-            raise SyntaxError, 'invalid fieldname "%s": is a reserved sql keyword' % fieldname
-        if fieldname.upper() in NEWDALBaseAdapter.KEYWORDS_ALL:
-            logging.warn('fieldname "%s" is a reserved sql keyword. it might not work on all databases' % fieldname)
-
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
         if length == None:
@@ -3737,12 +3751,12 @@ SQLRows = Rows
 SQLStorage = Row
 BaseAdapter = SQLDB
 
-def DAL(uri='sqlite:memory:', pool_size=0, folder=None, db_codec='UTF-8'):
+def DAL(uri='sqlite:memory:', pool_size=0, folder=None, db_codec='UTF-8', check_reserved=None):
     if uri == 'gae':
         import gluon.contrib.gql
         return gluon.contrib.gql.GQLDB()
     else:
-        return SQLDB(uri, pool_size=pool_size, folder=folder, db_codec=db_codec)
+        return SQLDB(uri, pool_size=pool_size, folder=folder, db_codec=db_codec, check_reserved=check_reserved)
 
 if __name__ == '__main__':
     import doctest
