@@ -570,7 +570,7 @@ def save_password(password, port):
         chars = string.letters + string.digits
         password = ''.join([random.choice(chars) for i in range(8)])
         print '******************* INPORTANT!!! ************************'
-        print 'you admin password is "%s"' % password
+        print 'your admin password is "%s"' % password
         print '*********************************************************'
     elif password == '<recycle>':
         if os.path.exists(password_file):
