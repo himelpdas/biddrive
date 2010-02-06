@@ -367,6 +367,7 @@ class UploadWidget(FormWidget):
             return True
         return False
 
+
 class AutocompleteWidget:
     def __init__(self,request,field,id_field=None,db=None,orderby=None,limitby=(0,10),keyword='_autocomplete_%s'):
         self.request = request
