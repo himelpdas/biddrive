@@ -406,18 +406,18 @@ class AutocompleteWidget:
             attr['_class']='string'
             name = attr['_name']
             if 'requires' in attr: del attr['requires']
-            attr['_name']= key2
-            attr['_onkeyup'] = "jQuery('input[name=\\'%(name)s\\']').val('');jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('input[name=\\'%(name)s\\']').val(jQuery('#%(key)s').val())});});" % \
+            del attr['_name'] #= key2
+            attr['_onkeyup'] = "jQuery('input[name=\\'%(name)s\\']').val('');jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('input[name=\\'%(name)s\\']').val(jQuery('#%(key)s').val())});});" % \
                 dict(url=URL(r=self.request,args=self.request.args),
                      key=self.keyword,id=attr['_id'],key2=key2,name=name,div_id=div_id)
-            return TAG[''](INPUT(**attr),INPUT(_type='text',_name=name,requires=field.requires),   ###_readonly=True),
-                           BR(),DIV(_id=div_id,_style='position:absolute;'))
+            return TAG[''](INPUT(**attr),INPUT(_type='hidden',_name=name,requires=field.requires),
+                           DIV(_id=div_id,_style='position:absolute;'))
         else:
             attr['_name']=field.name
-            attr['_onkeyup'] = "jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())});});" % \
+            attr['_onkeyup'] = "jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())});});" % \
                 dict(url=URL(r=self.request,args=self.request.args),
                      key=self.keyword,id=attr['_id'],div_id=div_id)
-            return TAG[''](INPUT(**attr),BR(),DIV(_id=div_id,_style='position:absolute;'))
+            return TAG[''](INPUT(**attr),DIV(_id=div_id,_style='position:absolute;'))
 
 class SQLFORM(FORM):
 
@@ -834,7 +834,7 @@ class SQLFORM(FORM):
                     and fieldname in request_vars:
                     self.trows[fieldname][1].components = \
                         [field.widget(field, request_vars[fieldname])]
-                    self.trows[fieldname][1][0].errors = self.errors
+                    self.trows[fieldname][1]._traverse(False)
             return ret
 
         if record_id and record_id != self.record_id:

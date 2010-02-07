@@ -1054,6 +1054,7 @@ class INPUT(DIV):
         if name == None or name == '':
             return True
         name = str(name)
+
         if self['_type'] != 'checkbox':
             self['old_value'] = self['value'] or self['_value'] or ''
             value = self.request_vars.get(name, '')
@@ -1104,7 +1105,7 @@ class INPUT(DIV):
                 self['value'] = self['_value']
 
     def xml(self):
-        name = self.attributes.get('_name', None)
+        name = self.attributes.get('_name', None)        
         if name and hasattr(self, 'errors') \
                 and self.errors.get(name, None) \
                 and self['hideerror'] != True:
