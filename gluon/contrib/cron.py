@@ -91,7 +91,7 @@ def tokenmaster(path, action = 'claim', startup = False):
         try:
             os.unlink(tokeninuse)
             return time.time()
-        except IOError:
+        except: # may raise IOError or WindowsError
             return 0
 
     if not startup and os.path.exists(token):
@@ -108,7 +108,7 @@ def tokenmaster(path, action = 'claim', startup = False):
             logging.warning('WEB2PY CRON: Stale cron.master detected')
             try:
                 os.unlink(tokeninuse)
-            except:
+            except: # may raise IOError or WindowsError
                 logging.warning('WEB2PY CRON: unable to unlink %s' % tokeninuse)
 
     # no tokens, new install ? Need to regenerate anyho
@@ -119,7 +119,7 @@ def tokenmaster(path, action = 'claim', startup = False):
         try:
             mfile = open(token, 'wb')
             mfile.close()
-        except IOError:
+        except: # may raise IOError or WindowsError
             logging.error(
                 'WEB2PY CRON: Unable to re-create cron.master, ' + \
                     'cron functionality likely not available')
@@ -136,11 +136,7 @@ def tokenmaster(path, action = 'claim', startup = False):
             mfile.close()
             logging.debug('WEB2PY CRON: Locked')
             return os.stat(token).st_mtime
-        except:
-            """
-            should only catch IOError end WindowsError but latter
-            is not defined on Poisx
-            """
+        except: # may raise IOError or WindowsError
             logging.info('WEB2PY CRON: Failed to claim %s' % token)
             return 0
 
