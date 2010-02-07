@@ -715,7 +715,6 @@ class HEAD(DIV):
 
     tag = 'head'
 
-
 class TITLE(DIV):
 
     tag = 'title'

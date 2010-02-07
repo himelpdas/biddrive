@@ -369,25 +369,26 @@ class UploadWidget(FormWidget):
 
 
 class AutocompleteWidget:
-    def __init__(self,request,field,id_field=None,db=None,orderby=None,limitby=(0,10),keyword='_autocomplete_%s'):
+    def __init__(self,request,field,id_field=None,db=None,orderby=None,limitby=(0,10),keyword='_autocomplete_%(fieldname)s'):
         self.request = request
-        self.keyword = keyword % field.name
+        self.keyword = keyword % dict(fieldname=field.name)
         self.db = db or field._db
         fields=[field]
         if id_field:
             self.is_reference = True
             fields.append(id_field)
         else:
-            self.is_refere
-        if self.keyword in self.request.vars:            
+            self.is_reference = False
+        if self.keyword in self.request.vars:
             rows = self.db(field.like(self.request.vars[self.keyword]+'%'))\
                 .select(orderby=orderby,limitby=limitby,*fields)
-            if rows and not self.is_reference:
-                raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
+            if rows:
+                if self.is_reference:
+                    raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',_multiple=True,_size=len(rows),
+                                          *[OPTION(s[field.name],_value=s[id_field.name]) for s in rows]).xml())
+                else:
+                    raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',_multiple=True,_size=len(rows),
                                           *[OPTION(s[field.name]) for s in rows]).xml())
-            elif rows and self.is_reference:
-                raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
-                                      *[OPTION(s[field.name],_value=s[id_field.name]) for s in rows]).xml())
             else:
                 raise HTTP(200,'')
     def __call__(self,field,value,**attributes):
@@ -396,21 +397,27 @@ class AutocompleteWidget:
             value = (value!=None and str(value)) or '',
             )
         attr = StringWidget._attributes(field, default, **attributes)
+        div_id = self.keyword+'_div'
+        attr['_onblur']="jQuery('#%(div_id)s').fadeOut('slow')" % dict(div_id=div_id)
+        attr['_autocomplete']='off'
+        # optional: jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));
         if self.is_reference:
             key2 = self.keyword+'_aux'
             attr['_class']='string'
             name = attr['_name']
+            if 'requires' in attr: del attr['requires']
             attr['_name']= key2
-            attr['_onkeyup'] = "jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(key)s').remove();jQuery('#%(id)s').after(data);jQuery('#%(key)s').click(function(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('input[name=\\'%(name)s\\']').val(jQuery('#%(key)s').val())});});" % \
+            attr['_onkeyup'] = "jQuery('input[name=\\'%(name)s\\']').val('');jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('input[name=\\'%(name)s\\']').val(jQuery('#%(key)s').val())});});" % \
                 dict(url=URL(r=self.request,args=self.request.args),
-                     key=self.keyword,id=attr['_id'],key2=key2,name=name)            
-            return TAG[''](INPUT(_type='hidden',_name=name),INPUT(**attr))
+                     key=self.keyword,id=attr['_id'],key2=key2,name=name,div_id=div_id)
+            return TAG[''](INPUT(**attr),INPUT(_type='text',_name=name,requires=field.requires),   ###_readonly=True),
+                           BR(),DIV(_id=div_id,_style='position:absolute;'))
         else:
-            attr['_onkeyup'] = "jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(key)s').remove();jQuery('#%(id)s').after(data);jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())});});" % \
+            attr['_name']=field.name
+            attr['_onkeyup'] = "jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())});});" % \
                 dict(url=URL(r=self.request,args=self.request.args),
-                     key=self.keyword,id=attr['_id'])
-            return INPUT(**attr)
-
+                     key=self.keyword,id=attr['_id'],div_id=div_id)
+            return TAG[''](INPUT(**attr),BR(),DIV(_id=div_id,_style='position:absolute;'))
 
 class SQLFORM(FORM):
 

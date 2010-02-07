@@ -136,7 +136,11 @@ def tokenmaster(path, action = 'claim', startup = False):
             mfile.close()
             logging.debug('WEB2PY CRON: Locked')
             return os.stat(token).st_mtime
-        except IOError:
+        except:
+            """
+            should only catch IOError end WindowsError but latter
+            is not defined on Poisx
+            """
             logging.info('WEB2PY CRON: Failed to claim %s' % token)
             return 0
 
