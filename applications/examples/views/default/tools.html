@@ -104,7 +104,7 @@ auth.settings.table_user = db.define_table('auth_user',
     Field('first_name', length=512,default=''),
     Field('last_name', length=512,default=''),
     Field('email', length=512,default='',
-          requires = [IS_EMAIL(),IS_NOT_IN_DB(db,'auth_user.email')])
+          requires = [IS_EMAIL(),IS_NOT_IN_DB(db,'auth_user.email')]),
     Field('password', 'password', readable=False,
           label='Password',
           requires=CRYPT(auth.settings.hmac_key)),
