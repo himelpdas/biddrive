@@ -2263,7 +2263,7 @@ class Table(dict):
         fields = list(fields)
 
         for field in fields:
-            if db.check_reserved:
+            if db and db.check_reserved:
                 db.check_reserved_keyword(field.name)
 
             self.fields.append(field.name)
