@@ -27,8 +27,8 @@ response.menu_edit=[
   [T('Edit'), False, URL('admin', 'default', 'design/%s' % request.application),
    [
             [T('Controller'), False, 
-             URL('admin', 'default', 'edit/%s/controllers/default.py' \
-                     % request.application)],
+             URL('admin', 'default', 'edit/%s/controllers/%s.py' \
+                     % (request.application, request.controller))], 
             [T('View'), False, 
              URL('admin', 'default', 'edit/%s/views/%s' \
                      % (request.application,response.view))],
