@@ -100,18 +100,18 @@ auth.messages.old_password = 'Old password'
 # instantiate auth
 auth=Auth(globals(),db)
 
-# define custom tables (table_user_name is 'auth_user')
-auth.settings.table_user = db.define_table(
-    auth.settings.table_user_name,
+auth.settings.table_user = db.define_table('auth_user',    
     Field('first_name', length=512,default=''),
     Field('last_name', length=512,default=''),
     Field('email', length=512,default='',
-             requires = [IS_EMAIL(),
-                         IS_NOT_IN_DB(db,'%s.email'%auth.settings.table_user_name)])
+          requires = [IS_EMAIL(),IS_NOT_IN_DB(db,'auth_user.email')])
     Field('password', 'password', readable=False,
-             label='Password', requires=CRYPT()),
+          label='Password',
+          requires=CRYPT(auth.settings.hmac_key)),
     Field('registration_key', length=512,
-             writable=False, readable=False,default=''))
+          writable=False, readable=False,default=''),
+    Field('reset_password_key', length=512,
+          writable=False, readable=False, default=''))
 
 # define any other requires table
 auth.define_tables()
