@@ -24,6 +24,7 @@ import urllib
 import re
 import cStringIO
 
+
 table_field = re.compile('[\w_]+\.[\w_]+')
 
 
