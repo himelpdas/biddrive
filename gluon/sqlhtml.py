@@ -19,6 +19,7 @@ from html import *
 from validators import *
 from sql import SQLDB, Table, Row
 from storage import Storage
+from serializers import json
 
 import urllib
 import re
@@ -400,13 +401,13 @@ class AutocompleteWidget:
                 if self.is_reference:
                     id_field = self.fields[1]
                     raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
-                                          _multiple=True,_size=len(rows),
+                                          _size=len(rows),_multiple=(len(rows)==1),
                                           *[OPTION(s[field.name],_value=s[id_field.name],
                                                    _selected=(k==0)) \
                                                 for k,s in enumerate(rows)]).xml())
                 else:
                     raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
-                                          _multiple=True,_size=len(rows),
+                                          _size=len(rows),_multiple=(len(rows)==1),
                                           *[OPTION(s[field.name],
                                                    _selected=(k==0)) \
                                                 for k,s in enumerate(rows)]).xml())
@@ -434,9 +435,9 @@ class AutocompleteWidget:
             print record
             attr['value'] = record and record[self.fields[0].name]
             print attr['value']
-            attr['_onblur']="jQuery('#%(div_id)s').delay(1000).fadeOut('slow');jQuery(this).keyup();" % \
+            attr['_onblur']="jQuery('#%(div_id)s').fadeOut('slow');" % \
                 dict(div_id=div_id,u='F'+self.keyword)
-            attr['_onkeyup'] = "jQuery('#%(key3)s').val('');var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('#%(key3)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {if(jQuery('#%(key)s option:selected').next().length)jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {if(jQuery('#%(key)s option:selected').prev().length)jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));jQuery('#%(key3)s').val(jQuery('#%(key)s').val());jQuery('#%(key)s').change(%(u)s);}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
+            attr['_onkeyup'] = "jQuery('#%(key3)s').val('');var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('#%(key3)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {if(jQuery('#%(key)s option:selected').next().length)jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {if(jQuery('#%(key)s option:selected').prev().length)jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){if(data=='')jQuery('#%(key3)s').val('');else{jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));jQuery('#%(key3)s').val(jQuery('#%(key)s').val());jQuery('#%(key)s').change(%(u)s);jQuery('#%(key)s option').click(%(u)s);};}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
                 dict(url=self.url,min_length=self.min_length,
                      key=self.keyword,id=attr['_id'],key2=key2,key3=key3,
                      name=name,div_id=div_id,u='F'+self.keyword)
@@ -445,12 +446,13 @@ class AutocompleteWidget:
                            DIV(_id=div_id,_style='position:absolute;'))
         else:
             attr['_name']=field.name
-            attr['_onblur']="jQuery('#%(div_id)s').delay(1000).fadeOut('slow');jQuery(this).keyup();" % \
+            attr['_onblur']="jQuery('#%(div_id)s').fadeOut('slow');" % \
                 dict(div_id=div_id,u='F'+self.keyword)
-            attr['_onkeyup'] = "var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {if(jQuery('#%(key)s option:selected').next().length)jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {if(jQuery('#%(key)s option:selected').prev().length)jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));jQuery('#%(key)s').change(%(u)s);}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
+            attr['_onkeyup'] = "var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {if(jQuery('#%(key)s option:selected').next().length)jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {if(jQuery('#%(key)s option:selected').prev().length)jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));jQuery('#%(key)s').change(%(u)s);jQuery('#%(key)s option').click(%(u)s);}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
                 dict(url=self.url,min_length=self.min_length,
                      key=self.keyword,id=attr['_id'],div_id=div_id,u='F'+self.keyword)
             return TAG[''](INPUT(**attr),DIV(_id=div_id,_style='position:absolute;'))
+
 
 class SQLFORM(FORM):
 
