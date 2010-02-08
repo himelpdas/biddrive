@@ -307,11 +307,14 @@ class DIV(XmlComponent):
                 tuple)):
             self.components = list(components[0])
         else:
-            self.components = list(components)
+            self.components = list(components)                    
         self.attributes = attributes
-        self._fixup()
+        self._fixup()        
         # converts special attributes in components attributes
         self._postprocessing()
+        self.parent = None
+        for c in self.components:
+            self._setnode(c)
 
     def update(self, **kargs):
         """
@@ -326,14 +329,14 @@ class DIV(XmlComponent):
         """
         list style appending of components
         """
-
+        self._setnode(value)
         return self.components.append(value)
 
     def insert(self, i, value):
         """
         list style inserting of components
         """
-
+        self._setnode(value)
         return self.components.insert(i, value)
 
     def __getitem__(self, i):
@@ -363,10 +366,10 @@ class DIV(XmlComponent):
            otherwise references to number of the component
         :param value: the new value
         """
-
+        self._setnode(value)
         if isinstance(i, str):
             self.attributes[i] = value
-        else:
+        else:            
             self.components[i] = value
 
     def __delitem__(self, i):
@@ -470,6 +473,10 @@ class DIV(XmlComponent):
         nothing to validate yet. May be overridden by subclasses
         """
         return True
+    
+    def _setnode(self,value):
+        if isinstance(value,DIV):
+            value.parent = self
 
     def _xml(self):
         """
@@ -579,7 +586,44 @@ class DIV(XmlComponent):
             # we found nothing
             return None
         return elements[0]
-
+    
+    def siblings(self,*args,**kargs):
+        """
+        find all sibling components that match the supplied argument list 
+        and attribute dictionary, or None if nothing could be found
+        """
+        sibs = [s for s in self.parent.components if not s == self]
+        matches = []
+        first_only = False
+        if kargs.has_key("first_only"):
+            first_only = kargs["first_only"]
+            del kargs["first_only"]
+        for c in sibs:
+            try:
+                check = True
+                tag = getattr(c,'tag').replace("/","")
+                if args and tag not in args:
+                        check = False
+                for (key, value) in kargs.items():
+                    if c[key] != value:
+                            check = False
+                if check:
+                    matches.append(c)
+                    if first_only: break
+            except:
+                pass
+        return matches            
+            
+    def sibling(self,*args,**kargs):
+        """
+        find the first sibling component that match the supplied argument list 
+        and attribute dictionary, or None if nothing could be found
+        """
+        kargs['first_only'] = True
+        sibs = self.siblings(*args, **kargs)
+        if not sibs:
+            return None
+        return sibs[0]
 
 class __TAG__(XmlComponent):
 
