@@ -70,7 +70,6 @@ class FormWidget(object):
 
         raise NotImplementedError
 
-
 class StringWidget(FormWidget):
 
     @staticmethod
@@ -369,28 +368,49 @@ class UploadWidget(FormWidget):
 
 
 class AutocompleteWidget:
-    def __init__(self,request,field,id_field=None,db=None,orderby=None,limitby=(0,10),keyword='_autocomplete_%(fieldname)s',min_length=2):        
+
+    def __init__(self, request, field, id_field=None, db=None, 
+                 orderby=None, limitby=(0,10),
+                 keyword='_autocomplete_%(fieldname)s',
+                 min_length=2):        
         self.request = request
         self.keyword = keyword % dict(fieldname=field.name)
         self.db = db or field._db
+        self.orderby = orderby
+        self.limitby = limitby
         self.min_length = min_length
-        fields=[field]
+        self.fields=[field]
         if id_field:
             self.is_reference = True
-            fields.append(id_field)
+            self.fields.append(id_field)
         else:
             self.is_reference = False
+        if hasattr(request,'application'):
+            self.url = URL(r=request,args=request.args)
+            self.callback()
+        else:
+            self.url = request
+    def callback(self):
         if self.keyword in self.request.vars:
+            field = self.fields[0]
             rows = self.db(field.like(self.request.vars[self.keyword]+'%'))\
-                .select(orderby=orderby,limitby=limitby,*fields)
+                .select(orderby=self.orderby,limitby=self.limitby,*self.fields)
             if rows:
                 if self.is_reference:
-                    raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',_multiple=True,_size=len(rows),
-                                          *[OPTION(s[field.name],_value=s[id_field.name],_selected=(k==0)) for k,s in enumerate(rows)]).xml())
+                    id_field = self.fields[1]
+                    raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
+                                          _multiple=True,_size=len(rows),_readonly=True,
+                                          *[OPTION(s[field.name],_value=s[id_field.name],
+                                                   _selected=(k==0)) \
+                                                for k,s in enumerate(rows)]).xml())
                 else:
-                    raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',_multiple=True,_size=len(rows),
-                                          *[OPTION(s[field.name],_selected=(k==0)) for k,s in enumerate(rows)]).xml())
+                    raise HTTP(200,SELECT(_id=self.keyword,_class='autocomplete',
+                                          _multiple=True,_size=len(rows),_readonly=True,
+                                          *[OPTION(s[field.name],
+                                                   _selected=(k==0)) \
+                                                for k,s in enumerate(rows)]).xml())
             else:
+
                 raise HTTP(200,'')
     def __call__(self,field,value,**attributes):
         default = dict(
@@ -399,9 +419,8 @@ class AutocompleteWidget:
             )
         attr = StringWidget._attributes(field, default, **attributes)
         div_id = self.keyword+'_div'
-        attr['_onblur']="jQuery('#%(div_id)s').fadeOut('slow')" % dict(div_id=div_id)
         attr['_autocomplete']='off'
-        # optional: jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));
+        # optional: 
         #"jQuery('#%(id)s').keyup(function(e){if(e.which==40) alert(jQuery('#%(key)s').val()) })"
         if self.is_reference:
             key2 = self.keyword+'_aux'
@@ -409,18 +428,28 @@ class AutocompleteWidget:
             attr['_class']='string'
             name = attr['_name']
             if 'requires' in attr: del attr['requires']
-            attr['_name'] = key2
-            #attr['_onkeyup'] = "jQuery('input[name=\\'%(name)s\\']').val('');if(jQuery('#%(id)s').val().length>=%(min_length)s)jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('input[name=\\'%(name)s\\']').val(jQuery('#%(key)s').val())});});" % \
-            attr['_onkeyup'] = "jQuery('#%(key3)s').val(''); var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('#%(key3)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(%(u)s);}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
-                dict(url=URL(r=self.request,args=self.request.args),min_length=self.min_length,
-                     key=self.keyword,id=attr['_id'],key2=key2,key3=key3,name=name,div_id=div_id,u='F'+self.keyword)
-            return TAG[''](INPUT(**attr),INPUT(_type='hidden',_id=key3,_name=name,requires=field.requires),
+            attr['_name'] = key2            
+            value = attr['value']
+            print value
+            record = self.db(self.fields[1]==value).select(self.fields[0]).first()
+            print record
+            attr['value'] = record and record[self.fields[0].name]
+            print attr['value']
+            attr['_onblur']="jQuery(this).keyup();jQuery('#%(div_id)s').fadeOut('slow')" % \
+                dict(div_id=div_id,u='F'+self.keyword)
+            attr['_onkeyup'] = "jQuery('#%(key3)s').val('');var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('#%(key3)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));jQuery('#%(key3)s').val(jQuery('#%(key)s').val());jQuery('#%(key)s').change(%(u)s);}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
+                dict(url=self.url,min_length=self.min_length,
+                     key=self.keyword,id=attr['_id'],key2=key2,key3=key3,
+                     name=name,div_id=div_id,u='F'+self.keyword)
+            return TAG[''](INPUT(**attr),INPUT(_type='hidden',_id=key3,_value=value,
+                                               _name=name,requires=field.requires),
                            DIV(_id=div_id,_style='position:absolute;'))
         else:
             attr['_name']=field.name
-            #attr['_onkeyup'] = "var e=event.keyCode; var i=jQuery('#%(id)s'); if(e==39) i.val(jQuery('#%(key)s').val()); else if(e==40) {jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); i.val(jQuery('#%(key)s').val());} else if(e==38) {jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); i.val(jQuery('#%(key)s').val());} else {if(i.val().length>=%(min_length)s)jQuery.get('%(url)s?%(key)s='+escape(i.val()),function(data){i.next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(function(){i.val(jQuery('#%(key)s').val())});}); }" % \
-            attr['_onkeyup'] = "var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(key)s').change(%(u)s);}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
-                dict(url=URL(r=self.request,args=self.request.args),min_length=self.min_length,
+            attr['_onblur']="%(u)s();jQuery('#%(div_id)s').fadeOut('slow')" % \
+                dict(div_id=div_id,u='F'+self.keyword)
+            attr['_onkeyup'] = "var e=event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));jQuery('#%(key)s').change(%(u)s);}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
+                dict(url=self.url,min_length=self.min_length,
                      key=self.keyword,id=attr['_id'],div_id=div_id,u='F'+self.keyword)
             return TAG[''](INPUT(**attr),DIV(_id=div_id,_style='position:absolute;'))
 
@@ -548,7 +577,7 @@ class SQLFORM(FORM):
         # otherwise ignore it
         if record and isinstance(record, (int, long, str, unicode)):
             record = table._db(table.id == record).select().first()
-            if not records:
+            if not record:
                 raise HTTP(404, "Object not found")
         self.record = record
 
