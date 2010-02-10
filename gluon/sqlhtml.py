@@ -1010,9 +1010,13 @@ class SQLTABLE(TABLE):
     :param headers: dictionary of headers to headers redefinions
     :param truncate: length at which to truncate text in table cells.
         Defaults to 16 characters.
+    :param columns: a list of dict contaning the names of the columns to be shown 
+        Defaults to all
 
-    optional names attributes for passed to the <table> tag
+    Optional names attributes for passed to the <table> tag
 
+    The keys of headers and columns must be of the form "tablename.fieldname"
+    
     Simple linkto example::
 
         rows = db.select(db.sometable.ALL)
@@ -1043,6 +1047,7 @@ class SQLTABLE(TABLE):
         orderby=None,
         headers={},
         truncate=16,
+        columns=None,
         **attributes
         ):
 
@@ -1053,11 +1058,14 @@ class SQLTABLE(TABLE):
         (components, row) = (self.components, [])
         if not orderby:
             for c in sqlrows.colnames:
-                row.append(TH(headers.get(c, c)))
+                if not columns or c in columns:
+                    row.append(TH(headers.get(c, c)))
         else:
             for c in sqlrows.colnames:
-                row.append(TH(A(headers.get(c, c), _href='?orderby='
-                            + c)))
+                if not columns or c in columns:
+                    row.append(TH(A(headers.get(c, c), 
+                                    _href='?orderby=' + c)))
+
         components.append(THEAD(TR(*row)))
         tbody = []
         for (rc, record) in enumerate(sqlrows):
@@ -1067,6 +1075,8 @@ class SQLTABLE(TABLE):
             else:
                 _class = 'odd'
             for colname in sqlrows.colnames:
+                if columns and not colname in columns:
+                    continue
                 if not table_field.match(colname):
                     r = record._extra[colname]
                     row.append(TD(r))
