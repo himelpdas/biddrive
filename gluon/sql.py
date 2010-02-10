@@ -1059,7 +1059,7 @@ class SQLDB(dict):
             charset = m.group('charset') or 'UTF8'
 
             self._pool_connection(lambda : \
-                    kinterbasdb.connect(dsn='%s:%s' % (host, db),
+                    kinterbasdb.connect(dsn='%s/%s:%s' % (host, port, db),
                                         user=user,
                                         password=passwd,
                                         charset=charset))

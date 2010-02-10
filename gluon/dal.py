@@ -1349,7 +1349,7 @@ class FireBirdAdapter(BaseAdapter):
         if not db:
             raise SyntaxError, 'Database name required'
         charset = m.group('charset') or 'UTF8'
-        self.pool_connection(lambda dsn='%s:%s' % (host,db),
+        self.pool_connection(lambda dsn='%s/%s:%s' % (host,port,db),
                              user=user,
                              password=password,
                              charset=charset: \
