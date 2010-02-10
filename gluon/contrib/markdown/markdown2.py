@@ -1327,8 +1327,8 @@ class Markdown(object):
             text = text.replace(before, after)
         return text
 
-    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
-    _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
+    _strong_re = re.compile(r"(?<!\w)(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1(?!\w)", re.S)
+    _em_re = re.compile(r"(?<!\w)(\*|_)(?=\S)(.+?)(?<=\S)\1(?!\w)", re.S)
     _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
     _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
     def _do_italics_and_bold(self, text):
