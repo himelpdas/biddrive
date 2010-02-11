@@ -18,6 +18,7 @@ import base64
 import cPickle
 import datetime
 from email import *
+import logging
 import sys
 import os
 import re
@@ -313,6 +314,7 @@ class Mail(object):
                 result = server.sendmail(self.settings.sender, to, payload.as_string())
                 server.quit()
         except Exception, e:
+            logging.warn('Mail.send failure:%s' % e)
             self.result = result
             self.error = e
             return False
