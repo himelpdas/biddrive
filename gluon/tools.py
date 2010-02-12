@@ -27,6 +27,7 @@ import smtplib
 import urllib
 import urllib2
 import uuid
+import Cookie
 
 import serializers
 import contrib.simplejson as simplejson
@@ -2418,14 +2419,35 @@ class Crud(object):
         return SQLTABLE(rows, headers=headers, **attr)
 
 
-def fetch(url):
-    try:
-        from google.appengine.api.urlfetch import fetch
-        return fetch(url).content
-    except:
-        import urllib
-        return urllib.urlopen(url).read()
+urllib2.install_opener(urllib2.build_opener(urllib2.HTTPCookieProcessor()))
 
+def fetch(url, data=None, headers={},
+          cookie=Cookie.SimpleCookie(), 
+          user_agent='Mozilla/5.0'):
+    cookie = Cookie.SimpleCookie()
+    data = data if data is None else urllib.urlencode(data)
+    if user_agent: headers['User-agent'] = user_agent
+    try:
+        from google.appengine.api import urlfetch
+    except ImportError:
+        request = urllib2.Request(url, data, headers)
+        html = urllib2.urlopen(request).read()
+    else:
+        headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
+        method = urlfetch.GET if data is None else urlfetch.POST
+        while url is not None:
+            response = urlfetch.fetch(url=url, payload=data,
+                                      method=method, headers=headers,
+                                      allow_truncated=False,follow_redirects=False,
+                                      deadline=10)
+            # next request will be a get, so no need to send the data again
+            data = None 
+            method = urlfetch.GET
+            # load cookies from the response
+            cookie.load(response.headers.get('set-cookie', '')) 
+            url = response.headers.get('location')
+        html = response.content
+    return html 
 
 regex_geocode = \
     re.compile('\<coordinates\>(?P<la>[^,]*),(?P<lo>[^,]*).*?\</coordinates\>')

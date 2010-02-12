@@ -9,44 +9,28 @@ session.forget()
 def index():
     return response.render(dict())
 
-
 def what():
     return response.render(dict())
 
-
 def who():
-    return response.render(dict())
-
+    return dict()
 
 def download():
     return response.render(dict())
 
-
 def docs():
     return response.render(dict())
 
-
 def support():
-    return response.render(dict())
-
+    return dict()
 
 def api():
-    return response.render(dict())
-
-
-def examples():
-    return response.render(dict())
-
+    return dict()
 
 def dal():
     return response.render(dict())
 
-
 def license():
-    return response.render(dict())
-
-
-def tools():
     return response.render(dict())
 
 def version():
@@ -55,11 +39,14 @@ def version():
 def security():
    return response.render(dict())
 
+def examples():
+    return response.render(dict())
+
+def tools():
+    return response.render(dict())
+
 def cron():
    return response.render(dict())
-
-def translation():
-    return response.render(dict())
 
 def changelog():
     log=[]
