@@ -2786,7 +2786,14 @@ class Expression(object):
         return Expression(self._db,self._db._adapter.ADD,self,other,self.type)
 
     def __sub__(self, other):
-        return Expression(self._db,self._db._adapter.SUB,self,other,self.type)
+        if self.type == 'integer':
+            result_type = 'integer'
+        elif self.type in ['date','time','datetime','double']:
+            result_type = 'double'
+        else:
+            raise SyntaxError, "subscraction operation not supported for type"
+        return Expression(self._db,self._db._adapter.SUB,self,other,
+                          result_type)
 
     def __mul__(self, other):
         return Expression(self._db,self._db._adapter.MUL,self,other,self.type)
