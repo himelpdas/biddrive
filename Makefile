@@ -96,4 +96,6 @@ push:
 	hg push
 	bzr push bzr+ssh://mdipierro@bazaar.launchpad.net/~mdipierro/web2py/devel --use-existing-dir
 post:
-	rsync -avz --partial --progress -e ssh web2py_src.zip web2py_osx.zip web2py_win.zip user@www.web2py.com:~/
+	scp -i ~/web2py.pem web2py_src.zip ubuntu@www.web2py.com:~/
+	scp -i ~/web2py.pem web2py_win.zip ubuntu@www.web2py.com:~/
+	scp -i ~/web2py.pem web2py_osx.zip ubuntu@www.web2py.com:~/

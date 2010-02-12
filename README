@@ -651,3 +651,12 @@ jQuery 1.4.1
 Fixed major problem with internationalization of multiple languages.
 Fixed a serius security issue with login
 Possibly fixed some issues with cron
+
+#1.75.1
+better cron
+better fetch
+logging of email failures
+new web2py.fedora.sh
+new setup-web2py-ubuntu.sh
+experimental autocomplete
+menus work on IE6

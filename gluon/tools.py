@@ -2424,7 +2424,6 @@ urllib2.install_opener(urllib2.build_opener(urllib2.HTTPCookieProcessor()))
 def fetch(url, data=None, headers={},
           cookie=Cookie.SimpleCookie(), 
           user_agent='Mozilla/5.0'):
-    cookie = Cookie.SimpleCookie()
     data = data if data is None else urllib.urlencode(data)
     if user_agent: headers['User-agent'] = user_agent
     try:
