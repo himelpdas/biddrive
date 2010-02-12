@@ -17,19 +17,23 @@ jQuery(document).ready(function(){
       {{qry='%s.%s.id>0'%(db,table)}}
       {{tbl=databases[db][table]}}
       {{if hasattr(tbl,'_primarykey'):}}
-        {{firstkey=tbl[tbl._primarykey[0]]}}
-        {{if firstkey.type in ['string','text']:}}
-          {{qry='%s.%s.%s!=""'%(db,table,firstkey.name)}}
+        {{if tbl._primarykey:}}
+            {{firstkey=tbl[tbl._primarykey[0]]}}
+            {{if firstkey.type in ['string','text']:}}
+              {{qry='%s.%s.%s!=""'%(db,table,firstkey.name)}}
+            {{else:}}
+              {{qry='%s.%s.%s>0'%(db,table,firstkey.name)}}
+            {{pass}}
         {{else:}}
-          {{qry='%s.%s.%s>0'%(db,table,firstkey.name)}}
-        {{pass}}
+             {{qry=''}}
+             {{pass}}
       {{pass}}
-      <h2>{{=A("%s.%s"%(db,table),_href=URL(r=request,f='select',args=[db],vars=dict(query=qry)))}}</h2>
-      [ {{=A(str(T('insert new'))+' '+table,_href=URL(r=request,f='insert',args=[db,table]))}} ]
+      <h2>{{=A("%s.%s" % (db,table),_href=URL(r=request,f='select',args=[db],vars=dict(query=qry)))}}
+</h2>
+      [ {{=A(str(T('insert new'))+''+table,_href=URL(r=request,f='insert',args=[db,table]))}} ]
     <br /><br />
     {{pass}}
   {{pass}}
-
 
 {{elif request.function=='select':}}
   <h1>{{=XML(str(T("database %s select"))%A(request.args[0],_href=URL(r=request,f='index'))) }}
