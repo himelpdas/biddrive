@@ -57,7 +57,7 @@ web2py {{=myversion}}<br />
 
 <div style="background-color: #CCCCCC; padding: 5px;">
 <h3>{{=T("Upload existing application")}}</h3>
-<form action="" enctype="multipart/form-data" method="post"><table padding="0"><tr><td>{{=T("upload application:")}} </td><td><input name="file" type="file" /></td></tr><tr><td>{{=T("or provide application url:")}} </td><td><input name="appurl" type="text" /></td></tr><tr><td>{{=T("and rename it (required):")}} </td><td><input name="filename" type="text" /></td></tr><tr><td></td><td><input type="submit" value={{=T('"submit"')}} /></td></tr></table><div class="hidden"></div></form>
+<form action="" enctype="multipart/form-data" method="post"><table padding="0"><tr><td>{{=T("upload application:")}} </td><td><input name="file" type="file" /></td></tr><tr><td>{{=T("or provide application url:")}} </td><td><input name="appurl" type="text" /></td></tr><tr><td>{{=T("and rename it (required):")}} </td><td><input name="filename" type="text" /></td></tr><tr><td></td><td><input type="submit" value={{=T('"submit"')}} />&nbsp;<input type="checkbox" name={{=T('"overwrite_check"')}} />&nbsp;{{=T("Overwrite existing application")}}</td></tr></table><div class="hidden"></div></form>
 </div><br/>
 
 {{if GAE_APPCFG and os.path.exists(GAE_APPCFG):}}

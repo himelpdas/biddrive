@@ -86,6 +86,7 @@ def site():
     file_or_appurl = 'file' in request.vars or 'appurl' in request.vars
 
     if request.vars.filename and not 'file' in request.vars:
+        # create a new application
         appname = cleanpath(request.vars.filename).replace('.', '_')
         if app_create(appname, request):
             session.flash = T('new application "%s" created', appname)
@@ -96,10 +97,12 @@ def site():
         redirect(URL(r=request))
         
     elif file_or_appurl and not request.vars.filename:
+        # can't do anything without an app name
         msg = 'you must specify a name for the uploaded application'
         response.flash = T(msg)
 
     elif file_or_appurl and request.vars.filename:
+        # fetch an application via URL or file upload
         if request.vars.appurl is not '':
             try:
                 f = urllib.urlopen(request.vars.appurl)
@@ -112,7 +115,7 @@ def site():
             fname = request.vars.file.filename
 
         appname = cleanpath(request.vars.filename).replace('.', '_')
-        installed = app_install(appname, f, request, fname)
+        installed = app_install(appname, f, request, fname, overwrite=request.vars.overwrite_check)
         if installed:
             msg = 'application %(appname)s installed with md5sum: %(digest)s'
             session.flash = T(msg, dict(appname=appname,

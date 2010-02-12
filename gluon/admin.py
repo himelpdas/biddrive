@@ -176,7 +176,7 @@ def app_create(app, request):
         return False
 
 
-def app_install(app, fobj, request, filename):
+def app_install(app, fobj, request, filename, overwrite=None):
     """
     Installs an application:
 
@@ -214,8 +214,9 @@ def app_install(app, fobj, request, filename):
         upfile.write(fobj.read())
         upfile.close()
         path = apath(app, request)
-        os.mkdir(path)
-        did_mkdir = True
+        if not overwrite:
+            os.mkdir(path)
+            did_mkdir = True
         w2p_unpack(upname, path)
         if extension != 'tar':
             os.unlink(upname)
