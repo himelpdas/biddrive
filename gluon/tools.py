@@ -2426,13 +2426,13 @@ def fetch(url, data=None, headers={},
           user_agent='Mozilla/5.0'):
     data = data if data is None else urllib.urlencode(data)
     if user_agent: headers['User-agent'] = user_agent
+    headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
     try:
         from google.appengine.api import urlfetch
     except ImportError:
-        request = urllib2.Request(url, data, headers)
-        html = urllib2.urlopen(request).read()
+        req = urllib2.Request(url, data, headers)
+        html = urllib2.urlopen(req).read()
     else:
-        headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
         method = urlfetch.GET if data is None else urlfetch.POST
         while url is not None:
             response = urlfetch.fetch(url=url, payload=data,
