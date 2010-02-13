@@ -2200,6 +2200,28 @@ class Crud(object):
         return TABLE(*[TR(A(name, _href=self.url(args=('select',
                      name)))) for name in self.db.tables])
 
+
+    @staticmethod
+    def archive(form,archive_table=None,current_record='current_record'):
+        old_record = form.record
+        if not old_record:
+            return None
+        table = form.table
+        if not archive_table:
+            archive_table_name = '%s_archive' % table
+            if archive_table_name in table._db:
+                archive_table = table._db[archive_table_name]
+            else:
+                archive_table = table._db.define_table(archive_table_name,
+                                                       Field(current_record,table),
+                                                       table)
+        new_record = {current_record:old_record.id}
+        for fieldname in archive_table.fields:
+            if not fieldname in ['id',current_record] and fieldname in old_record:
+                new_record[fieldname]=old_record[fieldname]
+        id = archive_table.insert(**new_record)
+        return id
+
     def update(
         self,
         table,
