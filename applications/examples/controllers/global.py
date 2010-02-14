@@ -26,7 +26,7 @@ def vars():
             None,
             )
         (title, args) = ('globals()', '')
-    elif len(request.args) < 4:
+    elif len(request.args) < 3:
         args = '.'.join(request.args)
         try:
             doc = eval(args + '.__doc__')

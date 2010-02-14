@@ -2203,6 +2203,52 @@ class Crud(object):
 
     @staticmethod
     def archive(form,archive_table=None,current_record='current_record'):
+        """
+        If you have a table (db.mytable) that needs full revision history you can just do::
+        
+            form=crud.update(db.mytable,myrecord,onaccept=crud.archive)
+
+        crud.archive will define a new table "mytable_history" and store the
+        previous record in the newly created table including a reference
+        to the current record.
+        
+        If you want to access such table you need to define it yourself in a mode::
+
+            db.define_table('mytable_history',
+                Field('current_record',db.mytable),
+                db.mytable)
+
+        Notice such table includes all fields of db.mytable plus one: current_record.
+        crud.archive does not timestamp the stored record unless your original table
+        has a fields like::
+
+            db.define_table(...,
+                Field('saved_on','datetime',
+                     default=request.now,update=request.now,writable=False),
+                Field('saved_by',auth.user,
+                     default=auth.user_id,update=auth.user_id,writable=False),
+
+        there is nothing special about these fields since they are filled before 
+        the record is archived.
+       
+        Alterantively you can create similar fields in the 'mytable_history' table
+        and they will be filled when the record is archived.
+
+        If you want to change the achive table name and the name of the reference field
+        you can do, for example::
+
+            db.define_table('myhistory',
+                Field('parent_record',db.mytable),
+                mytable)   
+        
+        and use it as::
+
+            form=crud.update(db.mytable,myrecord,
+                             onaccept=lambda form:crud.archive(form, \
+                               archive_table=db.myhistory, \
+                               current_record='parent_record'))
+
+        """
         old_record = form.record
         if not old_record:
             return None
