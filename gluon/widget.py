@@ -726,7 +726,7 @@ def start(cron = True):
 
     # ## Starts cron daemon
 
-    if cron and not options.nocron:
+    if not options.shell and cron and not options.nocron:
         print 'Starting cron...'
         contrib.cron.crontype = 'hard'
         cron = contrib.cron.hardcron()
