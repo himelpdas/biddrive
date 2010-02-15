@@ -35,7 +35,7 @@ apt-get -y install build-essential
 apt-get -y install python2.5
 apt-get -y install ipython
 apt-get -y install python-dev
-apt-get -y install postgresql-8.3
+apt-get -y install postgresql
 apt-get -y install apache2
 apt-get -y install libapache2-mod-wsgi
 apt-get -y install python2.5-psycopg2
@@ -43,7 +43,7 @@ apt-get -y install postfix
 apt-get -y install wget
 apt-get -y install python-matplotlib
 apt-get -y install python-reportlab
-/etc/init.d/postgresql-8.3 restart
+/etc/init.d/postgresql restart
 # optional, uncomment for backups using samba
 # apt-get -y install samba
 # apt-get -y install smbfs
@@ -86,7 +86,7 @@ NameVirtualHost *:80
 NameVirtualHost *:443
 
 <VirtualHost *:80>
-  WSGIDaemonProcess web2py user=www-data group=www-data display-name=%{GROUP}
+  WSGIDaemonProcess web2py user=www-data group=www-data
   WSGIProcessGroup web2py
   WSGIScriptAlias / /home/www-data/web2py/wsgihandler.py
 
@@ -153,10 +153,6 @@ echo "restarting apage"
 echo "================"
 
 /etc/init.d/apache2 restart
-
+cd /home/www-data/web2py
+sudo -u www-data python -c "from gluon.main import save_password; save_password(raw_input('admin password: '),443)"
 echo "done!"
-echo ""
-echo "to setup your admin password for HTTPS:"
-echo "> sudo -u www-data bash"
-echo "> cd /home/www-data/web2py"
-echo "> python -c \"from gluon.main import save_password; save_password('hello',443)\""
