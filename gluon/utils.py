@@ -56,12 +56,12 @@ def get_digest(value):
 
 web2py_uuid_locker = thread.allocate_lock() 
 node_id = uuid.getnode()
-nanoseconds = int(time.time() * 1e9)
+milliseconds = int(time.time() * 1e3)
 
 def rotate(i):
     a = random.randrange(256)
     b = (node_id >> 4*i) % 256
-    c = (nanoseconds >> 4*i) % 256
+    c = (milliseconds >> 4*i) % 256
     return (a + b + c) % 256
 
 def web2py_uuid():
