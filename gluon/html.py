@@ -7,7 +7,6 @@ Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
 License: GPL v2
 """
 
-import uuid
 import cgi
 import os
 import re
@@ -21,6 +20,7 @@ import rewrite
 from storage import Storage
 from validators import *
 from highlight import highlight
+from utils import web2py_uuid
 
 regex_crlf = re.compile('\r|\n')
 
@@ -1314,8 +1314,7 @@ class FORM(DIV):
         if self.errors:
             status = False
         if session != None:
-            self.formkey = session['_formkey[%s]' % formname] = \
-                str(uuid.uuid4())
+            self.formkey = session['_formkey[%s]' % formname] = web2py_uuid()
         if status and not keepvalues:
             self._traverse(False)
         return status

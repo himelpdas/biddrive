@@ -24,8 +24,8 @@ from http import HTTP
 from fileutils import up
 from serializers import json
 from settings import settings
+from utils import web2py_uuid
 
-import uuid
 import portalocker
 import cPickle
 import cStringIO
@@ -267,7 +267,7 @@ class Session(Storage):
             if not response.session_id:
                 response.session_id = '%s-%s'\
                      % (request.client.replace(':', '-').replace('.',
-                        '-'), uuid.uuid4())
+                        '-'), web2py_uuid())
                 response.session_filename = \
                     os.path.join(up(request.folder), masterapp,
                                  'sessions', response.session_id)
@@ -309,7 +309,7 @@ class Session(Storage):
                 self.update(session_data)
             except Exception:
                 record_id = None
-                unique_key = str(uuid.uuid4())
+                unique_key = web2py_uuid()
                 session_data = {}
             response._dbtable_and_field = \
                 (response.session_id_name, table, record_id, unique_key)

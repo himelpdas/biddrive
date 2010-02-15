@@ -8,7 +8,11 @@ License: GPL v2
 """
 
 import hashlib
-
+import uuid
+import random
+import os
+import thread
+import time
 
 def md5_hash(text):
     """ Generate a md5 hash with the given text """
@@ -49,3 +53,21 @@ def get_digest(value):
         return hashlib.sha512
     else:
         raise ValueError("Invalid digest algorithm")
+
+web2py_uuid_locker = thread.allocate_lock() 
+node_id = uuid.getnode()
+nanoseconds = int(time.time() * 1e9)
+
+def rotate(i):
+    a = random.randrange(256)
+    b = (node_id >> 4*i) % 256
+    c = (nanoseconds >> 4*i) % 256
+    return (a + b + c) % 256
+
+def web2py_uuid():
+    web2py_uuid_locker.acquire()    
+    try:
+        bytes = [chr(rotate(i)) for i in range(16)]
+        return str(uuid.UUID(bytes=bytes, version=4))
+    finally:
+        web2py_uuid_locker.release()

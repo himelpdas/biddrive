@@ -42,13 +42,12 @@ import logging
 import traceback
 import copy_reg
 import base64
-import uuid
 import shutil
 import marshal
 import decimal
 import struct
 
-from utils import md5_hash
+from utils import md5_hash, web2py_uuid
 from serializers import json
 import portalocker
 import validators
@@ -2980,7 +2979,7 @@ class Field(Expression):
                                         .replace('\\', os.sep))
         m = re.compile('\.(?P<e>\w{1,5})$').search(filename)
         extension = m and m.group('e') or 'txt'
-        uuid_key = str(uuid.uuid4()).replace('-', '')[-16:]
+        uuid_key = web2py_uuid().replace('-', '')[-16:]
         encoded_filename = base64.b16encode(filename).lower()
         newfilename = '%s.%s.%s.%s' % \
             (self._tablename, self.name, uuid_key, encoded_filename)

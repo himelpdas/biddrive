@@ -7,7 +7,6 @@ Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
 License: GPL v2
 """
 
-import uuid
 import sys
 import cPickle
 import traceback
@@ -16,6 +15,7 @@ import os
 import datetime
 import logging
 
+from utils import web2py_uuid
 from storage import Storage
 from http import HTTP
 
@@ -134,7 +134,7 @@ class RestrictedError:
             fmt = '%Y-%m-%d.%H-%M-%S'
             f = '%s.%s.%s' % (request.client.replace(':', '_'),
                               datetime.datetime.now().strftime(fmt),
-                              uuid.uuid4())
+                              web2py_uuid())
 
             ticket_storage = TicketStorage(db=request.tickets_db)
             ticket_storage.store(request, f, d)

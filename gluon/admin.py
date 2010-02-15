@@ -7,7 +7,7 @@ Utility functions for the Admin application
 ===========================================
 """
 import os
-import uuid
+from utils import web2py_uuid
 from shutil import rmtree
 from fileutils import *
 from restricted import RestrictedError
@@ -165,7 +165,7 @@ def app_create(app, request):
             fp = open(db,'r')
             data = fp.read()
             fp.close()
-            data = data.replace('<your secret key>','sha512:'+str(uuid.uuid4()))
+            data = data.replace('<your secret key>','sha512:'+web2py_uuid())
             fp = open(db,'w')
             fp.write(data)
             fp.close()

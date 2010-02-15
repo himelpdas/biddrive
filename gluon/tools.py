@@ -13,6 +13,7 @@ from validators import *
 from html import *
 from sqlhtml import *
 from http import *
+from utils import web2py_uuid
 
 import base64
 import cPickle
@@ -26,7 +27,6 @@ import time
 import smtplib
 import urllib
 import urllib2
-import uuid
 import Cookie
 
 import serializers
@@ -1226,7 +1226,7 @@ class Auth(object):
         if self.settings.captcha != None:
             form[0].insert(-1, TR('', self.settings.captcha, ''))
 
-        table_user.registration_key.default = key = str(uuid.uuid4())
+        table_user.registration_key.default = key = web2py_uuid()
         if form.accepts(request.post_vars, session, formname='register',
                         onvalidation=onvalidation):
             description = self.messages.group_description % form.vars
@@ -1587,7 +1587,7 @@ class Auth(object):
             elif user.registration_key in ['pending', 'disabled']:
                 session.flash = self.messages.registration_pending
                 redirect(self.url(args=request.args))
-            reset_password_key=str(int(time.time()))+'-'+str(uuid.uuid4())
+            reset_password_key = str(int(time.time()))+'-' + web2py_uuid()
 
             if self.settings.mailer.send(to=form.vars.email,
                                          subject=self.messages.reset_password_subject,
