@@ -839,7 +839,8 @@ class SQLDB(dict):
             sql_locker.release()
             self._connection = f()
 
-    def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8', check_reserved=None):
+    def __init__(self, uri='sqlite://dummy.db', pool_size=0,
+                 folder=None, db_codec='UTF-8', check_reserved=None):
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
         self._db_codec = db_codec
@@ -1233,7 +1234,7 @@ class SQLDB(dict):
         """
         for backend in self.check_reserved:
             if name.upper() in self.RSK[backend]:
-                logging.warn('invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper()))
+                raise SyntaxError, 'invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper())
 
 
     def define_table(
@@ -3755,12 +3756,17 @@ SQLRows = Rows
 SQLStorage = Row
 BaseAdapter = SQLDB
 
-def DAL(uri='sqlite:memory:', pool_size=0, folder=None, db_codec='UTF-8', check_reserved=None):
+def DAL(uri='sqlite:memory:',
+        pool_size=0,
+        folder=None, 
+        db_codec='UTF-8',
+        check_reserved=None):
     if uri == 'gae':
         import gluon.contrib.gql
         return gluon.contrib.gql.GQLDB()
     else:
-        return SQLDB(uri, pool_size=pool_size, folder=folder, db_codec=db_codec, check_reserved=check_reserved)
+        return SQLDB(uri, pool_size=pool_size, folder=folder,
+                     db_codec=db_codec, check_reserved=check_reserved)
 
 if __name__ == '__main__':
     import doctest

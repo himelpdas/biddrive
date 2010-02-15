@@ -1949,21 +1949,28 @@ class DAL(dict):
                 db._adapter.commit_prepared(keys[i])
         return
 
-    def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None, db_codec='UTF-8', check_reserved=None):
+    def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
+                 db_codec='UTF-8', check_reserved=None):
         """
         Creates a new Database Abstraction Layer instance.
 
         Keyword arguments:
-        uri -- string that contains information for connecting to a database. (default: 'sqlite://dummy.db')
-        pool_size -- How many open connections to make to the database object.
-        folder -- <please update me>
-        db_codec -- string encoding of the database (default: 'UTF-8')
-        check_reserve -- list of adapters to check tablenames and column names against sql reserved keywords
-             Is a list containing the adapter names, all, or common. (Default None)
-             common -- List of sql keywords that are common to all database types such as "SELECT, INSERT". (recommended)
-             all -- Checks against all known SQL keywords. (not recommended)
-             <adaptername> -- Checks against the specific adapters list of keywords (recommended)
-             <adaptername>_nonreserved -- Checks against the specific adapters list of nonreserved keywords. (if available)
+
+        :uri: string that contains information for connecting to a database.
+               (default: 'sqlite://dummy.db')
+        :pool_size: How many open connections to make to the database object.
+        :folder: <please update me>
+        :db_codec: string encoding of the database (default: 'UTF-8')
+        :check_reserve: list of adapters to check tablenames and column names
+                         against sql reserved keywords. (Default None)
+
+        * 'common' List of sql keywords that are common to all database types
+                such as "SELECT, INSERT". (recommended)
+        * 'all' Checks against all known SQL keywords. (not recommended)
+                <adaptername> Checks against the specific adapters list of keywords
+                (recommended)
+        * '<adaptername>_nonreserved' Checks against the specific adapters
+                list of nonreserved keywords. (if available)
         """
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
@@ -1997,7 +2004,7 @@ class DAL(dict):
         """
         for backend in self.check_reserved:
             if name.upper() in self.RSK[backend]:
-                logging.warn('invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper()))
+                raise SyntaxError, 'invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper())
 
     def define_table(
         self,
