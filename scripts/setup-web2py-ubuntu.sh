@@ -43,6 +43,7 @@ apt-get -y install postfix
 apt-get -y install wget
 apt-get -y install python-matplotlib
 apt-get -y install python-reportlab
+apt-get -y install mercurial
 /etc/init.d/postgresql restart
 # optional, uncomment for backups using samba
 # apt-get -y install samba
