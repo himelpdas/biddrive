@@ -115,7 +115,8 @@ def site():
             fname = request.vars.file.filename
 
         appname = cleanpath(request.vars.filename).replace('.', '_')
-        installed = app_install(appname, f, request, fname, overwrite=request.vars.overwrite_check)
+        installed = app_install(appname, f, request, fname,
+                                overwrite=request.vars.overwrite_check)
         if installed:
             msg = 'application %(appname)s installed with md5sum: %(digest)s'
             session.flash = T(msg, dict(appname=appname,
@@ -127,8 +128,8 @@ def site():
         redirect(URL(r=request))
 
     regex = re.compile('^\w+$')
-    apps = sorted([(f.upper(), f) for f in os.listdir(apath(r=request))
-                                                            if regex.match(f)])
+    apps = sorted([(f.upper(), f) for f in os.listdir(apath(r=request)) \
+                       if regex.match(f)])
     apps = [item[1] for item in apps]
 
     return dict(app=None, apps=apps, myversion=myversion)
