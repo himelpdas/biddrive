@@ -2966,7 +2966,7 @@ def prettydate(d,T=lambda x:x):
     elif dt.days >= 365:
         return T('1 year ago')
     elif dt.days >= 60:
-        return T('%d months ago' % int(dt.days / 30)
+        return T('%d months ago') % int(dt.days / 30)
     elif dt.days > 21:
         return T('1 month ago')
     elif dt.days >= 14:
