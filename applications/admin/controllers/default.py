@@ -106,8 +106,8 @@ def site():
         if request.vars.appurl is not '':
             try:
                 f = urllib.urlopen(request.vars.appurl)
-            except:
-                session.flash = T('Unable to download app')
+            except Exception, e:
+                session.flash = DIV(T('Unable to download app because:'),PRE(str(e)))
                 redirect(URL(r=request))
             fname = request.vars.appurl
         elif request.vars.file is not '':
@@ -120,7 +120,11 @@ def site():
         if installed:
             msg = 'application %(appname)s installed with md5sum: %(digest)s'
             session.flash = T(msg, dict(appname=appname,
-                                                    digest=md5_hash(installed)))
+                                        digest=md5_hash(installed)))
+        elif request.vars.overwrite_check:
+            msg = 'unable to install application "%(appname)s"'
+            session.flash = T(msg, dict(appname=request.vars.filename))
+
         else:
             msg = 'unable to install application "%(appname)s"'
             session.flash = T(msg, dict(appname=request.vars.filename))
@@ -342,8 +346,8 @@ def edit():
             exec 'import applications.%s.modules.%s' % (request.args[0], mopath)
             reload(sys.modules['applications.%s.modules.%s'
                     % (request.args[0], mopath)])
-        except:
-            response.flash = T('failed to reload module')
+        except Exception, e:
+            response.flash = DIV(T('failed to reload module because:'),PRE(str(e)))
 
     edit_controller = None
     editviewlinks = None
@@ -1032,6 +1036,6 @@ def twitter():
     try:
         page = gluon.tools.fetch('http://twitter.com/web2py?format=json')
         return sj.loads(page)['#timeline']
-    except:
-        return T('Unable to download')
+    except Exception, e:
+        return DIV(T('Unable to download because'),PRE(str(e)))
 

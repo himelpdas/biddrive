@@ -202,8 +202,8 @@ def select():
             import_csv(db[request.vars.table],
                        request.vars.csvfile.file)
             response.flash = T('data uploaded')
-        except:
-            response.flash = T('unable to parse csv file')
+        except Exception, e:
+            response.flash = DIV(T('unable to parse csv file'),PRE(str(e)))
     if form.accepts(request.vars, formname=None):
 #         regex = re.compile(request.args[0] + '\.(?P<table>\w+)\.id\>0')
         regex = re.compile(request.args[0] + '\.(?P<table>\w+)\..+')
@@ -248,28 +248,16 @@ def select():
 def update():
     (db, table) = get_table(request)
     keyed = hasattr(db[table],'_primarykey')
-    norec = True
+    record = None
     if keyed:
         key = [f for f in request.vars if f in db[table]._primarykey]
         if key:
-            try:
-              records = db(db[table][key[0]] == request.vars[key[0]]).select()
-              if records:
-                  record = records[0]
-                  norec = False
-            except:
-                pass
-        else:
-            qry = query_by_table_type(table, db)
+            record = db(db[table][key[0]] == request.vars[key[0]]).select().first()
     else:
-        try:
-            id = int(request.args[2])
-            record = db(db[table].id == id).select()[0]
-            norec = False
-        except:
-            qry = query_by_table_type(table, db)
+        record = db(db[table].id == request.args(2)).select().first()
 
-    if norec:
+    if not record:
+        qry = query_by_table_type(table, db)
         session.flash = T('record does not exist')
         redirect(URL(r=request, f='select', args=request.args[:1],
                      vars=dict(query=qry)))
@@ -329,7 +317,7 @@ def ccache():
     
     try:
         from guppy import hpy; hp=hpy()
-    except:
+    except ImportError:
         hp = False
         
     import shelve, os, copy, time, math
@@ -352,7 +340,7 @@ def ccache():
             ram['misses'] = value['misses']
             try:
                 ram['ratio'] = ram['hits'] * 100 / value['hit_total']
-            except:
+            except (KeyError, ZeroDivisionError):
                 ram['ratio'] = 0
         else:
             if hp:
@@ -375,7 +363,7 @@ def ccache():
             disk['misses'] = value['misses']
             try:
                 disk['ratio'] = disk['hits'] * 100 / value['hit_total']
-            except:
+            except (KeyError, ZeroDivisionError):
                 disk['ratio'] = 0
         else:
             if hp:
