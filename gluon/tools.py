@@ -2955,3 +2955,39 @@ def completion(callback):
                 callback(d)
         return __completion
     return _completion
+
+def prettydate(d,T=lambda x:x):
+    try:
+        dt = datetime.now() - d
+    except:
+        return ''
+    if dt.days >= 2*365:
+        return T('%d years ago') % int(dt.days / 365)
+    elif dt.days >= 365:
+        return T('1 year ago')
+    elif dt.days >= 60:
+        return T('%d months ago' % int(dt.days / 30)
+    elif dt.days > 21:
+        return T('1 month ago')
+    elif dt.days >= 14:
+        return T('%d weeks ago') % int(dt.days / 7)
+    elif dt.days >= 7:
+        return T('1 week ago')
+    elif dt.days > 1:
+        return T('%d days ago') % dt.days
+    elif dt.days == 1:
+        return T('1 day ago')
+    elif dt.seconds >= 2*60*60:
+        return T('%d hours ago') % int(dt.seconds / 3600)
+    elif dt.seconds >= 60*60:
+        return T('1 hour ago')
+    elif dt.seconds >= 2*60:
+        return T('%d minutes ago') % int(dt.seconds / 60)
+    elif dt.seconds >= 60:
+        return T('1 minute ago')
+    elif dt.seconds > 1:
+        return T('%d seconds ago') % dt.seconds
+    elif dt.seconds == 1:
+        return T('1 second ago')
+    else:
+        return T('now')
