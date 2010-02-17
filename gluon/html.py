@@ -1358,6 +1358,10 @@ class BEAUTIFY(DIV):
         '<div><table><tr><td><div>a</div></td></tr><tr><td><div>b</div></td></tr><tr><td><div><table><tr><td style="font-weight:bold;"><div>hello</div></td><td valign="top">:</td><td><div>world</div></td></tr></table></div></td></tr></table></div>'
 
     turns any list, dictionary, etc into decent looking html.
+    Two special attributes are 
+    :sorted: a function that takes the dict and returned sorted keys
+    :keyfilter: a funciton that takes a key and returns its representation
+                or None if the key is to be skipped. By default key[:1]=='_' is skipped.
     """
 
     tag = 'div'
@@ -1365,6 +1369,12 @@ class BEAUTIFY(DIV):
     def __init__(self, component, **attributes):
         self.components = [component]
         self.attributes = attributes
+        self.sorted = attributes.get('sorted',sorted)
+        def no_underscore(key):
+            if key[:1]=='_':
+                return None
+            return key
+        self.keyfilter = attributes.get('keyfilter',no_underscore)
         components = []
         attributes = copy.copy(self.attributes)
         if '_class' in attributes:
@@ -1377,13 +1387,14 @@ class BEAUTIFY(DIV):
             elif 'keys' in s:
                 rows = []
                 try:
-                    for key in sorted(c):
-                        if str(key)[:1] == '_':
+                    for key in (self.sorted and self.sorted(c)) or c:
+                        filtered_key = (self.keyfilter and self.keyfilter(key)) or key
+                        if filtered_key == None:
                             continue
                         value = c[key]
                         if type(value) == types.LambdaType:
                             continue
-                        rows.append(TR(TD(BEAUTIFY(key,
+                        rows.append(TR(TD(BEAUTIFY(filtered_key,
                                     **attributes), _style='font-weight:bold;'), TD(':',
                                     _valign='top'), TD(BEAUTIFY(value,
                                     **attributes))))
