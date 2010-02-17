@@ -1010,7 +1010,7 @@ class SQLTABLE(TABLE):
     :param headers: dictionary of headers to headers redefinions
     :param truncate: length at which to truncate text in table cells.
         Defaults to 16 characters.
-    :param columns: a list of dict contaning the names of the columns to be shown 
+    :param columns: a list or dict contaning the names of the columns to be shown 
         Defaults to all
 
     Optional names attributes for passed to the <table> tag
