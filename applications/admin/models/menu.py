@@ -5,7 +5,8 @@
 _a = request.application
 _c = request.controller
 _f = request.function
-response.title='%s %s' % (_f, '/'.join(request.args))
+response.title = '%s %s' % (_f, '/'.join(request.args))
+response.subtitle = 'admin'
 response.menu = [(T('site'), _f == 'site', URL(_a,'default','site'))]
 
 if request.args:
