@@ -567,19 +567,28 @@ def save_password(password, port):
 
     password_file='parameters_%i.py' % port
     if password == '<random>':
+        # make up a new password
         chars = string.letters + string.digits
         password = ''.join([random.choice(chars) for i in range(8)])
+        cpassword = CRYPT()(password)[0]
         print '******************* INPORTANT!!! ************************'
         print 'your admin password is "%s"' % password
         print '*********************************************************'
     elif password == '<recycle>':
+        # reuse the current password if any
         if os.path.exists(password_file):
             return
         else:
             password = ''
+    elif password.startswith('<pam_user:'):
+        # use the pam password for specified user
+        cpassword = password[1:-1]
+    else:
+        # use provided password
+        cpassword = CRYPT()(password)[0]
     fp = open(password_file, 'w')
-    if len(password) > 0:
-        fp.write('password="%s"\n' % CRYPT()(password)[0])
+    if password:
+        fp.write('password="%s"\n' % cpassword)
     else:
         fp.write('password=None\n')
     fp.close()

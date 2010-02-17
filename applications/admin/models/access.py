@@ -41,6 +41,20 @@ except IOError:
     else:
         raise HTTP(200, T('admin disabled because unable to access password file'))
 
+
+def verify_password(password):
+    session.pam_user = None
+    if not 'password' in _config:
+        return False
+    if _config['password'].startswith('pam_user:'):
+        session.pam_user = _config['password'][9:].strip()
+        import gluon.contrib.pam
+        return gluon.contrib.pam.authenticate(session.pam_user,password)
+    else:
+        return _config['password'] == CRYPT()(request.vars.password)[0]
+        
+
+
 # ###########################################################
 # ## session expiration
 # ###########################################################

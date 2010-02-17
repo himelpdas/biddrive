@@ -14,7 +14,7 @@ def index():
     if session.authorized:
         redirect(send)
     elif request.vars.password:
-        if _config['password'] == CRYPT()(request.vars.password)[0]:
+        if verify_password(request.vars.password):
             session.authorized = True
 
             if CHECK_VERSION:
@@ -62,11 +62,14 @@ def logout():
 
 
 def change_password():
+    if session.pam_user:
+        session.flash = T('PAM authenticated user, cannot change password here')
+        redirect(URL(r=request,f='site'))
     form=SQLFORM.factory(Field('current_admin_password','password'),
                          Field('new_admin_password','password',requires=IS_STRONG()),
                          Field('new_admin_password_again','password'))
     if form.accepts(request.vars):
-        if _config['password'] != CRYPT()(request.vars.current_admin_password)[0]:
+        if verify_password(request.vars.current_admin_password):
             form.errors.current_admin_password = T('invalid password')
         elif form.vars.new_admin_password != form.vars.new_admin_password_again:
             form.errors.new_admin_password_again = T('no match')
