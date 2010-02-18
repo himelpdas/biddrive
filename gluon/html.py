@@ -699,7 +699,6 @@ class HTML(DIV):
         (fa, co) = self._xml()
         return '%s<%s%s>%s</%s>' % (doctype, self.tag, fa, co, self.tag)
 
-
 class XHTML(DIV):
     """
     This is XHTML version of the HTML helper.
@@ -1366,29 +1365,36 @@ class BEAUTIFY(DIV):
 
     tag = 'div'
 
+    @staticmethod
+    def no_underscore(key):
+        if key[:1]=='_':
+            return None
+        return key
+
     def __init__(self, component, **attributes):
         self.components = [component]
         self.attributes = attributes
-        self.sorted = attributes.get('sorted',sorted)
-        def no_underscore(key):
-            if key[:1]=='_':
-                return None
-            return key
-        self.keyfilter = attributes.get('keyfilter',no_underscore)
+        sorter = attributes.get('sorted',sorted)
+        keyfilter = attributes.get('keyfilter',BEAUTIFY.no_underscore)
         components = []
         attributes = copy.copy(self.attributes)
+        level = attributes['level'] = attributes.get('level',3) - 1
         if '_class' in attributes:
             attributes['_class'] += 'i'
-        for c in self.components:
-            s = dir(c)  # this really has to be fixed!!!!
-            if 'xml' in s:  # assume c has a .xml()
+        if level == 0:
+            self.components = ['...']
+            return
+        for c in self.components:            
+            if hasattr(c,'xml') and callable(c.xml):
                 components.append(c)
                 continue
-            elif 'keys' in s:
+            elif isinstance(c,dict) and not hasattr(c,'type'):
                 rows = []
-                try:
-                    for key in (self.sorted and self.sorted(c)) or c:
-                        filtered_key = (self.keyfilter and self.keyfilter(key)) or key
+                try:                    
+                    keys = (sorter and sorter(c)) or c
+                    for key in keys:
+                        filtered_key = (isinstance(key,(str,unicode)) and \
+                                            keyfilter and keyfilter(key)) or key
                         if filtered_key == None:
                             continue
                         value = c[key]
