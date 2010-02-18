@@ -1378,32 +1378,32 @@ class BEAUTIFY(DIV):
         keyfilter = attributes.get('keyfilter',BEAUTIFY.no_underscore)
         components = []
         attributes = copy.copy(self.attributes)
-        level = attributes['level'] = attributes.get('level',3) - 1
+        level = attributes['level'] = attributes.get('level',6) - 1
         if '_class' in attributes:
             attributes['_class'] += 'i'
         if level == 0:
-            self.components = ['...']
             return
         for c in self.components:            
             if hasattr(c,'xml') and callable(c.xml):
                 components.append(c)
                 continue
-            elif isinstance(c,dict) and not hasattr(c,'type'):
+            elif hasattr(c,'keys') and callable(c.keys):
                 rows = []
                 try:                    
                     keys = (sorter and sorter(c)) or c
                     for key in keys:
-                        filtered_key = (isinstance(key,(str,unicode)) and \
-                                            keyfilter and keyfilter(key)) or key
+                        if isinstance(key,(str,unicode)) and keyfilter:
+                            filtered_key = keyfilter(key)
+                        else:
+                            filtered_key = str(key)
                         if filtered_key == None:
                             continue
                         value = c[key]
                         if type(value) == types.LambdaType:
                             continue
-                        rows.append(TR(TD(BEAUTIFY(filtered_key,
-                                    **attributes), _style='font-weight:bold;'), TD(':',
-                                    _valign='top'), TD(BEAUTIFY(value,
-                                    **attributes))))
+                        rows.append(TR(TD(filtered_key, _style='font-weight:bold;'), 
+                                       TD(':',_valign='top'),
+                                       TD(BEAUTIFY(value, **attributes))))
                     components.append(TABLE(*rows, **attributes))
                     continue
                 except:
