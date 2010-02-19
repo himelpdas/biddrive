@@ -1,7 +1,7 @@
 {
-'"browse"': '"buscar"',
-'"save"': '"guardar"',
-'"submit"': '"enviar"',
+'browse': 'buscar',
+'save': 'guardar',
+'submit': 'enviar',
 '"update" is an optional expression like "field1=\'newvalue\'". You cannot update or delete the results of a JOIN': '"actualice" es una expresi\xc3\xb3n opcional como "campo1=\'nuevo_valor\'". No se puede actualizar o eliminar resultados de un JOIN',
 '%Y-%m-%d': '%Y-%m-%d',
 '%Y-%m-%d %H:%M:%S': '%Y-%m-%d %H:%M:%S',

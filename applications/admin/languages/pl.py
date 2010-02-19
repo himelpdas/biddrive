@@ -1,5 +1,5 @@
 {
-'"submit"': '"wy\xc5\x9blij"',
+'submit': 'wy\xc5\x9blij',
 '"update" is an optional expression like "field1=\'newvalue\'". You cannot update or delete the results of a JOIN': '"Uaktualnij" jest dodatkowym wyra\xc5\xbceniem postaci "pole1=\'nowawarto\xc5\x9b\xc4\x87\'". Nie mo\xc5\xbcesz uaktualni\xc4\x87 lub usun\xc4\x85\xc4\x87 wynik\xc3\xb3w z JOIN:',
 '%Y-%m-%d': '%Y-%m-%d',
 '%Y-%m-%d %H:%M:%S': '%Y-%m-%d %H:%M:%S',

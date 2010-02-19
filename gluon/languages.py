@@ -11,6 +11,7 @@ import os
 import re
 import cgi
 import portalocker
+import logging
 from fileutils import listdir
 from settings import settings
 
@@ -41,8 +42,11 @@ def read_dict(filename):
     fp.close()
     if not lang_text.strip():
         return {}
-    return eval(lang_text)
-
+    try:
+        return eval(lang_text)
+    except:
+        logging.error('Syntax error in %s' % filename)
+        return {}
 
 def write_dict(filename, contents):
     fp = open(filename, 'w')
