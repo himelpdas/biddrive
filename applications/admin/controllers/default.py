@@ -69,7 +69,7 @@ def change_password():
                          Field('new_admin_password','password',requires=IS_STRONG()),
                          Field('new_admin_password_again','password'))
     if form.accepts(request.vars):
-        if verify_password(request.vars.current_admin_password):
+        if not verify_password(request.vars.current_admin_password):
             form.errors.current_admin_password = T('invalid password')
         elif form.vars.new_admin_password != form.vars.new_admin_password_again:
             form.errors.new_admin_password_again = T('no match')
