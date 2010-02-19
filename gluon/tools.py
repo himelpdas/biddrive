@@ -772,9 +772,9 @@ class Auth(object):
         """
 
         db = self.db
-        if not self.settings.table_user:
-            passfield = self.settings.password_field
-            self.settings.table_user = db.define_table(
+        if not self.settings.table_user_name in db.tables:
+            passfield = self.settings.password_field            
+            table = db.define_table(
                 self.settings.table_user_name,
                 Field('first_name', length=128, default='',
                         label=self.messages.label_first_name),
@@ -794,7 +794,6 @@ class Auth(object):
                 migrate=\
                     self.__get_migrate(self.settings.table_user_name, migrate),
                 format='%(first_name)s %(last_name)s (%(id)s)')
-            table = self.settings.table_user
             table.first_name.requires = \
                 IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.last_name.requires = \
@@ -802,11 +801,11 @@ class Auth(object):
             table[passfield].requires = [CRYPT(key=self.settings.hmac_key)]
             table.email.requires = \
                 [IS_EMAIL(error_message=self.messages.invalid_email),
-                 IS_NOT_IN_DB(db, '%s.email'
-                     % self.settings.table_user._tablename)]
+                 IS_NOT_IN_DB(db, '%s.email' % self.settings.table_user_name)]
             table.registration_key.default = ''
-        if not self.settings.table_group:
-            self.settings.table_group = db.define_table(
+        self.settings.table_user = db[self.settings.table_user_name]
+        if not self.settings.table_group_name in db.tables:
+            table = db.define_table(
                 self.settings.table_group_name,
                 Field('role', length=512, default='',
                         label=self.messages.label_role),
@@ -815,11 +814,11 @@ class Auth(object):
                 migrate=self.__get_migrate(
                     self.settings.table_group_name, migrate),
                 format = '%(role)s (%(id)s)')
-            table = self.settings.table_group
             table.role.requires = IS_NOT_IN_DB(db, '%s.role'
-                 % self.settings.table_group._tablename)
-        if not self.settings.table_membership:
-            self.settings.table_membership = db.define_table(
+                 % self.settings.table_group_name)
+        self.settings.table_group = db[self.settings.table_group_name]
+        if not self.settings.table_membership_name in db.tables:
+            table = db.define_table(
                 self.settings.table_membership_name,
                 Field('user_id', self.settings.table_user,
                         label=self.messages.label_user_id),
@@ -827,15 +826,15 @@ class Auth(object):
                         label=self.messages.label_group_id),
                 migrate=self.__get_migrate(
                     self.settings.table_membership_name, migrate))
-            table = self.settings.table_membership
             table.user_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_user._tablename,
+                    self.settings.table_user_name,
                     '%(first_name)s %(last_name)s (%(id)s)')
             table.group_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_group._tablename,
+                    self.settings.table_group_name,
                     '%(role)s (%(id)s)')
-        if not self.settings.table_permission:
-            self.settings.table_permission = db.define_table(
+        self.settings.table_membership = db[self.settings.table_membership_name]
+        if not self.settings.table_permission_name in db.tables:
+            table = db.define_table(
                 self.settings.table_permission_name,
                 Field('group_id', self.settings.table_group,
                         label=self.messages.label_group_id),
@@ -847,15 +846,15 @@ class Auth(object):
                         label=self.messages.label_record_id),
                 migrate=self.__get_migrate(
                     self.settings.table_permission_name, migrate))
-            table = self.settings.table_permission
             table.group_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_group._tablename,
+                    self.settings.table_group_name,
                     '%(role)s (%(id)s)')
             table.name.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.table_name.requires = IS_IN_SET(self.db.tables)
             table.record_id.requires = IS_INT_IN_RANGE(0, 10 ** 9)
-        if not self.settings.table_event:
-            self.settings.table_event = db.define_table(
+        self.settings.table_permission = db[self.settings.table_permission_name]
+        if not self.settings.table_event_name in db.tables:
+            table  = db.define_table(
                 self.settings.table_event_name,
                 Field('time_stamp', 'datetime',
                         default=self.environment.request.now,
@@ -871,12 +870,12 @@ class Auth(object):
                         label=self.messages.label_description),
                 migrate=self.__get_migrate(
                     self.settings.table_event_name, migrate))
-            table = self.settings.table_event
             table.user_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_user._tablename,
+                    self.settings.table_user_name,
                     '%(first_name)s %(last_name)s (%(id)s)')
             table.origin.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.description.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
+        self.settings.table_event = db[self.settings.table_event_name]
 
     def log_event(self, description, origin='auth'):
         """
