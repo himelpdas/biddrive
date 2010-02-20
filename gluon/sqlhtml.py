@@ -46,7 +46,7 @@ class FormWidget(object):
         """
         attr = dict(
             _id = '%s_%s' % (field._tablename, field.name),
-            _class = field.type,
+            _class = isinstance(field.type,str) and field.type or None,
             _name = field.name,
             requires = field.requires,
             )
