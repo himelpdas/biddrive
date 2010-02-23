@@ -2981,7 +2981,7 @@ class Field(Expression):
 
     def store(self, file, filename=None, path=None):
         if not filename:
-            filename = file.filename
+            filename = file.name
         filename = os.path.basename(filename.replace('/', os.sep)\
                                         .replace('\\', os.sep))
         m = re.compile('\.(?P<e>\w{1,5})$').search(filename)
