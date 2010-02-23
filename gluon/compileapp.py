@@ -149,9 +149,9 @@ class LoadFactory:
             other_response._view_environment = other_environment
             other_request.env.http_web2py_component_location = request.env.path_info
             other_request.env.http_web2py_component_element = target
+            other_response.view = '%s/%s.%s' % (plugin,function,other_request.extension)
             page = run_controller_in(plugin, function,
                                      other_environment)
-            other_response.view = '%s/%s.%s' % (plugin,function,other_request.extension)
             if isinstance(page, dict):
                 other_response._vars = page
                 for key in page:
