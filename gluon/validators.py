@@ -238,6 +238,15 @@ class IS_IN_SET(Validator):
         ('|max|john|', None)
         >>> IS_IN_SET(['max', 'john'], multiple=True)(('bill', 'john'))
         (('bill', 'john'), 'value not allowed')
+        >>> IS_IN_SET(('id1','id2'), ['first label','second label'])('id1') # Traditional way
+        ('id1', None)
+        >>> IS_IN_SET({'id1':'first label', 'id2':'second label'})('id1')
+        ('id1', None)
+        >>> import itertools
+        >>> IS_IN_SET(itertools.chain(['1','3','5'],['2','4','6']))('1')
+        ('1', None)
+        >>> IS_IN_SET([('id1','id2'), ('first label','second label')])('id1') # Redundant way
+        ('id1', None)
     """
 
     def __init__(
@@ -250,12 +259,11 @@ class IS_IN_SET(Validator):
         sort=False,
         ):
         self.multiple = multiple
-        self.theset = [str(item) for item in theset]
         if isinstance(theset, dict):
+            self.theset = [str(item) for item in theset]
             self.labels = theset.values()
-        elif theset and (isinstance(theset[0], list) or  \
-                           isinstance(theset[0], tuple)) \
-                           and len(theset[0])==2:
+        elif theset and isinstance(theset, (tuple,list)) \
+            and isinstance(theset[0], (tuple,list)) and len(theset[0])==2:
             self.theset = [str(item) for item,label in theset]
             self.labels = [str(label) for item,label in theset]
         else:
@@ -453,10 +461,10 @@ class IS_INT_IN_RANGE(Validator):
     Determine that the argument is (or can be represented as) an int,
     and that it falls within the specified range. The range is interpreted
     in the Pythonic way, so the test is: min <= value < max.
-    
+
     The minimum and maximum limits can be None, meaning no lower or upper limit,
     respectively.
-    
+
     example::
 
         INPUT(_type='text', _name='name', requires=IS_INT_IN_RANGE(0, 10))
@@ -530,12 +538,12 @@ class IS_INT_IN_RANGE(Validator):
 class IS_FLOAT_IN_RANGE(Validator):
     """
     Determine that the argument is (or can be represented as) a float,
-    and that it falls within the specified inclusive range. 
+    and that it falls within the specified inclusive range.
     The comparison is made with native arithmetic.
-    
+
     The minimum and maximum limits can be None, meaning no lower or upper limit,
     respectively.
-    
+
     example::
 
         INPUT(_type='text', _name='name', requires=IS_FLOAT_IN_RANGE(0, 10))
@@ -604,12 +612,12 @@ class IS_FLOAT_IN_RANGE(Validator):
 class IS_DECIMAL_IN_RANGE(Validator):
     """
     Determine that the argument is (or can be represented as) a Python Decimal,
-    and that it falls within the specified inclusive range. 
+    and that it falls within the specified inclusive range.
     The comparison is made with Python Decimal arithmetic.
-    
+
     The minimum and maximum limits can be None, meaning no lower or upper limit,
     respectively.
-    
+
     example::
 
         INPUT(_type='text', _name='name', requires=IS_DECIMAL_IN_RANGE(0, 10))
@@ -2020,7 +2028,7 @@ class IS_DATE_IN_RANGE(IS_DATE):
             elif maximum is None:
                 error_message = "enter date on or after %(min)"
             else:
-                error_message = "enter date in range %(min)s %(max)s"    
+                error_message = "enter date in range %(min)s %(max)s"
         d = dict(min=minimum, max=maximum)
         IS_DATE.__init__(self,
                          format = format,
