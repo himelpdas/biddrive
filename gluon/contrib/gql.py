@@ -693,9 +693,9 @@ class Set(gluon.sql.Set):
         self._db['_lastsql'] = 'DELETE WHERE %s' % self.where
         (items, tablename, fields) = self._select()
         tableobj = self._db[tablename]._tableobj
-        counter = items.count()
+        counter = len(items)
         gae.delete(items)
-        return counter - items.count()
+        return counter - len(items)
 
     def update(self, **update_fields):
         self._db['_lastsql'] = 'UPDATE WHERE %s' % self.where
