@@ -660,3 +660,4 @@ new web2py.fedora.sh
 new setup-web2py-ubuntu.sh
 experimental autocomplete
 menus work on IE6
+

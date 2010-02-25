@@ -504,7 +504,7 @@ class Auth(object):
                                     c=self.settings.controller,
                                     f=f, args=args, vars=vars)
 
-    def __init__(self, environment, db=None):
+    def __init__(self, environment, db=None, controller='default'):
         """
         auth=Auth(globals(), db)
 
@@ -542,7 +542,7 @@ class Auth(object):
         self.settings.alternate_requires_registration = False
         self.settings.create_user_groups = True
 
-        self.settings.controller = 'default'
+        self.settings.controller = controller
         self.settings.login_url = self.url('user', args='login')
         self.settings.logged_url = self.url('user', args='profile')
         self.settings.download_url = self.url('download')
