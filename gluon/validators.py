@@ -1965,7 +1965,12 @@ class IS_DATE(Validator):
             return (value, self.error_message % IS_DATETIME.nice(self.format))
 
     def formatter(self, value):
-        return value.strftime(self.format)
+        format = self.format
+        y = '%.4i' % value.year
+        format = format.replace('%y',y[-2:])
+        format = format.replace('%Y',y)
+        d = datetime.date(2000,value.month,value.day)
+        return d.strftime(format)
 
 
 class IS_DATETIME(Validator):
@@ -2011,7 +2016,12 @@ class IS_DATETIME(Validator):
             return (value, self.error_message % IS_DATETIME.nice(self.format))
 
     def formatter(self, value):
-        return value.strftime(self.format)
+        format = self.format
+        y = '%.4i' % value.year
+        format = format.replace('%y',y[-2:])
+        format = format.replace('%Y',y)
+        d = datetime.datetime(2000,value.month,value.day,value.hour,value.minute,value.second)
+        return d.strftime(format)
 
 class IS_DATE_IN_RANGE(IS_DATE):
 
