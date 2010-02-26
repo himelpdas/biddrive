@@ -5,17 +5,12 @@ This file is part of web2py Web Framework (Copyrighted, 2007-2010).
 Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
 License: GPL v2
 
-This file is not required by web2py. It is used for three purposes:
+This file is not stricly required by web2py. It is used for three purposes:
+
 1) check that all required modules are installed properly
 2) provide py2exe and py2app a list of modules to be packaged in the binary
 3) (optional) preload modules in memory to speed up http responses
 
-If you are reading this it is likely because somebody pointed you to it.
-Be aware that people who complan about this file usually take it out of 
-context and seem to have a misunderstanding about its purpose. 
-
-You are smarter than the people who use these scare tactics to drive you 
-away from even trying web2py.
 """
 
 import os
