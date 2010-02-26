@@ -6,7 +6,7 @@ def WIKI(text, encoding="utf8", safe_mode='escape',**attributes):
         test = ''
     if attributes.has_key('extras'):
         extras = attributes['extras']
-        del attributes['extra']
+        del attributes['extras']
     else:
         extras=None
     text = text.decode(encoding,'replace')
