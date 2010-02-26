@@ -661,3 +661,29 @@ new setup-web2py-ubuntu.sh
 experimental autocomplete
 menus work on IE6
 
+#1.75.2
+fetch supports cache
+curd.update(....,onaccept=crud.archive) magic
+new UUID mechnism fixes session conflicts with cloned machine in cloud
+allow to upload app and overwrite existing old ones, thanks Jonathan
+print gluon.tools.prettydate(request.now,T), thanks Richard
+
+#1.75.3
+added support for PAM authentican for apps and for admin
+INTRODUCED MAJOR BUG IN BEAUTIFY (upgrade to 1.75.4) IMMEDIATELY
+
+#1.75.4
+customizable BEAUTIFY, thanks John
+
+#1.75.5
+fixed behaviour with languages.py, thanks Iceberg
+added chinese (thanks Iceberg) and Hungarian (thanks Gyuris)
+fixed problem with GAE deleted by id (thanks what_ho)
+fixed bug in LOAD with custom views, thanks vhang
+improved IS_IN_SET takes iterator, dict, list and list of tuples, thanks Iceberg
+Auth(...,controller='default')
+Fixed major bug in parsing repeated request.vars, thanks Ben
+IS_DATE and IS_DATETIME can now handle any 0<year
+allow to disable editarea onload, thanks Alex
+
+

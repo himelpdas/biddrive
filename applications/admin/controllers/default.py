@@ -398,6 +398,7 @@ def edit():
         editarea_preferences['FULL_SCREEN'] = 'false'
         editarea_preferences['ALLOW_TOGGLE'] = 'true'
         editarea_preferences['REPLACE_TAB_BY_SPACES'] = '4'
+        editarea_preferences['DISPLAY'] = 'onload'
         for key in editarea_preferences:
             if globals().has_key(key):
                 editarea_preferences[key]=globals()[key]

@@ -29,6 +29,9 @@ ALLOW_TOGGLE = 'true'
 # or an integer > 0 that specifies the number of spaces to replace a tab with.
 REPLACE_TAB_BY_SPACES = 4
 
+# Toggle on/off the code editor instead of textarea on startup
+DISPLAY = "onload" or "later"
+
 # To upload on google app engine this has to point to the proper appengine
 # config file
 import os
