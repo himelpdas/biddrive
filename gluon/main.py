@@ -250,9 +250,9 @@ def parse_get_post_vars(request, environ):
     for (key, value) in dget:
         if key in request.get_vars:
             if isinstance(request.get_vars[key], list):
-                request.get_vars[key] += list(value)
+                request.get_vars[key] += [value]
             else:
-                request.get_vars[key] = [request.get_vars[key]] + list(value)
+                request.get_vars[key] = [request.get_vars[key]] + [value]
         else:
             request.get_vars[key] = value
         request.vars[key] = request.get_vars[key]
