@@ -507,25 +507,27 @@ def edit_language():
     rows = []
     rows.append(H2(T('Original/Translation')))
 
-    for i,key in enumerate(keys):
+    for key in keys:
+        name = md5_hash(key)
         if len(key) <= 40:
-            elem = INPUT(_type='text', _name=str(i),value=strings[key],_size=70)
+            elem = INPUT(_type='text', _name=name,value=strings[key],_size=70)
         else:
-            elem = TEXTAREA(_name=str(i), value=strings[key], _cols=70, _rows=5)
+            elem = TEXTAREA(_name=name, value=strings[key], _cols=70, _rows=5)
 
         # Making the short circuit compatible with <= python2.4
         k = (strings[key] != key) and key or B(key)
 
         rows.append(P(k, BR(), elem, TAG.BUTTON(T('delete'),
-                            _onclick='return delkey("%s")' % i), _id=str(i)))
+                            _onclick='return delkey("%s")' % name), _id=name))
 
     rows.append(INPUT(_type='submit', _value=T('update')))
     form = FORM(*rows)
     if form.accepts(request.vars, keepvalues=True):
         strs = dict()
-        for i,key in enumerate(keys):
-            if form.vars[str(i)]==chr(127): continue
-            strs[key] = form.vars[str(i)]
+        for key in keys:
+            name = md5_hash(key)
+            if form.vars[name]==chr(127): continue
+            strs[key] = form.vars[name]
         write_dict(apath(filename, r=request), strs)
         session.flash = T('file saved on %(time)s', dict(time=time.ctime()))
         redirect(URL(r=request,args=request.args))
