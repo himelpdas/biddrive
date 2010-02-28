@@ -166,8 +166,10 @@ def filter_url(url, method='get', remote='0.0.0.0'):
     e = filter_in(e)
     if e['PATH_INFO'] == '':
         path = e['REQUEST_URI']
+    elif query_string:
+        path = e['PATH_INFO'] + '?' + query_string
     else:
-        path = e['PATH_INFO'] + (query_string and '?'+query_string or '')
+        path = e['PATH_INFO']
     return scheme + '://' + host + path
 
 def filter_err(status, application='app', ticket='tkt'):
