@@ -380,7 +380,11 @@ def ccache():
     total['objects'] = ram['objects'] + disk['objects']
     total['hits'] = ram['hits'] + disk['hits']
     total['misses'] = ram['misses'] + disk['misses']
-    total['ratio'] = (ram['ratio'] + disk['ratio']) / 2
+    try:
+        total['ratio'] = total['hits'] * 100 / (total['hits'] + total['misses'])
+    except (KeyError, ZeroDivisionError):
+        total['ratio'] = 0
+    
     if disk['oldest'] < ram['oldest']:
         total['oldest'] = disk['oldest']
     else:
