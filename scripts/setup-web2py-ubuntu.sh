@@ -25,7 +25,6 @@ read CONFIRM
 echo "installing useful packages"
 echo "=========================="
 apt-get update
-apt-get -y upgrade
 apt-get -y install emacs
 apt-get -y install ssh
 apt-get -y install zip unzip
