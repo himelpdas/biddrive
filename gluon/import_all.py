@@ -5,7 +5,7 @@ This file is part of web2py Web Framework (Copyrighted, 2007-2010).
 Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
 License: GPL v2
 
-This file is not stricly required by web2py. It is used for three purposes:
+This file is not strictly required by web2py. It is used for three purposes:
 
 1) check that all required modules are installed properly
 2) provide py2exe and py2app a list of modules to be packaged in the binary
