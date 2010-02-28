@@ -17,12 +17,13 @@ regex_at = re.compile('(?<!\\\\)\$[\w_]+')
 regex_anything = re.compile('(?<!\\\\)\$anything')
 regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
-params=Storage()
+params = Storage()
 
-params.routes_in=[]
-params.routes_out=[]
-params.routes_onerror=[]
-params.error_handler=None
+params.routes_in = []
+params.routes_out = []
+params.routes_onerror = []
+params.routes_apps_raw = []
+params.error_handler = None
 params.error_message = '<html><body><h1>Invalid request</h1></body></html>'
 params.error_message_custom = '<html><body><h1>%s</h1></body></html>'
 params.error_message_ticket = \
@@ -85,6 +86,8 @@ def load(routes='routes.py'):
         params.error_message = symbols['error_message']
     if 'error_message_ticket' in symbols:
         params.error_message_ticket = symbols['error_message_ticket']
+    if 'routes_apps_raw' in symbols:
+        params.routes_apps_raw = symbols['routes_apps_raw']
 
 
 def filter_in(e):

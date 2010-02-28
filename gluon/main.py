@@ -63,28 +63,32 @@ regex_space = re.compile('(\+|\s|%20)+')
 #     for static pages:
 #        /<b:application>/static/<x:file>
 #     for dynamic pages:
-#        /<a:application>[/<c:controller>[/<f:function>[.<e:ext>][/<s:sub>]]]
+#        /<a:application>[/<c:controller>[/<f:function>[.<e:ext>][/<s:args>]]]
 #   application, controller, function and ext may only contain [a-zA-Z0-9_]
-#   file and sub may also contain '-', '=', '.' and '/'
-regex_url = re.compile(r'''
+#   file and args may also contain '-', '=', '.' and '/'
+#   apps in rewrite.params.routes_apps_raw must parse raw_args into args
+
+regex_static = re.compile(r'''
      (^                              # static pages
          /(?P<b> \w+)                # b=app
          /static                     # /b/static
          /(?P<x> (\w[\-\=\./]?)* )   # x=file
      $)
-     |                               # dynamic pages
-     (^(                             # (/a/c/f.e/s)
-         /(?P<a> \w+ )               # /a=app
-         (                           # (/c.f.e/s)
-             /(?P<c> \w+ )           # /a/c=controller
-             (                       # (/f.e/s)
-                 /(?P<f> \w+ )       # /a/c/f=function
-                 (                   # (.e)
-                     \.(?P<e> \w+ )  # /a/c/f.e=extension
+     ''', re.X)
+
+regex_url = re.compile(r'''
+     (^(                                  # (/a/c/f.e/s)
+         /(?P<a> [\w\s+]+ )               # /a=app
+         (                                # (/c.f.e/s)
+             /(?P<c> [\w\s+]+ )           # /a/c=controller
+             (                            # (/f.e/s)
+                 /(?P<f> [\w\s+]+ )       # /a/c/f=function
+                 (                        # (.e)
+                     \.(?P<e> [\w\s+]+ )  # /a/c/f.e=extension
                  )?
-                 (                   # (/s)
-                     /(?P<s>         # /a/c/f.e/s=sub
-                     ( [\w\-@][\=\./]? )+
+                 (                        # (/s)
+                     /(?P<r>              # /a/c/f.e/r=raw_args
+                     .+
                      )
                  )?
              )?
@@ -93,7 +97,15 @@ regex_url = re.compile(r'''
      /?$)    # trailing slash
      ''', re.X)
 
-# patter used to validate client address
+regex_args = re.compile(r'''
+     (^
+         (?P<s>
+             ( [\w@-][=./]? )+          # s=args
+         )?
+     /?$)    # trailing slash
+     ''', re.X)
+
+# pattern used to validate client address
 regex_client = re.compile('[\w\-:]+(\.[\w\-]+)*\.?')  # ## to account for IPV6
 
 
@@ -360,20 +372,13 @@ def wsgibase(environ, responder):
                 else:
                     request.env.query_string = ''
             path = request.env.path_info.replace('\\', '/')
-            path = regex_space.sub('_', path)
-            match = regex_url.match(path)
-            if not match:
-                raise HTTP(400,
-                           rewrite.params.error_message,
-                           web2py_error='invalid path')
 
             # ##################################################
             # serve if a static file
             # ##################################################
 
-            if match.group('c') == 'static':
-                raise HTTP(400, rewrite.params.error_message)
-            if match.group('x'):
+            match = regex_static.match(regex_space.sub('_', path))
+            if match and match.group('x'):
                 static_file = os.path.join(request.env.web2py_path,
                                            'applications', match.group('b'),
                                            'static', match.group('x'))
@@ -385,13 +390,37 @@ def wsgibase(environ, responder):
             # parse application, controller and function
             # ##################################################
 
-            request.application = match.group('a') or 'init'
-            request.controller = match.group('c') or 'default'
-            request.function = match.group('f') or 'index'
-            raw_extension = match.group('e')
+            path = re.sub('%20', ' ', path)
+            match = regex_url.match(path)
+            if not match or match.group('c') == 'static':
+                raise HTTP(400,
+                           rewrite.params.error_message,
+                           web2py_error='invalid path')
+
+            request.application = \
+                regex_space.sub('_', match.group('a') or 'init')
+            request.controller = \
+                regex_space.sub('_', match.group('c') or 'default')
+            request.function = \
+                regex_space.sub('_', match.group('f') or 'index')
+            group_e = match.group('e')
+            raw_extension = group_e and regex_space.sub('_',group_e) or None
             request.extension = raw_extension or 'html'
-            request.args = \
-                List((match.group('s') and match.group('s').split('/')) or [])
+            request.raw_args = match.group('r')
+            request.args = List([])
+            if request.application in rewrite.params.routes_apps_raw:
+                # application is responsible for parsing args
+                request.args = None  
+            elif request.raw_args:
+                match = regex_args.match(request.raw_args)
+                if match:
+                    group_s = match.group('s')
+                    request.args = \
+                        List((group_s and group_s.split('/')) or [])
+                else:
+                    raise HTTP(400,
+                               rewrite.params.error_message,
+                               web2py_error='invalid path')
             request.client = get_client(request.env)
             request.folder = os.path.join(request.env.web2py_path,
                     'applications', request.application) + '/'

@@ -50,6 +50,10 @@ routes_out = ()
 # error_message = '<html><body><h1>Invalid request</h1></body></html>'
 # error_message_ticket = '<html><body><h1>Internal error</h1>Ticket issued: <a href="/admin/default/ticket/%(ticket)s" target="_blank">%(ticket)s</a></body></html>'
 
+# specify a list of apps that bypass args-checking and use request.raw_args
+#
+#routes_apps_raw=['myapp']
+#routes_apps_raw=['myapp', 'myotherapp']
 
 def __routes_doctest():
     '''
