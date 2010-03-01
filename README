@@ -686,4 +686,11 @@ Fixed major bug in parsing repeated request.vars, thanks Ben
 IS_DATE and IS_DATETIME can now handle any 0<year
 allow to disable editarea onload, thanks Alex
 
-
+#1.76.1
+editarea 0.8.2 + zencoding
+new (better) cron locking meachnism
+no storing session cookies on session.forget(), thank you Alvaro
+routes_apps_raw allows disabling of request.args validation, thanks Jonathan and Denes
+fixed problem with edit_languages ad multiple tabs, thanks Iceberg
+crud captcha, thanks you Nathan
+softcron disabled by default in wsgihandler and fcgihandler
