@@ -2144,7 +2144,9 @@ class Crud(object):
         self.settings.delete_onaccept = None
         self.settings.update_deletable = True
         self.settings.showid = False
-        self.settings.keepvalues = False
+        self.settings.keepvalues = False        
+        self.settings.create_captcha = None
+        self.settings.update_captcha = None
         self.settings.lock_keys = True
 
         self.messages = Messages(self.environment.T)
@@ -2331,6 +2333,10 @@ class Crud(object):
             deletable=deletable,
             upload=self.settings.download_url,
             )
+        if record and self.settings.update_captcha:
+            form[0].insert(-1, TR('', self.settings.update_captcha, ''))
+        elif not record and self.settings.create_captcha:
+            form[0].insert(-1, TR('', self.settings.create_captcha, ''))
         if request.extension != 'html':
             (_session, _formname) = (None, None)
         else:
