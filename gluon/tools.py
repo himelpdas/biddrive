@@ -1815,7 +1815,7 @@ class Auth(object):
 
         return 'ACCESS DENIED'
 
-    def requires(self, condition):
+    def requires(self, condition, else_url = DEFAULT):
         """
         decorator that prevents access to action if not logged in
         """
@@ -1826,8 +1826,12 @@ class Auth(object):
 
                 if not condition:
                     request = self.environment.request
-                    next = URL(r=request,args=request.args,vars=request.get_vars)
-                    redirect(self.settings.login_url + '?_next='+urllib.quote(next))
+                    next = URL(r=request,args=request.args,
+                               vars=request.get_vars)
+                    if else_url == DEFAULT:
+                        else_url = self.settings.login_url + \
+                            '?_next='+urllib.quote(next)
+                    redirect(else_url)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             return f
