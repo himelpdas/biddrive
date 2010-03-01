@@ -102,7 +102,8 @@ class lazyT(object):
 class translator(object):
 
     """
-    this class is instantiated once in gluon/main.py as the T object
+    this class is instantiated by gluon.compileapp.build_environment 
+    as the T object
 
     ::
 

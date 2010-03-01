@@ -52,3 +52,23 @@ jQuery(document).ready(function(){
 {{=T('to  previous version.')}}
 <br/>
 </form>
+
+<br/><br/>
+{{if filetype=='html':}}
+<h2>Key bindings for ZenConding Plugin</h2>
+<table>
+  <tr><td><code>Ctrl+S</code></td><td>Save via Ajax</td></tr>
+  <tr><td><code>Ctrl+,</code></td><td>Expand Abbreviation</td></tr>
+  <tr><td><code>Ctrl+M</code></td><td>Match Pair</td></tr>
+  <tr><td><code>Ctrl+H</code></td><td>Wrap with Abbreviation</td></tr>
+  <tr><td><code>Shift+Ctrl+M</code></td><td>Merge Lines</td></tr>
+  <tr><td><code>Ctrl+Shift+←</code></td><td>Previous Edit Point</td></tr>
+  <tr><td><code>Ctrl+Shift+→</code></td><td>Next Edit Point</td></tr>
+  <tr><td><code>Ctrl+Shift+↑</code></td><td>Go to Matching Pair</td></tr>
+</table>
+{{else:}}
+<h2>Key bindings</h2>
+<table>
+  <tr><td><code>Ctrl+S</code></td><td>Save via Ajax</td></tr>
+</table>
+{{pass}}
