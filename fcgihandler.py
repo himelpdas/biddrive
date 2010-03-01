@@ -22,23 +22,26 @@ fastcgi.server = ('.fcgi' =>
                  )
 """
 
+LOGGING = False
+SOFTCRON = False
+
 import sys
 import os
-
-import gluon.main
-import gluon.contrib.gateways.fcgi as fcgi
-from gluon.contrib.wsgihooks import ExecuteOnCompletion2, callback
 
 # Append the file path in python path
 path = os.path.dirname(os.path.abspath(__file__))
 if not path in sys.path:
     sys.path.append(path)
+import gluon.main
+import gluon.contrib.gateways.fcgi as fcgi
 
-# Choose one of the ways below to define the application
-application = ExecuteOnCompletion2(gluon.main.wsgibase, callback)
+if LOGGING:
+    application = gluon.main.wsgibase_with_logging
+else:
+    application = gluon.main.wsgibase
 
-# application=gluon.main.wsgibase
-# # or
-# application=gluon.main.wsgibase_with_logging
+if SOFTCRON:
+    from gluon.contrib.wsgihooks import ExecuteOnCompletion2, callback
+    application = ExecuteOnCompletion2(application, callback)
 
 fcgi.WSGIServer(application, bindAddress='/tmp/fcgi.sock').run()
