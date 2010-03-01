@@ -442,7 +442,7 @@ class DIV(XmlComponent):
         # TODO: docstring
         newstatus = status
         for c in self.components:
-            if hasattr(c, '_traverse'):
+            if hasattr(c, '_traverse') and callable(c._traverse):
                 c.vars = self.vars
                 c.request_vars = self.request_vars
                 c.errors = self.errors

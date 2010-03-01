@@ -25,7 +25,6 @@ read CONFIRM
 echo "installing useful packages"
 echo "=========================="
 apt-get update
-apt-get -y install emacs
 apt-get -y install ssh
 apt-get -y install zip unzip
 apt-get -y install tar
@@ -44,6 +43,10 @@ apt-get -y install python-matplotlib
 apt-get -y install python-reportlab
 apt-get -y install mercurial
 /etc/init.d/postgresql restart
+
+# optional, uncomment for emacs
+# apt-get -y install emacs
+
 # optional, uncomment for backups using samba
 # apt-get -y install samba
 # apt-get -y install smbfs
@@ -57,13 +60,6 @@ rm web2py_src.zip*
 wget http://web2py.com/examples/static/web2py_src.zip
 unzip web2py_src.zip
 chown -R www-data:www-data web2py
-cd web2py
-killall python2.5
-# starting local web2py (optional) for debugging and tunelling
-# sudo -u www-data nohup python2.5 web2py.py -i 127.0.0.1 -p 8123 -a '<random>' &
-# setup password for remote 443 access to web2py, uncomment file to enable
-# sudo -u www-data cp parameters_8123.py parameters_443.py
-cd ..
 
 echo "setting up apache modules"
 echo "========================="
