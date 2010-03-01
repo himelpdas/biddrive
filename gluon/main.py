@@ -536,11 +536,13 @@ def wsgibase(environ, responder):
             # store cookies in headers
             # ##################################################
 
-            if session._secure:
-                response.cookies[response.session_id_name]['secure'] = \
-                    True
-            http_response.headers['Set-Cookie'] = [str(cookie)[11:]
-                    for cookie in response.cookies.values()]
+            if session._forget:
+                del response.cookies[response.session_id_name]
+            elif session._secure:
+                response.cookies[response.session_id_name]['secure'] = True
+            if len(response.cookies)>0: 
+                http_response.headers['Set-Cookie'] = \
+                    [str(cookie)[11:] for cookie in response.cookies.values()]
             ticket=None
 
         except RestrictedError, e:
