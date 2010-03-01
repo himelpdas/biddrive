@@ -143,8 +143,8 @@ pre{
 }
 
 .hidden{
-	opacity: 0.4; 
-	filter:alpha(opacity=40);
+	opacity: 0.2; 
+	filter:alpha(opacity=20);
 }
 
 #result .edit_area_cursor{
