@@ -1815,7 +1815,7 @@ class Auth(object):
 
         return 'ACCESS DENIED'
 
-    def requires(self, condition, else_url = DEFAULT):
+    def requires(self, condition):
         """
         decorator that prevents access to action if not logged in
         """
@@ -1823,15 +1823,17 @@ class Auth(object):
         def decorator(action):
 
             def f(*a, **b):
-
-                if not condition:
+                if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    if else_url == DEFAULT:
-                        else_url = self.settings.login_url + \
-                            '?_next='+urllib.quote(next)
-                    redirect(else_url)
+                    redirect(self.settings.login_url + \
+                                 '?_next='+urllib.quote(next))
+                if not condition:
+                    self.environment.session.flash = \
+                        self.messages.access_denied
+                    next = self.settings.on_failed_authorization
+                    redirect(next)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             return f
@@ -1849,8 +1851,10 @@ class Auth(object):
 
                 if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
-                    next = URL(r=request,args=request.args,vars=request.get_vars)
-                    redirect(self.settings.login_url + '?_next='+urllib.quote(next))
+                    next = URL(r=request,args=request.args,
+                               vars=request.get_vars)
+                    redirect(self.settings.login_url + \
+                                 '?_next='+urllib.quote(next))
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             return f
@@ -1861,7 +1865,8 @@ class Auth(object):
         """
         decorator that prevents access to action if not logged in or
         if user logged in is not a member of group_id.
-        If role is provided instead of group_id then the group_id is calculated.
+        If role is provided instead of group_id then the 
+        group_id is calculated.
         """
 
         def decorator(action):
@@ -1870,8 +1875,10 @@ class Auth(object):
             def f(*a, **b):
                 if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
-                    next = URL(r=request,args=request.args,vars=request.get_vars)
-                    redirect(self.settings.login_url + '?_next='+urllib.quote(next))
+                    next = URL(r=request,args=request.args,
+                               vars=request.get_vars)
+                    redirect(self.settings.login_url + \
+                                 '?_next='+urllib.quote(next))
                 if not self.has_membership(group_id):
                     self.environment.session.flash = \
                         self.messages.access_denied
@@ -1900,8 +1907,10 @@ class Auth(object):
             def f(*a, **b):
                 if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
-                    next = URL(r=request,args=request.args,vars=request.get_vars)
-                    redirect(self.settings.login_url + '?_next='+urllib.quote(next))
+                    next = URL(r=request,args=request.args,
+                               vars=request.get_vars)
+                    redirect(self.settings.login_url + 
+                             '?_next='+urllib.quote(next))
                 if not self.has_permission(name, table_name, record_id):
                     self.environment.session.flash = \
                         self.messages.access_denied
