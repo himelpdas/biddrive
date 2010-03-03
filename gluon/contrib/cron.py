@@ -136,7 +136,10 @@ class Token:
             portalocker.lock(self.master,portalocker.LOCK_EX)        
             logging.debug('WEB2PY CRON: Releasing cron lock')
             self.master.seek(0)
-            cPickle.dump((self.now,time.time()),self.master)
+            (start, stop) =  cPickle.load(self.master)
+            if start == self.now: # if this is my lock
+                self.master.seek(0)
+                cPickle.dump((self.now,time.time()),self.master)
             portalocker.unlock(self.master)
             self.master.close()
 
