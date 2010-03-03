@@ -630,6 +630,13 @@ def console():
                       default=False,
                       help=msg)
 
+    msg = 'triggers the use of softcron'
+    parser.add_option('--softcron',
+                      action='store_true',
+                      dest='softcron',
+                      default=False,
+                      help=msg)
+
     parser.add_option('-N',
                       '--no-cron',
                       action='store_true',
@@ -725,40 +732,8 @@ def start(cron = True):
     from sql import drivers
     print 'Database drivers available: %s' % ', '.join(drivers)
 
-    # ## Starts cron daemon
-
-    if not options.shell and cron and not options.nocron:
-        print 'Starting hardcron...'
-        settings.web2py_crontype = 'hard'
-        newcron.hardcron(os.getcwd()).start()
-
-    # ## if -W install/start/stop web2py as service
-
-    if options.winservice:
-        if os.name == 'nt':
-            web2py_windows_service_handler(['', options.winservice],
-                    options.config)
-        else:
-            print 'Error: Windows services not supported on this platform'
-            sys.exit(1)
-        return
-
-    # ## if -T run doctests
-
-    if options.test:
-        test(options.test, verbose=options.verbose)
-        return
-
-    # ## if -S start interactive shell
-
-    if options.shell:
-        sys.args = options.args
-        run(options.shell, plain=options.plain,
-            import_models=options.import_models, startfile=options.run)
-        return
 
     # ## if -L load options from options.config file
-
     if options.config:
         try:
             options = __import__(options.config, [], [], '')
@@ -770,16 +745,46 @@ def start(cron = True):
                 print 'Cannot import config file [%s]' % options.config
                 sys.exit(1)
 
-    # ## if -C start cron run
-    # ## if -N disable cron in this *process*
-    # ##     - note, startup tasks WILL be run regardless !
 
+    # ## if -T run doctests (no cron)
+    if options.test:
+        test(options.test, verbose=options.verbose)
+        return
+
+    # ## if -S start interactive shell (also no cron)
+    if options.shell:
+        sys.args = options.args
+        run(options.shell, plain=options.plain,
+            import_models=options.import_models, startfile=options.run)
+        return
+
+    # ## if -C start cron run (extcron) and exit
+    # ## if -N or not cron disable cron in this *process*
+    # ## if --softcron use softcron
+    # ## use hardcron in all ther cases
     if options.extcron:
         print 'Starting extcron...'
         settings.web2py_crontype = 'external'
         extcron = newcron.extcron(os.getcwd())
         extcron.start()
         extcron.join()
+        return
+    elif cron and not options.nocron and options.softcron:
+        print 'Using softcron'
+        settings.web2py_crontype = 'soft'
+    elif cron and not options.nocron:
+        print 'Starting hardcron...'
+        settings.web2py_crontype = 'hard'
+        newcron.hardcron(os.getcwd()).start()
+
+    # ## if -W install/start/stop web2py as service
+    if options.winservice:
+        if os.name == 'nt':
+            web2py_windows_service_handler(['', options.winservice],
+                    options.config)
+        else:
+            print 'Error: Windows services not supported on this platform'
+            sys.exit(1)
         return
 
     # ## if no password provided and havetk start Tk interface
