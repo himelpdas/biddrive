@@ -2987,9 +2987,8 @@ class Set(object):
                     sql_w_row = sql_w + ' AND w_row > %i' % lmin
                 else:
                     sql_w_row = 'WHERE w_row > %i' % lmin
-                return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row)
-                #return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s WHERE w_row>%i;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, lmin)
-                #return '%s %s FROM (SELECT *, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) WHERE ROWNUM<=%i) WHERE w_row>%i;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, lmin)
+                return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row, sql_o)
+                #return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row)                
             elif self._db._dbname == 'mssql' or \
                  self._db._dbname == 'mssql2':
                 if not attributes.get('orderby', None) and w2p_tablenames:
