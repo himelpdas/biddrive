@@ -112,7 +112,7 @@ class Token:
                 (start, stop) =  cPickle.load(self.master)
             except:
                 (start, stop) = (0, 1)
-            if startup or self.now - start > 60:
+            if startup or self.now - start >= 60:
                 ret = self.now
                 if not stop:
                     # this happens if previous cron job longer than 1 minute
@@ -140,13 +140,13 @@ class Token:
             portalocker.unlock(self.master)
             self.master.close()
 
+
 def apppath(env=None):
-    try:
-        apppath = os.path.join(env.get('web2py_path'), 'applications')
-    except:
-        apppath = os.path.join(os.path.split(env.get('SCRIPT_FILENAME'))[0],
-            'applications')
-    return apppath
+    if 'web2py_path' in env:
+        web2py_path = env['web2py_path']
+    else:
+        web2py_path = os.path.split(env['SCRIPT_FILENAME'])[0]
+    return os.path.join(web2py_path, 'applications')
 
 
 def rangetolist(s, period='min'):
@@ -236,74 +236,76 @@ def crondance(apppath, ctype='soft',startup=False):
     cron_path = os.path.join(apppath,'admin','cron')
     token = Token(cron_path)
     cronmaster = token.acquire(startup=startup)
-    if cronmaster:
-        try:
-            now_s = time.localtime()
-            checks=(('min',now_s.tm_min),
-                    ('hr',now_s.tm_hour),
-                    ('mon',now_s.tm_mon),
-                    ('dom',now_s.tm_mday),
-                    ('dow',now_s.tm_wday))
-            
-            apps = [x for x in os.listdir(apppath)
-                    if os.path.isdir(os.path.join(apppath, x))]
+    if not cronmaster:
+        return
+    now_s = time.localtime()
+    checks=(('min',now_s.tm_min),
+            ('hr',now_s.tm_hour),
+            ('mon',now_s.tm_mon),
+            ('dom',now_s.tm_mday),
+            ('dow',now_s.tm_wday))
+    
+    apps = [x for x in os.listdir(apppath)
+            if os.path.isdir(os.path.join(apppath, x))]
         
-            for app in apps:
-                apath = os.path.join(apppath,app)
-                cronpath = os.path.join(apath, 'cron')
-                crontab = os.path.join(cronpath, 'crontab')
-                if not os.path.exists(crontab):
-                    continue
-                f = open(crontab, 'rt')
-                cronlines = f.readlines()
-                lines = [x for x in cronlines if x.strip() and x[0]!='#']
-                tasks = [parsecronline(cline) for cline in lines]
+    for app in apps:
+        apath = os.path.join(apppath,app)
+        cronpath = os.path.join(apath, 'cron')
+        crontab = os.path.join(cronpath, 'crontab')
+        if not os.path.exists(crontab):
+            continue
+        try:
+            f = open(crontab, 'rt')
+            cronlines = f.readlines()
+            lines = [x for x in cronlines if x.strip() and x[0]!='#']
+            tasks = [parsecronline(cline) for cline in lines]
+        except Exception, e:
+            logging.error('WEB2PY CRON: crontab read error %s' % e)
+            continue
 
-                for task in tasks:
-                    commands = [sys.executable]
-                    if os.path.exists('web2py.py'):
-                        commands.append('web2py.py')
-
-                    if not task:
-                        continue
-                    elif not startup and task.get('min',[])==[-1]:
-                        continue
-                    if not task.get('min',[])==[-1]:
-                        for key, value in checks:
-                            if key in task and not value in task[key]:
-                                continue
-                    logging.info(
-                        'WEB2PY CRON (%s): Application: %s executing %s in %s at %s' \
-                            % (ctype, app, task.get('cmd'),
-                               os.getcwd(), datetime.datetime.now()))
-                    action, command, models = False, task['cmd'], ''
-                    if command.startswith('**'):
-                        (action,models,command) = (True,'',command[2:])
-                    elif command.startswith('*'):
-                        (action,models,command) = (True,'-M',command[1:])
-                    else:
-                        action=False
-                    if action and command.endswith('.py'):
-                        commands.extend(('-P',
-                                         '-N',models,
-                                         '-S',app,
-                                         '-a','"<recycle>"',
-                                         '-R',command))
-                        shell = True
-                    elif action:
-                        commands.extend(('-P',
-                                         '-N',models,
-                                         '-S',app+'/'+command,
-                                         '-a','"<recycle>"'))
-                        shell = True
-                    else:
-                        commands = command
-                        shell = False
-                    try:
-                        cronlauncher(commands, shell=shell).start()
-                    except Exception, e:
-                        logging.warning(
-                            'WEB2PY CRON: Execution error for %s: %s' \
-                                % (task.get('cmd'), e))
-        finally:
-            token.release()
+        for task in tasks:
+            commands = [sys.executable]
+            if os.path.exists('web2py.py'):
+                commands.append('web2py.py')
+            citems = [(k in task and not v in task[k]) for k,v in checks]
+            task_min= task.get('min',[])
+            if not task:
+                continue
+            elif not startup and task_min == [-1]:
+                continue
+            elif task_min != [-1] and reduce(lambda a,b: a or b, citems):
+                continue
+            logging.info('WEB2PY CRON (%s): %s executing %s in %s at %s' \
+                             % (ctype, app, task.get('cmd'),
+                                os.getcwd(), datetime.datetime.now()))
+            action, command, models = False, task['cmd'], ''
+            if command.startswith('**'):
+                (action,models,command) = (True,'',command[2:])
+            elif command.startswith('*'):
+                (action,models,command) = (True,'-M',command[1:])
+            else:
+                action=False
+            if action and command.endswith('.py'):
+                commands.extend(('-P',
+                                 '-N',models,
+                                 '-S',app,
+                                 '-a','"<recycle>"',
+                                 '-R',command))
+                shell = True
+            elif action:
+                commands.extend(('-P',
+                                 '-N',models,
+                                 '-S',app+'/'+command,
+                                 '-a','"<recycle>"'))
+                shell = True
+            else:
+                commands = command
+                shell = False
+            try:
+                print time.ctime()+' '+ctype+' CRON RUNNING %s' % commands
+                cronlauncher(commands, shell=shell).start()
+            except Exception, e:
+                logging.warning(
+                    'WEB2PY CRON: Execution error for %s: %s' \
+                        % (task.get('cmd'), e))
+    token.release()
