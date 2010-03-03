@@ -24,11 +24,12 @@ import logging
 from optparse import *
 from textwrap import dedent
 
-import contrib.cron
+import newcron
 
 from main import HttpServer
 from fileutils import w2p_pack
 from shell import run, test
+from settings import settings
 
 try:
     import Tkinter, tkMessageBox
@@ -727,10 +728,9 @@ def start(cron = True):
     # ## Starts cron daemon
 
     if not options.shell and cron and not options.nocron:
-        print 'Starting cron...'
-        contrib.cron.crontype = 'hard'
-        cron = contrib.cron.hardcron()
-        cron.start()
+        print 'Starting hardcron...'
+        settings.web2py_crontype = 'hard'
+        newcron.hardcron(os.getcwd()).start()
 
     # ## if -W install/start/stop web2py as service
 
@@ -774,13 +774,13 @@ def start(cron = True):
     # ## if -N disable cron in this *process*
     # ##     - note, startup tasks WILL be run regardless !
 
-    if options.extcron or options.nocron:
-        contrib.cron.crontype = 'External'
-        if options.extcron:
-            cron = contrib.cron.extcron()
-            cron.start()
-            cron.join()
-            return
+    if options.extcron:
+        print 'Starting extcron...'
+        settings.web2py_crontype = 'external'
+        extcron = newcron.extcron(os.getcwd())
+        extcron.start()
+        extcron.join()
+        return
 
     # ## if no password provided and havetk start Tk interface
     # ## or start interface if we want to put in taskbar (system tray)

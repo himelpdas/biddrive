@@ -43,6 +43,7 @@ from validators import CRYPT
 from cache import Cache
 from html import URL
 from storage import List
+import newcron
 try:
     import wsgiserver
 except:
@@ -589,6 +590,8 @@ def wsgibase(environ, responder):
                  web2py_error='ticket %s' % ticket)
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,request,ticket)
+    if settings.web2py_crontype == 'soft':
+        newcron.softcron(web2py_path).start()
     return http_response.to(responder)
 
 def save_password(password, port):
@@ -734,12 +737,10 @@ class HttpServer(object):
         if not server_name:
             server_name = socket.gethostname()
         logging.info('starting web server...')
-        from contrib.wsgihooks import ExecuteOnCompletion2, callback
         self.server = wsgiserver.CherryPyWSGIServer(
-#        self.server = sneaky.Sneaky(
             (ip, port),
-            appfactory(ExecuteOnCompletion2(wsgibase, callback),
-                       log_filename, profiler_filename, web2py_path=path),
+            appfactory(wsgibase, log_filename, 
+                       profiler_filename, web2py_path=path),
             numthreads=int(numthreads),
             server_name=server_name,
             request_queue_size=int(request_queue_size),

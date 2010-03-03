@@ -20,8 +20,6 @@ import gluon.portalocker as portalocker
 import cPickle
 from subprocess import Popen, PIPE, call
 
-crontype = None # or 'soft' or 'hard' or 'external'
-
 class extcron(threading.Thread):
 
     def __init__(self, web2py_path):

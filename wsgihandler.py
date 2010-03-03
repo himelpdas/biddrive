@@ -31,5 +31,5 @@ else:
     application = gluon.main.wsgibase
 
 if SOFTCRON:
-    from gluon.contrib.wsgihooks import ExecuteOnCompletion2, callback
-    application = ExecuteOnCompletion2(application, callback)
+    from settings import settings
+    settings.web2py_crontype = 'soft'
