@@ -395,7 +395,8 @@ def upgrade(request, url = 'http://web2py.com'):
         web2py_path = web2py_path + '/'
     (check, version) = check_new_version(web2py_version,
                                          url+'/examples/default/version')
-    if not check: return False
+    if not check:
+        return (False, 'Already latest version')
     if os.path.exists(os.path.join(web2py_path,'web2py.exe')):
         version_type = 'win'
         destination = web2py_path
@@ -420,7 +421,7 @@ def upgrade(request, url = 'http://web2py.com'):
         file.close()
         return False, e
     try:
-        unzip(filename,destination,subfolder)
+        #unzip(filename,destination,subfolder)
         return True, None
     except Exception,e:
         return False, e

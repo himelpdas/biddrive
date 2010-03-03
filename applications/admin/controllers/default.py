@@ -172,9 +172,21 @@ def pack_plugin():
         session.flash = T('internal error')
         redirect(URL(r=request, f='plugin',args=request.args))
 
+def upgrade_web2py():
+    if 'upgrade' in request.vars:
+        (success, error) = upgrade(request)
+        if success:
+            session.flash = T('web2py upgraded, plase restart it')
+        else:
+            session.flash = T('unable to upgrade because "%s"', error)
+        redirect(URL(r=request, f='site'))
+    elif 'noupgrade' in request.vars:
+        redirect(URL(r=request, f='site'))
+    return dict()
+
 def uninstall():
     app = request.args[0]
-    
+
     if 'delete' in request.vars:
         deleted = app_uninstall(app, request)
         if deleted:
