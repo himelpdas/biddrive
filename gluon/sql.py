@@ -2733,13 +2733,13 @@ class Field(Expression):
         return Expression('COUNT(%s)' % str(self), 'integer', self._db)
 
     def sum(self):
-        return Expression('SUM(%s)' % str(self), 'integer', self._db)
+        return Expression('SUM(%s)' % str(self), self.type, self._db)
 
     def max(self):
-        return Expression('MAX(%s)' % str(self), 'integer', self._db)
+        return Expression('MAX(%s)' % str(self), self.type, self._db)
 
     def min(self):
-        return Expression('MIN(%s)' % str(self), 'integer', self._db)
+        return Expression('MIN(%s)' % str(self), self.type, self._db)
 
     def __getslice__(self, start, stop):
         if start < 0:
