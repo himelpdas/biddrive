@@ -348,7 +348,7 @@ class Recaptcha(DIV):
         self.error_message = error_message
         self.components = []
         self.attributes = {}
-        self.label = ''
+        self.label = 'Verify:'
         self.comment = ''
 
     def _validate(self):
@@ -399,20 +399,17 @@ class Recaptcha(DIV):
             server = self.API_SSL_SERVER
         else:
             server = self.API_SERVER
-        captcha = \
-            """<script type="text/javascript" src="%(ApiServer)s/challenge?k=%(PublicKey)s%(ErrorParam)s"></script>
-<noscript>
-<iframe src="%(ApiServer)s/noscript?k=%(PublicKey)s%(ErrorParam)s" height="300" width="500" frameborder="0"></iframe><br />
-<textarea name="recaptcha_challenge_field" rows="3" cols="40"></textarea>
-<input type='hidden' name='recaptcha_response_field' value='manual_challenge' />
-</noscript>
-"""\
-             % {'ApiServer': server, 'PublicKey': public_key,
-                'ErrorParam': error_param}
+        captcha = DIV(SCRIPT(_type="text/javascript",
+                             _src="%s/challenge?k=%s%s" % (server,public_key,error_param)),
+                      TAG.noscript(IFRAME(_src="%s/noscript?k=%s%s" % (server,public_key,error_param),
+                                           _height="300",_width="500",_frameborder="0"), BR(),
+                                   INPUT(_type='hidden', _name='recaptcha_response_field', 
+                                         _value='manual_challenge')), _id='recaptcha')
         if not self.errors.captcha:
-            return captcha
+            return XML(captcha).xml()
         else:
-            return captcha + DIV(self.errors['captcha'], _class='error').xml()
+            captcha.append(DIV(self.errors['captcha'], _class='error'))
+            return XML(captcha).xml()
 
 
 class Auth(object):
@@ -549,8 +546,9 @@ class Auth(object):
         self.settings.logged_url = self.url('user', args='profile')
         self.settings.download_url = self.url('download')
         self.settings.mailer = None
-        self.settings.captcha = None
         self.settings.login_captcha = None
+        self.settings.register_captcha = None
+        self.settings.captcha = None
         self.settings.expiration = 3600         # one day
         self.settings.long_expiration = 3600*30 # one month
         self.settings.remember_me_form = True
@@ -1031,10 +1029,12 @@ class Auth(object):
                     ),
                     ""
                 ))
-
-            if self.settings.login_captcha != None:
-                form[0].insert(-1, TR('', self.settings.login_captcha, ''))
-
+ 
+            captcha = self.settings.login_captcha or self.settings.captcha:
+            if captcha:
+                form[0].insert(-1, TR(LABEL(captcha.label), 
+                                      captcha,captcha.command,
+                                      _id = 'capctha__row'))
             accepted_form = False
             if form.accepts(request.post_vars, session,
                             formname='login', dbio=False,
@@ -1224,8 +1224,11 @@ class Auth(object):
                                repr(request.vars.get(passfield, None)),
                         error_message=self.messages.mismatched_password)),
                 '', _class='%s_%s__row' % (table_user, 'password_two')))
-        if self.settings.captcha != None:
-            form[0].insert(-1, TR('', self.settings.captcha, ''))
+        captcha = self.settings.register_captcha or self.settings.captcha:
+        if captcha:
+            form[0].insert(-1, TR(LABEL(captcha.label),
+                                  captcha,captcha.command,
+                                  _id = 'capctha__row'))
 
         table_user.registration_key.default = key = web2py_uuid()
         if form.accepts(request.post_vars, session, formname='register',
@@ -2159,7 +2162,7 @@ class Crud(object):
         self.settings.delete_onaccept = None
         self.settings.update_deletable = True
         self.settings.showid = False
-        self.settings.keepvalues = False        
+        self.settings.keepvalues = False
         self.settings.create_captcha = None
         self.settings.update_captcha = None
         self.settings.lock_keys = True
@@ -2350,11 +2353,13 @@ class Crud(object):
             )
         if record and self.settings.update_captcha:
             captcha = self.settings.update_captcha
-            form[0].insert(-1, TR(captcha.label, captcha, captcha.comment,
+            form[0].insert(-1, TR(LABEL(captcha.label), 
+                                  captcha, captcha.comment,
                                   _id='captcha__row'))
         elif not record and self.settings.create_captcha:
             captcha = self.settings.create_captcha
-            form[0].insert(-1, TR(captcha.label, captcha, captcha.comment,
+            form[0].insert(-1, TR(LABEL(captcha.label), 
+                                  captcha, captcha.comment,
                                   _id='captcha__row'))
         if request.extension != 'html':
             (_session, _formname) = (None, None)
