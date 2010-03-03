@@ -99,3 +99,4 @@ post:
 	scp -i ~/web2py.pem web2py_src.zip ubuntu@www.web2py.com:~/
 	scp -i ~/web2py.pem web2py_win.zip ubuntu@www.web2py.com:~/
 	scp -i ~/web2py.pem web2py_osx.zip ubuntu@www.web2py.com:~/
+
