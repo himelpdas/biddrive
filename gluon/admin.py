@@ -361,7 +361,7 @@ def unzip(filename, dir, subfolder=''):
     for name in sorted(zf.namelist()):
         if not name.startswith(subfolder):
             continue
-        print name[n:]
+        #print name[n:]
         if name.endswith('/'):
             folder = os.path.join(dir,name[n:])
             if not os.path.exists(folder):
@@ -421,7 +421,7 @@ def upgrade(request, url = 'http://web2py.com'):
         file.close()
         return False, e
     try:
-        #unzip(filename,destination,subfolder)
+        unzip(filename,destination,subfolder)
         return True, None
     except Exception,e:
         return False, e
