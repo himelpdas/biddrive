@@ -632,6 +632,8 @@ class Set(gluon.sql.Set):
         for filter in self.where.filters:
             if filter.all():
                 continue
+            elif filter.one() and filter.right<=0:
+                items = []
             elif filter.one():
                 item = self._db[tablename]._tableobj.get_by_id(filter.right)
                 items = (item and [item]) or []
@@ -684,18 +686,26 @@ class Set(gluon.sql.Set):
         colnames = ['%s.%s' % (tablename, t) for t in fields]
         return self.parse(self._db, rows, colnames, False)
 
+    @staticmethod
+    def items_count(items):
+        try:
+            return len(items)
+        except TypeError:
+            return items.count()
+
     def count(self):
         (items, tablename, fields) = self._select()
         self._db['_lastsql'] = 'COUNT WHERE %s' % self.where
-        return items.count()
+        return self.items_count(items)
 
     def delete(self):
         self._db['_lastsql'] = 'DELETE WHERE %s' % self.where
         (items, tablename, fields) = self._select()
-        tableobj = self._db[tablename]._tableobj
-        counter = len(items)
-        gae.delete(items)
-        return counter - len(items)
+        tableobj = self._db[tablename]._tableobj        
+        counter = self.items_count(items)
+        if counter:
+            gae.delete(items)        
+        return counter
 
     def update(self, **update_fields):
         self._db['_lastsql'] = 'UPDATE WHERE %s' % self.where

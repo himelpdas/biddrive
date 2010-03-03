@@ -927,7 +927,8 @@ class SQLFORM(FORM):
                     (source_file, original_filename) = \
                         (cStringIO.StringIO(f), 'file.txt')
                 newfilename = field.store(source_file, original_filename)
-                self.vars['%s_newfilename' % fieldname] = fields[fieldname] = newfilename
+                self.vars['%s_newfilename' % fieldname] = \
+                    fields[fieldname] = newfilename
                 if field.uploadfield and not field.uploadfield==True:
                     fields[field.uploadfield] = source_file.read()
                 continue

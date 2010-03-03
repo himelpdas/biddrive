@@ -41,7 +41,7 @@ import struct
 
 from utils import md5_hash, web2py_uuid
 from serializers import json
-
+from http import HTTP
 
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
@@ -2609,6 +2609,8 @@ class Field(Expression):
             self.requires = requires
 
     def store(self, file, filename=None, path=None):
+        if hasattr(self,'custom_store'):
+            return self.custom_store(file,filename,path)
         if not filename:
             filename = file.name
         filename = os.path.basename(filename.replace('/', os.sep)\
@@ -2634,13 +2636,14 @@ class Field(Expression):
         return newfilename
 
     def retrieve(self, name, path=None):
-        import http
+        if hasattr(self,'custom_retrieve'):
+            return self.custom_retrieve(name, path)
         if self.authorize or isinstance(self.uploadfield, str):
             row = self._db(self == name).select().first()
             if not row:
-                raise http.HTTP(404)
+                raise HTTP(404)
         if self.authorize and not self.authorize(row):
-            raise http.HTTP(403)
+            raise HTTP(403)
         try:
             m = regex_content.match(name)
             if not m or not self.isattachment:
