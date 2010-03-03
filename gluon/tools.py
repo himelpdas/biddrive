@@ -348,6 +348,8 @@ class Recaptcha(DIV):
         self.error_message = error_message
         self.components = []
         self.attributes = {}
+        self.label = ''
+        self.comment = ''
 
     def _validate(self):
 
@@ -2347,9 +2349,13 @@ class Crud(object):
             upload=self.settings.download_url,
             )
         if record and self.settings.update_captcha:
-            form[0].insert(-1, TR('', self.settings.update_captcha, ''))
+            captcha = self.settings.update_captcha
+            form[0].insert(-1, TR(captcha.label, captcha, captcha.comment,
+                                  _id='captcha__row'))
         elif not record and self.settings.create_captcha:
-            form[0].insert(-1, TR('', self.settings.create_captcha, ''))
+            captcha = self.settings.create_captcha
+            form[0].insert(-1, TR(captcha.label, captcha, captcha.comment,
+                                  _id='captcha__row'))
         if request.extension != 'html':
             (_session, _formname) = (None, None)
         else:
