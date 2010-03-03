@@ -1033,7 +1033,7 @@ class Auth(object):
             captcha = self.settings.login_captcha or self.settings.captcha
             if captcha:
                 form[0].insert(-1, TR(LABEL(captcha.label), 
-                                      captcha,captcha.command,
+                                      captcha,captcha.comment,
                                       _id = 'capctha__row'))
             accepted_form = False
             if form.accepts(request.post_vars, session,
@@ -1227,7 +1227,7 @@ class Auth(object):
         captcha = self.settings.register_captcha or self.settings.captcha
         if captcha:
             form[0].insert(-1, TR(LABEL(captcha.label),
-                                  captcha,captcha.command,
+                                  captcha,captcha.comment,
                                   _id = 'capctha__row'))
 
         table_user.registration_key.default = key = web2py_uuid()
@@ -2165,6 +2165,7 @@ class Crud(object):
         self.settings.keepvalues = False
         self.settings.create_captcha = None
         self.settings.update_captcha = None
+        self.settings.captcha = None
         self.settings.lock_keys = True
 
         self.messages = Messages(self.environment.T)
@@ -2351,13 +2352,15 @@ class Crud(object):
             deletable=deletable,
             upload=self.settings.download_url,
             )
-        if record and self.settings.update_captcha:
-            captcha = self.settings.update_captcha
+        captcha = self.settings.update_captcha or \
+                  self.settings.captcha
+        if record and captcha:            
             form[0].insert(-1, TR(LABEL(captcha.label), 
                                   captcha, captcha.comment,
                                   _id='captcha__row'))
-        elif not record and self.settings.create_captcha:
-            captcha = self.settings.create_captcha
+        captcha = self.settings.create_captcha or \
+                  self.settings.captcha
+        if not record and captcha:
             form[0].insert(-1, TR(LABEL(captcha.label), 
                                   captcha, captcha.comment,
                                   _id='captcha__row'))
