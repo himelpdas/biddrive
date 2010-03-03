@@ -60,26 +60,15 @@ class softcron(threading.Thread):
     def __init__(self, env):
         threading.Thread.__init__(self)
         self.env = env
-        self.cronmaster = 0
         self.softwindow = 120
         self.path = apppath(self.env)
-        self.cronmaster = crondance(self.path, 'soft', startup = True)
+        crondance(self.path, 'soft', startup = True)
 
     def run(self):
         if crontype != 'soft':
             return
         now = time.time()
-        # our own thread did a cron check less than a minute ago, don't even
-        # bother checking the file
-        if self.cronmaster and 60 > now - self.cronmaster:
-            logging.debug("Don't bother with cron.master, it's only %s s old"
-                           % (now - self.cronmaster))
-            return
-
-        logging.debug('Cronmaster stamp: %s, Now: %s'
-                      % (self.cronmaster, now))
-        if 60 <= now - self.cronmaster:  # new minute, do the cron dance
-            self.cronmaster = crondance(self.path, 'soft')    
+        crondance(self.path, 'soft')    
 
 class Token:
     def __init__(self,path):
@@ -305,7 +294,6 @@ def crondance(apppath, ctype='soft',startup=False):
                 commands = command
                 shell = False
             try:
-                print time.ctime()+' '+ctype+' CRON RUNNING %s' % commands
                 cronlauncher(commands, shell=shell).start()
             except Exception, e:
                 logging.warning(
