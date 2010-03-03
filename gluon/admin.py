@@ -7,8 +7,10 @@ Utility functions for the Admin application
 ===========================================
 """
 import os
+import zipfile
+import urllib
 from utils import web2py_uuid
-from shutil import rmtree
+from shutil import rmtree, copyfile
 from fileutils import *
 from restricted import RestrictedError
 
@@ -344,3 +346,83 @@ def check_new_version(myversion, version_URL):
         return True, version
     else:
         return False, version
+
+def unzip(filename, dir, subfolder=''):
+    """
+    Unzips filename into dir (.zip only, no .gz etc)    
+    if subfolder!='' it unzip only files in subfolder
+    """
+    if not zipfile.is_zipfile(filename):
+        raise RuntimeError, 'Not a valid zipfile'
+    zf = zipfile.ZipFile(filename)
+    if not subfolder.endswith('/'):
+        subfolder = subfolder + '/'
+    n = len(subfolder)
+    for name in sorted(zf.namelist()):
+        if not name.startswith(subfolder):
+            continue
+        print name[n:]
+        if name.endswith('/'):
+            folder = os.path.join(dir,name[n:])
+            if not os.path.exists(folder):
+                os.mkdir(folder)
+        else:
+            outfile = open(os.path.join(dir, name[n:]), 'wb')
+            outfile.write(zf.read(name))         
+            outfile.close()
+
+
+def upgrade(request, url = 'http://web2py.com'):
+    """
+    Upgrades web2py (src, osx, win) is a new version is posted.
+    It detects whether src, osx or win is running and downloads the right one
+
+    Parameters
+    ----------
+    request:
+        the current request object, required to determine version and path
+    url:
+        the incomplete url where to locate the latest web2py
+        actual url is url+'/examples/static/web2py_(src|osx|win).zip'
+
+    Returns
+    -------
+        True on success, False on failure (network problem or old version)
+    """
+    web2py_version = request.env.web2py_version
+    web2py_path = request.env.web2py_path
+    if not web2py_path.endswith('/'):
+        web2py_path = web2py_path + '/'
+    (check, version) = check_new_version(web2py_version,
+                                         url+'/examples/default/version')
+    if not check: return False
+    if os.path.exists(os.path.join(web2py_path,'web2py.exe')):
+        version_type = 'win'
+        destination = web2py_path
+        subfolder = 'web2py/'
+    elif web2py_path.endswith('/Contents/Resources/'):
+        version_type = 'osx'
+        destination = web2py_path[:-len('/Contents/Resources/')]
+        subfolder = 'web2py/web2py.app/'
+    else:
+        version_type = 'src'
+        destination = web2py_path
+        subfolder = 'web2py/'
+
+    full_url = url+'/examples/static/web2py_%s.zip' % version_type
+    filename = os.path.join(web2py_path,
+                            'web2py_%s_downloaded.zip' % version_type)
+    try:
+        file = open(filename,'wb')
+        file.write(urllib.urlopen(full_url).read())
+        file.close()
+    except Exception,e:
+        file.close()
+        return False, e
+    try:
+        unzip(filename,destination,subfolder)
+        return True, None
+    except Exception,e:
+        return False, e
+        
+

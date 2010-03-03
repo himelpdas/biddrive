@@ -1030,7 +1030,7 @@ class Auth(object):
                     ""
                 ))
  
-            captcha = self.settings.login_captcha or self.settings.captcha:
+            captcha = self.settings.login_captcha or self.settings.captcha
             if captcha:
                 form[0].insert(-1, TR(LABEL(captcha.label), 
                                       captcha,captcha.command,
@@ -1224,7 +1224,7 @@ class Auth(object):
                                repr(request.vars.get(passfield, None)),
                         error_message=self.messages.mismatched_password)),
                 '', _class='%s_%s__row' % (table_user, 'password_two')))
-        captcha = self.settings.register_captcha or self.settings.captcha:
+        captcha = self.settings.register_captcha or self.settings.captcha
         if captcha:
             form[0].insert(-1, TR(LABEL(captcha.label),
                                   captcha,captcha.command,
