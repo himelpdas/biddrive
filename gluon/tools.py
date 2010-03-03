@@ -15,6 +15,7 @@ from sqlhtml import *
 from http import *
 from utils import web2py_uuid
 
+import thread
 import base64
 import cPickle
 import datetime
@@ -2977,6 +2978,17 @@ class Service:
 
 
 def completion(callback):
+    """
+    Executes a task on completion of the called action. For example:
+
+        from gluon.tools import completion
+        @completion(lambda d: logging.info(repr(d)))
+        def index():
+            return dict(message='hello')
+
+    It logs the output of the function every time input is called.
+    The argument of completion is executed in a new thread.
+    """
     def _completion(f):
         def __completion(*a,**b):
             d = None
@@ -2984,7 +2996,7 @@ def completion(callback):
                 d = f(*a,**b)
                 return d
             finally:
-                callback(d)
+                thread.start_new_thread(callback,(d,))
         return __completion
     return _completion
 
