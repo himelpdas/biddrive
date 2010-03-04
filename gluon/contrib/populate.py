@@ -113,7 +113,7 @@ def populate(table, n, default=True):
             elif field.type=='string' and fieldname.find('name')>=0:
                 record[fieldname] = da_du_ma(4).capitalize()
             elif field.type=='string':
-                record[fieldname] = ell.generate(10, prefix=False)[:field.length]
+                record[fieldname] = ell.generate(10, prefix=False)[:field.length].replace('\n',' ')
         table.insert(**record)
 
 if __name__ == '__main__':
