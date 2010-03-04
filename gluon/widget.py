@@ -770,7 +770,7 @@ def start(cron = True):
         extcron.join()
         return
     elif cron and not options.nocron and options.softcron:
-        print 'Using softcron'
+        print 'Using softcron (but this is not very efficient)'
         settings.web2py_crontype = 'soft'
     elif cron and not options.nocron:
         print 'Starting hardcron...'

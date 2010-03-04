@@ -1424,8 +1424,8 @@ class Reference(int):
     def __allocate(self):
         if not self._record:
             self._record = self._table[int(self)]
-        if not self._record:
-            raise Exception, "undefined record"
+            if not self._record:
+                raise Exception, "undefined record"
 
     def __getattr__(self,key):
         if key == 'id':
