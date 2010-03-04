@@ -95,7 +95,7 @@ class Token:
                 (start, stop) =  cPickle.load(self.master)
             except:
                 (start, stop) = (0, 1)
-            if startup or self.now - start >= 60:
+            if startup or self.now - start > 59.99:
                 ret = self.now
                 if not stop:
                     # this happens if previous cron job longer than 1 minute
