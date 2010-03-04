@@ -185,13 +185,17 @@ def render(content='hello world',stream=None,filename=None,path=None,context={})
     import globals  ### here to avoid circular imports
     if not content and not stream and not filename:
         raise SyntaxError, "Must specify a stream or filename or content"
+    close_stream = False
     if not stream:
-        if filename:
+        if filename:            
             stream = open(filename,'rb')
+            close_stream = True
         if content:
             stream = cStringIO.StringIO(content)
     context['response'] = globals.Response()
     exec(parse_template(stream,path=path)) in context
+    if close_stream:
+        stream.close()
     return context['response'].body.getvalue()
 
 if __name__ == '__main__':
