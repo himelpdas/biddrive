@@ -23,7 +23,7 @@ class Learner:
         self.loadd(cPickle.load(open(filename,'rb')))
     def loadd(self,db):
         self.db=db
-    def generate(self,length=10000,prefix='http://127.0.0.1:8000/'):
+    def generate(self,length=10000,prefix=False):
         replacements2={' ,':',', ' \.':'.\n', ' :':':', ' ;':';', '\n\s+':'\n' }
         keys=self.db.keys()
         key=keys[random.randint(0,len(keys)-1)]
