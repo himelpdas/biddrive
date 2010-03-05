@@ -20,7 +20,7 @@ index.yaml
 ./benchmark
 ./build
 ./dist*
-./tests
+tests/
 ./optional_contrib
 ./ssl
 ./docs
