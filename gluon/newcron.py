@@ -18,7 +18,6 @@ import traceback
 import platform
 import gluon.portalocker as portalocker
 import cPickle
-from subprocess import Popen, PIPE, call
 
 class extcron(threading.Thread):
 
@@ -196,11 +195,12 @@ class cronlauncher(threading.Thread):
         self.shell = shell
 
     def run(self):
-        proc = Popen(self.cmd,
-                     stdin=PIPE,
-                     stdout=PIPE,
-                     stderr=PIPE,
-                     shell=self.shell)
+        import subprocess
+        proc = subprocess.Popen(self.cmd,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                shell=self.shell)
         (stdoutdata,stderrdata) = proc.communicate()
         if proc.returncode != 0:
             logging.warning(
