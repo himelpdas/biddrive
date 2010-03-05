@@ -10,9 +10,8 @@ Thanks to Hans Donner <hans.donner@pobox.com> for GaeGoogleAccount.
 """
 
 from google.appengine.api import users
-from cas_auth import CasAuth
 
-class GaeGoogleAccount(CasAuth):
+class GaeGoogleAccount(object):
     """
     Login will be done via Google's Appengine login object, instead of web2py's
     login form.

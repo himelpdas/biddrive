@@ -6,50 +6,72 @@ This file is part of web2py Web Framework (Copyrighted, 2007-2009).
 Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
 License: GPL v2
 
-Thanks to Hans Donner <hans.donner@pobox.com> for CAS.
+Tinkered by Szabolcs Gyuris < szimszo n @ o regpreshaz dot eu>
 """
 
-
-class CasAuth(object):
+class CasAuth( object ):
     """
-    Login will be done via a CAS, instead of web2py's  login form.
-    To enable CAS login, set auth.setting.login_form to the CAS object.
+    Login will be done via Web2py's CAS application, instead of web2py's
+    login form.
+    
+    Include in your model (eg db.py)::
+        
+        from gluon.contrib.login_methods.cas_auth import CasAuth
+        auth.settings.login_form=CasAuth()
+        auth.settings.login_form.settings( globals(),
+                 urlbase = "https://web2py.com/cas/cas" )
 
-    Example::
-
-        # include in your model (eg db.py)
-        # GaeGoogleAccount is an implementation of a CAS
-        from gluon.contrib.login_methods.gae_google_login import \
-            GaeGoogleAccount
-        auth.settings.login_form=GaeGoogleAccount()
-
+    where urlbase is the actual CAS server url without the login,logout...
+    Enjoy.
     """
-
-    def login_url(self, next="/"):
+    def settings( self, g, urlbase = "https://web2py.com/cas/cas" ):
+        self.urlbase=urlbase
+        self.cas_login_url="%s/login"%self.urlbase
+        self.cas_check_url="%s/check"%self.urlbase
+        self.cas_logout_url="%s/logout"%self.urlbase
+        self.globals=g
+        self.request=self.globals['request']
+        self.session=self.globals['session']
+        http_host=self.request.env.http_x_forwarded_for
+        if not http_host: http_host=self.request.env.http_host
+        self.cas_my_url='http://%s%s'%( http_host, self.request.env.path_info )
+    def login_url( self, next = "/" ):
+        self.session.token=self._CAS_login()
+        return next
+    def logout_url( self, next = "/" ):
+        self.session.token=None
+        self._CAS_logout()
+        return next
+    def get_user( self ):
+        user=self.session.token
+        if user:
+            return dict( nickname = user[2], email = user[1],
+                        user_id = user[0], source = "web2py cas" )
+    def _CAS_login( self ):
         """
-        Provides the url for a CAS login form, and is called from Auth.login()
-
-        :param next: where to go after login
+        exposed as CAS.login(request)
+        returns a token on success, None on failed authentication
         """
-        raise NotImplementedError
+        import urllib
+        self.ticket=self.request.vars.ticket
+        if not self.request.vars.ticket:
+            self.globals['redirect']( "%s?service=%s"%( self.cas_login_url,
+                                          self.cas_my_url ) )
+        else:
+            url="%s?service=%s&ticket=%s"%\
+                                                           ( self.cas_check_url,
+                                                            self.cas_my_url,
+                                                            self.ticket )
+            data=urllib.urlopen( url ).read().split( '\n' )
+            if data[0]=='yes': return data[1].split( ':' )
+        return None
 
-    def logout_url(self, next="/"):
+    def _CAS_logout( self ):
         """
-        Provides the url for a CAS logout, and is called from Auth.logout()
-
-        :param next: where to go after logout
+        exposed CAS.logout()
+        redirects to the CAS logout page
         """
-        raise NotImplementedError
-
-    def get_user(self):
-        """
-        Retrieves the user information (who is logged in?), and is called from
-        Auth.login(). The information is passed to Auth.get_or_create_user
-
-        Example::
-
-            return dict(nickname=user.nickname(), email=user.email(),
-                user_id=user.user_id(), source="google account")
-
-        """
-        raise NotImplementedError
+        import urllib
+        self.globals['redirect']( "%s?service=%s"%( 
+                                                  self.cas_logout_url,
+                                                  self.cas_my_url ) )
