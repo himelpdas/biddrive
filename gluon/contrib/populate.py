@@ -97,7 +97,7 @@ def populate(table, n, default=True):
                 tablename = field.type[10:]
                 if not tablename in ids:
                     if table._db._dbname=='gql':
-                        ids[tableame] = [x.id for x in table._db(table._db[field.type[10:]].id>0).select()]
+                        ids[tablename] = [x.id for x in table._db(table._db[field.type[10:]].id>0).select()]
                     else:
                         ids[tablename] = [x.id for x in table._db(table._db[field.type[10:]].id>0).select()]
                 n = len(ids[tablename])
