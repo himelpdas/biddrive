@@ -66,7 +66,9 @@ def populate(table, n, default=True):
         record={}
         for fieldname in table.fields:
             field = table[fieldname]
-            if field.type == 'id':
+            if not isinstance(field.type,(str,unicode)):
+                continue
+            elif field.type == 'id':
                 continue
             elif default and field.default:
                 record[fieldname]=field.default
