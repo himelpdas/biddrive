@@ -1058,15 +1058,19 @@ class SQLTABLE(TABLE):
         self.attributes = attributes
         self.sqlrows = sqlrows
         (components, row) = (self.components, [])
-        if not orderby:
-            for c in sqlrows.colnames:
-                if not columns or c in columns:
-                    row.append(TH(headers.get(c, c)))
-        else:
-            for c in sqlrows.colnames:
-                if not columns or c in columns:
-                    row.append(TH(A(headers.get(c, c), 
-                                    _href='?orderby=' + c)))
+        if not columns:
+            columns = sqlrows.colnames
+        if headers=='fieldname:capitalize':
+            headers = {}
+            for c in columns:
+                headers[c] = ' '.join([w.capitalize() for w in c.split('.')[-1].split('_')])
+        
+        for c in columns:
+            if orderby:
+                row.append(TH(A(headers.get(c, c), 
+                                _href='?orderby=' + c)))
+            else:
+                row.append(TH(headers.get(c, c)))
 
         components.append(THEAD(TR(*row)))
         tbody = []
@@ -1076,9 +1080,7 @@ class SQLTABLE(TABLE):
                 _class = 'even'
             else:
                 _class = 'odd'
-            for colname in sqlrows.colnames:
-                if columns and not colname in columns:
-                    continue
+            for colname in columns:
                 if not table_field.match(colname):
                     r = record._extra[colname]
                     row.append(TD(r))
@@ -1096,30 +1098,26 @@ class SQLTABLE(TABLE):
                 r_old = r
                 if field.represent:
                     r = field.represent(r)
-                    if not isinstance(r,str):
-                        row.append(TD(r))
-                        continue
-                if field.type == 'blob' and r:
-                    row.append(TD('DATA'))
-                    continue
-                r = str(field.formatter(r))
-                if field.type == 'upload':
+                elif field.type == 'blob' and r:
+                    r = 'DATA'
+                elif field.type == 'upload':
                     if upload and r:
-                        row.append(TD(A('file', _href='%s/%s' % (upload, r))))
+                        r = A('file', _href='%s/%s' % (upload, r))
                     elif r:
-                        row.append(TD('file'))
+                        r = 'file'
                     else:
-                        row.append(TD())
-                    continue
-                ur = unicode(r, 'utf8')
-                if len(ur) > truncate:
-                    r = ur[:truncate - 3].encode('utf8') + '...'
-                if linkto and field.type == 'id':
+                        r = ''
+                elif field.type in ['string','text']:
+                    r = str(field.formatter(r))
+                    ur = unicode(r, 'utf8')
+                    if len(ur) > truncate:
+                        r = ur[:truncate - 3].encode('utf8') + '...'
+                elif linkto and field.type == 'id':
                     try:
                         href = linkto(r, 'table', tablename)
                     except TypeError:
                         href = '%s/%s/%s' % (linkto, tablename, r_old)
-                    row.append(TD(A(r, _href=href)))
+                    r = A(r, _href=href)
                 elif linkto and str(field.type).startswith('reference'):
                     ref = field.type[10:]
                     try:
@@ -1130,8 +1128,7 @@ class SQLTABLE(TABLE):
                             tref,fref = ref.split('.')
                             if hasattr(sqlrows.db[tref],'_primarykey'):
                                 href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:ur}))
-
-                    row.append(TD(A(r, _href=href)))
+                    r = A(r, _href=href)
                 elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \
@@ -1140,11 +1137,10 @@ class SQLTABLE(TABLE):
                                       and isinstance(record[tablename], Row)) and
                                  (k, record[tablename][k])) or (k, record[k]) \
                                     for k in field._table._primarykey ] ))
-                    row.append(TD(A(r, _href='%s/%s?%s' % (linkto, tablename, key))))
-                else:
-                    row.append(TD(r))
+                    r = A(r, _href='%s/%s?%s' % (linkto, tablename, key))
+                row.append(TD(r))
             tbody.append(TR(_class=_class, *row))
         components.append(TBODY(*tbody))
 
 
-form_factory = SQLFORM.factory
+form_factory = SQLFORM.factory # for backward compatibility, deprecated
