@@ -1368,6 +1368,8 @@ class FireBirdAdapter(BaseAdapter):
         self.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database' % tablename)
         return int(self.db._adapter.cursor.fetchone()[0])
 
+    def commit_on_alter_table(self):
+        return True
 
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
 
@@ -2579,7 +2581,10 @@ class Table(dict):
             elif self._db._dbname == 'sqlite':
                 query = None
             elif not key in sql_fields:
-                query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
+                if not self._db._dbname in ('firebird',):
+                    query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
+                else:
+                    query = ['ALTER TABLE %s DROP %s;' % (self._tablename, key)]
             elif sql_fields[key] != sql_fields_old[key] and \
                  not (self[key].type[:10]=='reference ' and \
                       sql_fields[key][:4]=='INT,' and \
@@ -2590,12 +2595,20 @@ class Table(dict):
 
                 t = self._tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
-                query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
-                         'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
-                         'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
-                         'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
-                         'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
-                         'ALTER TABLE %s DROP COLUMN %s__tmp;' % (t, key)]
+                if not self._db._dbname in ('firebird',):
+                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
+                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
+                             'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
+                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
+                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
+                             'ALTER TABLE %s DROP COLUMN %s__tmp;' % (t, key)]
+                else:
+                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
+                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
+                             'ALTER TABLE %s DROP %s;' % (t, key),
+                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
+                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
+                             'ALTER TABLE %s DROP %s__tmp;' % (t, key)]
             else:
                 query = None
 

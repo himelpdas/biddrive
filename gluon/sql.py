@@ -1758,7 +1758,10 @@ class Table(dict):
             elif self._db._dbname == 'sqlite':
                 query = None
             elif not key in sql_fields:
-                query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
+                if not self._db._dbname in ('firebird',):
+                    query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
+                else:
+                    query = ['ALTER TABLE %s DROP %s;' % (self._tablename, key)]
             elif sql_fields[key] != sql_fields_old[key] and \
                  not (self[key].type[:10]=='reference ' and \
                       sql_fields[key][:4]=='INT,' and \
@@ -1769,12 +1772,21 @@ class Table(dict):
 
                 t = self._tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
-                query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
-                         'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
-                         'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
-                         'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
-                         'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
-                         'ALTER TABLE %s DROP COLUMN %s__tmp;' % (t, key)]
+                if not self._db._dbname in ('firebird',):
+                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
+                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
+                             'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
+                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
+                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
+                             'ALTER TABLE %s DROP COLUMN %s__tmp;' % (t, key)]
+                else:
+                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
+                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
+                             'ALTER TABLE %s DROP %s;' % (t, key),
+                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
+                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
+                             'ALTER TABLE %s DROP %s__tmp;' % (t, key)]
+
             else:
                 query = None
 
@@ -1784,9 +1796,9 @@ class Table(dict):
                 self._db['_lastsql'] = '\n'.join(query)
                 for sub_query in query:
                     logfile.write(sub_query + '\n')
-                    if not fake_migrate:
+                    if not fake_migrate:                        
                         self._db._execute(sub_query)
-                        if self._db._dbname in ['mysql', 'oracle']:
+                        if self._db._dbname in ['mysql', 'oracle', 'firebird']:
                             self._db.commit()
                             logfile.write('success!\n')
                     else:
@@ -1866,7 +1878,7 @@ class Table(dict):
                 raise SyntaxError,'Table: missing required field: %s'%field
         sql_f = ', '.join(fs)
         sql_v = ', '.join(vs)
-        sql_t = self._tablename
+        sql_t = self._tablename        
         return 'INSERT INTO %s(%s) VALUES (%s);' % (sql_t, sql_f, sql_v)
 
     def bulk_insert(self, *items):
