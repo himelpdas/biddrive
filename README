@@ -695,9 +695,12 @@ fixed problem with edit_languages ad multiple tabs, thanks Iceberg
 crud captcha, thanks you Nathan
 softcron disabled by default in wsgihandler and fcgihandler
 
-#1.76.2
+#1.76.2-1.76.3
 major fix in cron (will I ever get this 100% right?)
 fix in delete for GAE
 auth.settings.login_captcha and auth.settings.register_captcha
 crud.settings.create_captcha and  crud.settings.update_captcha
 automatic update button in admin 
+
+#1.76.4
+SQLTABLE(db(db.auth_user.id>0).select(),headers='fieldname:capitalize')
