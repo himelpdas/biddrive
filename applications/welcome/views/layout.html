@@ -37,14 +37,14 @@ jQuery(document).ready(function(){
             {{='/'.join(['',request.application,request.controller,request.function]+request.args)}}
 	    {{ if 'auth' in globals():}}
 	    [ {{if not auth.user:}}
-	    <a href="{{=URL(r=request,f='user/login')}}">{{=T('login')}}</a> |
-	    <a href="{{=URL(r=request,f='user/register')}}">{{=T('register')}}</a> |
-	    <a href="{{=URL(r=request,f='user/request_reset_password')}}">{{=T('lost password')}}</a>
+	    <a href="{{=URL(r=request,c='default',f='user/login')}}">{{=T('login')}}</a> |
+	    <a href="{{=URL(r=request,c='default',f='user/register')}}">{{=T('register')}}</a> |
+	    <a href="{{=URL(r=request,c='default',f='user/request_reset_password')}}">{{=T('lost password')}}</a>
 	    {{else:}}
 	    {{=auth.user.first_name}} |
-	    <a href="{{=URL(r=request,f='user/logout')}}">{{=T('logout')}}</a> |
-	    <a href="{{=URL(r=request,f='user/change_password')}}">{{=T('change password')}}</a> |
-	    <a href="{{=URL(r=request,f='user/profile')}}">{{=T('edit profile')}}</a>
+	    <a href="{{=URL(r=request,c='default',f='user/logout')}}">{{=T('logout')}}</a> |
+	    <a href="{{=URL(r=request,c='default',f='user/change_password')}}">{{=T('change password')}}</a> |
+	    <a href="{{=URL(r=request,c='default',f='user/profile')}}">{{=T('edit profile')}}</a>
 	    {{pass}} ]
 	    {{pass}}
           </td>

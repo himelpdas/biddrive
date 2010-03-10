@@ -704,3 +704,8 @@ automatic update button in admin
 
 #1.76.4
 SQLTABLE(db(db.auth_user.id>0).select(),headers='fieldname:capitalize')
+Oracle limitby improved (thanks Sergey)
+fixed migrations in Firebird, thanks Jose Jachuf
+gluon/contrib/login_methods/linkedin_account.py (to be tested)
+
+
