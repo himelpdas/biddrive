@@ -27,7 +27,6 @@ import socket
 import tempfile
 import logging
 import random
-#import sneaky
 import rewrite
 import string
 from restricted import RestrictedError
@@ -45,9 +44,9 @@ from html import URL
 from storage import List
 import newcron
 try:
-    import wsgiserver
+    import rocket
 except:
-    logging.warn('unable to import wsgiserver')
+    logging.warn('unable to import Rocket')
 
 
 __all__ = ['wsgibase', 'save_password', 'appfactory', 'HttpServer']
@@ -708,7 +707,7 @@ def appfactory(wsgiapp=wsgibase,
 
 class HttpServer(object):
     """
-    the web2py web server (wsgiserver)
+    the web2py web server (Rocket)
     """
 
     def __init__(
@@ -725,7 +724,7 @@ class HttpServer(object):
         server_name=None,
         request_queue_size=5,
         timeout=10,
-        shutdown_timeout=5,
+        shutdown_timeout=None, # Rocket does not use a shutdown timeout
         path=web2py_path,
         ):
         """
@@ -736,29 +735,36 @@ class HttpServer(object):
         self.pid_filename = pid_filename
         if not server_name:
             server_name = socket.gethostname()
-        logging.info('starting web server...')
-        self.server = wsgiserver.CherryPyWSGIServer(
-            (ip, port),
-            appfactory(wsgibase, log_filename, 
-                       profiler_filename, web2py_path=path),
-            numthreads=int(numthreads),
-            server_name=server_name,
-            request_queue_size=int(request_queue_size),
-            timeout=int(timeout),
-            shutdown_timeout=int(shutdown_timeout),
-            )
+        logging.info('starting web server...')                                                                      
+        rocket.SERVER_NAME = server_name                                                                            
+        sock_list = [ip, port]                                                                                      
+        if not ssl_certificate or not ssl_private_key:                                                              
+              logging.info('SSL is off')                                                                            
+        elif not rocket.ssl:                                                                                        
+             logging.warning('Python "ssl" module unavailable. SSL is OFF')
         if not ssl_certificate or not ssl_private_key:
             logging.info('SSL is off')
-        elif not wsgiserver.SSL:
-            logging.warning('OpenSSL libraries unavailable. SSL is OFF')
+        elif not rocket.ssl:                                                                                        
+            logging.warning('Python "ssl" module unavailable. SSL is OFF') 
         elif not os.path.exists(ssl_certificate):
             logging.warning('unable to open SSL certificate. SSL is OFF')
         elif not os.path.exists(ssl_private_key):
             logging.warning('unable to open SSL private key. SSL is OFF')
         else:
-            self.server.ssl_certificate = ssl_certificate
-            self.server.ssl_private_key = ssl_private_key
+            sock_list.extend([ssl_private_key, ssl_certificate])
             logging.info('SSL is ON')
+        app_info = {'wsgi_app': appfactory(wsgibase,                                                                
+                                           log_filename,                                                            
+                                           profiler_filename,                                                       
+                                           web2py_path=path) }                                                      
+        self.server = rocket.Rocket(tuple(sock_list),
+                                    'wsgi',
+                                    app_info,
+                                    min_threads=int(numthreads),
+                                    queue_size=int(request_queue_size),
+                                    timeout=int(timeout)
+                                    ) 
+
 
     def start(self):
         """
@@ -773,9 +779,9 @@ class HttpServer(object):
         fp.close()
         self.server.start()
 
-    def stop(self):
+    def stop(self, stoplogging=False):
         """
         stop the web server
         """
-        self.server.stop()
+        self.server.stop(stoplogging)
         os.unlink(self.pid_filename)
