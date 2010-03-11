@@ -708,4 +708,5 @@ Oracle limitby improved (thanks Sergey)
 fixed migrations in Firebird, thanks Jose Jachuf
 gluon/contrib/login_methods/linkedin_account.py (to be tested)
 
-
+#1.76.5
+Fixed a typo in auth that created some registration problems
