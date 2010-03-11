@@ -214,12 +214,12 @@ class CacheOnDisk(CacheAbstract):
     Values stored in disk cache must be pickable.
     """
 
-    def __init__(self, request):
+    def __init__(self, request, folder=None):
         self.request = request
 
         # Lets test if the cache folder exists, if not
         # we are going to create it
-        folder = os.path.join(request.folder, 'cache')
+        folder = folder or os.path.join(request.folder, 'cache')
 
         if not os.path.exists(folder):
             os.mkdir(folder)
