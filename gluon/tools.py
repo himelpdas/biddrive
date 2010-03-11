@@ -1249,7 +1249,7 @@ class Auth(object):
                     return form
                 session.flash = self.messages.email_sent
             elif self.settings.registration_requires_approval:
-                user[form.vars.id] = dict(registration_key='pending')
+                table_user[form.vars.id] = dict(registration_key='pending')
                 session.flash = self.messages.registration_pending
             else:
                 table_user[form.vars.id] = dict(registration_key='')
