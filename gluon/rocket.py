@@ -7,10 +7,11 @@
 import sys
 import errno
 import socket
+import logging
 import platform
 
 # Define Constants
-VERSION = '0.2.1'
+VERSION = '0.3.1'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
@@ -25,6 +26,11 @@ DEFAULTS = dict(LISTEN_QUEUE_SIZE = DEFAULT_LISTEN_QUEUE_SIZE,
                 MAX_THREADS = DEFAULT_MAX_THREADS)
 
 PY3K = sys.version_info[0] > 2
+
+class NullHandler(logging.Handler):
+    "A Logging handler to prevent library errors."
+    def emit(self, record):
+        pass
 
 if PY3K:
     def b(val):
@@ -65,8 +71,11 @@ else:
 
 __all__ = ['VERSION', 'SERVER_SOFTWARE', 'HTTP_SERVER_SOFTWARE', 'BUF_SIZE',
            'IS_JYTHON', 'IGNORE_ERRORS_ON_CLOSE', 'DEFAULTS', 'PY3K', 'b', 'u',
-           'Rocket', 'CherryPyWSGIServer', 'SERVER_NAME']
-# Monolithic build...end of module: rocket\__init__.py# Monolithic build...start of module: rocket\connection.py
+           'Rocket', 'CherryPyWSGIServer', 'SERVER_NAME', 'NullHandler']
+
+# Monolithic build...end of module: rocket\__init__.py
+# Monolithic build...start of module: rocket\connection.py
+
 # Import System Modules
 import time
 import socket
@@ -103,7 +112,10 @@ class Connection:
                 else:
                     pass
         self.socket.close()
-# Monolithic build...end of module: rocket\connection.py# Monolithic build...start of module: rocket\main.py
+
+# Monolithic build...end of module: rocket\connection.py
+# Monolithic build...start of module: rocket\main.py
+
 # Import System Modules
 import os
 import sys
@@ -124,10 +136,7 @@ except ImportError:
 
 # Setup Logging
 log = logging.getLogger('Rocket')
-try:
-    log.addHandler(logging.NullHandler())
-except:
-    pass
+log.addHandler(NullHandler())
 
 class Rocket:
     """The Rocket class is responsible for handling threads and accepting and
@@ -177,7 +186,7 @@ class Rocket:
             signal.signal(signal.SIGTERM, self._sigterm)
             signal.signal(signal.SIGUSR1, self._sighup)
         except:
-            log.info('This platform does not support signals.')
+            log.debug('This platform does not support signals.')
 
         # Start our worker threads
         self._threadpool.start()
@@ -316,7 +325,10 @@ def CherryPyWSGIServer(bind_addr,
                   max_threads = max_threads,
                   queue_size = request_queue_size,
                   timeout = timeout)
-# Monolithic build...end of module: rocket\main.py# Monolithic build...start of module: rocket\monitor.py
+
+# Monolithic build...end of module: rocket\main.py
+# Monolithic build...start of module: rocket\monitor.py
+
 # Import System Modules
 import time
 import logging
@@ -420,7 +432,10 @@ class Monitor(Thread):
                 c.close()
             finally:
                 del c
-# Monolithic build...end of module: rocket\monitor.py# Monolithic build...start of module: rocket\threadpool.py
+
+# Monolithic build...end of module: rocket\monitor.py
+# Monolithic build...start of module: rocket\threadpool.py
+
 # Import System Modules
 import sys
 import time
@@ -573,7 +588,10 @@ class ThreadPool():
 
         if locked:
             self.resize_lock.release()
-# Monolithic build...end of module: rocket\threadpool.py# Monolithic build...start of module: rocket\worker.py
+
+# Monolithic build...end of module: rocket\threadpool.py
+# Monolithic build...start of module: rocket\worker.py
+
 # Import System Modules
 import re
 import sys
@@ -581,11 +599,12 @@ import time
 import socket
 import logging
 import traceback
+from threading import Thread
+from datetime import datetime
 try:
     from queue import Queue
 except ImportError:
     from Queue import Queue
-from threading import Thread
 try:
     from urllib import unquote
 except ImportError:
@@ -608,6 +627,7 @@ except ImportError:
 
 # Define Constants
 re_SLASH = re.compile('%2F', re.IGNORECASE)
+LOG_LINE = '%(client_ip)s - "%(request_line)s" - %(status)s %(size)s'
 RESPONSE = '''\
 HTTP/1.1 %s
 Content-Length: %i
@@ -632,38 +652,36 @@ class Worker(Thread):
             if 'timed out' in val.args[0]:
                 typ = SocketTimeout
         if typ == SocketTimeout:
-            self.log.debug('Socket timed out')
+            self.err_log.debug('Socket timed out')
             self.wait_queue.put(self.conn)
             return True
         if typ == SocketClosed:
             self.closeConnection = True
-            self.log.debug('Client closed socket')
+            self.err_log.debug('Client closed socket')
             return False
         if typ == socket.error:
             if val.args[0] in IGNORE_ERRORS_ON_CLOSE:
                 self.closeConnection = True
-                self.log.debug('Ignorable socket Error received...'
-                               'closing connection.')
+                self.err_log.debug('Ignorable socket Error received...'
+                                   'closing connection.')
                 return False
             else:
                 self.closeConnection = True
                 if not self.pool.stop_server:
-                    self.log.critical(str(traceback.format_exc()))
+                    self.err_log.critical(str(traceback.format_exc()))
                 return False
 
         self.closeConnection = True
-        self.log.error(str(traceback.format_exc()))
+        self.err_log.error(str(traceback.format_exc()))
         self.send_response('500 Server Error')
         return False
 
     def run(self):
-        self.name = self.getName()
-        self.log = logging.getLogger('Rocket.%s' % self.name)
-        try:
-            self.log.addHandler(logging.NullHandler())
-        except:
-            pass
-        self.log.debug('Entering main loop.')
+        self.req_log = logging.getLogger('Rocket.Requests')
+        self.err_log = logging.getLogger('Rocket.Errors')
+        self.req_log.addHandler(NullHandler())
+        self.err_log.addHandler(NullHandler())
+        self.err_log.debug('Entering main loop.')
 
         # Enter thread main loop
         while True:
@@ -675,7 +693,7 @@ class Worker(Thread):
 
             if not conn:
                 # A non-client is a signal to die
-                self.log.debug('Received a death threat.')
+                self.err_log.debug('Received a death threat.')
                 return
 
             self.conn = conn
@@ -685,7 +703,7 @@ class Worker(Thread):
                 # See: http://bugs.jython.org/issue1309
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-            self.log.debug('Received a connection.')
+            self.err_log.debug('Received a connection.')
 
             if hasattr(conn,'settimeout') and self.timeout:
                 conn.settimeout(self.timeout)
@@ -694,7 +712,7 @@ class Worker(Thread):
 
             # Enter connection serve loop
             while True:
-                self.log.debug('Serving a request')
+                self.err_log.debug('Serving a request')
                 try:
                     self.run_app(conn)
                 except:
@@ -705,8 +723,13 @@ class Worker(Thread):
                 if self.closeConnection:
                     conn.close()
                     break
-                else:
-                    conn.start_time = time.time()
+                log_info = dict(client_ip = conn.client_addr,
+                                time = datetime.now().strftime('%c'),
+                                status = self.status.split(' ')[0],
+                                size = self.size,
+                                request_line = self.request_line
+                                )
+                self.req_log.info(LOG_LINE % log_info)
 
     def run_app(self, conn):
         # Must be overridden with a method reads the request from the socket
@@ -719,7 +742,7 @@ class Worker(Thread):
             self.conn.sendall(b(msg))
         except socket.error:
             self.closeConnection = True
-            self.log.error('Tried to send "%s" to client but received socket'
+            self.err_log.error('Tried to send "%s" to client but received socket'
                            ' error' % status)
 
     def kill(self):
@@ -729,7 +752,7 @@ class Worker(Thread):
             except socket.error:
                 info = sys.exc_info()
                 if info[1].args[0] != socket.EBADF:
-                    self.log.debug('Error on shutdown: '+str(info))
+                    self.err_log.debug('Error on shutdown: '+str(info))
 
     def read_request_line(self, sock_file):
         try:
@@ -739,18 +762,19 @@ class Worker(Thread):
 
             if d == '\r\n':
                 # Allow an extra NEWLINE at the beginner per HTTP 1.1 spec
-                self.log.debug('Client sent newline')
+                self.err_log.debug('Client sent newline')
                 d = sock_file.readline()
                 d = d.decode('ISO-8859-1') if PY3K else d
         except socket.timeout:
             raise SocketTimeout("Socket timed out before request.")
 
         if d.strip() == '':
-            self.log.debug('Client did not send a recognizable request.')
+            self.err_log.debug('Client did not send a recognizable request.')
             raise SocketClosed('Client closed socket.')
 
         try:
-            method, uri, proto = d.strip().split(' ')
+            self.request_line = d.strip()
+            method, uri, proto = self.request_line.split(' ')
         except ValueError:
             # FIXME - Raise 400 Bad Request
             raise
@@ -788,7 +812,7 @@ class Worker(Thread):
             try:
                 l = str(l, 'ISO-8859-1') if PY3K else l
             except UnicodeDecodeError:
-                self.log.warning('Client sent invalid header: ' + l.__repr__())
+                self.err_log.warning('Client sent invalid header: ' + l.__repr__())
 
             if l == '\r\n':
                 break
@@ -863,14 +887,14 @@ class TestWorker(Worker):
         sock_file = conn.makefile('rb', BUF_SIZE)
         n = sock_file.readline().strip()
         while n:
-            self.log.debug(n)
+            self.err_log.debug(n)
             n = sock_file.readline().strip()
 
         response = self.HEADER_RESPONSE % ('200 OK', 'Content-type: text/html')
         response += '\r\n<h1>It Works!</h1>'
 
         try:
-            self.log.debug(response)
+            self.err_log.debug(response)
             conn.sendall(b(response))
         finally:
             sock_file.close()
@@ -881,7 +905,13 @@ def get_method(method):
                    wsgi=WSGIWorker)
 
     return methods.get(method.lower(), TestWorker)
-# Monolithic build...end of module: rocket\worker.py# Monolithic build...start of module: rocket\methods\__init__.py# Monolithic build...end of module: rocket\methods\__init__.py# Monolithic build...start of module: rocket\methods\wsgi.py
+
+# Monolithic build...end of module: rocket\worker.py
+# Monolithic build...start of module: rocket\methods\__init__.py
+
+# Monolithic build...end of module: rocket\methods\__init__.py
+# Monolithic build...start of module: rocket\methods\wsgi.py
+
 # Import System Modules
 import os
 import sys
@@ -929,7 +959,7 @@ class WSGIWorker(Worker):
         """ Build the execution environment. """
         # Grab the request line
         request = self.read_request_line(sock_file)
-
+        
         # Grab the headers
         self.headers = self.read_headers(sock_file)
 
@@ -977,7 +1007,7 @@ class WSGIWorker(Worker):
 
         # Does the app want us to send output chunked?
         self.chunked = header_dict.get('transfer-encoding', '').lower() == 'chunked'
-
+        
         # Add a Date header if it's not there already
         if not 'date' in header_dict:
             self.header_set.append(('Date', formatdate(usegmt=True)))
@@ -993,12 +1023,15 @@ class WSGIWorker(Worker):
                     if sections == 1:
                         # Add a Content-Length header if it's not there already
                         self.header_set.append(('Content-Length', len(data)))
+                        self.size = len(data)
                     else:
                         # If they sent us more than one section, we blow chunks
                         self.header_set.append(('Transfer-Encoding', 'Chunked'))
                         self.chunked = True
-                        self.log.debug('Adding header...Transfer-Encoding: '
-                                       'Chunked')
+                        self.err_log.debug('Adding header...Transfer-Encoding: '
+                                           'Chunked')
+        else:
+            self.size = int(header_dict['content-length'])
 
         # If the client or application asks to keep the connection alive, do so.
         conn = header_dict.get('connection', '').lower()
@@ -1016,13 +1049,13 @@ class WSGIWorker(Worker):
         header_data = HEADER_RESPONSE % (self.status, serialized_headers)
 
         # Send the headers
-        self.log.debug('Sending Headers: %s' % header_data.__repr__())
+        self.err_log.debug('Sending Headers: %s' % header_data.__repr__())
         self.conn.sendall(b(header_data))
         self.headers_sent = True
 
     def write_warning(self, data, sections=None):
-        self.log.warning('WSGI app called write method directly.  This is '
-                         'obsolete behavior.  Please update your app.')
+        self.err_log.warning('WSGI app called write method directly.  This is '
+                             'obsolete behavior.  Please update your app.')
         return self.write(data, sections)
 
     def write(self, data, sections=None):
@@ -1074,19 +1107,20 @@ class WSGIWorker(Worker):
         except UnicodeDecodeError:
             self.error = ('500 Internal Server Error',
                           'HTTP Headers should be bytes')
-            self.log.error('Received HTTP Headers from client that contain'
-                           ' invalid characters for Latin-1 encoding.')
+            self.err_log.error('Received HTTP Headers from client that contain'
+                               ' invalid characters for Latin-1 encoding.')
 
         return self.write_warning
 
     def run_app(self, conn):
+        self.size = 0
         self.header_set = []
         self.headers_sent = False
         self.error = (None, None)
         sections = None
         output = None
 
-        self.log.debug('Getting sock_file')
+        self.err_log.debug('Getting sock_file')
         # Build our file-like object
         sock_file = conn.makefile('rb',BUF_SIZE)
 
@@ -1118,9 +1152,10 @@ class WSGIWorker(Worker):
                 self.conn.sendall(b('0\r\n\r\n'))
 
         finally:
-            self.log.debug('Finally closing output and sock_file')
+            self.err_log.debug('Finally closing output and sock_file')
             if hasattr(output,'close'):
                 output.close()
 
             sock_file.close()
+
 # Monolithic build...end of module: rocket\methods\wsgi.py
