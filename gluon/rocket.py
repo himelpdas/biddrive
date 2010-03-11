@@ -5,11 +5,13 @@
 
 # Import System Modules
 import sys
-import errnoimport socket
+import errno
+import socket
 import platform
 
 # Define Constants
-VERSION = '0.2.1'SERVER_NAME = socket.gethostname()
+VERSION = '0.2.1'
+SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
 BUF_SIZE = 16384

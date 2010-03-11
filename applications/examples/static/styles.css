@@ -60,7 +60,31 @@ textarea:focus { background: #F3D4D4 }
 .left {text-align:left }
 .center {text-align:center }
 .right {text-align:right }
-
 .foto{ display: block }
 .flash { clear: both; margin: 10px auto 0 auto; padding: 1.0em 0; border-top: 5px; background: #FF5C1F; color: #FFFFFF; text-align: center; cursor: pointer }
 .error { padding: 3px; background: #FF0000; color: #FFFFFF }
+
+.download  li a {
+-moz-background-clip:border;
+-moz-background-inline-policy:continuous;
+-moz-background-origin:padding;
+-moz-border-radius-bottomleft:3px;
+-moz-border-radius-bottomright:3px;
+-moz-border-radius-topleft:3px;
+-moz-border-radius-topright:3px;
+background:#4F843C url(download.png) no-repeat scroll right center;
+border:1px solid #4F843C;
+color:#FFFFFF;
+display:block;
+font-size:93%;
+margin:0;
+padding:6% 40px 6% 6%;
+line-height: 16px;
+}
+.download li {
+list-style-image:none;
+list-style-position:outside;
+list-style-type:none;
+width: 200px;
+height: 50px;
+}
