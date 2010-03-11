@@ -1966,10 +1966,13 @@ class IS_DATE(Validator):
 
     def formatter(self, value):
         format = self.format
-        y = '%.4i' % value.year
+        year = value.year
+        y = '%.4i' % year
         format = format.replace('%y',y[-2:])
         format = format.replace('%Y',y)
-        d = datetime.date(2000,value.month,value.day)
+        if year<1900:
+            year = 2000
+        d = datetime.date(year,value.month,value.day)
         return d.strftime(format)
 
 
@@ -2017,10 +2020,13 @@ class IS_DATETIME(Validator):
 
     def formatter(self, value):
         format = self.format
-        y = '%.4i' % value.year
+        year = value.year
+        y = '%.4i' % year
         format = format.replace('%y',y[-2:])
         format = format.replace('%Y',y)
-        d = datetime.datetime(2000,value.month,value.day,value.hour,value.minute,value.second)
+        if year<1900:
+            year = 2000
+        d = datetime.datetime(year,value.month,value.day,value.hour,value.minute,value.second)
         return d.strftime(format)
 
 class IS_DATE_IN_RANGE(IS_DATE):
