@@ -1971,7 +1971,7 @@ class IS_DATE(Validator):
         format = format.replace('%y',y[-2:])
         format = format.replace('%Y',y)
         if year<1900:
-            year = 2000
+            year = 2000 
         d = datetime.date(year,value.month,value.day)
         return d.strftime(format)
 

@@ -331,6 +331,9 @@ class BaseAdapter(ConnectionPool):
     def DIV(self,first,second):
         return '(%s / %s)' % (self.expand(first),self.expand(second,first.type))
 
+    def AS(self,first,second):
+        return '(%s AS %s)' % (self.expand(first),second)
+
     def ON(self,first,second):
         return '%s ON %s' % (self.expand(first),self.expand(second))
 
@@ -658,9 +661,15 @@ class BaseAdapter(ConnectionPool):
             for j in xrange(len(colnames)):
                 value = row[j]
                 if not table_field.match(colnames[j]):
-                    if not '_extra' in new_row:
-                        new_row['_extra'] = Row()
-                    new_row['_extra'][colnames[j]] = value
+                    select_as_parser = re.compile("\s+AS\s+(\S+)")
+                                new_column_name = select_as_parser.search(colnames[j])
+                    if new_column_name is None:
+                        if not '_extra' in new_row:
+                            new_row['_extra'] = Row()
+                        new_row['_extra'][colnames[j]] = value
+                    else:
+                        column_name = new_column_name.groups(0)
+                        setattr(new_row,column_name[0],value)
                     continue
                 (tablename, fieldname) = colnames[j].split('.')
                 table = self.db[tablename]
@@ -2843,6 +2852,9 @@ class Expression(object):
 
     def belongs(self, value):
         return Query(self._db, self._db._adapter.BELONGS, self, value)
+
+    def with_alias(self,alias):
+        return Expression(self._db,self._db._adapter.AS,self,alias,self.type)
 
     # for use in both Query and sortby
 
