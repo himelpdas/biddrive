@@ -1867,7 +1867,7 @@ class Auth(object):
 
         return decorator
 
-    def requires_membership(self, role):
+    def requires_membership(self, role=None, group_id=None):
         """
         decorator that prevents access to action if not logged in or
         if user logged in is not a member of group_id.
@@ -1876,7 +1876,6 @@ class Auth(object):
         """
 
         def decorator(action):
-            group_id = self.id_group(role)
 
             def f(*a, **b):
                 if not self.basic() and not self.is_logged_in():
@@ -1885,7 +1884,7 @@ class Auth(object):
                                vars=request.get_vars)
                     redirect(self.settings.login_url + \
                                  '?_next='+urllib.quote(next))
-                if not self.has_membership(group_id):
+                if not self.has_membership(group_id=group_id, role=role):
                     self.environment.session.flash = \
                         self.messages.access_denied
                     next = self.settings.on_failed_authorization
@@ -1973,11 +1972,16 @@ class Auth(object):
         role = 'user_%s' % user_id
         return self.id_group(role)
 
-    def has_membership(self, group_id, user_id=None):
+    def has_membership(self, group_id=None, user_id=None, role=None):
         """
-        checks if user is member of group_id
+        checks if user is member of group_id or role
         """
 
+        group_id = group_id or self.id_group(role)
+        try:
+            group_id = int(group_id)
+        except:
+            group_id = self.id_group(group_id) # interpret group_id as a role
         if not user_id and self.user:
             user_id = self.user.id
         membership = self.settings.table_membership
@@ -1992,12 +1996,17 @@ class Auth(object):
                                       group_id=group_id, check=r))
         return r
 
-    def add_membership(self, group_id, user_id=None):
+    def add_membership(self, group_id=None, user_id=None, role=None):
         """
-        gives user_id membership of group_id
-        if group_id==None than user_id is that of current logged in user
+        gives user_id membership of group_id or role
+        if user_id==None than user_id is that of current logged in user
         """
 
+        group_id = group_id or self.id_group(role)
+        try:
+            group_id = int(group_id)
+        except:
+            group_id = self.id_group(group_id) # interpret group_id as a role
         if not user_id and self.user:
             user_id = self.user.id
         membership = self.settings.table_membership
@@ -2011,9 +2020,10 @@ class Auth(object):
     def del_membership(self, group_id, user_id=None):
         """
         revokes membership from group_id to user_id
-        if group_id==None than user_id is that of current logged in user
+        if user_id==None than user_id is that of current logged in user
         """
 
+        group_id = group_id or self.id_group(role)
         if not user_id and self.user:
             user_id = self.user.id
         membership = self.settings.table_membership
