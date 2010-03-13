@@ -3081,13 +3081,12 @@ class Set(object):
             for j,colname in enumerate(colnames):
                 value = row[j]
                 if not table_field.match(colnames[j]):
+                    if not '_extra' in new_row:
+                        new_row['_extra'] = Row()
+                    new_row['_extra'][colnames[j]] = value
                     select_as_parser = re.compile("\s+AS\s+(\S+)")
                     new_column_name = select_as_parser.search(colnames[j])                    
-                    if new_column_name is None:
-                        if not '_extra' in new_row:
-                            new_row['_extra'] = Row()
-                        new_row['_extra'][colnames[j]] = value
-                    else:
+                    if not new_column_name is None:
                         column_name = new_column_name.groups(0)
                         setattr(new_row,column_name[0],value)
                     continue
