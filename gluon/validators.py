@@ -2040,9 +2040,9 @@ class IS_DATE_IN_RANGE(IS_DATE):
         self.maximum = maximum
         if error_message is None:
             if minimum is None:
-                error_message = "enter date on or before %(max)"
+                error_message = "enter date on or before %(max)s"
             elif maximum is None:
-                error_message = "enter date on or after %(min)"
+                error_message = "enter date on or after %(min)s"
             else:
                 error_message = "enter date in range %(min)s %(max)s"
         d = dict(min=minimum, max=maximum)
@@ -2072,9 +2072,9 @@ class IS_DATETIME_IN_RANGE(IS_DATETIME):
         self.maximum = maximum
         if error_message is None:
             if minimum is None:
-                error_message = "enter date and time on or before %(max)"
+                error_message = "enter date and time on or before %(max)s"
             elif maximum is None:
-                error_message = "enter date and time on or after %(min)"
+                error_message = "enter date and time on or after %(min)s"
             else:
                 error_message = "enter date and time in range %(min)s %(max)s"
         d = dict(min = minimum, max = maximum)
