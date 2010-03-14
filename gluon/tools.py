@@ -757,7 +757,7 @@ class Auth(object):
         else:
             return True
 
-    def define_tables(self, migrate=True):
+    def define_tables(self, username=True, migrate=True):
         """
         to be called unless tables are defined manually
 
@@ -775,26 +775,48 @@ class Auth(object):
         db = self.db
         if not self.settings.table_user_name in db.tables:
             passfield = self.settings.password_field            
-            table = db.define_table(
-                self.settings.table_user_name,
-                Field('first_name', length=128, default='',
-                        label=self.messages.label_first_name),
-                Field('last_name', length=128, default='',
-                        label=self.messages.label_last_name),
-                # Field('username', length=128, default=''),
-                Field('email', length=512, default='',
-                        label=self.messages.label_email),
-                Field(passfield, 'password', length=512,
-                         readable=False, label=self.messages.label_password),
-                Field('registration_key', length=512,
-                        writable=False, readable=False, default='',
-                        label=self.messages.label_registration_key),
-                Field('reset_password_key', length=512,
-                        writable=False, readable=False, default='',
-                        label=self.messages.label_reset_password_key),
-                migrate=\
-                    self.__get_migrate(self.settings.table_user_name, migrate),
-                format='%(first_name)s %(last_name)s (%(id)s)')
+            if username:
+                table = db.define_table(
+                    self.settings.table_user_name,
+                    Field('first_name', length=128, default='',
+                          label=self.messages.label_first_name),
+                    Field('last_name', length=128, default='',
+                          label=self.messages.label_last_name),
+                    Field('username', length=128, default=''),
+                    Field('email', length=512, default='',
+                          label=self.messages.label_email),
+                    Field(passfield, 'password', length=512,
+                          readable=False, label=self.messages.label_password),
+                    Field('registration_key', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_registration_key),
+                    Field('reset_password_key', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_reset_password_key),
+                    migrate=\
+                        self.__get_migrate(self.settings.table_user_name, migrate),
+                    format='%(username)s')
+                table.username.requires = IS_NOT_IN_DB(db, table.username)
+            else:
+                table = db.define_table(
+                    self.settings.table_user_name,
+                    Field('first_name', length=128, default='',
+                          label=self.messages.label_first_name),
+                    Field('last_name', length=128, default='',
+                          label=self.messages.label_last_name),
+                    Field('email', length=512, default='',
+                          label=self.messages.label_email),
+                    Field(passfield, 'password', length=512,
+                          readable=False, label=self.messages.label_password),
+                    Field('registration_key', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_registration_key),
+                    Field('reset_password_key', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_reset_password_key),
+                    migrate=\
+                        self.__get_migrate(self.settings.table_user_name, migrate),
+                    format='%(first_name)s %(last_name)s (%(id)s)')
             table.first_name.requires = \
                 IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.last_name.requires = \
@@ -802,7 +824,7 @@ class Auth(object):
             table[passfield].requires = [CRYPT(key=self.settings.hmac_key)]
             table.email.requires = \
                 [IS_EMAIL(error_message=self.messages.invalid_email),
-                 IS_NOT_IN_DB(db, '%s.email' % self.settings.table_user_name)]
+                 IS_NOT_IN_DB(db, table.email)]
             table.registration_key.default = ''
         self.settings.table_user = db[self.settings.table_user_name]
         if not self.settings.table_group_name in db.tables:
