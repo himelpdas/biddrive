@@ -665,7 +665,7 @@ class BaseAdapter(ConnectionPool):
                         new_row['_extra'] = Row()
                     new_row['_extra'][colnames[j]] = value
                     select_as_parser = re.compile("\s+AS\s+(\S+)")
-                                new_column_name = select_as_parser.search(colnames[j])
+                    new_column_name = select_as_parser.search(colnames[j])
                     if not new_column_name is None:
                         column_name = new_column_name.groups(0)
                         setattr(new_row,column_name[0],value)
