@@ -670,6 +670,7 @@ class Auth(object):
 
         self.messages.label_first_name = 'First name'
         self.messages.label_last_name = 'Last name'
+        self.messages.label_username = 'Username'
         self.messages.label_email = 'E-mail'
         self.messages.label_password = 'Password'
         self.messages.label_registration_key = 'Registration key'
@@ -782,7 +783,8 @@ class Auth(object):
                           label=self.messages.label_first_name),
                     Field('last_name', length=128, default='',
                           label=self.messages.label_last_name),
-                    Field('username', length=128, default=''),
+                    Field('username', length=128, default='',
+                          label=self.messages.label_username),
                     Field('email', length=512, default='',
                           label=self.messages.label_email),
                     Field(passfield, 'password', length=512,
