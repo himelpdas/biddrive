@@ -53,13 +53,15 @@ def _TEST():
     stdout = sys.stdout
     html = '<h2>Testing controller "%s.py" ... done.</h2><br/>\n' \
         % request.controller
-    for key in [key for key in globals() if not key in __symbols__+['_TEST']]:
-        if type(eval(key)) == types.FunctionType:
-            if doctest.DocTestFinder().find(eval(key)):
+    for key in sorted([key for key in globals() if not key in __symbols__+['_TEST']]):
+        eval_key = eval(key)
+        if type(eval_key) == types.FunctionType:
+            number_doctests = sum([len(ds.examples) for ds in doctest.DocTestFinder().find(eval_key)])
+            if number_doctests>0:
                 sys.stdout = cStringIO.StringIO()
                 name = '%s/controllers/%s.py in %s.__doc__' \
                     % (request.folder, request.controller, key)
-                doctest.run_docstring_examples(eval(key),
+                doctest.run_docstring_examples(eval_key,
                     globals(), False, name=name)
                 report = sys.stdout.getvalue().strip()
                 if report:

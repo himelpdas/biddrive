@@ -2,7 +2,7 @@
 
 <h1>{{=T('Testing application')}} "{{=app}}"</h1>
 
-{{for controller in controllers:}}
+{{for controller in sorted(controllers):}}
 
 <div id='output_{{=controller}}'><h2>Testing controller "{{=controller}}"... <blink>please wait!</blink></h2></div>
 
