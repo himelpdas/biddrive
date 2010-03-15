@@ -3036,7 +3036,7 @@ def completion(callback):
 
 def prettydate(d,T=lambda x:x):
     try:
-        dt = datetime.now() - d
+        dt = datetime.datetime.now() - d
     except:
         return ''
     if dt.days >= 2*365:
