@@ -758,7 +758,7 @@ class Auth(object):
         else:
             return True
 
-    def define_tables(self, username=True, migrate=True):
+    def define_tables(self, username=False, migrate=True):
         """
         to be called unless tables are defined manually
 
