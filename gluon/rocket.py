@@ -11,7 +11,7 @@ import logging
 import platform
 
 # Define Constants
-VERSION = '0.3.1'
+VERSION = '1.0.1'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
@@ -144,7 +144,7 @@ class Rocket:
 
     def __init__(self,
                  interfaces = ('127.0.0.1', 8000),
-                 method='test',
+                 method='wsgi',
                  app_info = None,
                  min_threads=DEFAULTS['MIN_THREADS'],
                  max_threads=DEFAULTS['MAX_THREADS'],
@@ -441,7 +441,6 @@ import sys
 import time
 import socket
 import logging
-import traceback
 from threading import Lock
 try:
     from queue import Queue
@@ -452,16 +451,12 @@ except ImportError:
 
 
 # Setup Logging
-log = logging.getLogger('Rocket.ThreadPool')
-try:
-    log.addHandler(logging.NullHandler())
-except:
-    pass
+log = logging.getLogger('Rocket.Errors.ThreadPool')
+log.addHandler(NullHandler())
 
-class ThreadPool():
+class ThreadPool:
     """The ThreadPool class is a container class for all the worker threads. It
     manages the number of actively running threads."""
-    # Web worker base class.
     queue = None
     threads = set()
 
@@ -473,7 +468,7 @@ class ThreadPool():
                  server_software=SERVER_SOFTWARE,
                  timeout_queue=None):
 
-        log.debug("Initializing.")
+        log.debug("Initializing ThreadPool.")
         self.check_for_dead_threads = 0
         self.resize_lock = Lock()
         self.queue = Queue()
@@ -504,7 +499,7 @@ class ThreadPool():
         self.stop_server = False
         log.debug("Starting threads.")
         for thread in self.threads:
-            thread.daemon = True
+            thread.setDaemon(True)
             thread._pool = self
             thread.start()
 
@@ -599,6 +594,7 @@ import time
 import socket
 import logging
 import traceback
+from wsgiref.headers import Headers
 from threading import Thread
 from datetime import datetime
 try:
@@ -631,7 +627,7 @@ LOG_LINE = '%(client_ip)s - "%(request_line)s" - %(status)s %(size)s'
 RESPONSE = '''\
 HTTP/1.1 %s
 Content-Length: %i
-Content-Type: text/plain
+Content-Type: %s
 
 %s
 '''
@@ -647,6 +643,13 @@ class Worker(Thread):
     timeout = 1
     server_software = SERVER_SOFTWARE
 
+    def __init__(self, *args, **kwargs):
+        Thread.__init__(self, *args, **kwargs)
+        self.req_log = logging.getLogger('Rocket.Requests')
+        self.err_log = logging.getLogger('Rocket.Errors.'+self.getName())
+        self.req_log.addHandler(NullHandler())
+        self.err_log.addHandler(NullHandler())
+
     def _handleError(self, typ, val, tb):
         if typ == SSLError:
             if 'timed out' in val.args[0]:
@@ -660,15 +663,17 @@ class Worker(Thread):
             self.err_log.debug('Client closed socket')
             return False
         if typ == socket.error:
+            self.closeConnection = True
             if val.args[0] in IGNORE_ERRORS_ON_CLOSE:
                 self.closeConnection = True
                 self.err_log.debug('Ignorable socket Error received...'
                                    'closing connection.')
                 return False
             else:
-                self.closeConnection = True
+                self.status = "999 Utter Server Failure"
                 if not self.pool.stop_server:
-                    self.err_log.critical(str(traceback.format_exc()))
+                    tb = traceback.format_exception(*exc)
+                    self.err_log.error('Unhandled Error when serving connection:\n' + tb)
                 return False
 
         self.closeConnection = True
@@ -677,10 +682,6 @@ class Worker(Thread):
         return False
 
     def run(self):
-        self.req_log = logging.getLogger('Rocket.Requests')
-        self.err_log = logging.getLogger('Rocket.Errors')
-        self.req_log.addHandler(NullHandler())
-        self.err_log.addHandler(NullHandler())
         self.err_log.debug('Entering main loop.')
 
         # Enter thread main loop
@@ -715,29 +716,41 @@ class Worker(Thread):
                 self.err_log.debug('Serving a request')
                 try:
                     self.run_app(conn)
+                    log_info = dict(client_ip = conn.client_addr,
+                                    time = datetime.now().strftime('%c'),
+                                    status = self.status.split(' ')[0],
+                                    size = self.size,
+                                    request_line = self.request_line)
+                    self.req_log.info(LOG_LINE % log_info)
                 except:
-                    handled = self._handleError(*sys.exc_info())
+                    exc = sys.exc_info()
+                    handled = self._handleError(*exc)
                     if handled:
                         break
+                    else:
+                        if self.request_line and not self.pool.stop_server:
+                            log_info = dict(client_ip = conn.client_addr,
+                                            time = datetime.now().strftime('%c'),
+                                            status = self.status.split(' ')[0],
+                                            size = self.size,
+                                            request_line = self.request_line + ' - not stopping')
+                            self.req_log.info(LOG_LINE % log_info)
 
                 if self.closeConnection:
                     conn.close()
                     break
-                log_info = dict(client_ip = conn.client_addr,
-                                time = datetime.now().strftime('%c'),
-                                status = self.status.split(' ')[0],
-                                size = self.size,
-                                request_line = self.request_line
-                                )
-                self.req_log.info(LOG_LINE % log_info)
 
     def run_app(self, conn):
         # Must be overridden with a method reads the request from the socket
         # and sends a response.
+        self.closeConnection = True
         raise NotImplementedError('Overload this method!')
 
-    def send_response(self, status, disconnect=False):
-        msg = RESPONSE % (status, len(status), status.split(' ', 1)[1])
+    def send_response(self, status, disconnect=False, content_type='text/plain'):
+        msg = RESPONSE % (status,
+                          len(status),
+                          content_type,
+                          status.split(' ', 1)[1])
         try:
             self.conn.sendall(b(msg))
         except socket.error:
@@ -755,6 +768,7 @@ class Worker(Thread):
                     self.err_log.debug('Error on shutdown: '+str(info))
 
     def read_request_line(self, sock_file):
+        self.request_line = ''
         try:
             # Grab the request line
             d = sock_file.readline()
@@ -803,7 +817,7 @@ class Worker(Thread):
         return req
 
     def read_headers(self, sock_file):
-        headers = dict()
+        headers = Headers([])
         l = sock_file.readline()
 
         lname = None
@@ -812,7 +826,7 @@ class Worker(Thread):
             try:
                 l = str(l, 'ISO-8859-1') if PY3K else l
             except UnicodeDecodeError:
-                self.err_log.warning('Client sent invalid header: ' + l.__repr__())
+                self.err_log.warning('Client sent invalid header: ' + repr(l))
 
             if l == '\r\n':
                 break
@@ -825,9 +839,8 @@ class Worker(Thread):
                 l = l.split(':', 1)
                 # HTTP header names are us-ascii encoded
                 lname = l[0].strip().replace('-', '_')
-                lname = 'HTTP_'+lname.upper()
                 lval = l[-1].strip()
-            headers.update({str(lname): str(lval)})
+            headers[str(lname)] = str(lval)
 
             l = sock_file.readline()
         return headers
@@ -879,32 +892,10 @@ class ChunkedReader:
     def readlines(self):
         yield self.readline()
 
-class TestWorker(Worker):
-    HEADER_RESPONSE = '''HTTP/1.1 %s\r\n%s\r\n'''
-
-    def run_app(self, conn):
-        self.closeConnection = True
-        sock_file = conn.makefile('rb', BUF_SIZE)
-        n = sock_file.readline().strip()
-        while n:
-            self.err_log.debug(n)
-            n = sock_file.readline().strip()
-
-        response = self.HEADER_RESPONSE % ('200 OK', 'Content-type: text/html')
-        response += '\r\n<h1>It Works!</h1>'
-
-        try:
-            self.err_log.debug(response)
-            conn.sendall(b(response))
-        finally:
-            sock_file.close()
-
 def get_method(method):
 
-    methods = dict(test=TestWorker,
-                   wsgi=WSGIWorker)
-
-    return methods.get(method.lower(), TestWorker)
+    methods = dict(wsgi=WSGIWorker)
+    return methods[method.lower()]
 
 # Monolithic build...end of module: rocket\worker.py
 # Monolithic build...start of module: rocket\methods\__init__.py
@@ -916,17 +907,17 @@ def get_method(method):
 import os
 import sys
 import socket
+import traceback
 from email.utils import formatdate
-from wsgiref.simple_server import demo_app
+from wsgiref.headers import Headers
 from wsgiref.util import FileWrapper
 # Import Package Modules
 # package imports removed in monolithic build
 
 
 # Define Constants
-HEADER_LINE = '%s: %s\r\n'
 NEWLINE = b('\r\n')
-HEADER_RESPONSE = '''HTTP/1.1 %s\r\n%s\r\n'''
+HEADER_RESPONSE = '''HTTP/1.1 %s\r\n%s'''
 BASE_ENV = {'SERVER_NAME': SERVER_NAME,
             'wsgi.errors': sys.stderr,
             'wsgi.version': (1, 0),
@@ -948,10 +939,7 @@ class WSGIWorker(Worker):
                                   })
         self.base_environ.update(BASE_ENV)
         # Grab our application
-        if isinstance(self.app_info, dict):
-            self.app = self.app_info.get('wsgi_app', demo_app)
-        else:
-            self.app = demo_app
+        self.app = self.app_info['wsgi_app']
 
         Worker.__init__(self)
 
@@ -959,9 +947,9 @@ class WSGIWorker(Worker):
         """ Build the execution environment. """
         # Grab the request line
         request = self.read_request_line(sock_file)
-        
+
         # Grab the headers
-        self.headers = self.read_headers(sock_file)
+        self.headers = dict([(str('HTTP_'+k.upper()), v) for k, v in self.read_headers(sock_file).items()])
 
         # Copy the Base Environment
         environ = dict(self.base_environ)
@@ -1002,54 +990,50 @@ class WSGIWorker(Worker):
         return environ
 
     def send_headers(self, data, sections):
-        # Before the first output, send the stored headers
-        header_dict = dict([(x.lower(), y) for (x,y) in self.header_set])
-
+        h_set = self.header_set
         # Does the app want us to send output chunked?
-        self.chunked = header_dict.get('transfer-encoding', '').lower() == 'chunked'
-        
+        self.chunked = h_set.get('transfer-encoding', '').lower() == 'chunked'
+
         # Add a Date header if it's not there already
-        if not 'date' in header_dict:
-            self.header_set.append(('Date', formatdate(usegmt=True)))
+        if not 'date' in h_set:
+            h_set['Date'] = formatdate(usegmt=True)
 
         # Add a Server header if it's not there already
-        if not 'server' in header_dict:
-            self.header_set.append(('Server', HTTP_SERVER_SOFTWARE))
+        if not 'server' in h_set:
+            h_set['Server'] = HTTP_SERVER_SOFTWARE
 
-        if 'content-length' not in header_dict:
+        if 'content-length' in h_set:
+            self.size = int(h_set['content-length'])
+        else:
             s = int(self.status.split(' ')[0])
             if s < 200 or s not in (204, 205, 304):
                 if not self.chunked:
                     if sections == 1:
                         # Add a Content-Length header if it's not there already
-                        self.header_set.append(('Content-Length', len(data)))
+                        h_set['Content-Length'] = len(data)
                         self.size = len(data)
                     else:
                         # If they sent us more than one section, we blow chunks
-                        self.header_set.append(('Transfer-Encoding', 'Chunked'))
+                        h_set['Transfer-Encoding'] = 'Chunked'
                         self.chunked = True
                         self.err_log.debug('Adding header...Transfer-Encoding: '
                                            'Chunked')
-        else:
-            self.size = int(header_dict['content-length'])
 
         # If the client or application asks to keep the connection alive, do so.
-        conn = header_dict.get('connection', '').lower()
+        conn = h_set.get('connection', '').lower()
         client_conn = self.headers.get('HTTP_CONNECTION', '').lower()
         if conn != 'close' and client_conn == 'keep-alive':
-            self.header_set.append(('Connection', 'keep-alive'))
+            h_set['Connection'] = 'keep-alive'
             self.closeConnection = False
         else:
-            self.header_set.append(('Connection', 'close'))
+            h_set['Connection'] = 'close'
             self.closeConnection = True
 
         # Build our output headers
-        serialized_headers = ''.join([HEADER_LINE % (k,v)
-                                      for (k,v) in self.header_set])
-        header_data = HEADER_RESPONSE % (self.status, serialized_headers)
+        header_data = HEADER_RESPONSE % (self.status, str(h_set))
 
         # Send the headers
-        self.err_log.debug('Sending Headers: %s' % header_data.__repr__())
+        self.err_log.debug('Sending Headers: %s' % repr(header_data))
         self.conn.sendall(b(header_data))
         self.headers_sent = True
 
@@ -1069,10 +1053,9 @@ class WSGIWorker(Worker):
             self.send_headers(data, sections)
 
         if self.request_method != 'HEAD':
-            if self.chunked:
-                self.conn.sendall(b('%x\r\n' % len(data)))
-
             try:
+                if self.chunked:
+                    self.conn.sendall(b('%x\r\n' % len(data)))
                 # Send another NEWLINE for good measure
                 self.conn.sendall(data)
                 if self.chunked:
@@ -1102,8 +1085,7 @@ class WSGIWorker(Worker):
             self.status = status
         # Make sure headers are bytes objects
         try:
-            self.header_set = [(h[0].strip(),
-                                h[1].strip()) for h in response_headers]
+            self.header_set = Headers(response_headers)
         except UnicodeDecodeError:
             self.error = ('500 Internal Server Error',
                           'HTTP Headers should be bytes')
@@ -1114,7 +1096,7 @@ class WSGIWorker(Worker):
 
     def run_app(self, conn):
         self.size = 0
-        self.header_set = []
+        self.header_set = Headers([])
         self.headers_sent = False
         self.error = (None, None)
         self.chunked = False
@@ -1128,6 +1110,11 @@ class WSGIWorker(Worker):
         try:
             # Read the headers and build our WSGI environment
             environ = self.build_environ(sock_file, conn)
+            
+            # Handle 100 Continue
+            if environ.get('HTTP_EXPECT', '').lower() == '100-continue':
+                res = environ['SERVER_PROTOCOL'] + ' 100 Continue\r\n\r\n'
+                conn.sendall(b(res))
 
             # Send it to our WSGI application
             output = self.app(environ, self.start_response)
@@ -1144,14 +1131,15 @@ class WSGIWorker(Worker):
                 if data:
                     self.write(data, sections)
 
-            # Send headers if the body was empty
-            if not self.headers_sent:
-                self.write(b(''))
-
-            # If chunked, send our final chunk length
             if self.chunked:
+                # If chunked, send our final chunk length
                 self.conn.sendall(b('0\r\n\r\n'))
+            elif not self.headers_sent:
+                # Send headers if the body was empty
+                self.send_headers('', sections)
 
+        # Don't capture exceptions here.  The Worker class handles
+        # them appropriately.
         finally:
             self.err_log.debug('Finally closing output and sock_file')
             if hasattr(output,'close'):
