@@ -122,6 +122,7 @@ def URL(
     vars={},
     anchor='',
     extension=None,
+    env=None
     ):
     """
     generate a relative URL
@@ -159,6 +160,7 @@ def URL(
         application = r.application
         controller = r.controller
         function = r.function
+        env = r.env
     if a:
         application = a
     if c:
@@ -188,7 +190,7 @@ def URL(
 
     if regex_crlf.search(url):
         raise SyntaxError, 'CRLF Injection Detected'
-    return rewrite.filter_out(url)
+    return rewrite.filter_out(url, env)
 
 
 ON = True

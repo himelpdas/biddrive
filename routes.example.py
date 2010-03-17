@@ -11,13 +11,15 @@
 #
 
 routes_in = (('.*:/favicon.ico', '/examples/static/favicon.ico'),
-             ('.*:/robots.txt', '/examples/static/robots.txt'))
+             ('.*:/robots.txt', '/examples/static/robots.txt'),
+             (('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')))
 
 # routes_out, like routes_in translates URL paths created with the web2py URL()
 # function in the same manner that route_in translates inbound URL paths.
 #
 
-routes_out = ()
+routes_out = (('.*http://otherdomain.com.* /app/ctr(?P<any>.*)', '\g<any>'),
+              ('/app(?P<any>.*)', '\g<any>'))
 
 # Error-handling redirects all HTTP errors (status codes >= 400) to a specified
 # path.  If you wish to use error-handling redirects, uncomment the tuple
@@ -59,12 +61,11 @@ def __routes_doctest():
     '''
     Dummy function for doctesting routes.py.
     
-    Use filter_url() to test incoming routes;
-    filter_out() for outgoing routes;
+    Use filter_url() to test incoming ot outgoing routes;
     filter_err() for error redirection.
     
     filter_url() accepts overrides for method and remote host:
-        filter_url(url, method='get', remote='0.0.0.0')
+        filter_url(url, method='get', remote='0.0.0.0', out=False)
 
     filter_err() accepts overrides for application and ticket:
         filter_err(status, application='app', ticket='tkt')
@@ -79,8 +80,18 @@ def __routes_doctest():
     'http://domain.com/app/ctr/fcn'
     >>> filter_url('http://domain.com/app/ctr/fcn?query')
     'http://domain.com/app/ctr/fcn?query'
-    >>> filter_out('http://domain.com/app/ctr/fcn')
-    'http://domain.com/app/ctr/fcn'
+    >>> filter_url('http://otherdomain.com/fcn')
+    'http://otherdomain.com/app/ctr/fcn'
+    >>> filter_out('/app/ctr/fcn')
+    '/ctr/fcn'
+    >>> filter_url('https://otherdomain.com/app/ctr/fcn', out=True)
+    '/app/ctr/fcn'
+    >>> filter_url('http://otherdomain.com/app/ctr/fcn', out=True)
+    '/fcn'
+    >>> filter_url('http://otherdomain.com/app/ctr/fcn?query', out=True)
+    '/fcn?query'
+    >>> filter_url('http://otherdomain.com/app/ctr/fcn#anker', out=True)
+    '/fcn#anker'
     >>> filter_err(200)
     200
     >>> filter_err(399)

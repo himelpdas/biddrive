@@ -29,6 +29,23 @@ params.error_message_custom = '<html><body><h1>%s</h1></body></html>'
 params.error_message_ticket = \
     '<html><body><h1>Internal error</h1>Ticket issued: <a href="/admin/default/ticket/%(ticket)s" target="_blank">%(ticket)s</a></body><!-- this is junk text else IE does not display the page: '+('x'*512)+' //--></html>'
 
+def compile_re(k, v):
+    if not k[0] == '^':
+        k = '^%s' % k
+    if not k[-1] == '$':
+        k = '%s$' % k
+    if k.find(':') < 0:
+        k = '^.*?:%s' % k[1:]
+    if k.find('://') < 0:
+        i = k.find(':/')
+        k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
+    for item in regex_anything.findall(k):
+        k = k.replace(item, '(?P<anything>.*)')
+    for item in regex_at.findall(k):
+        k = k.replace(item, '(?P<%s>[\\w_]+)' % item[1:])
+    for item in regex_at.findall(v):
+        v = v.replace(item, '\\g<%s>' % item[1:])
+    return (re.compile(k, re.DOTALL), v)
 
 def load(routes='routes.py'):
     symbols = {}
@@ -48,35 +65,12 @@ def load(routes='routes.py'):
     params.routes_in=[]
     if 'routes_in' in symbols:
         for (k, v) in symbols['routes_in']:
-            if not k[0] == '^':
-                k = '^%s' % k
-            if not k[-1] == '$':
-                k = '%s$' % k
-            if k.find(':') < 0:
-                k = '^.*?:%s' % k[1:]
-            if k.find('://') < 0:
-                i = k.find(':/')
-                k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
-            for item in regex_anything.findall(k):
-                k = k.replace(item, '(?P<anything>.*)')
-            for item in regex_at.findall(k):
-                k = k.replace(item, '(?P<%s>[\\w_]+)' % item[1:])
-            for item in regex_at.findall(v):
-                v = v.replace(item, '\\g<%s>' % item[1:])
-            params.routes_in.append((re.compile(k, re.DOTALL), v))
+            params.routes_in.append(compile_re(k, v))
 
     params.routes_out=[]
     if 'routes_out' in symbols:
         for (k, v) in symbols['routes_out']:
-            if not k[0] == '^':
-                k = '^%s' % k
-            if not k[-1] == '$':
-                k = '%s$' % k
-            for item in regex_at.findall(k):
-                k = k.replace(item, '(?P<%s>\\w+)' % item[1:])
-            for item in regex_at.findall(v):
-                v = v.replace(item, '\\g<%s>' % item[1:])
-            params.routes_out.append((re.compile(k, re.DOTALL), v))
+            params.routes_out.append(compile_re(k, v))
 
     if 'routes_onerror' in symbols:
         params.routes_onerror = symbols['routes_onerror']
@@ -117,9 +111,20 @@ def filter_in(e):
             e['WEB2PY_ORIGINAL_URI'] = original_uri
     return e
 
-def filter_out(url):
+def filter_out(url, e=None):
     if params.routes_out:
         items = url.split('?', 1)
+        if e:
+            host = e.get('http_host', 'localhost').lower()
+            i = host.find(':')
+            if i > 0:
+                host = host[:i]
+            items[0] = '%s:%s://%s:%s %s' % \
+                 (e.get('remote_addr', ''),
+                  e.get('wsgi_url_scheme', 'http').lower(), host,
+                  e.get('request_method', 'get').lower(), items[0])
+        else:
+            items[0] = ':http://localhost:get %s' % items[0]
         for (regex, value) in params.routes_out:
             if regex.match(items[0]):
                 return '?'.join([regex.sub(value, items[0])] + items[1:])
@@ -146,8 +151,8 @@ def try_redirect_on_error(http_object, request, ticket=None):
                             Location=url)
     return http_object
 
-def filter_url(url, method='get', remote='0.0.0.0'):
-    "doctest interface to filter_in()"
+def filter_url(url, method='get', remote='0.0.0.0', out=False):
+    "doctest interface to filter_in() and filter_out()"
     regex_url = re.compile('^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>\S*)')
     match = regex_url.match(url)
     scheme = match.group('scheme').lower()
@@ -164,15 +169,23 @@ def filter_url(url, method='get', remote='0.0.0.0'):
          'HTTP_HOST': host,
          'REQUEST_URI': uri,
          'PATH_INFO': path_info,
-         'QUERY_STRING': query_string
+         'QUERY_STRING': query_string,
+         #for filter_out request.env use lowercase
+         'remote_addr': remote,
+         'request_method': method,
+         'wsgi_url_scheme': scheme,
+         'http_host': host
     }
-    e = filter_in(e)
-    if e['PATH_INFO'] == '':
-        path = e['REQUEST_URI']
-    elif query_string:
-        path = e['PATH_INFO'] + '?' + query_string
+    if out:
+        return filter_out(uri, e)
     else:
-        path = e['PATH_INFO']
+        e = filter_in(e)
+        if e['PATH_INFO'] == '':
+            path = e['REQUEST_URI']
+        elif query_string:
+            path = e['PATH_INFO'] + '?' + query_string
+        else:
+            path = e['PATH_INFO']
     return scheme + '://' + host + path
 
 def filter_err(status, application='app', ticket='tkt'):
