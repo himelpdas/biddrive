@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # routes_in is a tuple of tuples.  The first item in each is a regexp that will
-# be used to match the incoming request URL.  The second item in the tuple is
+# be used to match the incoming request URL. The second item in the tuple is
 # what it will be replaced with.  This mechanism allows you to redirect incoming
 # routes to different web2py locations
 #
@@ -61,7 +61,7 @@ def __routes_doctest():
     '''
     Dummy function for doctesting routes.py.
     
-    Use filter_url() to test incoming ot outgoing routes;
+    Use filter_url() to test incoming or outgoing routes;
     filter_err() for error redirection.
     
     filter_url() accepts overrides for method and remote host:
@@ -90,8 +90,8 @@ def __routes_doctest():
     '/fcn'
     >>> filter_url('http://otherdomain.com/app/ctr/fcn?query', out=True)
     '/fcn?query'
-    >>> filter_url('http://otherdomain.com/app/ctr/fcn#anker', out=True)
-    '/fcn#anker'
+    >>> filter_url('http://otherdomain.com/app/ctr/fcn#anchor', out=True)
+    '/fcn#anchor'
     >>> filter_err(200)
     200
     >>> filter_err(399)

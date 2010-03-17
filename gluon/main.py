@@ -54,57 +54,6 @@ __all__ = ['wsgibase', 'save_password', 'appfactory', 'HttpServer']
 # Security Checks: validate URL and session_id here,
 # accept_language is validated in languages
 
-# pattern to replace spaces with underscore in URL
-#   also the html escaped variants '+' and '%20' are covered
-regex_space = re.compile('(\+|\s|%20)+')
-
-# pattern to find valid paths in url /application/controller/...
-#   this could be:
-#     for static pages:
-#        /<b:application>/static/<x:file>
-#     for dynamic pages:
-#        /<a:application>[/<c:controller>[/<f:function>[.<e:ext>][/<s:args>]]]
-#   application, controller, function and ext may only contain [a-zA-Z0-9_]
-#   file and args may also contain '-', '=', '.' and '/'
-#   apps in rewrite.params.routes_apps_raw must parse raw_args into args
-
-regex_static = re.compile(r'''
-     (^                              # static pages
-         /(?P<b> \w+)                # b=app
-         /static                     # /b/static
-         /(?P<x> (\w[\-\=\./]?)* )   # x=file
-     $)
-     ''', re.X)
-
-regex_url = re.compile(r'''
-     (^(                                  # (/a/c/f.e/s)
-         /(?P<a> [\w\s+]+ )               # /a=app
-         (                                # (/c.f.e/s)
-             /(?P<c> [\w\s+]+ )           # /a/c=controller
-             (                            # (/f.e/s)
-                 /(?P<f> [\w\s+]+ )       # /a/c/f=function
-                 (                        # (.e)
-                     \.(?P<e> [\w\s+]+ )  # /a/c/f.e=extension
-                 )?
-                 (                        # (/s)
-                     /(?P<r>              # /a/c/f.e/r=raw_args
-                     .+
-                     )
-                 )?
-             )?
-         )?
-     )?
-     /?$)    # trailing slash
-     ''', re.X)
-
-regex_args = re.compile(r'''
-     (^
-         (?P<s>
-             ( [\w@-][=./]? )+          # s=args
-         )?
-     /?$)    # trailing slash
-     ''', re.X)
-
 # pattern used to validate client address
 regex_client = re.compile('[\w\-:]+(\.[\w\-]+)*\.?')  # ## to account for IPV6
 
@@ -360,90 +309,14 @@ def wsgibase(environ, responder):
             request.env.update(settings)
 
             # ##################################################
-            # validate the path in url
+            # invoke the legacy URL parser and serve static file
             # ##################################################
 
-            if not request.env.path_info and request.env.request_uri:
-                # for fcgi, decode path_info and query_string
-                items = request.env.request_uri.split('?')
-                request.env.path_info = items[0]
-                if len(items) > 1:
-                    request.env.query_string = items[1]
-                else:
-                    request.env.query_string = ''
-            path = request.env.path_info.replace('\\', '/')
-
-            # ##################################################
-            # serve if a static file
-            # ##################################################
-
-            match = regex_static.match(regex_space.sub('_', path))
-            if match and match.group('x'):
-                static_file = os.path.join(request.env.web2py_path,
-                                           'applications', match.group('b'),
-                                           'static', match.group('x'))
+            static_file = parse_url(request, environ)
+            if static_file:
                 if request.env.get('query_string', '')[:10] == 'attachment':
                     response.headers['Content-Disposition'] = 'attachment'
                 response.stream(static_file, request=request)
-
-            # ##################################################
-            # parse application, controller and function
-            # ##################################################
-
-            path = re.sub('%20', ' ', path)
-            match = regex_url.match(path)
-            if not match or match.group('c') == 'static':
-                raise HTTP(400,
-                           rewrite.params.error_message,
-                           web2py_error='invalid path')
-
-            request.application = \
-                regex_space.sub('_', match.group('a') or 'init')
-            request.controller = \
-                regex_space.sub('_', match.group('c') or 'default')
-            request.function = \
-                regex_space.sub('_', match.group('f') or 'index')
-            group_e = match.group('e')
-            raw_extension = group_e and regex_space.sub('_',group_e) or None
-            request.extension = raw_extension or 'html'
-            request.raw_args = match.group('r')
-            request.args = List([])
-            if request.application in rewrite.params.routes_apps_raw:
-                # application is responsible for parsing args
-                request.args = None  
-            elif request.raw_args:
-                match = regex_args.match(request.raw_args)
-                if match:
-                    group_s = match.group('s')
-                    request.args = \
-                        List((group_s and group_s.split('/')) or [])
-                else:
-                    raise HTTP(400,
-                               rewrite.params.error_message,
-                               web2py_error='invalid path')
-            request.client = get_client(request.env)
-            request.folder = os.path.join(request.env.web2py_path,
-                    'applications', request.application) + '/'
-
-            # ##################################################
-            # access the requested application
-            # ##################################################
-
-            if not os.path.exists(request.folder):
-                if request.application=='init':
-                    request.application = 'welcome'
-                    redirect(URL(r=request))
-                elif rewrite.params.error_handler:
-                    redirect(URL(rewrite.params.error_handler['application'],
-                                 rewrite.params.error_handler['controller'],
-                                 rewrite.params.error_handler['function'],
-                                 args=request.application))
-                else:
-                    raise HTTP(400,
-                               rewrite.params.error_message,
-                               web2py_error='invalid application')
-            request.url = URL(r=request,args=request.args,
-                                   extension=raw_extension)
 
             # ##################################################
             # build missing folder
@@ -785,3 +658,142 @@ class HttpServer(object):
         """
         self.server.stop(stoplogging)
         os.unlink(self.pid_filename)
+
+# pattern to replace spaces with underscore in URL
+#   also the html escaped variants '+' and '%20' are covered
+regex_space = re.compile('(\+|\s|%20)+')
+
+# pattern to find valid paths in url /application/controller/...
+#   this could be:
+#     for static pages:
+#        /<b:application>/static/<x:file>
+#     for dynamic pages:
+#        /<a:application>[/<c:controller>[/<f:function>[.<e:ext>][/<s:args>]]]
+#   application, controller, function and ext may only contain [a-zA-Z0-9_]
+#   file and args may also contain '-', '=', '.' and '/'
+#   apps in rewrite.params.routes_apps_raw must parse raw_args into args
+
+regex_static = re.compile(r'''
+     (^                              # static pages
+         /(?P<b> \w+)                # b=app
+         /static                     # /b/static
+         /(?P<x> (\w[\-\=\./]?)* )   # x=file
+     $)
+     ''', re.X)
+
+regex_url = re.compile(r'''
+     (^(                                  # (/a/c/f.e/s)
+         /(?P<a> [\w\s+]+ )               # /a=app
+         (                                # (/c.f.e/s)
+             /(?P<c> [\w\s+]+ )           # /a/c=controller
+             (                            # (/f.e/s)
+                 /(?P<f> [\w\s+]+ )       # /a/c/f=function
+                 (                        # (.e)
+                     \.(?P<e> [\w\s+]+ )  # /a/c/f.e=extension
+                 )?
+                 (                        # (/s)
+                     /(?P<r>              # /a/c/f.e/r=raw_args
+                     .+
+                     )
+                 )?
+             )?
+         )?
+     )?
+     /?$)    # trailing slash
+     ''', re.X)
+
+regex_args = re.compile(r'''
+     (^
+         (?P<s>
+             ( [\w@-][=./]? )+          # s=args
+         )?
+     /?$)    # trailing slash
+     ''', re.X)
+
+def parse_url(request, environ):
+    "parse and rewrite the incoming URL"
+    
+    # ##################################################
+    # validate the path in url
+    # ##################################################
+
+    if not request.env.path_info and request.env.request_uri:
+        # for fcgi, decode path_info and query_string
+        items = request.env.request_uri.split('?')
+        request.env.path_info = items[0]
+        if len(items) > 1:
+            request.env.query_string = items[1]
+        else:
+            request.env.query_string = ''
+    path = request.env.path_info.replace('\\', '/')
+
+    # ##################################################
+    # serve if a static file
+    # ##################################################
+
+    match = regex_static.match(regex_space.sub('_', path))
+    if match and match.group('x'):
+        static_file = os.path.join(request.env.web2py_path,
+                                   'applications', match.group('b'),
+                                   'static', match.group('x'))
+        return static_file
+
+    # ##################################################
+    # parse application, controller and function
+    # ##################################################
+
+    path = re.sub('%20', ' ', path)
+    match = regex_url.match(path)
+    if not match or match.group('c') == 'static':
+        raise HTTP(400,
+                   rewrite.params.error_message,
+                   web2py_error='invalid path')
+
+    request.application = \
+        regex_space.sub('_', match.group('a') or 'init')
+    request.controller = \
+        regex_space.sub('_', match.group('c') or 'default')
+    request.function = \
+        regex_space.sub('_', match.group('f') or 'index')
+    group_e = match.group('e')
+    raw_extension = group_e and regex_space.sub('_',group_e) or None
+    request.extension = raw_extension or 'html'
+    request.raw_args = match.group('r')
+    request.args = List([])
+    if request.application in rewrite.params.routes_apps_raw:
+        # application is responsible for parsing args
+        request.args = None  
+    elif request.raw_args:
+        match = regex_args.match(request.raw_args)
+        if match:
+            group_s = match.group('s')
+            request.args = \
+                List((group_s and group_s.split('/')) or [])
+        else:
+            raise HTTP(400,
+                       rewrite.params.error_message,
+                       web2py_error='invalid path')
+    request.client = get_client(request.env)
+    request.folder = os.path.join(request.env.web2py_path,
+            'applications', request.application) + '/'
+
+    # ##################################################
+    # access the requested application
+    # ##################################################
+
+    if not os.path.exists(request.folder):
+        if request.application=='init':
+            request.application = 'welcome'
+            redirect(URL(r=request))
+        elif rewrite.params.error_handler:
+            redirect(URL(rewrite.params.error_handler['application'],
+                         rewrite.params.error_handler['controller'],
+                         rewrite.params.error_handler['function'],
+                         args=request.application))
+        else:
+            raise HTTP(400,
+                       rewrite.params.error_message,
+                       web2py_error='invalid application')
+    request.url = URL(r=request,args=request.args,
+                           extension=raw_extension)
+    return None
