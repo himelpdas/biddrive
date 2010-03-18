@@ -11,11 +11,12 @@ import logging
 import platform
 
 # Define Constants
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
 BUF_SIZE = 16384
+POLL_TIMEOUT = 1.0
 IS_JYTHON = platform.system() == 'Java' # Handle special cases for Jython
 IGNORE_ERRORS_ON_CLOSE = set([errno.ECONNABORTED, errno.ECONNRESET])
 DEFAULT_LISTEN_QUEUE_SIZE = 5
@@ -124,7 +125,7 @@ import signal
 import socket
 import logging
 import traceback
-from select import select
+import select
 try:
     import ssl
 except ImportError:
@@ -137,6 +138,15 @@ except ImportError:
 # Setup Logging
 log = logging.getLogger('Rocket')
 log.addHandler(NullHandler())
+
+# Setup Polling if supported (but it doesn't work well on Jython)
+if hasattr(select, 'poll') and not IS_JYTHON:
+    try:
+        poll = select.epoll()
+    except:
+        poll = select.poll()
+else:
+    poll = None
 
 class Rocket:
     """The Rocket class is responsible for handling threads and accepting and
@@ -270,11 +280,25 @@ class Rocket:
         msg += ', '.join(['%s:%i%s' % (l[0], l[1], '*' if len(l) > 2 else '') for l in self.listener_dict.values()])
         log.info(msg)
 
+        # Add our polling objects
+        if poll:
+            log.info("Detected Polling.")
+            poll_dict = dict()
+            for l in self.listeners:
+                poll.register(l)
+                poll_dict.update({l.fileno():l})
+
         while not self._threadpool.stop_server:
             try:
-                for l in select(self.listeners, [], [], 1.0)[0]:
-                    self._threadpool.queue.put((l.accept(),
-                                                self.listener_dict[l][1]))
+                if poll:
+                    for sd, evt in poll.poll(POLL_TIMEOUT):
+                        sock = poll_dict[sd]
+                        self._threadpool.queue.put((sock.accept(),
+                                                    self.listener_dict[sock][1]))
+                else:
+                    for l in select.select(self.listeners, [], [], POLL_TIMEOUT)[0]:
+                        self._threadpool.queue.put((l.accept(),
+                                                    self.listener_dict[l][1]))
             except KeyboardInterrupt:
                 # Capture a keyboard interrupt when running from a console
                 return self.stop()
@@ -332,7 +356,7 @@ def CherryPyWSGIServer(bind_addr,
 # Import System Modules
 import time
 import logging
-from select import select
+import select
 try:
     from queue import Queue
 except ImportError:
@@ -384,7 +408,8 @@ class Monitor(Thread):
 
             # Wait on those connections
             self.log.debug('Blocking on connections')
-            readable = select(list(self.connections), [], [], 1.0)[0]
+            readable = select.select(list(self.connections),
+                                     [], [], POLL_TIMEOUT)[0]
 
             # If we have any readable connections, put them back
             for r in readable:
@@ -662,6 +687,10 @@ class Worker(Thread):
             self.closeConnection = True
             self.err_log.debug('Client closed socket')
             return False
+        if typ == BadRequest:
+            self.closeConnection = True
+            self.err_log.debug('Client sent a bad request')
+            return True
         if typ == socket.error:
             self.closeConnection = True
             if val.args[0] in IGNORE_ERRORS_ON_CLOSE:
@@ -789,9 +818,10 @@ class Worker(Thread):
         try:
             self.request_line = d.strip()
             method, uri, proto = self.request_line.split(' ')
-        except ValueError:
-            # FIXME - Raise 400 Bad Request
-            raise
+            assert proto.startswith('HTTP')
+        except ValueError, AssertionError:
+            self.send_response('400 Bad Request')
+            raise BadRequest
 
         req = dict(method=method, protocol = proto)
         scheme = ''
@@ -847,6 +877,10 @@ class Worker(Thread):
 
 class SocketTimeout(Exception):
     "Exception for when a socket times out between requests."
+    pass
+
+class BadRequest(Exception):
+    "Exception for when a client sends an incomprehensible request."
     pass
 
 class SocketClosed(Exception):
@@ -956,8 +990,6 @@ class WSGIWorker(Worker):
 
         # Add CGI Variables
         environ['REQUEST_METHOD'] = request['method']
-        # I haven't decided if we really need to be like Apache.
-        #environ['REQUEST_URI'] = '?'.join((request['path'], request['query_string']))
         environ['PATH_INFO'] = request['path']
         environ['SERVER_PROTOCOL'] = request['protocol']
         environ['SCRIPT_NAME'] = '' # Direct call WSGI does not need a name
@@ -1019,15 +1051,18 @@ class WSGIWorker(Worker):
                         self.err_log.debug('Adding header...Transfer-Encoding: '
                                            'Chunked')
 
-        # If the client or application asks to keep the connection alive, do so.
-        conn = h_set.get('connection', '').lower()
-        client_conn = self.headers.get('HTTP_CONNECTION', '').lower()
-        if conn != 'close' and client_conn == 'keep-alive':
-            h_set['Connection'] = 'keep-alive'
-            self.closeConnection = False
-        else:
-            h_set['Connection'] = 'close'
-            self.closeConnection = True
+        if 'connection' not in h_set:
+            # If the application did not provide a connection header, fill it in
+            client_conn = self.headers.get('HTTP_CONNECTION', '').lower()
+            if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.1':
+                # HTTP = 1.1 defaults to keep-alive connections
+                h_set['Connection'] = client_conn if client_conn else 'keep-alive'
+            else:
+                # HTTP < 1.1 supports keep-alive but it's quirky so we don't support it
+                h_set['Connection'] = 'close'
+        
+        # Close our connection if we need to.
+        self.closeConnection = h_set.get('connection', '').lower() == 'close'
 
         # Build our output headers
         header_data = HEADER_RESPONSE % (self.status, str(h_set))
@@ -1039,7 +1074,7 @@ class WSGIWorker(Worker):
 
     def write_warning(self, data, sections=None):
         self.err_log.warning('WSGI app called write method directly.  This is '
-                             'obsolete behavior.  Please update your app.')
+                             'deprecated behavior.  Please update your app.')
         return self.write(data, sections)
 
     def write(self, data, sections=None):
@@ -1109,8 +1144,8 @@ class WSGIWorker(Worker):
 
         try:
             # Read the headers and build our WSGI environment
-            environ = self.build_environ(sock_file, conn)
-            
+            self.environ = environ = self.build_environ(sock_file, conn)
+
             # Handle 100 Continue
             if environ.get('HTTP_EXPECT', '').lower() == '100-continue':
                 res = environ['SERVER_PROTOCOL'] + ' 100 Continue\r\n\r\n'
