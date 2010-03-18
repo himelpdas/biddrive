@@ -28,7 +28,7 @@
 {{for a in keys:}}
 {{doc1,t1,c1,d1=attributes[a]}}
 <tr>
-<td>{{=A(a,_href=URL(r=request,args=a.split('.')))}}</td>
+<td><b>{{=a}}</b>{{#=A(a,_href=URL(r=request,args=a.split('.')))}}</td>
 <td>
 {{if t1:}}
 {{=t1}}{{if d1:}} extends {{=d1}}{{pass}}

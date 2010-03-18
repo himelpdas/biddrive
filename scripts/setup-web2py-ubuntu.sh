@@ -66,6 +66,8 @@ echo "========================="
 a2enmod ssl
 a2enmod proxy
 a2enmod proxy_http
+a2enmod headers
+a2enmod expires
 mkdir /etc/apache2/ssl
 
 echo "creating a self signed certificate"
@@ -136,6 +138,8 @@ NameVirtualHost *:443
         /home/www-data/web2py/applications/$1/static/$2
 
   <Directory /home/www-data/web2py/applications/*/static/>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 hour"
     Order Allow,Deny
     Allow from all
   </Directory>
