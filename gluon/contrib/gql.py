@@ -258,7 +258,8 @@ class Table(gluon.sql.Table):
                 if field in item:
                     fields[field] = obj_represent(item[field],
                                                   self[field].type, self._db)
-            parsed_items.append(fields)
+            #parsed_items.append(fields)
+            parsed_items.append(self._tableobj(**fields))
         gae.put(parsed_items)
         return True
 
