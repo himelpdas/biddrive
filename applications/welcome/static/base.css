@@ -1,11 +1,19 @@
 @charset "UTF-8";
 
+.header, .statusbar, .column1, .expandable, .footer {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-top: 0.3em;
+    padding-bottom: 0.2em;
+}
 body, table, tr, td, th, thead, tfoot, label, h1, h2, h3, h4, h5, h6, p, ul, li, ol, pre, textarea {
     background: transparent;
+    /**/
     border: 0;
     margin: 0;
     outline: 0;
     padding: 0;
+
     color: inherit;
     font-weight: inherit;
     font-style: inherit;
@@ -53,16 +61,14 @@ i {
 
 pre {
     font-size: 0.8em;
-    font-family: monospace,
-courier;
+    font-family: monospace, courier;
     padding-left: 2em;
     padding-top: 1em;
 }
 
 tt {
     font-size: 0.8em;
-    font-family: monospace,
-courier;
+    font-family: monospace, courier;
 }
 
 h1 {
@@ -109,7 +115,7 @@ textarea {
 }
 
 button {
-    background: url('menu.jpg');
+    background: url('menu.gif');
 }
 
 input:focus,
@@ -186,8 +192,13 @@ div.error {
 }
 
 .wrapper {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    /*
     padding-top: 20px;
     padding-left: 20px;
+    */
 }
 
 .layout {
