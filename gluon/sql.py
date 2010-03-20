@@ -2760,26 +2760,18 @@ class Field(Expression):
 
     def __getslice__(self, start, stop):
         if start < 0:
-            pos0 = '(%s - %d)' % (self.len(), -start)
+            pos0 = '(%s - %d)' % (self.len(), abs(start) - 1)
         else:
-            pos0 = start
+            pos0 = start + 1
 
         if stop < 0:
-            length = '(%s - %d - %s)' % (self.len(), -stop, pos0)
+            length = '(%s - %d - %s)' % (self.len(), abs(stop) - 1, pos0)
+        elif stop == sys.maxint:
+            length = self.len()
         else:
-            length = '(%s - %s)' % (stop, pos0)
+            length = '(%s - %s)' % (stop + 1, pos0)
 
-        d = dict(field=str(self), pos=int(pos0)+1, length=length)
-        s = self._db._translator['substring'] % d
-        return Expression(s, 'string', self._db)
-
-    def __getitem__(self, i):
-        if i < 0:
-            pos0 = '(%s - %d)' % (self.len(), -i)
-        else:
-            pos0 = str(i)
-
-        d = dict(field=str(self), pos=pos0+1, length=1)
+        d = dict(field=str(self), pos=pos0, length=length)
         s = self._db._translator['substring'] % d
         return Expression(s, 'string', self._db)
 

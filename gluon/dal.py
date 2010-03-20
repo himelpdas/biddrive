@@ -3126,26 +3126,19 @@ class Field(Expression):
         return True
 
     def __getslice__(self, start, stop):
-        """
-        <<<< THIS IS BROKEN FOR start<0 or stop<0
-        """
-        if start < 0 or stop < start:
-            raise SyntaxError, 'not supported: %s - %s' % (start, stop)
-        pos=start + 1
-        length=stop - start
-
         if start < 0:
-            pos0 = '(%s - %d)' % (self.len(), -start)
+            pos0 = '(%s - %d)' % (self.len(), abs(start) - 1)
         else:
             pos0 = start + 1
 
         if stop < 0:
-            length = '(%s - %d - %s)' % (self.len(), -stop, str(pos0))
+            length = '(%s - %d - %s)' % (self.len(), abs(stop) - 1, pos0)
+        elif stop == sys.maxint:
+            length = self.len()
         else:
-            length = '(%s - %s)' % (str(stop), str(pos0))
-
+            length = '(%s - %s)' % (stop + 1, pos0)
         return self._db._adapter.Expression(self._db,seld._db._adapter.SUBSTRING,
-                                           self, (pos, length), self.type)
+                                            self, (pos0, length), self.type)
 
     def __getitem__(self, i):
         return self[i:i + 1]
