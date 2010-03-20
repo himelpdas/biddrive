@@ -850,6 +850,8 @@ class IS_EMAIL(Validator):
         ('Ima.Fool@example.com', None)
         >>> IS_EMAIL()('Ima Fool@example.com')     # space in name
         ('Ima Fool@example.com', 'enter a valid email address')
+        >>> IS_EMAIL()('localguy@localhost')       # localhost as domain
+        ('localguy@localhost', None)
     """
 
     regex = re.compile('''
@@ -862,14 +864,18 @@ class IS_EMAIL(Validator):
         (?<!\.)                            # name may not end with a dot
         @
         (
-          [a-z0-9]                         # [sub]domain begins with alphanumeric
+          localhost
+          |
           (
-            [-\w]*                         # alphanumeric, underscore, dot, hyphen
-            [a-z0-9]                       # ending alphanumeric
-          )?
+            [a-z0-9]                         # [sub]domain begins with alphanumeric
+            (
+              [-\w]*                         # alphanumeric, underscore, dot, hyphen
+              [a-z0-9]                       # ending alphanumeric
+            )?
           \.                               # ending dot
-        )+
-        [a-z]{2,}$                         # TLD alpha-only
+          )+
+          [a-z]{2,}	                       # TLD alpha-only
+       )$
     ''', re.VERBOSE|re.IGNORECASE)
 
     def __init__(self,
