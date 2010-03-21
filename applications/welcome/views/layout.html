@@ -3,61 +3,40 @@
   <head>
     <title>{{=response.title or request.application}}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <!--
+    <!-- include requires CSS files
     {{response.files.append(URL(request.application,'static','base.css'))}}
     {{response.files.append(URL(request.application,'static','ez-plug-min.css'))}}
     -->
-    <link rel="stylesheet" type="text/css" media="screen,projection" href={{=URL(request.application,'static','base.css')}}>
-    <link rel="stylesheet" type="text/css" media="screen,projection" href={{=URL(request.application,'static','ez-plug-min.css')}}>
     {{include 'web2py_ajax.html'}}
-<script type="text/javascript">
-<!--
-/* this adds sfhover class to menu li items to make IE6 work */
-jQuery(document).ready(function(){
-    jQuery('li.web2py-menu-expand').hover(
-        function () {
-            jQuery(this).addClass('sfhover');
-        },
-        function () {
-            jQuery(this).removeClass('sfhover');
-        }
-    );
-});
-//-->
-</script>
+    <script type="text/javascript">
+      <!-- /* this adds sfhover class to menu li items to make IE6 work */ jQuery(document).ready(function(){jQuery('li.web2py-menu-expand').hover(function () {jQuery(this).addClass('sfhover');},function () {jQuery(this).removeClass('sfhover');});});//-->
+    </script>
   </head>
   <body>
-<div class="flash">{{=response.flash or ''}}</div>
-  <!-- Layout 2
-<div class="wrapper layout">
-  -->
-<div class="ez-wr wrapper layout">
-  <!-- header -->
+    <div class="flash">{{=response.flash or ''}}</div>
+    <div class="ez-wr wrapper layout">
       <div class="ez-box header">
-            <h1>
-              {{=A(response.title or request.application, _href=URL(request.application,'default','index'))}}
-            </h1>            
-            <h3>{{=response.subtitle or ''}}</h3>
+        <h1>
+          {{=A(response.title or request.application, _href=URL(request.application,'default','index'))}}
+        </h1>            
+        <h3>{{=response.subtitle or ''}}</h3>
       </div>
       <div class="ez-box statusbar">
-          <!-- colspan="3" class="statusbar" -->
-            {{='/'.join(['',request.application,request.controller,request.function]+request.args)}}
-	    {{ if 'auth' in globals():}}
-	    [ {{if not auth.user:}}
-	    <a href="{{=URL(r=request,c='default',f='user/login')}}">{{=T('login')}}</a> |
-	    <a href="{{=URL(r=request,c='default',f='user/register')}}">{{=T('register')}}</a> |
-	    <a href="{{=URL(r=request,c='default',f='user/request_reset_password')}}">{{=T('lost password')}}</a>
-	    {{else:}}
-	    {{=auth.user.first_name}} |
-	    <a href="{{=URL(r=request,c='default',f='user/logout')}}">{{=T('logout')}}</a> |
-	    <a href="{{=URL(r=request,c='default',f='user/change_password')}}">{{=T('change password')}}</a> |
-	    <a href="{{=URL(r=request,c='default',f='user/profile')}}">{{=T('edit profile')}}</a>
-	    {{pass}} ]
-	    {{pass}}
+	{{ if 'auth' in globals():}}
+	{{if not auth.user:}} [
+	{{=A(T('login'),_href=URL(r=request,c='default',f='user/login'))}} |
+	{{=A(T('register'),_href=URL(r=request,c='default',f='user/register'))}} ]
+	{{else:}}
+	{{=T('Welcome %s',auth.user.first_name)}} [
+	{{=A(T('logout'),_href=URL(r=request,c='default',f='user/logout'))}} |
+	{{=A(T('edit profile'),_href=URL(r=request,c='default',f='user/profile'))}} |
+	{{=A(T('change password'),_href=URL(r=request,c='default',f='user/change_password'))}} ]
+	{{pass}}
+	{{pass}}
       </div>
       <!-- ez-css Module 2A -->
       <div class="ez-wr">
-          <div class="ez-fl ez-negmr">
+        <div class="ez-fl ez-negmr">
           <!-- td class="width10em column1" -->
 	  <div class="ez-box width10em column1">
             {{if response.menu:}}
@@ -69,27 +48,20 @@ jQuery(document).ready(function(){
             {{=MENU(response.menu_edit)}}
             {{pass}}
             <br />
-	  </div></div>
-	  <div class="ez-last ez-oh">
+	  </div>
+	</div>
+	<div class="ez-last ez-oh">
 	  <div class="ez-box expandable">
-          <!-- td class="expandable column2" ... there is no 'column2' base.css class!
-            <div class="flash">{{=response.flash or ''}}</div>
-	  -->
             {{include}}
-          </div></div>
-          <!--
-               <td class="width10em column3">
-                 <h2>Right Column</h2>
-               </td>
-          //-->
-	</div> 
-        <div class="ez-box footer">
-          <!-- td colspan="10" class="footer" -->
-            <p>
-            {{=T('Copyright')}} &copy; 2009 -
-            {{=T('Powered by')}} <a href="http://www.web2py.com">web2py</a>
-            </p>
-        </div>
+          </div>
+	</div>
+      </div> 
+      <div class="ez-box footer">
+        <p>
+          {{=T('Copyright')}} &copy; 2009 -
+          {{=T('Powered by')}} <a href="http://www.web2py.com">web2py</a>
+        </p>
+      </div>
     </div>
   </body>
 </html>
