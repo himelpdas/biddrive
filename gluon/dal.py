@@ -69,7 +69,7 @@ try:
     drivers.append('pysqlite2')
 except:
     try:
-        import sqlite3
+        from sqlite3 import dbapi2 as sqlite3
         drivers.append('SQLite3')
     except:
         logging.debug('no sqlite3 or pysqlite2.dbapi2 driver')
