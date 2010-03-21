@@ -284,13 +284,13 @@ class Mail(object):
                     text = text.decode(encoding).encode('utf-8')
                 else:
                     text = text.read().decode(encoding).encode('utf-8')
-                attachment.attach(MIMEText.MIMEText(text))
+                attachment.attach(MIMEText.MIMEText(text,_charset='utf-8')) 
             if html != None:
                 if isinstance(html, str):
                     html = html.decode(encoding).encode('utf-8')
                 else:
                     html = html.read().decode(encoding).encode('utf-8')
-                attachment.attach(MIMEText.MIMEText(html, 'html'))
+                attachment.attach(MIMEText.MIMEText(html, 'html',_charset='utf-8'))
             payload.attach(attachment)
         if attachments == None:
             pass
