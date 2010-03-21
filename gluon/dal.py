@@ -729,7 +729,7 @@ class BaseAdapter(ConnectionPool):
                     if field._db._dbname == 'sqlite':
                         value = ('%.'+str(decimals)+'f') % value
                     if not isinstance(value,decimal.Decimal):
-                        value = decimal.Decimal(value)
+                        value = decimal.Decimal(str(value))
                     colset[fieldname] = value
                 elif isinstance(field.type,SQLCustomType) and value != None:
                     colset[fieldname] = field.type.decoder(value)
@@ -1303,7 +1303,7 @@ class FireBirdAdapter(BaseAdapter):
         'upload': 'VARCHAR(%(length)s)',
         'integer': 'INTEGER',
         'double': 'FLOAT',
-        'decimal': 'NUMERIC(%(precision)s,%(scale)s)',
+        'decimal': 'DECIMAL(%(precision)s,%(scale)s)',
         'date': 'DATE',
         'time': 'TIME',
         'datetime': 'TIMESTAMP',
