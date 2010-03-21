@@ -256,19 +256,24 @@ class Mail(object):
         if len(to) == 0:
             raise Exception('Target receiver address not specified')
         payload = MIMEMultipart.MIMEMultipart('related')
-        payload['To'] = ', '.join(to).decode(encoding).encode('utf-8')
+        payload['To'] = \
+            header.Header(', '.join(to).decode(encoding).encode('utf-8'),'utf-8')
         if reply_to != None:
-            payload['Reply-To'] = reply_to.decode(encoding).encode('utf-8')
-        payload['Subject'] = subject.decode(encoding).encode('utf-8')
+            payload['Reply-To'] = \
+                header.Header(reply_to.decode(encoding).encode('utf-8'),'utf-8') 
+        payload['Subject'] = \
+            header.Header(subject.decode(encoding).encode('utf-8'),'utf-8')
         if cc != None:
             if not isinstance(cc, (list, tuple)):
                 cc = [cc]
-            payload['Cc'] = ', '.join(cc).decode(encoding).encode('utf-8')
+            payload['Cc'] = \
+                header.Header(', '.join(cc).decode(encoding).encode('utf-8'),'utf-8') 
             to.extend(cc)
         if bcc != None:
             if not isinstance(bcc, (list, tuple)):
                 bcc = [bcc]
-            payload['Bcc'] = ', '.join(bcc).decode(encoding).encode('utf-8')
+            payload['Bcc'] = \
+                header.Header(', '.join(bcc).decode(encoding).encode('utf-8'),'utf-8') 
             to.extend(bcc)
         if message == None:
             text = html = None
