@@ -302,7 +302,7 @@ SQL_DIALECTS = {
         'blob': 'BLOB SUB_TYPE 0',
         'upload': 'VARCHAR(%(length)s)',
         'integer': 'INTEGER',
-        'double': 'FLOAT',
+        'double': 'DOUBLE',
         'decimal': 'DECIMAL(%(precision)s,%(scale)s)',
         'date': 'DATE',
         'time': 'TIME',
