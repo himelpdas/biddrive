@@ -487,8 +487,7 @@ class DIV(XmlComponent):
         - the generated xml of the inner components
 
         Component attributes start with an underscore ('_') and
-        do not have a False or None value. The underscore is removed
-        and the name will be in lower case.
+        do not have a False or None value. The underscore is removed.
         A value of True is replaced with the attribute name.
 
         :returns: tuple: (attributes, components)
@@ -501,7 +500,7 @@ class DIV(XmlComponent):
             value = self[key]
             if key[:1] != '_':
                 continue
-            name = key[1:].lower()
+            name = key[1:]
             if value is True:
                 value = name
             elif value is False or value is None:
