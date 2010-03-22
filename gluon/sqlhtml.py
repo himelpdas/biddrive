@@ -1049,6 +1049,7 @@ class SQLTABLE(TABLE):
         headers={},
         truncate=16,
         columns=None,
+        th_link='',
         **attributes
         ):
 
@@ -1067,7 +1068,7 @@ class SQLTABLE(TABLE):
         for c in columns:
             if orderby:
                 row.append(TH(A(headers.get(c, c), 
-                                _href='?orderby=' + c)))
+                                _href=th_link+'?orderby=' + c)))
             else:
                 row.append(TH(headers.get(c, c)))
 
