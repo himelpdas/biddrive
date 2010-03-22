@@ -839,14 +839,13 @@ class SQLFORM(FORM):
             onvalidation,
             )
 
-        if not ret and self.record and self.errors:
+        if not ret and self.record and self.errors:            
             for key in self.errors.keys():
-                if not request_vars.get(key, None) \
+                if not key in request_vars and not request.vars[key] \
                         and not key == 'captcha' \
                         and self.table[key].type=='upload' \
                         and self.record[key] \
-                        and not key+UploadWidget.ID_DELETE_SUFFIX in \
-                            request_vars:
+                        and not key+UploadWidget.ID_DELETE_SUFFIX in request_vars:
                     del self.errors[key]
             if not self.errors:
                 ret = True
