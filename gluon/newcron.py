@@ -169,6 +169,7 @@ def parsecronline(line):
     params = line.strip().split(None, 6)
     if len(params) < 7:
         return None
+    daysofweek={'sun':0,'mon':1,'tue':2,'wed':3,'thu':4,'fri':5,'sat':6}
     for (s, id) in zip(params[:5], ['min', 'hr', 'dom', 'mon', 'dow']):
         if not s in [None, '*']:
             task[id] = []
@@ -178,6 +179,8 @@ def parsecronline(line):
                     task[id] += rangetolist(val, id)
                 elif val.isdigit() or val=='-1':
                     task[id].append(int(val))
+                elif id=='dow' and val[:3].lower() in daysofweek:
+                    task[id].append(daysofweek(val[:3].lower()))
     task['user'] = params[5]
     task['cmd'] = params[6]
     return task
@@ -222,7 +225,7 @@ def crondance(web2py_path, ctype='soft', startup=False):
             ('hr',now_s.tm_hour),
             ('mon',now_s.tm_mon),
             ('dom',now_s.tm_mday),
-            ('dow',now_s.tm_wday))
+            ('dow',(now_s.tm_wday+1)%7))
     
     apps = [x for x in os.listdir(apppath)
             if os.path.isdir(os.path.join(apppath, x))]
