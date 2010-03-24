@@ -2564,7 +2564,8 @@ urllib2.install_opener(urllib2.build_opener(urllib2.HTTPCookieProcessor()))
 def fetch(url, data=None, headers={},
           cookie=Cookie.SimpleCookie(), 
           user_agent='Mozilla/5.0'):
-    data = data if data is None else urllib.urlencode(data)
+    if data != None:
+        data = urllib.urlencode(data)
     if user_agent: headers['User-agent'] = user_agent
     headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
     try:
@@ -2573,7 +2574,7 @@ def fetch(url, data=None, headers={},
         req = urllib2.Request(url, data, headers)
         html = urllib2.urlopen(req).read()
     else:
-        method = urlfetch.GET if data is None else urlfetch.POST
+        method = ((data==None) and urlfetch.GET) or urlfetch.POST
         while url is not None:
             response = urlfetch.fetch(url=url, payload=data,
                                       method=method, headers=headers,
