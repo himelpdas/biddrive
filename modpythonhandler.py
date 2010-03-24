@@ -31,6 +31,7 @@ from mod_python import apache
 path = os.path.dirname(os.path.abspath(__file__))
 if not path in sys.path:
     sys.path.append(path)
+    sys.path.append(os.path.join(path,'site-packages'))
 os.chdir(path)
 
 import gluon.main

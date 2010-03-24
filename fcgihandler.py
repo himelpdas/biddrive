@@ -32,6 +32,7 @@ import os
 path = os.path.dirname(os.path.abspath(__file__))
 if not path in sys.path:
     sys.path.append(path)
+    sys.path.append(os.path.join(path,'site-packages'))
 import gluon.main
 import gluon.contrib.gateways.fcgi as fcgi
 
