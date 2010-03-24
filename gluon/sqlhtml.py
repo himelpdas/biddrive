@@ -589,7 +589,7 @@ class SQLFORM(FORM):
                 self.record_id = dict([(k,record[k]) for k in table._primarykey])
             else:
                 self.record_id = dict([(k,None) for k in table._primarykey])
-        self.trows = {}
+        self.field_parent = {}
         xfields = []
         self.fields = fields
         self.custom = Storage()
@@ -769,25 +769,28 @@ class SQLFORM(FORM):
         if formstyle == 'table3cols':
             table = TABLE()
             for id,a,b,c in xfields:
-                td_b = self.trows[id] = TD(b)
-                table.append(TR(TD(a),td_b,TD(c),_id=id))
+                td_b = self.field_parent[id] = TD(b,_class='w2p_fw')
+                table.append(TR(TD(a,_class='w2p_fl'),
+                                td_b,
+                                TD(c,_class='w2p_fc'),_id=id))
         elif formstyle == 'table2cols':
             table = TABLE()
             for id,a,b,c in xfields:
-                td_b = self.trows[id] = TD(b,_class='w2p_fw',_colspan="2")
-                table.append(TR(TD(a,_class='w2p_fl'),TD(c,_class='w3p_fc'),_id=id+'1',_class='even'))
+                td_b = self.field_parent[id] = TD(b,_class='w2p_fw',_colspan="2")
+                table.append(TR(TD(a,_class='w2p_fl'),
+                                TD(c,_class='w3p_fc'),_id=id+'1',_class='even'))
                 table.append(TR(td_b,_id=id+'2',_class='odd'))
         elif formstyle == 'divs':     
             table = TAG['']()
             for id,a,b,c in xfields:
-                div_b = self.trows[id] = DIV(b,_class='w2p_fw')
+                div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
                 table.append(DIV(DIV(a,_class='w2p_fl'),
                                  div_b,
                                  DIV(c,_class='w3p_fc'),_id=id))
         elif formstyle == 'ul':            
             table = UL()
             for id,a,b,c in xfields:
-                div_b = self.trows[id] = DIV(b,_class='w2p_fw')
+                div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
                 table.append(LI(DIV(a,_class='w2p_fl'),
                                  div_b,
                                  DIV(c,_class='w3p_fc'),_id=id))
@@ -889,8 +892,8 @@ class SQLFORM(FORM):
                 if hasattr(field, 'widget') and field.widget\
                                  and fieldname in request_vars:                             
                     row_id = '%s_%s%s' % (self.table,fieldname,SQLFORM.ID_ROW_SUFFIX)
-                    self.trows[row_id].components = [field.widget(field, value)]
-                    self.trows[row_id]._traverse(False)
+                    self.field_parent[row_id].components = [field.widget(field, value)]
+                    self.field_parent[row_id]._traverse(False)
             return ret
 
         if record_id and record_id != self.record_id:
