@@ -523,6 +523,8 @@ class SQLFORM(FORM):
 
     FIELDNAME_REQUEST_DELETE = 'delete_this_record'
     FIELDKEY_DELETE_RECORD = 'delete_record'
+    ID_LABEL_SUFFIX = '__label'
+    ID_ROW_SUFFIX = '__row'
 
     def __init__(
         self,
@@ -542,6 +544,7 @@ class SQLFORM(FORM):
         keepopts = [],
         ignore_rw = False,
         record_id = None,
+        formstyle = 'table3cols',
         **attributes
         ):
         """
@@ -552,10 +555,8 @@ class SQLFORM(FORM):
                linkto=URL(r=request, f='table/db/')
         """
 
-        ID_LABEL_SUFFIX = 'label'
-        ID_ROW_SUFFIX = 'row'
-
         self.ignore_rw = ignore_rw
+        self.formstyle = formstyle
         nbsp = XML('&nbsp;') # Firefox2 does not display fields with blanks
         FORM.__init__(self, *[], **attributes)
         ofields = fields
@@ -623,9 +624,9 @@ class SQLFORM(FORM):
             field_id = '%s_%s' % (table._tablename, fieldname)
 
             label = LABEL(label, colon, _for=field_id,
-                _id='%s__%s' % (field_id, ID_LABEL_SUFFIX))
+                          _id=field_id+SQLFORM.ID_LABEL_SUFFIX)
 
-            row_id = '%s__%s' % (field_id, ID_ROW_SUFFIX)
+            row_id = field_id+SQLFORM.ID_ROW_SUFFIX
             if field.type == 'id':
                 self.custom.dspval.id = nbsp
                 self.custom.inpval.id = ''
@@ -635,8 +636,7 @@ class SQLFORM(FORM):
                         v = record['id']
                         widget = SPAN(v, _id=field_id)
                         self.custom.dspval.id = str(v)
-                        xfields.append(TR(label, widget,
-                            comment, _id='%s__%s' % ('id', ID_ROW_SUFFIX)))
+                        xfields.append((row_id,label, widget,comment))
                     self.record_id = str(record['id'])
                 self.custom.widget.id = widget
                 continue
@@ -701,9 +701,7 @@ class SQLFORM(FORM):
             else:
                 inp = self.widgets.string.widget(field, default)
 
-            tr = self.trows[fieldname] = TR(label, inp, comment,
-                    _id=row_id)
-            xfields.append(tr)
+            xfields.append((row_id,label,inp,comment))
             self.custom.dspval[fieldname] = dspval or nbsp
             self.custom.inpval[fieldname] = inpval or ''
             self.custom.widget[fieldname] = inp
@@ -727,12 +725,8 @@ class SQLFORM(FORM):
                 widget = A(lname,
                            _class='reference',
                            _href='%s/%s?query=%s' % (linkto, rtable, query))
-                xfields.append(
-                    TR('',
-                       widget,
-                       col3.get(olname, ''),
-                       _id='%s__%s' % (olname.replace('.', '__'), ID_ROW_SUFFIX),
-                    ))
+                xfields.append((olname.replace('.', '__')+SQLFORM.ID_ROW_SUFFIX,
+                                '',widget,col3.et(olname,'')))
                 self.custom.linkto[olname.replace('.', '__')] = widget
 #                 </block>
 
@@ -744,27 +738,22 @@ class SQLFORM(FORM):
                             _id=self.FIELDKEY_DELETE_RECORD,
                             _name=self.FIELDNAME_REQUEST_DELETE,
                             )
-            xfields.append(TR(
+            xfields.append((self.FIELDKEY_DELETE_RECORD+SQLFORM.ID_ROW_SUFFIX,
                             LABEL(
                                 delete_label,
                                 _for=self.FIELDKEY_DELETE_RECORD,
-                                _id='%s__%s' % (self.FIELDKEY_DELETE_RECORD,
-                                    ID_LABEL_SUFFIX),
+                                _id=self.FIELDKEY_DELETE_RECORD+SQLFORM.ID_LABEL_SUFFIX),
                             ),
                             widget,
-                            col3.get(self.FIELDKEY_DELETE_RECORD, ''),
-                            _id='%s__%s' % (self.FIELDKEY_DELETE_RECORD,
-                                ID_ROW_SUFFIX)
-                            ))
+                            col3.get(self.FIELDKEY_DELETE_RECORD, ''))
             self.custom.deletable = widget
         # when writable, add submit button
         self.custom.submit = ''
         if not readonly:
             widget = INPUT(_type='submit',
                            _value=submit_button)
-            xfields.append(TR('', widget,
-                           col3.get('submit_button', ''),
-                           _id='submit_record__row'))
+            xfields.append(('submit_record'+SQLFORM.ID_ROW_SUFFIX,
+                            '', widget,col3.get('submit_button', '')))
             self.custom.submit = widget
         # if a record is provided and found
         # make sure it's id is stored in the form
@@ -777,7 +766,34 @@ class SQLFORM(FORM):
         (begin, end) = self._xml()
         self.custom.begin = XML("<%s %s>" % (self.tag, begin))
         self.custom.end = XML("%s</%s>" % (end, self.tag))
-        self.components = [TABLE(*xfields)]
+        if formstyle == 'table3cols':
+            table = TABLE()
+            for id,a,b,c in xfields:
+                td_b = self.trows[id] = TD(b)
+                table.append(TR(TD(a),td_b,TD(c),_id=id))
+        elif formstyle == 'table2cols':
+            table = TABLE()
+            for id,a,b,c in xfields:
+                td_b = self.trows[id] = TD(b,_class='w2p_fw',_colspan="2")
+                table.append(TR(TD(a,_class='w2p_fl'),TD(c,_class='w3p_fc'),_id=id+'1',_class='even'))
+                table.append(TR(td_b,_id=id+'2',_class='odd'))
+        elif formstyle == 'divs':     
+            table = TAG['']()
+            for id,a,b,c in xfields:
+                div_b = self.trows[id] = DIV(b,_class='w2p_fw')
+                table.append(DIV(DIV(a,_class='w2p_fl'),
+                                 div_b,
+                                 DIV(c,_class='w3p_fc'),_id=id))
+        elif formstyle == 'ul':            
+            table = UL()
+            for id,a,b,c in xfields:
+                div_b = self.trows[id] = DIV(b,_class='w2p_fw')
+                table.append(LI(DIV(a,_class='w2p_fl'),
+                                 div_b,
+                                 DIV(c,_class='w3p_fc'),_id=id))
+        else:
+            raise RuntimeError, 'formsyle not supported'
+        self.components = [table]
 
     def accepts(
         self,
@@ -871,10 +887,10 @@ class SQLFORM(FORM):
                     value = self.table[fieldname].default
                 #was value = request_vars[fieldname]
                 if hasattr(field, 'widget') and field.widget\
-                    and fieldname in request_vars:
-                    self.trows[fieldname][1].components = \
-                        [field.widget(field, value)]
-                    self.trows[fieldname][1]._traverse(False)
+                                 and fieldname in request_vars:                             
+                    row_id = '%s_%s%s' % (self.table,fieldname,SQLFORM.ID_ROW_SUFFIX)
+                    self.trows[row_id].components = [field.widget(field, value)]
+                    self.trows[row_id]._traverse(False)
             return ret
 
         if record_id and record_id != self.record_id:
@@ -883,7 +899,8 @@ class SQLFORM(FORM):
 
         if requested_delete:
             if keyed:
-                qry = reduce(lambda x,y: x & y, [self.table[k]==record_id[k] for k in self.table._primarykey])
+                qry = reduce(lambda x,y: x & y,
+                             [self.table[k]==record_id[k] for k in self.table._primarykey])
                 if self.table._db(qry).delete():
                     self.vars.update(record_id)
             else:
