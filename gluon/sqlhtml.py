@@ -743,9 +743,8 @@ class SQLFORM(FORM):
                                 delete_label,
                                 _for=self.FIELDKEY_DELETE_RECORD,
                                 _id=self.FIELDKEY_DELETE_RECORD+SQLFORM.ID_LABEL_SUFFIX),
-                            ),
                             widget,
-                            col3.get(self.FIELDKEY_DELETE_RECORD, ''))
+                            col3.get(self.FIELDKEY_DELETE_RECORD, '')))
             self.custom.deletable = widget
         # when writable, add submit button
         self.custom.submit = ''
