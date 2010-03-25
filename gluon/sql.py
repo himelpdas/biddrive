@@ -681,7 +681,7 @@ class Row(dict):
     def __ne__(self,other):
         return not (self == other)
 
-    def as_dict(self,datetime_to_str=False):
+    def as_dict(self,datetime_to_str=True):
         d = dict(self)
         for k in copy.copy(d.keys()):
             v=d[k]
@@ -698,10 +698,10 @@ class Row(dict):
 
 
 def Row_unpickler(data):
-    return Row(marshal.loads(data))
+    return Row(cPickle.loads(data))
 
 def Row_pickler(data):
-    return Row_unpickler, (marshal.dumps(data.as_dict()),)
+    return Row_unpickler, (cPickle.dumps(data.as_dict(datetime_to_str=False)),)
 
 copy_reg.pickle(Row, Row_pickler, Row_unpickler)
 
@@ -3558,9 +3558,11 @@ class Rows(object):
 
 
 def Rows_unpickler(data):
-    return marshal.loads(data)
+    return cPickle.loads(data)
 def Rows_pickler(data):
-    return Rows_unpickler, (marshal.dumps(data.as_list(storage_to_dict=True)),)
+    return Rows_unpickler, \
+        (cPickle.dumps(data.as_list(storage_to_dict=True,
+                                    datetime_to_str=False)),)
 copy_reg.pickle(Rows, Rows_pickler, Rows_unpickler)
 
 
