@@ -315,7 +315,7 @@ class Mail(object):
                 if self.settings.login != None:
                     if self.settings.tls:
                         server.ehlo()
-                        server.starttls()
+                        server.starttls() 
                         server.ehlo()
                     server.login(*self.settings.login.split(':'))
                 result = server.sendmail(self.settings.sender, to, payload.as_string())

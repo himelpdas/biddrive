@@ -657,7 +657,10 @@ class HttpServer(object):
         stop the web server
         """
         self.server.stop(stoplogging)
-        os.unlink(self.pid_filename)
+        try:
+            os.unlink(self.pid_filename)
+        except:
+            pass
 
 # pattern to replace spaces with underscore in URL
 #   also the html escaped variants '+' and '%20' are covered
