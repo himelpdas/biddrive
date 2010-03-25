@@ -1142,7 +1142,7 @@ class INPUT(DIV):
                 self['_checked'] = 'checked'
             else:
                 self['_checked'] = None
-        elif t == 'text':
+        elif t == 'text' or t == 'hidden':
             if self['value'] != None:
                 self['_value'] = self['value']
             else:
