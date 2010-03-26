@@ -14,6 +14,7 @@ import portalocker
 import logging
 from fileutils import listdir
 from settings import settings
+from cfs import getcfs
 
 __all__ = ['translator', 'findT', 'update_all_languages']
 
@@ -34,7 +35,7 @@ regex_language = \
     re.compile('^[a-zA-Z]{2}(\-[a-zA-Z]{2})?(\-[a-zA-Z]+)?$')
 
 
-def read_dict(filename):
+def read_dict_aux(filename):
     fp = open(filename, 'r')
     portalocker.lock(fp, portalocker.LOCK_SH)
     lang_text = fp.read().replace('\r\n', '\n')
@@ -47,6 +48,10 @@ def read_dict(filename):
     except:
         logging.error('Syntax error in %s' % filename)
         return {}
+
+def read_dict(filename):
+    return getcfs('language:%s'%filename,filename,
+                  lambda filename=filename:read_dict_aux(filename))
 
 def write_dict(filename, contents):
     fp = open(filename, 'w')
