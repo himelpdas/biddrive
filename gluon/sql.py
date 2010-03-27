@@ -1725,14 +1725,18 @@ class Table(dict):
         else:
             tfile = open(self._dbt, 'r')
             portalocker.lock(tfile, portalocker.LOCK_SH)
-            sql_fields_old = cPickle.load(tfile)
+            try:
+                sql_fields_old = cPickle.load(tfile)
+            except EOFError, e:
+                portalocker.unlock(tfile)
+                tfile.close()
+                raise RuntimeError, 'File %s appears corrupted' % self._dbt
             portalocker.unlock(tfile)
             tfile.close()
             if sql_fields != sql_fields_old:
                 self._migrate(sql_fields, sql_fields_old,
                               sql_fields_aux, logfile,
                               fake_migrate=fake_migrate)
-
         return query
 
     def _migrate(
