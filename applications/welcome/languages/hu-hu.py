@@ -56,6 +56,7 @@
 'Use (...)&(...) for AND, (...)|(...) for OR, and ~(...)  for NOT to build more complex queries.': 'Use (...)&(...) for AND, (...)|(...) for OR, and ~(...)  for NOT to build more complex queries.',
 'User ID': 'User ID',
 'View': 'N\xc3\xa9zet',
+'Welcome %s': 'Welcome %s',
 'Welcome to web2py': 'Isten hozott a web2py-ban',
 'appadmin is disabled because insecure channel': 'az appadmin a biztons\xc3\xa1gtalan csatorna miatt letiltva',
 'cache': 'gyors\xc3\xadt\xc3\xb3t\xc3\xa1r',
