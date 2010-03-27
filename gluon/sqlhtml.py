@@ -726,7 +726,7 @@ class SQLFORM(FORM):
                            _class='reference',
                            _href='%s/%s?query=%s' % (linkto, rtable, query))
                 xfields.append((olname.replace('.', '__')+SQLFORM.ID_ROW_SUFFIX,
-                                '',widget,col3.et(olname,'')))
+                                '',widget,col3.get(olname,'')))
                 self.custom.linkto[olname.replace('.', '__')] = widget
 #                 </block>
 
