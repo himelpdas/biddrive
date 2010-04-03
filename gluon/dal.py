@@ -561,7 +561,7 @@ class BaseAdapter(ConnectionPool):
     def concat_add(self,table):
         return ', ADD '
 
-    def contraint_name(self, table, fieldname):
+    def constraint_name(self, table, fieldname):
         return '%s_%s__constraint' % (table,fieldname)
 
     def create_sequence_and_triggers(self, query, table):
@@ -1083,8 +1083,8 @@ class OracleAdapter(BaseAdapter):
             return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row, sql_o)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
-    def contraint_name(self, tablename, fieldname):
-        constraint_name = BaseAdapter.contraint_name(self, tablename, fieldname)
+    def constraint_name(self, tablename, fieldname):
+        constraint_name = BaseAdapter.constraint_name(self, tablename, fieldname)
         if len(constraint_name)>30:
             constraint_name = '%s_%s__constraint' % (tablename[:10], fieldname[:7])
         return constraint_name
@@ -2433,7 +2433,7 @@ class Table(dict):
                 ftype = field.type.native or field.type.type
             elif field.type[:10] == 'reference ':
                 referenced = field.type[10:].strip()
-                constraint_name = self._db._adapter.contraint_name(self._tablename, field.name)
+                constraint_name = self._db._adapter.constraint_name(self._tablename, field.name)
                 if hasattr(self,'_primarykey'):
                     rtablename,rfieldname = ref.split('.')
                     rtable = self._db[rtablename]
