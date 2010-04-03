@@ -613,7 +613,7 @@ class Auth(object):
 
 
         # ## these are messages that can be customized
-        self.messages = Messages(None)
+        self.messages = Messages(self.environment.T)
         self.messages.submit_button = 'Submit'
         self.messages.verify_password = 'Verify Password'
         self.messages.delete_label = 'Check to delete:'
@@ -1561,7 +1561,9 @@ class Auth(object):
             Field('new_password2', 'password',
                   label=self.messages.verify_password,
                   requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
-                                    self.messages.mismatched_password)]))
+                                    self.messages.mismatched_password)]),
+            submit_button=self.messages.submit_button
+        )
         if form.accepts(request.post_vars,session):
             user.update_record(password=form.vars.new_password,reset_password_key='')
             session.flash = self.messages.password_changed
@@ -1691,21 +1693,22 @@ class Auth(object):
         if log == DEFAULT:
             log = self.messages.change_password_log
         passfield = self.settings.password_field
-        form = form_factory(Field(
-            'old_password',
-            'password',
-            label=self.messages.old_password,
-            requires=validators(
+        form = form_factory(
+            Field('old_password', 'password',
+                label=self.messages.old_password,
+                requires=validators(
                      table_user[passfield].requires,
                      IS_IN_DB(s, '%s.%s' % (usern, passfield),
                               error_message=self.messages.invalid_password))),
             Field('new_password', 'password',
-            label=self.messages.new_password,
-            requires=table_user[passfield].requires),
+                label=self.messages.new_password,
+                requires=table_user[passfield].requires),
             Field('new_password2', 'password',
-            label=self.messages.verify_password,
-            requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
-                              self.messages.mismatched_password)]))
+                label=self.messages.verify_password,
+                requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
+                              self.messages.mismatched_password)]),
+            submit_button=self.messages.submit_button
+        )
         if form.accepts(request.post_vars, session,
                         formname='change_password',
                         onvalidation=onvalidation):
