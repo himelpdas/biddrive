@@ -2359,7 +2359,7 @@ class Table(dict):
                 return rows[0]
             return None
         elif str(key).isdigit():
-            return self._db(self.id == key).select()._first()
+            return self._db(self.id == key).select().first()
         elif key:
             return dict.__getitem__(self, str(key))
 
