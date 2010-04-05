@@ -684,13 +684,13 @@ class BaseAdapter(ConnectionPool):
                     virtualtables.append((tablename, self.db[tablename].virtualfields))
                 if field.type[:10] == 'reference ':
                     referee = field.type[10:].strip()
-                    if value and '.' in referee:
-                        # Reference not by id
+                    if not value:
                         colset[fieldname] = value
-                    else:
-                        # Reference by id
+                    elif not '.' in referee:
                         colset[fieldname] = rid = Reference(value)
-                        (rid._table, rid._record) = (self.db[referee], None)
+                        (rid._table, rid._record) = (db[referee], None)
+                    else: ### reference not by id
+                        colset[fieldname] = value
                 elif field.type == 'blob' and value != None and blob_decode:
                     colset[fieldname] = base64.b64decode(str(value))
                 elif field.type == 'boolean' and value != None:
