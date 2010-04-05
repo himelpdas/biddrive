@@ -176,7 +176,7 @@ def upgrade_web2py():
     if 'upgrade' in request.vars:
         (success, error) = upgrade(request)
         if success:
-            session.flash = T('web2py upgraded, plase restart it')
+            session.flash = T('web2py upgraded; plase restart it')
         else:
             session.flash = T('unable to upgrade because "%s"', error)
         redirect(URL(r=request, f='site'))
@@ -825,7 +825,7 @@ def create_file():
             text = text % (T('try something like'), fn, fn)
 
         elif path[-13:] == '/controllers/':
-            # Handle python controlers
+            # Handle python controllers
             if not filename[-3:] == '.py':
                 filename += '.py'
 
@@ -1039,7 +1039,7 @@ def ticket():
 
 
 def update_languages():
-    """ Update avaliable languages """
+    """ Update available languages """
 
     app = request.args[0]
     update_all_languages(apath(app, r=request))
