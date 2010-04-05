@@ -688,7 +688,7 @@ class BaseAdapter(ConnectionPool):
                         colset[fieldname] = value
                     elif not '.' in referee:
                         colset[fieldname] = rid = Reference(value)
-                        (rid._table, rid._record) = (db[referee], None)
+                        (rid._table, rid._record) = (self.db[referee], None)
                     else: ### reference not by id
                         colset[fieldname] = value
                 elif field.type == 'blob' and value != None and blob_decode:
