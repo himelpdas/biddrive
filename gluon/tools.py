@@ -1060,7 +1060,8 @@ class Auth(object):
                     ""
                 ))
  
-            captcha = self.settings.login_captcha or self.settings.captcha
+            captcha = self.settings.login_captcha or \
+                (self.settings.login_captcha!=False and self.settings.captcha)
             if captcha:
                 form[0].insert(-1, TR(LABEL(captcha.label), 
                                       captcha,captcha.comment,
@@ -2049,7 +2050,7 @@ class Auth(object):
                                       group_id=group_id))
         return id
 
-    def del_membership(self, group_id, user_id=None):
+    def del_membership(self, group_id, user_id=None, role=None):
         """
         revokes membership from group_id to user_id
         if user_id==None than user_id is that of current logged in user
@@ -2412,9 +2413,11 @@ class Crud(object):
         else:
             (_session, _formname) = \
                 (session, '%s/%s' % (table._tablename, form.record_id))
+        keepvalues = self.settings.keepvalues
+        if request.vars.delete_this_record:
+            keepvalues = False
         if form.accepts(request.post_vars, _session, formname=_formname,
-                        onvalidation=onvalidation,
-                        keepvalues=self.settings.keepvalues):
+                        onvalidation=onvalidation, keepvalues=keepvalues)
             response.flash = message
             if log:
                 self.log_event(log % form.vars)
