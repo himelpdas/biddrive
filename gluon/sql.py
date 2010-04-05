@@ -2970,7 +2970,7 @@ class Set(object):
             joinont = [t.table._tablename for t in joinon]
             excluded = [t for t in tablenames if not t in joint
                          + joinont]
-            sql_t = '(%s)' % ', '.join(excluded)            
+            sql_t = ', '.join(excluded)
             if joint:
                 sql_t += ' %s %s' % (command, ', '.join(joint))
             for t in joinon:

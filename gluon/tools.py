@@ -2417,7 +2417,7 @@ class Crud(object):
         if request.vars.delete_this_record:
             keepvalues = False
         if form.accepts(request.post_vars, _session, formname=_formname,
-                        onvalidation=onvalidation, keepvalues=keepvalues)
+                        onvalidation=onvalidation, keepvalues=keepvalues):
             response.flash = message
             if log:
                 self.log_event(log % form.vars)
