@@ -1416,7 +1416,7 @@ class SQLJoin(object):
         self.query = query
 
     def __str__(self):
-        return '(%s) ON (%s)' % (self.table, self.query)
+        return '%s ON %s' % (self.table, self.query)
 
 
 class Reference(int):
