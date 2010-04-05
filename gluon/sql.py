@@ -964,7 +964,7 @@ class SQLDB(dict):
         elif self._uri[:9] == 'oracle://':
             self._dbname = 'oracle'
             self._pool_connection(lambda : \
-                                  cx_Oracle.connect(self._uri[9:]))
+                                  cx_Oracle.connect(self._uri[9:],threaded=True))
             self._cursor = self._connection.cursor()
             self._execute = lambda a: \
                 oracle_fix_execute(a,self._cursor.execute)
