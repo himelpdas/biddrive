@@ -2304,7 +2304,7 @@ class KeyedTable(Table):
                      on_delete_action=field.ondelete)
 
         if self._primarykey:
-            query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
+            query = '''CREATE TABLE %s(\n    %s,\n    %s) %s''' % \
                (self._tablename, fields, self._db._translator['primarykey']%', '.join(self._primarykey),other)
         else:
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \

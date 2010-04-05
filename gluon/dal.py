@@ -2510,7 +2510,7 @@ class Table(dict):
                      on_delete_action=field.ondelete)
 
         if hasattr(self,'_primarykey'):
-            query = '''CREATE TABLE %s(\n    %s,\n`    %s) %s''' % \
+            query = '''CREATE TABLE %s(\n    %s,\n    %s) %s''' % \
                (self._tablename, fields, self._db._adapter.PRIMARY_KEY(', '.join(self._primarykey),other))
         else:
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
