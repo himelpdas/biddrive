@@ -176,7 +176,7 @@ def upgrade_web2py():
     if 'upgrade' in request.vars:
         (success, error) = upgrade(request)
         if success:
-            session.flash = T('web2py upgraded; plase restart it')
+            session.flash = T('web2py upgraded; please restart it')
         else:
             session.flash = T('unable to upgrade because "%s"', error)
         redirect(URL(r=request, f='site'))
