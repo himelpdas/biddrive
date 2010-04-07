@@ -3099,10 +3099,10 @@ class Set(object):
             rows = list(rows)
         if db._dbname in ['mssql', 'mssql2', 'db2']:
             rows = rows[(attributes.get('limitby', None) or (0,))[0]:]
-        return self.parse(db,rows,self.colnames)
+        return self.parse(db,rows,self.colnames,SetClass=Set)
 
     @staticmethod
-    def parse(db,rows,colnames,blob_decode=True,SetClass=Set):
+    def parse(db,rows,colnames,blob_decode=True,SetClass=None):
         virtualtables = []
         new_rows = []
         for (i,row) in enumerate(rows):
@@ -3198,10 +3198,11 @@ class Set(object):
                         i = id, **a: update_record(c, t, i, a)
                     colset.delete_record = lambda t = table, i = id: \
                         t._db(t.id==i).delete()
-                    for (referee_table, referee_name) in \
-                            table._referenced_by:
-                        s = db[referee_table][referee_name]
-                        colset[referee_table] = SetClass(db, s == id)
+                    if SetClass:
+                        for (referee_table, referee_name) in \
+                                table._referenced_by:
+                            s = db[referee_table][referee_name]
+                            colset[referee_table] = SetClass(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
         rowsobj = Rows(db, new_rows, colnames)
