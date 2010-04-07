@@ -2421,8 +2421,11 @@ class Crud(object):
             response.flash = message
             if log:
                 self.log_event(log % form.vars)
-            if request.vars.delete_this_record and ondelete:
-                ondelete(form)
+            if request.vars.delete_this_record:
+                message = self.messages.record_deleted
+                if ondelete:
+                    ondelete(form)
+            response.flash = message
             if onaccept:
                 onaccept(form)
             if request.extension != 'html':
