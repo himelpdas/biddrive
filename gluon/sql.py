@@ -1245,12 +1245,39 @@ class SQLDB(dict):
         ):
 
         for key in args:
-            if key not in ['migrate','primarykey','fake_migrate','format']:
+            if key not in [
+                    'migrate',
+                    'primarykey',
+                    'fake_migrate',
+                    'format',
+                    'trigger_name',
+                    'sequence_name']:
                 raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
-        migrate = args.get('migrate',True)
+        migrate = args.get('migrate', True)
         fake_migrate = args.get('fake_migrate', False)
-        format = args.get('format',None)
+        format = args.get('format', None)
+        trigger_name = args.get('trigger_name', None)
+        sequence_name = args.get('sequence_name', None)
         tablename = cleanup(tablename)
+
+        #default values (for compatibility with previous version)
+        if trigger_name is None:
+            if self._dbname == 'firebird':
+                trigger_name = 'trg_id_%s' % tablename
+            if self._dbname == 'oracle':
+                trigger_name = '%s_trigger' % tablename
+            if self._dbname == 'ingres':
+                pass
+
+        #default (for compatibility with previous version)
+        if sequence_name is None:
+            if self._dbname == 'firebird':
+                sequence_name = 'genid_%s' %tablename
+            if self._dbname == 'oracle':
+                sequence_name = '%s_sequence' %tablename
+            if self._dbname == 'ingres':
+                pass
+
         if hasattr(self,tablename) or tablename[0] == '_':
             raise SyntaxError, 'invalid table name: %s' % tablename
         if tablename in self.tables:
@@ -1260,9 +1287,10 @@ class SQLDB(dict):
             
         if 'primarykey' in args:
             t = self[tablename] = KeyedTable(self, tablename, *fields,
-                                             **dict(primarykey=args['primarykey']))
+                    **dict(primarykey=args['primarykey'], trigger_name=trigger_name, sequence_name=sequence_name))
         else:
-            t = self[tablename] = Table(self, tablename, *fields)
+            t = self[tablename] = Table(self, tablename, *fields,
+                    **dict(trigger_name=trigger_name, sequence_name=sequence_name))
         # db magic
         if self._uri == 'None':
             return t
@@ -1479,8 +1507,8 @@ class Table(dict):
         self,
         db,
         tablename,
-        *fields
-        ):
+        *fields,
+        **args):
         """
         Initializes the table and performs checking on the provided fields.
 
@@ -1510,6 +1538,8 @@ class Table(dict):
         fields = new_fields
         self._db = db
         self._tablename = tablename
+        self._trigger_name = args.get('trigger_name', None)
+        self._sequence_name = args.get('sequence_name', None)
         self.fields = SQLCallableList()
         self.virtualfields = []
         fields = list(fields)
@@ -1694,16 +1724,16 @@ class Table(dict):
                 self._db._execute(query)
                 if self._db._dbname in ['oracle']:
                     t = self._tablename
-                    self._db._execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
-                                   % t)
-                    self._db._execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
-                                   % (t, t, t))
+                    self._db._execute('CREATE SEQUENCE %s START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
+                                   % self._sequence_name)
+                    self._db._execute('CREATE OR REPLACE TRIGGER %s BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s.nextval INTO :NEW.id FROM DUAL; END;\n'
+                                   % (self._trigger_name, t, self._sequence_name))
                 elif self._db._dbname == 'firebird':
                     t = self._tablename
-                    self._db._execute('create generator GENID_%s;' % t)
-                    self._db._execute('set generator GENID_%s to 0;' % t)
-                    self._db._execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
-''' % (t, t, t))
+                    self._db._execute('create generator %s;' % self._sequence_name)
+                    self._db._execute('set generator %s to 0;' % self._sequence_name)
+                    self._db._execute('create trigger %s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(%s, 1);\nend\nend;'
+                            % (self._trigger_name, t, self._sequence_name))
                 elif self._db._dbname == 'ingres':
                     # post create table auto inc code (if needed)
                     # modify table to btree for performance....
@@ -1826,11 +1856,11 @@ class Table(dict):
         t = self._tablename
         c = mode or ''
         if self._db._dbname in ['oracle']:
-            return ['DROP TABLE %s %s;' % (t, c), 'DROP SEQUENCE %s_sequence;'
-                     % t]
+            return ['DROP TABLE %s %s;' % (t, c), 'DROP SEQUENCE %s;'
+                     % t, self._sequence_name]
         elif self._db._dbname == 'firebird':
-            return ['DROP TABLE %s %s;' % (t, c), 'DROP GENERATOR GENID_%s;'
-                     % t]
+            return ['DROP TABLE %s %s;' % (t, c), 'DROP GENERATOR %s;'
+                     % t, self._sequence_name]
         elif self._db._dbname == 'mysql':
             # breaks db integrity but without this mysql does not drop table
             return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % t,'SET FOREIGN_KEY_CHECKS=1;']
@@ -1904,16 +1934,16 @@ class Table(dict):
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname in ['oracle']:
             t = self._tablename
-            self._db._execute('SELECT %s_sequence.currval FROM dual;'
-                               % t)
+            self._db._execute('SELECT %s.currval FROM dual;'
+                               % self._sequence_name)
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'mssql' or self._db._dbname\
              == 'mssql2':
             self._db._execute('SELECT @@IDENTITY;')
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'firebird':
-            self._db._execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database'
-                               % self._tablename)
+            self._db._execute('SELECT gen_id(%s, 0) FROM rdb$database'
+                               % self._sequence_name)
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'informix':
             id = self._db._cursor.sqlerrd[1]
@@ -2070,6 +2100,9 @@ class KeyedTable(Table):
 
         :raises SyntaxError: when a supplied field is of incorrect type.
         """
+
+        self._trigger_name = args.get('trigger_name', None)
+        self._sequence_name = args.get('sequence_name', None)
 
         for k,v in args.iteritems():
             if k != 'primarykey':
@@ -2344,16 +2377,16 @@ class KeyedTable(Table):
                 self._db._execute(query)
                 if self._db._dbname in ['oracle']:
                     t = self._tablename
-                    self._db._execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
-                                      % t)
-                    self._db._execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n'
-                                      % (t, t, t))
+                    self._db._execute('CREATE SEQUENCE %s START WITH 1 INCREMENT BY 1 NOMAXVALUE;'
+                                   % self._sequence_name)
+                    self._db._execute('CREATE OR REPLACE TRIGGER %s BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s.nextval INTO :NEW.id FROM DUAL; END;\n'
+                                   % (self._trigger_name, t, self._sequence_name))
                 elif self._db._dbname == 'firebird':
                     t = self._tablename
-                    self._db._execute('create generator GENID_%s;' % t)
-                    self._db._execute('set generator GENID_%s to 0;' % t)
-                    self._db._execute('''create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;
-''' % (t, t, t))
+                    self._db._execute('create generator %s;' % self._sequence_name)
+                    self._db._execute('set generator %s to 0;' % self._sequence_name)
+                    self._db._execute('create trigger %s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(%s, 1);\nend\nend;'
+                            % (self._trigger_name, t, self._sequence_name))
                 elif self._db._dbname == 'ingres':
                     # post create table auto inc code (if needed)
                     # modify table to btree for performance.... NOT sure if this will be faster or not.
