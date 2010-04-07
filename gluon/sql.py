@@ -3102,7 +3102,7 @@ class Set(object):
         return self.parse(db,rows,self.colnames)
 
     @staticmethod
-    def parse(db,rows,colnames,blob_decode=True):
+    def parse(db,rows,colnames,blob_decode=True,SetClass=Set):
         virtualtables = []
         new_rows = []
         for (i,row) in enumerate(rows):
@@ -3201,7 +3201,7 @@ class Set(object):
                     for (referee_table, referee_name) in \
                             table._referenced_by:
                         s = db[referee_table][referee_name]
-                        colset[referee_table] = Set(db, s == id)
+                        colset[referee_table] = SetClass(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
         rowsobj = Rows(db, new_rows, colnames)

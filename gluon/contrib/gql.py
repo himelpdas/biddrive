@@ -685,7 +685,7 @@ class Set(gluon.sql.Set):
                     new_item.append(getattr(item, t))
             rows.append(new_item)
         colnames = ['%s.%s' % (tablename, t) for t in fields]
-        return self.parse(self._db, rows, colnames, False)
+        return self.parse(self._db, rows, colnames, False, SetClass=Set)
 
     @staticmethod
     def items_count(items):
