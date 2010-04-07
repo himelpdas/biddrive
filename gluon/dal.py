@@ -242,6 +242,12 @@ class BaseAdapter(ConnectionPool):
         self.folder = folder
         self.db_codec = db_codec
 
+    def sequence_name(self,table):
+        return '%s_sequence' % table
+
+    def trigger_name(self,table):
+        return '%s_sequence' % table
+
     def LOWER(self,first):
         return 'LOWER(%s)' % self.expand(first)
 
@@ -564,7 +570,7 @@ class BaseAdapter(ConnectionPool):
     def constraint_name(self, table, fieldname):
         return '%s_%s__constraint' % (table,fieldname)
 
-    def create_sequence_and_triggers(self, query, table):
+    def create_sequence_and_triggers(self, query, table, **args):
         self.execute(query)
 
     def commit_on_alter_table(self):
@@ -643,7 +649,7 @@ class BaseAdapter(ConnectionPool):
     def represent_exceptions(self, obj, fieldtype):
         return None
 
-    def lastrowid(self,tablename):
+    def lastrowid(self,table):
         return None
 
     def integrity_error_class(self):
@@ -814,7 +820,7 @@ class SQLiteAdapter(BaseAdapter):
         return ['DELETE FROM %s;' % tablename,
                 "DELETE FROM sqlite_sequence WHERE name='%s';" % tablename]
 
-    def lastrowid(self,tablename):
+    def lastrowid(self,table):
         return self.cursor.lastrowid
 
 
@@ -932,7 +938,7 @@ class MySQLAdapter(BaseAdapter):
     def commit_on_alter_table(self):
         return True
 
-    def lastrowid(self,tablename):
+    def lastrowid(self,table):
         self.execute('select last_insert_id();')
         return int(self.cursor.fetchone()[0])
 
@@ -1005,7 +1011,7 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
         self.execute("SET standard_conforming_strings=on;")
 
-    def lastrowid(self,tablename):
+    def lastrowid(self,table):
         self.execute("select currval('%s_id_Seq')" % tablename)
         return int(self.cursor.fetchone()[0])
 
@@ -1061,6 +1067,12 @@ class OracleAdapter(BaseAdapter):
         'reference': 'NUMBER, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
 
+    def sequence_name(self,table):
+        return table._sequence_name or '%s_sequence' % table
+
+    def trigger_name(self,table):
+        return table._trigger_name or '%s_trigger' % table
+
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
 
@@ -1071,7 +1083,8 @@ class OracleAdapter(BaseAdapter):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
 
     def DROP(self,table,mode):
-        return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s_sequence;' % table]
+        sequence_name = self.sequence_name(table)
+        return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s;' % sequence_name]
 
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
@@ -1134,17 +1147,20 @@ class OracleAdapter(BaseAdapter):
             i += 1
         return self.log_execute(command[:-1], args)
 
-    def create_sequence_and_triggers(self, query, table):
+    def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
+        sequence_name = self.sequence_name(table)
+        trigger_name = self.trigger_name(table)
         self.execute(query)
-        self.execute('CREATE SEQUENCE %s_sequence START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % tablename)
-        self.execute('CREATE OR REPLACE TRIGGER %s_trigger BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s_sequence.nextval INTO :NEW.id FROM DUAL; END;\n' % (tablename, tablename, tablename))
+        self.execute('CREATE SEQUENCE %s START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % sequence_name)
+        self.execute('CREATE OR REPLACE TRIGGER %s BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s.nextval INTO :NEW.id FROM DUAL; END;\n' % (trigger_name, tablename, sequence_name))
 
     def commit_on_alter_table(self):
         return True
 
-    def lastrowid(self,tablename):
-        self.execute('SELECT %s_sequence.currval FROM dual;' % tablename)
+    def lastrowid(self,table):
+        sequence_name = self.sequence_name(table)
+        self.execute('SELECT %s.currval FROM dual;' % sequence_name)
         return int(self.cursor.fetchone()[0])
 
 
@@ -1250,7 +1266,7 @@ class MSSQLAdapter(BaseAdapter):
                 % (host, port, db, user, password, urlargs)
         self.pool_connection(lambda cnxn=cnxn : pyodbc.connect(cnxn))
 
-    def lastrowid(self,tablename):
+    def lastrowid(self,table):
         self.execute('SELECT @@IDENTITY;')
         return int(self.cursor.fetchone()[0])
 
@@ -1311,6 +1327,12 @@ class FireBirdAdapter(BaseAdapter):
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
 
+    def sequence_name(self,table):
+        return table._sequence_name or 'genid_%s' % table
+
+    def trigger_name(self,table):
+        return table._trigger_name or 'trg_id_%s' % table
+
     def RANDOM(self):
         return 'RAND()'
 
@@ -1321,7 +1343,8 @@ class FireBirdAdapter(BaseAdapter):
         return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
 
     def DROP(self,table,mode):
-        return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR GENID_%s;' % table]
+        sequence_name = self.sequence_name(table)
+        return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR %s;' % sequence_name]
 
     def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
@@ -1365,15 +1388,18 @@ class FireBirdAdapter(BaseAdapter):
                                                      password=password,
                                                      charset=charset))
 
-    def create_sequence_and_triggers(self, query, table):
+    def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
+        sequence_name = self.sequence_name(table)
+        trigger_name = self.trigger_name(table)
         self.execute(query)
-        self.execute('create generator GENID_%s;' % tablename)
-        self.execute('set generator GENID_%s to 0;' % tablename)
-        self.execute('create trigger trg_id_%s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(GENID_%s, 1);\nend\nend;' % (tablename,tablename,tablename))
+        self.execute('create generator %s;' % sequence_name)
+        self.execute('set generator %s to 0;' % sequence_name)
+        self.execute('create trigger %s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(%s, 1);\nend\nend;' % (trigger_name, tablename, sequence_name))
 
-    def lastrowid(self,tablename):
-        self.execute('SELECT gen_id(GENID_%s, 0) FROM rdb$database' % tablename)
+    def lastrowid(self,table):
+        sequence_name = self.sequence_name(table)
+        self.execute('SELECT gen_id(%s, 0) FROM rdb$database' % sequence_name)
         return int(self.db._adapter.cursor.fetchone()[0])
 
     def commit_on_alter_table(self):
@@ -1506,7 +1532,7 @@ class InformixAdapter(BaseAdapter):
             command = command[:-1]
         return self.log_execute(command)
 
-    def lastrowid(self,tablename):
+    def lastrowid(self,table):
         return self.cursor.sqlerrd[1]
 
     def integrity_error_class(self):
@@ -1572,8 +1598,8 @@ class DB2Adapter(BaseAdapter):
             command = command[:-1]
         return self.log_execute(command)
 
-    def lastrowid(self,tablename):
-        self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % tablename)
+    def lastrowid(self,table):
+        self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % table)
         return int(self.db._adapter.cursor.fetchone()[0])
 
     def rowslice(self,rows,minimum=0,maximum=None):
@@ -1648,7 +1674,7 @@ class IngresAdapter(BaseAdapter):
                                                    servertype=servertype,
                                                    trace=trace))
 
-    def create_sequence_and_triggers(self, query, table):
+    def create_sequence_and_triggers(self, query, table, **args):
         # post create table auto inc code (if needed)
         # modify table to btree for performance....
         # Older Ingres releases could use rule/trigger like Oracle above.
@@ -1665,8 +1691,8 @@ class IngresAdapter(BaseAdapter):
             self.execute('modify %s to btree unique on %s' % (table._tablename, 'id'))
 
 
-    def lastrowid(self,tablename):
-        tmp_seqname='%s_iisq' % tablename
+    def lastrowid(self,table):
+        tmp_seqname='%s_iisq' % table
         self.execute('select current value for %s' % tmp_seqname)
         return int(self.cursor.fetchone()[0]) # don't really need int type cast here...
 
@@ -2024,12 +2050,21 @@ class DAL(dict):
         ):
 
         for key in args:
-            if key not in ['migrate','primarykey','fake_migrate','format']:
+            if key not in [
+                    'migrate',
+                    'primarykey',
+                    'fake_migrate',
+                    'format',
+                    'trigger_name',
+                    'sequence_name']:
                 raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
         migrate = args.get('migrate',True)
         fake_migrate = args.get('fake_migrate', False)
         format = args.get('format',None)
+        trigger_name = args.get('trigger_name', None)
+        sequence_name = args.get('sequence_name', None)
         tablename = cleanup(tablename)
+
         if hasattr(self,tablename) or tablename[0] == '_':
             raise SyntaxError, 'invalid table name: %s' % tablename
         if tablename in self.tables:
@@ -2038,7 +2073,9 @@ class DAL(dict):
             self.check_reserved_keyword(tablename)
 
         t = self[tablename] = Table(self, tablename, *fields,
-                                    **dict(primarykey=args.get('primarykey',None)))
+                                    **dict(primarykey=args.get('primarykey',None),
+                                    trigger_name=trigger_name,
+                                    sequence_name=sequence_name))
         # db magic
         if self._uri == 'None':
             return t
@@ -2248,7 +2285,10 @@ class Table(dict):
 
         :raises SyntaxError: when a supplied field is of incorrect type.
         """
-        primarykey = args.get('primarykey',None)
+        self._trigger_name = args.get('trigger_name', None)
+        self._sequence_name = args.get('sequence_name', None)
+
+        primarykey = args.get('primarykey', None)
         if primarykey and not isinstance(primarykey,list):
             raise SyntaxError, "primarykey must be a list of fields from table '%s'" % tablename
         elif primarykey:
@@ -2688,7 +2728,7 @@ class Table(dict):
             raise e
         if hasattr(self,'_primarykey'):
             return dict( [ (k,fields[k]) for k in self._primarykey ])
-        id = self._db._adapter.lastrowid(self._tablename)
+        id = self._db._adapter.lastrowid(self)
         if not isinstance(id,int):
             return id
         rid = Reference(id)
