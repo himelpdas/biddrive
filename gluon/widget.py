@@ -574,7 +574,7 @@ def console():
                       help=msg)
 
     msg = 'run web2py in interactive shell or IPython (if installed) with'
-    msg += ' specified appname'
+    msg += ' specified appname (if app does not exist it will be created).'
     parser.add_option('-S',
                       '--shell',
                       dest='shell',
