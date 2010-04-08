@@ -25,8 +25,8 @@ from optparse import *
 from textwrap import dedent
 
 import newcron
+import main
 
-from main import HttpServer
 from fileutils import w2p_pack
 from shell import run, test
 from settings import settings
@@ -367,8 +367,8 @@ class web2pyDialog(object):
         try:
             options = self.options
             req_queue_size = options.request_queue_size
-
-            self.server = HttpServer(
+            main.web2py_path=options.folder
+            self.server = main.HttpServer(
                 ip,
                 port,
                 password,
@@ -381,8 +381,7 @@ class web2pyDialog(object):
                 server_name=options.server_name,
                 request_queue_size=req_queue_size,
                 timeout=options.timeout,
-                shutdown_timeout=options.shutdown_timeout,
-                path=options.folder)
+                shutdown_timeout=options.shutdown_timeout)
 
             thread.start_new_thread(self.server.start, ())
         except Exception, e:
@@ -846,20 +845,20 @@ def start(cron = True):
     print '\thttp://%s:%s' % (ip, port)
     print 'use "kill -SIGTERM %i" to shutdown the web2py server' % os.getpid()
 
-    server = HttpServer(ip=ip,
-                        port=port,
-                        password=options.password,
-                        pid_filename=options.pid_filename,
-                        log_filename=options.log_filename,
-                        profiler_filename=options.profiler_filename,
-                        ssl_certificate=options.ssl_certificate,
-                        ssl_private_key=options.ssl_private_key,
-                        numthreads=options.numthreads,
-                        server_name=options.server_name,
-                        request_queue_size=options.request_queue_size,
-                        timeout=options.timeout,
-                        shutdown_timeout=options.shutdown_timeout,
-                        path=options.folder)
+    main.web2py_path=options.folder
+    server = main.HttpServer(ip=ip,
+                             port=port,
+                             password=options.password,
+                             pid_filename=options.pid_filename,
+                             log_filename=options.log_filename,
+                             profiler_filename=options.profiler_filename,
+                             ssl_certificate=options.ssl_certificate,
+                             ssl_private_key=options.ssl_private_key,
+                             numthreads=options.numthreads,
+                             server_name=options.server_name,
+                             request_queue_size=options.request_queue_size,
+                             timeout=options.timeout,
+                             shutdown_timeout=options.shutdown_timeout)
 
     try:
         server.start()

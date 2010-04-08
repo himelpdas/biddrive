@@ -502,8 +502,7 @@ def save_password(password, port):
 
 def appfactory(wsgiapp=wsgibase,
                logfilename='httpserver.log',
-               profilerfilename='profiler.log',
-               web2py_path=web2py_path):
+               profilerfilename='profiler.log'):
     """
     generates a wsgi application that does logging and profiling and calls
     wsgibase
@@ -511,8 +510,7 @@ def appfactory(wsgiapp=wsgibase,
     .. function:: gluon.main.appfactory(
             [wsgiapp=wsgibase
             [, logfilename='httpserver.log'
-            [, profilerfilename='profiler.log'
-            [, web2py_path=web2py_path]]]])
+            [, profilerfilename='profiler.log']]])
 
     """
     if profilerfilename and os.path.exists(profilerfilename):
@@ -523,7 +521,6 @@ def appfactory(wsgiapp=wsgibase,
         """
         a wsgi app that does logging and profiling and calls wsgibase
         """
-        environ['web2py_path'] = web2py_path
         status_headers = []
 
         def responder2(s, h):
@@ -598,7 +595,6 @@ class HttpServer(object):
         request_queue_size=5,
         timeout=10,
         shutdown_timeout=None, # Rocket does not use a shutdown timeout
-        path=web2py_path,
         ):
         """
         starts the web server.
@@ -626,10 +622,10 @@ class HttpServer(object):
         else:
             sock_list.extend([ssl_private_key, ssl_certificate])
             logging.info('SSL is ON')
-        app_info = {'wsgi_app': appfactory(wsgibase,                                                                
-                                           log_filename,                                                            
-                                           profiler_filename,                                                       
-                                           web2py_path=path) }                                                      
+        app_info = {'wsgi_app': appfactory(wsgibase,
+                                           log_filename,
+                                           profiler_filename) }
+
         self.server = rocket.Rocket(tuple(sock_list),
                                     'wsgi',
                                     app_info,
