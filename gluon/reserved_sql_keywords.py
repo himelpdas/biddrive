@@ -2,14 +2,14 @@
 
 __author__ = "Thadeus Burgess <thadeusb@thadeusb.com>"
 
-#    we classify as "non-reserved" those key words that are explicitly known 
-#    to the parser but are allowed as column or table names. Some key words 
+#    we classify as "non-reserved" those key words that are explicitly known
+#    to the parser but are allowed as column or table names. Some key words
 #    that are otherwise non-reserved cannot be used as function or data type n
-#    ames and are in the nonreserved list. (Most of these words represent 
-#    built-in functions or data types with special syntax. The function 
-#    or type is still available but it cannot be redefined by the user.) 
-#    Labeled "reserved" are those tokens that are not allowed as column or 
-#    table names. Some reserved key words are allowable as names for 
+#    ames and are in the nonreserved list. (Most of these words represent
+#    built-in functions or data types with special syntax. The function
+#    or type is still available but it cannot be redefined by the user.)
+#    Labeled "reserved" are those tokens that are not allowed as column or
+#    table names. Some reserved key words are allowable as names for
 #    functions or data typesself.
 
 # Note at the bottom of the list is a dict containing references to the
@@ -2089,7 +2089,7 @@ ORACLE = (
 
 # remove from here when you add a list.
 SQLITE = DB2 = INFORMIX = INGRES = JDBCSQLITE = JDBCPOSTGRESQL = COMMON
-    
+
 ADAPTERS = {
     'sqlite': SQLITE,
     'mysql': MYSQL,

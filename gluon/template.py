@@ -19,11 +19,15 @@ re_unblock = re.compile('^(return|continue|break)( .*)?$', re.DOTALL)
 re_pass = re.compile('^pass( .*)?$', re.DOTALL)
 re_write = re.compile('\{\{=(?P<value>.*?)\}\}', re.DOTALL)
 re_html = re.compile('\}\}.*?\{\{', re.DOTALL)
-re_strings = re.compile(r'(?P<name>'
-                         + r"[uU]?[rR]?'''([^']+|'{1,2}(?!'))*'''|"
-                         + r"'([^'\\]|\\.)*'|"
-                         + r'"""([^"]|"{1,2}(?!"))*"""|'
-                         + r'"([^"\\]|\\.)*")', re.DOTALL)
+re_strings = re.compile('('
+                         + r"'''(?:[^'\\]+|'{1,2}(?!')|\\.)*'''"
+                         + '|'
+                         + r'"""(?:[^"\\]+|"{1,2}(?!")|\\.)*"""'
+                         + '|'
+                         + r"'(?!'')(?:[^'\\]+|\\.)*'"
+                         + '|'
+                         + r'"(?!"")(?:[^"\\]+|\\.)*"'
+                         + ')', re.DOTALL)
 
 re_include_nameless = re.compile('\{\{\s*include\s*\}\}')
 re_include = re.compile('\{\{\s*include\s+(?P<name>.+?)\s*\}\}',
@@ -187,7 +191,7 @@ def render(content='hello world',stream=None,filename=None,path=None,context={})
         raise SyntaxError, "Must specify a stream or filename or content"
     close_stream = False
     if not stream:
-        if filename:            
+        if filename:
             stream = open(filename,'rb')
             close_stream = True
         if content:

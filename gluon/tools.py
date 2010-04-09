@@ -260,20 +260,20 @@ class Mail(object):
             header.Header(', '.join(to).decode(encoding).encode('utf-8'),'utf-8')
         if reply_to != None:
             payload['Reply-To'] = \
-                header.Header(reply_to.decode(encoding).encode('utf-8'),'utf-8') 
+                header.Header(reply_to.decode(encoding).encode('utf-8'),'utf-8')
         payload['Subject'] = \
             header.Header(subject.decode(encoding).encode('utf-8'),'utf-8')
         if cc != None:
             if not isinstance(cc, (list, tuple)):
                 cc = [cc]
             payload['Cc'] = \
-                header.Header(', '.join(cc).decode(encoding).encode('utf-8'),'utf-8') 
+                header.Header(', '.join(cc).decode(encoding).encode('utf-8'),'utf-8')
             to.extend(cc)
         if bcc != None:
             if not isinstance(bcc, (list, tuple)):
                 bcc = [bcc]
             payload['Bcc'] = \
-                header.Header(', '.join(bcc).decode(encoding).encode('utf-8'),'utf-8') 
+                header.Header(', '.join(bcc).decode(encoding).encode('utf-8'),'utf-8')
             to.extend(bcc)
         if message == None:
             text = html = None
@@ -289,7 +289,7 @@ class Mail(object):
                     text = text.decode(encoding).encode('utf-8')
                 else:
                     text = text.read().decode(encoding).encode('utf-8')
-                attachment.attach(MIMEText.MIMEText(text,_charset='utf-8')) 
+                attachment.attach(MIMEText.MIMEText(text,_charset='utf-8'))
             if html != None:
                 if isinstance(html, str):
                     html = html.decode(encoding).encode('utf-8')
@@ -315,7 +315,7 @@ class Mail(object):
                 if self.settings.login != None:
                     if self.settings.tls:
                         server.ehlo()
-                        server.starttls() 
+                        server.starttls()
                         server.ehlo()
                     server.login(*self.settings.login.split(':'))
                 result = server.sendmail(self.settings.sender, to, payload.as_string())
@@ -409,7 +409,7 @@ class Recaptcha(DIV):
                              _src="%s/challenge?k=%s%s" % (server,public_key,error_param)),
                       TAG.noscript(IFRAME(_src="%s/noscript?k=%s%s" % (server,public_key,error_param),
                                            _height="300",_width="500",_frameborder="0"), BR(),
-                                   INPUT(_type='hidden', _name='recaptcha_response_field', 
+                                   INPUT(_type='hidden', _name='recaptcha_response_field',
                                          _value='manual_challenge')), _id='recaptcha')
         if not self.errors.captcha:
             return XML(captcha).xml()
@@ -781,7 +781,7 @@ class Auth(object):
 
         db = self.db
         if not self.settings.table_user_name in db.tables:
-            passfield = self.settings.password_field            
+            passfield = self.settings.password_field
             if username:
                 table = db.define_table(
                     self.settings.table_user_name,
@@ -1061,11 +1061,11 @@ class Auth(object):
                     ),
                     ""
                 ))
- 
+
             captcha = self.settings.login_captcha or \
                 (self.settings.login_captcha!=False and self.settings.captcha)
             if captcha:
-                form[0].insert(-1, TR(LABEL(captcha.label), 
+                form[0].insert(-1, TR(LABEL(captcha.label),
                                       captcha,captcha.comment,
                                       _id = 'capctha__row'))
             accepted_form = False
@@ -1915,7 +1915,7 @@ class Auth(object):
         """
         decorator that prevents access to action if not logged in or
         if user logged in is not a member of group_id.
-        If role is provided instead of group_id then the 
+        If role is provided instead of group_id then the
         group_id is calculated.
         """
 
@@ -1958,7 +1958,7 @@ class Auth(object):
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    redirect(self.settings.login_url + 
+                    redirect(self.settings.login_url +
                              '?_next='+urllib.quote(next))
                 if not self.has_permission(name, table_name, record_id):
                     self.environment.session.flash = \
@@ -2281,13 +2281,13 @@ class Crud(object):
     def archive(form,archive_table=None,current_record='current_record'):
         """
         If you have a table (db.mytable) that needs full revision history you can just do::
-        
+
             form=crud.update(db.mytable,myrecord,onaccept=crud.archive)
 
         crud.archive will define a new table "mytable_history" and store the
         previous record in the newly created table including a reference
         to the current record.
-        
+
         If you want to access such table you need to define it yourself in a mode::
 
             db.define_table('mytable_history',
@@ -2304,9 +2304,9 @@ class Crud(object):
                 Field('saved_by',auth.user,
                      default=auth.user_id,update=auth.user_id,writable=False),
 
-        there is nothing special about these fields since they are filled before 
+        there is nothing special about these fields since they are filled before
         the record is archived.
-       
+
         Alterantively you can create similar fields in the 'mytable_history' table
         and they will be filled when the record is archived.
 
@@ -2315,8 +2315,8 @@ class Crud(object):
 
             db.define_table('myhistory',
                 Field('parent_record',db.mytable),
-                mytable)   
-        
+                mytable)
+
         and use it as::
 
             form=crud.update(db.mytable,myrecord,
@@ -2411,14 +2411,14 @@ class Crud(object):
             )
         captcha = self.settings.update_captcha or \
                   self.settings.captcha
-        if record and captcha:            
-            form[0].insert(-1, TR(LABEL(captcha.label), 
+        if record and captcha:
+            form[0].insert(-1, TR(LABEL(captcha.label),
                                   captcha, captcha.comment,
                                   _id='captcha__row'))
         captcha = self.settings.create_captcha or \
                   self.settings.captcha
         if not record and captcha:
-            form[0].insert(-1, TR(LABEL(captcha.label), 
+            form[0].insert(-1, TR(LABEL(captcha.label),
                                   captcha, captcha.comment,
                                   _id='captcha__row'))
         if request.extension != 'html':
@@ -2585,7 +2585,7 @@ class Crud(object):
 urllib2.install_opener(urllib2.build_opener(urllib2.HTTPCookieProcessor()))
 
 def fetch(url, data=None, headers={},
-          cookie=Cookie.SimpleCookie(), 
+          cookie=Cookie.SimpleCookie(),
           user_agent='Mozilla/5.0'):
     if data != None:
         data = urllib.urlencode(data)
@@ -2604,13 +2604,13 @@ def fetch(url, data=None, headers={},
                                       allow_truncated=False,follow_redirects=False,
                                       deadline=10)
             # next request will be a get, so no need to send the data again
-            data = None 
+            data = None
             method = urlfetch.GET
             # load cookies from the response
-            cookie.load(response.headers.get('set-cookie', '')) 
+            cookie.load(response.headers.get('set-cookie', ''))
             url = response.headers.get('location')
         html = response.content
-    return html 
+    return html
 
 regex_geocode = \
     re.compile('\<coordinates\>(?P<la>[^,]*),(?P<lo>[^,]*).*?\</coordinates\>')

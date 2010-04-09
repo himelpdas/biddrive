@@ -424,7 +424,7 @@ class TestReferece(unittest.TestCase):
         x.a = x
         assert x.a == 1
         x.update_record()
-        y = db.t[1]        
+        y = db.t[1]
         assert y.a == 1
         assert y.a.a.a.a.a.a.name == 'max'
         z=db.t.insert(name='xxx', a = y)
@@ -441,9 +441,9 @@ class TestClientLevelOps(unittest.TestCase):
         db.t.insert(a="test")
         rows1 = db(db.t.id>0).select()
         rows2 = db(db.t.id>0).select()
-        rows3 = rows1 & rows2 
-        assert len(rows3) == 2 
-        rows4 = rows1 | rows2 
+        rows3 = rows1 & rows2
+        assert len(rows3) == 2
+        rows4 = rows1 | rows2
         assert len(rows4) == 1
         rows5 = rows1.find(lambda row: row.a=="test")
         assert len(rows5) == 1

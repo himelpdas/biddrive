@@ -349,7 +349,7 @@ def check_new_version(myversion, version_URL):
 
 def unzip(filename, dir, subfolder=''):
     """
-    Unzips filename into dir (.zip only, no .gz etc)    
+    Unzips filename into dir (.zip only, no .gz etc)
     if subfolder!='' it unzip only files in subfolder
     """
     if not zipfile.is_zipfile(filename):
@@ -368,7 +368,7 @@ def unzip(filename, dir, subfolder=''):
                 os.mkdir(folder)
         else:
             outfile = open(os.path.join(dir, name[n:]), 'wb')
-            outfile.write(zf.read(name))         
+            outfile.write(zf.read(name))
             outfile.close()
 
 
@@ -425,5 +425,5 @@ def upgrade(request, url = 'http://web2py.com'):
         return True, None
     except Exception,e:
         return False, e
-        
+
 

@@ -107,7 +107,7 @@ class lazyT(object):
 class translator(object):
 
     """
-    this class is instantiated by gluon.compileapp.build_environment 
+    this class is instantiated by gluon.compileapp.build_environment
     as the T object
 
     ::

@@ -413,7 +413,7 @@ def wsgibase(environ, responder):
                 del response.cookies[response.session_id_name]
             elif session._secure:
                 response.cookies[response.session_id_name]['secure'] = True
-            if len(response.cookies)>0: 
+            if len(response.cookies)>0:
                 http_response.headers['Set-Cookie'] = \
                     [str(cookie)[11:] for cookie in response.cookies.values()]
             ticket=None
@@ -604,17 +604,17 @@ class HttpServer(object):
         self.pid_filename = pid_filename
         if not server_name:
             server_name = socket.gethostname()
-        logging.info('starting web server...')                                                                      
-        rocket.SERVER_NAME = server_name                                                                            
-        sock_list = [ip, port]                                                                                      
-        if not ssl_certificate or not ssl_private_key:                                                              
-              logging.info('SSL is off')                                                                            
-        elif not rocket.ssl:                                                                                        
+        logging.info('starting web server...')
+        rocket.SERVER_NAME = server_name
+        sock_list = [ip, port]
+        if not ssl_certificate or not ssl_private_key:
+              logging.info('SSL is off')
+        elif not rocket.ssl:
              logging.warning('Python "ssl" module unavailable. SSL is OFF')
         if not ssl_certificate or not ssl_private_key:
             logging.info('SSL is off')
-        elif not rocket.ssl:                                                                                        
-            logging.warning('Python "ssl" module unavailable. SSL is OFF') 
+        elif not rocket.ssl:
+            logging.warning('Python "ssl" module unavailable. SSL is OFF')
         elif not os.path.exists(ssl_certificate):
             logging.warning('unable to open SSL certificate. SSL is OFF')
         elif not os.path.exists(ssl_private_key):
@@ -632,7 +632,7 @@ class HttpServer(object):
                                     min_threads=int(numthreads),
                                     queue_size=int(request_queue_size),
                                     timeout=int(timeout)
-                                    ) 
+                                    )
 
 
     def start(self):
@@ -711,7 +711,7 @@ regex_args = re.compile(r'''
 
 def parse_url(request, environ):
     "parse and rewrite the incoming URL"
-    
+
     # ##################################################
     # validate the path in url
     # ##################################################
@@ -761,7 +761,7 @@ def parse_url(request, environ):
     request.args = List([])
     if request.application in rewrite.params.routes_apps_raw:
         # application is responsible for parsing args
-        request.args = None  
+        request.args = None
     elif request.raw_args:
         match = regex_args.match(request.raw_args)
         if match:

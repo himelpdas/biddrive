@@ -60,7 +60,7 @@ class softcron(threading.Thread):
 
     def run(self):
         logging.debug('soft cron invocation')
-        crondance(self.path, 'soft', startup=False)    
+        crondance(self.path, 'soft', startup=False)
 
 class Token:
 
@@ -73,20 +73,20 @@ class Token:
 
     def acquire(self,startup=False):
         """
-        returns the time when the lock is acquired or 
+        returns the time when the lock is acquired or
         None if cron already runing
-        
+
         lock is implemnted by writing a pickle (start, stop) in cron.master
         start is time when cron job starts and stop is time when cron completed
         stop == 0 if job started but did not yet complete
         if a cron job started within less than 60 secods, acquire returns None
-        if a cron job started before 60 seconds and did not stop, 
+        if a cron job started before 60 seconds and did not stop,
         a warning is issue "Stale cron.master detected"
         """
         if portalocker.LOCK_EX == None:
             logging.warning('WEB2PY CRON: Disabled because no file locking')
             return None
-        self.master = open(self.path,'rb+')        
+        self.master = open(self.path,'rb+')
         try:
             ret = None
             portalocker.lock(self.master,portalocker.LOCK_EX)
@@ -111,11 +111,11 @@ class Token:
 
     def release(self):
         """
-        this function writes into cron.msater the time when cron job 
+        this function writes into cron.msater the time when cron job
         was completed
         """
         if not self.master.closed:
-            portalocker.lock(self.master,portalocker.LOCK_EX)        
+            portalocker.lock(self.master,portalocker.LOCK_EX)
             logging.debug('WEB2PY CRON: Releasing cron lock')
             self.master.seek(0)
             (start, stop) =  cPickle.load(self.master)
@@ -226,10 +226,10 @@ def crondance(web2py_path, ctype='soft', startup=False):
             ('mon',now_s.tm_mon),
             ('dom',now_s.tm_mday),
             ('dow',(now_s.tm_wday+1)%7))
-    
+
     apps = [x for x in os.listdir(apppath)
             if os.path.isdir(os.path.join(apppath, x))]
-        
+
     for app in apps:
         apath = os.path.join(apppath,app)
         cronpath = os.path.join(apath, 'cron')

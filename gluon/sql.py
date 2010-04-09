@@ -59,7 +59,7 @@ try:
     drivers.append('pysqlite2')
 except:
     try:
-        from sqlite3 import dbapi2 as sqlite3 
+        from sqlite3 import dbapi2 as sqlite3
         drivers.append('SQLite3')
     except:
         logging.debug('no sqlite3 or pysqlite2.dbapi2 driver')
@@ -1221,7 +1221,7 @@ class SQLDB(dict):
         self._instances[pid].append(self)
         sql_locker.release()
         pass
-        
+
     def check_reserved_keyword(self, name):
         """
         Validates ``name`` against SQL keywords
@@ -1284,7 +1284,7 @@ class SQLDB(dict):
             raise SyntaxError, 'table already defined: %s' % tablename
         if self.check_reserved:
             self.check_reserved_keyword(tablename)
-            
+
         if 'primarykey' in args:
             t = self[tablename] = KeyedTable(self, tablename, *fields,
                     **dict(primarykey=args['primarykey'], trigger_name=trigger_name, sequence_name=sequence_name))
@@ -1830,7 +1830,7 @@ class Table(dict):
                 self._db['_lastsql'] = '\n'.join(query)
                 for sub_query in query:
                     logfile.write(sub_query + '\n')
-                    if not fake_migrate:                        
+                    if not fake_migrate:
                         self._db._execute(sub_query)
                         if self._db._dbname in ['mysql', 'oracle', 'firebird']:
                             self._db.commit()
@@ -1912,7 +1912,7 @@ class Table(dict):
                 raise SyntaxError,'Table: missing required field: %s'%field
         sql_f = ', '.join(fs)
         sql_v = ', '.join(vs)
-        sql_t = self._tablename        
+        sql_t = self._tablename
         return 'INSERT INTO %s(%s) VALUES (%s);' % (sql_t, sql_f, sql_v)
 
     def bulk_insert(self, *items):
@@ -2481,9 +2481,9 @@ class Expression(object):
 
     def belongs(self, value):
         return Query(self, ' IN ', value)
-    
+
     def with_alias(self,value):
-        return Expression(str(self) + ' AS %s' % value, 
+        return Expression(str(self) + ' AS %s' % value,
                           self.type, self._db, value)
 
     # for use in both Query and sortby
@@ -2501,7 +2501,7 @@ class Expression(object):
         else:
             raise SyntaxError, "subscraction operation not supported for type"
         return Expression('(%s-%s)' % (self, sql_represent(other,
-                          self.type, self._db._dbname, self._db._db_codec)), 
+                          self.type, self._db._dbname, self._db._db_codec)),
                           result_type,
                           self._db)
 
@@ -3034,7 +3034,7 @@ class Set(object):
                 else:
                     sql_w_row = 'WHERE w_row > %i' % lmin
                 return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row, sql_o)
-                #return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row)                
+                #return '%s %s FROM (SELECT w_tmp.*, ROWNUM w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNUM<=%i) %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row)
             elif self._db._dbname == 'mssql' or \
                  self._db._dbname == 'mssql2':
                 if not attributes.get('orderby', None) and w2p_tablenames:
@@ -3114,7 +3114,7 @@ class Set(object):
                         new_row['_extra'] = Row()
                     new_row['_extra'][colnames[j]] = value
                     select_as_parser = re.compile("\s+AS\s+(\S+)")
-                    new_column_name = select_as_parser.search(colnames[j])                    
+                    new_column_name = select_as_parser.search(colnames[j])
                     if not new_column_name is None:
                         column_name = new_column_name.groups(0)
                         setattr(new_row,column_name[0],value)
@@ -3814,7 +3814,7 @@ BaseAdapter = SQLDB
 
 def DAL(uri='sqlite:memory:',
         pool_size=0,
-        folder=None, 
+        folder=None,
         db_codec='UTF-8',
         check_reserved=None):
     if uri == 'gae':

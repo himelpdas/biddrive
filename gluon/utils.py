@@ -54,7 +54,7 @@ def get_digest(value):
     else:
         raise ValueError("Invalid digest algorithm")
 
-web2py_uuid_locker = thread.allocate_lock() 
+web2py_uuid_locker = thread.allocate_lock()
 node_id = uuid.getnode()
 milliseconds = int(time.time() * 1e3)
 
@@ -65,7 +65,7 @@ def rotate(i):
     return (a + b + c) % 256
 
 def web2py_uuid():
-    web2py_uuid_locker.acquire()    
+    web2py_uuid_locker.acquire()
     try:
         bytes = [chr(rotate(i)) for i in range(16)]
         return str(uuid.UUID(bytes=bytes, version=4))

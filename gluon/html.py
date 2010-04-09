@@ -309,9 +309,9 @@ class DIV(XmlComponent):
                 tuple)):
             self.components = list(components[0])
         else:
-            self.components = list(components)                    
+            self.components = list(components)
         self.attributes = attributes
-        self._fixup()        
+        self._fixup()
         # converts special attributes in components attributes
         self._postprocessing()
         self.parent = None
@@ -371,7 +371,7 @@ class DIV(XmlComponent):
         self._setnode(value)
         if isinstance(i, str):
             self.attributes[i] = value
-        else:            
+        else:
             self.components[i] = value
 
     def __delitem__(self, i):
@@ -475,7 +475,7 @@ class DIV(XmlComponent):
         nothing to validate yet. May be overridden by subclasses
         """
         return True
-    
+
     def _setnode(self,value):
         if isinstance(value,DIV):
             value.parent = self
@@ -587,10 +587,10 @@ class DIV(XmlComponent):
             # we found nothing
             return None
         return elements[0]
-    
+
     def siblings(self,*args,**kargs):
         """
-        find all sibling components that match the supplied argument list 
+        find all sibling components that match the supplied argument list
         and attribute dictionary, or None if nothing could be found
         """
         sibs = [s for s in self.parent.components if not s == self]
@@ -613,11 +613,11 @@ class DIV(XmlComponent):
                     if first_only: break
             except:
                 pass
-        return matches            
-            
+        return matches
+
     def sibling(self,*args,**kargs):
         """
-        find the first sibling component that match the supplied argument list 
+        find the first sibling component that match the supplied argument list
         and attribute dictionary, or None if nothing could be found
         """
         kargs['first_only'] = True
@@ -1149,7 +1149,7 @@ class INPUT(DIV):
                 self['value'] = self['_value']
 
     def xml(self):
-        name = self.attributes.get('_name', None)        
+        name = self.attributes.get('_name', None)
         if name and hasattr(self, 'errors') \
                 and self.errors.get(name, None) \
                 and self['hideerror'] != True:
@@ -1358,7 +1358,7 @@ class BEAUTIFY(DIV):
         '<div><table><tr><td><div>a</div></td></tr><tr><td><div>b</div></td></tr><tr><td><div><table><tr><td style="font-weight:bold;"><div>hello</div></td><td valign="top">:</td><td><div>world</div></td></tr></table></div></td></tr></table></div>'
 
     turns any list, dictionary, etc into decent looking html.
-    Two special attributes are 
+    Two special attributes are
     :sorted: a function that takes the dict and returned sorted keys
     :keyfilter: a funciton that takes a key and returns its representation
                 or None if the key is to be skipped. By default key[:1]=='_' is skipped.
@@ -1384,13 +1384,13 @@ class BEAUTIFY(DIV):
             attributes['_class'] += 'i'
         if level == 0:
             return
-        for c in self.components:            
+        for c in self.components:
             if hasattr(c,'xml') and callable(c.xml):
                 components.append(c)
                 continue
             elif hasattr(c,'keys') and callable(c.keys):
                 rows = []
-                try:                    
+                try:
                     keys = (sorter and sorter(c)) or c
                     for key in keys:
                         if isinstance(key,(str,unicode)) and keyfilter:
@@ -1402,7 +1402,7 @@ class BEAUTIFY(DIV):
                         value = c[key]
                         if type(value) == types.LambdaType:
                             continue
-                        rows.append(TR(TD(filtered_key, _style='font-weight:bold;'), 
+                        rows.append(TR(TD(filtered_key, _style='font-weight:bold;'),
                                        TD(':',_valign='top'),
                                        TD(BEAUTIFY(value, **attributes))))
                     components.append(TABLE(*rows, **attributes))

@@ -371,10 +371,10 @@ class UploadWidget(FormWidget):
 
 class AutocompleteWidget:
 
-    def __init__(self, request, field, id_field=None, db=None, 
+    def __init__(self, request, field, id_field=None, db=None,
                  orderby=None, limitby=(0,10),
                  keyword='_autocomplete_%(fieldname)s',
-                 min_length=2):        
+                 min_length=2):
         self.request = request
         self.keyword = keyword % dict(fieldname=field.name)
         self.db = db or field._db
@@ -428,7 +428,7 @@ class AutocompleteWidget:
             attr['_class']='string'
             name = attr['_name']
             if 'requires' in attr: del attr['requires']
-            attr['_name'] = key2            
+            attr['_name'] = key2
             value = attr['value']
             print value
             record = self.db(self.fields[1]==value).select(self.fields[0]).first()
@@ -779,14 +779,14 @@ class SQLFORM(FORM):
                 table.append(TR(TD(a,_class='w2p_fl'),
                                 TD(c,_class='w3p_fc'),_id=id+'1',_class='even'))
                 table.append(TR(td_b,_id=id+'2',_class='odd'))
-        elif formstyle == 'divs':     
+        elif formstyle == 'divs':
             table = TAG['']()
             for id,a,b,c in xfields:
                 div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
                 table.append(DIV(DIV(a,_class='w2p_fl'),
                                  div_b,
                                  DIV(c,_class='w3p_fc'),_id=id))
-        elif formstyle == 'ul':            
+        elif formstyle == 'ul':
             table = UL()
             for id,a,b,c in xfields:
                 div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
@@ -857,7 +857,7 @@ class SQLFORM(FORM):
             onvalidation,
             )
 
-        if not ret and self.record and self.errors:            
+        if not ret and self.record and self.errors:
             for key in self.errors.keys():
                 if not key in request_vars and not request.vars[key] \
                         and not key == 'captcha' \
@@ -880,7 +880,7 @@ class SQLFORM(FORM):
 
         if not ret and not auch:
             for fieldname in self.fields:
-                field = self.table[fieldname]                
+                field = self.table[fieldname]
                 if fieldname in self.vars:
                     value = self.vars[fieldname]
                 elif self.record:
@@ -889,7 +889,7 @@ class SQLFORM(FORM):
                     value = self.table[fieldname].default
                 #was value = request_vars[fieldname]
                 if hasattr(field, 'widget') and field.widget\
-                                 and fieldname in request_vars:                             
+                                 and fieldname in request_vars:
                     row_id = '%s_%s%s' % (self.table,fieldname,SQLFORM.ID_ROW_SUFFIX)
                     self.field_parent[row_id].components = [field.widget(field, value)]
                     self.field_parent[row_id]._traverse(False)
@@ -1030,13 +1030,13 @@ class SQLTABLE(TABLE):
     :param headers: dictionary of headers to headers redefinions
     :param truncate: length at which to truncate text in table cells.
         Defaults to 16 characters.
-    :param columns: a list or dict contaning the names of the columns to be shown 
+    :param columns: a list or dict contaning the names of the columns to be shown
         Defaults to all
 
     Optional names attributes for passed to the <table> tag
 
     The keys of headers and columns must be of the form "tablename.fieldname"
-    
+
     Simple linkto example::
 
         rows = db.select(db.sometable.ALL)
@@ -1083,10 +1083,10 @@ class SQLTABLE(TABLE):
             headers = {}
             for c in columns:
                 headers[c] = ' '.join([w.capitalize() for w in c.split('.')[-1].split('_')])
-        
+
         for c in columns:
             if orderby:
-                row.append(TH(A(headers.get(c, c), 
+                row.append(TH(A(headers.get(c, c),
                                 _href=th_link+'?orderby=' + c)))
             else:
                 row.append(TH(headers.get(c, c)))
