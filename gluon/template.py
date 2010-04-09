@@ -19,6 +19,21 @@ re_unblock = re.compile('^(return|continue|break)( .*)?$', re.DOTALL)
 re_pass = re.compile('^pass( .*)?$', re.DOTALL)
 re_write = re.compile('\{\{=(?P<value>.*?)\}\}', re.DOTALL)
 re_html = re.compile('\}\}.*?\{\{', re.DOTALL)
+#
+#  re_strings, used as regex.finditer() in replace() below,
+#  finds all the Python-quoted strings in a block of text.
+#
+#  The problem is complicated by the fact that Python has
+#  four quotes, hence the four-part alternation.
+#  The first two cases, ''' and """, are looking for anything but
+#  a quote, but make special cases for one or two quotes in a row,
+#  and for escaped quotes (actually any escaped character).
+#  The second two cases, ' and ", accept non-quotes and escaped-anything,
+#  but begin with a negative lookahead to avoid finding ''' or """.
+#
+#  The four alternations are mutually exclusive, avoiding excessive
+#  backtracking in Jython.
+#
 re_strings = re.compile('('
                          + r"'''(?:[^'\\]+|'{1,2}(?!')|\\.)*'''"
                          + '|'
@@ -36,9 +51,13 @@ re_extend = re.compile('\{\{\s*extend\s+(?P<name>.+?)\s*\}\}',
                        re.DOTALL)
 
 def __re_strings(text):
-    ''''
+    '''
     expose re_strings regex for doctest
 
+    >>> __re_strings('x""y')
+    ['""']
+    >>> __re_strings('""""""')
+    ['""""""']
     >>> __re_strings('"abc"')
     ['"abc"']
     >>> __re_strings(r'"abc\\"" "x"')
@@ -111,7 +130,7 @@ def parse_template(
     context=dict(),
     ):
     """
-    filename can be a view filename in the views/ folder or an imput stream
+    filename can be a view filename in the views/ folder or an input stream
     path is the path of a views folder
     context is a dictionary of symbols used to render the template
     """
