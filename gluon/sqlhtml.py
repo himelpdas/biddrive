@@ -319,8 +319,8 @@ class UploadWidget(FormWidget):
             url = download_url + '/' + value
             (br, image) = ('', '')
             if UploadWidget.is_image(value):
-                (br, image) = \
-                    (BR(), IMG(_src = url, _width = UploadWidget.DEFAULT_WIDTH))
+                br = BR()
+                image = IMG(_src = url, _width = UploadWidget.DEFAULT_WIDTH)
             inp = DIV(inp, '[',
                       A(UploadWidget.GENERIC_DESCRIPTION, _href = url), '|',
                       INPUT(_type='checkbox',

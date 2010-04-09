@@ -559,9 +559,9 @@ class Auth(object):
         self.settings.long_expiration = 3600*30 # one month
         self.settings.remember_me_form = True
         self.settings.allow_basic_login = False
-
-        self.settings.on_failed_authorization = self.url('user',
-                                                         args='not_authorized')
+        self.settings.on_failed_authorization = \
+            self.url('user',args='not_authorized')
+        self.settings.formstyle = 'table3cols'
 
         # ## table names to be used
 
@@ -610,6 +610,7 @@ class Auth(object):
         self.settings.change_password_next = self.url('index')
 
         self.settings.hmac_key = None
+        self.settings.lock_keys = True
 
 
         # ## these are messages that can be customized
@@ -1040,6 +1041,7 @@ class Auth(object):
                 showid=self.settings.showid,
                 submit_button=self.messages.submit_button,
                 delete_label=self.messages.delete_label,
+                formstyle=self.settings.formstyle
                 )
 
             if self.settings.remember_me_form:
@@ -1243,7 +1245,9 @@ class Auth(object):
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
-                       delete_label=self.messages.delete_label)
+                       delete_label=self.messages.delete_label,
+                       formstyle=self.settings.formstyle
+                       )
         for i, row in enumerate(form[0].components):
             item = row[1][0]
             if isinstance(item, INPUT) and item['_name'] == passfield:
@@ -1399,7 +1403,9 @@ class Auth(object):
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
-                       delete_label=self.messages.delete_label)
+                       delete_label=self.messages.delete_label,
+                       formstyle=self.settings.formstyle
+                       )
         if form.accepts(request.post_vars, session,
                         formname='retrieve_username', dbio=False,
                         onvalidation=onvalidation):
@@ -1480,7 +1486,9 @@ class Auth(object):
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
-                       delete_label=self.messages.delete_label)
+                       delete_label=self.messages.delete_label,
+                       formstyle=self.settings.formstyle
+                       )
         if form.accepts(request.post_vars, session,
                         formname='retrieve_password', dbio=False,
                         onvalidation=onvalidation):
@@ -1613,7 +1621,9 @@ class Auth(object):
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
-                       delete_label=self.messages.delete_label)
+                       delete_label=self.messages.delete_label,
+                       formstyle=self.settings.formstyle
+                       )
         if form.accepts(request.post_vars, session,
                         formname='reset_password', dbio=False,
                         onvalidation=onvalidation):
@@ -1767,7 +1777,8 @@ class Auth(object):
             showid=self.settings.showid,
             submit_button=self.messages.submit_button,
             delete_label=self.messages.delete_label,
-            upload=self.settings.download_url
+            upload=self.settings.download_url,
+            formstyle=self.settings.formstyle
             )
         if form.accepts(request.post_vars, session,
                         formname='profile',
@@ -2210,6 +2221,7 @@ class Crud(object):
         self.settings.create_captcha = None
         self.settings.update_captcha = None
         self.settings.captcha = None
+        self.settings.formstyle = 'table3cols'
         self.settings.lock_keys = True
 
         self.messages = Messages(self.environment.T)
@@ -2395,6 +2407,7 @@ class Crud(object):
             delete_label=self.messages.delete_label,
             deletable=deletable,
             upload=self.settings.download_url,
+            formstyle=self.settings.formstyle
             )
         captcha = self.settings.update_captcha or \
                   self.settings.captcha
@@ -2491,6 +2504,7 @@ class Crud(object):
             comments=False,
             upload=self.settings.download_url,
             showid=self.settings.showid,
+            formstyle=self.settings.formstyle
             )
         if self.environment.request.extension != 'html':
             return table._filter_fields(form.record, id=True)
