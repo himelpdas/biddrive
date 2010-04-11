@@ -434,7 +434,7 @@ class BaseAdapter(ConnectionPool):
                     fields.append(field)
         else:
             for f in fields:
-                if not f in tablenames:
+                if not f._tablename in tablenames:
                     tablenames.append(f._tablename)
         if len(tablenames) < 1:
             raise SyntaxError, 'Set: no tables selected'
