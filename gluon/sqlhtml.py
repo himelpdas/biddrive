@@ -859,8 +859,7 @@ class SQLFORM(FORM):
 
         if not ret and self.record and self.errors:
             for key in self.errors.keys():
-                if not key in request_vars and not request.vars[key] \
-                        and not key == 'captcha' \
+                if not key in request_vars \
                         and self.table[key].type=='upload' \
                         and self.record[key] \
                         and not key+UploadWidget.ID_DELETE_SUFFIX in request_vars:
@@ -947,6 +946,8 @@ class SQLFORM(FORM):
                 newfilename = field.store(source_file, original_filename)
                 self.vars['%s_newfilename' % fieldname] = \
                     fields[fieldname] = newfilename
+# proposed by Hamdy (accept?)
+#               self.vars['%s' % fieldname] = newfilename
                 if field.uploadfield and not field.uploadfield==True:
                     fields[field.uploadfield] = source_file.read()
                 continue
