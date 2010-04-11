@@ -859,7 +859,7 @@ class SQLFORM(FORM):
 
         if not ret and self.record and self.errors:
             for key in self.errors.keys():
-                if not key in request_vars \
+                if not request_vars.get(key,None) \
                         and self.table[key].type=='upload' \
                         and self.record[key] \
                         and not key+UploadWidget.ID_DELETE_SUFFIX in request_vars:
