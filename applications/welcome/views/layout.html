@@ -1,8 +1,7 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{{=T.accepted_language or 'en'}}">
   <head>
     <title>{{=response.title or request.application}}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <!-- include requires CSS files
     {{response.files.append(URL(request.application,'static','base.css'))}}
     {{response.files.append(URL(request.application,'static','ez-plug-min.css'))}}
@@ -58,7 +57,7 @@
       </div> 
       <div class="ez-box footer">
         <p>
-          {{=T('Copyright')}} &copy; 2009 -
+          {{=T('Copyright')}} &#169; 2009 -
           {{=T('Powered by')}} <a href="http://www.web2py.com">web2py</a>
         </p>
       </div>
