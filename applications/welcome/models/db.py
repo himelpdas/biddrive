@@ -27,16 +27,19 @@ else:                                         # else use a normal relational dat
 
 from gluon.tools import *
 auth=Auth(globals(),db)                      # authentication/authorization
-auth.settings.hmac_key='<your secret key>'
-auth.define_tables()                         # creates all needed tables
 crud=Crud(globals(),db)                      # for CRUD helpers using auth
 service=Service(globals())                   # for json, xml, jsonrpc, xmlrpc, amfrpc
+plugins=PluginManager(globals())             # for plugin configuration
 
 # crud.settings.auth=auth                      # enforces authorization on crud
 # mail=Mail()                                  # mailer
 # mail.settings.server='smtp.gmail.com:587'    # your SMTP server
 # mail.settings.sender='you@gmail.com'         # your email
 # mail.settings.login='username:password'      # your credentials or None
+
+auth.settings.hmac_key='<your secret key>'
+auth.define_tables()                         # creates all needed tables
+
 # auth.settings.mailer=mail                    # for user email verification
 # auth.settings.registration_requires_verification = True
 # auth.settings.registration_requires_approval = True

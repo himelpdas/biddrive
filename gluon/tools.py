@@ -34,7 +34,7 @@ import serializers
 import contrib.simplejson as simplejson
 from sql import Field
 
-__all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'fetch', 'geocode']
+__all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode']
 
 DEFAULT = lambda: None
 
@@ -3098,3 +3098,23 @@ def prettydate(d,T=lambda x:x):
         return T('1 second ago')
     else:
         return T('now')
+
+class PluginManager(dict):
+    """
+    This object stored parameters to configure plugins (if they need configuration)
+    In models/db.py instantiate the PluginManager
+
+    plugins=PluginManager()
+
+    then set the parameters required plugins, for example
+
+    plugins.comments.db=db
+
+    (each plugin should have a documented set of required parameters)
+    """
+    def __init__(self,env):
+        self['globals'] = env
+    def __getattr__(self, key):
+        if not key in self:
+            self[key] = Storage()
+        return self[key]

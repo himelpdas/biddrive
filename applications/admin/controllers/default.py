@@ -821,8 +821,7 @@ def create_file():
                 raise SyntaxError
 
             fn = re.sub('\W', '', filename[:-3].lower())
-            text = '# coding: utf8\n# %s\n%s=DAL("sqlite://%s.db")'
-            text = text % (T('try something like'), fn, fn)
+            text = '# coding: utf8\n'
 
         elif path[-13:] == '/controllers/':
             # Handle python controllers
