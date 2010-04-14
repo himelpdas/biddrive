@@ -19,7 +19,7 @@ from utils import web2py_uuid
 from storage import Storage
 from http import HTTP
 
-__all__ = ['RestrictedError', 'restricted', 'TicketStorage']
+__all__ = ['RestrictedError', 'restricted', 'TicketStorage', 'compile2']
 
 
 class TicketStorage(Storage):
@@ -156,6 +156,11 @@ class RestrictedError:
         self.output = d['output']
         self.traceback = d['traceback']
 
+def compile2(code,layer):
+    """
+    The +'\n' is necessary else complile fails when code ends in a comment.
+    """
+    return compile(code.rstrip().replace('\r\n','\n')+'\n', layer, 'exec')
 
 def restricted(code, environment={}, layer='Unknown'):
     """
@@ -168,7 +173,7 @@ def restricted(code, environment={}, layer='Unknown'):
         if type(code) == types.CodeType:
             ccode = code
         else:
-            ccode = compile(code.replace('\r\n', '\n'), layer, 'exec')
+            ccode = compile2(code,layer)
 
         exec ccode in environment
     except HTTP:
@@ -179,3 +184,4 @@ def restricted(code, environment={}, layer='Unknown'):
             etype, evalue, tb = sys.exc_info()
             sys.excepthook(etype, evalue, tb)
         raise RestrictedError(layer, code, '', environment)
+

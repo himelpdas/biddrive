@@ -21,7 +21,7 @@ import copy
 import random
 from storage import Storage, List
 from template import parse_template
-from restricted import restricted
+from restricted import restricted, compile2
 from fileutils import listdir
 from myregex import regex_expose
 from languages import translator
@@ -330,10 +330,8 @@ def run_models_in(environment):
         for model in models:
             layer = model
             if is_gae:
-                code = getcfs(model, model, lambda: \
-                              compile(open(model, 'r')\
-                              .read().replace('\r\n', '\n'), layer,
-                              'exec'))
+                code = getcfs(model, model, 
+                              lambda: compile2(open(model, 'r').read(),layer))
             else:
                 code = getcfs(model, model, None)
             restricted(code, environment, layer)
@@ -389,9 +387,7 @@ def run_controller_in(controller, function, environment):
         code = "%s\nresponse._vars=response._caller(%s)\n" % (code, function)
         if is_gae:
             layer = filename + ':' + function
-            code = getcfs(layer, filename, lambda: \
-                          compile(code.replace('\r\n', '\n'), layer,
-                          'exec'))
+            code = getcfs(layer, filename,  lambda: compile2(code,layer))
         restricted(code, environment, filename)
     response = environment['response']
     vars=response._vars
@@ -451,11 +447,10 @@ def run_view_in(environment):
                        web2py_error='invalid view')
         layer = filename
         if is_gae:
-            ccode = getcfs(layer, filename, lambda: \
-                           compile(parse_template(response.view,
-                           os.path.join(folder, 'views/'),
-                           context=environment).replace('\r\n', '\n'),
-                           layer, 'exec'))
+            ccode = getcfs(layer, filename,
+                           lambda: compile2(parse_template(response.view,
+                                            os.path.join(folder, 'views/'),
+                                            context=environment),layer))
         else:
             ccode = parse_template(response.view,
                 os.path.join(folder, 'views/'), context=environment)
