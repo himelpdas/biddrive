@@ -256,6 +256,8 @@ class Mail(object):
         if len(to) == 0:
             raise Exception('Target receiver address not specified')
         payload = MIMEMultipart.MIMEMultipart('related')
+        payload['From'] =\
+            self.settings.sender.decode(encoding).encode('utf-8')
         payload['To'] = \
             header.Header(', '.join(to).decode(encoding).encode('utf-8'),'utf-8')
         if reply_to != None:
