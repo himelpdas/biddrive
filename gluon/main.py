@@ -595,10 +595,17 @@ class HttpServer(object):
         request_queue_size=5,
         timeout=10,
         shutdown_timeout=None, # Rocket does not use a shutdown timeout
+        path=None
         ):
         """
         starts the web server.
         """
+        
+        if path:
+            # if a path is specified change the global variables so that web2py
+            # runs from there instead of cwd or os.environ['web2py_path'] 
+            global web2py_path
+            web2py_path = path
 
         save_password(password, port)
         self.pid_filename = pid_filename

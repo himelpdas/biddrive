@@ -367,7 +367,6 @@ class web2pyDialog(object):
         try:
             options = self.options
             req_queue_size = options.request_queue_size
-            main.web2py_path=options.folder
             self.server = main.HttpServer(
                 ip,
                 port,
@@ -381,7 +380,8 @@ class web2pyDialog(object):
                 server_name=options.server_name,
                 request_queue_size=req_queue_size,
                 timeout=options.timeout,
-                shutdown_timeout=options.shutdown_timeout)
+                shutdown_timeout=options.shutdown_timeout,
+                path=options.folder)
 
             thread.start_new_thread(self.server.start, ())
         except Exception, e:
@@ -845,7 +845,6 @@ def start(cron = True):
     print '\thttp://%s:%s' % (ip, port)
     print 'use "kill -SIGTERM %i" to shutdown the web2py server' % os.getpid()
 
-    main.web2py_path=options.folder
     server = main.HttpServer(ip=ip,
                              port=port,
                              password=options.password,
@@ -858,7 +857,8 @@ def start(cron = True):
                              server_name=options.server_name,
                              request_queue_size=options.request_queue_size,
                              timeout=options.timeout,
-                             shutdown_timeout=options.shutdown_timeout)
+                             shutdown_timeout=options.shutdown_timeout,
+                             path=options.folder)
 
     try:
         server.start()
