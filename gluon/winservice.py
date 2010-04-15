@@ -100,8 +100,9 @@ class Web2pyService(Service):
         else:
             opt_mod = self._exe_args_
         options = __import__(opt_mod, [], [], '')
-        from main import HttpServer
-        self.server = HttpServer(
+        import main
+        main.web2py_path=options.folder
+        self.server = main.HttpServer(
             ip=options.ip,
             port=options.port,
             password=options.password,
@@ -115,7 +116,6 @@ class Web2pyService(Service):
             request_queue_size=options.request_queue_size,
             timeout=options.timeout,
             shutdown_timeout=options.shutdown_timeout,
-            path=options.folder,
             )
         try:
             self.server.start()
