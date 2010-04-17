@@ -7,13 +7,14 @@ Utility functions for the Admin application
 ===========================================
 """
 import os
+import sys
+import traceback
 import zipfile
 import urllib
 from utils import web2py_uuid
 from shutil import rmtree, copyfile
 from fileutils import *
 from restricted import RestrictedError
-
 
 def apath(path='', r=None):
     """
@@ -139,10 +140,10 @@ def app_compile(app, request):
     folder = apath(app, request)
     try:
         compile_application(folder)
-        return True
-    except (Exception, RestrictedError):
-        remove_compiled_application(folder)
         return False
+    except (Exception, RestrictedError), e:
+        remove_compiled_application(folder)
+        return traceback.format_exc(sys.exc_info)
 
 def app_create(app, request):
     """

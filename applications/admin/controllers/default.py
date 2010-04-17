@@ -211,12 +211,10 @@ def cleanup():
 
 def compile_app():
     c = app_compile(request.args[0], request)
-    if c:
+    if not c:
         session.flash = T('application compiled')
     else:
-        import traceback
-        tb = traceback.format_exc()
-        session.flash = DIV(T('Cannot compile: there are errors in your app:',CODE(tb)))    
+        session.flash = DIV(T('Cannot compile: there are errors in your app:',CODE(c)))    
     redirect(URL(r=request, f='site'))
 
 
