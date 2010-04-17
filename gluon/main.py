@@ -748,19 +748,16 @@ def parse_url(request, environ):
     # parse application, controller and function
     # ##################################################
 
-    path = re.sub('%20', ' ', path)
+    path = regex_space.sub('_',path)
     match = regex_url.match(path)
     if not match or match.group('c') == 'static':
         raise HTTP(400,
                    rewrite.params.error_message,
                    web2py_error='invalid path')
 
-    request.application = \
-        regex_space.sub('_', match.group('a') or 'init')
-    request.controller = \
-        regex_space.sub('_', match.group('c') or 'default')
-    request.function = \
-        regex_space.sub('_', match.group('f') or 'index')
+    request.application = match.group('a') or 'init'
+    request.controller = match.group('c') or 'default'
+    request.function = match.group('f') or 'index'
     group_e = match.group('e')
     raw_extension = group_e and regex_space.sub('_',group_e) or None
     request.extension = raw_extension or 'html'
