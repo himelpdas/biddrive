@@ -746,7 +746,7 @@ def start(cron = True):
 
 
     # ## if -T run doctests (no cron)
-    if options.test:
+    if hasattr(options,'test') and options.test:
         test(options.test, verbose=options.verbose)
         return
 
