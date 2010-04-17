@@ -1340,7 +1340,7 @@ class FireBirdAdapter(BaseAdapter):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
 
     def SUBSTRING(self,field,parameters):
-        return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
+        return 'SUBSTRING(%s from %s for %s)' % (self.expand(field), parameters[0], parameters[1])
 
     def DROP(self,table,mode):
         sequence_name = self.sequence_name(table)

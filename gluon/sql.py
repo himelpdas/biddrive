@@ -317,7 +317,7 @@ SQL_DIALECTS = {
         'left join': 'LEFT JOIN',
         'random': 'RAND()',
         'notnull': 'DEFAULT %(default)s NOT NULL',
-        'substring': 'SUBSTRING(%(field)s,%(pos)s,%(length)s)',
+        'substring': 'SUBSTRING(%(field)s from %(pos)s for %(length)s)',
         },
     'informix': {
         'boolean': 'CHAR(1)',
