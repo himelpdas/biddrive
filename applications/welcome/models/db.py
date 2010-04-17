@@ -26,31 +26,32 @@ else:                                         # else use a normal relational dat
 ## comment/uncomment as needed
 
 from gluon.tools import *
-auth=Auth(globals(),db)                      # authentication/authorization
-crud=Crud(globals(),db)                      # for CRUD helpers using auth
-service=Service(globals())                   # for json, xml, jsonrpc, xmlrpc, amfrpc
-plugins=PluginManager(globals())             # for plugin configuration
+auth=Auth(globals(),db)              # authentication/authorization
+crud=Crud(globals(),db)              # for CRUD helpers using auth
+service=Service(globals())           # for json, xml, jsonrpc, xmlrpc, amfrpc
 
-# crud.settings.auth=auth                      # enforces authorization on crud
 # mail=Mail()                                  # mailer
 # mail.settings.server='smtp.gmail.com:587'    # your SMTP server
 # mail.settings.sender='you@gmail.com'         # your email
 # mail.settings.login='username:password'      # your credentials or None
 
 auth.settings.hmac_key='<your secret key>'
-auth.define_tables()                         # creates all needed tables
+auth.define_tables()                 # creates all needed tables
 
-# auth.settings.mailer=mail                    # for user email verification
+# auth.settings.mailer=mail          # for user email verification
 # auth.settings.registration_requires_verification = True
 # auth.settings.registration_requires_approval = True
 # auth.messages.verify_email = 'Click on the link http://'+request.env.http_host+URL(r=request,c='default',f='user',args=['verify_email'])+'/%(key)s to verify your email'
 # auth.settings.reset_password_requires_verification = True
 # auth.messages.reset_password = 'Click on the link http://'+request.env.http_host+URL(r=request,c='default',f='user',args=['reset_password'])+'/%(key)s to reset your password'
+
+# crud.settings.auth=auth            # enforces authorization on crud
+
 ## more options discussed in gluon/tools.py
 #########################################################################
 
 #########################################################################
-## Define your tables below, for example
+## Define your tables below (or better in another model file) for example
 ##
 ## >>> db.define_table('mytable',Field('myfield','string'))
 ##

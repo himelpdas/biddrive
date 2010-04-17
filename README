@@ -710,3 +710,27 @@ gluon/contrib/login_methods/linkedin_account.py (to be tested)
 
 #1.76.5
 Fixed a typo in auth that created some registration problems
+
+#1.77.1
+Replaced CherryPy with Rocket web server, thanks Tim
+CacheOnDisk allows to specify a folder
+IS_DATE/DATETIME can handle any year since 0
+Field().with_alias, thanks Nathan and Mengu
+has_membership(group=...,role=...), thank Jonathan
+db.define_table(username=True), thanks Jonathan
+gluon.tools.prettydate
+can specify hostname in routes_out (same syntax as routes in), thanks Martin
+db.table.bulk_insert([...records...]) now works on GAE, thanks Jon
+IS_EMAIL validates on 'localhost', thanks Jonathan
+welcome/views/layout.html uses ez.css, thanks Yarko
+mail attachments support utf8, thanks szimszon
+works with PyPy, thanks Joe
+better Firebird support, thanks Jose
+better Oracle support, thanks Gabriele
+cron supports days of week
+SQLFORM(...,formstyle="table3cols") or "table2cols" or "divs" or "ul"
+crud.settings.formstyle
+web2py.py -f folder allows to specify locations of applications, thanks Iceberg
+better/faster regex in template works in Jython
+fixed lots of small bugs
+
