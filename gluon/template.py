@@ -154,7 +154,12 @@ def parse_template(
         match = re_extend.search(text)
         if not match:
             break
-        t = os.path.join(path, eval(match.group('name'), context))
+        try:
+            name = match.group('name')
+            t = os.path.join(path, eval(name, context))
+        except:
+            raise restricted.RestrictedError('Processing View %s' % filename,
+                  text, '', 'Unable to evaluate expression: ' + name)
         try:
             fp = open(t, 'rb')
             parent = fp.read()

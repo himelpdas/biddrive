@@ -735,7 +735,7 @@ def start(cron = True):
     # ## if -L load options from options.config file
     if options.config:
         try:
-            options = __import__(options.config, [], [], '')
+            options2 = __import__(options.config, [], [], '')
         except Exception:
             try:
                 # Jython doesn't like the extra stuff
@@ -743,7 +743,9 @@ def start(cron = True):
             except Exception:
                 print 'Cannot import config file [%s]' % options.config
                 sys.exit(1)
-
+        for key in dir(options2):
+            if hasattr(options,key):
+                setattr(options,key,getattr(options2,key))
 
     # ## if -T run doctests (no cron)
     if hasattr(options,'test') and options.test:

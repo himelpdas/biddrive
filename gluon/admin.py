@@ -140,8 +140,8 @@ def app_compile(app, request):
     folder = apath(app, request)
     try:
         compile_application(folder)
-        return False
-    except (Exception, RestrictedError), e:
+        return None
+    except (Exception, RestrictedError):
         remove_compiled_application(folder)
         return traceback.format_exc(sys.exc_info)
 
