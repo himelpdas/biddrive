@@ -34,7 +34,7 @@ import serializers
 import contrib.simplejson as simplejson
 from sql import Field
 
-__all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode']
+__all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode', 'prettydate']
 
 DEFAULT = lambda: None
 
