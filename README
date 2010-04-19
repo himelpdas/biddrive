@@ -715,6 +715,7 @@ Fixed a typo in auth that created some registration problems
 Replaced CherryPy with Rocket web server, thanks Tim
 CacheOnDisk allows to specify a folder
 IS_DATE/DATETIME can handle any year since 0
+SQLTABLE(...,headers='fieldname:capitalize')
 Field().with_alias, thanks Nathan and Mengu
 has_membership(group=...,role=...), thank Jonathan
 db.define_table(username=True), thanks Jonathan
@@ -733,4 +734,3 @@ crud.settings.formstyle
 web2py.py -f folder allows to specify locations of applications, thanks Iceberg
 better/faster regex in template works in Jython
 fixed lots of small bugs
-
