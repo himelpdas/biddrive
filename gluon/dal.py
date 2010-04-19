@@ -134,7 +134,6 @@ class Logger(object):
 
     def __init__(self,folder,name='sql.log'):
         if isinstance(folder,(str,unicode)):
-            print os.path.join(folder,name)
             self.file = open(os.path.join(folder,name),'a')
         else:
             self.file = None
