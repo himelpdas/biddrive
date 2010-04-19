@@ -968,6 +968,7 @@ class SQLDB(dict):
             self._cursor = self._connection.cursor()
             self._execute = lambda a: \
                 oracle_fix_execute(a,self._cursor.execute)
+            # self._execute("ALTER SESSION set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';") 
             self._execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
             self._execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
         elif self._uri[:8] == 'mssql://' or self._uri[:9] == 'mssql2://':
