@@ -3205,7 +3205,7 @@ class Set(object):
                             colset[referee_table] = SetClass(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
-        rowsobj = Rows(db, new_rows, colnames)
+        rowsobj = Rows(db, new_rows, colnames, rawrows=rows)        
         for table, virtualfields in virtualtables:
             for item in virtualfields:
                 rowsobj = rowsobj.setvirtualfields(**{table:item})
@@ -3337,12 +3337,14 @@ class Rows(object):
         db=None,
         records=[],
         colnames=[],
-        compact=True
+        compact=True,
+        rawrows=None,
         ):
         self.db = db
         self.records = records
         self.colnames = colnames
         self.compact = compact
+        self.response = rawrows
 
     def setvirtualfields(self,**keyed_virtualfields):
         if not keyed_virtualfields:
