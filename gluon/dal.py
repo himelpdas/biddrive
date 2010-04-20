@@ -1130,7 +1130,7 @@ class OracleAdapter(BaseAdapter):
         self.find_or_make_work_folder()
         uri = uri.split('://')[1]
         self.pool_connection(lambda uri=uri: cx_Oracle.connect(uri,threaded=True))
-        self.execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
+        self.execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
         self.execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
     oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
 
