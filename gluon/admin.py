@@ -141,7 +141,8 @@ def app_compile(app, request):
     try:
         compile_application(folder)
         return None
-    except (Exception, RestrictedError):
+    except (Exception, RestrictedError), e:
+        print e
         remove_compiled_application(folder)
         return traceback.format_exc(sys.exc_info)
 

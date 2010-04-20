@@ -279,7 +279,7 @@ def compile_models(folder):
         fp = open(os.path.join(path, file), 'r')
         data = fp.read()
         fp.close()
-        filename = os.path.join(folder, 'compiled/', ('models/'
+        filename = os.path.join(folder, 'compiled', ('models/'
                                  + file).replace('/', '_'))
         fp = open(filename, 'w')
         fp.write(data)
@@ -295,7 +295,7 @@ def compile_controllers(folder):
 
     path = os.path.join(folder, 'controllers/')
     for file in listdir(path, '.+\.py$'):
-        save_pyc(os.path.join(path, file))
+        ### save_pyc(os.path.join(path, file))
         fp = open(path + file, 'r')
         data = fp.read()
         fp.close()
@@ -303,7 +303,7 @@ def compile_controllers(folder):
         for function in exposed:
             command = data + "\nresponse._vars=response._caller(%s)\n" % \
                 function
-            filename = os.path.join(folder, 'compiled/', ('controllers/'
+            filename = os.path.join(folder, 'compiled', ('controllers/'
                                      + file[:-3]).replace('/', '_')
                                      + '_' + function + '.py')
             fp = open(filename, 'w')
@@ -437,10 +437,10 @@ def run_view_in(environment):
                    rewrite.params.error_message_custom % 'invalid view',
                    web2py_error='invalid view')
     else:
-        filename = os.path.join(folder, 'views/', response.view)
+        filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
             response.view = 'generic.' + request.extension
-        filename = os.path.join(folder, 'views/', response.view)
+        filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
             raise HTTP(400,
                        rewrite.params.error_message_custom % 'invalid view',
@@ -478,7 +478,7 @@ def compile_application(folder):
     Compiles all models, views, controller for the application in `folder`.
     """
     remove_compiled_application(folder)
-    os.mkdir(os.path.join(folder, 'compiled/'))
+    os.mkdir(os.path.join(folder, 'compiled'))
     compile_models(folder)
     compile_controllers(folder)
     compile_views(folder)

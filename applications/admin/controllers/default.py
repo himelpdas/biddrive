@@ -214,7 +214,8 @@ def compile_app():
     if not c:
         session.flash = T('application compiled')
     else:
-        session.flash = DIV(T('Cannot compile: there are errors in your app:',CODE(c)))    
+        session.flash = DIV(T('Cannot compile: there are errors in your app:',
+                              CODE(c)))    
     redirect(URL(r=request, f='site'))
 
 
