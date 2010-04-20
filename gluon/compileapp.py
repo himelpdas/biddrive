@@ -295,7 +295,7 @@ def compile_controllers(folder):
 
     path = os.path.join(folder, 'controllers/')
     for file in listdir(path, '.+\.py$'):
-        ### save_pyc(os.path.join(path, file))
+        save_pyc(os.path.join(path, file))
         fp = open(path + file, 'r')
         data = fp.read()
         fp.close()
