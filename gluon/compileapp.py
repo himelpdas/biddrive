@@ -257,7 +257,7 @@ def compile_views(folder):
     Compiles all the views in the application specified by `folder`
     """
 
-    path = os.path.join(folder, 'views/')
+    path = os.path.join(folder, 'views')
     for file in listdir(path, '^[\w/]+\.\w+$'):
         data = parse_template(file, path)
         filename = ('views/%s.py' % file).replace('/', '_').replace('\\', '_')
@@ -274,7 +274,7 @@ def compile_models(folder):
     Compiles all the models in the application specified by `folder`
     """
 
-    path = os.path.join(folder, 'models/')
+    path = os.path.join(folder, 'models')
     for file in listdir(path, '.+\.py$'):
         fp = open(os.path.join(path, file), 'r')
         data = fp.read()
@@ -293,10 +293,10 @@ def compile_controllers(folder):
     Compiles all the controllers in the application specified by `folder`
     """
 
-    path = os.path.join(folder, 'controllers/')
+    path = os.path.join(folder, 'controllers')
     for file in listdir(path, '.+\.py$'):
         ### why is this here? save_pyc(os.path.join(path, file))
-        fp = open(path + file, 'r')
+        fp = open(os.path.join(path,file), 'r')
         data = fp.read()
         fp.close()
         exposed = regex_expose.findall(data)
@@ -320,12 +320,12 @@ def run_models_in(environment):
     """
 
     folder = environment['request'].folder
-    path = os.path.join(folder, 'compiled/')
+    path = os.path.join(folder, 'compiled')
     if os.path.exists(path):
         for model in listdir(path, '^models_.+\.pyc$', 0):
             restricted(read_pyc(model), environment, layer=model)
     else:
-        models = listdir(os.path.join(folder, 'models/'), '^\w+\.py$',
+        models = listdir(os.path.join(folder, 'models'), '^\w+\.py$',
                          0)
         for model in models:
             layer = model
@@ -347,7 +347,7 @@ def run_controller_in(controller, function, environment):
     # if compiled should run compiled!
 
     folder = environment['request'].folder
-    path = os.path.join(folder, 'compiled/')
+    path = os.path.join(folder, 'compiled')
     if os.path.exists(path):
         filename = os.path.join(path, 'controllers_%s_%s.pyc'
                                  % (controller, function))
@@ -411,9 +411,9 @@ def run_view_in(environment):
     request = environment['request']
     response = environment['response']
     folder = request.folder
-    path = os.path.join(folder, 'compiled/')
+    path = os.path.join(folder, 'compiled')
     if not isinstance(response.view, str):
-        ccode = parse_template(response.view, os.path.join(folder, 'views/'),
+        ccode = parse_template(response.view, os.path.join(folder, 'views'),
                                context=environment)
         restricted(ccode, environment, 'file stream')
     elif os.path.exists(path):
@@ -449,11 +449,11 @@ def run_view_in(environment):
         if is_gae:
             ccode = getcfs(layer, filename,
                            lambda: compile2(parse_template(response.view,
-                                            os.path.join(folder, 'views/'),
+                                            os.path.join(folder, 'views'),
                                             context=environment),layer))
         else:
             ccode = parse_template(response.view,
-                os.path.join(folder, 'views/'), context=environment)
+                os.path.join(folder, 'views'), context=environment)
         restricted(ccode, environment, layer)
 
 def remove_compiled_application(folder):
@@ -461,11 +461,11 @@ def remove_compiled_application(folder):
     Deletes the folder `compiled` containing the compiled application.
     """
     try:
-        path = os.path.join(folder, 'compiled/')
+        path = os.path.join(folder, 'compiled')
         for file in listdir(path):
             os.unlink(os.path.join(path, file))
         os.rmdir(path)
-        path = os.path.join(folder, 'controllers/')
+        path = os.path.join(folder, 'controllers')
         for file in os.listdir(path):
             if file.endswith('.pyc'):
                 os.unlink(os.path.join(path, file))

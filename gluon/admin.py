@@ -141,10 +141,10 @@ def app_compile(app, request):
     try:
         compile_application(folder)
         return None
-    except (Exception, RestrictedError), e:
-        print e
+    except (Exception, RestrictedError):
+        tb = traceback.format_exc(sys.exc_info)
         remove_compiled_application(folder)
-        return traceback.format_exc(sys.exc_info)
+        return tb
 
 def app_create(app, request):
     """
