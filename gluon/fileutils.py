@@ -280,12 +280,13 @@ def fix_newlines(path):
 )''')
     for filename in listdir(path, '.*\.(py|html)$', drop=False):
         fp = open(filename, 'rb')
-        data = fp.read()
+        rdata = fp.read()
         fp.close()
-        data = regex.sub('\n', data)
-        fp = open(filename, 'wb')
-        fp.write(data)
-        fp.close()
+        wdata = regex.sub('\n', rdata)
+        if wdata != rdata:
+            fp = open(filename, 'wb')
+            fp.write(wdata)
+            fp.close()
 
 def copystream(
     src,
