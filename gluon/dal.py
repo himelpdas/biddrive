@@ -3053,7 +3053,7 @@ class Field(Expression):
         encoded_filename = base64.b16encode(filename).lower()
         newfilename = '%s.%s.%s.%s' % \
             (self._tablename, self.name, uuid_key, encoded_filename)
-        newfilename = newfilename[:500] + '.' + extension
+        newfilename = newfilename[:200] + '.' + extension
         if self.uploadfield == True:
             if path:
                 pass
