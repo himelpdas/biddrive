@@ -3825,8 +3825,12 @@ def DAL(uri='sqlite:memory:',
         import gluon.contrib.gql
         return gluon.contrib.gql.GQLDB()
     else:
-        return SQLDB(uri, pool_size=pool_size, folder=folder,
-                     db_codec=db_codec, check_reserved=check_reserved)
+        for k in range(3):
+            try:
+                return SQLDB(uri, pool_size=pool_size, folder=folder,
+                             db_codec=db_codec, check_reserved=check_reserved)
+            except: pass
+        raise RuntimeError, "Failure to connect to DB. Tried 3 times"
 
 if __name__ == '__main__':
     import doctest

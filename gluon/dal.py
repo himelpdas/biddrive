@@ -2018,7 +2018,16 @@ class DAL(dict):
             prefix = ''
         if uri and uri.find(':')>=0:
             self._dbname = uri.split(':')[0]
-            self._adapter = ADAPTERS[prefix+self._dbname](self,uri,pool_size,folder,db_codec)
+            connected = False
+            for k in range(3):
+                try:
+                    self._adapter = ADAPTERS[prefix+self._dbname](self,uri,pool_size,folder,db_codec)
+                    connected = True
+                    break
+                except:
+                    pass
+            if not connected:
+                raise RuntimeError, "Failure to connect, tried 3 times"
         else:
             self._adapter = BaseAdapter(self,uri)
         self.tables = SQLCallableList()
