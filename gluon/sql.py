@@ -23,6 +23,7 @@ import re
 import sys
 import locale
 import os
+import time
 import types
 import cPickle
 import datetime
@@ -3825,12 +3826,13 @@ def DAL(uri='sqlite:memory:',
         import gluon.contrib.gql
         return gluon.contrib.gql.GQLDB()
     else:
-        for k in range(3):
+        for k in range(5):
             try:
                 return SQLDB(uri, pool_size=pool_size, folder=folder,
                              db_codec=db_codec, check_reserved=check_reserved)
-            except: pass
-        raise RuntimeError, "Failure to connect to DB. Tried 3 times"
+            except:
+                time.sleep(1)
+        raise RuntimeError, "Failure to connect to DB. Tried 5 times"
 
 if __name__ == '__main__':
     import doctest

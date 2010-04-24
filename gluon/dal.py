@@ -34,6 +34,7 @@ import types
 import cPickle
 import datetime
 import thread
+import time
 import cStringIO
 import csv
 import copy
@@ -2019,15 +2020,15 @@ class DAL(dict):
         if uri and uri.find(':')>=0:
             self._dbname = uri.split(':')[0]
             connected = False
-            for k in range(3):
+            for k in range(5):
                 try:
                     self._adapter = ADAPTERS[prefix+self._dbname](self,uri,pool_size,folder,db_codec)
                     connected = True
                     break
                 except:
-                    pass
+                    time.sleep(1)
             if not connected:
-                raise RuntimeError, "Failure to connect, tried 3 times"
+                raise RuntimeError, "Failure to connect, tried 5 times"
         else:
             self._adapter = BaseAdapter(self,uri)
         self.tables = SQLCallableList()
