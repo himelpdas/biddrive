@@ -239,7 +239,7 @@ def crondance(web2py_path, ctype='soft', startup=False):
         try:
             f = open(crontab, 'rt')
             cronlines = f.readlines()
-            lines = [x.strip() for x in cronlines if not x.strip().startswith('#')]         
+            lines = [x.strip() for x in cronlines if x.strip() and not x.strip().startswith('#')]         
             tasks = [parsecronline(cline) for cline in lines]
         except Exception, e:
             logging.error('WEB2PY CRON: crontab read error %s' % e)
