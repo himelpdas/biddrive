@@ -64,6 +64,7 @@ __all__ = [
     'P',
     'PRE',
     'SCRIPT',
+    'OPTGROUP',
     'SELECT',
     'SPAN',
     'STYLE',
@@ -1195,6 +1196,19 @@ class OBJECT(DIV):
 
     tag = 'object'
 
+class OPTGROUP(DIV):
+
+    tag = 'optgroup'
+
+    def _fixup(self):
+        components = []
+        for c in self.components:
+            if isinstance(c, OPTION):
+                components.append(c)
+            else:
+                components.append(OPTION(c, _value=str(c)))
+        self.components = components
+
 
 class SELECT(INPUT):
 
@@ -1212,7 +1226,7 @@ class SELECT(INPUT):
     def _fixup(self):
         components = []
         for c in self.components:
-            if isinstance(c, OPTION):
+            if isinstance(c, (OPTION, OPTGROUP)):
                 components.append(c)
             else:
                 components.append(OPTION(c, _value=str(c)))
