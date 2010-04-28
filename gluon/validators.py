@@ -286,7 +286,13 @@ class IS_IN_SET(Validator):
 
     def __call__(self, value):
         if self.multiple:
-            values = re.compile("[\w\-:]+").findall(str(value))
+            ### if below was values = re.compile("[\w\-:]+").findall(str(value))
+            if isinstance(value, (str,unicode)):
+                values = [value]
+            elif isinstance(value, (tuple, list)):
+                values = value
+            elif not value:
+                values = []
         else:
             values = [value]
         failures = [x for x in values if not x in self.theset]

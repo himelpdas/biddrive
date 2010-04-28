@@ -255,11 +255,24 @@ class CheckboxesWidget(OptionsWidget):
         else:
             raise SyntaxError, 'widget cannot determine options of %s' % field
 
-        opts = [TR(INPUT(_type='checkbox', _name=field.name,
+        options = [(k, v) for k, v in options if k!='']
+        opts = []
+        cols = attributes.get('cols',1)
+        totals = len(options)
+        mods = totals%cols
+        rows = totals/cols
+        if mods:
+            rows += 1
+
+        for r_index in range(rows):
+            tds = []
+            for k, v in options[r_index*cols:(r_index+1)*cols]:
+                tds.append(TD(INPUT(_type='checkbox', _name=field.name,
                          requires=attr.get('requires',None),
                          hideerror=True, _value=k,
-                         value=(k in values)), v) \
-                    for (k, v) in options if k!='']
+                         value=(k in values)), v))
+            opts.append(TR(tds))
+
         if opts:
             opts[-1][0][0]['hideerror'] = False
         return TABLE(*opts, **attr)
