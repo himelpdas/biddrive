@@ -10,7 +10,7 @@ if request.env.web2py_runtime_gae:            # if running on Google App Engine
     ### or use the following lines to store sessions in Memcache
     # from gluon.contrib.memdb import MEMDB
     # from google.appengine.api.memcache import Client
-    # session.connect(request, response, db=MEMDB(Client())
+    # session.connect(request, response, db=MEMDB(Client()))
 else:                                         # else use a normal relational database
     db = DAL('sqlite://storage.sqlite')       # if not, use SQLite or other DB
 ## if no need for session
