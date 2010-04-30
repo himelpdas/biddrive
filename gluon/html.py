@@ -16,6 +16,7 @@ import urllib
 import base64
 import sanitizer
 import rewrite
+import itertools
 
 from storage import Storage
 from validators import *
@@ -1233,17 +1234,19 @@ class SELECT(INPUT):
         self.components = components
 
     def _postprocessing(self):
+        options = itertools.chain(*[ \
+                (c.components if isinstance(c, OPTGROUP) else [c]) \
+                for c in self.components])
         if self['value'] != None:
             if not self['_multiple']:
-                for c in self.components:
-                    if self['value'] and str(c['_value'])\
-                         == str(self['value']):
+                for c in options: # my patch
+                    if self['value'] and str(c['_value'])==str(self['value']):
                         c['_selected'] = 'selected'
                     else:
                         c['_selected'] = None
             else:
                 values = re.compile('[\w\-:]+').findall(str(self['value']))
-                for c in self.components:
+                for c in options: # my patch
                     if self['value'] and str(c['_value']) in values:
                         c['_selected'] = 'selected'
                     else:
