@@ -149,6 +149,13 @@ NameVirtualHost *:443
 </VirtualHost>
 ' > /etc/apache2/sites-available/default
 
+echo "setting up PAM"
+echo "================"
+sudo apt-get install pwauth
+sudo ln -s /etc/apache2/mods-available/authnz_external.load /etc/apache2/mods-enabled
+ln -s /etc/pam.d/apache2 /etc/pam.d/httpd
+usermod -a -G shadow www-data
+
 echo "restarting apage"
 echo "================"
 

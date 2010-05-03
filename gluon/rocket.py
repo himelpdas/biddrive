@@ -82,8 +82,9 @@ import time
 import socket
 try:
     import ssl
+    has_ssl = True
 except ImportError:
-    ssl = None
+    has_ssl = False
 # Import Package Modules
 # package imports removed in monolithic build
 
@@ -93,7 +94,7 @@ class Connection:
         self.server_port = port
         self.socket = sock_tuple[0]
         self.start_time = time.time()
-        self.ssl = ssl and isinstance(self.socket, ssl.SSLSocket)
+        self.ssl = has_ssl and isinstance(self.socket, ssl.SSLSocket)
         self.secure = secure
 
         for x in dir(self.socket):
@@ -129,8 +130,12 @@ import traceback
 import select
 try:
     import ssl
+    from ssl import SSLError
+    has_ssl = True
 except ImportError:
-    ssl = None
+    has_ssl = False
+    class SSLError(socket.error):
+        pass
 # Import Package Modules
 # package imports removed in monolithic build
 
@@ -217,7 +222,7 @@ class Rocket:
             listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             if secure:
-                if not ssl:
+                if not has_ssl:
                     log.error("ssl module required to serve HTTPS.")
                     del listener
                     continue
