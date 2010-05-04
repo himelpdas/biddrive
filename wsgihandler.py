@@ -27,7 +27,9 @@ os.chdir(path)
 import gluon.main
 
 if LOGGING:
-    application = gluon.main.wsgibase_with_logging
+    application = gluon.main.appfactory(wsgiapp=gluon.main.wsgibase,
+                                        logfilename='httpserver.log',
+                                        profilerfilename=None)
 else:
     application = gluon.main.wsgibase
 
