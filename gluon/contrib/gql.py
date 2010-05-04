@@ -28,6 +28,8 @@ import gluon.sql
 from new import classobj
 from google.appengine.ext import db as gae
 
+MAX_ITEMS = 1000 # GAE main limitation
+
 Row = gluon.sql.Row
 Rows = gluon.sql.Rows
 Reference = gluon.sql.Reference
@@ -700,12 +702,18 @@ class Set(gluon.sql.Set):
         return self.items_count(items)
 
     def delete(self):
+        """
+        This function was changed on 2010-05-04 because according to
+        http://code.google.com/p/googleappengine/issues/detail?id=3119
+        GAE no longer support deleting more than 1000 records.
+        """
         self._db['_lastsql'] = 'DELETE WHERE %s' % self.where
-        (items, tablename, fields) = self._select()
-        tableobj = self._db[tablename]._tableobj        
-        counter = self.items_count(items)
+        (query, tablename, fields) = self._select()
+        tableobj = self._db[tablename]._tableobj                
+        items = query.fetch(MAX_ITEMS)
+        counter = len(items)
         if counter:
-            gae.delete(items)        
+            gae.delete(items)
         return counter
 
     def update(self, **update_fields):
