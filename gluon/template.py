@@ -180,6 +180,8 @@ class TemplateParser(object):
     
     r_tag = re.compile(r'(\{\{.*?\}\})', re.DOTALL)
 
+    r_block_comment = re.compile(r'(""".*?""")', re.DOTALL)
+
     # These are used for re-indentation.
     # Indent + 1
     re_block = re.compile('^(elif |else:|except:|except |finally:).*$',
@@ -261,9 +263,10 @@ class TemplateParser(object):
             # If we have a line that contains python code that
             # should be un-indented for this line of code.
             # and then re-indented for the next line.
-            if line[:5] == 'elif ' or line[:5] == 'else:' or    \
-               line[:7] == 'except:' or line[:7] == 'except ' or \
-               line[:7] == 'finally:':
+            if 'elif ' in line or \
+                'else:' in line or \
+                'except' in line or \
+                'finally:' in line:
                     k = k + credit - 1
                     
             # We obviously can't have a negative indentation
@@ -285,9 +288,9 @@ class TemplateParser(object):
             # But the line right after us will be de-dented.
             # So we add one credit to keep us at the level
             # While moving back one indentation level.
-            if line == 'return' or line[:7] == 'return ' or \
-               line == 'continue' or line[:9] == 'continue ' or \
-               line == 'break' or line[:6] == 'break':
+            if 'return' in line or \
+                'continue' in line or \
+                'break' in line:
                 credit = 1
                 k -= 1
 
@@ -430,7 +433,28 @@ class TemplateParser(object):
                             # {{ for i in range(10): }}
                             name, value = v
 
-                    value = value.replace('\n', '\\n')
+                    # This will replace newlines in block comments
+                    # with the newline character. This is so that they
+                    # retain their formatting, but squish down to one
+                    # line in the rendered template. 
+                    
+                    # We do not want to replace the newlines in code,
+                    # only in block comments.
+                    def remove_newline(re_val):
+                        # Take the entire match and replace newlines with
+                        # escaped newlines.
+                        return re_val.group(0).replace('\n', '\\n')
+
+                        
+                    # Perform block comment escaping.
+                    value = re.sub(TemplateParser.r_block_comment,
+                                remove_newline,
+                                value)
+
+                    # Now we want to get rid of all newlines that exist
+                    # in the line. This does not effect block comments
+                    # since we already converted those.
+                    value = value.replace('\n', '')
 
                     if name == 'block':
                         # Make a new node with name.
