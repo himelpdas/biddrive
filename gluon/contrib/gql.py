@@ -708,13 +708,18 @@ class Set(gluon.sql.Set):
         GAE no longer support deleting more than 1000 records.
         """
         self._db['_lastsql'] = 'DELETE WHERE %s' % self.where
-        (query, tablename, fields) = self._select()
-        tableobj = self._db[tablename]._tableobj                
-        items = query.fetch(MAX_ITEMS)
-        counter = len(items)
-        if counter:
-            gae.delete(items)
-        return counter
+        (items, tablename, fields) = self._select()
+        tableobj = self._db[tablename]._tableobj
+        counter = self.items_count(items)
+        # items can be one item or a query
+        if not isinstance(items,list):
+           leftitems = items.fetch(1000)
+           while len(leftitems):
+               gae.delete(leftitems)
+               leftitems = items.fetch(1000)
+        else:
+           gae.delete(items)
+        return counter 
 
     def update(self, **update_fields):
         self._db['_lastsql'] = 'UPDATE WHERE %s' % self.where
