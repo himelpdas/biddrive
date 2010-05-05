@@ -245,38 +245,37 @@ class Mail(object):
         self.error: Exception message or None if above was successful
         """
 
+        def encode_header(key):
+            if [c for c in key if 32>ord(c) or ord(c)>127]:
+                return header.Header(key.encode('utf-8'),'utf-8')
+            else:
+                return key
+
         if not isinstance(self.settings.server, str):
             raise Exception('Server address not specified')
         if not isinstance(self.settings.sender, str):
             raise Exception('Sender address not specified')
-        if isinstance(to, str):
-            to = [to]
-        else:
-            to = list(to)
-        if len(to) == 0:
-            raise Exception('Target receiver address not specified')
         payload = MIMEMultipart.MIMEMultipart('related')
-        payload['From'] =\
-            header.Header(self.settings.sender.decode(encoding).encode('utf-8'),'utf-8')
-        payload['To'] = \
-            header.Header(', '.join(to).decode(encoding).encode('utf-8'),'utf-8')
-        if reply_to != None:
-            payload['Reply-To'] = \
-                header.Header(reply_to.decode(encoding).encode('utf-8'),'utf-8')
-        payload['Subject'] = \
-            header.Header(subject.decode(encoding).encode('utf-8'),'utf-8')
-        if cc != None:
+        payload['From'] = encode_header(self.settings.sender.decode(encoding))
+        if to:            
+            if not isinstance(to, (list,tuple)):
+                to = [to]
+            payload['To'] = encode_header(', '.join(to).decode(encoding))
+        else:
+            raise Exception('Target receiver address not specified')
+        if reply_to:
+            payload['Reply-To'] = encode_header(reply_to.decode(encoding))
+        if cc:
             if not isinstance(cc, (list, tuple)):
                 cc = [cc]
-            payload['Cc'] = \
-                header.Header(', '.join(cc).decode(encoding).encode('utf-8'),'utf-8')
+            payload['Cc'] = encode_header(', '.join(cc).decode(encoding))
             to.extend(cc)
-        if bcc != None:
+        if bcc:
             if not isinstance(bcc, (list, tuple)):
                 bcc = [bcc]
-            payload['Bcc'] = \
-                header.Header(', '.join(bcc).decode(encoding).encode('utf-8'),'utf-8')
+            payload['Bcc'] = encode_header(', '.join(bcc).decode(encoding))
             to.extend(bcc)
+        payload['Subject'] = encode_header(subject.decode(encoding))
         if message == None:
             text = html = None
         elif isinstance(message, (list, tuple)):
