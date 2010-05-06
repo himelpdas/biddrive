@@ -3,13 +3,15 @@
 
 """
 This file is part of the web2py Web Framework (Copyrighted, 2007-2010).
-License: GPL v2
+License: GPL v3
 
 Author: Thadeus Burgess
 
-This module was mostly inspired by Uliweb templates created by Limodou, which 
-was inspired by web2py's template system. The effort is to merge Uliweb 
-templates with web2py so that web2py can have support for block-elements.
+Contributors: 
+
+- Thank you to Massimo Di Pierro for creating the original gluon/template.py
+- Thank you to Jonathan Lundell for extensively testing the regex on Jython.
+- Thank you to Limodou (creater of uliweb) who inspired the block-element support for web2py.
 """
 
 import os
@@ -24,10 +26,22 @@ class Node(object):
         self.value = value
 
     def __str__(self):
+        return str(self.value)
+
+class SuperNode(Node):
+    def __init__(self, name=''):
+        self.name = name
+        self.value = None
+
+    def __str__(self):
         if self.value:
-            return self.value
+            return str(self.value)
         else:
-            return ''
+            raise SyntaxError("Undefined parent block ``%s``. \n" % self.name + \
+"You must define a block before referencing it.\nMake sure you have not left out an ``{{end}}`` tag." )
+
+    def __repr__(self):
+        return "%s->%s" % (self.name, self.value)
 
 class BlockNode(Node):
     """
@@ -42,7 +56,7 @@ class BlockNode(Node):
             This is default block test
         {{ end }}
     """
-    def __init__(self, name=''):
+    def __init__(self, name = ''):
         """
         name - Name of this Node.
         """
@@ -74,7 +88,7 @@ class BlockNode(Node):
 
         - node -- Node object or string to append.
         """
-        if isinstance(node, str) or isinstance(node, BlockNode):
+        if isinstance(node, str) or isinstance(node, Node):
             self.nodes.append(node)
         else:
             raise TypeError("Invalid type, must be instance of ``str`` or ``BlockNode``. %s" % node)
@@ -110,7 +124,7 @@ class BlockNode(Node):
                     lines.append(blocks[node.name].output(blocks))
                 # Else we take the default
                 else:
-                    lines.append(node.output(blocks))
+                    lines.append(node.output(blocks))               
             # Else its just a string
             else:
                 lines.append(str(node))
@@ -123,7 +137,7 @@ class Content(BlockNode):
 
     Contains functions that operate as such.
     """
-    def __init__(self, name="ContentBlock"):
+    def __init__(self, name = "ContentBlock"):
         """
         Keyword Arugments
 
@@ -156,7 +170,7 @@ class Content(BlockNode):
         """
         Adds a node to list. If it is a BlockNode then we assign a block for it.
         """
-        if isinstance(node, str) or isinstance(node, BlockNode):
+        if isinstance(node, str) or isinstance(node, Node):
             self.nodes.append(node)
             if isinstance(node, BlockNode):
                 self.blocks[node.name] = node
@@ -192,10 +206,24 @@ class TemplateParser(object):
     re_pass = re.compile('^pass( .*)?$', re.DOTALL)
 
     def __init__(self, text,
-            name = "ParserContainer" ,
+            name    = "ParserContainer" ,
             context = dict(),
             path    = 'views/',
-            writer  ='response.write'):
+            writer  = 'response.write',
+            lexers  = {},
+            _super_nodes = []):
+        """
+        text -- text to parse
+        context -- context to parse in
+        path -- folder path to temlpates
+        writer -- string of writer class to use
+        lexers -- list of custom lexers to use.
+        _super_nodes -- a list of nodes to check for inclusion
+                        this should only be set by "self.extend"
+                        It contains a list of SuperNodes from a child
+                        template that need to be handled.
+                       
+        """
 
         # Keep a root level name.
         self.name = name
@@ -205,6 +233,9 @@ class TemplateParser(object):
         # This will end up as
         # "%s(%s, escape=False)" % (self.writer, value)
         self.writer = writer
+
+        # Dictionary of custom name lexers to use.
+        self.lexers = lexers
 
         # Path of templates
         self.path = path
@@ -220,9 +251,21 @@ class TemplateParser(object):
         # self.content should stay on the stack at all times.
         self.stack = [self.content]
 
+        # This variable will hold a reference to every super block
+        # that we come across in this template.
+        self.super_nodes = []
+
+        # This variable will hold a reference to the child
+        # super nodes that need handling.
+        self.child_super_nodes = _super_nodes
+
+        # This variable will hold a reference to every block
+        # that we come across in this template
+        self.blocks = {}
+
         # Begin parsing.
         self.parse(text)
-
+        
     def __str__(self):
         """
         Returns the parsed template with correct indentation.
@@ -342,10 +385,10 @@ class TemplateParser(object):
         text = self._get_file_text(filename)
             
         t = TemplateParser(text, 
-                    name=filename,
-                    context=self.context, 
-                    path=self.path, 
-                    writer=self.writer)
+                    name    = filename,
+                    context = self.context, 
+                    path    = self.path, 
+                    writer  = self.writer)
 
         content.extend(t.content)
 
@@ -356,11 +399,19 @@ class TemplateParser(object):
         """
         text = self._get_file_text(filename)
 
+        # Create out nodes list to send to the parent
+        super_nodes = []
+        # We want to include any non-handled nodes.
+        super_nodes.extend(self.child_super_nodes)
+        # And our nodes as well.
+        super_nodes.extend(self.super_nodes)
+
         t = TemplateParser(text, 
-                    name=filename,
-                    context=self.context, 
-                    path=self.path, 
-                    writer=self.writer)
+                    name         = filename,
+                    context      = self.context, 
+                    path         = self.path, 
+                    writer       = self.writer,
+                    _super_nodes = super_nodes)
 
         # Make a temporary buffer that is unique for parent
         # template.
@@ -378,7 +429,7 @@ class TemplateParser(object):
             # Parent templates {{include}} section.
                 buf.append(node)
             else:
-                buf.append(node)
+                buf.append(node)    
 
         # Clear our current nodes. We will be replacing this with
         # the parent nodes.
@@ -388,6 +439,7 @@ class TemplateParser(object):
         t.content.blocks['__include__' + filename] = buf
         # Extend our blocks
         t.content.extend(self.content)
+        
         # Work off the parent node.
         self.content = t.content
 
@@ -425,13 +477,15 @@ class TemplateParser(object):
                             # Example
                             # {{ include }}
                             # {{ end }}
-                            name, value = v[0], ''
+                            name = v[0]
+                            value = ''
                         else:
                             # Example
                             # {{ block pie }}
                             # {{ include "layout.html" }}
                             # {{ for i in range(10): }}
-                            name, value = v
+                            name = v[0]
+                            value = v[1]
 
                     # This will replace newlines in block comments
                     # with the newline character. This is so that they
@@ -456,11 +510,32 @@ class TemplateParser(object):
                     # since we already converted those.
                     value = value.replace('\n', '')
 
-                    if name == 'block':
+                    # First lets check if we have any custom lexers
+                    if name in self.lexers:
+                        # Pass the information to the lexer
+                        # and allow it to inject in the environment
+
+                        # You can define custom names such as
+                        # '{{<<variable}}' which could potentially
+                        # write unescaped version of the variable.
+                        self.lexers[name](parser    = self, 
+                                          value     = value, 
+                                          top       = top, 
+                                          stack     = stack,)
+                    
+                    elif name == '=':
+                        # So we have a variable to insert into
+                        # the template
+                        buf = "\n%s(%s)" % (self.writer, value)
+                        top.append(buf)
+                        
+                    elif name == 'block':
                         # Make a new node with name.
                         node = BlockNode(name=value.strip())
+                        
                         # Append this node to our active node
                         top.append(node)
+                        
                         # Make sure to add the node to the stack.
                         # so anything after this gets added
                         # to this node. This allows us to
@@ -469,18 +544,36 @@ class TemplateParser(object):
 
                     elif name == 'end':
                         # We are done with this node.
+
+                        # Save an instance of it
+                        self.blocks[top.name] = top
+                        
+                        # Pop it.
                         self.stack.pop()
 
-                    elif name == '=':
-                        # So we have a variable to insert into
-                        # the template
-                        buf = "\n%s(%s)" % (self.writer, value)
-                        top.append(buf)
+                    elif name == 'super':
+                        # Lets get our correct target name
+                        # If they just called {{super}} without a name
+                        # attempt to assume the top blocks name.
+                        if value:
+                            target_node = value
+                        else:
+                            target_node = top.name
+
+                        # Create a SuperNode instance                        
+                        node = SuperNode(name = target_node)
+
+                        # Add this to our list to be taken care of
+                        self.super_nodes.append(node)
+
+                        # And put in in the tree
+                        top.append(node)
 
                     elif name == 'include':
                         # If we know the target file to include
                         if value:
                             self.include(top, value)
+                            
                         # Otherwise, make a temporary include node
                         # That the child node will know to hook into.
                         else:
@@ -494,8 +587,7 @@ class TemplateParser(object):
 
                     else:
                         # If we don't know where it belongs
-                        # we just add it anyways without form
-                        # matting.
+                        # we just add it anyways without formatting.
                         if line and in_tag:
                             top.append("\n%s" % line)
                         
@@ -507,10 +599,29 @@ class TemplateParser(object):
             # Remeber, tag, not tag, tag, not tag
             in_tag = not in_tag
 
+        # Lets make a list of items to remove from child
+        to_rm = []
+
+        # Go through each of the children nodes
+        for node in self.child_super_nodes:
+            # If we declared a block that this node wants to include
+            if node.name in self.blocks:
+                # Lets go ahead and include it!
+                node.value = self.blocks[node.name]
+                # Since we processed this child, we don't need to
+                # pass it along to the parent
+                to_rm.append(node)
+
+        # So now lets remove some of the processed nodes
+        for node in to_rm:
+            # Since this is a pointer, it works beautifully.
+            # Sometimes I miss C-Style pointers... I want my asterisk...
+            self.child_super_nodes.remove(node)
+
         # If we need to extend a template.
         if extend:
             self.extend(extend)
-
+        
 # We need this for integration with gluon
 def parse_template(filename,
         path    = 'views/',
