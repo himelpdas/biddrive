@@ -2042,7 +2042,15 @@ class IS_DATETIME(Validator):
         return d.strftime(format)
 
 class IS_DATE_IN_RANGE(IS_DATE):
-
+    """
+    example::                                         
+    
+        IS_DATE_IN_RANGE(minimum=datetime.date(2008,1,1),
+                         maximum=datetime.date(2009,12,31),
+                         format="%m/%d/%Y",
+                         error_message=T("enter date in range %(min)s %(max)s"))
+                         
+    """
     def __init__(self,
                  minimum = None,
                  maximum = None,
@@ -2066,15 +2074,22 @@ class IS_DATE_IN_RANGE(IS_DATE):
         (value, msg) = IS_DATE.__call__(self,value)
         if msg is not None:
             return (value, msg)
-        if self.minimum and self.minimum >= value:
+        if self.minimum and self.minimum > value:
             return (value, self.error_message)
-        if self.maximum and value >= self.maximum:
+        if self.maximum and value > self.maximum:
             return (value, self.error_message)
         return (value, None)
 
 
 class IS_DATETIME_IN_RANGE(IS_DATETIME):
-
+    """
+    example::
+    
+    IS_DATETIME_IN_RANGE(minimum=datetime.datetime(2008,1,1,13,20),
+                         maximum=datetime.datetime(2009,12,31,14,30),
+                         format="%m/%d/%Y %H:%M:%S",
+         error_message=T("enter datetime in range %(min)s %(max)s"))
+    """
     def __init__(self,
                  minimum = None,
                  maximum = None,
@@ -2098,9 +2113,9 @@ class IS_DATETIME_IN_RANGE(IS_DATETIME):
         (value, msg) = IS_DATETIME.__call__(self, value)
         if msg is not None:
             return (value, msg)
-        if self.minimum and self.minimum >= value:
+        if self.minimum and self.minimum > value:
             return (value, self.error_message)
-        if self.maximum and value >= self.maximum:
+        if self.maximum and value > self.maximum:
             return (value, self.error_message)
         return (value, None)
 

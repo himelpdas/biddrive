@@ -69,12 +69,20 @@ def env(
     c=None,
     f=None,
     dir='',
+    extra_request={},
     ):
     """
     Return web2py execution environment for application (a), controller (c),
     function (f).
     If import_models is True the exec all application models into the
     environment.
+
+    extra_request allows you to pass along any extra
+    variables to the request object before your models
+    get executed. This was mainly done to support
+    web2py_utils.test_runner, however you can use it
+    with any wrapper scripts that need access to the
+    web2py environment.
     """
 
     request = Request()
@@ -95,6 +103,9 @@ def env(
     request.env.path_info = '/%s/%s/%s' % (a, c, f)
     request.env.http_host = '127.0.0.1:8000'
     request.env.remote_addr = '127.0.0.1'
+
+    for k,v in extra_request.items():
+        request[k] = v
 
     # Monkey patch so credentials checks pass.
 

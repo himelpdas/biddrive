@@ -3,7 +3,7 @@
 
 """
 This file is part of the web2py Web Framework (Copyrighted, 2007-2010).
-License: GPL v3
+License: GPL v2
 
 Author: Thadeus Burgess
 
@@ -625,7 +625,8 @@ class TemplateParser(object):
 # We need this for integration with gluon
 def parse_template(filename,
         path    = 'views/',
-        context = dict()):
+        context = dict(),
+        lexers  = None):
     """
     filename can be a view filename in the views folder or an input stream
     path is the path of a views folder
@@ -645,7 +646,7 @@ def parse_template(filename,
         text = filename.read()
 
     # Use the file contents to get a parsed template and return it.
-    return str(TemplateParser(text, context=context, path=path))
+    return str(TemplateParser(text, context=context, path=path, lexers=lexers))
         
     
 # And this is a generic render function.
@@ -654,7 +655,8 @@ def render(content = "hello world",
         stream = None,
         filename = None,
         path = None,
-        context = {},):
+        context = {},
+        lexers  = None):
     """
     >>> render()
     'hello world'
@@ -693,7 +695,7 @@ def render(content = "hello world",
     context['response'] = globals.Response()
 
     # Execute the template.
-    exec(str(TemplateParser(stream.read(), context=context, path=path))) in context
+    exec(str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers))) in context
     
     if close_stream:
         stream.close()
