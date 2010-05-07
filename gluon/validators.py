@@ -2045,11 +2045,16 @@ class IS_DATE_IN_RANGE(IS_DATE):
     """
     example::                                         
     
-        IS_DATE_IN_RANGE(minimum=datetime.date(2008,1,1),
-                         maximum=datetime.date(2009,12,31),
-                         format="%m/%d/%Y",
-                         error_message=T("enter date in range %(min)s %(max)s"))
-                         
+        >>> v = IS_DATE_IN_RANGE(minimum=datetime.date(2008,1,1), \
+                                 maximum=datetime.date(2009,12,31), \
+                                 format="%m/%d/%Y",error_message="oops")
+
+        >>> print v('03/03/2008')
+        (datetime.date(2008, 3, 3), None)
+
+        >>> print v('03/03/2010')
+        (datetime.date(2010, 3, 3), 'oops')
+                             
     """
     def __init__(self,
                  minimum = None,
@@ -2085,10 +2090,15 @@ class IS_DATETIME_IN_RANGE(IS_DATETIME):
     """
     example::
     
-    IS_DATETIME_IN_RANGE(minimum=datetime.datetime(2008,1,1,13,20),
-                         maximum=datetime.datetime(2009,12,31,14,30),
-                         format="%m/%d/%Y %H:%M:%S",
-         error_message=T("enter datetime in range %(min)s %(max)s"))
+        >>> v = IS_DATETIME_IN_RANGE(\
+                minimum=datetime.datetime(2008,1,1,12,20), \
+                maximum=datetime.datetime(2009,12,31,12,20), \
+                format="%m/%d/%Y %H:%M",error_message="oops")
+        >>> print v('03/03/2008 12:40')
+        (datetime.datetime(2008, 3, 3, 12, 40), None)
+
+        >>> print v('03/03/2010 10:34')
+        (datetime.datetime(2010, 3, 3, 10, 34), 'oops')
     """
     def __init__(self,
                  minimum = None,
