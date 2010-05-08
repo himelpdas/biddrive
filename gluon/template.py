@@ -511,7 +511,7 @@ class TemplateParser(object):
                     value = value.replace('\n', '')
 
                     # First lets check if we have any custom lexers
-                    if name in self.lexers or {}:
+                    if name in self.lexers:
                         # Pass the information to the lexer
                         # and allow it to inject in the environment
 
