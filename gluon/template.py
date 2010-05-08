@@ -217,7 +217,7 @@ class TemplateParser(object):
         context -- context to parse in
         path -- folder path to temlpates
         writer -- string of writer class to use
-        lexers -- list of custom lexers to use.
+        lexers -- dict of custom lexers to use.
         _super_nodes -- a list of nodes to check for inclusion
                         this should only be set by "self.extend"
                         It contains a list of SuperNodes from a child
@@ -511,7 +511,7 @@ class TemplateParser(object):
                     value = value.replace('\n', '')
 
                     # First lets check if we have any custom lexers
-                    if name in self.lexers:
+                    if name in self.lexers or {}:
                         # Pass the information to the lexer
                         # and allow it to inject in the environment
 
@@ -626,7 +626,7 @@ class TemplateParser(object):
 def parse_template(filename,
         path    = 'views/',
         context = dict(),
-        lexers  = None):
+        lexers  = {}):
     """
     filename can be a view filename in the views folder or an input stream
     path is the path of a views folder
@@ -656,7 +656,7 @@ def render(content = "hello world",
         filename = None,
         path = None,
         context = {},
-        lexers  = None):
+        lexers  = {}):
     """
     >>> render()
     'hello world'
