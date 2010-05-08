@@ -2049,10 +2049,10 @@ class IS_DATE_IN_RANGE(IS_DATE):
                                  maximum=datetime.date(2009,12,31), \
                                  format="%m/%d/%Y",error_message="oops")
 
-        >>> print v('03/03/2008')
+        >>> v('03/03/2008')
         (datetime.date(2008, 3, 3), None)
 
-        >>> print v('03/03/2010')
+        >>> v('03/03/2010')
         (datetime.date(2010, 3, 3), 'oops')
                              
     """
@@ -2094,10 +2094,10 @@ class IS_DATETIME_IN_RANGE(IS_DATETIME):
                 minimum=datetime.datetime(2008,1,1,12,20), \
                 maximum=datetime.datetime(2009,12,31,12,20), \
                 format="%m/%d/%Y %H:%M",error_message="oops")
-        >>> print v('03/03/2008 12:40')
+        >>> v('03/03/2008 12:40')
         (datetime.datetime(2008, 3, 3, 12, 40), None)
 
-        >>> print v('03/03/2010 10:34')
+        >>> v('03/03/2010 10:34')
         (datetime.datetime(2010, 3, 3, 10, 34), 'oops')
     """
     def __init__(self,
