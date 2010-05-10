@@ -257,7 +257,7 @@ class Mail(object):
             raise Exception('Sender address not specified')
         payload = MIMEMultipart.MIMEMultipart('related')
         payload['From'] = encode_header(self.settings.sender.decode(encoding))
-        if to:            
+        if to:         
             if not isinstance(to, (list,tuple)):
                 to = [to]
             payload['To'] = encode_header(', '.join(to).decode(encoding))
@@ -276,6 +276,8 @@ class Mail(object):
             payload['Bcc'] = encode_header(', '.join(bcc).decode(encoding))
             to.extend(bcc)
         payload['Subject'] = encode_header(subject.decode(encoding))
+        payload['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000",
+                                        time.gmtime())
         if message == None:
             text = html = None
         elif isinstance(message, (list, tuple)):
