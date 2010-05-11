@@ -2639,8 +2639,9 @@ class Crud(object):
                               value = chkval == 'on')),
                      TD(field),TD(SELECT(ops, _name = "op" + fieldname,
                                          value = opval)),
-                     TD(INPUT(_type = "text", _name = "txt"+ fieldname,
-                              _value = txtval,_class=str(field.type))))
+                     TD(INPUT(_type = "text", _name = "txt" + fieldname,
+                              _value = txtval, _id='txt' + fieldname,
+                              _class = str(field.type))))
             tbl.append(row)
             if chkval:
                 if txtval and opval != '':                    
@@ -2661,13 +2662,9 @@ class Crud(object):
                 results = db(query).select(*selected, **args)
                 for r in refsearch:
                     results = results.find(r)
-            except:
+            except: # hmmm, we should do bettere here
                 results = None
-        if results:
-            rtable = SQLTABLE(results,headers='fieldname:capitalize')
-        else:
-            rtable = ''
-        return DIV(form,rtable)
+        return form, results
 
 urllib2.install_opener(urllib2.build_opener(urllib2.HTTPCookieProcessor()))
 
