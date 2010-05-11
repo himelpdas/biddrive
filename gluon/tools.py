@@ -2653,7 +2653,7 @@ class Crud(object):
                             ### TODO deal with 'starts with', 'ends with', 'contains' on GAE
                             query &= self.get_query(field, opval, value)
                         else:
-                            row[2].append(DIV(error,_class='error'))
+                            row[3].append(DIV(error,_class='error'))
                 selected.append(field)
         form = FORM(tbl,INPUT(_type="submit"))
         if selected:
