@@ -335,7 +335,7 @@ def wsgibase(environ, responder):
             # get the GET and POST data
             # ##################################################
 
-            parse_get_post_vars(request, environ):
+            parse_get_post_vars(request, environ)
 
             # ##################################################
             # expose wsgi hooks for convenience
