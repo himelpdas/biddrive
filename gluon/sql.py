@@ -2970,9 +2970,9 @@ class Set(object):
             'distinct',
             'having',
             ]
-        if [key for key in attributes if not key
-             in valid_attributes]:
-            raise SyntaxError, 'invalid select attribute: %s' % key
+        invalid_keys = [key for key in attributes if not key in valid_attributes]
+        if invalid_keys:
+            raise SyntaxError, 'invalid select attributes: %s' % invalid_keys
 
         # ## if not fields specified take them all from the requested tables
 
