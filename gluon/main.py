@@ -219,10 +219,7 @@ def parse_get_post_vars(request, environ):
         request.vars[key] = request.get_vars[key]
 
     # parse POST variables on POST, PUT, BOTH only in post_vars
-    try:
-        request.body = copystream_progress(request) ### stores request body
-    except:
-        return False
+    request.body = copystream_progress(request) ### stores request body
     if (request.body and request.env.request_method in ('POST', 'PUT', 'BOTH')):
         dpost = cgi.FieldStorage(fp=request.body,environ=environ,keep_blank_values=1)
         # The same detection used by FieldStorage to detect multipart POSTs
@@ -260,7 +257,7 @@ def parse_get_post_vars(request, environ):
             request.vars[key] = value
             if len(pvalue):
                 request.post_vars[key] = (len(pvalue)>1 and pvalue) or pvalue[0]
-    return True
+
 
 def wsgibase(environ, responder):
     """
@@ -338,8 +335,7 @@ def wsgibase(environ, responder):
             # get the GET and POST data
             # ##################################################
 
-            if not parse_get_post_vars(request, environ):
-                return []
+            parse_get_post_vars(request, environ):
 
             # ##################################################
             # expose wsgi hooks for convenience
