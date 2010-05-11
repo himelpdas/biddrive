@@ -10,6 +10,8 @@ License: GPL v2
 import os
 import re
 import logging
+import traceback
+
 from storage import Storage
 from http import HTTP
 
@@ -58,8 +60,9 @@ def load(routes='routes.py'):
         logging.info('URL rewrite is on. configuration in %s' % routes)
     except SyntaxError, e:
         routesfp.close()
-        logging.error('Your %s has a syntax error. ' % routes + \
-                          'Please fix it before you restart web2py')
+        logging.error('Your %s has a syntax error ' % routes + \
+                          'Please fix it before you restart web2py\n' + \
+                          traceback.format_exc())
         raise e
 
     params.routes_in=[]
