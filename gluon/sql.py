@@ -303,7 +303,7 @@ SQL_DIALECTS = {
         'blob': 'BLOB SUB_TYPE 0',
         'upload': 'VARCHAR(%(length)s)',
         'integer': 'INTEGER',
-        'double': 'DOUBLE',
+        'double': 'DOUBLE PRECISION',
         'decimal': 'DECIMAL(%(precision)s,%(scale)s)',
         'date': 'DATE',
         'time': 'TIME',
@@ -970,7 +970,7 @@ class SQLDB(dict):
             self._execute = lambda a: \
                 oracle_fix_execute(a,self._cursor.execute)
             ### becase Oracle uses date for both date and datetime
-            self._execute("ALTER SESSION set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';") 
+            self._execute("ALTER SESSION set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
             # self._execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
             self._execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
         elif self._uri[:8] == 'mssql://' or self._uri[:9] == 'mssql2://':
@@ -3208,7 +3208,7 @@ class Set(object):
                             colset[referee_table] = SetClass(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
-        rowsobj = Rows(db, new_rows, colnames, rawrows=rows)        
+        rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
         for table, virtualfields in virtualtables:
             for item in virtualfields:
                 rowsobj = rowsobj.setvirtualfields(**{table:item})
