@@ -179,7 +179,11 @@ class Mail(object):
         cc=None,
         bcc=None,
         reply_to=None,
-        encoding='utf-8'
+        encoding='utf-8',
+        cipher_type=None,
+        sign=True,
+        sign_passphrase=None,
+        encrypt=True,
         ):
         """
         Sends an email using data specified in constructor
@@ -208,6 +212,11 @@ class Mail(object):
             reply_to: address to which reply should be composed
             encoding: encoding of all strings passed to this method (including
                       message bodies)
+            cipher_type: none
+                         gpg - need a python-pyme package and gpgme lib
+            sign: sign the message
+            sign_passphrase: passphrase for key signing
+            encrypt: encrypt the message
 
         Examples::
 
@@ -255,29 +264,18 @@ class Mail(object):
             raise Exception('Server address not specified')
         if not isinstance(self.settings.sender, str):
             raise Exception('Sender address not specified')
-        payload = MIMEMultipart.MIMEMultipart('related')
-        payload['From'] = encode_header(self.settings.sender.decode(encoding))
+        payload_in = MIMEMultipart.MIMEMultipart('related')
         if to:         
             if not isinstance(to, (list,tuple)):
                 to = [to]
-            payload['To'] = encode_header(', '.join(to).decode(encoding))
         else:
             raise Exception('Target receiver address not specified')
-        if reply_to:
-            payload['Reply-To'] = encode_header(reply_to.decode(encoding))
         if cc:
             if not isinstance(cc, (list, tuple)):
                 cc = [cc]
-            payload['Cc'] = encode_header(', '.join(cc).decode(encoding))
-            to.extend(cc)
         if bcc:
             if not isinstance(bcc, (list, tuple)):
                 bcc = [bcc]
-            payload['Bcc'] = encode_header(', '.join(bcc).decode(encoding))
-            to.extend(bcc)
-        payload['Subject'] = encode_header(subject.decode(encoding))
-        payload['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000",
-                                        time.gmtime())
         if message == None:
             text = html = None
         elif isinstance(message, (list, tuple)):
@@ -299,14 +297,126 @@ class Mail(object):
                 else:
                     html = html.read().decode(encoding).encode('utf-8')
                 attachment.attach(MIMEText.MIMEText(html, 'html',_charset='utf-8'))
-            payload.attach(attachment)
+            payload_in.attach(attachment)
         if attachments == None:
             pass
         elif isinstance(attachments, (list, tuple)):
             for attachment in attachments:
-                payload.attach(attachment)
+                payload_in.attach(attachment)
         else:
-            payload.attach(attachments)
+            payload_in.attach(attachments)
+        
+        
+        #######################################################
+        #                       GPGME                         #
+        #######################################################
+        if cipher_type == 'gpg':
+            # need a python-pyme package and gpgme lib
+            from pyme import core, constants, errors
+            import pyme.constants.validity
+            from pyme.constants.sig import mode
+            ############################################
+            #                   sign                   #
+            ############################################
+            if sign:
+                import string
+                core.check_version(None)
+                pin=string.replace(payload_in.as_string(),'\n','\r\n')
+                plain = core.Data(pin)
+                sig = core.Data()
+                c = core.Context()
+                c.set_armor(1)
+                c.signers_clear()
+                # search for signing key for From:
+                for sigkey in c.op_keylist_all(self.settings.sender, 1):
+                    if sigkey.can_sign:
+                        c.signers_add(sigkey)
+                if not c.signers_enum(0):
+                    self.result=False
+                    self.error='No key for signing [%s]' % self.settings.sender
+                c.set_passphrase_cb(lambda x,y,z: sign_passphrase)
+                try:
+                    # make a signature
+                    c.op_sign(plain,sig,mode.DETACH)
+                    sig.seek(0,0)
+                    # make it part of the email
+                    payload=MIMEMultipart.MIMEMultipart('signed',
+                                                        boundary=None,
+                                                        _subparts=None,
+                                                        **dict(micalg="pgp-sha1",
+                                                               protocol="application/pgp-signature"))
+                    # insert the origin payload
+                    payload.attach(payload_in)
+                    # insert the detached signature
+                    p=MIMEBase.MIMEBase("application",'pgp-signature')
+                    p.set_payload(sig.read())
+                    payload.attach(p)
+                    # it's just a trick to handle the no encryption case
+                    payload_in=payload
+                except errors.GPGMEError, ex:
+                    self.result=False
+                    self.error="GPG error: %s" % ex.getstring()
+                    return False
+            ############################################
+            #                  encrypt                 #
+            ############################################
+            if encrypt:
+                core.check_version(None)
+                plain = core.Data(payload_in.as_string())
+                cipher = core.Data()
+                c = core.Context()
+                c.set_armor(1)
+                # collect the public keys for encryption
+                recipients=[]
+                rec=to
+                if cc:
+                    rec.extend(cc)
+                if bcc:
+                    rec.extend(bcc)
+                for addr in rec:
+                    c.op_keylist_start(addr,0)
+                    r = c.op_keylist_next()
+                    if r == None:
+                        self.result=False
+                        self.error='No key for [%s]' % addr
+                        return False
+                    recipients.append(r)
+                try:
+                    # make the encryption
+                    c.op_encrypt(recipients, 1, plain, cipher)
+                    cipher.seek(0,0)
+                    # make it a part of the email
+                    payload=MIMEMultipart.MIMEMultipart('encrypted',
+                                                        boundary=None,
+                                                        _subparts=None,
+                                                        **dict(protocol="application/pgp-encrypted"))
+                    p=MIMEBase.MIMEBase("application",'pgp-encrypted')
+                    p.set_payload("Version: 1\r\n")
+                    payload.attach(p)
+                    p=MIMEBase.MIMEBase("application",'octet-stream')
+                    p.set_payload(cipher.read())
+                    payload.attach(p)
+                except errors.GPGMEError, ex:
+                    self.result=False
+                    self.error="GPG error: %s" % ex.getstring()
+                    return False
+        else:
+            # no cryptography process as usual
+            payload=payload_in
+        payload['From'] = encode_header(self.settings.sender.decode(encoding))
+        if to:
+            payload['To'] = encode_header(', '.join(to).decode(encoding))
+        if reply_to:
+            payload['Reply-To'] = encode_header(reply_to.decode(encoding))
+        if cc:
+            payload['Cc'] = encode_header(', '.join(cc).decode(encoding))
+            to.extend(cc)
+        if bcc:
+            payload['Bcc'] = encode_header(', '.join(bcc).decode(encoding))
+            to.extend(bcc)
+        payload['Subject'] = encode_header(subject.decode(encoding))
+        payload['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000",
+                                        time.gmtime())
         result = {}
         try:
             if self.settings.server == 'gae':
