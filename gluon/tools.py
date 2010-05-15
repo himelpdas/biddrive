@@ -1999,6 +1999,8 @@ class Auth(object):
                     redirect(next)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
@@ -2020,6 +2022,8 @@ class Auth(object):
                                  '?_next='+urllib.quote(next))
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
@@ -2048,6 +2052,8 @@ class Auth(object):
                     redirect(next)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
@@ -2080,6 +2086,8 @@ class Auth(object):
                     redirect(next)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
