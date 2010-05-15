@@ -607,6 +607,7 @@ class HttpServer(object):
             # runs from there instead of cwd or os.environ['web2py_path'] 
             global web2py_path
             web2py_path = path
+            sys.path.append(path)
 
         save_password(password, port)
         self.pid_filename = pid_filename
