@@ -2691,7 +2691,7 @@ class Crud(object):
         if not fields:
             fields = [table.ALL]
         rows = self.db(query).select(*fields, **dict(orderby=orderby,
-            limitby=limitby))
+                                                     limitby=limitby))
         if not rows:
             return None # Nicer than an empty table.
         if not 'linkto' in attr:
