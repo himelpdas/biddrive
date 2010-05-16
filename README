@@ -734,3 +734,19 @@ crud.settings.formstyle
 web2py.py -f folder allows to specify locations of applications, thanks Iceberg
 better/faster regex in template works in Jython
 fixed lots of small bugs
+
+#1.77.2
+fixed x-index in calendar
+#1.77.3
+some cleanup of code in compileapp
+
+#1.78.1
+new template system allows {{block name}}{{end}}, thanks Thadeus
+fixed mime headers in emails, included PGP in emails, thanks Gyuris
+automatic database retry connect when pooling and lost connections
+OPTGROUP helper, thanks Iceberg
+web2py_ajax_trap captures all form submissions, thank you Skiros
+multicolumn checkwidget and arbitrary chars in multiple is_in_set, thanks hy 
+Québécois for welcome, thanks Chris
+crud.search(), thanks Mr Freeze
+DAL(...migrate,fake_migrate), thanks Thadeus
