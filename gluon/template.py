@@ -18,6 +18,7 @@ import os
 import re
 import cStringIO
 
+
 class Node(object):
     """
     Basic Container Object
@@ -235,7 +236,10 @@ class TemplateParser(object):
         self.writer = writer
 
         # Dictionary of custom name lexers to use.
-        self.lexers = lexers
+        if isinstance(lexers, dict):
+            self.lexers = lexers
+        else:
+            self.lexers = {}
 
         # Path of templates
         self.path = path
@@ -303,14 +307,15 @@ class TemplateParser(object):
         for raw_line in lines:
             line = raw_line.strip()
             
+            # ignore empty lines
+            if not line:
+                continue
+            
             # If we have a line that contains python code that
             # should be un-indented for this line of code.
             # and then re-indented for the next line.
-            if 'elif ' in line or \
-                'else:' in line or \
-                'except' in line or \
-                'finally:' in line:
-                    k = k + credit - 1
+            if TemplateParser.re_block.match(line):
+                k = k + credit - 1
                     
             # We obviously can't have a negative indentation
             if k < 0: 
@@ -323,7 +328,7 @@ class TemplateParser(object):
             credit = 0
 
             # If we are a pass block, we obviously de-dent.
-            if line == 'pass' or line[:5] == 'pass ':
+            if TemplateParser.re_pass.match(line):
                 k -= 1
                 
             # If we are any of the following, de-dent.
@@ -331,16 +336,19 @@ class TemplateParser(object):
             # But the line right after us will be de-dented.
             # So we add one credit to keep us at the level
             # While moving back one indentation level.
-            if 'return' in line or \
-                'continue' in line or \
-                'break' in line:
+            if TemplateParser.re_unblock.match(line):
                 credit = 1
                 k -= 1
-
-            # If we are an if statement or a semi-colon we 
+            
+            # If we are an if statement, a try, or a semi-colon we 
             # probably need to indent the next line.
-            if line[-1:] == ':' or line[:3] == 'if ':
+            if line[-1:] == ':' and line[:0] != '#':
                 k += 1
+
+        if k>0:
+            raise SyntaxError, 'missing "pass" in view'
+        elif k<0:
+            raise SyntaxError, 'too many "pass"" in view'
 
         new_text = '\n'.join(new_lines)
         
@@ -385,11 +393,11 @@ class TemplateParser(object):
         text = self._get_file_text(filename)
             
         t = TemplateParser(text, 
-                    name    = filename,
-                    context = self.context, 
-                    path    = self.path, 
-                    writer  = self.writer)
-
+                           name    = filename,
+                           context = self.context, 
+                           path    = self.path, 
+                           writer  = self.writer)
+        
         content.extend(t.content)
 
     def extend(self, filename):
