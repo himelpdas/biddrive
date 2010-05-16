@@ -152,9 +152,22 @@ class Mail(object):
         to None, however, to be able to send emails at least server and sender
         must be specified. They are available under following fields:
 
-            self.settings.server
-            self.settings.sender
-            self.settings.login
+            mail.settings.server
+            mail.settings.sender
+            mail.settings.login
+
+        Optionally you can use PGP encryption:
+
+            mail.settings.cipher_type = None
+            mail.settings.sign = True
+            mail.settings.sign_passphrase = None
+            mail.settings.encrypt = True
+
+            cipher_type: None
+                         gpg - need a python-pyme package and gpgme lib
+            sign: sign the message (True or False)
+            sign_passphrase: passphrase for key signing
+            encrypt: encrypt the message
 
         Examples::
 
@@ -167,6 +180,11 @@ class Mail(object):
         self.settings.sender = sender
         self.settings.login = login
         self.settings.tls = tls
+        self.settings.cipher_type = None
+        self.settings.sign = True
+        self.settings.sign_passphrase = None
+        self.settings.encrypt = True
+        self.settings.lock_keys = True
         self.result = {}
         self.error = None
 
@@ -180,10 +198,6 @@ class Mail(object):
         bcc=None,
         reply_to=None,
         encoding='utf-8',
-        cipher_type=None,
-        sign=True,
-        sign_passphrase=None,
-        encrypt=True,
         ):
         """
         Sends an email using data specified in constructor
@@ -212,11 +226,6 @@ class Mail(object):
             reply_to: address to which reply should be composed
             encoding: encoding of all strings passed to this method (including
                       message bodies)
-            cipher_type: none
-                         gpg - need a python-pyme package and gpgme lib
-            sign: sign the message
-            sign_passphrase: passphrase for key signing
-            encrypt: encrypt the message
 
         Examples::
 
@@ -310,6 +319,10 @@ class Mail(object):
         #######################################################
         #                       GPGME                         #
         #######################################################
+        cipher_type = self.settings.cipher_type
+        sign = self.settings.sign
+        sign_passphrase = self.settings.sign_passphrase
+        encrypt = self.settings.encrypt
         if cipher_type == 'gpg':
             # need a python-pyme package and gpgme lib
             from pyme import core, constants, errors
