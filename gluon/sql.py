@@ -3824,7 +3824,8 @@ def DAL(uri='sqlite:memory:',
         pool_size=0,
         folder=None,
         db_codec='UTF-8',
-        check_reserved=None):
+        check_reserved=None,
+        migrate=True, fake_migrate=False):
     if uri == 'gae':
         import gluon.contrib.gql
         return gluon.contrib.gql.GQLDB()
@@ -3832,7 +3833,8 @@ def DAL(uri='sqlite:memory:',
         for k in range(5):
             try:
                 return SQLDB(uri, pool_size=pool_size, folder=folder,
-                             db_codec=db_codec, check_reserved=check_reserved)
+                             db_codec=db_codec, check_reserved=check_reserved,
+                             migrate=migrate, fake_migrate=fake_migrate)
             except:
                 time.sleep(1)
         raise RuntimeError, "Failure to connect to DB. Tried 5 times"
