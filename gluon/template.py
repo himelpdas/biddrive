@@ -17,7 +17,7 @@ Contributors:
 import os
 import re
 import cStringIO
-
+import restricted
 
 class Node(object):
     """
@@ -207,12 +207,13 @@ class TemplateParser(object):
     re_pass = re.compile('^pass( .*)?$', re.DOTALL)
 
     def __init__(self, text,
-            name    = "ParserContainer" ,
-            context = dict(),
-            path    = 'views/',
-            writer  = 'response.write',
-            lexers  = {},
-            _super_nodes = []):
+                 name    = "ParserContainer" ,
+                 context = dict(),
+                 path    = 'views/',
+                 writer  = 'response.write',
+                 lexers  = {},                 
+                 _super_nodes = [],
+                 ):
         """
         text -- text to parse
         context -- context to parse in
@@ -234,7 +235,7 @@ class TemplateParser(object):
         # This will end up as
         # "%s(%s, escape=False)" % (self.writer, value)
         self.writer = writer
-
+        
         # Dictionary of custom name lexers to use.
         if isinstance(lexers, dict):
             self.lexers = lexers
@@ -270,14 +271,13 @@ class TemplateParser(object):
         # Begin parsing.
         self.parse(text)
         
-    def __str__(self):
+    def to_string(self):
         """
         Returns the parsed template with correct indentation.
         """
-        return TemplateParser.reindent(str(self.content))
+        return self.reindent(str(self.content))
 
-    @staticmethod
-    def reindent(text):
+    def reindent(self,text):
         """
         Reindents a string of unindented python code.
         """
@@ -345,13 +345,13 @@ class TemplateParser(object):
             if line[-1:] == ':' and line[:0] != '#':
                 k += 1
 
-        if k>0:
-            raise SyntaxError, 'missing "pass" in view'
-        elif k<0:
-            raise SyntaxError, 'too many "pass"" in view'
-
         new_text = '\n'.join(new_lines)
-        
+
+        if k>0:
+            self.raise_error('missing "pass" in view', new_text)
+        elif k<0:
+            self.raise_error('too many "pass"" in view', new_text)
+
         return new_text
 
     def _get_file_text(self, filename):
@@ -360,11 +360,10 @@ class TemplateParser(object):
 
         This will use self.path to search for the file.
         """
-        import restricted
 
         # If they didn't specify a filename, how can we find one!
         if not filename.strip():
-            raise Exception, "Invalid template filename"
+            self.raise_error("Invalid template filename",self.text)
 
         # Get the file name, filename looks like ``"template.html"``.
         # We need to eval to remove the qoutations and get the string type.
@@ -376,26 +375,25 @@ class TemplateParser(object):
         # Lets try to read teh text.
         try:
             fileobj = open(filepath, 'rb')
-
             text = fileobj.read()
-
             fileobj.close()
         except IOError:
-            raise restricted.RestrictedError('Processing View %s' % filename,
-                  text, '', 'Unable to open included view file: ' + t)
-
+            self.raise_error('Unable to open included view file: ' + filepath, self.text)
         return text
+
+    def raise_error(self,message,text):
+        raise restricted.RestrictedError(self.name,text,message)
 
     def include(self, content, filename):
         """
         Include ``filename`` here.
         """
         text = self._get_file_text(filename)
-            
-        t = TemplateParser(text, 
+
+        t = TemplateParser(text,
                            name    = filename,
-                           context = self.context, 
-                           path    = self.path, 
+                           context = self.context,
+                           path    = self.path,
                            writer  = self.writer)
         
         content.extend(t.content)
@@ -464,7 +462,7 @@ class TemplateParser(object):
         for i in TemplateParser.r_tag.split(text):
             if i:
                 if len(self.stack) == 0:
-                    raise Exception, "The 'end' tag is unmatched, please check if you have a starting 'block' tag"
+                    raise_error("The 'end' tag is unmatched, please check if you have a starting 'block' tag",text)
 
                 # Our current element in the stack.
                 top = self.stack[-1]
@@ -648,14 +646,15 @@ def parse_template(filename,
             text = fp.read()
             fp.close()
         except IOError:
-            raise restricted.RestrictedError('Processing View %s' % filename,
-                                             '', 'Unable to find the file')
+            raise restricted.RestrictedError(filename, '', 'Unable to find the file')
     else:
-        text = filename.read()
+        stream = filename
+        filename = straem.__name__
+        text = stream.read()
 
     # Use the file contents to get a parsed template and return it.
-    return str(TemplateParser(text, context=context, path=path, lexers=lexers))
-        
+    return TemplateParser(text, name=filename, context=context, path=path,
+                          lexers=lexers).to_string() 
     
 # And this is a generic render function.
 # Here for integration with gluon.
@@ -703,7 +702,7 @@ def render(content = "hello world",
     context['response'] = globals.Response()
 
     # Execute the template.
-    exec(str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers))) in context
+    exec(TemplateParser(stream.read(), context=context, path=path, lexers=lexers).to_string(),{},context)
     
     if close_stream:
         stream.close()

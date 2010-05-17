@@ -1031,7 +1031,8 @@ def ticket():
 
     return dict(app=app,
                 ticket=ticket,
-                traceback=TRACEBACK(e.traceback),
+                output=e.output,
+                traceback=(e.traceback and TRACEBACK(e.traceback)),
                 code=e.code,
                 layer=e.layer)
 
