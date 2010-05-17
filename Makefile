@@ -21,7 +21,7 @@ epydoc:
 	epydoc --config epydoc.conf
 	cp applications/examples/static/title.png applications/examples/static/epydoc
 src:
-	echo 'Version 1.78.1 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
+	echo 'Version 1.78.2 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files
 	make clean
 	### clean up baisc apps

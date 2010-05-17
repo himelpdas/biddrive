@@ -462,7 +462,7 @@ class TemplateParser(object):
         for i in TemplateParser.r_tag.split(text):
             if i:
                 if len(self.stack) == 0:
-                    raise_error("The 'end' tag is unmatched, please check if you have a starting 'block' tag",text)
+                    self.raise_error("The 'end' tag is unmatched, please check if you have a starting 'block' tag",text)
 
                 # Our current element in the stack.
                 top = self.stack[-1]
