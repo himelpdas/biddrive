@@ -750,3 +750,6 @@ multicolumn checkwidget and arbitrary chars in multiple is_in_set, thanks hy
 Québécois for welcome, thanks Chris
 crud.search(), thanks Mr Freeze
 DAL(...migrate,fake_migrate), thanks Thadeus
+
+#1.78.3
+reverted temporarily to old template system because of backward compatibility issues
