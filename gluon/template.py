@@ -401,11 +401,14 @@ class TemplateParser(object):
         
         content.extend(t.content)
 
-    def extend(self, filename):
+    def extend(self, filename, pre_extend_statements):
         """
         Extend ``filename``. Anything not declared in a block defined by the 
         parent will be placed in the parent templates ``{{include}}`` block.
         """
+
+        # <<<<<< somehow make use of pre_extend_statements
+
         text = self._get_file_text(filename)
 
         # Create out nodes list to send to the parent
@@ -438,7 +441,7 @@ class TemplateParser(object):
             # Parent templates {{include}} section.
                 buf.append(node)
             else:
-                buf.append(node)    
+                buf.append(node)
 
         # Clear our current nodes. We will be replacing this with
         # the parent nodes.
@@ -563,6 +566,7 @@ class TemplateParser(object):
                 elif meta_command == 'extend':
                     # We need to extend the following template.
                     extend = code_items[1] # <<< need to catch potential exception
+                    pre_extend_statements = len(top)
                     
                 else:
                     # If we don't know where it belongs
@@ -590,7 +594,7 @@ class TemplateParser(object):
 
         # If we need to extend a template.
         if extend:
-            self.extend(extend)
+            self.extend(extend,pre_extend_statements)
         
 # We need this for integration with gluon
 def parse_template(filename,
