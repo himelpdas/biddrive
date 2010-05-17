@@ -195,7 +195,7 @@ class TemplateParser(object):
     
     r_tag = re.compile(r'(\{\{.*?\}\})', re.DOTALL)
 
-    r_block_comment = re.compile(r'(""".*?""")|(\'\'\'.*?\'\'\')', re.DOTALL)
+    r_multiline = re.compile(r'(""".*?""")|(\'\'\'.*?\'\'\')', re.DOTALL)
 
     # These are used for re-indentation.
     # Indent + 1
@@ -283,7 +283,7 @@ class TemplateParser(object):
         """
         
         # Get each of our lines into an array.
-        lines       = text.split('\n')
+        lines = text.split('\n')
         
         # Our new lines
         new_lines   = []
@@ -291,10 +291,10 @@ class TemplateParser(object):
         # Keeps track of how many indents we have.
         # Used for when we need to drop a level of indentaiton
         # only to re-indent on the next line.
-        credit      = 0
+        credit = 0
         
         # Current indentation
-        k           = 0
+        k = 0
 
         #################
         # THINGS TO KNOW
@@ -310,6 +310,7 @@ class TemplateParser(object):
             # ignore empty lines
             if not line:
                 continue
+
             if line[0] == '=':
                 line = '%s(%s)' % (self.writer,line[1:])
 
@@ -458,68 +459,41 @@ class TemplateParser(object):
         # so if we alternate this variable, we know
         # what to look for. This is alternate to 
         # line.startswith("{{")
-        in_tag = False
         extend = None
 
-        for i in TemplateParser.r_tag.split(text):
-            if i:
-                if len(self.stack) == 0:
-                    self.raise_error("The 'end' tag is unmatched, please check if you have a starting 'block' tag",text)
+        # Our current element in the stack.
+        top = self.stack[-1]
 
-                # Our current element in the stack.
-                top = self.stack[-1]
+        for item in TemplateParser.r_tag.split(text):
 
-                if in_tag:
-                    # Get rid of '{{' and '}}'
-                    line = i[2:-2].strip()
-                    # This is bad joo joo, but lets do it anyway
-                    if not line:
-                        continue
+            # ignore empty items
+            if not item:
+                continue 
+            elif not item.startswith('{{') or not item.endswith('}}'):
+                # It is HTML so just include it.
+                top.append("\n%s(%r, escape=False)" % (self.writer, item))
+            else:
+                # item is inside {{...}} so get rid of {{ and }}
+                code = item[2:-2].strip()
+                # escape newlines in long strings
+                code = re.sub(TemplateParser.r_multiline,
+                              lambda text:text.group(0).replace('\n', '\\n'),
+                              code)                
 
-                    if line.startswith('='):
-                        # IE: {{=response.title}}
-                        name, value = '=', line[1:].strip()
-                    else:
-                        v = line.split(' ', 1)
-                        if len(v) == 1:
-                            # Example
-                            # {{ include }}
-                            # {{ end }}
-                            name = v[0]
-                            value = ''
-                        else:
-                            # Example
-                            # {{ block pie }}
-                            # {{ include "layout.html" }}
-                            # {{ for i in range(10): }}
-                            name = v[0]
-                            value = v[1]
+                code_items = code.split(' ',1)
+                meta_command = code_items[0]
 
-                    # This will replace newlines in block comments
-                    # with the newline character. This is so that they
-                    # retain their formatting, but squish down to one
-                    # line in the rendered template. 
-                    
-                    # We do not want to replace the newlines in code,
-                    # only in block comments.
-                    def remove_newline(re_val):
-                        # Take the entire match and replace newlines with
-                        # escaped newlines.
-                        return re_val.group(0).replace('\n', '\\n')
+                """
 
-                        
-                    # Perform block comment escaping.
-                    value = re.sub(TemplateParser.r_block_comment,
-                                remove_newline,
-                                value)
+                This needs discussion !!!!
 
-                    # Now we want to get rid of all newlines that exist
-                    # in the line. This does not effect block comments
-                    # since we already converted those.
-                    value = value.replace('\n', '')
-
-                    # First lets check if we have any custom lexers
-                    if name in self.lexers:
+                # Now we want to get rid of all newlines that exist
+                # in the line. This does not effect block comments
+                # since we already converted those.
+                value = value.replace('\n', '')  <<< why?
+                
+                # First lets check if we have any custom lexers
+                if name in self.lexers:
                         # Pass the information to the lexer
                         # and allow it to inject in the environment
 
@@ -530,82 +504,71 @@ class TemplateParser(object):
                                           value     = value, 
                                           top       = top, 
                                           stack     = stack,)
-
-                    elif name == '=':
-                        # So we have a variable to insert into
-                        # the template
-                        buf = "\n=%s" % value
-                        top.append(buf)
+            
+                <<< does this belong here or in reindent ?
+                """
+                
+                    
+                if meta_command == 'block':
+                    # Make a new node with name.
+                    node = BlockNode(name=code_items[1].strip())
+                    # Append this node to our active node
+                    top.append(node)
                         
-                    elif name == 'block':
-                        # Make a new node with name.
-                        node = BlockNode(name=value.strip())
+                    # Make sure to add the node to the stack.
+                    # so anything after this gets added
+                    # to this node. This allows us to
+                    # "nest" nodes.
+                    self.stack.append(node)
+                    top = node
+
+                elif meta_command == 'end':
+                    # We are done with this node.
+
+                    # Save an instance of it
+                    self.blocks[top.name] = top
                         
-                        # Append this node to our active node
-                        top.append(node)
-                        
-                        # Make sure to add the node to the stack.
-                        # so anything after this gets added
-                        # to this node. This allows us to
-                        # "nest" nodes.
-                        self.stack.append(node)
+                    # Pop it.
+                    self.stack.pop()
+                    top = self.stack[-1]
 
-                    elif name == 'end':
-                        # We are done with this node.
+                elif meta_command == 'super':
+                    # Lets get our correct target name
+                    # If they just called {{super}} without a name
+                    # attempt to assume the top blocks name.
+                    if len(code_items)>1:
+                        target_node = code_items[1]
+                    else:
+                        target_node = top.name
 
-                        # Save an instance of it
-                        self.blocks[top.name] = top
-                        
-                        # Pop it.
-                        self.stack.pop()
+                    # Create a SuperNode instance                        
+                    node = SuperNode(name = target_node)
 
-                    elif name == 'super':
-                        # Lets get our correct target name
-                        # If they just called {{super}} without a name
-                        # attempt to assume the top blocks name.
-                        if value:
-                            target_node = value
-                        else:
-                            target_node = top.name
+                    # Add this to our list to be taken care of
+                    self.super_nodes.append(node)
 
-                        # Create a SuperNode instance                        
-                        node = SuperNode(name = target_node)
-
-                        # Add this to our list to be taken care of
-                        self.super_nodes.append(node)
-
-                        # And put in in the tree
-                        top.append(node)
-
-                    elif name == 'include':
+                    # And put in in the tree
+                    top.append(node)
+                    
+                elif meta_command == 'include':
+                    if len(code_items)>1:
                         # If we know the target file to include
-                        if value:
-                            self.include(top, value)
-                            
+                        self.include(top, code_items[1])
+                    else:
                         # Otherwise, make a temporary include node
                         # That the child node will know to hook into.
-                        else:
-                            include_node = BlockNode(name='__include__' + self.name)
-                            top.append(include_node)
+                        include_node = BlockNode(name='__include__' + self.name)
+                        top.append(include_node)
 
-                    elif name == 'extend':
-                        # We need to extend the following
-                        # template.
-                        extend = value
-
-                    else:
-                        # If we don't know where it belongs
-                        # we just add it anyways without formatting.
-                        if line and in_tag:
-                            top.append("\n%s" % line)
-                        
+                elif meta_command == 'extend':
+                    # We need to extend the following
+                    # template.
+                    extend = code_items[1]
+                    
                 else:
-                    # It is HTML so just include it.
-                    buf = "\n%s(%r, escape=False)" % (self.writer, i)
-                    top.append(buf)
-
-            # Remeber, tag, not tag, tag, not tag
-            in_tag = not in_tag
+                    # If we don't know where it belongs
+                    # we just add it anyways without formatting.
+                    top.append("\n%s" % code)
 
         # Lets make a list of items to remove from child
         to_rm = []
@@ -683,6 +646,12 @@ def render(content = "hello world",
     "'''a\\nc'''"
     >>> render(content="'''a\\'c'''")
     "'''a\'c'''"
+    >>> render(content='{{for i in range(a):}}{{=i}}<br />{{pass}}', context=dict(a=5))
+    '0<br />1<br />2<br />3<br />4<br />'
+    >>> render(content="{{='''hello\\nworld'''}}")
+    'hello\\nworld'
+    >>> render(content='{{for i in range(3):\\n=i\\npass}}')
+    '012'
     """
     # Here to avoid circular Imports        
     import globals
@@ -711,8 +680,10 @@ def render(content = "hello world",
 
     # Returned the rendered content.
     return context['response'].body.getvalue()
+
     
 
 if __name__ == '__main__':
+
     import doctest
     doctest.testmod()
