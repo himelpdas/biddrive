@@ -195,7 +195,7 @@ class TemplateParser(object):
     
     r_tag = re.compile(r'(\{\{.*?\}\})', re.DOTALL)
 
-    r_block_comment = re.compile(r'(""".*?""")', re.DOTALL)
+    r_block_comment = re.compile(r'(""".*?""")|(\'\'\'.*?\'\'\')', re.DOTALL)
 
     # These are used for re-indentation.
     # Indent + 1
@@ -310,7 +310,9 @@ class TemplateParser(object):
             # ignore empty lines
             if not line:
                 continue
-            
+            if line[0] == '=':
+                line = '%s(%s)' % (self.writer,line[1:])
+
             # If we have a line that contains python code that
             # should be un-indented for this line of code.
             # and then re-indented for the next line.
@@ -528,11 +530,11 @@ class TemplateParser(object):
                                           value     = value, 
                                           top       = top, 
                                           stack     = stack,)
-                    
+
                     elif name == '=':
                         # So we have a variable to insert into
                         # the template
-                        buf = "\n%s(%s)" % (self.writer, value)
+                        buf = "\n=%s" % value
                         top.append(buf)
                         
                     elif name == 'block':
