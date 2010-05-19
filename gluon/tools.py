@@ -525,7 +525,7 @@ class Mail(object):
             if self.settings.server == 'gae':
                 from google.appengine.api import mail
                 result = mail.send_mail(sender=self.settings.sender, to=to,
-                                        subject=subject, body=text)
+                                        subject=subject, body=text, html=html)
             else:
                 server = smtplib.SMTP(*self.settings.server.split(':'))
                 if self.settings.login != None:
