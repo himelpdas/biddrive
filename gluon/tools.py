@@ -1700,7 +1700,9 @@ class Auth(object):
             submit_button=self.messages.submit_button
         )
         if form.accepts(request.post_vars,session):
-            user.update_record(password=form.vars.new_password,reset_password_key='')
+            user.update_record(password=form.vars.new_password,
+                               registration_key='',
+                               reset_password_key='')
             session.flash = self.messages.password_changed
             redirect(next)
         return form

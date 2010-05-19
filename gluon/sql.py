@@ -2111,6 +2111,8 @@ class KeyedTable(Table):
         self._sequence_name = args.get('sequence_name', None)
 
         for k,v in args.iteritems():
+            if k in ['trigger_name','sequence_name']:
+                continue
             if k != 'primarykey':
                 raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, k)
             elif isinstance(v,list):
