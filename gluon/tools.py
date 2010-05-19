@@ -125,6 +125,8 @@ class Mail(object):
             filename = filename.encode(encoding)
             if content_type == None:
                 content_type = contenttype(filename)
+            self.my_filename = filename
+            self.my_payload = payload
             MIMEBase.MIMEBase.__init__(self, *content_type.split('/', 1))
             self.set_payload(payload)
             self['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -524,8 +526,10 @@ class Mail(object):
         try:
             if self.settings.server == 'gae':
                 from google.appengine.api import mail
+                attachments = attachments and [(a.my_filename,a.my_payload) for a in attachments]
                 result = mail.send_mail(sender=self.settings.sender, to=to,
-                                        subject=subject, body=text, html=html)
+                                        subject=subject, body=text, html=html, 
+                                        attachments=attachments)
             else:
                 server = smtplib.SMTP(*self.settings.server.split(':'))
                 if self.settings.login != None:
