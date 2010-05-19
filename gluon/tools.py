@@ -156,18 +156,28 @@ class Mail(object):
             mail.settings.sender
             mail.settings.login
 
-        Optionally you can use PGP encryption:
+        Optionally you can use PGP encryption or X509:
 
             mail.settings.cipher_type = None
             mail.settings.sign = True
             mail.settings.sign_passphrase = None
             mail.settings.encrypt = True
+            mail.settings.x509_sign_keyfile = None
+            mail.settings.x509_sign_certfile = None
+            mail.settings.x509_crypt_certfiles = None
 
-            cipher_type: None
-                         gpg - need a python-pyme package and gpgme lib
-            sign: sign the message (True or False)
-            sign_passphrase: passphrase for key signing
-            encrypt: encrypt the message
+            cipher_type       : None
+                                gpg - need a python-pyme package and gpgme lib
+                                x509 - smime 
+            sign              : sign the message (True or False)
+            sign_passphrase   : passphrase for key signing
+            encrypt           : encrypt the message
+                             ... x509 only ...
+            x509_sign_keyfile : the signers private key filename (PEM format)
+            x509_sign_certfile: the signers certificate filename (PEM format)
+            x509_crypt_certfiles: the certificates file to encrypt the messages
+                                  with can be a file name or a list of
+                                  file names (PEM format)
 
         Examples::
 
@@ -184,6 +194,9 @@ class Mail(object):
         self.settings.sign = True
         self.settings.sign_passphrase = None
         self.settings.encrypt = True
+        self.settings.x509_sign_keyfile = None
+        self.settings.x509_sign_certfile = None
+        self.settings.x509_crypt_certfiles = None
         self.settings.lock_keys = True
         self.result = {}
         self.error = None
@@ -317,13 +330,20 @@ class Mail(object):
         
         
         #######################################################
-        #                       GPGME                         #
+        #                      CIPHER                         #
         #######################################################
         cipher_type = self.settings.cipher_type
         sign = self.settings.sign
         sign_passphrase = self.settings.sign_passphrase
         encrypt = self.settings.encrypt
+        #######################################################
+        #                       GPGME                         #
+        #######################################################
         if cipher_type == 'gpg':
+            if not sign and not encrypt:
+                self.error="No sign and no encrypt is set but cipher type to gpg"
+                return False
+
             # need a python-pyme package and gpgme lib
             from pyme import core, constants, errors
             import pyme.constants.validity
@@ -345,8 +365,8 @@ class Mail(object):
                     if sigkey.can_sign:
                         c.signers_add(sigkey)
                 if not c.signers_enum(0):
-                    self.result=False
                     self.error='No key for signing [%s]' % self.settings.sender
+                    return False
                 c.set_passphrase_cb(lambda x,y,z: sign_passphrase)
                 try:
                     # make a signature
@@ -367,7 +387,6 @@ class Mail(object):
                     # it's just a trick to handle the no encryption case
                     payload_in=payload
                 except errors.GPGMEError, ex:
-                    self.result=False
                     self.error="GPG error: %s" % ex.getstring()
                     return False
             ############################################
@@ -390,7 +409,6 @@ class Mail(object):
                     c.op_keylist_start(addr,0)
                     r = c.op_keylist_next()
                     if r == None:
-                        self.result=False
                         self.error='No key for [%s]' % addr
                         return False
                     recipients.append(r)
@@ -410,9 +428,81 @@ class Mail(object):
                     p.set_payload(cipher.read())
                     payload.attach(p)
                 except errors.GPGMEError, ex:
-                    self.result=False
                     self.error="GPG error: %s" % ex.getstring()
                     return False
+        #######################################################
+        #                       X.509                         #
+        #######################################################
+        elif cipher_type == 'x509':
+            if not sign and not encrypt:
+                self.error="No sign and no encrypt is set but cipher type to x509"
+                return False
+            x509_sign_keyfile=self.settings.x509_sign_keyfile
+            if self.settings.x509_sign_certfile:
+                x509_sign_certfile=self.settings.x509_sign_certfile
+            else:
+                # if there is no sign certfile we'll assume the
+                # cert is in keyfile
+                x509_sign_certfile=self.settings.x509_sign_keyfile
+            # crypt certfiles could be a string or a list
+            x509_crypt_certfiles=self.settings.x509_crypt_certfiles
+            
+            
+            # need m2crypto
+            from M2Crypto import BIO, SMIME, X509
+            msg_bio = BIO.MemoryBuffer(payload_in.as_string())
+            s = SMIME.SMIME()
+            
+            #                   SIGN
+            if sign:
+                #key for signing
+                try: 
+                    s.load_key(x509_sign_keyfile, x509_sign_certfile, callback=lambda x: sign_passphrase)
+                    if encrypt:
+                        p7 = s.sign(msg_bio)
+                    else:
+                        p7 = s.sign(msg_bio,flags=SMIME.PKCS7_DETACHED)
+                    msg_bio = BIO.MemoryBuffer(payload_in.as_string()) # Recreate coz sign() has consumed it.
+                except Exception,e:
+                    self.error="Something went wrong on signing: <%s>" %str(e)
+                    return False
+                    
+            #                   ENCRYPT
+            if encrypt:
+                try:
+                    sk = X509.X509_Stack()
+                    if not isinstance(x509_crypt_certfiles, (list, tuple)):
+                        x509_crypt_certfiles = [x509_crypt_certfiles]
+                    
+                    # make an encryption cert's stack
+                    for x in x509_crypt_certfiles:
+                        sk.push(X509.load_cert(x))
+                    s.set_x509_stack(sk)
+                    
+                    s.set_cipher(SMIME.Cipher('des_ede3_cbc'))
+                    tmp_bio = BIO.MemoryBuffer()
+                    if sign:
+                        s.write(tmp_bio, p7)
+                    else:
+                        tmp_bio.write(payload_in.as_string())
+                    p7 = s.encrypt(tmp_bio)
+                except Exception,e:
+                    self.error="Something went wrong on encrypting: <%s>" %str(e)
+                    return False
+            
+            #                 Final stage in sign and encryption
+            out = BIO.MemoryBuffer()
+            if encrypt:
+                s.write(out, p7)
+            else:
+                if sign:
+                    s.write(out, p7, msg_bio, SMIME.PKCS7_DETACHED)
+                else:
+                    out.write('\r\n')
+                    out.write(payload_in.as_string())
+            out.close()
+            st=str(out.read())
+            payload=message_from_string(st)
         else:
             # no cryptography process as usual
             payload=payload_in
