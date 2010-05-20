@@ -1296,17 +1296,7 @@ class FORM(DIV):
     tag = 'form'
 
     def __init__(self, *components, **attributes):
-        if self.tag[-1:] == '/' and components:
-            raise SyntaxError, '<%s> tags cannot have components' % self.tag
-        if len(components) == 1 and isinstance(components[0], (list,
-                tuple)):
-            self.components = list(components[0])
-        else:
-            self.components = list(components)
-        self.attributes = attributes
-        self._fixup()
-        # converts special attributes in components attributes
-        self._postprocessing()
+        DIV.__init__(self, *components,  **attributes)
         self.vars = Storage()
         self.errors = Storage()
         self.latest = Storage()
