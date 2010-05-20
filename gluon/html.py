@@ -539,42 +539,52 @@ class DIV(XmlComponent):
 
         return self.xml()
 
+
     def elements(self, *args, **kargs):
         """
         find all component that match the supplied attribute dictionary,
         or None if nothing could be found
-
+        
         All components of the components are searched.
+        
+        >>> a = DIV(DIV(SPAN('x'),3,DIV(SPAN('y'))))
+        >>> for c in a.elements('span',first_only=True): c[0]='z'
+        >>> print a
+        <div><div><span>z</span>3<div><span>y</span></div></div></div>
+        >>> for c in a.elements('span'): c[0]='z'
+        >>> print a
+        <div><div><span>z</span>3<div><span>z</span></div></div></div>
         """
-        # make a copy of the components
-        components = [self]
+    # make a copy of the components
         matches = []
         first_only = False
         if kargs.has_key("first_only"):
             first_only = kargs["first_only"]
             del kargs["first_only"]
+        # check if the component has an attribute with the same
+        # value as provided
+        check = True
+        tag = getattr(self,'tag').replace("/","")
+        if args and tag not in args:
+            check = False
+        for (key, value) in kargs.items():
+            if self[key] != value:
+                check = False
+        # if found, return the component
+        if check:
+            matches.append(self)
+            if first_only:
+                return matches
         # loop the copy
-        for c in components:
-            try:
-                # if the component has components, add it to the list
-                # so it can be part of the processing
-                components += copy.copy(c.components)
-                # check if the component has an attribute with the same
-                # value as provided
-                check = True
-                tag = getattr(c,'tag').replace("/","")
-                if args and tag not in args:
-                        check = False
-                for (key, value) in kargs.items():
-                    if c[key] != value:
-                            check = False
-                # if found, return the component
-                if check:
-                    matches.append(c)
-                    if first_only: break
-            except:
-                pass
+        for c in self.components:
+            if isinstance(c, XmlComponent):
+                kargs['first_only'] = first_only		
+                child_matches = c.elements( *args,  **kargs )
+                if first_only  and len(child_matches) != 0:
+                    return child_matches
+                matches.extend( child_matches )
         return matches
+
 
     def element(self, *args, **kargs):
         """
@@ -1372,7 +1382,7 @@ class BEAUTIFY(DIV):
     example::
 
         >>> BEAUTIFY(['a', 'b', {'hello': 'world'}]).xml()
-        '<div><table><tr><td><div>a</div></td></tr><tr><td><div>b</div></td></tr><tr><td><div><table><tr><td style="font-weight:bold;"><div>hello</div></td><td valign="top">:</td><td><div>world</div></td></tr></table></div></td></tr></table></div>'
+        '<div><table><tr><td><div>a</div></td></tr><tr><td><div>b</div></td></tr><tr><td><div><table><tr><td style="font-weight:bold;">hello</td><td valign="top">:</td><td><div>world</div></td></tr></table></div></td></tr></table></div>'
 
     turns any list, dictionary, etc into decent looking html.
     Two special attributes are
