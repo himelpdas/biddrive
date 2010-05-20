@@ -307,8 +307,7 @@ class DIV(XmlComponent):
         if self.tag[-1:] == '/' and components:
             raise SyntaxError, '<%s> tags cannot have components'\
                  % self.tag
-        if len(components) == 1 and isinstance(components[0], (list,
-                tuple)):
+        if len(components) == 1 and isinstance(components[0], (list,tuple)):
             self.components = list(components[0])
         else:
             self.components = list(components)
@@ -332,16 +331,30 @@ class DIV(XmlComponent):
     def append(self, value):
         """
         list style appending of components
+        
+        >>> a=DIV()
+        >>> a.append(SPAN('x'))
+        >>> print a
+        <div><span>x</span></div>
         """
         self._setnode(value)
-        return self.components.append(value)
+        ret = self.components.append(value)
+        self._fixup()
+        return ret
 
     def insert(self, i, value):
         """
         list style inserting of components
+
+        >>> a=DIV()
+        >>> a.insert(0,SPAN('x'))
+        >>> print a
+        <div><span>x</span></div>
         """
         self._setnode(value)
-        return self.components.insert(i, value)
+        ret = self.components.insert(i, value)
+        self._fixup()
+        return ret
 
     def __getitem__(self, i):
         """
