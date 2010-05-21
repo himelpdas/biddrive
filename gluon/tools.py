@@ -1304,7 +1304,7 @@ class Auth(object):
                     elif temp_user.registration_key == 'disabled':
                         response.flash = self.messages.login_disabled
                         return form
-                    elif temp_user.registration_key.strip():
+                    elif temp_user.registration_key!=None and temp_user.registration_key.strip():
                         response.flash = \
                             self.messages.registration_verifying
                         return form
