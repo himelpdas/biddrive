@@ -22,7 +22,6 @@ epydoc:
 	cp applications/examples/static/title.png applications/examples/static/epydoc
 tests:
 	cd gluon/tests; ./tests >& tests.log
-	mv gluon/tests/tests.log applications/examples/static/nightly_tests.log
 src:
 	echo 'Version 1.78.3 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files
