@@ -1593,6 +1593,7 @@ class web2pyHTMLParser(HTMLParser):
         self.tree = self.parent = TAG['']()
         self.closed = closed
         self.tags = [x for x in __all__ if isinstance(eval(x),DIV)]
+        self.last = None
         self.feed(text)
     def handle_starttag(self, tagname, attrs):
         if tagname.upper() in self.tags:
@@ -1603,8 +1604,10 @@ class web2pyHTMLParser(HTMLParser):
         for key,value in attrs: tag['_'+key]=value
         tag.parent = self.parent
         self.parent.append(tag)
-        if not tag.tag.endswith('/'):
+        if not tag.tag.endswith('/'):            
             self.parent=tag
+        else:
+            self.last = tag.tag[:-1]
     def handle_data(self,data):
         self.parent.append(data)
     def handle_charref(self,name):
@@ -1618,9 +1621,11 @@ class web2pyHTMLParser(HTMLParser):
         pass
     def handle_endtag(self, tagname):
         # this deals with unbalanced tags
-        while True:
-            parent_tagname=self.parent.tag
+        if tagname==self.last:
+            return
+        while True:            
             try:
+                parent_tagname=self.parent.tag
                 self.parent = self.parent.parent            
             except:
                 raise RuntimeError, "unable to balance tag %s" % tagname
