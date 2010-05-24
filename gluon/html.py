@@ -17,6 +17,8 @@ import base64
 import sanitizer
 import rewrite
 import itertools
+from HTMLParser import HTMLParser
+from htmlentitydefs import name2codepoint
 
 from storage import Storage
 from validators import *
@@ -1569,9 +1571,60 @@ def test():
     >>> if form.accepts({}, session,formname=None): print 'passed'
     >>> if form.accepts({'var':'test ', '_formkey': session['_formkey[None]']}, session, formname=None): print 'passed'
     """
-
     pass
 
+
+class web2pyHTMLParser(HTMLParser):
+    """
+    obj = web2pyHTMLParser(text) parses and html/xml text into web2py helpers.
+    obj.tree contains the root of the tree, and tree can be manipulated
+
+    >>> str(web2pyHTMLParser('hello<div a="b" c=3>wor&lt;ld<span>xxx</span>y<script/>yy</div>zzz').tree)
+    'hello<div a="b" c="3">wor&lt;ld<span>xxx</span>y<script></script>yy</div>zzz'
+    >>> str(web2pyHTMLParser('<div>a<span>b</div>c').tree)
+    '<div>a<span>b</span></div>c'
+    >>> tree = web2pyHTMLParser('hello<div a="b">world</div>').tree
+    >>> tree.element(_a='b')['_c']=5
+    >>> str(tree)
+    'hello<div a="b" c="5">world</div>'
+    """
+    def __init__(self,text,closed=('input','link')):
+        HTMLParser.__init__(self)
+        self.tree = self.parent = TAG['']()
+        self.closed = closed
+        self.tags = [x for x in __all__ if isinstance(eval(x),DIV)]
+        self.feed(text)
+    def handle_starttag(self, tagname, attrs):
+        if tagname.upper() in self.tags:
+            tag=eval(tagname.upper())
+        else:
+            if tagname in self.closed: tagname+='/'
+            tag = TAG[tagname]()
+        for key,value in attrs: tag['_'+key]=value
+        tag.parent = self.parent
+        self.parent.append(tag)
+        if not tag.tag.endswith('/'):
+            self.parent=tag
+    def handle_data(self,data):
+        self.parent.append(data)
+    def handle_charref(self,name):
+        if name[1].lower()=='x':
+            self.parent.append(unichr(int(ent[2:], 16)))
+        else:
+            self.parent.append(unichr(int(ent[1:], 10)))
+        pass
+    def handle_entityref(self,name):
+        self.parent.append(unichr(name2codepoint[name]))
+        pass
+    def handle_endtag(self, tagname):
+        # this deals with unbalanced tags
+        while True:
+            parent_tagname=self.parent.tag
+            try:
+                self.parent = self.parent.parent            
+            except:
+                raise RuntimeError, "unable to balance tag %s" % tagname
+            if parent_tagname[:len(tagname)]==tagname: break
 
 if __name__ == '__main__':
     import doctest
