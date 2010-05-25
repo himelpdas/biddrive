@@ -273,7 +273,12 @@ class XML(XmlComponent):
     def __str__(self):
         return self.xml()
 
-    def flatten(self):
+    def flatten(self,render=None):
+        """
+        return the text stored by the XML object rendered by the render function
+        """
+        if render: 
+            return render(self.text)
         return self.text
 
 
@@ -557,14 +562,28 @@ class DIV(XmlComponent):
 
         return self.xml()
 
-    def flatten(self):
+    def flatten(self, render=None):
+        """
+        return the text stored by the DIV object rendered by the render function
+        the render function must take text, tagname, and attributes
+        render=None is equivalent to render=lambda text, tag, attr: text
+        """
+
         text = ''
         for c in self.components:
             if isinstance(c,XmlComponent):
-                text+=c.flatten()
+                s=c.flatten(render)
             else:
-                text+=str(c)
+                s=str(c)
+            text+=s
+        if render:
+            text = render(text,self.tag,self.attributes)
         return text
+
+    regex_tag=re.compile('^\w+')
+    regex_id=re.compile('#(\w+)')
+    regex_class=re.compile('\.(\w+)')
+    regex_attr=re.compile('\[(\w+)=(\w+)\]')
 
 
     def elements(self, *args, **kargs):
@@ -581,8 +600,38 @@ class DIV(XmlComponent):
         >>> for c in a.elements('span'): c[0]='z'
         >>> print a
         <div><div><span>z</span>3<div><span>z</span></div></div></div>
+
+        It also supports a syntax compatible with jQuery
+
+        >>> a=TAG('<div><span><a id="1">hello</a></span><p class="this is a test">world</p></div>')
+        >>> for e in a.elements('div a#1, p.is'): print e.flatten()
+        hello
+        world
         """
-    # make a copy of the components
+        if len(args)==1:
+            args = args[0].split(',')
+        if len(args)>1:
+            subset = [self.elements(a,**kargs) for a in args]
+            return reduce(lambda a,b:a+b,subset,[])
+        elif len(args)==1:
+            items = args[0].split()
+            if len(items)>1:  
+                subset=[a.elements(' '.join(items[1:]),**kargs) for a in self.elements(items[0])]
+                return reduce(lambda a,b:a+b,subset,[])
+            else:
+                item=items[0]
+                if '#' in item or '.' in item or '[' in item:
+                    match_tag = self.regex_tag.search(item)
+                    match_id = self.regex_id.search(item)
+                    match_class = self.regex_class.search(item)
+                    match_attr = self.regex_attr.finditer(item)
+                    tag=match_tag.group()
+                    if match_id: kargs['_id']=match_id.group(1)
+                    if match_class: kargs['_class']=re.compile('(?<!\w)%s(?!\w)' % match_class.group(1))
+                    for item in match_attr:                        
+                        kargs['_'+item.group(1)]=item.group(2)
+                    return self.elements(tag,**kargs)                        
+        # make a copy of the components
         matches = []
         first_only = False
         if kargs.has_key("first_only"):
@@ -599,7 +648,7 @@ class DIV(XmlComponent):
                 if self[key] != str(value):
                     check = False
             elif key in self.attributes:
-                if not value.match(str(self[key])):
+                if not value.search(str(self[key])):
                     check = False
             else:
                 check = False
