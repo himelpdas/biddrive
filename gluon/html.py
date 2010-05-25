@@ -585,6 +585,15 @@ class DIV(XmlComponent):
         for (key, value) in kargs.items():
             if self[key] != value:
                 check = False
+        if 'find' in kargs:
+            find = kargs['find']
+            for c in self.components:
+                if isinstance(find,str):
+                    if isinstance(c,str) and find in c:
+                        check = True
+                else:
+                    if isinstance(c,str) and find.match(c):
+                        check = True
         # if found, return the component
         if check:
             matches.append(self)
