@@ -583,13 +583,19 @@ class DIV(XmlComponent):
         if args and tag not in args:
             check = False
         for (key, value) in kargs.items():
-            if self[key] != value:
+            if isinstance(value,(str,int)):
+                if self[key] != str(value):
+                    check = False
+            elif key in self.attributes:
+                if not value.match(str(self[key])):
+                    check = False
+            else:
                 check = False
         if 'find' in kargs:
             find = kargs['find']
             for c in self.components:
-                if isinstance(find,str):
-                    if isinstance(c,str) and find in c:
+                if isinstance(find,(str,int)):
+                    if isinstance(c,str) and str(find) in c:
                         check = True
                 else:
                     if isinstance(c,str) and find.match(c):
