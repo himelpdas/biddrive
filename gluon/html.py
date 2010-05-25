@@ -1641,9 +1641,9 @@ class web2pyHTMLParser(HTMLParser):
         self.parent.append(data)
     def handle_charref(self,name):
         if name[1].lower()=='x':
-            self.parent.append(unichr(int(ent[2:], 16)))
+            self.parent.append(unichr(int(name[2:], 16)))
         else:
-            self.parent.append(unichr(int(ent[1:], 10)))
+            self.parent.append(unichr(int(name[1:], 10)))
         pass
     def handle_entityref(self,name):
         self.parent.append(unichr(name2codepoint[name]))
