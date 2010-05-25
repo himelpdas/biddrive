@@ -273,6 +273,9 @@ class XML(XmlComponent):
     def __str__(self):
         return self.xml()
 
+    def flatten(self):
+        return self.text
+
 
 class DIV(XmlComponent):
     """
@@ -554,6 +557,15 @@ class DIV(XmlComponent):
 
         return self.xml()
 
+    def flatten(self):
+        text = ''
+        for c in self.components:
+            if isinstance(c,XmlComponent):
+                text+=c.flatten()
+            else:
+                text+=str(c)
+        return text
+
 
     def elements(self, *args, **kargs):
         """
@@ -692,6 +704,8 @@ class __TAG__(XmlComponent):
 
         return lambda *a, **b: __tag__(*a, **b)
 
+    def __call__(self,html):
+        return web2pyHTMLParser(html).tree
 
 TAG = __TAG__()
 
