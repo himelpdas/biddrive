@@ -617,7 +617,8 @@ class DIV(XmlComponent):
         >>> for e in a.elements('div a#1, p.is'): print e.flatten()
         hello
         world
-
+        >>> for e in a.elements('#1'): print e.flatten()
+        hello
         >>> a.elements('a[id=1]')[0].xml()
         '<a id="1">hello</a>'
         """
@@ -638,12 +639,13 @@ class DIV(XmlComponent):
                     match_id = self.regex_id.search(item)
                     match_class = self.regex_class.search(item)
                     match_attr = self.regex_attr.finditer(item)
-                    tag=match_tag.group()
+                    args=[]
+                    if match_tag: args=[match_tag.group()]
                     if match_id: kargs['_id']=match_id.group(1)
                     if match_class: kargs['_class']=re.compile('(?<!\w)%s(?!\w)' % match_class.group(1))
                     for item in match_attr:                        
                         kargs['_'+item.group(1)]=item.group(2)
-                    return self.elements(tag,**kargs)                        
+                    return self.elements(*args,**kargs)                        
         # make a copy of the components
         matches = []
         first_only = False
