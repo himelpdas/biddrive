@@ -277,7 +277,7 @@ class XML(XmlComponent):
         """
         return the text stored by the XML object rendered by the render function
         """
-        if render: 
+        if render:
             return render(self.text)
         return self.text
 
@@ -567,12 +567,22 @@ class DIV(XmlComponent):
         return the text stored by the DIV object rendered by the render function
         the render function must take text, tagname, and attributes
         render=None is equivalent to render=lambda text, tag, attr: text
+
+        >>> markdown = lambda text,tag=None,attributes={}: \
+                        {None: re.sub('\s+',' ',text), \
+                         'h1':'#'+text+'\\n\\n', \
+                         'p':text+'\\n'}.get(tag,text)
+        >>> a=TAG('<h1>Header</h1><p>this is a     test</p>')
+        >>> a.flatten(markdown)
+        '#Header\\n\\nthis is a test\\n'
         """
 
         text = ''
         for c in self.components:
             if isinstance(c,XmlComponent):
                 s=c.flatten(render)
+            elif render:
+                s=render(str(c))
             else:
                 s=str(c)
             text+=s
