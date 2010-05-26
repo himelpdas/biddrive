@@ -278,7 +278,7 @@ class XML(XmlComponent):
         return the text stored by the XML object rendered by the render function
         """
         if render:
-            return render(self.text)
+            return render(self.text,None,{})
         return self.text
 
 
@@ -394,7 +394,7 @@ class DIV(XmlComponent):
         :param value: the new value
         """
         self._setnode(value)
-        if isinstance(i, str):
+        if isinstance(i, (str, unicode)):
             self.attributes[i] = value
         else:
             self.components[i] = value
@@ -1723,6 +1723,22 @@ class web2pyHTMLParser(HTMLParser):
             except:
                 raise RuntimeError, "unable to balance tag %s" % tagname
             if parent_tagname[:len(tagname)]==tagname: break
+
+def markdown(text,tag=None,attr={}):
+    if tag==None: return re.sub('\s+',' ',text)
+    if tag=='br': return '\n\n'
+    if tag=='h1': return '#'+text+'\n\n'
+    if tag=='h2': return '#'*2+text+'\n\n'
+    if tag=='h3': return '#'*3+text+'\n\n'
+    if tag=='h4': return '#'*4+text+'\n\n'
+    if tag=='p': return text+'\n\n'
+    if tag=='b': return '**%s**' % text
+    if tag=='en': return '*%s*' % text
+    if tag=='it': return '*%s*' % text
+    if tag=='tt': return '`%s`' % text
+    if tag=='a': return '[%s](%s)' % (text,attr['_href'])
+    if tag=='img': return '![%s](%s)' % (attr['_alt'],attr['_src'])
+    return text
 
 if __name__ == '__main__':
     import doctest
