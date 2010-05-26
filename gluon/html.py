@@ -617,6 +617,9 @@ class DIV(XmlComponent):
         >>> for e in a.elements('div a#1, p.is'): print e.flatten()
         hello
         world
+
+        >>> a.elements('a[id=1]')[0].xml()
+        '<a id="1">hello</a>'
         """
         if len(args)==1:
             args = args[0].split(',')
