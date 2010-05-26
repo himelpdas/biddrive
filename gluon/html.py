@@ -590,10 +590,10 @@ class DIV(XmlComponent):
             text = render(text,self.tag,self.attributes)
         return text
 
-    regex_tag=re.compile('^\w+')
-    regex_id=re.compile('#(\w+)')
-    regex_class=re.compile('\.(\w+)')
-    regex_attr=re.compile('\[(\w+)=(\w+)\]')
+    regex_tag=re.compile('^[\w\-\:]+')
+    regex_id=re.compile('#([\w\-]+)')
+    regex_class=re.compile('\.([\w\-]+)')
+    regex_attr=re.compile('\[([\w\-\:]+)=(.*?)\]')
 
 
     def elements(self, *args, **kargs):
@@ -613,14 +613,14 @@ class DIV(XmlComponent):
 
         It also supports a syntax compatible with jQuery
 
-        >>> a=TAG('<div><span><a id="1">hello</a></span><p class="this is a test">world</p></div>')
-        >>> for e in a.elements('div a#1, p.is'): print e.flatten()
+        >>> a=TAG('<div><span><a id="1-1" u:v=$>hello</a></span><p class="this is a test">world</p></div>')
+        >>> for e in a.elements('div a#1-1, p.is'): print e.flatten()
         hello
         world
-        >>> for e in a.elements('#1'): print e.flatten()
+        >>> for e in a.elements('#1-1'): print e.flatten()
         hello
-        >>> a.elements('a[id=1]')[0].xml()
-        '<a id="1">hello</a>'
+        >>> a.elements('a[u:v=$]')[0].xml()
+        '<a id="1-1" u:v="$">hello</a>'
         """
         if len(args)==1:
             args = args[0].split(',')
@@ -639,10 +639,11 @@ class DIV(XmlComponent):
                     match_id = self.regex_id.search(item)
                     match_class = self.regex_class.search(item)
                     match_attr = self.regex_attr.finditer(item)
-                    args=[]
-                    if match_tag: args=[match_tag.group()]
-                    if match_id: kargs['_id']=match_id.group(1)
-                    if match_class: kargs['_class']=re.compile('(?<!\w)%s(?!\w)' % match_class.group(1))
+                    args = []
+                    if match_tag: args = [match_tag.group()]
+                    if match_id: kargs['_id'] = match_id.group(1)
+                    if match_class: kargs['_class'] = re.compile('(?<!\w)%s(?!\w)' % \
+                       match_class.group(1).replace('-','\\-').replace(':','\\:'))
                     for item in match_attr:                        
                         kargs['_'+item.group(1)]=item.group(2)
                     return self.elements(*args,**kargs)                        
