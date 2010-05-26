@@ -1708,7 +1708,6 @@ class web2pyHTMLParser(HTMLParser):
             self.parent.append(unichr(int(name[2:], 16)).encode('utf8'))
         else:
             self.parent.append(unichr(int(name[1:], 10)).encode('utf8'))
-        pass
     def handle_entityref(self,name):
         self.parent.append(unichr(name2codepoint[name]))
         pass
@@ -1736,8 +1735,8 @@ def markdown(text,tag=None,attr={}):
     if tag=='en': return '*%s*' % text
     if tag=='it': return '*%s*' % text
     if tag=='tt': return '`%s`' % text
-    if tag=='a': return '[%s](%s)' % (text,attr['_href'])
-    if tag=='img': return '![%s](%s)' % (attr['_alt'],attr['_src'])
+    if tag=='a': return '[%s](%s)' % (text,attr.get('_href',''))
+    if tag=='img': return '![%s](%s)' % (attr.get('_alt',''),attr.get('_src',''))
     return text
 
 if __name__ == '__main__':
