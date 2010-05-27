@@ -1708,15 +1708,17 @@ class web2pyHTMLParser(HTMLParser):
         else:
             self.last = tag.tag[:-1]
     def handle_data(self,data):
-        self.parent.append(data)
+        try:
+            self.parent.append(data.encode('utf8','xmlcharref'))
+        except:
+            self.parent.append(data.decode('latin1').encode('utf8','xmlcharref'))
     def handle_charref(self,name):
         if name[1].lower()=='x':
             self.parent.append(unichr(int(name[2:], 16)).encode('utf8'))
         else:
             self.parent.append(unichr(int(name[1:], 10)).encode('utf8'))
     def handle_entityref(self,name):
-        self.parent.append(unichr(name2codepoint[name]))
-        pass
+        self.parent.append(unichr(name2codepoint[name]).encode('utf8'))
     def handle_endtag(self, tagname):
         # this deals with unbalanced tags
         if tagname==self.last:
