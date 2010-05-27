@@ -1353,9 +1353,14 @@ class SELECT(INPUT):
         self.components = components
 
     def _postprocessing(self):
-        options = itertools.chain(*[ \
-                (c.components if isinstance(c, OPTGROUP) else [c]) \
-                for c in self.components])
+        component_list = []
+        for c in self.components:
+            if isinstance(c, OPTGROUP):
+                component_list.append(c.components)
+            else:
+                component_list.append([c])
+        options = itertools.chain(*[mylist])
+
         if self['value'] != None:
             if not self['_multiple']:
                 for c in options: # my patch
