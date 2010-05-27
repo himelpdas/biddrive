@@ -1359,7 +1359,7 @@ class SELECT(INPUT):
                 component_list.append(c.components)
             else:
                 component_list.append([c])
-        options = itertools.chain(*[mylist])
+        options = itertools.chain(*component_list)
 
         if self['value'] != None:
             if not self['_multiple']:
