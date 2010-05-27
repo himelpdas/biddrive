@@ -927,7 +927,7 @@ class MySQLAdapter(BaseAdapter):
                              port=port,
                              charset=charset: MySQLdb.Connection(db=db,
                                                                  user=user,
-                                                                 password=password,
+                                                                 passwd=password,
                                                                  host=host,
                                                                  port=port,
                                                                  charset=charset,
