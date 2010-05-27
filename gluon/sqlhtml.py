@@ -443,11 +443,8 @@ class AutocompleteWidget:
             if 'requires' in attr: del attr['requires']
             attr['_name'] = key2
             value = attr['value']
-            print value
             record = self.db(self.fields[1]==value).select(self.fields[0]).first()
-            print record
             attr['value'] = record and record[self.fields[0].name]
-            print attr['value']
             attr['_onblur']="jQuery('#%(div_id)s').delay(3000).fadeOut('slow');" % \
                 dict(div_id=div_id,u='F'+self.keyword)
             attr['_onkeyup'] = "jQuery('#%(key3)s').val('');var e=event.which?event.which:event.keyCode; function %(u)s(){jQuery('#%(id)s').val(jQuery('#%(key)s :selected').text());jQuery('#%(key3)s').val(jQuery('#%(key)s').val())}; if(e==39) %(u)s(); else if(e==40) {if(jQuery('#%(key)s option:selected').next().length)jQuery('#%(key)s option:selected').attr('selected',null).next().attr('selected','selected'); %(u)s();} else if(e==38) {if(jQuery('#%(key)s option:selected').prev().length)jQuery('#%(key)s option:selected').attr('selected',null).prev().attr('selected','selected'); %(u)s();} else if(jQuery('#%(id)s').val().length>=%(min_length)s) jQuery.get('%(url)s?%(key)s='+escape(jQuery('#%(id)s').val()),function(data){if(data=='')jQuery('#%(key3)s').val('');else{jQuery('#%(id)s').next('.error').hide();jQuery('#%(div_id)s').html(data).show().focus();jQuery('#%(div_id)s select').css('width',jQuery('#%(id)s').css('width'));jQuery('#%(key3)s').val(jQuery('#%(key)s').val());jQuery('#%(key)s').change(%(u)s);jQuery('#%(key)s').click(%(u)s);};}); else jQuery('#%(div_id)s').fadeOut('slow');" % \
@@ -920,6 +917,7 @@ class SQLFORM(FORM):
             else:
                 self.table._db(self.table.id == self.record.id).delete()
                 self.vars.id = self.record.id
+            self.errors.clear()
             return True
 
         for fieldname in self.fields:
