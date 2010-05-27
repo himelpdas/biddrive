@@ -536,7 +536,7 @@ class Query(object):
                 except ValueError:
                     raise SyntaxError, 'id value must be integer: %s' % id
                 if not (op == '=' or (op == '>' and right == 0)):
-                    raise RuntumeError, '(field.id <op> value) is not supported on GAE'
+                    raise RuntimeError, '(field.id <op> value) is not supported on GAE'
             elif op=='IN':
                 right = [dateobj_to_datetime(obj_represent(r, left.type, left._db)) \
                              for r in right]
