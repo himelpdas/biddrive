@@ -823,6 +823,8 @@ class Auth(object):
         self.settings.verify_email_onaccept = None
 
         self.settings.profile_next = self.url('index')
+        self.settings.profile_onvalidation = None
+        self.settings.profile_onaccept = None
         self.settings.retrieve_username_next = self.url('index')
         self.settings.retrieve_password_next = self.url('index')
         self.settings.request_reset_password_next = self.url('user', args='login')
