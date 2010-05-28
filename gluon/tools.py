@@ -1202,7 +1202,7 @@ class Auth(object):
         password = table_user[passfield].validate(password)[0]
         if user:
             if not user.registration_key and user[passfield] == password:
-                user = Storage(table_user._filter_fields(user, id=True))
+                user = Storage(table_user._filter_fields(user, id=True))                
                 session.auth = Storage(user=user, last_visit=request.now,
                                        expiration=self.settings.expiration)
                 self.user = user
@@ -1976,6 +1976,7 @@ class Auth(object):
 
         """
 
+        table_user = self.settings.table_user
         if not self.is_logged_in():
             redirect(self.settings.login_url)
         passfield = self.settings.password_field
@@ -1993,7 +1994,7 @@ class Auth(object):
         if log == DEFAULT:
             log = self.messages.profile_log
         form = SQLFORM(
-            self.settings.table_user,
+            table_user,
             self.user.id,
             hidden=dict(_next=next),
             showid=self.settings.showid,
@@ -2004,8 +2005,8 @@ class Auth(object):
             )
         if form.accepts(request.post_vars, session,
                         formname='profile',
-                        onvalidation=onvalidation):
-            self.user.update(form.vars)
+                        onvalidation=onvalidation):            
+            self.user.update(table_user._filter_fields(form.updated_fields))
             session.flash = self.messages.profile_updated
             if log:
                 self.log_event(log % self.user)

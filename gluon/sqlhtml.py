@@ -984,6 +984,8 @@ class SQLFORM(FORM):
                  in request_vars:
                 fields[fieldname] = self.vars[fieldname]
 
+        self.updated_fields = fields
+                
         if dbio:
             if keyed:
                 if reduce(lambda x,y: x and y, record_id.values()): # if record_id
@@ -1003,7 +1005,6 @@ class SQLFORM(FORM):
                         self.table._db(self.table.id == self.record.id).update(**fields)
                 else:
                     self.vars.id = self.table.insert(**fields)
-
         return ret
 
     @staticmethod
