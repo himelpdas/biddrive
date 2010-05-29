@@ -85,7 +85,6 @@ def reindent(text):
         if k < 0:
             k = 0
         new_lines.append('    ' * k + line)
-        print repr(new_lines[-1])
         credit = 0
         if re_pass.match(line):
             (credit, k) = (0, k - 1)
