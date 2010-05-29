@@ -2008,7 +2008,7 @@ class Auth(object):
         if form.accepts(request.post_vars, session,
                         formname='profile',
                         onvalidation=onvalidation):            
-            self.user.update(table_user._filter_fields(form.updated_fields))
+            self.user.update(table_user._filter_fields(form.vars))
             session.flash = self.messages.profile_updated
             if log:
                 self.log_event(log % self.user)

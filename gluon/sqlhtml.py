@@ -955,12 +955,13 @@ class SQLFORM(FORM):
                     (source_file, original_filename) = \
                         (cStringIO.StringIO(f), 'file.txt')
                 newfilename = field.store(source_file, original_filename)
-                self.vars['%s_newfilename' % fieldname] = \
-                    fields[fieldname] = newfilename
-# proposed by Hamdy (accept?)
-#               self.vars['%s' % fieldname] = newfilename
+                # this line is for backward compatibility only
+                self.vars['%s_newfilename' % fieldname] = newfilename
+                fields[fieldname] = newfilename
                 if field.uploadfield and not field.uploadfield==True:
                     fields[field.uploadfield] = source_file.read()
+                # proposed by Hamdy (accept?) do we need fields at this point?
+                self.vars[fieldname] = fields[fieldname]
                 continue
             elif fieldname in self.vars:
                 fields[fieldname] = self.vars[fieldname]
@@ -984,8 +985,6 @@ class SQLFORM(FORM):
                  in request_vars:
                 fields[fieldname] = self.vars[fieldname]
 
-        self.updated_fields = fields
-                
         if dbio:
             if keyed:
                 if reduce(lambda x,y: x and y, record_id.values()): # if record_id
