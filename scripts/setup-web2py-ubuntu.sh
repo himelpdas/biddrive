@@ -100,6 +100,7 @@ NameVirtualHost *:443
   AliasMatch ^/([^/]+)/static/(.*) \
            /home/www-data/web2py/applications/$1/static/$2
   <Directory /home/www-data/web2py/applications/*/static/>
+    Options -Indexes
     Order Allow,Deny
     Allow from all
   </Directory>
@@ -138,6 +139,7 @@ NameVirtualHost *:443
         /home/www-data/web2py/applications/$1/static/$2
 
   <Directory /home/www-data/web2py/applications/*/static/>
+    Options -Indexes
     ExpiresActive On
     ExpiresDefault "access plus 1 hour"
     Order Allow,Deny

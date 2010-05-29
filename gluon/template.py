@@ -75,7 +75,7 @@ def __re_strings(text):
 def reindent(text):
     (new_lines, credit, k) = ([], 0, 0)
     for raw_line in text.split('\n'):
-        line = raw_line.strip()
+        line = raw_line.strip()        
         if not line:
             continue
         if line[0] == '=':
@@ -85,6 +85,7 @@ def reindent(text):
         if k < 0:
             k = 0
         new_lines.append('    ' * k + line)
+        print repr(new_lines[-1])
         credit = 0
         if re_pass.match(line):
             (credit, k) = (0, k - 1)
