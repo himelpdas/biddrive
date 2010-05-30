@@ -88,6 +88,9 @@ def populate(table, n, default=True):
                 record[fieldname] = ''
             elif field.type == 'upload':
                 record[fieldname] = None
+            elif field.type=='integer' and hasattr(field.requires,'options'):                
+                options=field.requires.options()
+                record[fieldname] = options[random.randint(0,len(options)-1)][0]
             elif field.type in ['integer','double']:
                 try:
                     record[fieldname] = random.randint(field.requires.minimum,field.requires.maximum-1)
@@ -105,7 +108,7 @@ def populate(table, n, default=True):
                     record[fieldname] = ids[tablename][random.randint(0,n-1)]
                 else:
                     record[fieldname] = 0
-            elif field.type=='string' and hasattr(field.requires,'options'):
+            elif field.type=='string' and hasattr(field.requires,'options'):                
                 options=field.requires.options()
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
             elif field.type=='string' and fieldname.find('url')>=0:
