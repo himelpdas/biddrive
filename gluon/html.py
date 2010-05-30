@@ -1251,23 +1251,25 @@ class INPUT(DIV):
         if not t:
             t = self['_type'] = 'text'
         t = t.lower()
+        value, _value = self['value'] = self['_value']
         if t == 'checkbox':
-            if not self['_value']:
+            if not _value:
                 self['_value'] = 'on'
-            if self['value']:
-                self['_checked'] = 'checked'
-            else:
-                self['_checked'] = None
+            if not value:
+                value = []
+            elif not isinstance(value,(list,tuple)):
+                value = str(value).split('|')
+            self['_checked'] = _value in value and 'checked' or None
         elif t == 'radio':
-            if str(self['value']) == str(self['_value']):
+            if str(value) == str(_value):
                 self['_checked'] = 'checked'
             else:
                 self['_checked'] = None
         elif t == 'text' or t == 'hidden':
-            if self['value'] != None:
-                self['_value'] = self['value']
+            if value != None:
+                self['_value'] = value
             else:
-                self['value'] = self['_value']
+                self['value'] = _value
 
     def xml(self):
         name = self.attributes.get('_name', None)
