@@ -1257,6 +1257,8 @@ class INPUT(DIV):
                 self['_value'] = 'on'
             if not value:
                 value = []
+            elif value == True:
+                value = [_value]
             elif not isinstance(value,(list,tuple)):
                 value = str(value).split('|')
             self['_checked'] = _value in value and 'checked' or None
