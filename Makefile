@@ -23,7 +23,7 @@ epydoc:
 tests:
 	cd gluon/tests; ./tests 1>tests.log 2>&1 
 src:
-	echo 'Version 1.78.3 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
+	echo 'Version 1.79.0rc1 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files
 	make clean
 	### clean up baisc apps

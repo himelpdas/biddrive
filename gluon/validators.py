@@ -858,6 +858,7 @@ class IS_EMAIL(Validator):
         ('Ima Fool@example.com', 'enter a valid email address')
         >>> IS_EMAIL()('localguy@localhost')       # localhost as domain
         ('localguy@localhost', None)
+
     """
 
     regex = re.compile('''
@@ -883,6 +884,8 @@ class IS_EMAIL(Validator):
           [a-z]{2,}	                       # TLD alpha-only
        )$
     ''', re.VERBOSE|re.IGNORECASE)
+
+    regex_proposed_but_failed = re.compile('^([\w\!\#$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~]+\.)*[\w\!\#$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~]+@((((([a-z0-9]{1}[a-z0-9\-]{0,62}[a-z0-9]{1})|[a-z])\.)+[a-z]{2,6})|(\d{1,3}\.){3}\d{1,3}(\:\d{1,5})?)$',re.VERBOSE|re.IGNORECASE)
 
     def __init__(self,
                  banned=None,

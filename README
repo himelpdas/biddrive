@@ -753,3 +753,22 @@ DAL(...migrate,fake_migrate), thanks Thadeus
 
 #1.78.3
 reverted temporarily to old template system because of backward compatibility issues
+
+#1.79.0rc1
+x509 emails, thanks Gyuris
+attachment and html in Mail on GAE, thanks PanosJee
+fixed docstring in SQLTABLE, thanks aabelyakov
+TAG(html) parese html into helpers (experimental, still some problems with unicode, , thanks RobertVa for unicode help)
+DIV.elements(find=re.compile(....))
+DIV.flatten()
+DIV.elements('....') supports jQuery syntax in '....'
+better it-it.py and it.py, thanks Marcello Della Longa
+Many Bug fixes:
+improved support for DAL and joins in postgresql/oracle, thanks Nico de Groot
+bux fixex in html.py, thanks Ian
+fixed an issue with registration_key==None, thanks Jay Kelkar
+fixed bug in gql.py, thanks NoNoNo
+fixed problem with multiple and checkboxes, thanks MIchael Howden
+fixed bug in gae, thanks NoNoNo
+restored 2.4 compatibility, thanks Paolo Gasparello
+auth.update() when pictures in profile
