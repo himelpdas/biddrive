@@ -6,11 +6,11 @@
 
 if request.env.web2py_runtime_gae:            # if running on Google App Engine
     db = DAL('gae')                           # connect to Google BigTable
-    session.connect(request, response, db=db) # and store sessions and tickets there
+    session.connect(request, response, db = db) # and store sessions and tickets there
     ### or use the following lines to store sessions in Memcache
     # from gluon.contrib.memdb import MEMDB
     # from google.appengine.api.memcache import Client
-    # session.connect(request, response, db=MEMDB(Client()))
+    # session.connect(request, response, db = MEMDB(Client()))
 else:                                         # else use a normal relational database
     db = DAL('sqlite://storage.sqlite')       # if not, use SQLite or other DB
 ## if no need for session
@@ -23,32 +23,29 @@ else:                                         # else use a normal relational dat
 ## - authorization (role based authorization)
 ## - services (xml, csv, json, xmlrpc, jsonrpc, amf, rss)
 ## - crud actions
-## comment/uncomment as needed
+## (more options discussed in gluon/tools.py)
+#########################################################################
 
 from gluon.tools import *
-auth=Auth(globals(),db)              # authentication/authorization
-crud=Crud(globals(),db)              # for CRUD helpers using auth
-service=Service(globals())           # for json, xml, jsonrpc, xmlrpc, amfrpc
+mail = Mail()                                  # mailer
+auth = Auth(globals(),db)                      # authentication/authorization
+crud = Crud(globals(),db)                      # for CRUD helpers using auth
+service = Service(globals())                   # for json, xml, jsonrpc, xmlrpc, amfrpc
 
-# mail=Mail()                                  # mailer
-# mail.settings.server='smtp.gmail.com:587'    # your SMTP server
-# mail.settings.sender='you@gmail.com'         # your email
-# mail.settings.login='username:password'      # your credentials or None
+mail.settings.server = 'logging' or 'smtp.gmail.com:587'  # your SMTP server
+mail.settings.sender = 'you@gmail.com'         # your email
+mail.settings.login = 'username:password'      # your credentials or None
 
-auth.settings.hmac_key='<your secret key>'
-auth.define_tables()                 # creates all needed tables
+auth.settings.hmac_key = '<your secret key>'   # before define_tables()
+auth.define_tables()                           # creates all needed tables
+auth.settings.mailer = mail                    # for user email verification
+auth.settings.registration_requires_verification = False
+auth.settings.registration_requires_approval = False
+auth.messages.verify_email = 'Click on the link http://'+request.env.http_host+URL(r=request,c='default',f='user',args=['verify_email'])+'/%(key)s to verify your email'
+auth.settings.reset_password_requires_verification = True
+auth.messages.reset_password = 'Click on the link http://'+request.env.http_host+URL(r=request,c='default',f='user',args=['reset_password'])+'/%(key)s to reset your password'
 
-# auth.settings.mailer=mail          # for user email verification
-# auth.settings.registration_requires_verification = True
-# auth.settings.registration_requires_approval = True
-# auth.messages.verify_email = 'Click on the link http://'+request.env.http_host+URL(r=request,c='default',f='user',args=['verify_email'])+'/%(key)s to verify your email'
-# auth.settings.reset_password_requires_verification = True
-# auth.messages.reset_password = 'Click on the link http://'+request.env.http_host+URL(r=request,c='default',f='user',args=['reset_password'])+'/%(key)s to reset your password'
-
-# crud.settings.auth=auth            # enforces authorization on crud
-
-## more options discussed in gluon/tools.py
-#########################################################################
+crud.settings.auth = None                      # =auth to enforce authorization on crud
 
 #########################################################################
 ## Define your tables below (or better in another model file) for example

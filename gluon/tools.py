@@ -158,6 +158,8 @@ class Mail(object):
             mail.settings.sender
             mail.settings.login
 
+        When server is 'logging', email is logged but not sent (debug mode)
+
         Optionally you can use PGP encryption or X509:
 
             mail.settings.cipher_type = None
@@ -199,6 +201,7 @@ class Mail(object):
         self.settings.x509_sign_keyfile = None
         self.settings.x509_sign_certfile = None
         self.settings.x509_crypt_certfiles = None
+        self.settings.debug = False
         self.settings.lock_keys = True
         self.result = {}
         self.error = None
@@ -524,7 +527,11 @@ class Mail(object):
                                         time.gmtime())
         result = {}
         try:
-            if self.settings.server == 'gae':
+            if self.settings.server == 'logging':
+                logging.warn('email not sent\n%s\nFrom: %s\nTo: %s\n\n%s\n%s\n' % \
+                                 ('-'*40,self.settings.sender,
+                                  ', '.join(to),text or html,'-'*40))
+            elif self.settings.server == 'gae':
                 from google.appengine.api import mail
                 attachments = attachments and [(a.my_filename,a.my_payload) for a in attachments]
                 result = mail.send_mail(sender=self.settings.sender, to=to,
