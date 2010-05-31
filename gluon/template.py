@@ -48,7 +48,7 @@ re_include_nameless = re.compile('\{\{\s*include\s*\}\}')
 re_include = re.compile('\{\{\s*include\s+(?P<name>.+?)\s*\}\}',
                         re.DOTALL)
 re_extend = re.compile('\{\{\s*extend\s+(?P<name>.+?)\s*\}\}',
-                       re.DOTALL)
+                       re.DOTALL|re.MULTILINE)
 
 def __re_strings(text):
     '''
