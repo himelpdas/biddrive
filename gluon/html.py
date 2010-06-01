@@ -675,7 +675,7 @@ class DIV(XmlComponent):
                     if isinstance(c,str) and str(find) in c:
                         check = True
                 else:
-                    if isinstance(c,str) and find.match(c):
+                    if isinstance(c,str) and find.search(c):
                         check = True
         # if found, return the component
         if check:
