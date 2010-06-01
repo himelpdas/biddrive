@@ -918,6 +918,8 @@ class SQLFORM(FORM):
                 self.table._db(self.table.id == self.record.id).delete()
                 self.vars.id = self.record.id
             self.errors.clear()
+            for component in self.elements('input, select, textarea'):
+                component['_disabled'] = True
             return True
 
         for fieldname in self.fields:
