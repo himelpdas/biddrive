@@ -70,6 +70,7 @@ def wsgiapp(env, res):
             taskqueue.add(eta=datetime.datetime.now() + delta)
         res('200 OK',[('Content-Type','text/plain')])
         return ['']
+    env['PATH_INFO'] = env['PATH_INFO'].encode('utf8') 
     return gluon.main.wsgibase(env, res)
 
 
