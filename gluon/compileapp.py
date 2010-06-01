@@ -438,6 +438,7 @@ def run_view_in(environment):
                    web2py_error='invalid view')
     else:
         filename = os.path.join(folder, 'views', response.view)
+        print filename
         if not os.path.exists(filename):
             response.view = 'generic.' + request.extension
         filename = os.path.join(folder, 'views', response.view)

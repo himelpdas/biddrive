@@ -1,12 +1,3 @@
-
-
-
-def status():
-    """ page that shows internal status"""
-
-    return dict(request=request, session=session, response=response)
-
-
 def hello1():
     """ simple page without template """
 
@@ -47,7 +38,7 @@ def hello6():
 
 def status():
     """ page that shows internal status"""
-
+    response.view = 'generic.html'
     return dict(request=request, session=session, response=response)
 
 
