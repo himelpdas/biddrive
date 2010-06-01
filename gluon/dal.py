@@ -3464,7 +3464,7 @@ class Rows(object):
         returns a set of rows of sorted elements (not filtered in place)
         """
         if not self.records:
-            return []
+            return return Rows(self.db, [], self.colnames) 
         records = []
         for i in range(0,len(self)):
             row = self[i]
@@ -3477,7 +3477,7 @@ class Rows(object):
         returns a set of rows of sorted elements (not filtered in place)
         """
         if not self.records:
-            return []
+            return Rows(self.db, [], self.colnames) 
         removed = []
         i=0
         while i<len(self):
