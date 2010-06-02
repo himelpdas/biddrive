@@ -621,9 +621,14 @@ class DIV(XmlComponent):
         hello
         >>> a.elements('a[u:v=$]')[0].xml()
         '<a id="1-1" u:v="$">hello</a>'
+
+        >>> a=FORM( INPUT(_type='text'), SELECT(range(1)), TEXTAREA() )
+        >>> for c in a.elements('input, select, textarea'): c['_disabled'] = 'disabled'
+        >>> a.xml()
+        '<form action="" enctype="multipart/form-data" method="post"><input disabled="disabled" type="text" /><select disabled="disabled"><option value="0">0</option></select><textarea cols="40" disabled="disabled" rows="10"></textarea></form>'
         """
         if len(args)==1:
-            args = args[0].split(',')
+            args = [a.strip() for a in args[0].split(',')]
         if len(args)>1:
             subset = [self.elements(a,**kargs) for a in args]
             return reduce(lambda a,b:a+b,subset,[])
