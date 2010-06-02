@@ -803,6 +803,15 @@ class SQLFORM(FORM):
                 table.append(LI(DIV(a,_class='w2p_fl'),
                                  div_b,
                                  DIV(c,_class='w3p_fc'),_id=id))
+        elif type(formstyle) == type(lambda:None):
+            table = TABLE()
+            for id,a,b,c in xfields:
+                td_b = self.field_parent[id] = TD(b,_class='w2p_fw')
+                newrows = formstyle(id,a,td_b,c)
+                if type(newrows).__name__ != "tuple":
+                    newrows = [newrows]
+                for newrow in newrows:
+                    table.append(newrow)
         else:
             raise RuntimeError, 'formsyle not supported'
         self.components = [table]
