@@ -1352,6 +1352,11 @@ class FireBirdAdapter(BaseAdapter):
             sql_s += ' FIRST %i SKIP %i' % (lmax - lmin, lmin)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
+    def TRUNCATE(self,table,mode = ''):
+        tablename = table._tablename
+        return ['DELETE FROM %s;' % tablename,
+                'SET GENERATOR %s TO 0;' % table._sequence_name]
+
     def support_distributed_transaction(self):
         return True
 
@@ -3464,7 +3469,7 @@ class Rows(object):
         returns a set of rows of sorted elements (not filtered in place)
         """
         if not self.records:
-            return return Rows(self.db, [], self.colnames) 
+            return return Rows(self.db, [], self.colnames)
         records = []
         for i in range(0,len(self)):
             row = self[i]
@@ -3477,7 +3482,7 @@ class Rows(object):
         returns a set of rows of sorted elements (not filtered in place)
         """
         if not self.records:
-            return Rows(self.db, [], self.colnames) 
+            return Rows(self.db, [], self.colnames)
         removed = []
         i=0
         while i<len(self):

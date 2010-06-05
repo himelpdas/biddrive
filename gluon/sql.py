@@ -2042,7 +2042,11 @@ class Table(dict):
         if self._db._dbname == 'sqlite':
             return ['DELETE FROM %s;' % t,
                     "DELETE FROM sqlite_sequence WHERE name='%s';" % t]
-        return ['TRUNCATE TABLE %s %s;' % (t, c)]
+        elif self._db._dbname == 'firebird':
+            return ['DELETE FROM %s;' % t,
+                    'SET GENERATOR %s TO 0;' % self._sequence_name]
+        else:
+            return ['TRUNCATE TABLE %s %s;' % (t, c)]
 
     def truncate(self, mode = None):
         if self._dbt:
