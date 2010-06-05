@@ -838,6 +838,9 @@ class Auth(object):
         self.settings.reset_password_next = self.url('user', args='login')
         self.settings.change_password_next = self.url('index')
 
+        self.settings.retrieve_password_onvalidation = None
+        self.settings.reset_password_onvalidation = None 
+
         self.settings.hmac_key = None
         self.settings.lock_keys = True
 
