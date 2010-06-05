@@ -1251,7 +1251,7 @@ class INPUT(DIV):
             return True
         return False
 
-    def _postprocessing(self):
+    def _postprocessing(self):        
         t = self['_type']
         if not t:
             t = self['_type'] = 'text'
@@ -1259,7 +1259,7 @@ class INPUT(DIV):
         value, _value = self['value'], self['_value']
         if t == 'checkbox':
             if not _value:
-                self['_value'] = 'on'
+                _value = self['_value'] = 'on'
             if not value:
                 value = []
             elif value == True:
