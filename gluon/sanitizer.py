@@ -51,6 +51,7 @@ class XssCleaner(HTMLParser):
         allowed_attributes={'a': ['href', 'title'], 'img': ['src', 'alt'
                             ], 'blockquote': ['type']},
         fmt=AbstractFormatter,
+        strip_disallowed = False
         ):
 
         HTMLParser.__init__(self, fmt)
@@ -67,24 +68,34 @@ class XssCleaner(HTMLParser):
 
         self.allowed_schemes = ['http', 'https', 'ftp']
 
+        #to strip or escape disallowed tags?
+        self.strip_disallowed = strip_disallowed
+        self.in_disallowed = False
+
     def handle_data(self, data):
-        if data:
+        if data and not self.in_disallowed:
             self.result += xssescape(data)
 
     def handle_charref(self, ref):
-        if len(ref) < 7 and ref.isdigit():
+        if self.in_disallowed:
+            return
+        elif len(ref) < 7 and ref.isdigit():
             self.result += '&#%s;' % ref
         else:
             self.result += xssescape('&#%s' % ref)
 
     def handle_entityref(self, ref):
-        if ref in entitydefs:
+        if self.in_disallowed:
+            return
+        elif ref in entitydefs:
             self.result += '&%s;' % ref
         else:
             self.result += xssescape('&%s' % ref)
 
     def handle_comment(self, comment):
-        if comment:
+        if self.in_disallowed:
+            return
+        elif comment:
             self.result += xssescape('<!--%s-->' % comment)
 
     def handle_starttag(
@@ -94,7 +105,10 @@ class XssCleaner(HTMLParser):
         attrs,
         ):
         if tag not in self.permitted_tags:
-            self.result += xssescape('<%s>' % tag)
+            if self.strip_disallowed:
+                self.in_disallowed = True
+            else:
+                self.result += xssescape('<%s>' % tag)
         else:
             bt = '<' + tag
             if tag in self.allowed_attributes:
@@ -121,7 +135,10 @@ class XssCleaner(HTMLParser):
     def handle_endtag(self, tag, attrs):
         bracketed = '</%s>' % tag
         if tag not in self.permitted_tags:
-            self.result += xssescape(bracketed)
+            if self.strip_disallowed:
+                self.in_disallowed = False
+            else:
+                self.result += xssescape(bracketed)
         elif tag in self.open_tags:
             self.result += bracketed
             self.open_tags.remove(tag)
@@ -140,14 +157,20 @@ class XssCleaner(HTMLParser):
         parsed = urlparse(url)
         return parsed[0] in self.allowed_schemes and '.' in parsed[1]
 
-    def strip(self, rawstring):
+    def strip(self, rawstring, escape=True):
         """
         Returns the argument stripped of potentially harmful
         HTML or Javascript code
+
+        @type escape: boolean
+        @param escape: If True (default) it escapes the potentially harmful
+          content, otherwise remove it
         """
 
         for tag in self.requires_no_close:
             rawstring = rawstring.replace("<%s/>" % tag, "<%s />" % tag)
+        if not escape:
+            self.strip_disallowed = True
         self.result = ''
         self.feed(rawstring)
         for endtag in self.open_tags:
@@ -185,6 +208,7 @@ def sanitize(text, permitted_tags=[
     'pre',
     'img/',
     ], allowed_attributes={'a': ['href', 'title'], 'img': ['src', 'alt'
-                           ], 'blockquote': ['type']}):
+                           ], 'blockquote': ['type']},
+    escape=True):
     return XssCleaner(permitted_tags=permitted_tags,
-                      allowed_attributes=allowed_attributes).strip(text)
+                      allowed_attributes=allowed_attributes).strip(text, escape)
