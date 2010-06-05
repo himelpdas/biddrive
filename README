@@ -754,7 +754,7 @@ DAL(...migrate,fake_migrate), thanks Thadeus
 #1.78.3
 reverted temporarily to old template system because of backward compatibility issues
 
-#1.79.0rc1
+#1.79.1
 x509 emails, thanks Gyuris
 attachment and html in Mail on GAE, thanks PanosJee
 fixed docstring in SQLTABLE, thanks aabelyakov
@@ -772,3 +772,10 @@ fixed problem with multiple and checkboxes, thanks MIchael Howden
 fixed bug in gae, thanks NoNoNo
 restored 2.4 compatibility, thanks Paolo Gasparello
 auth.update() when pictures in profile
+formstyle can be a function, thanks Howden
+escape in sanitizer, thanks Howes
+add missing settings, thanks Hamdy
+find and exclude return empty Rows instead of [], thanks iceberg
+simplejson 2.1.1 should fix compatibility problems
+added sms_utils and Authorize.net in contrib
+
