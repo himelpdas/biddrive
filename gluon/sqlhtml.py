@@ -1154,7 +1154,7 @@ class SQLTABLE(TABLE):
                 elif field.type in ['string','text']:
                     r = str(field.formatter(r))
                     ur = unicode(r, 'utf8')
-                    if len(ur) > truncate:
+                    if truncate!=None and len(ur) > truncate:
                         r = ur[:truncate - 3].encode('utf8') + '...'
                 elif linkto and field.type == 'id':
                     try:
