@@ -3,6 +3,7 @@
 import re
 def _import_c_make_scanner():
     try:
+        raise ImportError # not not import this because conflict with python 2.6
         from simplejson._speedups import make_scanner
         return make_scanner
     except ImportError:

@@ -89,9 +89,9 @@ def site():
     file_or_appurl = 'file' in request.vars or 'appurl' in request.vars
 
     if request.vars.filename and not 'file' in request.vars:
-        # create a new application
+        # create a new application        
         appname = cleanpath(request.vars.filename).replace('.', '_')
-        if app_create(appname, request):
+        if app_create(appname, request):            
             session.flash = T('new application "%s" created', appname)
             redirect(URL(r=request,f='design',args=appname))
         else:

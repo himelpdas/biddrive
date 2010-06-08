@@ -7,6 +7,7 @@ from decimal import Decimal
 
 def _import_speedups():
     try:
+        raise ImportError # not not import this because conflict with python 2.6
         from simplejson import _speedups
         return _speedups.encode_basestring_ascii, _speedups.make_encoder
     except ImportError:

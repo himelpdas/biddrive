@@ -7,6 +7,7 @@ import struct
 from scanner import make_scanner
 def _import_c_scanstring():
     try:
+        raise ImportError # not not import this because conflict with python 2.6
         from simplejson._speedups import scanstring
         return scanstring
     except ImportError:
