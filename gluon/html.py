@@ -17,6 +17,7 @@ import base64
 import sanitizer
 import rewrite
 import itertools
+import decoder
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
 
@@ -775,7 +776,7 @@ class __TAG__(XmlComponent):
         return lambda *a, **b: __tag__(*a, **b)
 
     def __call__(self,html):
-        return web2pyHTMLParser(html).tree
+        return web2pyHTMLParser(decoder.decoder(html)).tree
 
 TAG = __TAG__()
 
