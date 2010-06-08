@@ -779,3 +779,5 @@ find and exclude return empty Rows instead of [], thanks iceberg
 simplejson 2.1.1 should fix compatibility problems
 added sms_utils and Authorize.net in contrib
 
+#1.79.2
+solved simplejson imcompatibility problem
