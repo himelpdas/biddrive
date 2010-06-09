@@ -326,6 +326,7 @@ class IS_IN_DB(Validator):
         label=None,
         error_message='value not in database',
         orderby=None,
+        groupby=None,
         cache=None,
         multiple=False,
         zero='',
@@ -358,6 +359,7 @@ class IS_IN_DB(Validator):
         self.error_message = error_message
         self.theset = None
         self.orderby = orderby
+        self.groupby = groupby
         self.cache = cache
         self.multiple = multiple
         self.zero = zero
@@ -371,7 +373,8 @@ class IS_IN_DB(Validator):
     def build_set(self):
         if self.dbset._db._dbname != 'gql':
             orderby = self.orderby or ', '.join(self.fields)
-            dd = dict(orderby=orderby, cache=self.cache)
+            groupby = self.groupby or reduce(lambda a,b:a|b,self.fields)
+            dd = dict(orderby=orderby, groupby=groupby, cache=self.cache)
             records = self.dbset.select(*self.fields, **dd)
         else:
             import contrib.gql
