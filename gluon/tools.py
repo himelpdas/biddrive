@@ -291,7 +291,7 @@ class Mail(object):
             raise Exception('Server address not specified')
         if not isinstance(self.settings.sender, str):
             raise Exception('Sender address not specified')
-        payload_in = MIMEMultipart.MIMEMultipart('related')
+        payload_in = MIMEMultipart.MIMEMultipart('mixed')
         if to:         
             if not isinstance(to, (list,tuple)):
                 to = [to]
