@@ -373,7 +373,7 @@ class IS_IN_DB(Validator):
     def build_set(self):
         if self.dbset._db._dbname != 'gql':
             orderby = self.orderby or ', '.join(self.fields)
-            groupby = self.groupby or reduce(lambda a,b:a|b,self.fields)
+            groupby = self.groupby or ', '.join(self.fields)
             dd = dict(orderby=orderby, groupby=groupby, cache=self.cache)
             records = self.dbset.select(*self.fields, **dd)
         else:
