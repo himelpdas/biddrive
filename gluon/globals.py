@@ -192,7 +192,10 @@ class Response(Storage):
             raise HTTP(404)
         (t, f) = (items.group('table'), items.group('field'))
         field = db[t][f]
-        (filename, stream) = field.retrieve(name)
+        try:
+            (filename, stream) = field.retrieve(name)
+        except IOError:
+            raise HTTP(404)
         self.headers['Content-Type'] = c.contenttype(name)
         if attachment:
             self.headers['Content-Disposition'] = \

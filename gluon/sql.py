@@ -49,7 +49,7 @@ from http import HTTP
 
 table_field = re.compile('[\w_]+\.[\w_]+')
 oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
-regex_content = re.compile('([\w\-]+\.){3}(?P<name>\w+)\.\w+$')
+regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
 
 # list of drivers will be built on the fly
@@ -2602,7 +2602,13 @@ class Field(Expression):
                               # 'a_field_name' means store in this field in db
                               # False means file content will be discarded.
             writable=True, readable=True, update=None, authorize=None,
-            autodelete=False, represent=None, uploadfolder=None)
+            autodelete=False, represent=None, uploadfolder=None,
+            uploadseparate=False # upload to separate directories by uuid_keys
+                                 # first 2 character and tablename.fieldname
+                                 # False - old behaviour
+                                 # True - put uploaded file in
+                                 #   <uploaddir>/<tablename>.<fieldname>/uuid_key[:2]/
+                                 #        directory)
 
     to be used as argument of SQLDB.define_table
 
@@ -2638,6 +2644,7 @@ class Field(Expression):
         autodelete=False,
         represent=None,
         uploadfolder=None,
+        uploadseparate=False,
         compute=None,
         ):
 
@@ -2657,6 +2664,7 @@ class Field(Expression):
         self.unique = unique
         self.uploadfield = uploadfield
         self.uploadfolder = uploadfolder
+        self.uploadseparate = uploadseparate
         self.widget = widget
         self.label = label
         self.comment = comment
@@ -2697,6 +2705,10 @@ class Field(Expression):
                 path = self.uploadfolder
             else:
                 path = os.path.join(self._db._folder, '..', 'uploads')
+            if self.uploadseparate:
+                path = os.path.join(path,"%s.%s" % (self._tablename, self.name),uuid_key[:2])
+            if not os.path.exists(path):
+                os.makedirs(path)
             pathfilename = os.path.join(path, newfilename)
             dest_file = open(pathfilename, 'wb')
             shutil.copyfileobj(file, dest_file)
@@ -2730,6 +2742,11 @@ class Field(Expression):
                 path = self.uploadfolder
             else:
                 path = os.path.join(self._db._folder, '..', 'uploads')
+            if self.uploadseparate:
+                t = m.group('table')
+                f = m.group('field')
+                u = m.group('uuidkey')
+                path = os.path.join(path,"%s.%s" % (t,f),u[:2])
             return (filename, open(os.path.join(path, name), 'rb'))
 
     def formatter(self, value):

@@ -178,6 +178,7 @@ SQL_DIALECTS = {
         'time': 'TIME',
         'datetime': 'DATETIME',
         'id': 'INT AUTO_INCREMENT NOT NULL',
+        'autoincrement': 'INT AUTO_INCREMENT NOT NULL',
         'reference': 'INT, INDEX %(field_name)s__idx (%(field_name)s), FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
@@ -203,6 +204,7 @@ SQL_DIALECTS = {
         'time': 'TIME',
         'datetime': 'TIMESTAMP',
         'id': 'SERIAL PRIMARY KEY',
+        'autoincrement': 'INTEGER DEFAULT SERIAL',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
@@ -2042,7 +2044,11 @@ class Table(dict):
         if self._db._dbname == 'sqlite':
             return ['DELETE FROM %s;' % t,
                     "DELETE FROM sqlite_sequence WHERE name='%s';" % t]
-        return ['TRUNCATE TABLE %s %s;' % (t, c)]
+        elif self._db._dbname == 'firebird':
+            return ['DELETE FROM %s;' % t,
+                    'SET GENERATOR %s TO 0;' % self._sequence_name]
+        else:
+            return ['TRUNCATE TABLE %s %s;' % (t, c)]
 
     def truncate(self, mode = None):
         if self._dbt:

@@ -2531,7 +2531,7 @@ class Crud(object):
         previous record in the newly created table including a reference
         to the current record.
 
-        If you want to access such table you need to define it yourself in a mode::
+        If you want to access such table you need to define it yourself in a model::
 
             db.define_table('mytable_history',
                 Field('current_record',db.mytable),
@@ -2563,9 +2563,9 @@ class Crud(object):
         and use it as::
 
             form=crud.update(db.mytable,myrecord,
-                             onaccept=lambda form:crud.archive(form, \
-                               archive_table=db.myhistory, \
-                               current_record='parent_record'))
+                             onaccept=lambda form:crud.archive(form,
+                             archive_table=db.myhistory,
+                             current_record='parent_record'))
 
         """
         old_record = form.record
