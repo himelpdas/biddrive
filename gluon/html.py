@@ -1371,17 +1371,21 @@ class SELECT(INPUT):
                 component_list.append([c])
         options = itertools.chain(*component_list)
 
-        if self['value'] != None:
+        value = self['value']
+        if value != None:
             if not self['_multiple']:
                 for c in options: # my patch
-                    if self['value'] and str(c['_value'])==str(self['value']):
+                    if value and str(c['_value'])==str(value):
                         c['_selected'] = 'selected'
                     else:
                         c['_selected'] = None
             else:
-                values = re.compile('[\w\-:]+').findall(str(self['value']))
+                if isinstance(value,list):
+                    values=value
+                else:
+                    values=value.split('|')
                 for c in options: # my patch
-                    if self['value'] and str(c['_value']) in values:
+                    if value and str(c['_value']) in values:
                         c['_selected'] = 'selected'
                     else:
                         c['_selected'] = None

@@ -401,7 +401,12 @@ class IS_IN_DB(Validator):
 
     def __call__(self, value):
         if self.multiple:
-            values = re.compile("[\w\-:]+").findall(str(value))
+            if isinstance(value,list):
+                values=value
+            elif value:            
+                values = [value]
+            else:
+                values = []
             if not [x for x in values if not x in self.theset]:
                 return ('|%s|' % '|'.join(values), None)
         elif self.theset:
