@@ -909,8 +909,10 @@ class SQLFORM(FORM):
                 if hasattr(field, 'widget') and field.widget\
                                  and fieldname in request_vars:
                     row_id = '%s_%s%s' % (self.table,fieldname,SQLFORM.ID_ROW_SUFFIX)
-                    self.field_parent[row_id].components = [field.widget(field, value)]
+                    widget = field.widget(field, value)
+                    self.field_parent[row_id].components = [ widget ]
                     self.field_parent[row_id]._traverse(False)
+                    self.custom.widget[ fieldname ] = widget
             return ret
 
         if record_id and record_id != self.record_id:
