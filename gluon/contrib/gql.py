@@ -27,6 +27,7 @@ import gluon.sqlhtml as sqlhtml
 import gluon.sql
 from new import classobj
 from google.appengine.ext import db as gae
+from google.appengine.api.datastore_types import Key
 
 MAX_ITEMS = 1000 # GAE main limitation
 
@@ -297,7 +298,7 @@ class Expression(object):
 
     def __or__(self, other):  # for use in sortby
         assert_filter_fields(self, other)
-        return Expression(self.name + '|' + other.name, None, None)
+        return Expression(self.name if self.type!='id' else '__key__' + '|' + other.name if other.type!='id' else '__key__', None, None)
 
     def __invert__(self):
         assert_filter_fields(self)
@@ -532,11 +533,24 @@ class Query(object):
             assert_filter_fields(left)
             if left.type == 'id':
                 try:
-                    right = long(right or 0)
+                    if type(right) == list:
+                        #make this work for belongs
+                        right = [long(r) for r in right]
+                    else:
+                        right = long(right or 0)
                 except ValueError:
                     raise SyntaxError, 'id value must be integer: %s' % id
-                if not (op == '=' or (op == '>' and right == 0)):
-                    raise RuntimeError, '(field.id <op> value) is not supported on GAE'
+                if op != '=' and not (op == '>' and right == 0):
+                    #get key (or keys) based on path.  Note if we later support
+                    # ancesters this will not be the proper key for items with
+                    # ancesters.
+                    #in GAE (with no ancesters) the key is base64 encoded
+                    # "table_name: id=<id>".  GAE decodes the string and compares
+                    # the id
+                    if op=='IN':
+                        right = [Key.from_path(left._tablename, r) for r in right]
+                    else:
+                        right = Key.from_path(left._tablename, right)
             elif op=='IN':
                 right = [dateobj_to_datetime(obj_represent(r, left.type, left._db)) \
                              for r in right]
@@ -634,20 +648,29 @@ class Set(gluon.sql.Set):
             self.where = Query(fields[0].table.id,'>',0)
         for filter in self.where.filters:
             if filter.all():
+                #this is id > 0
                 continue
             elif filter.one() and filter.right<=0:
+                #this is id == 0
                 items = []
             elif filter.one():
+                #this is id == x
                 item = self._db[tablename]._tableobj.get_by_id(filter.right)
                 items = (item and [item]) or []
             elif isinstance(items,list):
-                (name, op, value) = (filter.left.name, filter.op, filter.right)
+                (name, op, value) = \
+                       (filter.left.name if filter.left.type!='id' else '__key__',
+                        filter.op, filter.right)
                 if op == '=': op = '=='
                 if op == 'IN': op = 'in'
                 items = [item for item in items \
                              if eval("getattr(item,'%s') %s %s" % (name, op, repr(value)))]
             else:
-                (name, op, value) = (filter.left.name, filter.op, filter.right)
+                (name, op, value) = \
+                       (filter.left.name if filter.left.type!='id' else '__key__',
+                        filter.op, filter.right)
+                if filter.left.type=='id':
+                    items.order("__key__")
                 items = items.filter('%s %s' % (name, op), value)
         if not isinstance(items,list):
             if attributes.get('left', None):
@@ -659,7 +682,11 @@ class Set(gluon.sql.Set):
                 if isinstance(orderby, (list, tuple)):
                     orderby = gluon.sql.xorify(orderby)
                 assert_filter_fields(orderby)
-                orders = orderby.name.split('|')
+                if orderby.type == 'id':
+                    orders = ['__key__']
+                else:
+                    orders = orderby.name.split('|')
+                logging.info(orders)
                 for order in orders:
                     items = items.order(order)
             if attributes.get('limitby', None):
@@ -667,6 +694,7 @@ class Set(gluon.sql.Set):
                 (limit, offset) = (lmax - lmin, lmin)
                 items = items.fetch(limit, offset=offset)
         fields = self._db[tablename].fields
+
         return (items, tablename, fields)
 
     def select(self, *fields, **attributes):
