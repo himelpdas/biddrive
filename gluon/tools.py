@@ -534,9 +534,13 @@ class Mail(object):
             elif self.settings.server == 'gae':
                 from google.appengine.api import mail
                 attachments = attachments and [(a.my_filename,a.my_payload) for a in attachments]
-                result = mail.send_mail(sender=self.settings.sender, to=to,
-                                        subject=subject, body=text, html=html, 
-                                        attachments=attachments)
+                if attachments:
+                    result = mail.send_mail(sender=self.settings.sender, to=to,
+                                            subject=subject, body=text, html=html, 
+                                            attachments=attachments)
+                else:
+                    result = mail.send_mail(sender=self.settings.sender, to=to,
+                                            subject=subject, body=text, html=html)
             else:
                 server = smtplib.SMTP(*self.settings.server.split(':'))
                 if self.settings.login != None:
