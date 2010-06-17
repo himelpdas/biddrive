@@ -134,7 +134,7 @@ class LoadFactory:
             #for (name,value) in other_response.headers:
             #    if name == 'web2py-component-command':
             #        script += value
-            return html.TAG[''](html.DIV(html.XML(page),_id=target),html.SCRIPT(script))
+            return html.TAG[''](html.DIV(html.XML(page),_id=target),html.SCRIPT(script,_type="text/javascript"))
         else:
             url = url or html.URL(r=request,c=plugin,f=function,args=args,vars=vars)
             return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % (url,target)),
