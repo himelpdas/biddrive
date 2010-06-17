@@ -94,7 +94,7 @@ class LoadFactory:
                  target=None,ajax=False,ajax_trap=False, url=None):
         import globals
         import html
-        target = target or str(random.random())[2:]
+        target = target or 'c'+str(random.random())[2:]
         request = self.environment['request']
         if plugin and not url and not ajax:
             other_environment = copy.copy(self.environment)
