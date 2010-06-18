@@ -777,13 +777,10 @@ class SQLDB(dict):
             return
         instances = enumerate(instances)
         for (i, db) in instances:
+            if not db._dbname in ['postgres', 'mysql', 'firebird']:
+                raise SyntaxError, 'distributed transaction only supported by postgresql, mysql, and firebird'
             if db._dbname == 'mysql':
                 db._execute('XA START;')
-            elif db._dbname == 'postgres':
-                pass
-            else:
-                raise SyntaxError, \
-                    'distributed transaction only supported by postgresql'
 
     @staticmethod
     def distributed_transaction_commit(*instances):
@@ -794,8 +791,7 @@ class SQLDB(dict):
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         for (i, db) in instances:
             if not db._dbname in ['postgres', 'mysql', 'firebird']:
-                raise SyntaxError, \
-                    'distributed transaction only supported by postgresql, firebir'
+                raise SyntaxError, 'distributed transaction only supported by postgresql, mysql, and firebird'
         try:
             for (i, db) in instances:
                 if db._dbname == 'postgres':
