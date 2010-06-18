@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -39,10 +40,10 @@ class LinkedInAccount(object):
         return ''
 
     def get_user(self):
-        result = self.request.vars.verifier and api.accessToken(verifier = self.request.vars.verifier )
+        result = self.request.vars.verifier and self.api.accessToken(verifier = self.request.vars.verifier )
         if result:
             profile = self.api.GetProfile()
-            profile = api.GetProfile(profile.public_url = "http://www.linkedin.com/in/ozgurv")
+            profile = self.api.GetProfile(profile).public_url = "http://www.linkedin.com/in/ozgurv"
             return dict(first_name = profile.first_name,
                         last_name = profile.last_name,
                         username = profile.id)
