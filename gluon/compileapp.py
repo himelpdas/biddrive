@@ -137,7 +137,7 @@ class LoadFactory:
             return html.TAG[''](html.DIV(html.XML(page),_id=target),html.SCRIPT(script,_type="text/javascript"))
         else:
             url = url or html.URL(r=request,c=plugin,f=function,args=args,vars=vars)
-            return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % (url,target)),
+            return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % (url,target),_type="text/javascript"),
                                 html.DIV('loading...',_id=target))
 
 
