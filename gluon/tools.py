@@ -2863,25 +2863,47 @@ class Crud(object):
             return None
     
     def search(self, *tables, **args):
-        table=tables[0]
-        fields=args.get('fields',None)
+        """
+        Creates a search form and its results for a table 
+        Example usage:
+        form, results = crud.search(db.test,
+                               queries = ['equals', 'not equal', 'contains'],
+                               query_labels={'equals':'Equals',
+                                             'not equal':'Not equal'},
+                               fields = [db.test.id, db.test.children],
+                               field_labels = {'id':'ID','children':'Children'},
+                               zero='Please choose',
+                               query = (db.test.id > 0)&(db.test.id != 3) )
+        """
+        table = tables[0]
+        fields = args.get('fields', table.fields)
         request = self.environment.request
         db = self.db     
         if not (isinstance(table, db.Table) or table in db.tables):
             raise HTTP(404)        
         tbl = TABLE()
         selected = []; refsearch = []; results = []
-        ops = ['', 'equals', 'not equal', 'greater than', 'less than',
-               'starts with', 'ends with', 'contains']
-        query = table.id > 0 
-        for fieldname in fields or table.fields:
+        ops = args.get('queries', [])
+        zero = args.get('zero', '')
+        if not ops:
+            ops = ['equals', 'not equal', 'greater than', 
+                   'less than', 'starts with', 
+                   'ends with', 'contains']
+        ops.insert(0,zero)
+        query_labels = args.get('query_labels', {})
+        query = args.get('query',table.id > 0)
+        field_labels = args.get('field_labels',{})
+        for fieldname in fields:
             field = table[fieldname]
             chkval = request.vars.get('chk' + fieldname, None)
             txtval = request.vars.get('txt' + fieldname, None)
             opval = request.vars.get('op' + fieldname, None)
             row = TR(TD(INPUT(_type = "checkbox", _name = "chk" + fieldname,
                               value = chkval == 'on')),
-                     TD(field),TD(SELECT(ops, _name = "op" + fieldname,
+                     TD(field_labels.get(fieldname,fieldname)),
+                        TD(SELECT([OPTION(query_labels.get(op,op),
+                                                 _value=op) for op in ops], 
+                                                 _name = "op" + fieldname,
                                          value = opval)),
                      TD(INPUT(_type = "text", _name = "txt" + fieldname,
                               _value = txtval, _id='txt' + fieldname,
@@ -2903,7 +2925,7 @@ class Crud(object):
         form = FORM(tbl,INPUT(_type="submit"))
         if selected:
             try:
-                results = db(query).select(*selected, **args)
+                results = db(query).select(*selected)
                 for r in refsearch:
                     results = results.find(r)
             except: # hmmm, we should do bettere here
