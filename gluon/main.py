@@ -596,12 +596,24 @@ class HttpServer(object):
         request_queue_size=5,
         timeout=10,
         shutdown_timeout=None, # Rocket does not use a shutdown timeout
-        path=None
+        path=None,
+        interfaces=None # Rocket is able to use several interfaces - must be list of socket-tuples as string 
         ):
         """
         starts the web server.
         """
-        
+
+        if interfaces:
+            # if interfaces is specified, it must be tested for rocket parameter correctness
+            # not necessarily completely tested (e.g. content of tuples or ip-format)
+            import types
+            if isinstance(interfaces,types.ListType):
+            	for i in interfaces:
+         	    if not isinstance(i,types.TupleType):
+         	    	raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"
+            else:
+      	    	raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"
+
         if path:
             # if a path is specified change the global variables so that web2py
             # runs from there instead of cwd or os.environ['web2py_path'] 
@@ -636,13 +648,22 @@ class HttpServer(object):
                                            log_filename,
                                            profiler_filename) }
 
-        self.server = rocket.Rocket(tuple(sock_list),
-                                    'wsgi',
-                                    app_info,
-                                    min_threads=int(numthreads),
-                                    queue_size=int(request_queue_size),
-                                    timeout=int(timeout)
-                                    )
+        if not interfaces:
+            self.server = rocket.Rocket(tuple(sock_list),
+                                        'wsgi',
+                                        app_info,
+                                        min_threads=int(numthreads),
+                                        queue_size=int(request_queue_size),
+                                        timeout=int(timeout)
+                                        )
+        else:
+            self.server = rocket.Rocket(interfaces,
+                                        'wsgi',
+                                        app_info,
+                                        min_threads=int(numthreads),
+                                        queue_size=int(request_queue_size),
+                                        timeout=int(timeout)
+                                        )
 
 
     def start(self):

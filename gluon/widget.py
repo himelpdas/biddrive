@@ -381,7 +381,8 @@ class web2pyDialog(object):
                 request_queue_size=req_queue_size,
                 timeout=options.timeout,
                 shutdown_timeout=options.shutdown_timeout,
-                path=options.folder)
+                path=options.folder,
+                interfaces=options.interfaces)
 
             thread.start_new_thread(self.server.start, ())
         except Exception, e:
@@ -676,6 +677,13 @@ def console():
                       default='',
                       help='should be followed by a list of arguments to be passed to script, to be used with -S, -A must be the last option')
 
+    msg = 'allows multiple interfaces to be served'
+    parser.add_option('--interfaces',
+                      action='store',
+                      dest='interfaces',
+                      default=None,
+                      help=msg)
+    
     if '-A' in sys.argv: k = sys.argv.index('-A')
     elif '--args' in sys.argv: k = sys.argv.index('--args')
     else: k=len(sys.argv)
@@ -860,7 +868,8 @@ def start(cron = True):
                              request_queue_size=options.request_queue_size,
                              timeout=options.timeout,
                              shutdown_timeout=options.shutdown_timeout,
-                             path=options.folder)
+                             path=options.folder,
+                             interfaces=options.interfaces)
 
     try:
         server.start()
