@@ -2839,29 +2839,44 @@ class Crud(object):
         try:
             if refsearch: format = self.get_format(field)
             if op == 'equals':
-                return field == value if not refsearch else \
-                       lambda row: row[field.name][format] == value
+                if not refsearch:
+                    return field == value
+                else:
+                    return lambda row: row[field.name][format] == value
             elif op == 'not equal':
-                return field != value if not refsearch else \
-                       lambda row: row[field.name][format] != value
+                if not refsearch:
+                    return field != value
+                else:
+                    return lambda row: row[field.name][format] != value
             elif op == 'greater than':
-                return field > value if not refsearch else \
-                       lambda row: row[field.name][format] > value
+                if not refsearch:
+                    return field > value
+                else:
+                    return lambda row: row[field.name][format] > value
             elif op == 'less than':
-                return field < value if not refsearch else \
-                       lambda row: row[field.name][format] < value
+                if not refsearch:
+                    return field < value
+                else:
+                    return lambda row: row[field.name][format] < value
             elif op == 'starts with':
-                return field.like(value+'%') if not refsearch else \
-                       lambda row: str(row[field.name][format]).startswith(value)
+                if not refsearch:
+                    return field.like(value+'%')
+                else:
+                    return lambda row: str(row[field.name][format]).startswith(value)
             elif op == 'ends with':
-                return field.like('%'+value) if not refsearch else \
-                       lambda row: str(row[field.name][format]).endswith(value)
+                if not refsearch:
+                    return field.like('%'+value)
+                else:
+                    return lambda row: str(row[field.name][format]).endswith(value)
             elif op == 'contains':
-                return field.like('%'+value+'%') if not refsearch else \
-                       lambda row: value in row[field.name][format]                
+                if not refsearch:
+                    return field.like('%'+value+'%')
+                else:
+                    return lambda row: value in row[field.name][format]
         except:
-            return None
-    
+            return None 
+
+
     def search(self, *tables, **args):
         """
         Creates a search form and its results for a table 
