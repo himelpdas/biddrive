@@ -3394,6 +3394,11 @@ class Set(object):
                 uploadfolder = table[fieldname].uploadfolder
                 if not uploadfolder:
                     uploadfolder = os.path.join(self._db._adapter.folder, '..', 'uploads')
+                if self.uploadseparate:
+                    items = oldname.split('.')
+                    uploadfolder = os.path.join(uploadfolder,
+                                                "%s.%s" % (items[0], items[1]),
+                                                items[2][:2])
                 oldpath = os.path.join(uploadfolder, oldname)
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)
