@@ -11,7 +11,7 @@ import logging
 import platform
 
 # Define Constants
-VERSION = '1.0.5'
+VERSION = '1.0.6'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
@@ -280,7 +280,7 @@ class Rocket:
             sys.exit(1)
 
         msg = 'Listening on sockets: '
-        msg += ', '.join(['%s:%i%s' % (l[0], l[1], '*' if s else '') for l, s in self.listener_dict.values()])
+        msg += ', '.join(['%s:%i%s' % (l[0], l[1], s and '*' or '') for l, s in self.listener_dict.values()])
         log.info(msg)
 
         # Add our polling objects
@@ -450,7 +450,7 @@ class Monitor(Thread):
                         stale.add(c)
 
                 for c in stale:
-                    data = (c.client_addr, c.server_port, '*' if c.ssl else '')
+                    data = (c.client_addr, c.server_port, c.ssl and '*' or '')
                     self.log.debug('Flushing stale connection: %s:%i%s' % data)
                     self.connections.remove(c)
                     try:
@@ -532,7 +532,9 @@ class ThreadPool:
         W.server_software = server_software
         W.queue = self.queue
         W.wait_queue = self.timeout_queue
-        W.timeout = max_threads * 0.2 if max_threads != 0 else 2
+        W.timeout = 2
+        if max_threads != 0:
+            W.timeout = max_threads * 0.2
 
         self.threads = set([self.worker_class() for x in range(min_threads)])
 
@@ -635,7 +637,7 @@ import time
 import socket
 import logging
 import traceback
-from wsgiref.headers import Headers
+#from wsgiref.headers import Headers
 from threading import Thread
 from datetime import datetime
 try:
@@ -672,6 +674,106 @@ Content-Type: %s
 
 %s
 '''
+
+###
+# The Headers and FileWrapper classes are ripped straight from the Python Standard Library.
+# I've removed some docstrings and integrated my BUF_SIZE.
+# See the Python License here: http://docs.python.org/license.html
+###
+class Headers:
+    def __init__(self,headers):
+        if type(headers) is not type([]):
+            raise TypeError("Headers must be a list of name/value tuples")
+        self._headers = headers
+
+    def __len__(self):
+        return len(self._headers)
+
+    def __setitem__(self, name, val):
+        del self[name]
+        self._headers.append((name, val))
+
+    def __delitem__(self,name):
+        name = name.lower()
+        self._headers[:] = [kv for kv in self._headers if kv[0].lower() != name]
+
+    def __getitem__(self,name):
+        return self.get(name)
+
+    def has_key(self, name):
+        return self.get(name) is not None
+
+    __contains__ = has_key
+
+    def get_all(self, name):
+        name = name.lower()
+        return [kv[1] for kv in self._headers if kv[0].lower()==name]
+
+    def get(self,name,default=None):
+        name = name.lower()
+        for k,v in self._headers:
+            if k.lower()==name:
+                return v
+        return default
+
+    def keys(self):
+        return [k for k, v in self._headers]
+
+    def values(self):
+        return [v for k, v in self._headers]
+
+    def items(self):
+        return self._headers[:]
+
+    def __repr__(self):
+        return "Headers(%r)" % self._headers
+
+    def __str__(self):
+        return '\r\n'.join(["%s: %s" % kv for kv in self._headers]+['',''])
+
+    def setdefault(self,name,value):
+        result = self.get(name)
+        if result is None:
+            self._headers.append((name,value))
+            return value
+        else:
+            return result
+
+
+    def add_header(self, _name, _value, **_params):
+        parts = []
+        if _value is not None:
+            parts.append(_value)
+        for k, v in _params.items():
+            if v is None:
+                parts.append(k.replace('_', '-'))
+            else:
+                parts.append(_formatparam(k.replace('_', '-'), v))
+        self._headers.append((_name, "; ".join(parts)))
+
+class FileWrapper:
+    """Wrapper to convert file-like objects to iterables"""
+
+    def __init__(self, filelike, blksize=BUF_SIZE):
+        self.filelike = filelike
+        self.blksize = blksize
+        if hasattr(filelike,'close'):
+            self.close = filelike.close
+
+    def __getitem__(self,key):
+        data = self.filelike.read(self.blksize)
+        if data:
+            return data
+        raise IndexError
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        data = self.filelike.read(self.blksize)
+        if data:
+            return data
+        raise StopIteration
 
 class Worker(Thread):
     """The Worker class is a base class responsible for receiving connections
@@ -823,13 +925,15 @@ class Worker(Thread):
         try:
             # Grab the request line
             d = sock_file.readline()
-            d = d.decode('ISO-8859-1') if PY3K else d
+            if PY3K:
+                d = d.decode('ISO-8859-1')
 
             if d == '\r\n':
                 # Allow an extra NEWLINE at the beginner per HTTP 1.1 spec
                 self.err_log.debug('Client sent newline')
                 d = sock_file.readline()
-                d = d.decode('ISO-8859-1') if PY3K else d
+                if PY3K:
+                    d = d.decode('ISO-8859-1')
         except socket.timeout:
             raise SocketTimeout("Socket timed out before request.")
 
@@ -857,7 +961,8 @@ class Worker(Thread):
             scheme, rest = uri.split('://')
             host, path = rest.split('/', 1)
         else:
-            path = ''
+            self.send_response('400 Bad Request')
+            raise BadRequest
 
         query_string = ''
         if '?' in path:
@@ -879,7 +984,8 @@ class Worker(Thread):
         lval = None
         while True:
             try:
-                l = str(l, 'ISO-8859-1') if PY3K else l
+                if PY3K:
+                    l = str(l, 'ISO-8859-1')
             except UnicodeDecodeError:
                 self.err_log.warning('Client sent invalid header: ' + repr(l))
 
@@ -962,17 +1068,17 @@ def get_method(method):
 # Monolithic build...end of module: rocket\methods\__init__.py
 # Monolithic build...start of module: rocket\methods\wsgi.py
 
+
 # Import System Modules
 import os
 import sys
 import socket
 import traceback
-from email.utils import formatdate
-from wsgiref.headers import Headers
-from wsgiref.util import FileWrapper
+from email.Utils import formatdate
+#from wsgiref.headers import Headers
+#from wsgiref.util import FileWrapper
 # Import Package Modules
 # package imports removed in monolithic build
-
 
 # Define Constants
 NEWLINE = b('\r\n')
@@ -1081,7 +1187,10 @@ class WSGIWorker(Worker):
             client_conn = self.headers.get('HTTP_CONNECTION', '').lower()
             if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.1':
                 # HTTP = 1.1 defaults to keep-alive connections
-                h_set['Connection'] = client_conn if client_conn else 'keep-alive'
+                if client_conn:
+                    h_set['Connection'] = client_conn
+                else:
+                    h_set['Connection'] = 'keep-alive'
             else:
                 # HTTP < 1.1 supports keep-alive but it's quirky so we don't support it
                 h_set['Connection'] = 'close'
