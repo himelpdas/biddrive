@@ -1,6 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# when web2py is run as a windows service (web2py.exe -W)
+# it does not load the command line options but it
+# expects to find conifguration settings in a file called
+#
+#   web2py/options.py
+#
+# this file is an example for options.py
+
 import socket
 import os
 
