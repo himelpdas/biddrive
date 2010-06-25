@@ -3346,7 +3346,12 @@ excluded + tables_to_merge.keys()])
                     continue
                 uploadfolder = table[fieldname].uploadfolder
                 if not uploadfolder:
-                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')
+                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')                
+                if self.uploadseparate:
+                    items = oldname.split('.')
+                    uploadfolder = os.path.join(uploadfolder,
+                                                "%s.%s" % (items[0], items[1]),
+                                                items[2][:2])
                 oldpath = os.path.join(uploadfolder, oldname)
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)
