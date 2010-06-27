@@ -45,6 +45,7 @@ __all__ = [
     'IS_LIST_OF',
     'IS_LOWER',
     'IS_MATCH',
+    'IS_EQUAL_TO',
     'IS_NOT_EMPTY',
     'IS_NOT_IN_DB',
     'IS_NULL_OR',
@@ -128,6 +129,33 @@ class IS_MATCH(Validator):
         match = self.regex.match(value)
         if match:
             return (match.group(), None)
+        return (value, self.error_message)
+
+
+class IS_EQUAL_TO(Validator):
+    """
+    example::
+
+        INPUT(_type='text', _name='password')
+        INPUT(_type='text', _name='password2',
+              requires=IS_EQUAL_TO(request.vars.password))
+
+    the argument of IS_EQUAL_TO is a string
+
+        >>> IS_EQUAL_TO('aaa')('aaa')
+        ('aaa', None)
+
+        >>> IS_EQUAL_TO('aaa')('aab')
+        ('aab', 'no match')
+    """
+
+    def __init__(self, expression, error_message='no match'):
+        self.expression = expression
+        self.error_message = error_message
+
+    def __call__(self, value):
+        if value == self.expression:
+            return (value, None)
         return (value, self.error_message)
 
 
