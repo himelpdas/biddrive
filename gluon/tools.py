@@ -991,6 +991,27 @@ class Auth(object):
         else:
             raise HTTP(404)
 
+    def navbar(self,prefix='Welcome',action=None):
+        request = self.environment.request
+        if not action:
+            action=URL(request.application,request.controller,'user')
+        if prefix:
+            prefix = prefix.strip()+' '
+        if self.user_id:            
+            logout=A('logout',_href=action+'/logout')
+            profile=A('profile',_href=action+'/profile')
+            password=A('password',_href=action+'/change_password')
+            return SPAN(prefix,self.user.first_name,' [ ',
+                        logout,' | ',profile,' | ',password,' ]',
+                        _class='auth_navbar')
+        else:
+            login=A('login',_href=action+'/login')
+            register=A('register',_href=action+'/register')
+            lost_password=A('lost password?',_href=action+'/request_reset_password')
+            return SPAN('[ ',login,' | ',register,' | ',lost_password,' ]',
+                        _class='auth_navbar')
+            
+
     def __get_migrate(self, tablename, migrate=True):
 
         if type(migrate).__name__ == 'str':

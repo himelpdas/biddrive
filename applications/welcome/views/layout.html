@@ -22,17 +22,7 @@
         <h3>{{=response.subtitle or ''}}</h3>
       </div>
       <div class="ez-box statusbar">
-	{{ if 'auth' in globals():}}
-	{{if not auth.user:}} [
-	{{=A(T('login'),_href=URL(r=request,c='default',f='user/login'))}} |
-	{{=A(T('register'),_href=URL(r=request,c='default',f='user/register'))}} ]
-	{{else:}}
-	{{=T('Welcome %s',auth.user.first_name)}} [
-	{{=A(T('logout'),_href=URL(r=request,c='default',f='user/logout'))}} |
-	{{=A(T('edit profile'),_href=URL(r=request,c='default',f='user/profile'))}} |
-	{{=A(T('change password'),_href=URL(r=request,c='default',f='user/change_password'))}} ]
-	{{pass}}
-	{{pass}}
+	{{ if 'auth' in globals():}}{{=auth.navbar()}}{{pass}}
       </div>
       <!-- ez-css Module 2A -->
       <div class="ez-wr">

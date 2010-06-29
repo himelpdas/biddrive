@@ -483,8 +483,10 @@ class IS_NOT_IN_DB(Validator):
         self.record_id = id
 
     def __call__(self, value):
+        if not value.strip():
+            return (value, self.error_message)
         if value in self.allowed_override:
-            return (value, None)
+            return (value, None)        
         (tablename, fieldname) = str(self.field).split('.')
         field = self.dbset._db[tablename][fieldname]
         rows = self.dbset(field == value).select(limitby=(0, 1))
