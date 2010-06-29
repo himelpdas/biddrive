@@ -1267,7 +1267,8 @@ class MSSQLAdapter(BaseAdapter):
         self.pool_connection(lambda cnxn=cnxn : pyodbc.connect(cnxn))
 
     def lastrowid(self,table):
-        self.execute('SELECT @@IDENTITY;')
+        #self.execute('SELECT @@IDENTITY;')
+        self.execute('SELECT SCOPE_IDENTITY();')
         return int(self.cursor.fetchone()[0])
 
     def integrity_error_class(self):

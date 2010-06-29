@@ -1943,7 +1943,8 @@ class Table(dict):
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'mssql' or self._db._dbname\
              == 'mssql2':
-            self._db._execute('SELECT @@IDENTITY;')
+            #self._db._execute('SELECT @@IDENTITY;')
+            self._db._execute('SELECT SCOPE_IDENTITY();')
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'firebird':
             self._db._execute('SELECT gen_id(%s, 0) FROM rdb$database'
