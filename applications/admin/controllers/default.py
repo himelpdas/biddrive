@@ -514,7 +514,7 @@ def edit_language():
 
     from gluon.languages import read_dict, write_dict
     strings = read_dict(apath(filename, r=request))
-    keys = sorted(strings.keys())
+    keys = sorted(strings.keys(),lambda x,y: cmp(x.lower(), y.lower()))
     rows = []
     rows.append(H2(T('Original/Translation')))
 
