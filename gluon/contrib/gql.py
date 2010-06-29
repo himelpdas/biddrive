@@ -277,8 +277,8 @@ class Table(gluon.sql.Table):
                 fields[field] = obj_represent(fields[field],
                         self[field].type, self._db)
         tmp = self._tableobj(**fields)
-        self._last_reference = tmp
         tmp.put()
+        self._last_reference = tmp
         rid = Reference(tmp.key().id())
         (rid._table, rid._record) = (self, None)
         return rid
