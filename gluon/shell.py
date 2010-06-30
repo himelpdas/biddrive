@@ -19,6 +19,7 @@ import optparse
 import glob
 
 import fileutils
+from utils import web2py_uuid
 from compileapp import *
 from restricted import RestrictedError
 from globals import Request, Response, Session
@@ -158,8 +159,15 @@ def run(
                       % a).lower() in ['y', 'yes']:
             os.mkdir(adir)
             w2p_unpack('welcome.w2p', adir)
-        else:
-            return
+            db = os.path.join(adir,'models/db.py')
+            if os.path.exists(db):
+                fp = open(db,'r')
+                data = fp.read()
+                fp.close()
+                data = data.replace('<your secret key>','sha512:'+web2py_uuid())
+                fp = open(db,'w')
+                fp.write(data)
+                fp.close()
 
     if c:
         import_models = True
