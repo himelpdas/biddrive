@@ -961,6 +961,9 @@ class PostgreSQLAdapter(BaseAdapter):
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
 
+    def sequence_name(self,table):
+        return table._sequence_name or '%s_id_Seq' % table
+
     def RANDOM(self):
         return 'RANDOM()'
 
@@ -1012,7 +1015,7 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute("SET standard_conforming_strings=on;")
 
     def lastrowid(self,table):
-        self.execute("select currval('%s_id_Seq')" % tablename)
+        self.execute("select currval('%s')" % table._sequence_name)
         return int(self.cursor.fetchone()[0])
 
 

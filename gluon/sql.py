@@ -1276,11 +1276,13 @@ class SQLDB(dict):
         #default (for compatibility with previous version)
         if sequence_name is None:
             if self._dbname == 'firebird':
-                sequence_name = 'genid_%s' %tablename
+                sequence_name = 'genid_%s' % tablename
             if self._dbname == 'oracle':
-                sequence_name = '%s_sequence' %tablename
+                sequence_name = '%s_sequence' % tablename
             if self._dbname == 'ingres':
                 pass
+            if self._dbname == 'postgres':
+                sequence_name = '%s_id_Seq' % tablename
 
         if hasattr(self,tablename) or tablename[0] == '_':
             raise SyntaxError, 'invalid table name: %s' % tablename
@@ -1930,8 +1932,7 @@ class Table(dict):
         if self._db._dbname == 'sqlite':
             id = self._db._cursor.lastrowid
         elif self._db._dbname == 'postgres':
-            self._db._execute("select currval('%s_id_Seq')"
-                               % self._tablename)
+            self._db._execute("select currval('%s')" % self._sequence_name)
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'mysql':
             self._db._execute('select last_insert_id();')
