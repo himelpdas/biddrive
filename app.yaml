@@ -9,6 +9,7 @@ handlers:
   static_files: applications/\1/static/\2
   upload: applications/(.+?)/static/(.+)
   secure: optional
+  expiration: "90d"
 
 - url: /admin-gae/.*
   script: $PYTHON_LIB/google/appengine/ext/admin
