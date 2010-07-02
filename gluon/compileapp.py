@@ -168,6 +168,8 @@ def local_import_aux(name, force=False, app='welcome'):
     #    module = env['mymodule']
     #else:
     module = __import__(name)
+    for item in name.split(".")[1:]:
+        module = getattr(module, item)
     return module
 
 
