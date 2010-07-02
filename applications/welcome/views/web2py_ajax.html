@@ -29,7 +29,7 @@ function ajax(u,s,t) {
      if(i>0) query=query+"&";
      query=query+encodeURIComponent(s[i])+"="+encodeURIComponent(document.getElementById(s[i]).value);
   }
-  jQuery.ajax({type: "POST", url: u, data: query, success: function(msg) { if(t==':eval') eval(msg); else document.getElementById(t).innerHTML=msg; } });  
+  jQuery.ajax({type: "POST", url: u, data: query, success: function(msg) { if(t) { if(t==':eval') eval(msg); else document.getElementById(t).innerHTML=msg; } } });  
 }
 String.prototype.reverse = function () { return this.split('').reverse().join('');};
 function web2py_ajax_init() {
