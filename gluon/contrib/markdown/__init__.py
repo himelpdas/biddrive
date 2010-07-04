@@ -1,7 +1,7 @@
 from markdown2 import *
 from gluon.html import XML
 
-def WIKI(text, encoding="utf8", safe_mode='escape',**attributes):
+def WIKI(text, encoding="utf8", safe_mode='escape', html4tags=False, **attributes):
     if not text:
         test = ''
     if attributes.has_key('extras'):
@@ -11,5 +11,6 @@ def WIKI(text, encoding="utf8", safe_mode='escape',**attributes):
         extras=None
     text = text.decode(encoding,'replace')
 
-    return XML(markdown(text,extras=extras,safe_mode=safe_mode)\
+    return XML(markdown(text,extras=extras,
+                        safe_mode=safe_mode, html4tags=html4tags)\
                    .encode(encoding,'xmlcharrefreplace'),**attributes)

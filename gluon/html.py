@@ -282,6 +282,13 @@ class XML(XmlComponent):
             return render(self.text,None,{})
         return self.text
 
+    def elements(self, *args, **kargs):
+        """
+        to be considered experimental since the behaviour of this method is quiestinable
+        another options could be TAG(self.text).elements(*args,**kargs)
+        """
+        return []
+
 
 class DIV(XmlComponent):
     """
