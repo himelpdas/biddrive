@@ -22,7 +22,7 @@
         <h3>{{=response.subtitle or ''}}</h3>
       </div>
       <div class="ez-box statusbar">
-	{{ if 'auth' in globals():}}{{=auth.navbar()}}{{pass}}
+	{{ if 'auth' in globals():}}{{=auth.navbar(action=URL(request.application,'default','user'))}}{{pass}}
       </div>
       <!-- ez-css Module 2A -->
       <div class="ez-wr">

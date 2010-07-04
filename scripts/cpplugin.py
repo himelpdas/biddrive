@@ -16,5 +16,10 @@ for f in b:
     for i in range(3,len(path)):
         try: os.mkdir(os.path.join('applications',dest,*path[2:i]))
         except: pass
-    shutil.copyfile(f,os.path.join('applications',dest,*f.split('/')[2:]))
+    path = os.path.join('applications',dest,*f.split('/')[2:])
+    if os.path.isdir(f):
+        if not os.path.exists(path):
+            shutil.copytree(f,path)
+    else:
+        shutil.copyfile(f,path)
     print 'done'

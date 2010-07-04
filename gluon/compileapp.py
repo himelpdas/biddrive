@@ -161,17 +161,12 @@ def local_import_aux(name, force=False, app='welcome'):
     """
     items = name.replace('/','.')
     name = "applications.%s.modules.%s" % (app, items)
-    #if force:
-    #    env = {}
-    #    exec("import %s as mymodule" % name) in env
-    #    exec('reload(mymodule)') in env
-    #    module = env['mymodule']
-    #else:
     module = __import__(name)
     for item in name.split(".")[1:]:
         module = getattr(module, item)
+    if force:
+        reload(module)
     return module
-
 
 
 """
