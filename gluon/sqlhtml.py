@@ -1188,5 +1188,4 @@ class SQLTABLE(TABLE):
             tbody.append(TR(_class=_class, *row))
         components.append(TBODY(*tbody))
 
-
 form_factory = SQLFORM.factory # for backward compatibility, deprecated
