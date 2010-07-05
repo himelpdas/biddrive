@@ -27,7 +27,7 @@ We wanted a markup language with the following requirements:
 - automatically links urls
 - fast 
 
-(results depend on text but in average for text ~100K markmin is 30% as fast as markdown, for text ~10K it is 10x faster)
+(results depend on text but in average for text ~100K markmin is 30% faster than markdown, for text ~10K it is 10x faster)
 
 ## Where
 
