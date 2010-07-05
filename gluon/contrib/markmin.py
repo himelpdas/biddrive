@@ -147,7 +147,7 @@ Markmin also supports the <video> and <audio> html5 tags using the notation:
 ``
 
 ### Caveats
-``<ul\>``, ``<ol\>``, ``<code\>``, ``<table\>``, ``<h1\>``, ..., ``<h6\>`` do not have ``<p>...</p>`` around them.
+``<ul/>``, ``<ol/>``, ``<code/>``, ``<table/>``, ``<h1/>``, ..., ``<h6/>`` do not have ``<p>...</p>`` around them.
 
 """
 
