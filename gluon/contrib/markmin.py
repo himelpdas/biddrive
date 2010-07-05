@@ -3,6 +3,8 @@
 import re
 import cgi    
 
+__all__ = ['render']
+
 __doc__ = """
 # Markmin markup language
 
