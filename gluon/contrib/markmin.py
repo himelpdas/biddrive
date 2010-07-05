@@ -1,4 +1,4 @@
-# created my Massimo Di Pierro
+#!/usr/bin/env python                                                                                                        # created my Massimo Di Pierro
 # license MIT/BSD/GPL
 import re
 import cgi    
@@ -12,9 +12,9 @@ This is a new markup language that we call markmin, it is implemented in the ``r
 
 ## Why?
 
-We wanted a markup language in less than 100 lines of code with the following requirements:
-- less than 100 lines of code
-- simple to read
+We wanted a markup language with the following requirements:
+- less than 100 lines of functional code
+- easy to read
 - secure
 - support table, ul, ol, code
 - support html5 video and audio elements
@@ -23,6 +23,9 @@ We wanted a markup language in less than 100 lines of code with the following re
 - can add anchors anywhere
 - does not use _ for markup (since it creates odd behavior)
 - automatically links urls
+- fast 
+
+(results depend on text but in average for text ~100K markmin is 30% as fast as markdown, for text ~10K it is 10x faster)
 
 ## Where
 
