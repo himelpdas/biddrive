@@ -14,17 +14,21 @@ This is a new markup language that we call markmin, it is implemented in the ``r
 
 We wanted a markup language in less than 100 lines of code with the following requirements:
 - less than 100 lines of code
-- be very simple to read
-- be very secure
+- simple to read
+- secure
 - support table, ul, ol, code
 - support html5 video and audio elements
-- ability to align images and resize them
-- ability to specify class for tables and code elements
-- ability to add anchors anywhere
-- does not use _ for markup (since it creates problems)
+- can align images and resize them
+- can specify class for tables and code elements
+- can add anchors anywhere
+- does not use _ for markup (since it creates odd behavior)
 - automatically links urls
 
-## Usage:
+## Where
+
+[[download http://web2py.googlecode.com/hg/gluon/contrib/markmin.py]]
+
+## Usage
 
 ``
 >>> from markmin import render
