@@ -20,6 +20,7 @@ import itertools
 import decoder
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
+from contrib.markmin import render
 
 from storage import Storage
 from validators import *
@@ -60,6 +61,7 @@ __all__ = [
     'LINK',
     'OL',
     'UL',
+    'MARKMIN',
     'MENU',
     'META',
     'OBJECT',
@@ -288,6 +290,7 @@ class XML(XmlComponent):
         another options could be TAG(self.text).elements(*args,**kargs)
         """
         return []
+
 
 
 class DIV(XmlComponent):
@@ -1760,13 +1763,58 @@ def markdown(text,tag=None,attr={}):
     if tag=='h3': return '#'*3+text+'\n\n'
     if tag=='h4': return '#'*4+text+'\n\n'
     if tag=='p': return text+'\n\n'
-    if tag=='b': return '**%s**' % text
-    if tag=='en': return '*%s*' % text
-    if tag=='it': return '*%s*' % text
-    if tag=='tt': return '`%s`' % text
+    if tag=='b' or tag=='strong': return '**%s**' % text
+    if tag=='em' or tag=='it': return '*%s*' % text
+    if tag=='tt' or tag=='code': return '`%s`' % text
     if tag=='a': return '[%s](%s)' % (text,attr.get('_href',''))
     if tag=='img': return '![%s](%s)' % (attr.get('_alt',''),attr.get('_src',''))
     return text
+
+def markmin(text,tag=None,attr={}):
+    if tag==None: return re.sub('\s+',' ',text)
+    if tag=='br': return '\n\n'
+    if tag=='h1': return '#'+text+'\n\n'
+    if tag=='h2': return '#'*2+text+'\n\n'
+    if tag=='h3': return '#'*3+text+'\n\n'
+    if tag=='h4': return '#'*4+text+'\n\n'
+    if tag=='p': return text+'\n\n'
+    if tag=='b' or tag=='strong': return '**%s**' % text
+    if tag=='em' or tag=='it': return "''%s''" % text
+    if tag=='tt' or tag=='code': return '``%s``' % text
+    if tag=='a': return '[[%s %s]]' % (text,attr.get('_href',''))
+    if tag=='img': return '[[%s %s left]]' % (attr.get('_alt','no title'),attr.get('_src',''))
+    return text
+
+
+class MARKMIN(XmlComponent):
+    def __init__(self, text, extra={}, allowed={}, sep='p'):
+        self.text = text
+        self.extra = extra
+        self.allowed = allowed
+        self.sep = sep
+
+    def xml(self):
+        """
+        calls the gluon.contrib.markmin render function to convert the wiki syntax
+        """
+        return render(self.text,extra=self.extra,allowed=self.allowed,sep=self.sep)
+
+    def __str__(self):
+        return self.xml()
+
+    def flatten(self,render=None):
+        """
+        return the text stored by the MARKMIN object rendered by the render function
+        """
+        return self.text
+
+    def elements(self, *args, **kargs):
+        """
+        to be considered experimental since the behaviour of this method is quiestinable
+        another options could be TAG(self.text).elements(*args,**kargs)
+        """
+        return [self.text]
+
 
 if __name__ == '__main__':
     import doctest

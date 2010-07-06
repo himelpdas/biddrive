@@ -103,17 +103,15 @@ def rss_aggregator():
     return rss2.dumps(rss)
 
 
-from gluon.contrib.markdown import WIKI
-
 
 def ajaxwiki():
     form = FORM(TEXTAREA(_id='text'), INPUT(_type='button',
-                _value='markdown',
-                _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
+                                            _value='markmin',
+                                            _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
     return dict(form=form, html=DIV(_id='html'))
 
 
 def ajaxwiki_onclick():
-    return WIKI(request.vars.text).xml()
+    return MARKMIN(request.vars.text).xml()
 
 

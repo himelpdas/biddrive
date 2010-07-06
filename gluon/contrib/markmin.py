@@ -43,7 +43,7 @@ We wanted a markup language with the following requirements:
 
 ## Exmaples
 
-### Bold, italic, verbatim and links
+### Bold, italic, code and links
 
 --------------------------------------------------
 **SOURCE**                 | **OUTPUT**
@@ -56,7 +56,7 @@ We wanted a markup language with the following requirements:
 
 ### More on links
 
-The format is always ``[[title link]]``. Notice you can nest bold, italic and verbatim inside the link title.
+The format is always ``[[title link]]``. Notice you can nest bold, italic and code inside the link title.
 
 ### Anchors [[myanchor]]
 
@@ -66,7 +66,7 @@ You can then link the anchor with [[link #myanchor]], i.e. ``[[link #myanchor]]`
 ### Images
 
 [[some image http://www.google.it/images/srpr/nav_logo13.png right 200px]]
-This paragraph has an image alighed to the right with a width of 200px. Its is placed using the code
+This paragraph has an image aligned to the right with a width of 200px. Its is placed using the code
 ``[[some image http://www.google.it/images/srpr/nav_logo13.png right 200px]]``.
 
 ### Unordered Lists
@@ -118,7 +118,7 @@ Four or more dashes delimit the table and | separates the columns.
 The ``:abc`` at the end sets the class for the table and it is optional.
 
 
-### Verbatim, ``<code>``, escaping and extra stuff
+### Code, ``<code>``, escaping and extra stuff
 
 ``
 def test():
@@ -152,7 +152,7 @@ Markmin also supports the <video> and <audio> html5 tags using the notation:
 """
 
 META = 'META'
-regex_verbatim = re.compile('('+META+')|(``(?P<t>.*?)``(:(?P<c>\w+))?)',re.S)
+regex_code = re.compile('('+META+')|(``(?P<t>.*?)``(:(?P<c>\w+))?)',re.S)
 regex_maps = [
     (re.compile('[ \t\r]+\n'),'\n'),
     (re.compile('[ \t\r]+\n'),'\n'),
@@ -179,8 +179,18 @@ regex_link = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+)\]\]')
 regex_auto = re.compile('(?<!["\w])(?P<k>\w+://[\w\.\-\?&%]+)',re.M)
 regex_anchor = re.compile('\[\[(?P<t>\w+)\]\]')
 
-def render(text,extra={},sep='p'):
+def render(text,extra={},allowed={},sep='p'):
     """
+    Arguments:
+    - text is the text to be processed
+    - extra is a dict like extra=dict(custom=lambda value: value) that process custom code
+      ad in " ``this is custom code``:custom "
+    - allowed is a cistionary of list of allowed classes like
+      allowed = dict(code=('python','cpp','java'))
+    - sep can be 'p' to separate text in <p>...</p>
+      or can be 'br' to separate text using <br /> 
+
+
     >>> render('this is\\n# a section\\nparagraph')
     '<p>this is</p><h1>a section</h1><p>paragraph</p>'
     >>> render('this is\\n## a subsection\\nparagraph')
@@ -230,17 +240,21 @@ def render(text,extra={},sep='p'):
     """
     #############################################################
     # replace all blocks marked with ``...``:class with META
-    # store them into segments they will be treated as verbatim
+    # store them into segments they will be treated as code
     #############################################################
     segments, i = [], 0
     while True:
-        item = regex_verbatim.search(text,i)
+        item = regex_code.search(text,i)
         if not item: break
         if item.group()==META:
             segments.append((None,None))
             text = text[:item.start()]+META+text[item.end():]
         else:
-            segments.append((item.group('t').replace('!`!','`'),item.group('c') or ''))
+            c = item.group('c') or ''
+            if 'code' in allowed and not c in allowed['code']: c = ''
+            code = item.group('t').replace('!`!','`').rstrip()
+            while code[:1] in ('\n','\r'): code = code[1:]
+            segments.append((code,c))
             text = text[:item.start()]+META+text[item.end():]
         i=item.start()+3
 
@@ -259,6 +273,7 @@ def render(text,extra={},sep='p'):
         item = regex_table.search(text)
         if not item: break
         c = item.group('c') or ''
+        if 'table' in allowed and not c in allowed['table']: c = ''
         rows = item.group('t').replace('\n','</td></tr><tr><td>').replace(' | ','</td><td>')
         text = text[:item.start()] + '<<table class="%s"><tr><td>'%c + rows + '</td></tr></table>' + text[item.end():]
 
@@ -277,7 +292,7 @@ def render(text,extra={},sep='p'):
     #############################################################
     # deal with paragraphs (trick <<ul, <<ol, <<table, <<h1, etc)
     # the << indicates that there should NOT be a new paragraph
-    # META indicates a verbatim block therefore no new paragraph
+    # META indicates a code block therefore no new paragraph
     #############################################################
     items = [item.strip() for item in text.split('\n\n')]
     if sep=='p':
@@ -291,7 +306,7 @@ def render(text,extra={},sep='p'):
     text=text.replace('<<','<')
     
     #############################################################
-    # process all verbatim text
+    # process all code text
     #############################################################
     parts = text.split(META)
     text = parts[0]
@@ -304,13 +319,13 @@ def render(text,extra={},sep='p'):
         else:
             code='<code class="%s">%s</code>' % (b,cgi.escape(a))
         text = text+code+parts[i+1]
-    ### end restore verbatim
     return text
+
 
 if __name__ == '__main__':
     import sys
     import doctest
-    if len(sys.argv)>0:
+    if len(sys.argv)>1:
         open(sys.argv[1],'w').write('<html><body>'+render(__doc__)+'</body></html>')
     else:
         doctest.testmod()

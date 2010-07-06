@@ -179,17 +179,16 @@ gluon.contrib.<a href="http://www.feedparser.org/">feedparser</a>, developed by 
 
 <h3 id="example_wiki">Example {{=c}}{{c+=1}}</h3><b>In controller: simple_examples.py</b>
 {{=CODE("""
-from gluon.contrib.markdown import WIKI
-
 def ajaxwiki():
-    form=FORM(TEXTAREA(_id='text'),INPUT(_type='button',_value='markdown',
-              _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
+    form=FORM(TEXTAREA(_id='text'),INPUT(_type='button',_value='markmin',
+         _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
     return dict(form=form,html=DIV(_id='html'))
 
 def ajaxwiki_onclick():
-    return WIKI(request.vars.text).xml()
+    return MARKMIN(request.vars.text).xml()
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}
-<p>web2py also includes gluon.contrib.<a href="http://code.google.com/p/python-markdown2/">markdown</a> (markdown2) which converts WIKI markup to HTML following <a href="http://en.wikipedia.org/wiki/Markdown">this syntax</a>. In this example we added a fancy ajax effect.<br/>Try it here: <a href="/{{=request.application}}/simple_examples/ajaxwiki">ajaxwiki</a></p>
+<p>The markmin wiki markup is described <a href="{{=URL(r=request,c='static',f='markmin.html')}}">here</a>.
+web2py also includes gluon.contrib.<a href="http://code.google.com/p/python-markdown2/">markdown</a>.WIKI helper (markdown2) which converts WIKI markup to HTML following <a href="http://en.wikipedia.org/wiki/Markdown">this syntax</a>. In this example we added a fancy ajax effect.<br/>Try it here: <a href="/{{=request.application}}/simple_examples/ajaxwiki">ajaxwiki</a></p>
 
 <h2 id="session_examples">Session Examples</h2>
 
