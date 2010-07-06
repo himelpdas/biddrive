@@ -211,8 +211,8 @@ def render(text,extra={},allowed={},sep='p'):
     '<code class="">hello world</code>'
     >>> render('``hello world``:python')
     '<code class="python">hello world</code>'
-    >>> render('``\\nhello world\\n``:python')
-    '<pre><code class="python">\\nhello world\\n</code></pre>'
+    >>> render('``\\nhello\\nworld\\n``:python')
+    '<pre><code class="python">hello\\nworld</code></pre>'
     >>> render("''hello world''")
     '<p><i>hello world</i></p>'
     >>> render('** hello** **world**')
@@ -326,18 +326,18 @@ def render(text,extra={},allowed={},sep='p'):
     text = parts[0]
     for i,(a,b) in enumerate(segments):
         if a==None:
-            code=META
+            html = META
         else:
             pre = a[0]=='\n' or a[-1]=='\n'
-            code=code.strip()
+            code = code.rstrip()
             while code[:1] in ('\n','\r'): code = code[1:]
             if b in extra:
-                code = extra[b](a)
+                html = extra[b](code)
             elif pre:
-                code='<pre><code class="%s">%s</code></pre>' % (b,cgi.escape(a))
+                html = '<pre><code class="%s">%s</code></pre>' % (b,cgi.escape(code))
             else:
-                code='<code class="%s">%s</code>' % (b,cgi.escape(a))
-        text = text+code+parts[i+1]
+                html = '<code class="%s">%s</code>' % (b,cgi.escape(code))
+        text = text+html+parts[i+1]
     return text
 
 
