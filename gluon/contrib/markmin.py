@@ -179,13 +179,13 @@ regex_maps = [
     (re.compile('<<'),'\n\n<<'),
     (re.compile('\n\s+\n'),'\n\n')]
 regex_table = re.compile('^\-{4,}\n(?P<t>.*?)\n\-{4,}(:(?P<c>\w+))?\n',re.M|re.S)
+regex_anchor = re.compile('\[\[(?P<t>\w+)\]\]')
 regex_image_width = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center) +(?P<w>\d+px)\]\]')
 regex_image = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center)\]\]')
 regex_video = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +video\]\]')
 regex_audio = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +audio\]\]')
 regex_link = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+)\]\]')
 regex_auto = re.compile('(?<!["\w])(?P<k>\w+://[\w\.\-\?&%]+)',re.M)
-regex_anchor = re.compile('\[\[(?P<t>\w+)\]\]')
 
 def render(text,extra={},allowed={},sep='p'):
     """
@@ -295,13 +295,13 @@ def render(text,extra={},allowed={},sep='p'):
     # deal with images, videos, audios and links
     #############################################################
 
+    text = regex_anchor.sub('<span id="\g<t>"><span>', text)
     text = regex_image_width.sub('<img src="\g<k>" alt="\g<t>" align="\g<p>" width="\g<w>" />', text)
     text = regex_image.sub('<img src="\g<k>" alt="\g<t>" align="\g<p>" />', text)
     text = regex_video.sub('<video src="\g<k>" controls></video>', text)
     text = regex_audio.sub('<audio src="\g<k>" controls></audio>', text)
     text = regex_link.sub('<a href="\g<k>">\g<t></a>', text)
     text = regex_auto.sub('<a href="\g<k>">\g<k></a>', text)
-    text = regex_anchor.sub('<span id="\g<t>"><span>', text)
     
     #############################################################
     # deal with paragraphs (trick <<ul, <<ol, <<table, <<h1, etc)
