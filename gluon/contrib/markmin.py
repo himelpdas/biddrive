@@ -42,7 +42,7 @@ We wanted a markup language with the following requirements:
 
 ``:python
 
-## Exmaples
+## Examples
 
 ### Bold, italic, code and links
 
@@ -50,7 +50,7 @@ We wanted a markup language with the following requirements:
 **SOURCE**                 | **OUTPUT**
 ``**bold**``               | **bold** 
 ``''italic''``             | ''italic'' 
-``!`!`varbatim`!`!``       | ``verbatim``
+``!`!`verbatim`!`!``       | ``verbatim``
 ``http://google.com``      | http://google.com
 ``[[click me #myanchor]]`` | [[click me #myanchor]]
 ---------------------------------------------------
@@ -78,7 +78,7 @@ This paragraph has an image aligned to the right with a width of 200px. Its is p
 - Mouse
 ``
 
-is redered as 
+is rendered as 
 - Dog
 - Cat
 - Mouse 
@@ -109,7 +109,7 @@ Something like this
 X | 0 | 0
 -----:abc
 ``
-is a table and is redenered as
+is a table and is rendered as
 ---------
 0 | 0 | X
 0 | X | 0
@@ -135,7 +135,7 @@ def test():
 
 Optionally a ` inside a ``!`!`...`!`!`` block can be inserted escaped with !`!.
 The ``:python`` after the markup is also optional. If present, by default, it is used to set the class of the <code> block.
-The behavior can be overwritten by passing an argument ``extra`` to the ``render`` function. For example:
+The behavior can be overridden by passing an argument ``extra`` to the ``render`` function. For example:
 
 ``>>> render("!`!!`!aaa!`!!`!:custom",extra=dict(custom=lambda text: 'x'+text+'x'))``:python
 
@@ -160,6 +160,7 @@ Markmin also supports the <video> and <audio> html5 tags using the notation:
 """
 
 META = 'META'
+regex_newlines = re.compile('(\n\r)|(\r\n)')
 regex_code = re.compile('('+META+')|(``(?P<t>.*?)``(:(?P<c>\w+))?)',re.S)
 regex_maps = [
     (re.compile('[ \t\r]+\n'),'\n'),
@@ -254,6 +255,7 @@ def render(text,extra={},allowed={},sep='p'):
     # store them into segments they will be treated as code
     #############################################################
     segments, i = [], 0
+    text = regex_newlines.sub('\n',text)
     while True:
         item = regex_code.search(text,i)
         if not item: break
@@ -324,16 +326,14 @@ def render(text,extra={},allowed={},sep='p'):
     #############################################################
     parts = text.split(META)
     text = parts[0]
-    for i,(a,b) in enumerate(segments):
-        if a==None:
+    for i,(code,b) in enumerate(segments):
+        if code==None:
             html = META
         else:
-            pre = a[0]=='\n' or a[-1]=='\n'
-            code = a.rstrip()
-            while code[:1] in ('\n','\r'): code = code[1:]
             if b in extra:
+                if code[0]=='\n' and code[-1]=='\n': code=code[1:-1]
                 html = extra[b](code)
-            elif pre:
+            elif code[0]=='\n' or code[-1]=='\n':
                 html = '<pre><code class="%s">%s</code></pre>' % (b,cgi.escape(code))
             else:
                 html = '<code class="%s">%s</code>' % (b,cgi.escape(code))
