@@ -38,7 +38,8 @@ We wanted a markup language with the following requirements:
 ``
 >>> from markmin import render
 >>> render('hello **world**')
-<p>hello <b>world</b></p>
+'<p>hello <b>world</b></p>'
+
 ``:python
 
 ## Exmaples
@@ -117,6 +118,13 @@ X | 0 | 0
 Four or more dashes delimit the table and | separates the columns.
 The ``:abc`` at the end sets the class for the table and it is optional.
 
+### Blockquote
+
+A table with a single cell is rendered as a blockquote:
+
+-----
+Hello world
+-----
 
 ### Code, ``<code>``, escaping and extra stuff
 
@@ -147,7 +155,7 @@ Markmin also supports the <video> and <audio> html5 tags using the notation:
 ``
 
 ### Caveats
-``<ul/>``, ``<ol/>``, ``<code/>``, ``<table/>``, ``<h1/>``, ..., ``<h6/>`` do not have ``<p>...</p>`` around them.
+``<ul/>``, ``<ol/>``, ``<code/>``, ``<table/>``, ``<blockquote/>``, ``<h1/>``, ..., ``<h6/>`` do not have ``<p>...</p>`` around them.
 
 """
 
@@ -219,6 +227,9 @@ def render(text,extra={},allowed={},sep='p'):
     >>> render("----\\na | b\\nc | d\\n----\\n")
     '<table class=""><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr></table>'
 
+    >>> render("----\\nhello world\\n----\\n")
+    '<blockquote class="">hello world</blockquote>'
+
     >>> render('[[this is a link http://example.com]]')
     '<p><a href="http://example.com">this is a link</a></p>'
 
@@ -252,8 +263,7 @@ def render(text,extra={},allowed={},sep='p'):
         else:
             c = item.group('c') or ''
             if 'code' in allowed and not c in allowed['code']: c = ''
-            code = item.group('t').replace('!`!','`').rstrip()
-            while code[:1] in ('\n','\r'): code = code[1:]
+            code = item.group('t').replace('!`!','`')
             segments.append((code,c))
             text = text[:item.start()]+META+text[item.end():]
         i=item.start()+3
@@ -267,15 +277,19 @@ def render(text,extra={},allowed={},sep='p'):
         text = regex.sub(sub,text)
  
     #############################################################
-    # process tables
+    # process tables and blockquotes
     #############################################################
     while True:
         item = regex_table.search(text)
         if not item: break
         c = item.group('c') or ''
         if 'table' in allowed and not c in allowed['table']: c = ''
-        rows = item.group('t').replace('\n','</td></tr><tr><td>').replace(' | ','</td><td>')
-        text = text[:item.start()] + '<<table class="%s"><tr><td>'%c + rows + '</td></tr></table>' + text[item.end():]
+        content = item.group('t')
+        if ' | ' in content:
+            rows = content.replace('\n','</td></tr><tr><td>').replace(' | ','</td><td>')
+            text = text[:item.start()] + '<<table class="%s"><tr><td>'%c + rows + '</td></tr></table>' + text[item.end():]
+        else:
+            text = text[:item.start()] + '<<blockquote class="%s">'%c + content + '</blockquote>' + text[item.end():]
 
     #############################################################
     # deal with images, videos, audios and links
@@ -311,13 +325,18 @@ def render(text,extra={},allowed={},sep='p'):
     parts = text.split(META)
     text = parts[0]
     for i,(a,b) in enumerate(segments):
-        if a==None: code=META
-        elif b in extra:
-            code = extra[b](a)
-        elif a[0]=='\n' or a[-1]=='\n':
-            code='<pre><code class="%s">%s</code></pre>' % (b,cgi.escape(a))
+        if a==None:
+            code=META
         else:
-            code='<code class="%s">%s</code>' % (b,cgi.escape(a))
+            pre = a[0]=='\n' or a[-1]=='\n'
+            code=code.strip()
+            while code[:1] in ('\n','\r'): code = code[1:]
+            if b in extra:
+                code = extra[b](a)
+            elif pre:
+                code='<pre><code class="%s">%s</code></pre>' % (b,cgi.escape(a))
+            else:
+                code='<code class="%s">%s</code>' % (b,cgi.escape(a))
         text = text+code+parts[i+1]
     return text
 
