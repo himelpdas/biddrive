@@ -1764,7 +1764,7 @@ def markdown(text,tag=None,attr={}):
     if tag=='h4': return '#'*4+text+'\n\n'
     if tag=='p': return text+'\n\n'
     if tag=='b' or tag=='strong': return '**%s**' % text
-    if tag=='em' or tag=='it': return '*%s*' % text
+    if tag=='em' or tag=='i': return '*%s*' % text
     if tag=='tt' or tag=='code': return '`%s`' % text
     if tag=='a': return '[%s](%s)' % (text,attr.get('_href',''))
     if tag=='img': return '![%s](%s)' % (attr.get('_alt',''),attr.get('_src',''))
@@ -1779,7 +1779,7 @@ def markmin(text,tag=None,attr={}):
     if tag=='h4': return '#'*4+text+'\n\n'
     if tag=='p': return text+'\n\n'
     if tag=='b' or tag=='strong': return '**%s**' % text
-    if tag=='em' or tag=='it': return "''%s''" % text
+    if tag=='em' or tag=='i': return "''%s''" % text
     if tag=='tt' or tag=='code': return '``%s``' % text
     if tag=='a': return '[[%s %s]]' % (text,attr.get('_href',''))
     if tag=='img': return '[[%s %s left]]' % (attr.get('_alt','no title'),attr.get('_src',''))

@@ -52,7 +52,7 @@ We wanted a markup language with the following requirements:
 ``''italic''``             | ''italic'' 
 ``!`!`varbatim`!`!``       | ``verbatim``
 ``http://google.com``      | http://google.com
-``[[click me #myanchow]]`` | [[click me #myanchor]]
+``[[click me #myanchor]]`` | [[click me #myanchor]]
 ---------------------------------------------------
 
 ### More on links
