@@ -329,7 +329,7 @@ def render(text,extra={},allowed={},sep='p'):
             html = META
         else:
             pre = a[0]=='\n' or a[-1]=='\n'
-            code = code.rstrip()
+            code = a.rstrip()
             while code[:1] in ('\n','\r'): code = code[1:]
             if b in extra:
                 html = extra[b](code)
