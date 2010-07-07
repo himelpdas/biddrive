@@ -223,10 +223,15 @@ class RadioWidget(OptionsWidget):
 
         attr = OptionsWidget._attributes(field, {}, **attributes)
 
-        if hasattr(field.requires, 'options'):
-            options = field.requires.options()
-        else:
-            raise SyntaxError, 'widget cannot determine options of %s' % field
+        requires = field.requires
+        if not isinstance(requires, (list, tuple)):
+            requires = [requires]
+        if requires:
+            if hasattr(requires[0], 'options'):
+                options = requires[0].options()
+            else:
+                raise SyntaxError, 'widget cannot determine options of %s' \
+                    % field
         opts = [TR(INPUT(_type='radio', _name=field.name,
                          requires=attr.get('requires',None),
                          hideerror=True, _value=k,
@@ -250,10 +255,15 @@ class CheckboxesWidget(OptionsWidget):
 
         attr = OptionsWidget._attributes(field, {}, **attributes)
 
-        if hasattr(field.requires, 'options'):
-            options = field.requires.options()
-        else:
-            raise SyntaxError, 'widget cannot determine options of %s' % field
+        requires = field.requires
+        if not isinstance(requires, (list, tuple)):
+            requires = [requires]
+        if requires:
+            if hasattr(requires[0], 'options'):
+                options = requires[0].options()
+            else:
+                raise SyntaxError, 'widget cannot determine options of %s' \
+                    % field
 
         options = [(k, v) for k, v in options if k!='']
         opts = []

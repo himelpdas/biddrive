@@ -194,7 +194,7 @@ def render(text,extra={},allowed={},sep='p'):
     - text is the text to be processed
     - extra is a dict like extra=dict(custom=lambda value: value) that process custom code
       as in " ``this is custom code``:custom "
-    - allowed is a distionary of list of allowed classes like
+    - allowed is a dictionary of list of allowed classes like
       allowed = dict(code=('python','cpp','java'))
     - sep can be 'p' to separate text in <p>...</p>
       or can be 'br' to separate text using <br /> 
