@@ -61,7 +61,7 @@ The format is always ``[[title link]]``. Notice you can nest bold, italic and co
 
 ### Anchors [[myanchor]]
 
-You can place an ancor anywhere in the text using the syntax ``[[name]]`` where ''name'' is the name of the anchor.
+You can place an anchor anywhere in the text using the syntax ``[[name]]`` where ''name'' is the name of the anchor.
 You can then link the anchor with [[link #myanchor]], i.e. ``[[link #myanchor]]``.
 
 ### Images
@@ -193,8 +193,8 @@ def render(text,extra={},allowed={},sep='p'):
     Arguments:
     - text is the text to be processed
     - extra is a dict like extra=dict(custom=lambda value: value) that process custom code
-      ad in " ``this is custom code``:custom "
-    - allowed is a cistionary of list of allowed classes like
+      as in " ``this is custom code``:custom "
+    - allowed is a distionary of list of allowed classes like
       allowed = dict(code=('python','cpp','java'))
     - sep can be 'p' to separate text in <p>...</p>
       or can be 'br' to separate text using <br /> 

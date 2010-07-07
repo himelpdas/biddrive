@@ -143,37 +143,6 @@ a {
     color: #FF5C1F;
 }
 
-div.flash {
-    position: absolute;
-    float: right;
-    padding: 10px;
-    top: 0px;
-    right: 0px;
-    opacity: 0.75;
-    margin: 10px 10px 10px 10px;
-    text-align: center;
-    clear: both;
-    color: #fff;
-    font-size: 11pt;
-    text-align: center;
-    vertical-align: middle;
-    cursor: pointer;
-    background: black;
-    border: 2px solid #fff; 
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    z-index: 2;
-}
-
-div.error {
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    background-color: red;
-    color: white;
-    padding: 3px;
-    border: 1px solid #666;
-}
-
 .warn {
     background-color: yellow;
     color: black;
@@ -627,10 +596,42 @@ html:not([lang*=""])  div.web2py-menu-center ul.web2py-menu li a:hover {
     min-width: 0;
     display: inline-block;
     display: block;
+    height: 1%;
 }
 
-* html .clearfix
-{
-    height: 1%;
+td {
+    text-align: left;
+    vertical-align: top;
+}
+
+div.flash {
+    position: absolute;
+    float: right;
+    padding: 10px;
+    top: 0px;
+    right: 0px;
+    opacity: 0.75;
+    margin: 10px 10px 10px 10px;
+    text-align: center;
+    clear: both;
+    color: #fff;
+    font-size: 11pt;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    background: black;
+    border: 2px solid #fff; 
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    z-index: 2;
+}
+
+div.error {
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    background-color: red;
+    color: white;
+    padding: 3px;
+    border: 1px solid #666;
 }
 
