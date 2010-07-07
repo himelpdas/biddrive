@@ -283,7 +283,7 @@ class Mail(object):
 
         def encode_header(key):
             if [c for c in key if 32>ord(c) or ord(c)>127]:
-                return header.Header(key.encode('utf-8'),'utf-8')
+                return Header.Header(key.encode('utf-8'),'utf-8')
             else:
                 return key
 
