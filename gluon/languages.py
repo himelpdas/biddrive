@@ -53,12 +53,46 @@ def read_dict(filename):
     return getcfs('language:%s'%filename,filename,
                   lambda filename=filename:read_dict_aux(filename))
 
+def utf8_repr(s):
+    r''' # note that we use raw strings to avoid having to use double back slashes below
+
+    utf8_repr() works same as repr() when processing ascii string
+    >>> utf8_repr('abc') == utf8_repr("abc") == repr('abc') == repr("abc") == "'abc'"
+    True
+    >>> utf8_repr('a"b"c') == repr('a"b"c') == '\'a"b"c\''
+    True
+    >>> utf8_repr("a'b'c") == repr("a'b'c") == '"a\'b\'c"'
+    True
+    >>> utf8_repr('a\'b"c') == repr('a\'b"c') == utf8_repr("a'b\"c") == repr("a'b\"c") == '\'a\\\'b"c\''
+    True
+    >>> utf8_repr('a\r\nb') == repr('a\r\nb') == "'a\\r\\nb'" # Test for \r, \n
+    True
+
+    Unlike repr(), utf8_repr() remains utf8 content when processing utf8 string
+    >>> utf8_repr('中文字') == utf8_repr("中文字") == "'中文字'" != repr('中文字')
+    True
+    >>> utf8_repr('中"文"字') == "'中\"文\"字'" != repr('中"文"字')
+    True
+    >>> utf8_repr("中'文'字") == '"中\'文\'字"' != repr("中'文'字")
+    True
+    >>> utf8_repr('中\'文"字') == utf8_repr("中'文\"字") == '\'中\\\'文"字\'' != repr('中\'文"字') == repr("中'文\"字")
+    True
+    >>> utf8_repr('中\r\n文') == "'中\\r\\n文'" != repr('中\r\n文') # Test for \r, \n
+    True
+    '''
+    if (s.find("'") >= 0) and (s.find('"') < 0): # only single quote exists
+        s = ''.join(['"', s, '"']) # s = ''.join(['"', s.replace('"','\\"'), '"'])
+    else:
+        s = ''.join(["'", s.replace("'","\\'"), "'"])
+    return s.replace("\n","\\n").replace("\r","\\r")
+
+
 def write_dict(filename, contents):
     fp = open(filename, 'w')
     portalocker.lock(fp, portalocker.LOCK_EX)
     fp.write('# coding: utf8\n{\n')
     for key in sorted(contents):
-        fp.write('%s: %s,\n' % (repr(key), repr(contents[key])))
+        fp.write('%s: %s,\n' % (utf8_repr(key), utf8_repr(contents[key])))
     fp.write('}\n')
     portalocker.unlock(fp)
     fp.close()
@@ -213,3 +247,9 @@ def update_all_languages(application_path):
     path = os.path.join(application_path, 'languages/')
     for language in listdir(path, '^\w+(\-\w+)?\.py$'):
         findT(application_path, language[:-3])
+
+
+if __name__=='__main__':
+    import doctest
+    doctest.testmod()
+
