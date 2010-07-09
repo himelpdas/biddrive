@@ -11,6 +11,8 @@ syntax: glob
 *.svn
 *.w2p
 *.class
+*.rej
+*.orig
 .DS_Store
 index.yaml
 gluon/tests/VERSION
