@@ -3196,29 +3196,35 @@ excluded + tables_to_merge.keys()])
                 elif field.type == 'date' and value != None\
                         and (not isinstance(value, datetime.date)\
                                  or isinstance(value, datetime.datetime)):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
-                    colset[fieldname] = datetime.date(y, m, d)
+                    if not value: colset[fieldname] = None
+                    else:
+                        (y, m, d) = [int(x) for x in
+                                     str(value)[:10].strip().split('-')]
+                        colset[fieldname] = datetime.date(y, m, d)
                 elif field.type == 'time' and value != None\
                         and not isinstance(value, datetime.time):
-                    time_items = [int(x) for x in
-                                  str(value)[:8].strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
+                    if not value: colset[fieldname] = None
                     else:
-                        (h, mi, s) = time_items + [0]
-                    colset[fieldname] = datetime.time(h, mi, s)
+                        time_items = [int(x) for x in
+                                      str(value)[:8].strip().split(':')[:3]]
+                        if len(time_items) == 3:
+                            (h, mi, s) = time_items
+                        else:
+                            (h, mi, s) = time_items + [0]
+                        colset[fieldname] = datetime.time(h, mi, s)
                 elif field.type == 'datetime' and value != None\
                         and not isinstance(value, datetime.datetime):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
-                    time_items = [int(x) for x in
-                                  str(value)[11:19].strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
+                    if not value: colset[fieldname] = None
                     else:
-                        (h, mi, s) = time_items + [0]
-                    colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
+                        (y, m, d) = [int(x) for x in
+                                     str(value)[:10].strip().split('-')]
+                        time_items = [int(x) for x in
+                                      str(value)[11:19].strip().split(':')[:3]]
+                        if len(time_items) == 3:
+                            (h, mi, s) = time_items
+                        else:
+                            (h, mi, s) = time_items + [0]
+                        colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
                 elif field.type[:7] == 'decimal' and value != None:
                     decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
