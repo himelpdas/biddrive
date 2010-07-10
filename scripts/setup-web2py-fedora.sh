@@ -25,7 +25,7 @@ read CONFIRM
 echo "installing useful packages"
 echo "=========================="
 apt-get update
-you install python2.5
+yum install python2.5
 yum install mod_wsgi
 yum install emacs
 httpd restart
