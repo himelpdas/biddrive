@@ -782,7 +782,7 @@ class SQLiteAdapter(BaseAdapter):
         'time': 'TIME',
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
-        'reference': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         }
 
     def EXTRACT(self,field,what):
