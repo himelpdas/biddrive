@@ -207,14 +207,18 @@ class translator(object):
 
     def translate(self, message, symbols):
         """
+        user ## to add a comment into a translation string
+        the comment can be useful do discriminate different possible
+        translations for the same string (for example different locations)
+
         T(' hello world ') -> ' hello world '
-        T(' hello world # token') -> 'hello world'
-        T('hello # world # token') -> 'hello # world'
+        T(' hello world ## token') -> 'hello world'
+        T('hello ## world ## token') -> 'hello ## world'
         """
-        tokens = message.rsplit('#',1)
+        tokens = message.rsplit('##',1)
         if len(tokens)==2:
             tokens[0] = tokens[0].strip()
-            message = tokens[0]+'#'+tokens[1].strip()
+            message = tokens[0]+'##'+tokens[1].strip()
         mt = self.t.get(message, None)
         if mt == None:
             self.t[message] = mt = tokens[0]
@@ -245,9 +249,9 @@ def findT(path, language='en-us'):
         for item in items:
             try:
                 msg = eval(item)
-                tokens = msg.rsplit('#',1)
+                tokens = msg.rsplit('##',1)
                 if len(tokens)==2:
-                    msg = tokens[0].strip()+'#'+tokens[1].strip()
+                    msg = tokens[0].strip()+'##'+tokens[1].strip()
                 if msg and not msg in sentences:
                     sentences[msg] = msg
             except:
