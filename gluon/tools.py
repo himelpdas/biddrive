@@ -1001,16 +1001,21 @@ class Auth(object):
             logout=A('logout',_href=action+'/logout')
             profile=A('profile',_href=action+'/profile')
             password=A('password',_href=action+'/change_password')
-            return SPAN(prefix,self.user.first_name,' [ ',
-                        logout,' | ',profile,' | ',password,' ]',
-                        _class='auth_navbar')
+            bar = SPAN(prefix,self.user.first_name,' [ ', logout, 
+                       ' | ',password,']',_class='auth_navbar')
+            if not 'profile' in self.settings.actions_disabled:
+                bar.insert(4, ' | ')
+                bar.insert(5, profile)
         else:
             login=A('login',_href=action+'/login')
             register=A('register',_href=action+'/register')
             lost_password=A('lost password?',_href=action+'/request_reset_password')
-            return SPAN('[ ',login,' | ',register,' | ',lost_password,' ]',
-                        _class='auth_navbar')
-            
+            bar = SPAN('[ ',login,' | ',lost_password,' ]',
+                       _class='auth_navbar')
+            if not 'register' in self.settings.actions_disabled:
+                bar.insert(2, ' | ')
+                bar.insert(3, register)
+        return bar
 
     def __get_migrate(self, tablename, migrate=True):
 
