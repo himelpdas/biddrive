@@ -781,3 +781,21 @@ added sms_utils and Authorize.net in contrib
 
 #1.79.2
 solved simplejson imcompatibility problem
+
+#1.80.1
+MARKMIN helper (no backward compatibility promise yet)
+self._last_reference, thanks Dave (no backward compatibility promise yet)
+IS_EQUAL_TO
+zh-tw and better internationalization page, thanks Daniel Lin and Iceberg
+better crud.search, thanks MrFreeze
+Rocket interfaces, thanks Nik Klever
+db.table.field.uploadseparate=True, thanks Gyuris
+SCOPE_IDENITY for MSSQL, thanks Jose
+fixed email attachment issue, thanks Bob_in_Comox
+fixed problem with groupby and IS_IN_DB
+other bug fixes
+new implementation for local_import
+ajax(..,...,null)
+fixed Chrome bug in calendar.js, thanks Iceberg
+experimental scrips/web2py-setup-fedora.sh
+generic.load, thanks Iceberg
