@@ -206,9 +206,18 @@ class translator(object):
             return self.translate(message, symbols)
 
     def translate(self, message, symbols):
+        """
+        T(' hello world ') -> ' hello world '
+        T(' hello world # token') -> 'hello world'
+        T('hello # world # token') -> 'hello # world'
+        """
+        items = message.rsplit('#',1)
+        if len(items)==2:
+            items[0] = items[0].strip()
+            message = items[0]+'#'+items[1].strip()
         mt = self.t.get(message, None)
         if mt == None:
-            self.t[message] = mt = message
+            self.t[message] = mt = items[0]
             if self.language_file and not is_gae:
                 write_dict(self.language_file, self.t)
         if symbols or symbols == 0:
