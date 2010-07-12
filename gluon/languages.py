@@ -211,13 +211,13 @@ class translator(object):
         T(' hello world # token') -> 'hello world'
         T('hello # world # token') -> 'hello # world'
         """
-        items = message.rsplit('#',1)
-        if len(items)==2:
-            items[0] = items[0].strip()
-            message = items[0]+'#'+items[1].strip()
+        tokens = message.rsplit('#',1)
+        if len(tokens)==2:
+            tokens[0] = tokens[0].strip()
+            message = tokens[0]+'#'+tokens[1].strip()
         mt = self.t.get(message, None)
         if mt == None:
-            self.t[message] = mt = items[0]
+            self.t[message] = mt = tokens[0]
             if self.language_file and not is_gae:
                 write_dict(self.language_file, self.t)
         if symbols or symbols == 0:
@@ -245,6 +245,9 @@ def findT(path, language='en-us'):
         for item in items:
             try:
                 msg = eval(item)
+                tokens = msg.rsplit('#',1)
+                if len(tokens)==2:
+                    msg = tokens[0].strip()+'#'+tokens[1].strip()
                 if msg and not msg in sentences:
                     sentences[msg] = msg
             except:
