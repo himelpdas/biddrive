@@ -40,7 +40,7 @@
 'Use (...)&(...) for AND, (...)|(...) for OR, and ~(...)  for NOT to build more complex queries.': 'Use (...)&(...) for AND, (...)|(...) for OR, and ~(...)  for NOT to build more complex queries.',
 'View': 'View',
 'Welcome %s': 'Welcome %s',
-'Welcome to web2py': 'Ciao da wek2py',
+'Welcome to web2py': 'Ciao da web2py',
 'appadmin is disabled because insecure channel': 'appadmin is disabled because insecure channel',
 'cache': 'cache',
 'change password': 'change password',

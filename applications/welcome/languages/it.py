@@ -81,7 +81,7 @@
 'Verify Password': 'Verify Password',
 'View': 'View',
 'Welcome %s': 'Welcome %s',
-'Welcome to web2py': 'Ciao da wek2py',
+'Welcome to web2py': 'Ciao da web2py',
 'Which called the function': 'Which called the function',
 'You are successfully running web2py': 'You are successfully running web2py',
 'You are successfully running web2py.': 'You are successfully running web2py.',
