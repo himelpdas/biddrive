@@ -751,7 +751,7 @@ class Auth(object):
         """
 
         self.environment = Storage(environment)
-        self.db = db
+        self.db = db 
         request = self.environment.request
         session = self.environment.session
         auth = session.auth
@@ -993,23 +993,25 @@ class Auth(object):
 
     def navbar(self,prefix='Welcome',action=None):
         request = self.environment.request
+        T = self.environment.T
         if not action:
             action=URL(request.application,request.controller,'user')
         if prefix:
             prefix = prefix.strip()+' '
         if self.user_id:            
-            logout=A('logout',_href=action+'/logout')
-            profile=A('profile',_href=action+'/profile')
-            password=A('password',_href=action+'/change_password')
+            logout=A(T('logout'),_href=action+'/logout')
+            profile=A(T('profile'),_href=action+'/profile')
+            password=A(T('password'),_href=action+'/change_password')
             bar = SPAN(prefix,self.user.first_name,' [ ', logout, 
                        ' | ',password,']',_class='auth_navbar')
             if not 'profile' in self.settings.actions_disabled:
                 bar.insert(4, ' | ')
                 bar.insert(5, profile)
         else:
-            login=A('login',_href=action+'/login')
-            register=A('register',_href=action+'/register')
-            lost_password=A('lost password?',_href=action+'/request_reset_password')
+            login=A(T('login'),_href=action+'/login')
+            register=A(T('register'),_href=action+'/register')
+            lost_password=A(T('lost password?'),
+                            _href=action+'/request_reset_password')
             bar = SPAN('[ ',login,' | ',lost_password,' ]',
                        _class='auth_navbar')
             if not 'register' in self.settings.actions_disabled:

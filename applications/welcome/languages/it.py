@@ -111,6 +111,7 @@
 'login': 'login',
 'logout': 'logout',
 'lost password': 'lost password',
+'lost password?': 'lost password?',
 'new record inserted': 'nuovo record inserito',
 'next 100 rows': 'next 100 rows',
 'or import from csv file': 'or import from csv file',
