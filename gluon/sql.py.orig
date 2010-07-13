@@ -49,7 +49,7 @@ from http import HTTP
 
 table_field = re.compile('[\w_]+\.[\w_]+')
 oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
-regex_content = re.compile('([\w\-]+\.){3}(?P<name>\w+)\.\w+$')
+regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
 
 # list of drivers will be built on the fly
@@ -151,7 +151,7 @@ SQL_DIALECTS = {
         'time': 'TIME',
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
-        'reference': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
 
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
@@ -777,13 +777,10 @@ class SQLDB(dict):
             return
         instances = enumerate(instances)
         for (i, db) in instances:
+            if not db._dbname in ['postgres', 'mysql', 'firebird']:
+                raise SyntaxError, 'distributed transaction only supported by postgresql, mysql, and firebird'
             if db._dbname == 'mysql':
                 db._execute('XA START;')
-            elif db._dbname == 'postgres':
-                pass
-            else:
-                raise SyntaxError, \
-                    'distributed transaction only supported by postgresql'
 
     @staticmethod
     def distributed_transaction_commit(*instances):
@@ -794,8 +791,7 @@ class SQLDB(dict):
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         for (i, db) in instances:
             if not db._dbname in ['postgres', 'mysql', 'firebird']:
-                raise SyntaxError, \
-                    'distributed transaction only supported by postgresql, firebir'
+                raise SyntaxError, 'distributed transaction only supported by postgresql, mysql, and firebird'
         try:
             for (i, db) in instances:
                 if db._dbname == 'postgres':
@@ -1280,11 +1276,13 @@ class SQLDB(dict):
         #default (for compatibility with previous version)
         if sequence_name is None:
             if self._dbname == 'firebird':
-                sequence_name = 'genid_%s' %tablename
+                sequence_name = 'genid_%s' % tablename
             if self._dbname == 'oracle':
-                sequence_name = '%s_sequence' %tablename
+                sequence_name = '%s_sequence' % tablename
             if self._dbname == 'ingres':
                 pass
+            if self._dbname == 'postgres':
+                sequence_name = '%s_id_Seq' % tablename
 
         if hasattr(self,tablename) or tablename[0] == '_':
             raise SyntaxError, 'invalid table name: %s' % tablename
@@ -1785,8 +1783,9 @@ class Table(dict):
         logfile,
         fake_migrate=False,
         ):
-        keys = sql_fields.keys()
-        for key in sql_fields_old:
+        keys_old = [x.lower() for x in sql_fields_old]
+        keys = [x.lower() for x in sql_fields]
+        for key in keys_old:
             if not key in keys:
                 keys.append(key)
         if self._db._dbname == 'mssql':
@@ -1794,12 +1793,12 @@ class Table(dict):
         else:
             new_add = ', ADD '
         for key in keys:
-            if not key in sql_fields_old:
+            if not key in keys_old:
                 query = ['ALTER TABLE %s ADD %s %s;' % \
                          (self._tablename, key, sql_fields_aux[key].replace(', ', new_add))]
             elif self._db._dbname == 'sqlite':
                 query = None
-            elif not key in sql_fields:
+            elif not key in keys:
                 if not self._db._dbname in ('firebird',):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
                 else:
@@ -1934,8 +1933,7 @@ class Table(dict):
         if self._db._dbname == 'sqlite':
             id = self._db._cursor.lastrowid
         elif self._db._dbname == 'postgres':
-            self._db._execute("select currval('%s_id_Seq')"
-                               % self._tablename)
+            self._db._execute("select currval('%s')" % self._sequence_name)
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'mysql':
             self._db._execute('select last_insert_id();')
@@ -1947,7 +1945,8 @@ class Table(dict):
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'mssql' or self._db._dbname\
              == 'mssql2':
-            self._db._execute('SELECT @@IDENTITY;')
+            #self._db._execute('SELECT @@IDENTITY;')
+            self._db._execute('SELECT SCOPE_IDENTITY();')
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname == 'firebird':
             self._db._execute('SELECT gen_id(%s, 0) FROM rdb$database'
@@ -2602,7 +2601,13 @@ class Field(Expression):
                               # 'a_field_name' means store in this field in db
                               # False means file content will be discarded.
             writable=True, readable=True, update=None, authorize=None,
-            autodelete=False, represent=None, uploadfolder=None)
+            autodelete=False, represent=None, uploadfolder=None,
+            uploadseparate=False # upload to separate directories by uuid_keys
+                                 # first 2 character and tablename.fieldname
+                                 # False - old behaviour
+                                 # True - put uploaded file in
+                                 #   <uploaddir>/<tablename>.<fieldname>/uuid_key[:2]/
+                                 #        directory)
 
     to be used as argument of SQLDB.define_table
 
@@ -2638,6 +2643,7 @@ class Field(Expression):
         autodelete=False,
         represent=None,
         uploadfolder=None,
+        uploadseparate=False,
         compute=None,
         ):
 
@@ -2657,6 +2663,7 @@ class Field(Expression):
         self.unique = unique
         self.uploadfield = uploadfield
         self.uploadfolder = uploadfolder
+        self.uploadseparate = uploadseparate
         self.widget = widget
         self.label = label
         self.comment = comment
@@ -2697,6 +2704,10 @@ class Field(Expression):
                 path = self.uploadfolder
             else:
                 path = os.path.join(self._db._folder, '..', 'uploads')
+            if self.uploadseparate:
+                path = os.path.join(path,"%s.%s" % (self._tablename, self.name),uuid_key[:2])
+            if not os.path.exists(path):
+                os.makedirs(path)
             pathfilename = os.path.join(path, newfilename)
             dest_file = open(pathfilename, 'wb')
             shutil.copyfileobj(file, dest_file)
@@ -2730,6 +2741,11 @@ class Field(Expression):
                 path = self.uploadfolder
             else:
                 path = os.path.join(self._db._folder, '..', 'uploads')
+            if self.uploadseparate:
+                t = m.group('table')
+                f = m.group('field')
+                u = m.group('uuidkey')
+                path = os.path.join(path,"%s.%s" % (t,f),u[:2])
             return (filename, open(os.path.join(path, name), 'rb'))
 
     def formatter(self, value):
@@ -3181,29 +3197,35 @@ excluded + tables_to_merge.keys()])
                 elif field.type == 'date' and value != None\
                         and (not isinstance(value, datetime.date)\
                                  or isinstance(value, datetime.datetime)):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
-                    colset[fieldname] = datetime.date(y, m, d)
+                    if not value: colset[fieldname] = None
+                    else:
+                        (y, m, d) = [int(x) for x in
+                                     str(value)[:10].strip().split('-')]
+                        colset[fieldname] = datetime.date(y, m, d)
                 elif field.type == 'time' and value != None\
                         and not isinstance(value, datetime.time):
-                    time_items = [int(x) for x in
-                                  str(value)[:8].strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
+                    if not value: colset[fieldname] = None
                     else:
-                        (h, mi, s) = time_items + [0]
-                    colset[fieldname] = datetime.time(h, mi, s)
+                        time_items = [int(x) for x in
+                                      str(value)[:8].strip().split(':')[:3]]
+                        if len(time_items) == 3:
+                            (h, mi, s) = time_items
+                        else:
+                            (h, mi, s) = time_items + [0]
+                        colset[fieldname] = datetime.time(h, mi, s)
                 elif field.type == 'datetime' and value != None\
                         and not isinstance(value, datetime.datetime):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
-                    time_items = [int(x) for x in
-                                  str(value)[11:19].strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
+                    if not value: colset[fieldname] = None
                     else:
-                        (h, mi, s) = time_items + [0]
-                    colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
+                        (y, m, d) = [int(x) for x in
+                                     str(value)[:10].strip().split('-')]
+                        time_items = [int(x) for x in
+                                      str(value)[11:19].strip().split(':')[:3]]
+                        if len(time_items) == 3:
+                            (h, mi, s) = time_items
+                        else:
+                            (h, mi, s) = time_items + [0]
+                        colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
                 elif field.type[:7] == 'decimal' and value != None:
                     decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
@@ -3333,7 +3355,12 @@ excluded + tables_to_merge.keys()])
                     continue
                 uploadfolder = table[fieldname].uploadfolder
                 if not uploadfolder:
-                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')
+                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')                
+                if self.uploadseparate:
+                    items = oldname.split('.')
+                    uploadfolder = os.path.join(uploadfolder,
+                                                "%s.%s" % (items[0], items[1]),
+                                                items[2][:2])
                 oldpath = os.path.join(uploadfolder, oldname)
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)

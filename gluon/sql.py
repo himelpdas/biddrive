@@ -1783,6 +1783,11 @@ class Table(dict):
         logfile,
         fake_migrate=False,
         ):
+        ### make sure all field names are lower case to avoid conflicts
+        sql_fields = dict((k.lower(),v) for k,v in sql_fields.items())
+        sql_fields_old = dict((k.lower(),v) for k,v in sql_fields_old.items())
+        sql_fields_aux = dict((k.lower(),v) for k,v in sql_fields_aux.items())
+
         keys = sql_fields.keys()
         for key in sql_fields_old:
             if not key in keys:
@@ -1826,7 +1831,6 @@ class Table(dict):
                              'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
                              'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
                              'ALTER TABLE %s DROP %s__tmp;' % (t, key)]
-
             else:
                 query = None
 
