@@ -549,24 +549,6 @@ def edit_language():
     return dict(app=request.args[0], filename=filename, form=form)
 
 
-def htmledit():
-    """ Html file edit handler """
-
-    filename = '/'.join(request.args)
-
-    # ## check if file is not there
-    data = open(apath(filename, r=request), 'r').read()
-    try:
-        data = request.vars.data.replace('\r\n', '\n')
-        open(apath(filename, r=request), 'w').write(data)
-        response.flash = T('file saved on %(time)s',
-                           dict(time=time.ctime()))
-    except Exception:
-        pass
-
-    return dict(app=request.args[0], filename=filename, data=data)
-
-
 def about():
     """ Read about info """
 
