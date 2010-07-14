@@ -799,3 +799,9 @@ ajax(..,...,null)
 fixed Chrome bug in calendar.js, thanks Iceberg
 experimental scrips/web2py-setup-fedora.sh
 generic.load, thanks Iceberg
+
+#1.81.0rc1
+Fixed a bug with db.table.field.uploadseparate=True and autodelete
+New welcome app with superfish and jQuery 1.4.2
+Deleted openwysiwyg from admin
+In XML and xmlescape quote defaults to True. Both ' and " are escaped. Thanks Craig Younkins
