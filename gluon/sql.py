@@ -3351,15 +3351,16 @@ excluded + tables_to_merge.keys()])
             return
         for record in self.select(*[table[f] for f in fields]):
             for fieldname in fields:
+                field = table[fieldname]
                 oldname = record.get(fieldname, None)
                 if not oldname:
                     continue
                 if upload_fields and oldname == upload_fields[fieldname]:
                     continue
-                uploadfolder = table[fieldname].uploadfolder
+                uploadfolder = field.uploadfolder
                 if not uploadfolder:
                     uploadfolder = os.path.join(self._db._folder, '..', 'uploads')                
-                if self.uploadseparate:
+                if field.uploadseparate:
                     items = oldname.split('.')
                     uploadfolder = os.path.join(uploadfolder,
                                                 "%s.%s" % (items[0], items[1]),
