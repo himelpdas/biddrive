@@ -93,7 +93,7 @@ __all__ = [
     ]
 
 
-def xmlescape(data, quote = False):
+def xmlescape(data, quote = True):
     """
     returns an escaped string of the provided data
 
@@ -116,7 +116,7 @@ def xmlescape(data, quote = False):
         data = data.encode('utf8', 'xmlcharrefreplace')
 
     # ... and do the escaping
-    data = cgi.escape(data, quote)
+    data = cgi.escape(data, quote).replace("'","&#x27;")
     return data
 
 
