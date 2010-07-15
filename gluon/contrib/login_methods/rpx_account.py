@@ -79,7 +79,7 @@ class RPXAccount(object):
             data = urllib.urlencode(dict(apiKey = self.api_key, token=request.vars.token))
             auth_info_json = fetch(self.auth_url+'?'+data)
             auth_info = json.loads(auth_info_json)
-            print auth_info
+            
             if auth_info['stat'] == 'ok':
                 self.profile = auth_info['profile']
                 provider = re.sub('[^\w\-]','',self.profile['providerName'])
