@@ -917,6 +917,7 @@ class Auth(object):
         self.messages.label_password = 'Password'
         self.messages.label_registration_key = 'Registration key'
         self.messages.label_reset_password_key = 'Reset Password key'
+        self.messages.label_registration_key = 'Registration identifier'
         self.messages.label_role = 'Role'
         self.messages.label_description = 'Description'
         self.messages.label_user_id = 'User ID'
@@ -1002,21 +1003,25 @@ class Auth(object):
             logout=A(T('logout'),_href=action+'/logout')
             profile=A(T('profile'),_href=action+'/profile')
             password=A(T('password'),_href=action+'/change_password')
-            bar = SPAN(prefix,self.user.first_name,' [ ', logout, 
-                       ' | ',password,']',_class='auth_navbar')
+            bar = SPAN(prefix,self.user.first_name,' [ ', logout, ']',_class='auth_navbar')
             if not 'profile' in self.settings.actions_disabled:
                 bar.insert(4, ' | ')
                 bar.insert(5, profile)
+            if not 'change_password' in self.settings.actions_disabled:
+                bar.insert(-1, ' | ')
+                bar.insert(-1, password)
         else:
             login=A(T('login'),_href=action+'/login')
             register=A(T('register'),_href=action+'/register')
             lost_password=A(T('lost password?'),
                             _href=action+'/request_reset_password')
-            bar = SPAN('[ ',login,' | ',lost_password,' ]',
-                       _class='auth_navbar')
+            bar = SPAN('[ ',login,' ]',_class='auth_navbar')
             if not 'register' in self.settings.actions_disabled:
                 bar.insert(2, ' | ')
                 bar.insert(3, register)
+            if not 'request_reset_password' in self.settings.actions_disabled:
+                bar.insert(-1, ' | ')
+                bar.insert(-1, lost_password)
         return bar
 
     def __get_migrate(self, tablename, migrate=True):
@@ -1065,6 +1070,9 @@ class Auth(object):
                     Field('reset_password_key', length=512,
                           writable=False, readable=False, default='',
                           label=self.messages.label_reset_password_key),
+                    Field('registration_id', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_registration_id),
                     migrate=\
                         self.__get_migrate(self.settings.table_user_name, migrate),
                     format='%(username)s')
@@ -1192,13 +1200,15 @@ class Auth(object):
             If the user exists already then password is updated.
             If the user doesn't yet exist, then they are created.
         """
-        if 'username' in keys:
+        table_user = self.settings.table_user
+        if 'registration_id' in table_user.fields() and 'registration_id' in keys:
+            username = 'registration_id'
+        elif 'username' in table_user.fields():
             username = 'username'
-        elif 'email' in keys:
+        elif 'email' in table_user.fields():
             username = 'email'
         else:
             raise SyntaxError, "user must have username or email"
-        table_user = self.settings.table_user
         passfield = self.settings.password_field
         user = self.db(table_user[username] == keys[username]).select().first()
         if user:
@@ -1387,17 +1397,23 @@ class Auth(object):
                     # invalid login
                     session.flash = self.messages.invalid_login
                     redirect(self.url(args=request.args))
-        else:
+
+        if self.settings.login_form:
             # use a central authentication server
             cas = self.settings.login_form
             cas_user = cas.get_user()
+            print cas, cas_user
             if cas_user:
                 cas_user[passfield] = None
                 user = self.get_or_create_user(cas_user)
+            elif hasattr(cas,'login_form'):
+                return cas.login_form()
             else:
                 # we need to pass through login again before going on
                 next = URL(r=request) + '?_next=' + next
+                print cas.login_url(next)
                 redirect(cas.login_url(next))
+
 
         # process authenticated users
         if user:

@@ -45,6 +45,16 @@ auth.messages.verify_email = 'Click on the link http://'+request.env.http_host+U
 auth.settings.reset_password_requires_verification = True
 auth.messages.reset_password = 'Click on the link http://'+request.env.http_host+URL(r=request,c='default',f='user',args=['reset_password'])+'/%(key)s to reset your password'
 
+#########################################################################
+## If you need to use OpenID, Facebook, MySpace, Twitter, Linkedin, etc.
+## register with janrain.com, uncomment and customize following
+# from gluon.contrib.login_methods.rpx_account import RPXAccount
+# auth.settings.actions_disabled=['register','change_password','request_reset_password']
+# auth.settings.login_form = RPXAccount(request, api_key='...',domain='...',
+#    url = "http://localhost:8000/%s/default/user/login" % request.application)
+## other login methods are in gluon/contrib/login_methods
+#########################################################################
+
 crud.settings.auth = None                      # =auth to enforce authorization on crud
 
 #########################################################################
