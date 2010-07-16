@@ -1398,7 +1398,7 @@ class Auth(object):
                     session.flash = self.messages.invalid_login
                     redirect(self.url(args=request.args))
 
-        if self.settings.login_form:
+        else:
             # use a central authentication server
             cas = self.settings.login_form
             cas_user = cas.get_user()
