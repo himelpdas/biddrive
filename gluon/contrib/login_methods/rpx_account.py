@@ -57,8 +57,8 @@ class RPXAccount(object):
             dict(registration_id = profile["identifier"],
                  username = profile["preferredUsername"],
                  email = profile["email"],
-                 first_name = profile["givenName"],
-                 last_name = profile["familyName"])
+                 first_name = profile["name"]["givenName"],
+                 last_name = profile["name"]["familyName"])
         self.mappings.Google = lambda profile:\
             dict(registration_id=profile["identifier"],
                  username=profile["preferredUsername"],
@@ -102,11 +102,12 @@ class RPXAccount(object):
         else:
             JANRAIN_URL = \
                 "https://%s.rpxnow.com/openid/v2/signin?token_url=%s"
-            rpxform = DIV(A(self.prompt,_class="rpxnow",_onclick="return false;",
-                            _href = JANRAIN_URL % (self.domain, self.token_url)),
-                          SCRIPT(_src="https://rpxnow.com/openid/v2/widget",
+            rpxform = DIV(SCRIPT(_src="https://rpxnow.com/openid/v2/widget",
                                  _type="text/javascript"),
                           SCRIPT("RPXNOW.overlay = true;",
                                  "RPXNOW.language_preference = '%s';" % self.language,
-                                 _type="text/javascript"))        
+                                 "RPXNOW.realm = '%s';" % self.domain,
+                                 "RPXNOW.token_url = '%s';" % self.token_url,
+                                 "RPXNOW.show();",
+                                 _type="text/javascript"))                          
         return rpxform

@@ -1402,7 +1402,7 @@ class Auth(object):
             # use a central authentication server
             cas = self.settings.login_form
             cas_user = cas.get_user()
-            print cas, cas_user
+            
             if cas_user:
                 cas_user[passfield] = None
                 user = self.get_or_create_user(cas_user)
@@ -1411,7 +1411,6 @@ class Auth(object):
             else:
                 # we need to pass through login again before going on
                 next = URL(r=request) + '?_next=' + next
-                print cas.login_url(next)
                 redirect(cas.login_url(next))
 
 
