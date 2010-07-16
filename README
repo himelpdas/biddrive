@@ -800,7 +800,9 @@ fixed Chrome bug in calendar.js, thanks Iceberg
 experimental scrips/web2py-setup-fedora.sh
 generic.load, thanks Iceberg
 
-#1.81.0rc1
+#1.81.1
+rpx (janrain) support out of the box, allows login with Facebook, MySpace, etc. Thanks Mr Freeze
+Increased security (escape  single and double quotes, thanks Craig"
 Fixed a bug with db.table.field.uploadseparate=True and autodelete
 New welcome app with superfish and jQuery 1.4.2
 Deleted openwysiwyg from admin
