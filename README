@@ -807,3 +807,6 @@ Fixed a bug with db.table.field.uploadseparate=True and autodelete
 New welcome app with superfish and jQuery 1.4.2
 Deleted openwysiwyg from admin
 In XML and xmlescape quote defaults to True. Both ' and " are escaped. Thanks Craig Younkins
+
+#1.81.2
+fixed bug in Auth
