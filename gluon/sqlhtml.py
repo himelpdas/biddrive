@@ -797,7 +797,7 @@ class SQLFORM(FORM):
             for id,a,b,c in xfields:
                 td_b = self.field_parent[id] = TD(b,_class='w2p_fw',_colspan="2")
                 table.append(TR(TD(a,_class='w2p_fl'),
-                                TD(c,_class='w3p_fc'),_id=id+'1',_class='even'))
+                                TD(c,_class='w2p_fc'),_id=id+'1',_class='even'))
                 table.append(TR(td_b,_id=id+'2',_class='odd'))
         elif formstyle == 'divs':
             table = TAG['']()
@@ -805,14 +805,14 @@ class SQLFORM(FORM):
                 div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
                 table.append(DIV(DIV(a,_class='w2p_fl'),
                                  div_b,
-                                 DIV(c,_class='w3p_fc'),_id=id))
+                                 DIV(c,_class='w2p_fc'),_id=id))
         elif formstyle == 'ul':
             table = UL()
             for id,a,b,c in xfields:
                 div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
                 table.append(LI(DIV(a,_class='w2p_fl'),
                                  div_b,
-                                 DIV(c,_class='w3p_fc'),_id=id))
+                                 DIV(c,_class='w2p_fc'),_id=id))
         elif type(formstyle) == type(lambda:None):
             table = TABLE()
             for id,a,b,c in xfields:
