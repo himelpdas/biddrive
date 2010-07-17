@@ -4,10 +4,10 @@
 
 {{for controller in sorted(controllers):}}
 
-<div id='output_{{=controller}}'><h2>Testing controller "{{=controller}}"... <blink>please wait!</blink></h2></div>
+<div id='output_{{=controller[:-3]}}'><h2>Testing controller "{{=controller}}"... <blink>please wait!</blink></h2></div>
 
 <script><!--
-ajax('{{=URL(a=app,c=controller[:-3],f='_TEST')}}',[],'output_{{=controller}}');
+ajax('{{=URL(a=app,c=controller[:-3],f='_TEST')}}',[],'output_{{=controller[:-3]}}');
 //--></script>
 
 {{pass}}

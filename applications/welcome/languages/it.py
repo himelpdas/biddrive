@@ -53,6 +53,7 @@
 'Record ID': 'Record ID',
 'Record Updated': 'Record Updated',
 'Register': 'Register',
+'Registration identifier': 'Registration identifier',
 'Registration key': 'Registration key',
 'Registration successful': 'Registration successful',
 'Remember me (for 30 days)': 'Remember me (for 30 days)',
