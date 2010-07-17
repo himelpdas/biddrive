@@ -917,7 +917,7 @@ class Auth(object):
         self.messages.label_password = 'Password'
         self.messages.label_registration_key = 'Registration key'
         self.messages.label_reset_password_key = 'Reset Password key'
-        self.messages.label_registration_key = 'Registration identifier'
+        self.messages.label_registration_id = 'Registration identifier'
         self.messages.label_role = 'Role'
         self.messages.label_description = 'Description'
         self.messages.label_user_id = 'User ID'
