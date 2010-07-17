@@ -814,3 +814,6 @@ fixed bug in Auth
 #1.81.3
 fixed bug in label names in formstyle
 fixed id names in admin test.html page
+
+#1.81.4
+Fixed gluon.tools to work work with load and base.css to nowrap labels
