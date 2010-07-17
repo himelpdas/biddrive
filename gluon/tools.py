@@ -2711,7 +2711,7 @@ class Crud(object):
             form[0].insert(-1, TR(LABEL(captcha.label),
                                   captcha, captcha.comment,
                                   _id='captcha__row'))
-        if request.extension != 'html':
+        if not request.extension in ('html','load'):
             (_session, _formname) = (None, None)
         else:
             (_session, _formname) = \
@@ -2731,7 +2731,7 @@ class Crud(object):
             response.flash = message
             if onaccept:
                 onaccept(form)
-            if request.extension != 'html':
+            if not request.extension in ('html','load'):
                 raise HTTP(200, 'RECORD CREATED/UPDATED')
             if isinstance(next, (list, tuple)): ### fix issue with 2.6
                next = next[0]
@@ -2740,7 +2740,7 @@ class Crud(object):
                     next = self.url(next.replace('[id]', str(form.vars.id)))
                 session.flash = response.flash
                 redirect(next)
-        elif request.extension != 'html':
+        elif not request.extension in ('html','load'):
             raise HTTP(401)
         return form
 
@@ -2796,7 +2796,7 @@ class Crud(object):
             showid=self.settings.showid,
             formstyle=self.settings.formstyle
             )
-        if self.environment.request.extension != 'html':
+        if not self.environment.request.extension in ('html','load'):
             return table._filter_fields(form.record, id=True)
         return form
 
@@ -2867,7 +2867,7 @@ class Crud(object):
             attr['linkto'] = self.url(args='read')
         if not 'upload' in attr:
             attr['upload'] = self.url('download')
-        if request.extension != 'html':
+        if not request.extension in ('html','load'):
             return rows.as_list()
         return SQLTABLE(rows, headers=headers, **attr)
     
