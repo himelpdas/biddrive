@@ -168,6 +168,8 @@ def URL(
         controller = r.controller
         function = r.function
         env = r.env
+        if r.extension != 'html':
+            extension = r.extension
     if a:
         application = a
     if c:

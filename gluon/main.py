@@ -546,7 +546,7 @@ def appfactory(wsgiapp=wsgibase,
                             globals(), locals(), profilerfilename+'.tmp')
             stat = pstats.Stats(profilerfilename+'.tmp')
             stat.stream = cStringIO.StringIO()
-            stat.strip_dirs().sort_stats(-1).print_stats()
+            stat.strip_dirs().sort_stats("time").print_stats(80)
             profile_out = stat.stream.getvalue()
             profile_file = open(profilerfilename, 'a')
             profile_file.write('%s\n%s\n%s\n%s\n\n' % \
