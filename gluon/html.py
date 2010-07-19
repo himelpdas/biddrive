@@ -1467,7 +1467,10 @@ class FORM(DIV):
             status = False
         status = self._traverse(status)
         if status and onvalidation:
-            onvalidation(self)
+            if isinstance(onvalidation, (list, tuple)):
+                [f(self) for f in onvalidation]
+            else:
+                onvalidation(self)
         if self.errors:
             status = False
         if session != None:

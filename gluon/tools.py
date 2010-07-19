@@ -8,7 +8,7 @@ License: GPL v2
 """
 
 from contenttype import contenttype
-from storage import Storage, Settings, Messages
+from storage import Storage, StorageList, Settings, Messages
 from validators import *
 from html import *
 from sqlhtml import *
@@ -38,6 +38,13 @@ __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fet
 
 DEFAULT = lambda: None
 
+def callback(actions,form,tablename=None):
+    if actions:
+        if tablename and isinstance(actions,dict):
+            actions = actions.get(tablename, [])
+        if not isinstance(actions,(list, tuple)):
+            actions = [actions]
+        [action(form) for action in actions]
 
 def validators(*a):
     b = []
@@ -818,8 +825,8 @@ class Auth(object):
         # ## these should be functions or lambdas
 
         self.settings.login_next = self.url('index')
-        self.settings.login_onvalidation = None
-        self.settings.login_onaccept = None
+        self.settings.login_onvalidation = []
+        self.settings.login_onaccept = []
         self.settings.login_methods = [self]
         self.settings.login_form = self
         self.settings.login_email_validate = True
@@ -827,23 +834,23 @@ class Auth(object):
         self.settings.logout_next = self.url('index')
 
         self.settings.register_next = self.url('index')
-        self.settings.register_onvalidation = None
-        self.settings.register_onaccept = None
+        self.settings.register_onvalidation = []
+        self.settings.register_onaccept = []
 
         self.settings.verify_email_next = self.url('user', args='login')
-        self.settings.verify_email_onaccept = None
+        self.settings.verify_email_onaccept = []
 
         self.settings.profile_next = self.url('index')
-        self.settings.profile_onvalidation = None
-        self.settings.profile_onaccept = None
+        self.settings.profile_onvalidation = []
+        self.settings.profile_onaccept = []
         self.settings.retrieve_username_next = self.url('index')
         self.settings.retrieve_password_next = self.url('index')
         self.settings.request_reset_password_next = self.url('user', args='login')
         self.settings.reset_password_next = self.url('user', args='login')
         self.settings.change_password_next = self.url('index')
 
-        self.settings.retrieve_password_onvalidation = None
-        self.settings.reset_password_onvalidation = None 
+        self.settings.retrieve_password_onvalidation = []
+        self.settings.reset_password_onvalidation = []
 
         self.settings.hmac_key = None
         self.settings.lock_keys = True
@@ -1443,8 +1450,7 @@ class Auth(object):
         # how to continue
         if self.settings.login_form == self:
             if accepted_form:
-                if onaccept:
-                    onaccept(form)
+                callback(onaccept,form)
                 if isinstance(next, (list, tuple)):
                     # fix issue with 2.6
                     next = next[0]
@@ -1580,8 +1586,7 @@ class Auth(object):
                 session.flash = self.messages.logged_in
             if log:
                 self.log_event(log % form.vars)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1634,8 +1639,7 @@ class Auth(object):
             onaccept = self.settings.verify_email_onaccept
         if log:
             self.log_event(log % user)
-        if onaccept:
-            onaccept(user)
+        callback(onaccept,user)
         redirect(next)
 
     def retrieve_username(
@@ -1701,8 +1705,7 @@ class Auth(object):
             session.flash = self.messages.email_sent
             if log:
                 self.log_event(log % user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1795,8 +1798,7 @@ class Auth(object):
                 session.flash = self.messages.unable_to_send_email
             if log:
                 self.log_event(log % user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1927,8 +1929,7 @@ class Auth(object):
                 session.flash = self.messages.unable_to_send_email
             if log:
                 self.log_event(log % user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -2009,8 +2010,7 @@ class Auth(object):
             session.flash = self.messages.password_changed
             if log:
                 self.log_event(log % self.user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -2069,8 +2069,7 @@ class Auth(object):
             session.flash = self.messages.profile_updated
             if log:
                 self.log_event(log % self.user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -2498,13 +2497,13 @@ class Crud(object):
         self.settings.controller = 'default'
         self.settings.delete_next = self.url()
         self.settings.download_url = self.url('download')
-        self.settings.create_onvalidation = None
-        self.settings.update_onvalidation = None
-        self.settings.delete_onvalidation = None
-        self.settings.create_onaccept = None
-        self.settings.update_onaccept = None
-        self.settings.update_ondelete = None
-        self.settings.delete_onaccept = None
+        self.settings.create_onvalidation = StorageList()
+        self.settings.update_onvalidation = StorageList()
+        self.settings.delete_onvalidation = StorageList()
+        self.settings.create_onaccept = StorageList()
+        self.settings.update_onaccept = StorageList()
+        self.settings.update_ondelete = StorageList()
+        self.settings.delete_onaccept = StorageList()
         self.settings.update_deletable = True
         self.settings.showid = False
         self.settings.keepvalues = False
@@ -2597,7 +2596,7 @@ class Crud(object):
         there is nothing special about these fields since they are filled before
         the record is archived.
 
-        Alterantively you can create similar fields in the 'mytable_history' table
+        Alterantively you can create similar fields in the 'mytable_archive' table
         and they will be filled when the record is archived.
 
         If you want to change the achive table name and the name of the reference field
@@ -2719,6 +2718,8 @@ class Crud(object):
         keepvalues = self.settings.keepvalues
         if request.vars.delete_this_record:
             keepvalues = False
+        if isinstance(onvalidation,dict):
+            onvalidation=onvalidation.get(table._tablename,[])
         if form.accepts(request.post_vars, _session, formname=_formname,
                         onvalidation=onvalidation, keepvalues=keepvalues):
             response.flash = message
@@ -2726,11 +2727,9 @@ class Crud(object):
                 self.log_event(log % form.vars)
             if request.vars.delete_this_record:
                 message = self.messages.record_deleted
-                if ondelete:
-                    ondelete(form)
+                callback(ondelete,form,table._tablename)
             response.flash = message
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form,table._tablename)
             if not request.extension in ('html','load'):
                 raise HTTP(200, 'RECORD CREATED/UPDATED')
             if isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -2828,11 +2827,9 @@ class Crud(object):
             message = self.messages.record_deleted
         record = table[record_id]
         if record:
-            if self.settings.delete_onvalidation:
-                self.settings.delete_onvalidation(record)
-            del table[record_id]
-            if self.settings.delete_onaccept:
-                self.settings.delete_onaccept(record)
+            callback(self.settings.delete_onvalidation,record)
+            del table[record_id]            
+            callback(self.settings.delete_onaccept,record,table._tablename)
             session.flash = message
         redirect(next)
 

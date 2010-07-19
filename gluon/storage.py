@@ -16,7 +16,7 @@ import cPickle
 import portalocker
 
 __all__ = ['List', 'Storage', 'Settings', 'Messages',
-           'load_storage', 'save_storage']
+           'StorageList', 'load_storage', 'save_storage']
 
 
 class List(list):
@@ -26,9 +26,9 @@ class List(list):
     """
 
     def __call__(self, i, default=None):
-        try:
+        if 0<=i<len(self):
             return self[i]
-        except IndexError:
+        else:
             return default
 
 
@@ -56,19 +56,19 @@ class Storage(dict):
     """
 
     def __getattr__(self, key):
-        try:
+        if key in self:
             return self[key]
-        except KeyError:
+        else:
             return None
 
     def __setattr__(self, key, value):
         self[key] = value
 
     def __delattr__(self, key):
-        try:
+        if key in self:
             del self[key]
-        except KeyError, k:
-            raise AttributeError, k
+        else:
+            raise AttributeError, "missing key=%s" % key
 
     def __repr__(self):
         return '<Storage ' + dict.__repr__(self) + '>'
@@ -79,6 +79,17 @@ class Storage(dict):
     def __setstate__(self, value):
         for (k, v) in value.items():
             self[k] = v
+
+class StorageList(Storage):
+    """
+    like Storage but missing elements default to [] instead of None
+    """
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            self[key]=[]
+            return self[key]
 
 def load_storage(filename):
     fp = open(filename, 'rb')
