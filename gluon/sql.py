@@ -2658,8 +2658,8 @@ class Field(Expression):
         if length == None:
             length = 512
         self.type = type  # 'string', 'integer'
-        self.length = length  # the length of the string
-        self.default = default  # default value for field
+        self.length = length # the length of the string
+        self.default = default or update # default value for field
         self.required = required  # is this field required
         self.ondelete = ondelete.upper()  # this is for reference fields only
         self.notnull = notnull
