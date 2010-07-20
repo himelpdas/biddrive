@@ -30,7 +30,7 @@ h5 { font-size: 100% }
 .sidebar span { color: #515F6A }
 .sidebar p { margin-top: 5px }
 
-.footer { clear: both; padding: 0.5em 0; background: #CEAE6C; color: #FFFFFF; text-align: center }
+.footer { clear: both; padding: 0.5em 0; border-top: 5px solid #CEAE6C; color: #666666; text-align: center }
 
 /* paragraphs -------------------------------------------------------------------- */
 p { margin: 15px 0 }
