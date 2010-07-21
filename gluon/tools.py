@@ -2494,7 +2494,7 @@ class Crud(object):
 
         self.settings.create_next = None
         self.settings.update_next = None
-        self.settings.controller = 'default'
+        self.settings.controller = self.environment.request.controller
         self.settings.delete_next = self.url()
         self.settings.download_url = self.url('download')
         self.settings.create_onvalidation = StorageList()
