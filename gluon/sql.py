@@ -3414,7 +3414,7 @@ class Rows(object):
                 for attribute in attributes:
                     if attribute[0] != '_':
                         method = getattr(virtualfields,attribute)
-                        if callable(method) and len(method.im_func.func_code.co_varnames)==1:
+                        if callable(method) and method.im_func.func_code.co_argcount:
                             box[attribute]=method()
         return self
 
