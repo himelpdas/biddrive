@@ -27,6 +27,10 @@ class _MemcacheClient(Client):
                  pickler=pickle.Pickler, unpickler=pickle.Unpickler,
                  pload=None, pid=None):
         self.request=request
+        if request:
+            app = request.application
+        else:
+            app = ''
         Client.__init__(self,servers,debug,pickleProtocol,
                         pickler,unpickler,pload,pid)
         if not app in self.meta_storage:
