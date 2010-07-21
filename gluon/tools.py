@@ -2481,11 +2481,15 @@ class Auth(object):
 class Crud(object):
 
     def url(self, f=None, args=[], vars={}):
+        """
+        this should point to the controller that exposes
+        download and crud
+        """
         return self.environment.URL(r=self.environment.request,
                                     c=self.settings.controller,
                                     f=f, args=args, vars=vars)
 
-    def __init__(self, environment, db):
+    def __init__(self, environment, db, controller='default'):
         self.environment = Storage(environment)
         self.db = db
         self.settings = Settings()
@@ -2494,7 +2498,7 @@ class Crud(object):
 
         self.settings.create_next = None
         self.settings.update_next = None
-        self.settings.controller = self.environment.request.controller
+        self.settings.controller = controller
         self.settings.delete_next = self.url()
         self.settings.download_url = self.url('download')
         self.settings.create_onvalidation = StorageList()
@@ -2562,8 +2566,9 @@ class Crud(object):
 
     def tables(self):
         request = self.environment.request
-        return TABLE(*[TR(A(name, _href=self.url(args=('select',
-                     name)))) for name in self.db.tables])
+        return TABLE(*[TR(A(name,
+                            _href=self.url(args=('select',name)))) \
+                           for name in self.db.tables])
 
 
     @staticmethod
@@ -2736,7 +2741,8 @@ class Crud(object):
                next = next[0]
             if next: # Only redirect when explicit
                 if next[0] != '/' and next[:4] != 'http':
-                    next = self.url(next.replace('[id]', str(form.vars.id)))
+                    next = URL(r=request,
+                               f=next.replace('[id]', str(form.vars.id)))
                 session.flash = response.flash
                 redirect(next)
         elif not request.extension in ('html','load'):
