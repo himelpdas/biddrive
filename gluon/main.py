@@ -381,6 +381,8 @@ def wsgibase(environ, responder):
             serve_controller(request, response, session)
 
         except HTTP, http_response:
+            if static_file:
+                return http_response.to(responder)
 
             if request.body:
                 request.body.close()

@@ -374,7 +374,6 @@ class Session(Storage):
             session_folder = os.path.dirname(response.session_filename)
             response.session_file = open(response.session_filename, 'wb')
             portalocker.lock(response.session_file, portalocker.LOCK_EX)
-
         cPickle.dump(dict(self), response.session_file)
         self._unlock(response)
 
