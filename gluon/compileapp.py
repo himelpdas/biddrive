@@ -91,18 +91,21 @@ class LoadFactory:
     def __init__(self,environment):
         self.environment = environment
     def __call__(self, plugin=None, function='index', args=[], vars={},
-                 target=None,ajax=False,ajax_trap=False, url=None):
+                 extension=None, target=None,ajax=False,ajax_trap=False, 
+                 url=None):
         import globals
         import html
         target = target or 'c'+str(random.random())[2:]
         request = self.environment['request']
+        if '.' in function:
+            function, extension = function.split('.',1)
         if plugin and not url and not ajax:
             other_environment = copy.copy(self.environment)
             other_request = globals.Request()
             other_request.application = request.application
             other_request.controller = plugin
             other_request.function = function
-            other_request.extension = request.extension
+            other_request.extension = extension or request.extension
             other_request.args = List(args)
             other_request.folder = request.folder
             other_request.env = request.env
@@ -116,9 +119,11 @@ class LoadFactory:
             other_response = globals.Response()
             other_environment['response'] = other_response
             other_response._view_environment = other_environment
-            other_request.env.http_web2py_component_location = request.env.path_info
+            other_request.env.http_web2py_component_location = \
+                request.env.path_info
             other_request.env.http_web2py_component_element = target
-            other_response.view = '%s/%s.%s' % (plugin,function,other_request.extension)
+            other_response.view = '%s/%s.%s' % \
+                (plugin,function, other_request.extension)
             page = run_controller_in(plugin, function,
                                      other_environment)
             if isinstance(page, dict):
@@ -130,14 +135,20 @@ class LoadFactory:
             script = ''
             if ajax_trap:
                 script += "web2py_trap_form('%s','%s');" % \
-                    (html.URL(request.application,plugin,function,args=args,vars=vars),target)
+                    (html.URL(request.application,plugin,
+                              function,args=args,vars=vars),target)
             #for (name,value) in other_response.headers:
             #    if name == 'web2py-component-command':
             #        script += value
-            return html.TAG[''](html.DIV(html.XML(page),_id=target),html.SCRIPT(script,_type="text/javascript"))
+            return html.TAG[''](html.DIV(html.XML(page),_id=target),
+                                html.SCRIPT(script,_type="text/javascript"))
         else:
-            url = url or html.URL(r=request,c=plugin,f=function,args=args,vars=vars)
-            return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % (url,target),_type="text/javascript"),
+            url = url or html.URL(r=request,c=plugin,f=function,
+                                  extension=extension,
+                                  args=args,vars=vars)
+            return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % \
+                                                (url,target),
+                                            _type="text/javascript"),
                                 html.DIV('loading...',_id=target))
 
 
