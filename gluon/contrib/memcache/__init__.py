@@ -20,12 +20,24 @@ def MemcacheClient(*a, **b):
     return MemcacheClient.__mc_instance
 
 class _MemcacheClient(Client):
+
+    meta_storage = {}
+
     def __init__(self, request, servers, debug=0, pickleProtocol=0,
                  pickler=pickle.Pickler, unpickler=pickle.Unpickler,
                  pload=None, pid=None):
         self.request=request
         Client.__init__(self,servers,debug,pickleProtocol,
                         pickler,unpickler,pload,pid)
+        if not app in self.meta_storage:
+            self.storage = self.meta_storage[app] = {
+                CacheAbstract.cache_stats_name: {
+                    'hit_total': 0,
+                    'misses': 0,
+                    }}
+        else:
+            self.storage = self.meta_storage[app]
+
 
     def __call__(self,key,f,time_expire=300):
         #key=self.__keyFormat__(key)
