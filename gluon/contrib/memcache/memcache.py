@@ -426,6 +426,8 @@ class Client(local):
             server.send_cmd(cmd)
             line = server.readline()
             return int(line)
+        except ValueError:
+            return None
         except socket.error, msg:
             if type(msg) is types.TupleType: msg = msg[1]
             server.mark_dead(msg)
