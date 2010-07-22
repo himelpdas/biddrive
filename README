@@ -817,3 +817,6 @@ fixed id names in admin test.html page
 
 #1.81.4
 Fixed gluon.tools to work work with load and base.css to nowrap labels
+
+#1.81.5
+Fixed a few bugs. The most important bugs we fixed are in memcache (thanks Scott) and in a process starvation issue with Rocket (thanks Mike Ellis and Tim).
