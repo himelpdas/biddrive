@@ -94,7 +94,7 @@
 'cache': 'cache',
 'change password': 'change password',
 'click here for online examples': 'clicca per vedere gli esempi',
-'click here for the administrative interface': "clicca per l'interfaccia administrativa",
+'click here for the administrative interface': "clicca per l'interfaccia amministrativa",
 'customize me!': 'customize me!',
 'data uploaded': 'dati caricati',
 'database': 'database',
