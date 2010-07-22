@@ -296,6 +296,7 @@ def wsgibase(environ, responder):
     request = Request()
     response = Response()
     session = Session()
+    static_file = False
     try:
         try:
 
