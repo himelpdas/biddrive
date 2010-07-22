@@ -21,7 +21,7 @@ IS_JYTHON = platform.system() == 'Java' # Handle special cases for Jython
 IGNORE_ERRORS_ON_CLOSE = set([errno.ECONNABORTED, errno.ECONNRESET])
 DEFAULT_LISTEN_QUEUE_SIZE = 5
 DEFAULT_MIN_THREADS = 10
-DEFAULT_MAX_THREADS = 128
+DEFAULT_MAX_THREADS = 0 # was 128 but caused a thread starvation issue.
 DEFAULTS = dict(LISTEN_QUEUE_SIZE = DEFAULT_LISTEN_QUEUE_SIZE,
                 MIN_THREADS = DEFAULT_MIN_THREADS,
                 MAX_THREADS = DEFAULT_MAX_THREADS)
