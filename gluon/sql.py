@@ -3242,10 +3242,8 @@ excluded + tables_to_merge.keys()])
                     colset[fieldname] = value
                 if field.type == 'id':
                     id = colset[field.name]
-                    colset.update_record = lambda c = colset, t = table, \
-                        i = id, **a: update_record(c, t, i, a)
-                    colset.delete_record = lambda t = table, i = id: \
-                        t._db(t.id==i).delete()
+                    colset.update_record = lambda _ = (colset, table, id), **a: update_record(_, a)
+                    colset.delete_record = lambda t = table, i = id: t._db(t.id==i).delete()
                     if SetClass:
                         for (referee_table, referee_name) in \
                                 table._referenced_by:
@@ -3369,7 +3367,8 @@ excluded + tables_to_merge.keys()])
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)
 
-def update_record(colset, table, id, a={}):
+def update_record(pack, a={}):
+    (colset, table, id) = pack
     b = a or dict(colset)
     c = dict([(k,v) for (k,v) in b.items() \
                   if k in table.fields and not k=='id'])
