@@ -2,6 +2,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{{=T.accepted_language or 'en'}}">
   <head>
     <title>{{=response.title or request.application}}</title>
+    <link rel="shortcut icon"
+	  href="{{=URL(request.application,'static','favicon.ico')}}" 
+	  type="image/vnd.microsoft.icon">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     {{#------  require CSS and JS files for this page (read info in base.css) ------}}
     {{response.files.append(URL(request.application,'static','base.css'))}}
