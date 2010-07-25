@@ -1917,7 +1917,7 @@ class Table(dict):
                 vs.append(sql_represent(field.default, ft, fd, self._db._db_codec))
             elif field.compute != None:
                 fs.append(fieldname)
-                vs.append(sql_represent(field.compute(fields), ft, fd, self._db._db_codec))
+                vs.append(sql_represent(field.compute(Row(fields)), ft, fd, self._db._db_codec))
             elif field.required is True:
                 raise SyntaxError,'Table: missing required field: %s'%field
         sql_f = ', '.join(fs)
@@ -3308,7 +3308,7 @@ excluded + tables_to_merge.keys()])
                                        for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].update != None]))
-        update_fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
+        update_fields.update(dict([(fieldname, table[fieldname].compute(Row(update_fields))) \
                                        for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].compute != None]))
