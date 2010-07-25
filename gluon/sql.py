@@ -3452,7 +3452,7 @@ class Rows(object):
 
     def find(self,f):
         """
-        returns a set of rows of sorted elements (not filtered in place)
+        returns a new Rows object, a subset of the original object, filtered by the function f
         """
         if not self.records:
             return Rows(self.db, [], self.colnames)
@@ -3465,7 +3465,8 @@ class Rows(object):
 
     def exclude(self,f):
         """
-        returns a set of rows of sorted elements (not filtered in place)
+        removes elements from the calling Rows object, filtered by the function f, 
+        and returns a new Rows object containing the removed elements
         """
         if not self.records:
             return Rows(self.db, [], self.colnames)
