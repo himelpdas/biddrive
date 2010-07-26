@@ -222,8 +222,8 @@ class Content(BlockNode):
 class TemplateParser(object):
     
     r_tag = re.compile(r'(\{\{.*?\}\})', re.DOTALL)
-
-    r_block_comment = re.compile(r'(""".*?""")', re.DOTALL)
+    
+    r_multiline = re.compile(r'(""".*?""")|(\'\'\'.*?\'\'\')', re.DOTALL)
 
     # These are used for re-indentation.
     # Indent + 1
@@ -235,7 +235,7 @@ class TemplateParser(object):
     re_pass = re.compile('^pass( .*)?$', re.DOTALL)
 
     def __init__(self, text,
-            name    = "ParserContainer" ,
+            name    = "ParserContainer",
             context = dict(),
             path    = 'views/',
             writer  = 'response.write',
@@ -442,7 +442,7 @@ class TemplateParser(object):
                            path    = self.path, 
                            writer  = self.writer)
         
-        content.extend(t.content)
+        content.append(t.content)
 
     def extend(self, filename):
         """
@@ -547,39 +547,46 @@ class TemplateParser(object):
                     # {{a = '}}blahblah{{'}}
                     # 
                     # This will fix these
-                    if line.count("'") % 2 != 0 or line.count('"') % 2 != 0:
-                        
-                        # Look ahead
-                        la = 1
-                        nextline = ij[j+la]
-                        
-                        # As long as we have not found our ending
-                        # brackets keep going
-                        while '}}' not in nextline:
-                            la += 1
-                            nextline += ij[j+la]
-                            # clear this line, so we
-                            # don't attempt to parse it
-                            # this is why there is an "if i"
-                            # around line 530
-                            ij[j+la] = ''
-                            
-                        # retrieve our index.
-                        index = nextline.index('}}')
-                        
-                        # Everything before the new brackets
-                        before = nextline[:index+2]
-                        
-                        # Everything after
-                        after = nextline[index+2:]
-                        
-                        # Make the next line everything after
-                        # so it parses correctly, this *should* be
-                        # all html
-                        ij[j+1] = after
-                        
-                        # Add everything before to the current line
-                        line += before
+                    # This is commented out because the current template
+                    # system has this same limitation. Since this has a
+                    # performance hit on larger templates, I do not recommend
+                    # using this code on production systems. This is still here
+                    # for "i told you it *can* be fixed" purposes.
+                    # 
+                    # 
+#                    if line.count("'") % 2 != 0 or line.count('"') % 2 != 0:
+#                        
+#                        # Look ahead
+#                        la = 1
+#                        nextline = ij[j+la]
+#                        
+#                        # As long as we have not found our ending
+#                        # brackets keep going
+#                        while '}}' not in nextline:
+#                            la += 1
+#                            nextline += ij[j+la]
+#                            # clear this line, so we
+#                            # don't attempt to parse it
+#                            # this is why there is an "if i"
+#                            # around line 530
+#                            ij[j+la] = ''
+#                            
+#                        # retrieve our index.
+#                        index = nextline.index('}}')
+#                        
+#                        # Everything before the new brackets
+#                        before = nextline[:index+2]
+#                        
+#                        # Everything after
+#                        after = nextline[index+2:]
+#                        
+#                        # Make the next line everything after
+#                        # so it parses correctly, this *should* be
+#                        # all html
+#                        ij[j+1] = after
+#                        
+#                        # Add everything before to the current line
+#                        line += before
                         
                     # Get rid of '{{' and '}}'
                     line = line[2:-2].strip()
@@ -623,7 +630,7 @@ class TemplateParser(object):
                     # Perform block comment escaping.
                     # This performs escaping ON anything
                     # in between """ and """
-                    value = re.sub(TemplateParser.r_block_comment,
+                    value = re.sub(TemplateParser.r_multiline,
                                 remove_newline,
                                 value)
 
@@ -716,6 +723,7 @@ class TemplateParser(object):
                         # If we don't know where it belongs
                         # we just add it anyways without formatting.
                         if line and in_tag:
+                        
                             # Lets go ahead and split on the newlines >.<
                             tokens = line.split('\n')
                             
@@ -724,10 +732,23 @@ class TemplateParser(object):
                             #   = i
                             # pass
                             # So we can properly put a response.write() in place.
+                            continuation = False
+                            len_parsed = 0
                             for k in range(len(tokens)):
+                            
                                 tokens[k] = tokens[k].strip()
+                                len_parsed += len(tokens[k])
+                                
                                 if tokens[k].startswith('='):
-                                    tokens[k] = "\n%s(%s)" % (self.writer, tokens[k][1:].strip())
+                                    if tokens[k].endswith('\\'):
+                                        continuation = True
+                                        tokens[k] = "\n%s(%s" % (self.writer, tokens[k][1:].strip())
+                                    else:
+                                        tokens[k] = "\n%s(%s)" % (self.writer, tokens[k][1:].strip())
+                                elif continuation:
+                                    tokens[k] += ')'
+                                    continuation = False
+                                    
                         
                             buf = "\n%s" % '\n'.join(tokens)
                             top.append(Node(buf, pre_extend = pre_extend))
@@ -840,7 +861,7 @@ def render(content = "hello world",
         if filename:
             stream = open(filename, 'rb')
             close_stream = True
-        if content:
+        elif content:
             stream = cStringIO.StringIO(content)
 
     # Get a response class.

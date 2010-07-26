@@ -1792,6 +1792,9 @@ def markmin(text,tag=None,attr={}):
 
 
 class MARKMIN(XmlComponent):
+    """
+    For documentation: http://web2py.com/examples/static/markmin.html
+    """
     def __init__(self, text, extra={}, allowed={}, sep='p'):
         self.text = text
         self.extra = extra
