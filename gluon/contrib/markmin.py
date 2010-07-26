@@ -165,8 +165,8 @@ regex_code = re.compile('('+META+')|(``(?P<t>.*?)``(:(?P<c>\w+))?)',re.S)
 regex_maps = [
     (re.compile('[ \t\r]+\n'),'\n'),
     (re.compile('[ \t\r]+\n'),'\n'),
-    (re.compile('\*\*(?P<t>\S+( +\S+)*)\*\*'),'<b>\g<t></b>'),
-    (re.compile("''(?P<t>\S+( +\S+)*)''"),'<i>\g<t></i>'),
+    (re.compile('\*\*(?P<t>[^\s\*]+( +[^\s\*]+)*)\*\*'),'<b>\g<t></b>'),
+    (re.compile("''(?P<t>[^\s']+( +[^\s']+)*)''"),'<i>\g<t></i>'),
     (re.compile('^#{6} (?P<t>[^\n]+)',re.M),'\n\n<<h6>\g<t></h6>\n'),
     (re.compile('^#{5} (?P<t>[^\n]+)',re.M),'\n\n<<h5>\g<t></h5>\n'),
     (re.compile('^#{4} (?P<t>[^\n]+)',re.M),'\n\n<<h4>\g<t></h4>\n'),
