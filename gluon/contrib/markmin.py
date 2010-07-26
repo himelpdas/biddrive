@@ -165,8 +165,8 @@ regex_code = re.compile('('+META+')|(``(?P<t>.*?)``(:(?P<c>\w+))?)',re.S)
 regex_maps = [
     (re.compile('[ \t\r]+\n'),'\n'),
     (re.compile('[ \t\r]+\n'),'\n'),
-    (re.compile('\*\*(?P<t>\w+( +\w+)*)\*\*'),'<b>\g<t></b>'),
-    (re.compile("''(?P<t>\w+( +\w+)*)''"),'<i>\g<t></i>'),
+    (re.compile('\*\*(?P<t>\S+( +\S+)*)\*\*'),'<b>\g<t></b>'),
+    (re.compile("''(?P<t>\S+( +\S+)*)''"),'<i>\g<t></i>'),
     (re.compile('^#{6} (?P<t>[^\n]+)',re.M),'\n\n<<h6>\g<t></h6>\n'),
     (re.compile('^#{5} (?P<t>[^\n]+)',re.M),'\n\n<<h5>\g<t></h5>\n'),
     (re.compile('^#{4} (?P<t>[^\n]+)',re.M),'\n\n<<h4>\g<t></h4>\n'),
@@ -180,7 +180,7 @@ regex_maps = [
     (re.compile('<<'),'\n\n<<'),
     (re.compile('\n\s+\n'),'\n\n')]
 regex_table = re.compile('^\-{4,}\n(?P<t>.*?)\n\-{4,}(:(?P<c>\w+))?\n',re.M|re.S)
-regex_anchor = re.compile('\[\[(?P<t>\w+)\]\]')
+regex_anchor = re.compile('\[\[(?P<t>\S+)\]\]')
 regex_image_width = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center) +(?P<w>\d+px)\]\]')
 regex_image = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center)\]\]')
 regex_video = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +video\]\]')
@@ -331,11 +331,16 @@ def render(text,extra={},allowed={},sep='p'):
             html = META
         else:
             if b in extra:
-                if code[0]=='\n' and code[-1]=='\n': code=code[1:-1]
+                if code[0]=='\n': code=code[1:]
+                if code[-1]=='\n': code=code[:-1]
                 html = extra[b](code)
             elif code[0]=='\n' or code[-1]=='\n':
+                if code[0]=='\n': code=code[1:]
+                if code[-1]=='\n': code=code[:-1]
                 html = '<pre><code class="%s">%s</code></pre>' % (b,cgi.escape(code))
             else:
+                if code[0]=='\n': code=code[1:]
+                if code[-1]=='\n': code=code[:-1]
                 html = '<code class="%s">%s</code>' % (b,cgi.escape(code))
         text = text+html+parts[i+1]
     return text
