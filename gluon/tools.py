@@ -2601,15 +2601,12 @@ class Crud(object):
         there is nothing special about these fields since they are filled before
         the record is archived.
 
-        Alternatively you can create similar fields in the 'mytable_archive' table
-        and they will be filled when the record is archived.
-
-        If you want to change the achive table name and the name of the reference field
+        If you want to change the history table name and the name of the reference field
         you can do, for example::
 
             db.define_table('myhistory',
                 Field('parent_record',db.mytable),
-                mytable)
+                db.mytable)
 
         and use it as::
 

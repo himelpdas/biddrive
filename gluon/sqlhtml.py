@@ -539,6 +539,7 @@ class SQLFORM(FORM):
         multiple = MultipleOptionsWidget,
         radio = RadioWidget,
         checkboxes = CheckboxesWidget,
+        autocomplete = AutocompleteWidget,
         ))
 
     FIELDNAME_REQUEST_DELETE = 'delete_this_record'
