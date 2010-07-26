@@ -1760,7 +1760,7 @@ class web2pyHTMLParser(HTMLParser):
                 raise RuntimeError, "unable to balance tag %s" % tagname
             if parent_tagname[:len(tagname)]==tagname: break
 
-def markdown(text,tag=None,attr={}):
+def markdown_serializer(text,tag=None,attr={}):
     if tag==None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '#'+text+'\n\n'
@@ -1775,7 +1775,7 @@ def markdown(text,tag=None,attr={}):
     if tag=='img': return '![%s](%s)' % (attr.get('_alt',''),attr.get('_src',''))
     return text
 
-def markmin(text,tag=None,attr={}):
+def markmin_serializer(text,tag=None,attr={}):
     if tag==None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '#'+text+'\n\n'
