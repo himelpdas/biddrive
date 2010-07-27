@@ -8,7 +8,7 @@ License: GPL v2
 """
 
 from contenttype import contenttype
-from storage import Storage, Settings, Messages
+from storage import Storage, StorageList, Settings, Messages
 from validators import *
 from html import *
 from sqlhtml import *
@@ -38,6 +38,13 @@ __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fet
 
 DEFAULT = lambda: None
 
+def callback(actions,form,tablename=None):
+    if actions:
+        if tablename and isinstance(actions,dict):
+            actions = actions.get(tablename, [])
+        if not isinstance(actions,(list, tuple)):
+            actions = [actions]
+        [action(form) for action in actions]
 
 def validators(*a):
     b = []
@@ -125,6 +132,8 @@ class Mail(object):
             filename = filename.encode(encoding)
             if content_type == None:
                 content_type = contenttype(filename)
+            self.my_filename = filename
+            self.my_payload = payload
             MIMEBase.MIMEBase.__init__(self, *content_type.split('/', 1))
             self.set_payload(payload)
             self['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -152,9 +161,34 @@ class Mail(object):
         to None, however, to be able to send emails at least server and sender
         must be specified. They are available under following fields:
 
-            self.settings.server
-            self.settings.sender
-            self.settings.login
+            mail.settings.server
+            mail.settings.sender
+            mail.settings.login
+
+        When server is 'logging', email is logged but not sent (debug mode)
+
+        Optionally you can use PGP encryption or X509:
+
+            mail.settings.cipher_type = None
+            mail.settings.sign = True
+            mail.settings.sign_passphrase = None
+            mail.settings.encrypt = True
+            mail.settings.x509_sign_keyfile = None
+            mail.settings.x509_sign_certfile = None
+            mail.settings.x509_crypt_certfiles = None
+
+            cipher_type       : None
+                                gpg - need a python-pyme package and gpgme lib
+                                x509 - smime 
+            sign              : sign the message (True or False)
+            sign_passphrase   : passphrase for key signing
+            encrypt           : encrypt the message
+                             ... x509 only ...
+            x509_sign_keyfile : the signers private key filename (PEM format)
+            x509_sign_certfile: the signers certificate filename (PEM format)
+            x509_crypt_certfiles: the certificates file to encrypt the messages
+                                  with can be a file name or a list of
+                                  file names (PEM format)
 
         Examples::
 
@@ -167,6 +201,15 @@ class Mail(object):
         self.settings.sender = sender
         self.settings.login = login
         self.settings.tls = tls
+        self.settings.cipher_type = None
+        self.settings.sign = True
+        self.settings.sign_passphrase = None
+        self.settings.encrypt = True
+        self.settings.x509_sign_keyfile = None
+        self.settings.x509_sign_certfile = None
+        self.settings.x509_crypt_certfiles = None
+        self.settings.debug = False
+        self.settings.lock_keys = True
         self.result = {}
         self.error = None
 
@@ -180,10 +223,6 @@ class Mail(object):
         bcc=None,
         reply_to=None,
         encoding='utf-8',
-        cipher_type=None,
-        sign=True,
-        sign_passphrase=None,
-        encrypt=True,
         ):
         """
         Sends an email using data specified in constructor
@@ -212,11 +251,6 @@ class Mail(object):
             reply_to: address to which reply should be composed
             encoding: encoding of all strings passed to this method (including
                       message bodies)
-            cipher_type: none
-                         gpg - need a python-pyme package and gpgme lib
-            sign: sign the message
-            sign_passphrase: passphrase for key signing
-            encrypt: encrypt the message
 
         Examples::
 
@@ -256,7 +290,7 @@ class Mail(object):
 
         def encode_header(key):
             if [c for c in key if 32>ord(c) or ord(c)>127]:
-                return header.Header(key.encode('utf-8'),'utf-8')
+                return Header.Header(key.encode('utf-8'),'utf-8')
             else:
                 return key
 
@@ -264,7 +298,7 @@ class Mail(object):
             raise Exception('Server address not specified')
         if not isinstance(self.settings.sender, str):
             raise Exception('Sender address not specified')
-        payload_in = MIMEMultipart.MIMEMultipart('related')
+        payload_in = MIMEMultipart.MIMEMultipart('mixed')
         if to:         
             if not isinstance(to, (list,tuple)):
                 to = [to]
@@ -308,9 +342,20 @@ class Mail(object):
         
         
         #######################################################
+        #                      CIPHER                         #
+        #######################################################
+        cipher_type = self.settings.cipher_type
+        sign = self.settings.sign
+        sign_passphrase = self.settings.sign_passphrase
+        encrypt = self.settings.encrypt
+        #######################################################
         #                       GPGME                         #
         #######################################################
         if cipher_type == 'gpg':
+            if not sign and not encrypt:
+                self.error="No sign and no encrypt is set but cipher type to gpg"
+                return False
+
             # need a python-pyme package and gpgme lib
             from pyme import core, constants, errors
             import pyme.constants.validity
@@ -332,8 +377,8 @@ class Mail(object):
                     if sigkey.can_sign:
                         c.signers_add(sigkey)
                 if not c.signers_enum(0):
-                    self.result=False
                     self.error='No key for signing [%s]' % self.settings.sender
+                    return False
                 c.set_passphrase_cb(lambda x,y,z: sign_passphrase)
                 try:
                     # make a signature
@@ -354,7 +399,6 @@ class Mail(object):
                     # it's just a trick to handle the no encryption case
                     payload_in=payload
                 except errors.GPGMEError, ex:
-                    self.result=False
                     self.error="GPG error: %s" % ex.getstring()
                     return False
             ############################################
@@ -377,7 +421,6 @@ class Mail(object):
                     c.op_keylist_start(addr,0)
                     r = c.op_keylist_next()
                     if r == None:
-                        self.result=False
                         self.error='No key for [%s]' % addr
                         return False
                     recipients.append(r)
@@ -397,9 +440,81 @@ class Mail(object):
                     p.set_payload(cipher.read())
                     payload.attach(p)
                 except errors.GPGMEError, ex:
-                    self.result=False
                     self.error="GPG error: %s" % ex.getstring()
                     return False
+        #######################################################
+        #                       X.509                         #
+        #######################################################
+        elif cipher_type == 'x509':
+            if not sign and not encrypt:
+                self.error="No sign and no encrypt is set but cipher type to x509"
+                return False
+            x509_sign_keyfile=self.settings.x509_sign_keyfile
+            if self.settings.x509_sign_certfile:
+                x509_sign_certfile=self.settings.x509_sign_certfile
+            else:
+                # if there is no sign certfile we'll assume the
+                # cert is in keyfile
+                x509_sign_certfile=self.settings.x509_sign_keyfile
+            # crypt certfiles could be a string or a list
+            x509_crypt_certfiles=self.settings.x509_crypt_certfiles
+            
+            
+            # need m2crypto
+            from M2Crypto import BIO, SMIME, X509
+            msg_bio = BIO.MemoryBuffer(payload_in.as_string())
+            s = SMIME.SMIME()
+            
+            #                   SIGN
+            if sign:
+                #key for signing
+                try: 
+                    s.load_key(x509_sign_keyfile, x509_sign_certfile, callback=lambda x: sign_passphrase)
+                    if encrypt:
+                        p7 = s.sign(msg_bio)
+                    else:
+                        p7 = s.sign(msg_bio,flags=SMIME.PKCS7_DETACHED)
+                    msg_bio = BIO.MemoryBuffer(payload_in.as_string()) # Recreate coz sign() has consumed it.
+                except Exception,e:
+                    self.error="Something went wrong on signing: <%s>" %str(e)
+                    return False
+                    
+            #                   ENCRYPT
+            if encrypt:
+                try:
+                    sk = X509.X509_Stack()
+                    if not isinstance(x509_crypt_certfiles, (list, tuple)):
+                        x509_crypt_certfiles = [x509_crypt_certfiles]
+                    
+                    # make an encryption cert's stack
+                    for x in x509_crypt_certfiles:
+                        sk.push(X509.load_cert(x))
+                    s.set_x509_stack(sk)
+                    
+                    s.set_cipher(SMIME.Cipher('des_ede3_cbc'))
+                    tmp_bio = BIO.MemoryBuffer()
+                    if sign:
+                        s.write(tmp_bio, p7)
+                    else:
+                        tmp_bio.write(payload_in.as_string())
+                    p7 = s.encrypt(tmp_bio)
+                except Exception,e:
+                    self.error="Something went wrong on encrypting: <%s>" %str(e)
+                    return False
+            
+            #                 Final stage in sign and encryption
+            out = BIO.MemoryBuffer()
+            if encrypt:
+                s.write(out, p7)
+            else:
+                if sign:
+                    s.write(out, p7, msg_bio, SMIME.PKCS7_DETACHED)
+                else:
+                    out.write('\r\n')
+                    out.write(payload_in.as_string())
+            out.close()
+            st=str(out.read())
+            payload=message_from_string(st)
         else:
             # no cryptography process as usual
             payload=payload_in
@@ -419,10 +534,20 @@ class Mail(object):
                                         time.gmtime())
         result = {}
         try:
-            if self.settings.server == 'gae':
+            if self.settings.server == 'logging':
+                logging.warn('email not sent\n%s\nFrom: %s\nTo: %s\n\n%s\n%s\n' % \
+                                 ('-'*40,self.settings.sender,
+                                  ', '.join(to),text or html,'-'*40))
+            elif self.settings.server == 'gae':
                 from google.appengine.api import mail
-                result = mail.send_mail(sender=self.settings.sender, to=to,
-                                        subject=subject, body=text)
+                attachments = attachments and [(a.my_filename,a.my_payload) for a in attachments]
+                if attachments:
+                    result = mail.send_mail(sender=self.settings.sender, to=to,
+                                            subject=subject, body=text, html=html, 
+                                            attachments=attachments)
+                else:
+                    result = mail.send_mail(sender=self.settings.sender, to=to,
+                                            subject=subject, body=text, html=html)
             else:
                 server = smtplib.SMTP(*self.settings.server.split(':'))
                 if self.settings.login != None:
@@ -633,7 +758,7 @@ class Auth(object):
         """
 
         self.environment = Storage(environment)
-        self.db = db
+        self.db = db 
         request = self.environment.request
         session = self.environment.session
         auth = session.auth
@@ -700,8 +825,8 @@ class Auth(object):
         # ## these should be functions or lambdas
 
         self.settings.login_next = self.url('index')
-        self.settings.login_onvalidation = None
-        self.settings.login_onaccept = None
+        self.settings.login_onvalidation = []
+        self.settings.login_onaccept = []
         self.settings.login_methods = [self]
         self.settings.login_form = self
         self.settings.login_email_validate = True
@@ -709,18 +834,23 @@ class Auth(object):
         self.settings.logout_next = self.url('index')
 
         self.settings.register_next = self.url('index')
-        self.settings.register_onvalidation = None
-        self.settings.register_onaccept = None
+        self.settings.register_onvalidation = []
+        self.settings.register_onaccept = []
 
         self.settings.verify_email_next = self.url('user', args='login')
-        self.settings.verify_email_onaccept = None
+        self.settings.verify_email_onaccept = []
 
         self.settings.profile_next = self.url('index')
+        self.settings.profile_onvalidation = []
+        self.settings.profile_onaccept = []
         self.settings.retrieve_username_next = self.url('index')
         self.settings.retrieve_password_next = self.url('index')
         self.settings.request_reset_password_next = self.url('user', args='login')
         self.settings.reset_password_next = self.url('user', args='login')
         self.settings.change_password_next = self.url('index')
+
+        self.settings.retrieve_password_onvalidation = []
+        self.settings.reset_password_onvalidation = []
 
         self.settings.hmac_key = None
         self.settings.lock_keys = True
@@ -794,6 +924,7 @@ class Auth(object):
         self.messages.label_password = 'Password'
         self.messages.label_registration_key = 'Registration key'
         self.messages.label_reset_password_key = 'Reset Password key'
+        self.messages.label_registration_id = 'Registration identifier'
         self.messages.label_role = 'Role'
         self.messages.label_description = 'Description'
         self.messages.label_user_id = 'User ID'
@@ -868,6 +999,38 @@ class Auth(object):
         else:
             raise HTTP(404)
 
+    def navbar(self,prefix='Welcome',action=None):
+        request = self.environment.request
+        T = self.environment.T
+        if not action:
+            action=URL(request.application,request.controller,'user')
+        if prefix:
+            prefix = prefix.strip()+' '
+        if self.user_id:            
+            logout=A(T('logout'),_href=action+'/logout')
+            profile=A(T('profile'),_href=action+'/profile')
+            password=A(T('password'),_href=action+'/change_password')
+            bar = SPAN(prefix,self.user.first_name,' [ ', logout, ']',_class='auth_navbar')
+            if not 'profile' in self.settings.actions_disabled:
+                bar.insert(4, ' | ')
+                bar.insert(5, profile)
+            if not 'change_password' in self.settings.actions_disabled:
+                bar.insert(-1, ' | ')
+                bar.insert(-1, password)
+        else:
+            login=A(T('login'),_href=action+'/login')
+            register=A(T('register'),_href=action+'/register')
+            lost_password=A(T('lost password?'),
+                            _href=action+'/request_reset_password')
+            bar = SPAN('[ ',login,' ]',_class='auth_navbar')
+            if not 'register' in self.settings.actions_disabled:
+                bar.insert(2, ' | ')
+                bar.insert(3, register)
+            if not 'request_reset_password' in self.settings.actions_disabled:
+                bar.insert(-1, ' | ')
+                bar.insert(-1, lost_password)
+        return bar
+
     def __get_migrate(self, tablename, migrate=True):
 
         if type(migrate).__name__ == 'str':
@@ -914,6 +1077,9 @@ class Auth(object):
                     Field('reset_password_key', length=512,
                           writable=False, readable=False, default='',
                           label=self.messages.label_reset_password_key),
+                    Field('registration_id', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_registration_id),
                     migrate=\
                         self.__get_migrate(self.settings.table_user_name, migrate),
                     format='%(username)s')
@@ -1041,13 +1207,15 @@ class Auth(object):
             If the user exists already then password is updated.
             If the user doesn't yet exist, then they are created.
         """
-        if 'username' in keys:
+        table_user = self.settings.table_user
+        if 'registration_id' in table_user.fields() and 'registration_id' in keys:
+            username = 'registration_id'
+        elif 'username' in table_user.fields():
             username = 'username'
-        elif 'email' in keys:
+        elif 'email' in table_user.fields():
             username = 'email'
         else:
             raise SyntaxError, "user must have username or email"
-        table_user = self.settings.table_user
         passfield = self.settings.password_field
         user = self.db(table_user[username] == keys[username]).select().first()
         if user:
@@ -1095,7 +1263,7 @@ class Auth(object):
         password = table_user[passfield].validate(password)[0]
         if user:
             if not user.registration_key and user[passfield] == password:
-                user = Storage(table_user._filter_fields(user, id=True))
+                user = Storage(table_user._filter_fields(user, id=True))                
                 session.auth = Storage(user=user, last_visit=request.now,
                                        expiration=self.settings.expiration)
                 self.user = user
@@ -1197,7 +1365,7 @@ class Auth(object):
                     elif temp_user.registration_key == 'disabled':
                         response.flash = self.messages.login_disabled
                         return form
-                    elif temp_user.registration_key.strip():
+                    elif temp_user.registration_key!=None and temp_user.registration_key.strip():
                         response.flash = \
                             self.messages.registration_verifying
                         return form
@@ -1236,17 +1404,22 @@ class Auth(object):
                     # invalid login
                     session.flash = self.messages.invalid_login
                     redirect(self.url(args=request.args))
+
         else:
             # use a central authentication server
             cas = self.settings.login_form
             cas_user = cas.get_user()
+            
             if cas_user:
                 cas_user[passfield] = None
                 user = self.get_or_create_user(cas_user)
+            elif hasattr(cas,'login_form'):
+                return cas.login_form()
             else:
                 # we need to pass through login again before going on
                 next = URL(r=request) + '?_next=' + next
                 redirect(cas.login_url(next))
+
 
         # process authenticated users
         if user:
@@ -1277,8 +1450,7 @@ class Auth(object):
         # how to continue
         if self.settings.login_form == self:
             if accepted_form:
-                if onaccept:
-                    onaccept(form)
+                callback(onaccept,form)
                 if isinstance(next, (list, tuple)):
                     # fix issue with 2.6
                     next = next[0]
@@ -1414,8 +1586,7 @@ class Auth(object):
                 session.flash = self.messages.logged_in
             if log:
                 self.log_event(log % form.vars)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1468,8 +1639,7 @@ class Auth(object):
             onaccept = self.settings.verify_email_onaccept
         if log:
             self.log_event(log % user)
-        if onaccept:
-            onaccept(user)
+        callback(onaccept,user)
         redirect(next)
 
     def retrieve_username(
@@ -1535,8 +1705,7 @@ class Auth(object):
             session.flash = self.messages.email_sent
             if log:
                 self.log_event(log % user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1629,8 +1798,7 @@ class Auth(object):
                 session.flash = self.messages.unable_to_send_email
             if log:
                 self.log_event(log % user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1687,7 +1855,9 @@ class Auth(object):
             submit_button=self.messages.submit_button
         )
         if form.accepts(request.post_vars,session):
-            user.update_record(password=form.vars.new_password,reset_password_key='')
+            user.update_record(**{passfield:form.vars.new_password,
+                                  'registration_key':'',
+                                  'reset_password_key':''})
             session.flash = self.messages.password_changed
             redirect(next)
         return form
@@ -1759,8 +1929,7 @@ class Auth(object):
                 session.flash = self.messages.unable_to_send_email
             if log:
                 self.log_event(log % user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1841,8 +2010,7 @@ class Auth(object):
             session.flash = self.messages.password_changed
             if log:
                 self.log_event(log % self.user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1867,6 +2035,7 @@ class Auth(object):
 
         """
 
+        table_user = self.settings.table_user
         if not self.is_logged_in():
             redirect(self.settings.login_url)
         passfield = self.settings.password_field
@@ -1884,7 +2053,7 @@ class Auth(object):
         if log == DEFAULT:
             log = self.messages.profile_log
         form = SQLFORM(
-            self.settings.table_user,
+            table_user,
             self.user.id,
             hidden=dict(_next=next),
             showid=self.settings.showid,
@@ -1895,13 +2064,12 @@ class Auth(object):
             )
         if form.accepts(request.post_vars, session,
                         formname='profile',
-                        onvalidation=onvalidation):
-            self.user.update(form.vars)
+                        onvalidation=onvalidation):            
+            self.user.update(table_user._filter_fields(form.vars))
             session.flash = self.messages.profile_updated
             if log:
                 self.log_event(log % self.user)
-            if onaccept:
-                onaccept(form)
+            callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
             elif isinstance(next, (list, tuple)): ### fix issue with 2.6
@@ -1999,6 +2167,8 @@ class Auth(object):
                     redirect(next)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
@@ -2020,6 +2190,8 @@ class Auth(object):
                                  '?_next='+urllib.quote(next))
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
@@ -2048,6 +2220,8 @@ class Auth(object):
                     redirect(next)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
@@ -2080,6 +2254,8 @@ class Auth(object):
                     redirect(next)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
             return f
 
         return decorator
@@ -2305,11 +2481,15 @@ class Auth(object):
 class Crud(object):
 
     def url(self, f=None, args=[], vars={}):
+        """
+        this should point to the controller that exposes
+        download and crud
+        """
         return self.environment.URL(r=self.environment.request,
                                     c=self.settings.controller,
                                     f=f, args=args, vars=vars)
 
-    def __init__(self, environment, db):
+    def __init__(self, environment, db, controller='default'):
         self.environment = Storage(environment)
         self.db = db
         self.settings = Settings()
@@ -2318,16 +2498,16 @@ class Crud(object):
 
         self.settings.create_next = None
         self.settings.update_next = None
-        self.settings.controller = 'default'
+        self.settings.controller = controller
         self.settings.delete_next = self.url()
         self.settings.download_url = self.url('download')
-        self.settings.create_onvalidation = None
-        self.settings.update_onvalidation = None
-        self.settings.delete_onvalidation = None
-        self.settings.create_onaccept = None
-        self.settings.update_onaccept = None
-        self.settings.update_ondelete = None
-        self.settings.delete_onaccept = None
+        self.settings.create_onvalidation = StorageList()
+        self.settings.update_onvalidation = StorageList()
+        self.settings.delete_onvalidation = StorageList()
+        self.settings.create_onaccept = StorageList()
+        self.settings.update_onaccept = StorageList()
+        self.settings.update_ondelete = StorageList()
+        self.settings.delete_onaccept = StorageList()
         self.settings.update_deletable = True
         self.settings.showid = False
         self.settings.keepvalues = False
@@ -2386,8 +2566,9 @@ class Crud(object):
 
     def tables(self):
         request = self.environment.request
-        return TABLE(*[TR(A(name, _href=self.url(args=('select',
-                     name)))) for name in self.db.tables])
+        return TABLE(*[TR(A(name,
+                            _href=self.url(args=('select',name)))) \
+                           for name in self.db.tables])
 
 
     @staticmethod
@@ -2401,7 +2582,7 @@ class Crud(object):
         previous record in the newly created table including a reference
         to the current record.
 
-        If you want to access such table you need to define it yourself in a mode::
+        If you want to access such table you need to define it yourself in a model::
 
             db.define_table('mytable_history',
                 Field('current_record',db.mytable),
@@ -2420,22 +2601,19 @@ class Crud(object):
         there is nothing special about these fields since they are filled before
         the record is archived.
 
-        Alterantively you can create similar fields in the 'mytable_history' table
-        and they will be filled when the record is archived.
-
-        If you want to change the achive table name and the name of the reference field
+        If you want to change the history table name and the name of the reference field
         you can do, for example::
 
             db.define_table('myhistory',
                 Field('parent_record',db.mytable),
-                mytable)
+                db.mytable)
 
         and use it as::
 
             form=crud.update(db.mytable,myrecord,
-                             onaccept=lambda form:crud.archive(form, \
-                               archive_table=db.myhistory, \
-                               current_record='parent_record'))
+                             onaccept=lambda form:crud.archive(form,
+                             archive_table=db.myhistory,
+                             current_record='parent_record'))
 
         """
         old_record = form.record
@@ -2534,7 +2712,7 @@ class Crud(object):
             form[0].insert(-1, TR(LABEL(captcha.label),
                                   captcha, captcha.comment,
                                   _id='captcha__row'))
-        if request.extension != 'html':
+        if not request.extension in ('html','load'):
             (_session, _formname) = (None, None)
         else:
             (_session, _formname) = \
@@ -2542,6 +2720,8 @@ class Crud(object):
         keepvalues = self.settings.keepvalues
         if request.vars.delete_this_record:
             keepvalues = False
+        if isinstance(onvalidation,dict):
+            onvalidation=onvalidation.get(table._tablename,[])
         if form.accepts(request.post_vars, _session, formname=_formname,
                         onvalidation=onvalidation, keepvalues=keepvalues):
             response.flash = message
@@ -2549,21 +2729,20 @@ class Crud(object):
                 self.log_event(log % form.vars)
             if request.vars.delete_this_record:
                 message = self.messages.record_deleted
-                if ondelete:
-                    ondelete(form)
+                callback(ondelete,form,table._tablename)
             response.flash = message
-            if onaccept:
-                onaccept(form)
-            if request.extension != 'html':
+            callback(onaccept,form,table._tablename)
+            if not request.extension in ('html','load'):
                 raise HTTP(200, 'RECORD CREATED/UPDATED')
             if isinstance(next, (list, tuple)): ### fix issue with 2.6
                next = next[0]
             if next: # Only redirect when explicit
                 if next[0] != '/' and next[:4] != 'http':
-                    next = self.url(next.replace('[id]', str(form.vars.id)))
+                    next = URL(r=request,
+                               f=next.replace('[id]', str(form.vars.id)))
                 session.flash = response.flash
                 redirect(next)
-        elif request.extension != 'html':
+        elif not request.extension in ('html','load'):
             raise HTTP(401)
         return form
 
@@ -2619,7 +2798,7 @@ class Crud(object):
             showid=self.settings.showid,
             formstyle=self.settings.formstyle
             )
-        if self.environment.request.extension != 'html':
+        if not self.environment.request.extension in ('html','load'):
             return table._filter_fields(form.record, id=True)
         return form
 
@@ -2651,11 +2830,9 @@ class Crud(object):
             message = self.messages.record_deleted
         record = table[record_id]
         if record:
-            if self.settings.delete_onvalidation:
-                self.settings.delete_onvalidation(record)
-            del table[record_id]
-            if self.settings.delete_onaccept:
-                self.settings.delete_onaccept(record)
+            callback(self.settings.delete_onvalidation,record)
+            del table[record_id]            
+            callback(self.settings.delete_onaccept,record,table._tablename)
             session.flash = message
         redirect(next)
 
@@ -2683,14 +2860,14 @@ class Crud(object):
         if not fields:
             fields = [table.ALL]
         rows = self.db(query).select(*fields, **dict(orderby=orderby,
-            limitby=limitby))
+                                                     limitby=limitby))
         if not rows:
             return None # Nicer than an empty table.
         if not 'linkto' in attr:
             attr['linkto'] = self.url(args='read')
         if not 'upload' in attr:
             attr['upload'] = self.url('download')
-        if request.extension != 'html':
+        if not request.extension in ('html','load'):
             return rows.as_list()
         return SQLTABLE(rows, headers=headers, **attr)
     
@@ -2705,49 +2882,86 @@ class Crud(object):
         try:
             if refsearch: format = self.get_format(field)
             if op == 'equals':
-                return field == value if not refsearch else \
-                       lambda row: row[field.name][format] == value
+                if not refsearch:
+                    return field == value
+                else:
+                    return lambda row: row[field.name][format] == value
             elif op == 'not equal':
-                return field != value if not refsearch else \
-                       lambda row: row[field.name][format] != value
+                if not refsearch:
+                    return field != value
+                else:
+                    return lambda row: row[field.name][format] != value
             elif op == 'greater than':
-                return field > value if not refsearch else \
-                       lambda row: row[field.name][format] > value
+                if not refsearch:
+                    return field > value
+                else:
+                    return lambda row: row[field.name][format] > value
             elif op == 'less than':
-                return field < value if not refsearch else \
-                       lambda row: row[field.name][format] < value
+                if not refsearch:
+                    return field < value
+                else:
+                    return lambda row: row[field.name][format] < value
             elif op == 'starts with':
-                return field.like(value+'%') if not refsearch else \
-                       lambda row: str(row[field.name][format]).startswith(value)
+                if not refsearch:
+                    return field.like(value+'%')
+                else:
+                    return lambda row: str(row[field.name][format]).startswith(value)
             elif op == 'ends with':
-                return field.like('%'+value) if not refsearch else \
-                       lambda row: str(row[field.name][format]).endswith(value)
+                if not refsearch:
+                    return field.like('%'+value)
+                else:
+                    return lambda row: str(row[field.name][format]).endswith(value)
             elif op == 'contains':
-                return field.like('%'+value+'%') if not refsearch else \
-                       lambda row: value in row[field.name][format]                
+                if not refsearch:
+                    return field.like('%'+value+'%')
+                else:
+                    return lambda row: value in row[field.name][format]
         except:
-            return None
-    
+            return None 
+
+
     def search(self, *tables, **args):
-        table=tables[0]
-        fields=args.get('fields',None)
+        """
+        Creates a search form and its results for a table 
+        Example usage:
+        form, results = crud.search(db.test,
+                               queries = ['equals', 'not equal', 'contains'],
+                               query_labels={'equals':'Equals',
+                                             'not equal':'Not equal'},
+                               fields = [db.test.id, db.test.children],
+                               field_labels = {'id':'ID','children':'Children'},
+                               zero='Please choose',
+                               query = (db.test.id > 0)&(db.test.id != 3) )
+        """
+        table = tables[0]
+        fields = args.get('fields', table.fields)
         request = self.environment.request
         db = self.db     
         if not (isinstance(table, db.Table) or table in db.tables):
             raise HTTP(404)        
         tbl = TABLE()
         selected = []; refsearch = []; results = []
-        ops = ['', 'equals', 'not equal', 'greater than', 'less than',
-               'starts with', 'ends with', 'contains']
-        query = table.id > 0 
-        for fieldname in fields or table.fields:
+        ops = args.get('queries', [])
+        zero = args.get('zero', '')
+        if not ops:
+            ops = ['equals', 'not equal', 'greater than', 
+                   'less than', 'starts with', 
+                   'ends with', 'contains']
+        ops.insert(0,zero)
+        query_labels = args.get('query_labels', {})
+        query = args.get('query',table.id > 0)
+        field_labels = args.get('field_labels',{})
+        for fieldname in fields:
             field = table[fieldname]
             chkval = request.vars.get('chk' + fieldname, None)
             txtval = request.vars.get('txt' + fieldname, None)
             opval = request.vars.get('op' + fieldname, None)
             row = TR(TD(INPUT(_type = "checkbox", _name = "chk" + fieldname,
                               value = chkval == 'on')),
-                     TD(field),TD(SELECT(ops, _name = "op" + fieldname,
+                     TD(field_labels.get(fieldname,fieldname)),
+                        TD(SELECT([OPTION(query_labels.get(op,op),
+                                                 _value=op) for op in ops], 
+                                                 _name = "op" + fieldname,
                                          value = opval)),
                      TD(INPUT(_type = "text", _name = "txt" + fieldname,
                               _value = txtval, _id='txt' + fieldname,
@@ -2769,7 +2983,7 @@ class Crud(object):
         form = FORM(tbl,INPUT(_type="submit"))
         if selected:
             try:
-                results = db(query).select(*selected, **args)
+                results = db(query).select(*selected)
                 for r in refsearch:
                     results = results.find(r)
             except: # hmmm, we should do bettere here

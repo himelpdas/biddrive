@@ -3060,6 +3060,7 @@ class Service:
         self.xmlrpc_procedures = {}
         self.amfrpc_procedures = {}
         self.amfrpc3_procedures = {}
+        self.soap_procedures = {}
 
     def run(self, f):
         """
@@ -3242,6 +3243,38 @@ class Service:
             return f
         return _amfrpc3
 
+    def soap(self, name=None, returns=None, args=None,doc=None):
+        """
+        example::
+
+            service = Service(globals())
+            @service.soap('MyFunction',returns={'result':int,args={'a':int,'b':int,})
+            def myfunction(a, b):
+                return a + b
+            def call():
+                return service()
+
+        The call it with::
+
+            from contrib.pysimplesoap.client import SoapClient
+            client = SoapClient(
+                    location = "http://localhost:8000/webservices/sample/call/soap",
+                    action = 'http://example.com/', # SOAPAction
+                    namespace = "http://example.com/sample.wsdl", 
+                    soap_ns='soap', # classic soap 1.1 dialect
+                    trace = True, # print http/xml request and response
+                    ns = False) # do not add target namespace prefix
+            response = client.MyFunction(a=1,b=2)
+            print int(response.result)
+
+
+        """
+
+        def _soap(f):
+            self.soap_procedures[name or f.__name__] = f, returns, args, doc
+            return f
+        return _soap
+
     def serve_run(self, args=None):
         request = self.environment['request']
         if not args:
@@ -3392,6 +3425,73 @@ class Service:
         else:
             return pyamf.remoting.encode(pyamf_response, context).getvalue()
 
+    def serve_soap(self, version="1.1"):
+        try:
+            from contrib.pysimplesoap.server import SoapDispatcher
+        except:
+            return "pysimplesoap not installed in contrib"
+        request = self.environment['request']
+        response = self.environment['response']
+        procedures = self.soap_procedures
+
+        location = "%s://%s%s" % (
+                        request.env.wsgi_url_scheme,
+                        request.env.http_host,
+                        URL(r=request,f="call/soap",vars=None))
+        namespace = 'namespace' in response and response.namespace or location
+        documentation = response.description or ''
+        dispatcher = SoapDispatcher(
+            name = response.title,
+            location = location,
+            action = location, # SOAPAction
+            namespace = namespace,
+            prefix='pys',
+            documentation = documentation,
+            ns = True)
+        for method, (function, returns, args, doc) in procedures.items():
+            dispatcher.register_function(method, function, returns, args, doc)
+        if request.env.request_method == 'POST':
+            # Process normal Soap Operation
+            response.headers['Content-Type'] = 'text/xml'
+            return dispatcher.dispatch(request.body.read())
+        elif 'WSDL' in request.vars:
+            # Return Web Service Description
+            response.headers['Content-Type'] = 'text/xml'
+            return dispatcher.wsdl()
+        elif 'op' in request.vars:
+            # Return method help webpage
+            response.headers['Content-Type'] = 'text/html'
+            method  = request.vars['op']
+            sample_req_xml, sample_res_xml, doc = dispatcher.help(method)
+            body = [H1("Welcome to Web2Py SOAP webservice gateway"),
+                    A("See all webservice operations",
+                      _href=URL(r=request,f="call/soap",vars=None)),
+                    H2(method),
+                    P(doc),
+                    UL(LI("Location: %s" % dispatcher.location),
+                       LI("Namespace: %s" % dispatcher.namespace),
+                       LI("SoapAction: %s" % dispatcher.action),
+                    ),
+                    H3("Sample SOAP XML Request Message:"),
+                    CODE(sample_req_xml,language="xml"),
+                    H3("Sample SOAP XML Response Message:"),
+                    CODE(sample_res_xml,language="xml"),
+                    ]
+            return {'body': body}
+        else:
+            # Return general help and method list webpage
+            response.headers['Content-Type'] = 'text/html'
+            body = [H1("Welcome to Web2Py SOAP webservice gateway"),
+                    P(response.description),
+                    P("The following operations are available"),
+                    A("See WSDL for webservice description",
+                      _href=URL(r=request,f="call/soap",vars={"WSDL":None})),
+                    UL([LI(A("%s: %s" % (method, doc or ''),
+                             _href=URL(r=request,f="call/soap",vars={'op': method})))
+                        for method, doc in dispatcher.list_methods()]),
+                    ]
+            return {'body': body}
+
     def __call__(self):
         """
         register services with:
@@ -3404,6 +3504,7 @@ class Service:
         @service.jsonrpc
         @service.amfrpc
         @service.amfrpc3('domain')
+        @service.soap('Method', returns={'Result':int}, args={'a':int,'b':int,})
 
         expose services with
 
@@ -3417,6 +3518,7 @@ class Service:
         http://..../app/default/call/xmlrpc
         http://..../app/default/call/amfrpc
         http://..../app/default/call/amfrpc3
+        http://..../app/default/call/soap
         """
 
         request = self.environment['request']
@@ -3441,6 +3543,8 @@ class Service:
             return self.serve_amfrpc()
         elif arg0 == 'amfrpc3':
             return self.serve_amfrpc(3)
+        elif arg0 == 'soap':
+            return self.serve_soap()
         else:
             self.error()
 
