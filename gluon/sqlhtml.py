@@ -835,6 +835,7 @@ class SQLFORM(FORM):
         keepvalues=False,
         onvalidation=None,
         dbio=True,
+        hideerror=False,
         ):
         """
         same as FORM.accepts but also does insert, update or delete in SQLDB.
@@ -885,6 +886,7 @@ class SQLFORM(FORM):
             formname,
             keepvalues,
             onvalidation,
+            hideerror=hideerror,
             )
 
         if not ret and self.record and self.errors:
@@ -922,7 +924,7 @@ class SQLFORM(FORM):
                     row_id = '%s_%s%s' % (self.table,fieldname,SQLFORM.ID_ROW_SUFFIX)
                     widget = field.widget(field, value)
                     self.field_parent[row_id].components = [ widget ]
-                    self.field_parent[row_id]._traverse(False)
+                    self.field_parent[row_id]._traverse(False,hideerror)
                     self.custom.widget[ fieldname ] = widget
             return ret
 

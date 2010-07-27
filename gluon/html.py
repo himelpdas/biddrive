@@ -478,7 +478,7 @@ class DIV(XmlComponent):
         """
         return
 
-    def _traverse(self, status):
+    def _traverse(self, status, hideerror=False):
         # TODO: docstring
         newstatus = status
         for c in self.components:
@@ -489,7 +489,8 @@ class DIV(XmlComponent):
                 c.latest = self.latest
                 c.session = self.session
                 c.formname = self.formname
-                newstatus = c._traverse(status) and newstatus
+                c['hideerror']=hideerror
+                newstatus = c._traverse(status,hideerror) and newstatus
 
         # for input, textarea, select, option
         # deal with 'value' and 'validation'
@@ -1448,6 +1449,7 @@ class FORM(DIV):
         formname='default',
         keepvalues=False,
         onvalidation=None,
+        hideerror=False,
         ):
         self.errors.clear()
         self.request_vars = Storage()
@@ -1465,7 +1467,7 @@ class FORM(DIV):
             status = False
         if self.formname != self.request_vars._formname:
             status = False
-        status = self._traverse(status)
+        status = self._traverse(status,hideerror)
         if status and onvalidation:
             if isinstance(onvalidation, (list, tuple)):
                 [f(self) for f in onvalidation]
@@ -1476,7 +1478,7 @@ class FORM(DIV):
         if session != None:
             self.formkey = session['_formkey[%s]' % formname] = web2py_uuid()
         if status and not keepvalues:
-            self._traverse(False)
+            self._traverse(False,hideerror)
         return status
 
     def _postprocessing(self):
