@@ -545,9 +545,12 @@ class Mail(object):
                     result = mail.send_mail(sender=self.settings.sender, to=to,
                                             subject=subject, body=text, html=html, 
                                             attachments=attachments)
-                else:
+                elif html:
                     result = mail.send_mail(sender=self.settings.sender, to=to,
                                             subject=subject, body=text, html=html)
+                else:
+                    result = mail.send_mail(sender=self.settings.sender, to=to,
+                                            subject=subject, body=text)
             else:
                 server = smtplib.SMTP(*self.settings.server.split(':'))
                 if self.settings.login != None:
@@ -3256,7 +3259,7 @@ class Service:
 
         The call it with::
 
-            from contrib.pysimplesoap.client import SoapClient
+            from gluon.contrib.pysimplesoap.client import SoapClient
             client = SoapClient(
                     location = "http://localhost:8000/webservices/sample/call/soap",
                     action = 'http://example.com/', # SOAPAction
