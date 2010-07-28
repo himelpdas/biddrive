@@ -2039,6 +2039,8 @@ class DAL(dict):
                     self._adapter = ADAPTERS[prefix+self._dbname](self,uri,pool_size,folder,db_codec)
                     connected = True
                     break
+                except SyntaxError:
+                    raise 
                 except:
                     time.sleep(1)
             if not connected:
