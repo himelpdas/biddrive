@@ -216,6 +216,11 @@ def build_environment(request, response, session):
     environment = {}
     for key in html.__all__:
         environment[key] = getattr(html, key)
+        
+    # Overwrite the URL function with a proxy
+    # url function which contains this request.
+    environment['URL'] = html._gURL(request)
+        
     for key in validators.__all__:
         environment[key] = getattr(validators, key)
     if not request.env:

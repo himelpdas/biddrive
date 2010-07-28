@@ -200,6 +200,25 @@ def URL(
     if regex_crlf.search(url):
         raise SyntaxError, 'CRLF Injection Detected'
     return rewrite.filter_out(url, env)
+    
+def _gURL(request):
+    """
+    A proxy function for URL which contains knowledge
+    of a given request object. 
+    
+    Usage is exactly like URL except you do not have
+    to specify r=request!
+    """
+    def _URL(*args, **kwargs):
+        # If they use URL as just passing along 
+        # args, we don't want to overwrite it and
+        # cause issues.
+        if not kwargs.has_key('r') and len(args) < 4:
+            kwargs['r'] = request
+        
+        return URL(*args, **kwargs)
+    _URL.__doc__ = URL.__doc__
+    return _URL
 
 
 ON = True
