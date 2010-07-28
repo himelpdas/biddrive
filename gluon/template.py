@@ -230,7 +230,7 @@ class TemplateParser(object):
     re_block = re.compile('^(elif |else:|except:|except |finally:).*$',
                       re.DOTALL)
     # Indent - 1
-    re_unblock = re.compile('^(return|continue|break)( .*)?$', re.DOTALL)
+    re_unblock = re.compile('^(return|continue|break|raise)( .*)?$', re.DOTALL)
     # Indent - 1
     re_pass = re.compile('^pass( .*)?$', re.DOTALL)
 
@@ -304,7 +304,7 @@ class TemplateParser(object):
         
         Used to make it easier to port to python3.
         """
-        return TemplateParser.reindent(str(self.content))
+        return self.reindent(str(self.content))
         
     def __str__(self):
         "Make sure str works exactly the same as python 3"
@@ -314,8 +314,7 @@ class TemplateParser(object):
         "Make sure str works exactly the same as python 3"
         return self.to_string()
 
-    @staticmethod
-    def reindent(text):
+    def reindent(self, text):
         """
         Reindents a string of unindented python code.
         """
@@ -388,17 +387,20 @@ class TemplateParser(object):
         new_text = '\n'.join(new_lines)
         
         if k > 0:
-            raise restricted.RestrictedError('', new_text, 'missing "pass" in view')
+            self._raise_error('missing "pass" in view', new_text)
         elif k < 0:
-            raise restricted.RestrictedError('', new_text, 'too many "pass" in view')
-        
+            self._raise_error('too many "pass" in view', new_text)
+            
         return new_text
         
-    def _raise_error(self, message=''):
+    def _raise_error(self, message='', text=None):
         """
         Raises an error using itself as the filename and textual content.
         """
-        raise restricted.RestrictedError(self.name, self.text, message)
+        if text:
+            raise restricted.RestrictedError(self.name, text, message)
+        else:
+            raise restricted.RestrictedError(self.name, self.text, message)
 
     def _get_file_text(self, filename):
         """
