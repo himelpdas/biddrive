@@ -161,6 +161,7 @@ Markmin also supports the <video> and <audio> html5 tags using the notation:
 
 META = 'META'
 regex_newlines = re.compile('(\n\r)|(\r\n)')
+regex_dd=re.compile('\$\$(?P<latex>.*?)\$\$')
 regex_code = re.compile('('+META+')|(``(?P<t>.*?)``(:(?P<c>\w+))?)',re.S)
 regex_maps = [
     (re.compile('[ \t\r]+\n'),'\n'),
@@ -249,12 +250,15 @@ def render(text,extra={},allowed={},sep='p'):
 
     >>> render("``aaa``:custom",extra=dict(custom=lambda text: 'x'+text+'x'))
     'xaaax'
+    >>> render(r"$$\int_a^b sin(x)dx$$")
+    '<code class="latex">\\\\int_a^b sin(x)dx</code>'
     """
     #############################################################
     # replace all blocks marked with ``...``:class with META
     # store them into segments they will be treated as code
     #############################################################
     segments, i = [], 0
+    text = regex_dd.sub('``\g<latex>``:latex',text)
     text = regex_newlines.sub('\n',text)
     while True:
         item = regex_code.search(text,i)
