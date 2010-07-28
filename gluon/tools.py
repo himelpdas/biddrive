@@ -781,7 +781,7 @@ class Auth(object):
 
         # ## what happens after registration?
 
-        self.settings.hiderror = False
+        self.settings.hideerror = False
         self.settings.actions_disabled = []
         self.settings.reset_password_requires_verification = False
         self.settings.registration_requires_verification = False
@@ -1357,7 +1357,7 @@ class Auth(object):
             if form.accepts(request.post_vars, session,
                             formname='login', dbio=False,
                             onvalidation=onvalidation,
-                            hiderror=self.settings.hiderror):
+                            hideerror=self.settings.hideerror):
                 accepted_form = True
                 # check for username in db
                 user = self.db(table_user[username] == form.vars[username]).select().first()
@@ -1557,7 +1557,7 @@ class Auth(object):
 
         table_user.registration_key.default = key = web2py_uuid()
         if form.accepts(request.post_vars, session, formname='register',
-                        onvalidation=onvalidation,hiderror=self.settings.hiderror):
+                        onvalidation=onvalidation,hideerror=self.settings.hideerror):
             description = self.messages.group_description % form.vars
             if self.settings.create_user_groups:
                 group_id = self.add_group("user_%s" % form.vars.id, description)
@@ -1696,7 +1696,7 @@ class Auth(object):
                        )
         if form.accepts(request.post_vars, session,
                         formname='retrieve_username', dbio=False,
-                        onvalidation=onvalidation,hiderror=self.settings.hiderror):
+                        onvalidation=onvalidation,hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
             if not user:
                 self.environment.session.flash = \
@@ -1778,7 +1778,7 @@ class Auth(object):
                        )
         if form.accepts(request.post_vars, session,
                         formname='retrieve_password', dbio=False,
-                        onvalidation=onvalidation,hiderror=self.settings.hiderror):
+                        onvalidation=onvalidation,hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
             if not user:
                 self.environment.session.flash = \
@@ -1859,7 +1859,7 @@ class Auth(object):
                                     self.messages.mismatched_password)]),
             submit_button=self.messages.submit_button
         )
-        if form.accepts(request.post_vars,session,hiderror=self.settings.hiderror):
+        if form.accepts(request.post_vars,session,hideerror=self.settings.hideerror):
             user.update_record(**{passfield:form.vars.new_password,
                                   'registration_key':'',
                                   'reset_password_key':''})
@@ -1914,7 +1914,7 @@ class Auth(object):
                        )
         if form.accepts(request.post_vars, session,
                         formname='reset_password', dbio=False,
-                        onvalidation=onvalidation,hiderror=self.settings.hiderror):
+                        onvalidation=onvalidation,hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
             if not user:
                 session.flash = self.messages.invalid_email
@@ -2010,7 +2010,7 @@ class Auth(object):
         if form.accepts(request.post_vars, session,
                         formname='change_password',
                         onvalidation=onvalidation,
-                        hiderror=self.settings.hiderror):
+                        hideerror=self.settings.hideerror):
             d = {passfield: form.vars.new_password}
             s.update(**d)
             session.flash = self.messages.password_changed
@@ -2070,7 +2070,7 @@ class Auth(object):
             )
         if form.accepts(request.post_vars, session,
                         formname='profile',
-                        onvalidation=onvalidation,hiderror=self.settings.hiderror):            
+                        onvalidation=onvalidation,hideerror=self.settings.hideerror):            
             self.user.update(table_user._filter_fields(form.vars))
             session.flash = self.messages.profile_updated
             if log:
@@ -2521,7 +2521,7 @@ class Crud(object):
         self.settings.update_captcha = None
         self.settings.captcha = None
         self.settings.formstyle = 'table3cols'
-        self.settings.hiderror = False
+        self.settings.hideerror = False
         self.settings.lock_keys = True
 
         self.messages = Messages(self.environment.T)
@@ -2731,7 +2731,7 @@ class Crud(object):
             onvalidation=onvalidation.get(table._tablename,[])
         if form.accepts(request.post_vars, _session, formname=_formname,
                         onvalidation=onvalidation, keepvalues=keepvalues,
-                        hiderror=self.settings.hiderror):
+                        hideerror=self.settings.hideerror):
             response.flash = message
             if log:
                 self.log_event(log % form.vars)
