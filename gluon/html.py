@@ -213,9 +213,14 @@ def _gURL(request):
         # If they use URL as just passing along 
         # args, we don't want to overwrite it and
         # cause issues.
-        if not kwargs.has_key('r') and len(args) < 4:
+        if not kwargs.has_key('r') and len(args) < 3:
             kwargs['r'] = request
-        
+            if len(args) == 1 and not 'f' in kwargs:
+                kwargs['f'] = args[0]
+                args = []
+            if len(args) == 2 and not 'f' in kwargs and not 'c' in kwargs:
+                kwargs['c'], kwargs['f'] = args[0], args[1]
+                args = []
         return URL(*args, **kwargs)
     _URL.__doc__ = URL.__doc__
     return _URL
