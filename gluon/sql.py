@@ -3878,15 +3878,18 @@ def DAL(uri='sqlite:memory:',
         import gluon.contrib.gql
         return gluon.contrib.gql.GQLDB()
     else:
+        uris = isinstance(uri,(list,tuple)) and uri or [uri]
         for k in range(5):
-            try:
-                return SQLDB(uri, pool_size=pool_size, folder=folder,
-                             db_codec=db_codec, check_reserved=check_reserved,
-                             migrate=migrate, fake_migrate=fake_migrate)
-            except SyntaxError:
-                raise 
-            except:
-                time.sleep(1)
+            for uri in uris:
+                try:
+                    return SQLDB(uri, pool_size=pool_size, folder=folder,
+                                 db_codec=db_codec, check_reserved=check_reserved,
+                                 migrate=migrate, fake_migrate=fake_migrate)
+                except SyntaxError:
+                    raise 
+                except:
+                    if uri==uris[-1]: 
+                        time.sleep(1)
         raise RuntimeError, "Failure to connect to DB. Tried 5 times"
 
 if __name__ == '__main__':
