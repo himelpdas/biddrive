@@ -355,11 +355,10 @@ class TemplateParser(object):
                 k = k + credit - 1
                     
             # We obviously can't have a negative indentation
-            if k < 0: 
-                k = 0
+            k = max(k,0)
 
             # Add the indentation!
-            new_lines.append('    '*k+line)
+            new_lines.append(' '*(4*k)+line)
 
             # Bank account back to 0 again :(
             credit = 0
@@ -379,7 +378,7 @@ class TemplateParser(object):
             
             # If we are an if statement, a try, or a semi-colon we 
             # probably need to indent the next line.
-            if line[-1:] == ':' and line[:0] != '#':
+            if line.endswith(':') and not line.startswith('#'):
                 k += 1
 
         # This must come before so that we can raise an error with the
