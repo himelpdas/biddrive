@@ -259,10 +259,15 @@ class Mail(object):
                       'Message subject',
                       'Plain text body of the message')
 
+            #Send html message to single address:
+            mail.send('you@example.com',
+                      'Message subject',
+                      '<html>Plain text body of the message</html>')
+
             #Send text and html message to three addresses (two in cc):
             mail.send('you@example.com',
                       'Message subject',
-                      ('Plain text body', <html>html body</html>),
+                      ('Plain text body', '<html>html body</html>'),
                       cc=['other1@example.com', 'other2@example.com'])
 
             #Send html only message with image attachment available from
@@ -314,6 +319,9 @@ class Mail(object):
             text = html = None
         elif isinstance(message, (list, tuple)):
             text, html = message
+        elif message.strip().startswith('<html>') and message.strip().endswith('</html>'):
+            text=None
+            html=message
         else:
             text = message
             html = None
