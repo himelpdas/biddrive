@@ -6,8 +6,14 @@ if not os.path.exists(path):
 now=time.time()
 for file in os.listdir(path):
    filename=os.path.join(path,file)
-   t=os.stat(filename)[stat.ST_MTIME]
-   if os.path.isfile(filename) and now-t>EXPIRATION_MINUTES*60 \
-          and file.startswith(('1','2','3','4','5','6','7','8','9')):
-      os.unlink(filename)
-
+   try:
+      t=os.stat(filename)[stat.ST_MTIME]
+      if os.path.isfile(filename) and now-t>EXPIRATION_MINUTES*60 \
+             and file.startswith(('1','2','3','4','5','6','7','8','9')):
+         try:
+            os.unlink(filename)
+         except:
+            print 'failure to unlink', filename
+   except:
+      print 'failure to stat', filename
+         
