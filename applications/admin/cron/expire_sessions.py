@@ -1,5 +1,5 @@
 EXPIRATION_MINUTES=60
-import os, time, stat
+import os, time, stat, logging
 path=os.path.join(request.folder,'sessions')
 if not os.path.exists(path):
    os.mkdir(path)
@@ -12,8 +12,8 @@ for file in os.listdir(path):
              and file.startswith(('1','2','3','4','5','6','7','8','9')):
          try:
             os.unlink(filename)
-         except:
-            print 'failure to unlink', filename
-   except:
-      print 'failure to stat', filename
+         except Exception,e:
+            logging.warn('failure to unlink %s: %s' % (filename,e))
+   except Exception, e:
+      logging.wanr('failure to stat %s: %s' % (filename,e))
          
