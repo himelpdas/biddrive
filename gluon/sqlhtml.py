@@ -502,7 +502,7 @@ class SQLFORM(FORM):
 
     generates an update form::
 
-        record=db(db.table.id==some_id).select()[0]
+        record=db.table[some_id]
         SQLFORM(db.table, record)
 
     generates an update with a delete button::
@@ -511,7 +511,7 @@ class SQLFORM(FORM):
 
     if record is an int::
 
-        record=db(db.table.id==record).select()[0]
+        record=db.table[record]
 
     optional arguments:
 
