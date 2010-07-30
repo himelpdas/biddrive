@@ -319,7 +319,7 @@ class Mail(object):
             text = html = None
         elif isinstance(message, (list, tuple)):
             text, html = message
-        elif message.strip().startswith('<html>') and message.strip().endswith('</html>'):
+        elif message.strip().startswith('<html') and message.strip().endswith('</html>'):
             text=None
             html=message
         else:

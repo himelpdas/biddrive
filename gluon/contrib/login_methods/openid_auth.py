@@ -8,6 +8,9 @@
 
     To support OpenID login, please look down the description of the class OpenIDAuth.
 
+    >>> from gluon.contrib.login_methods.openid_auth import OpenIDAuth
+    >>> auth.settings.login_form = OpenIDAuth(auth)
+
     To show OpenID list in user profile, you can add the following code
     before the end of function user() of your_app/controllers/default.py
 
