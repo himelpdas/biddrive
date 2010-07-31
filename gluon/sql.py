@@ -1591,6 +1591,22 @@ class Table(dict):
         else:
             return dict.__getitem__(self, str(key))
 
+    def __call__(self, key=None, **kwargs):
+        if key:
+            if not str(key).isdigit():
+                record = None
+            elif isinstance(key, Query):
+                record = self._db(key).select().first()
+            else:
+                record = self._db(self.id == key).select().first()
+            if record:
+                for k,v in kwargs.items():
+                    if record[k]!=v: return None
+            return record
+        elif kwargs:
+            query = reduce(lambda a,b:a&b,[self[k]==v for k,v in kwargs.items()])
+            return self._db(query).select().first()            
+
     def __setitem__(self, key, value):
         if str(key).isdigit():
             if key == 0:

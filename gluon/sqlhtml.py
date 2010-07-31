@@ -614,6 +614,8 @@ class SQLFORM(FORM):
         # try to retrieve the indicated record using its id
         # otherwise ignore it
         if record and isinstance(record, (int, long, str, unicode)):
+            if not str(record).isdigit():
+                raise HTTP(404, "Object not found")
             record = table._db(table.id == record).select().first()
             if not record:
                 raise HTTP(404, "Object not found")
