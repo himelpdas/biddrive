@@ -1606,6 +1606,8 @@ class Table(dict):
         elif kwargs:
             query = reduce(lambda a,b:a&b,[self[k]==v for k,v in kwargs.items()])
             return self._db(query).select().first()            
+        else:
+            return None
 
     def __setitem__(self, key, value):
         if str(key).isdigit():
