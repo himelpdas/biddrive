@@ -1596,16 +1596,16 @@ class Table(dict):
             if not str(key).isdigit():
                 record = None
             elif isinstance(key, Query):
-                record = self._db(key).select().first()
+                record = self._db(key).select(limitby=(0,1)).first()
             else:
-                record = self._db(self.id == key).select().first()
+                record = self._db(self.id == key).select(limitby=(0,1)).first()
             if record:
                 for k,v in kwargs.items():
                     if record[k]!=v: return None
             return record
         elif kwargs:
             query = reduce(lambda a,b:a&b,[self[k]==v for k,v in kwargs.items()])
-            return self._db(query).select().first()            
+            return self._db(query).select(limitby=(0,1)).first()            
         else:
             return None
 
