@@ -15,7 +15,7 @@ import traceback
 from storage import Storage
 from http import HTTP
 
-regex_at = re.compile('(?<!\\\\)\$[a-zA-Z][\w_]*')
+regex_at = re.compile('(?<!\\\\)\$[a-zA-Z]\w*')
 regex_anything = re.compile('(?<!\\\\)\$anything')
 regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 

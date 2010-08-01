@@ -136,16 +136,17 @@ class LoadFactory:
             if ajax_trap:
                 script += "web2py_trap_form('%s','%s');" % \
                     (html.URL(request.application,plugin,
-                              function,args=args,vars=vars),target)
+                              function,args=args,vars=vars,
+                              extension=extension),target)
             #for (name,value) in other_response.headers:
             #    if name == 'web2py-component-command':
             #        script += value
             return html.TAG[''](html.DIV(html.XML(page),_id=target),
                                 html.SCRIPT(script,_type="text/javascript"))
         else:
-            url = url or html.URL(r=request,c=plugin,f=function,
-                                  extension=extension,
-                                  args=args,vars=vars)
+            url = url or html.URL(request.application,plugin,
+                                  function, args=args,vars=vars,
+                                  extension=extension)
             return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % \
                                                 (url,target),
                                             _type="text/javascript"),
