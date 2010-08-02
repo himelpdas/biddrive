@@ -3693,6 +3693,8 @@ class PluginManager(object):
     mydb
     >>> print 'me' in plugins
     True
+    >>> print plugins.me.installed
+    True
     """
     instances = {}
     def __new__(cls,*a,**b):
@@ -3706,6 +3708,7 @@ class PluginManager(object):
             return instance
     def __init__(self,plugin=None,**defaults):
         settings = self.__getattr__(plugin)
+        settings.installed = True
         [settings.update({key:value}) for key,value in defaults.items() if not key in settings]
     def __getattr__(self, key):
         if not key in self.__dict__:
