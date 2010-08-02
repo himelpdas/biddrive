@@ -595,6 +595,20 @@ class TemplateParser(object):
                     # This is bad joo joo, but lets do it anyway
                     if not line:
                         continue
+                        
+                    # We do not want to replace the newlines in code,
+                    # only in block comments.
+                    def remove_newline(re_val):
+                        # Take the entire match and replace newlines with
+                        # escaped newlines.
+                        return re_val.group(0).replace('\n', '\\n')
+
+                    # Perform block comment escaping.
+                    # This performs escaping ON anything
+                    # in between """ and """
+                    line = re.sub(TemplateParser.r_multiline,
+                                remove_newline,
+                                line)
 
                     if line.startswith('='):
                         # IE: {{=response.title}}
@@ -619,27 +633,6 @@ class TemplateParser(object):
                     # with the newline character. This is so that they
                     # retain their formatting, but squish down to one
                     # line in the rendered template. 
-                    
-                    # We do not want to replace the newlines in code,
-                    # only in block comments.
-                    def remove_newline(re_val):
-                        # Take the entire match and replace newlines with
-                        # escaped newlines.
-                        return re_val.group(0).replace('\n', '\\n')
-
-                        
-                    # Perform block comment escaping.
-                    # This performs escaping ON anything
-                    # in between """ and """
-                    value = re.sub(TemplateParser.r_multiline,
-                                remove_newline,
-                                value)
-
-                    # Now we want to get rid of all newlines that exist
-                    # in the line. This does not effect block comments
-                    # since we already converted those.
-                    # This only effects the remaining python code
-                    value = value.replace('\n', '')
                     
                     # First lets check if we have any custom lexers
                     if name in self.lexers:
