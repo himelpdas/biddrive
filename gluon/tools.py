@@ -20,6 +20,7 @@ import base64
 import cPickle
 import datetime
 from email import *
+import thread
 import logging
 import sys
 import os
@@ -3698,14 +3699,18 @@ class PluginManager(object):
     """
     instances = {}
     def __new__(cls,*a,**b):
-        import threading
-        id = threading.currentThread()
+        id = thread.get_ident()
+        lock = thread.allocate_lock()
         try:
-            return cls.instances[id]
-        except KeyError:
-            instance = object.__new__(cls,*a,**b)
-            cls.instances[id] = instance
-            return instance
+            lock.acquire()
+            try:
+                return cls.instances[id]
+            except KeyError:
+                instance = object.__new__(cls,*a,**b)
+                cls.instances[id] = instance
+                return instance
+        finally:
+            lock.release()
     def __init__(self,plugin=None,**defaults):
         settings = self.__getattr__(plugin)
         settings.installed = True
