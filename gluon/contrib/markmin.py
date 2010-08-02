@@ -335,16 +335,16 @@ def render(text,extra={},allowed={},sep='p'):
             html = META
         else:
             if b in extra:
-                if code[0]=='\n': code=code[1:]
-                if code[-1]=='\n': code=code[:-1]
+                if code[:1]=='\n': code=code[1:]
+                if code[-1:]=='\n': code=code[:-1]
                 html = extra[b](code)
-            elif code[0]=='\n' or code[-1]=='\n':
-                if code[0]=='\n': code=code[1:]
-                if code[-1]=='\n': code=code[:-1]
+            elif code[:1]=='\n' or code[-1:]=='\n':
+                if code[:1]=='\n': code=code[1:]
+                if code[-1:]=='\n': code=code[:-1]
                 html = '<pre><code class="%s">%s</code></pre>' % (b,cgi.escape(code))
             else:
-                if code[0]=='\n': code=code[1:]
-                if code[-1]=='\n': code=code[:-1]
+                if code[:1]=='\n': code=code[1:]
+                if code[-1:]=='\n': code=code[:-1]
                 html = '<code class="%s">%s</code>' % (b,cgi.escape(code))
         text = text+html+parts[i+1]
     return text
