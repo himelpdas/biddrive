@@ -28,7 +28,7 @@ class MemcacheClient(Client):
         dt = time_expire
         value = None
         obj = self.get(key)
-        if obj and obj[0] > time.time() - dt:
+        if obj and (dt == None or obj[0] > time.time() - dt):
             value = obj[1]
         elif f is None:
             if obj:
