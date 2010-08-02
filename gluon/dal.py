@@ -2426,7 +2426,7 @@ class Table(dict):
                 return rows[0]
             return None
         elif str(key).isdigit():
-            return self._db(self.id == key).select().first()
+            return self._db(self.id == key).select(limitby=(0,1)).first()
         elif key:
             return dict.__getitem__(self, str(key))
 

@@ -1587,7 +1587,7 @@ class Table(dict):
         if not key:
             return None
         elif str(key).isdigit():
-            return self._db(self.id == key).select().first()
+            return self._db(self.id == key).select(limitby=(0,1)).first()
         else:
             return dict.__getitem__(self, str(key))
 
