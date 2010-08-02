@@ -3627,22 +3627,95 @@ def prettydate(d,T=lambda x:x):
     else:
         return T('now')
 
-class PluginManager(dict):
+def test_thread_separation():
+    import thread, time
+    def f():
+        c=PluginManager()        
+        lock1.acquire()
+        lock2.acquire()
+        c.x=7
+        lock1.release()
+        lock2.release()
+    lock1=thread.allocate_lock()
+    lock2=thread.allocate_lock()
+    lock1.acquire()
+    thread.start_new_thread(f,())
+    a=PluginManager()
+    a.x=5
+    lock1.release()
+    lock2.acquire()
+    return a.x
+
+class PluginManager(object):
     """
-    This object stored parameters to configure plugins (if they need configuration)
-    In models/db.py instantiate the PluginManager
 
-    plugins=PluginManager()
+    Plugin Manager is similar to a storage object but it is a single level singleton
+    this means that multiple instances within the same thread share the same attributes
+    Its contructor is also special. The first argument is the name of the plugin you are defining.
+    The named arguments are parameters needed by the plugin with default values.
+    If the parameteres were previous defined, the old values are used.
 
-    then set the parameters required plugins, for example
+    For example:
 
-    plugins.comments.db=db
+    ### in some general configuration file:
+    >>> plugins = PluginManager()
+    >>> plugins.me.param1=3
 
-    (each plugin should have a documented set of required parameters)
+    ### within the plugin model
+    >>> _ = PluginManager('me',param1=5,param2=6,param3=7)
+
+    ### where the plugin is used
+    >>> print plugins.me.param1
+    3
+    >>> print plugins.me.param2
+    6
+    >>> plugins.me.param3 = 8
+    >>> print plugins.me.param3
+    8
+    
+    Here are some tests:
+
+    >>> a=PluginManager()
+    >>> a.x=6
+    >>> b=PluginManager()
+    >>> print b.x
+    6
+    >>> b.x=7
+    >>> print a.x
+    7
+    >>> a.y.z=8
+    >>> print b.y.z
+    8
+    >>> test_thread_separation()
+    5
+    >>> plugins=PluginManager('me',db='mydb')    
+    >>> print plugins.me.db
+    mydb
+    >>> print 'me' in plugins
+    True
     """
-    def __init__(self,env):
-        self['globals'] = env
+    instances = {}
+    def __new__(cls,*a,**b):
+        import threading
+        id = threading.currentThread()
+        try:
+            return cls.instances[id]
+        except KeyError:
+            instance = object.__new__(cls,*a,**b)
+            cls.instances[id] = instance
+            return instance
+    def __init__(self,plugin=None,**defaults):
+        settings = self.__getattr__(plugin)
+        [settings.update({key:value}) for key,value in defaults.items() if not key in settings]
     def __getattr__(self, key):
-        if not key in self:
-            self[key] = Storage()
-        return self[key]
+        if not key in self.__dict__:
+            self.__dict__[key] = Storage()
+        return self.__dict__[key]
+    def keys(self):
+        return self.__dict__.keys()
+    def __contains__(self,key):
+        return key in self.__dict__
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
