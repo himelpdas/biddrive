@@ -187,6 +187,7 @@ regex_image = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center)\]
 regex_video = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +video\]\]')
 regex_audio = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +audio\]\]')
 regex_link = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+)\]\]')
+regex_popup = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) popup\]\]')
 regex_auto = re.compile('(?<!["\w])(?P<k>\w+://[\w\.\-\?&%]+)',re.M)
 
 def render(text,extra={},allowed={},sep='p'):
@@ -306,6 +307,7 @@ def render(text,extra={},allowed={},sep='p'):
     text = regex_image.sub('<img src="\g<k>" alt="\g<t>" align="\g<p>" />', text)
     text = regex_video.sub('<video src="\g<k>" controls></video>', text)
     text = regex_audio.sub('<audio src="\g<k>" controls></audio>', text)
+    text = regex_link_popup.sub('<a href="\g<k>" target="_blank">\g<t></a>', text)
     text = regex_link.sub('<a href="\g<k>">\g<t></a>', text)
     text = regex_auto.sub('<a href="\g<k>">\g<k></a>', text)
     
