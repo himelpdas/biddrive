@@ -54,23 +54,23 @@ class RPXAccount(object):
         self.mappings = Storage()
 
         self.mappings.Facebook = lambda profile:\
-            dict(registration_id = profile["identifier"],
-                 username = profile["preferredUsername"],
-                 email = profile["email"],
-                 first_name = profile["name"]["givenName"],
-                 last_name = profile["name"]["familyName"])
+            dict(registration_id = profile.get("identifier",""),
+                 username = profile.get("preferredUsername",""),
+                 email = profile.get("email",""),
+                 first_name = profile.get("name","").get("givenName",""),
+                 last_name = profile.get("name","").get("familyName",""))
         self.mappings.Google = lambda profile:\
-            dict(registration_id=profile["identifier"],
-                 username=profile["preferredUsername"],
-                 email=profile["email"],
-                 first_name=profile["name"]["givenName"],
-                 last_name=profile["name"]["familyName"])
-        self.mappings.default = lambda profile:\
-            dict(registration_id=profile["identifier"],
-                 username=profile["preferredUsername"],
+            dict(registration_id=profile.get("identifier",""),
+                 username=profile.get("preferredUsername",""),
                  email=profile.get("email",""),
-                 first_name=profile["preferredUsername"],
-                 last_name='')
+                 first_name=profile.get("name","").get("givenName",""),
+                 last_name=profile.get("name","").get("familyName",""))
+        self.mappings.default = lambda profile:\
+            dict(registration_id=profile.get("identifier",""),
+                 username=profile.get("preferredUsername",""),
+                 email=profile.get("email",""),
+                 first_name=profile.get("preferredUsername",""),
+                 last_name='') 
 
     def get_user(self):
         request = self.request
