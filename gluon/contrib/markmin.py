@@ -187,7 +187,7 @@ regex_image = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center)\]
 regex_video = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +video\]\]')
 regex_audio = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +audio\]\]')
 regex_link = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+)\]\]')
-regex_popup = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) popup\]\]')
+regex_link_popup = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) popup\]\]')
 regex_auto = re.compile('(?<!["\w])(?P<k>\w+://[\w\.\-\?&%]+)',re.M)
 
 def render(text,extra={},allowed={},sep='p'):
