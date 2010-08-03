@@ -3678,9 +3678,12 @@ class PluginManager(object):
 
     >>> a=PluginManager()
     >>> a.x=6
-    >>> b=PluginManager()
+    >>> b=PluginManager('check')
     >>> print b.x
     6
+    >>> b=PluginManager() # reset settings
+    >>> print b.x
+    <Storage {}>
     >>> b.x=7
     >>> print a.x
     7
@@ -3712,6 +3715,8 @@ class PluginManager(object):
         finally:
             lock.release()
     def __init__(self,plugin=None,**defaults):
+        if not plugin:
+            self.__dict__.clear()
         settings = self.__getattr__(plugin)
         settings.installed = True
         [settings.update({key:value}) for key,value in defaults.items() if not key in settings]
