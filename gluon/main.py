@@ -809,6 +809,8 @@ def parse_url(request, environ):
     request.client = get_client(request.env)
     request.folder = os.path.join(request.env.web2py_path,
             'applications', request.application) + '/'
+    request.ajax = (request.env.http_x_requested_with and \
+                    request.env.http_x_requested_with.lower() == 'xmlhttprequest')
 
     # ##################################################
     # access the requested application
