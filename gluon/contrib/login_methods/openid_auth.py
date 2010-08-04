@@ -39,12 +39,8 @@ from gluon.storage import Storage, Messages
 from gluon.sql import Field, SQLField
 from gluon.validators import IS_NOT_EMPTY, IS_NOT_IN_DB
 
-
-# use openid from gluon.contrib (mcm)
-import gluon.contrib.openid as openid
-import sys, os
-# openid imports from itself and expects openid dir in sys.path
-sys.path.append(os.path.split(openid.__path__[0])[0])
+# requires python-openid
+import openid
 import openid.consumer.consumer
 from openid.association import Association
 from openid.store.interface import OpenIDStore
