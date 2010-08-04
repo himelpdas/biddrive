@@ -15,7 +15,7 @@
 __author__ = "Mariano Reingart (reingart@gmail.com)"
 __copyright__ = "Copyright (C) 2008/009 Mariano Reingart"
 __license__ = "LGPL 3.0"
-__version__ = "1.01a"
+__version__ = "1.02a"
 
 import xml.dom.minidom
 from decimal import Decimal
@@ -40,7 +40,7 @@ class Alias():
     def __call__(self, value):
         return self.py_type(value)
     def __repr__(self):
-        return "<alias '%s' for type '%s'>" % (self.xml_type, self.py_type)
+        return "<alias '%s' for '%s'>" % (self.xml_type, self.py_type)
         
 byte = Alias(str,'byte')
 short = Alias(int,'short')
@@ -62,6 +62,36 @@ TYPE_MARSHAL_FN = {datetime.datetime:datetime_m, datetime.date:date_m,}
 TYPE_UNMARSHAL_FN = {datetime.datetime:datetime_u, datetime.date:date_u,
                      bool:bool_u,
             }
+
+
+class OrderedDict(dict):
+    "Minimal ordered dictionary for xsd:sequences"
+    def __init__(self):
+        self.__keys = []
+        self.array = False
+    def __setitem__(self, key, value):
+        if key not in self.__keys:
+            self.__keys.append(key)
+        dict.__setitem__(self, key, value)
+    def __iter__(self):
+        return iter(self.__keys)
+    def keys(self):
+        return self.__keys
+    def items(self):
+        return [(key, self[key]) for key in self.__keys]
+    def update(self, other):
+        for k,v in other.items():
+            self[k] = v
+        if isinstance(other, OrderedDict):
+            self.array = other.array
+    def __str__(self):
+        return "*%s*" % dict.__str__(self)
+    def __repr__(self):
+        s= "*{%s}*" % ", ".join(['%s: %s' % (repr(k),repr(v)) for k,v in self.items()])
+        if self.array and False:
+            s = "[%s]" % s
+        return s
+
 
 class SimpleXMLElement(object):
     "Simple XML manipulation (simil PHP)"
@@ -294,11 +324,13 @@ class SimpleXMLElement(object):
                 children = node.children()
                 value = children and children.unmarshall(fn)
             else:
-                if str(node) or fn == str:
+                if fn is None: # xsd:anyType not unmarshalled
+                    value = node
+                elif str(node) or fn == str:
                     try:
                         # get special desserialization function (if any)
                         fn = TYPE_UNMARSHAL_FN.get(fn,fn) 
-                        value = fn(str(node))
+                        value = fn(unicode(node))
                     except (ValueError, TypeError), e:
                         raise ValueError("Tag: %s: %s" % (name, unicode(e)))
                 else:

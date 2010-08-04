@@ -3265,7 +3265,7 @@ class Service:
         example::
 
             service = Service(globals())
-            @service.soap('MyFunction',returns={'result':int,args={'a':int,'b':int,})
+            @service.soap('MyFunction',returns={'result':int},args={'a':int,'b':int,})
             def myfunction(a, b):
                 return a + b
             def call():
@@ -3274,17 +3274,12 @@ class Service:
         The call it with::
 
             from gluon.contrib.pysimplesoap.client import SoapClient
-            client = SoapClient(
-                    location = "http://localhost:8000/webservices/sample/call/soap",
-                    action = 'http://example.com/', # SOAPAction
-                    namespace = "http://example.com/sample.wsdl", 
-                    soap_ns='soap', # classic soap 1.1 dialect
-                    trace = True, # print http/xml request and response
-                    ns = False) # do not add target namespace prefix
+            client = SoapClient(wsdl="http://..../app/default/call/soap?WSDL")
             response = client.MyFunction(a=1,b=2)
-            print int(response.result)
+            return response['result']
 
-
+        Exposes online generated documentation and xml example messages at:
+        - http://..../app/default/call/soap
         """
 
         def _soap(f):

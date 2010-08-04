@@ -15,7 +15,7 @@
 __author__ = "Mariano Reingart (reingart@gmail.com)"
 __copyright__ = "Copyright (C) 2008 Mariano Reingart"
 __license__ = "LGPL 3.0"
-__version__ = "1.01a"
+__version__ = "1.02a"
 
 import urllib
 try:
@@ -29,7 +29,7 @@ except ImportError:
             return f.info(), f.read()
 
     
-from simplexml import SimpleXMLElement, TYPE_MAP
+from simplexml import SimpleXMLElement, TYPE_MAP, OrderedDict
 
 class SoapFault(RuntimeError):
     def __init__(self,faultcode,faultstring):
@@ -126,7 +126,7 @@ class SoapClient(object):
         self.xml_request = request.as_xml()
         self.xml_response = self.send(method, self.xml_request)
         response = SimpleXMLElement(self.xml_response, namespace=self.namespace)
-        if self.exceptions and ("%s:Fault" % self.__soap_ns) in response:
+        if self.exceptions and response("Fault", ns=soap_namespaces.values(), error=False):
             raise SoapFault(unicode(response.faultcode), unicode(response.faultstring))
         return response    
     
@@ -134,7 +134,10 @@ class SoapClient(object):
         "Send SOAP request using HTTP"
         if self.location == 'test': return
         location = "%s" % self.location #?op=%s" % (self.location, method)
-        soap_action = self.services and self.action or self.action+method
+        if self.services:
+            soap_action = self.action 
+        else:
+            soap_action = self.action+method
         headers={
                 'Content-type': 'text/xml; charset="UTF-8"',
                 'Content-length': str(len(xml)),
@@ -152,14 +155,12 @@ class SoapClient(object):
         if self.trace: 
             print 
             print '\n'.join(["%s: %s" % (k,v) for k,v in response.items()])
-            print content.decode("utf8","ignore")
+            print content#.decode("utf8","ignore")
             print "="*80
         return content
 
-    def wsdl_call(self, method, *args, **kwargs):
-        "Pre and post process SOAP call, input and output parameters using WSDL"
+    def get_operation(self, method):
         # try to find operation in wsdl file
-        soap_uri = soap_namespaces[self.__soap_ns]
         soap_ver = self.__soap_ns == 'soap12' and 'soap12' or 'soap11'
         if not self.service_port:
             for service_name, service in self.services.items():
@@ -171,24 +172,53 @@ class SoapClient(object):
                     raise RuntimeError("Cannot determine service in WSDL: "
                                        "SOAP version: %s" % soap_ver)
         else:
-            print self.services[self.service_port[0]]['ports'].keys(),self.service_port[1]
             port = self.services[self.service_port[0]]['ports'][self.service_port[1]]
+        self.location = port['location']
         operation = port['operations'].get(unicode(method))
         if not operation:
             raise RuntimeError("Operation %s not found in WSDL: "
                                "Service/Port Type: %s" %
                                (method, self.service_port))
+        return operation
+    
+    def wsdl_call(self, method, *args, **kwargs):
+        "Pre and post process SOAP call, input and output parameters using WSDL"
+        soap_uri = soap_namespaces[self.__soap_ns]
+        operation = self.get_operation(method)
         # get i/o type declarations:
         input = operation['input']
         output = operation['output']
         if operation['action']:
             self.action = operation['action']
-        self.location = port['location']
+        # sort parameters (same order as xsd:sequence)
+        def sort_dict(od, d):
+            ret = OrderedDict()
+            for k in od.keys():
+                v = d[k]
+                if isinstance(v, dict):
+                    v = sort_dict(od[k], v)
+                ret[str(k)] = v 
+            return ret
+        if input and kwargs:
+            params = sort_dict(input.values()[0], kwargs).items()
+        else:
+            params = kwargs and kwargs.items()
         # call remote procedure
-        response = self.call(method, *args, **kwargs)
+        response = self.call(method, *params)
         # parse results:
         resp = response('Body',ns=soap_uri).children().unmarshall(output)
         return resp and resp.values()[0] # pass Response tag children
+
+    def help(self, method):
+        "Return operation documentation and invocation/returned value example"
+        operation = self.get_operation(method)
+        return "%s(%s)\n -> %s:\n\n%s" % (
+            method, 
+            ", ".join("%s=%s" % (k,repr(v)) for k,v 
+                                 in operation['input'].values()[0].items()),
+            operation['output'].values()[0],
+            operation.get("documentation",""),
+            )
 
     def wsdl(self, url, debug=False):
         "Parse Web Service Description v1.1"
@@ -261,38 +291,35 @@ class SoapClient(object):
             for operation in binding.operation:
                 op_name = operation['name']
                 op = operation('operation',ns=soap_uris.values(), error=False)
-                action = op and op['soapAction'] or None
+                action = op and op['soapAction']
                 d = operations.setdefault(op_name, {})
                 bindings[binding_name]['operations'][op_name] = d
                 d.update({'name': op_name})
-                if action: #TODO: separe operation_binding from operation
-                     d["action"] = action
+                #if action: #TODO: separe operation_binding from operation
+                d["action"] = action
         
         def process_element(element_name, children):
             if debug: print "Processing element", element_name
             for tag in children:
-                d = {}
+                d = OrderedDict()
                 for e in tag.children():
                     t = e['type'].split(":")
                     if len(t)>1:
                         ns, type_name = t
                     else:
-                        ns, type_name = "xsd", t[0]
+                        ns, type_name = xsd_ns, t[0]
                     if ns==xsd_ns:
                         # look for the type, None == any
                         fn = REVERSE_TYPE_MAP.get(unicode(type_name), None)
                     else:
                         # complex type, postprocess later
-                        fn = elements.setdefault(unicode(type_name), {})
+                        fn = elements.setdefault(unicode(type_name), OrderedDict())
                     e_name = unicode(e['name'])
                     d[e_name] = fn
                     if e['maxOccurs']=="unbounded":
                         # it's an array... TODO: compound arrays?
-                        d = [d]
-                if isinstance(d, dict):
-                    elements.setdefault(element_name,{}).update(d)
-                else:
-                    elements[element_name] = d
+                        d.array = True
+                elements.setdefault(element_name, OrderedDict()).update(d)
 
         for element in wsdl.types("schema", ns=xsd_uri).children():
             if element.get_local_name() in ('element', 'complexType'):
@@ -306,7 +333,17 @@ class SoapClient(object):
                         children = children.children()
                 if children:
                     process_element(element_name, children)
+
+        def postprocess_element(elements):
+            for k,v in elements.items():
+                if isinstance(v, OrderedDict):
+                    if v.array:
+                        elements[k] = [v] # convert arrays to python lists
+                    if v!=elements: #TODO: fix recursive elements
+                        postprocess_element(v)
                     
+        postprocess_element(elements)
+
         for message in wsdl.message:
             if debug: print "Processing message", message['name']
             part = message('part', error=False)
@@ -371,9 +408,8 @@ if __name__=="__main__":
             client = SoapClient(wsdl="http://127.0.0.1:8000/webservices/sample/call/soap?WSDL",trace=True)
         response = client.Dummy()
         print 'dummy', response
-        if not '--wsdl' in sys.argv:
-            response = client.Echo(value='hola')
-            print 'echo', response.value
+        response = client.Echo(value='hola')
+        print 'echo', repr(response)
         response = client.AddIntegers(a=1,b=2)
         if not '--wsdl' in sys.argv:
             result = response.AddResult # manully convert returned type
@@ -411,9 +447,11 @@ if __name__=="__main__":
     
     if '--wsfe' in sys.argv:
         # Demo & Test (AFIP Electronic Invoice):
-        token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYW"
-        sign = "gXVvzVwRrfkUAZKoy8ZqA3AL8IZgVxUvOHQH6g1/XzZJns1/k0lUdJslkzW"
-        cuit = long(30199999)
+        ta_string=open("TA.xml").read()   # read access ticket (wsaa.py)
+        ta = SimpleXMLElement(ta_string)
+        token = str(ta.credentials.token)
+        sign = str(ta.credentials.sign)
+        cuit = long(20267565393)
         id = 1234
         cbte =199
         client = SoapClient(
@@ -479,7 +517,37 @@ if __name__=="__main__":
         print cbt['Cae']
         FEX_event = result['FEXEvents']
         print FEX_event['EventCode'], FEX_event['EventMsg']
-    
+
+    if '--wsdl-ctg' in sys.argv:
+        client = SoapClient(wsdl='https://fwshomo.afip.gov.ar/wsctg/services/CTGService?wsdl',
+                            trace=True, ns = "ctg")
+        results = client.dummy()
+        print results
+        print results['DummyResponse']['appserver']
+        print results['DummyResponse']['dbserver']
+        print results['DummyResponse']['authserver']
+        ta_string=open("TA.xml").read()   # read access ticket (wsaa.py)
+        ta = SimpleXMLElement(ta_string)
+        token = str(ta.credentials.token)
+        sign = str(ta.credentials.sign)
+        print client.help("obtenerProvincias")
+        response = client.obtenerProvincias(auth={"token":token, "sign":sign, "cuitRepresentado":20267565393})
+        print "response=",response
+        for ret in response:
+            print ret['return']['codigoProvincia'], ret['return']['descripcionProvincia'].encode("latin1")
+        prueba = dict(numeroCartaDePorte=512345678, codigoEspecie=23,
+                cuitRemitenteComercial=20267565393, cuitDestino=20267565393, cuitDestinatario=20267565393, 
+                codigoLocalidadOrigen=3058, codigoLocalidadDestino=3059, 
+                codigoCosecha='0910', pesoNetoCarga=1000, cantHoras=1, 
+                patenteVehiculo='CZO985', cuitTransportista=20267565393,
+                numeroCTG="43816783", transaccion='10000001681', observaciones='',
+            )
+
+        response = client.solicitarCTG( 
+            auth={"token": token, "sign": sign, "cuitRepresentado": 20267565393},
+            solicitarCTGRequest= prueba)
+
+        print response['return']['numeroCTG']
 
     ##print parse_proxy(None)
     ##print parse_proxy("host:1234")
