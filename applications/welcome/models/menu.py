@@ -6,6 +6,9 @@
 
 response.title = request.application
 response.subtitle = T('customize me!')
+response.meta.author = 'you'
+response.meta.description = 'describe your app'
+response.meta.keywords = 'bla bla bla'
 
 ##########################################
 ## this is the main application menu

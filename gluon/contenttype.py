@@ -13,6 +13,7 @@ database version 0.70.
 __all__ = ['contenttype']
 
 CONTENT_TYPE = {
+    '.load': 'text/html',
     '.123': 'application/vnd.lotus-1-2-3',
     '.3ds': 'image/x-3ds',
     '.3g2': 'video/3gpp',
