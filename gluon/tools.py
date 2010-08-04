@@ -805,6 +805,8 @@ class Auth(object):
         self.settings.mailer = None
         self.settings.login_captcha = None
         self.settings.register_captcha = None
+        self.settings.retrieve_username_captcha = None
+        self.settings.retrieve_password_captcha = None
         self.settings.captcha = None
         self.settings.expiration = 3600         # one day
         self.settings.long_expiration = 3600*30 # one month
@@ -1678,7 +1680,8 @@ class Auth(object):
         request = self.environment.request
         response = self.environment.response
         session = self.environment.session
-
+        captcha = self.settings.retrieve_username_captcha or \
+                (self.settings.retrieve_username_captcha!=False and self.settings.captcha)
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
@@ -1703,6 +1706,10 @@ class Auth(object):
                        delete_label=self.messages.delete_label,
                        formstyle=self.settings.formstyle
                        )
+        if captcha:
+            form[0].insert(-1, TR(LABEL(captcha.label),
+                                      captcha,captcha.comment,
+                                      _id = 'capctha__row'))
         if form.accepts(request.post_vars, session,
                         formname='retrieve_username', dbio=False,
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
@@ -1895,6 +1902,8 @@ class Auth(object):
         request = self.environment.request
         response = self.environment.response
         session = self.environment.session
+        captcha = self.settings.retrieve_password_captcha or \
+                (self.settings.retrieve_password_captcha!=False and self.settings.captcha)
 
         if next == DEFAULT:
             next = request.get_vars._next \
@@ -1921,6 +1930,10 @@ class Auth(object):
                        delete_label=self.messages.delete_label,
                        formstyle=self.settings.formstyle
                        )
+        if captcha:
+            form[0].insert(-1, TR(LABEL(captcha.label),
+                                      captcha,captcha.comment,
+                                      _id = 'capctha__row'))
         if form.accepts(request.post_vars, session,
                         formname='reset_password', dbio=False,
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
