@@ -158,7 +158,7 @@ def serve_controller(request, response, session):
             response._view_environment[key] = page[key]
         run_view_in(response._view_environment)
         page = response.body.getvalue()
-    raise HTTP(200, page, **response.headers)
+    raise HTTP(response.status, page, **response.headers)
 
 
 def start_response_aux(status, headers, exc_info, response=None):
