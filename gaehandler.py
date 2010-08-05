@@ -5,9 +5,15 @@
 # Configuration parameters for Google App Engine 
 ##############################################################################
 KEEP_CACHED = False    # request a dummy url every 10secs to force caching app
-LOG_STATS = False      # log statistics
+LOG_STATS = False      # web2py level log statistics
+APPSTATS = True         # GAE level usage statistics and profiling
 DEBUG = False          # debug mode
 AUTO_RETRY = True      # force gae to retry commit on failure
+#
+# Read more about APPSTATS here
+#   http://googleappengine.blogspot.com/2010/03/easy-performance-profiling-with.html
+# can be accessed from:
+#   http://localhost:8080/_ah/stats
 ##############################################################################
 # All tricks in this file developed by Robin Bhattacharyya 
 ##############################################################################
@@ -31,6 +37,8 @@ sys.modules['cPickle'] = sys.modules['pickle']
 
 from gluon.settings import settings
 from google.appengine.api.labs import taskqueue
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp.util import run_wsgi_app
 
 
 if os.environ.get('SERVER_SOFTWARE', '').startswith('Devel'):
@@ -85,8 +93,10 @@ if AUTO_RETRY:
 
 def main():
     """Run the wsgi app"""
-    wsgiref.handlers.CGIHandler().run(wsgiapp)
-
+    if APPSTATS:
+        run_wsgi_app(wsgiapp)
+    else:
+        wsgiref.handlers.CGIHandler().run(wsgiapp)
 
 if __name__ == '__main__':
     main()

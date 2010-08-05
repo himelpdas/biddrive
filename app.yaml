@@ -5,6 +5,9 @@ runtime: python
 
 handlers:
 
+- url: /stats.*
+  script: $PYTHON_LIB/google/appengine/ext/appstats/ui.py
+ 
 - url: /(?P<a>.+?)/static/(?P<b>.+)
   static_files: applications/\1/static/\2
   upload: applications/(.+?)/static/(.+)
@@ -23,6 +26,11 @@ handlers:
   script: gaehandler.py  
   secure: optional
 
+admin_console:
+  pages:
+  - name: Appstats
+    url: /_ah/stats
+   
 skip_files: |
  ^(.*/)?(
  (app\.yaml)|

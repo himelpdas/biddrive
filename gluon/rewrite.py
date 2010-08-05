@@ -66,7 +66,7 @@ def load(routes='routes.py'):
         raise e
 
     params.routes_in=[]
-    if 'routes_in' in symbols:
+    if 'routes_in' in symbols:        
         for (k, v) in symbols['routes_in']:
             params.routes_in.append(compile_re(k, v))
 
