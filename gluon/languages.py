@@ -114,6 +114,9 @@ class lazyT(object):
         self.s = symbols
         self.T = T
 
+    def __repr__(self):
+        return "<lazyT %s>" % (repr(str(self.m)), )
+
     def __str__(self):
         return self.T.translate(self.m, self.s)
 

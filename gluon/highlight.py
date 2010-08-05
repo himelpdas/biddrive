@@ -254,6 +254,7 @@ def highlight(
     link='/examples/globals/vars/',
     counter=1,
     styles={},
+    highlight_line=None,
     attributes={},
     ):
     if not 'CODE' in styles:
@@ -282,20 +283,38 @@ def highlight(
     """
     else:
         linenumbers_style = styles['LINENUMBERS']
+    if not 'LINEHIGHLIGHT' in styles:
+        linehighlight_style = "background-color: #EBDDE2;"
+    else:
+        linehighlight_style = styles['LINEHIGHLIGHT']
+    
     if language and language.upper() in ['PYTHON', 'C', 'CPP', 'HTML',
             'WEB2PY']:
         code = Highlighter(language, link, styles).highlight(code)
     else:
         code = cgi.escape(code)
     lines = code.split('\n')
+
     if counter is None:
-        numbers = '<br/>' * len(lines)
+        linenumbers = [''] * len(lines)
     elif isinstance(counter, str):
-        numbers = cgi.escape(counter) + '<br/>' * len(lines)
+        linenumbers = [cgi.escape(counter)] * len(lines)
     else:
-        numbers = '<br/>'.join([str(i + counter) + '.' for i in
-                               xrange(len(lines))])
+        linenumbers = [str(i + counter) + '.' for i in
+                               xrange(len(lines))]
+
+    if highlight_line:
+        if counter and not isinstance(counter, str):
+            lineno = highlight_line - counter
+        else:
+            lineno = highlight_line
+        if lineno<len(lines):
+            lines[lineno] = '<div style="%s">%s</div>' % (linehighlight_style, lines[lineno])
+            linenumbers[lineno] = '<div style="%s">%s</div>' % (linehighlight_style, linenumbers[lineno])
+        
     code = '<br/>'.join(lines)
+    numbers = '<br/>'.join(linenumbers)
+
     items = attributes.items()
     fa = ' '.join([key[1:].lower() for (key, value) in items if key[:1]
                    == '_' and value == None] + ['%s="%s"'

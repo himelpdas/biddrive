@@ -1019,6 +1019,7 @@ def ticket():
                 ticket=ticket,
                 output=e.output,
                 traceback=(e.traceback and TRACEBACK(e.traceback)),
+                snapshot=e.snapshot,
                 code=e.code,
                 layer=e.layer)
 

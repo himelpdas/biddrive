@@ -114,8 +114,13 @@ class RestrictedError:
         self.output = output
         if layer:
             self.traceback = traceback.format_exc()
+            try:
+                self.snapshot = snapshot(context=10,code=code,environment=environment)
+            except:
+                self.snapshot = {}
         else:
             self.traceback = '(no error)'
+            self.snapshot = {}
         self.environment = environment
 
     def log(self, request):
@@ -130,6 +135,7 @@ class RestrictedError:
                 'code': str(self.code),
                 'output': str(self.output),
                 'traceback': str(self.traceback),
+                'snapshot': self.snapshot,
                 }
             fmt = '%Y-%m-%d.%H-%M-%S'
             f = '%s.%s.%s' % (request.client.replace(':', '_'),
@@ -155,6 +161,8 @@ class RestrictedError:
         self.code = d['code']
         self.output = d['output']
         self.traceback = d['traceback']
+        self.snapshot = d['snapshot']
+
 
 def compile2(code,layer):
     """
@@ -185,3 +193,89 @@ def restricted(code, environment={}, layer='Unknown'):
             sys.excepthook(etype, evalue, tb)
         raise RestrictedError(layer, code, '', environment)
 
+def snapshot(info=None, context=5, code=None, environment=None):
+    """Return a dict describing a given traceback (based on cgitb.text)."""
+    import os, types, time, traceback, linecache, inspect, pydoc, cgitb
+    
+    # if no exception info given, get current:
+    etype, evalue, etb = info or sys.exc_info()
+
+    if type(etype) is types.ClassType:
+        etype = etype.__name__
+    
+    # create a snapshot dict with some basic information
+    s = {}    
+    s['pyver'] = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
+    s['date'] = time.ctime(time.time())
+    
+    # start to process frames
+    records = inspect.getinnerframes(etb, context)
+    s['frames'] = []
+    for frame, file, lnum, func, lines, index in records:
+        file = file and os.path.abspath(file) or '?'
+        args, varargs, varkw, locals = inspect.getargvalues(frame)
+        call = ''
+        if func != '?':
+            call = inspect.formatargvalues(args, varargs, varkw, locals,
+                    formatvalue=lambda value: '=' + pydoc.text.repr(value))
+
+        # basic frame information
+        f = {'file': file, 'func': func, 'call': call, 'lines': {}, 'lnum': lnum}
+
+        highlight = {}
+        def reader(lnum=[lnum]):
+            highlight[lnum[0]] = 1
+            try: return linecache.getline(file, lnum[0])
+            finally: lnum[0] += 1
+        vars = cgitb.scanvars(reader, frame, locals)
+        
+        # if it is a view, replace with generated code
+        if file.endswith('html'):
+            lmin = lnum>context and (lnum-context) or 0
+            lmax = lnum+context
+            lines = code.split("\n")[lmin:lmax]
+            index = min(context, lnum) - 1
+
+        if index is not None:
+            i = lnum - index
+            for line in lines:
+                f['lines'][i] = line.rstrip()
+                i += 1
+
+        # dump local variables (referenced in current line only)
+        f['dump'] = {}
+        for name, where, value in vars:
+            if name in f['dump']: continue
+            if value is not cgitb.__UNDEF__:
+                if where == 'global': name = 'global ' + name
+                elif where != 'local': name = where + name.split('.')[-1]
+                f['dump'][name] = pydoc.text.repr(value)
+            else:
+                f['dump'][name] = 'undefined'
+        
+        s['frames'].append(f)
+
+    # add exception type, value and attributes
+    s['etype'] = str(etype)
+    s['evalue'] = str(evalue)
+    s['exception'] = {}
+    if isinstance(evalue, BaseException):
+        for name in dir(evalue):
+            # prevent py26 DeprecatedWarning:
+            if name!='message' or sys.version_info<(2.6): 
+                value = pydoc.text.repr(getattr(evalue, name))
+                s['exception'][name] = value
+
+    # add all local values (of last frame) to the snapshot 
+    s['locals'] = {}
+    for name, value in locals.items():
+        s['locals'][name] = pydoc.text.repr(value)
+
+    # add web2py environment variables
+    for k,v in environment.items():
+        if k in ('request', 'response', 'session'):
+            s[k] = {}
+            for name, value in v.items():
+                s[k][name] = pydoc.text.repr(value)
+
+    return s

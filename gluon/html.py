@@ -1095,7 +1095,7 @@ class CODE(DIV):
     Example::
 
         {{=CODE(\"print 'hello world'\", language='python', link=None,
-            counter=1, styles={})}}
+            counter=1, styles={}, highlight_line=None)}}
 
 
     supported languages are \"python\", \"html_plain\", \"c\", \"cpp\",
@@ -1114,6 +1114,7 @@ class CODE(DIV):
         language = self['language'] or 'PYTHON'
         link = self['link']
         counter = self.attributes.get('counter', 1)
+        highlight_line = self.attributes.get('highlight_line', None)
         styles = self['styles'] or {}
         return highlight(
             ''.join(self.components),
@@ -1122,6 +1123,7 @@ class CODE(DIV):
             counter=counter,
             styles=styles,
             attributes=self.attributes,
+            highlight_line=highlight_line,
             )
 
 
