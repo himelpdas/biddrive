@@ -5,8 +5,9 @@ runtime: python
 
 handlers:
 
-- url: /stats.*
+- url: /_ah/stats.*
   script: $PYTHON_LIB/google/appengine/ext/appstats/ui.py
+  login: admin
  
 - url: /(?P<a>.+?)/static/(?P<b>.+)
   static_files: applications/\1/static/\2
@@ -14,7 +15,7 @@ handlers:
   secure: optional
   expiration: "90d"
 
-- url: /admin-gae/.*
+- url: /_ah/admin/.*
   script: $PYTHON_LIB/google/appengine/ext/admin
   login: admin
  
