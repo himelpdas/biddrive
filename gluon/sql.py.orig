@@ -1587,9 +1587,27 @@ class Table(dict):
         if not key:
             return None
         elif str(key).isdigit():
-            return self._db(self.id == key).select().first()
+            return self._db(self.id == key).select(limitby=(0,1)).first()
         else:
             return dict.__getitem__(self, str(key))
+
+    def __call__(self, key=None, **kwargs):
+        if key:
+            if not str(key).isdigit():
+                record = None
+            elif isinstance(key, Query):
+                record = self._db(key).select(limitby=(0,1)).first()
+            else:
+                record = self._db(self.id == key).select(limitby=(0,1)).first()
+            if record:
+                for k,v in kwargs.items():
+                    if record[k]!=v: return None
+            return record
+        elif kwargs:
+            query = reduce(lambda a,b:a&b,[self[k]==v for k,v in kwargs.items()])
+            return self._db(query).select(limitby=(0,1)).first()            
+        else:
+            return None
 
     def __setitem__(self, key, value):
         if str(key).isdigit():
@@ -1665,7 +1683,7 @@ class Table(dict):
             else:
                 ftype = self._db._translator[field.type]\
                      % dict(length=field.length)
-            if not field.type[:10] in ['id', 'reference ']:
+            if field.type[:10] != 'id':
                 if field.notnull:
                     ftype += ' NOT NULL'
                 if field.unique:
@@ -1783,9 +1801,13 @@ class Table(dict):
         logfile,
         fake_migrate=False,
         ):
-        keys_old = [x.lower() for x in sql_fields_old]
-        keys = [x.lower() for x in sql_fields]
-        for key in keys_old:
+        ### make sure all field names are lower case to avoid conflicts
+        sql_fields = dict((k.lower(),v) for k,v in sql_fields.items())
+        sql_fields_old = dict((k.lower(),v) for k,v in sql_fields_old.items())
+        sql_fields_aux = dict((k.lower(),v) for k,v in sql_fields_aux.items())
+
+        keys = sql_fields.keys()
+        for key in sql_fields_old:
             if not key in keys:
                 keys.append(key)
         if self._db._dbname == 'mssql':
@@ -1793,12 +1815,12 @@ class Table(dict):
         else:
             new_add = ', ADD '
         for key in keys:
-            if not key in keys_old:
+            if not key in sql_fields_old:
                 query = ['ALTER TABLE %s ADD %s %s;' % \
                          (self._tablename, key, sql_fields_aux[key].replace(', ', new_add))]
             elif self._db._dbname == 'sqlite':
                 query = None
-            elif not key in keys:
+            elif not key in sql_fields:
                 if not self._db._dbname in ('firebird',):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
                 else:
@@ -1827,7 +1849,6 @@ class Table(dict):
                              'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
                              'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
                              'ALTER TABLE %s DROP %s__tmp;' % (t, key)]
-
             else:
                 query = None
 
@@ -1914,7 +1935,7 @@ class Table(dict):
                 vs.append(sql_represent(field.default, ft, fd, self._db._db_codec))
             elif field.compute != None:
                 fs.append(fieldname)
-                vs.append(sql_represent(field.compute(fields), ft, fd, self._db._db_codec))
+                vs.append(sql_represent(field.compute(Row(fields)), ft, fd, self._db._db_codec))
             elif field.required is True:
                 raise SyntaxError,'Table: missing required field: %s'%field
         sql_f = ', '.join(fs)
@@ -2655,8 +2676,8 @@ class Field(Expression):
         if length == None:
             length = 512
         self.type = type  # 'string', 'integer'
-        self.length = length  # the length of the string
-        self.default = default  # default value for field
+        self.length = length # the length of the string
+        self.default = default==None and update or default
         self.required = required  # is this field required
         self.ondelete = ondelete.upper()  # this is for reference fields only
         self.notnull = notnull
@@ -3239,10 +3260,8 @@ excluded + tables_to_merge.keys()])
                     colset[fieldname] = value
                 if field.type == 'id':
                     id = colset[field.name]
-                    colset.update_record = lambda c = colset, t = table, \
-                        i = id, **a: update_record(c, t, i, a)
-                    colset.delete_record = lambda t = table, i = id: \
-                        t._db(t.id==i).delete()
+                    colset.update_record = lambda _ = (colset, table, id), **a: update_record(_, a)
+                    colset.delete_record = lambda t = table, i = id: t._db(t.id==i).delete()
                     if SetClass:
                         for (referee_table, referee_name) in \
                                 table._referenced_by:
@@ -3307,7 +3326,7 @@ excluded + tables_to_merge.keys()])
                                        for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].update != None]))
-        update_fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
+        update_fields.update(dict([(fieldname, table[fieldname].compute(Row(update_fields))) \
                                        for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].compute != None]))
@@ -3348,15 +3367,16 @@ excluded + tables_to_merge.keys()])
             return
         for record in self.select(*[table[f] for f in fields]):
             for fieldname in fields:
+                field = table[fieldname]
                 oldname = record.get(fieldname, None)
                 if not oldname:
                     continue
                 if upload_fields and oldname == upload_fields[fieldname]:
                     continue
-                uploadfolder = table[fieldname].uploadfolder
+                uploadfolder = field.uploadfolder
                 if not uploadfolder:
                     uploadfolder = os.path.join(self._db._folder, '..', 'uploads')                
-                if self.uploadseparate:
+                if field.uploadseparate:
                     items = oldname.split('.')
                     uploadfolder = os.path.join(uploadfolder,
                                                 "%s.%s" % (items[0], items[1]),
@@ -3365,7 +3385,8 @@ excluded + tables_to_merge.keys()])
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)
 
-def update_record(colset, table, id, a={}):
+def update_record(pack, a={}):
+    (colset, table, id) = pack
     b = a or dict(colset)
     c = dict([(k,v) for (k,v) in b.items() \
                   if k in table.fields and not k=='id'])
@@ -3410,7 +3431,7 @@ class Rows(object):
                 for attribute in attributes:
                     if attribute[0] != '_':
                         method = getattr(virtualfields,attribute)
-                        if callable(method) and len(method.im_func.func_code.co_varnames)==1:
+                        if callable(method) and method.im_func.func_code.co_argcount:
                             box[attribute]=method()
         return self
 
@@ -3449,7 +3470,7 @@ class Rows(object):
 
     def find(self,f):
         """
-        returns a set of rows of sorted elements (not filtered in place)
+        returns a new Rows object, a subset of the original object, filtered by the function f
         """
         if not self.records:
             return Rows(self.db, [], self.colnames)
@@ -3462,7 +3483,8 @@ class Rows(object):
 
     def exclude(self,f):
         """
-        returns a set of rows of sorted elements (not filtered in place)
+        removes elements from the calling Rows object, filtered by the function f, 
+        and returns a new Rows object containing the removed elements
         """
         if not self.records:
             return Rows(self.db, [], self.colnames)
@@ -3874,13 +3896,18 @@ def DAL(uri='sqlite:memory:',
         import gluon.contrib.gql
         return gluon.contrib.gql.GQLDB()
     else:
+        uris = isinstance(uri,(list,tuple)) and uri or [uri]
         for k in range(5):
-            try:
-                return SQLDB(uri, pool_size=pool_size, folder=folder,
-                             db_codec=db_codec, check_reserved=check_reserved,
-                             migrate=migrate, fake_migrate=fake_migrate)
-            except:
-                time.sleep(1)
+            for uri in uris:
+                try:
+                    return SQLDB(uri, pool_size=pool_size, folder=folder,
+                                 db_codec=db_codec, check_reserved=check_reserved,
+                                 migrate=migrate, fake_migrate=fake_migrate)
+                except SyntaxError:
+                    raise 
+                except:
+                    if uri==uris[-1]: 
+                        time.sleep(1)
         raise RuntimeError, "Failure to connect to DB. Tried 5 times"
 
 if __name__ == '__main__':
