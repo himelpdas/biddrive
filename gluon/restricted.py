@@ -161,7 +161,7 @@ class RestrictedError:
         self.code = d['code']
         self.output = d['output']
         self.traceback = d['traceback']
-        self.snapshot = d['snapshot']
+        self.snapshot = d.get('snapshot')
 
 
 def compile2(code,layer):
