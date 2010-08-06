@@ -6,7 +6,7 @@
 
     Allowed using OpenID login together with web2py built-in login.
 
-    To support OpenID login, please look down the description of the class OpenIDAuth.
+    By default, to support OpenID login, put this in your db.py
 
     >>> from gluon.contrib.login_methods.openid_auth import OpenIDAuth
     >>> auth.settings.login_form = OpenIDAuth(auth)
@@ -14,10 +14,11 @@
     To show OpenID list in user profile, you can add the following code
     before the end of function user() of your_app/controllers/default.py
 
-    +     if (request.args and request.args(0) == "profile"
-    +        and deployment_settings.get_auth_openid()):
-    +            form = DIV(form, openid_login_form.list_user_openids())
+    +     if (request.args and request.args(0) == "profile"):
+    +         form = DIV(form, openid_login_form.list_user_openids())
         return dict(form=form, login_form=login_form, register_form=register_form, self_registration=self_registration)
+
+    More detail in the description of the class OpenIDAuth.
 
     Requirements:
         python-openid version 2.2.5 or later
@@ -39,14 +40,15 @@ from gluon.storage import Storage, Messages
 from gluon.sql import Field, SQLField
 from gluon.validators import IS_NOT_EMPTY, IS_NOT_IN_DB
 
-# requires python-openid
-import openid
-import openid.consumer.consumer
-from openid.association import Association
-from openid.store.interface import OpenIDStore
-from openid.extensions.sreg import SRegRequest, SRegResponse
-from openid.store import nonce
-from openid.consumer.discover import DiscoveryFailure
+try:
+    import openid.consumer.consumer
+    from openid.association import Association
+    from openid.store.interface import OpenIDStore
+    from openid.extensions.sreg import SRegRequest, SRegResponse
+    from openid.store import nonce
+    from openid.consumer.discover import DiscoveryFailure
+except ImportError, err:
+    raise ImportError("OpenIDAuth requires python-openid package")
 
 DEFAULT = lambda: None
 
@@ -57,8 +59,8 @@ class OpenIDAuth(object):
     It supports the logout_url, implementing the get_user and login_form
     for cas usage of gluon.tools.Auth.
 
-    It also implements the ExtendedLoginForm interface and allows the OpenIDAuth
-    login combined with the standard logon/register procedure.
+    It also uses the ExtendedLoginForm to allow the OpenIDAuth login_methods
+    combined with the standard logon/register procedure.
 
     It uses OpenID Consumer when render the form and begins the OpenID
     authentication.
@@ -79,7 +81,6 @@ class OpenIDAuth(object):
                                             signals=['oid','janrain_nonce'])
 
     auth.settings.login_form = extended_login_form
-
     """
 
     def __init__(self, auth):
@@ -114,7 +115,7 @@ class OpenIDAuth(object):
         messages.comment_openid_signin = 'What is OpenID?'
         messages.comment_openid_help_title = 'Start using your OpenID'
         messages.comment_openid_help_url = 'http://openid.net/get-an-openid/start-using-your-openid/'
-        messages.flash_openid_fail_discover = 'Failed to discover OpenID service. Check your OpenID again?'
+        messages.openid_fail_discover = 'Failed to discover OpenID service. Check your OpenID or "More about OpenID"?'
         messages.flash_openid_expired = 'OpenID expired. Please login or authenticate OpenID again. Sorry for the inconvenient.'
         messages.flash_openid_associated = 'OpenID associated'
         messages.flash_associate_openid = 'Please login or register an account for this OpenID.'
@@ -216,6 +217,9 @@ class OpenIDAuth(object):
 
                 # Get existed OpenID user
                 user = db(self.table_user.id==alt_login.user).select().first()
+                if user:
+                    if self.environment.session.w2popenid:
+                        del(self.environment.session.w2popenid)
                 if 'username' in self.table_user.fields():
                     username = 'username'
                 elif 'email' in self.table_user.fields():
@@ -228,7 +232,7 @@ class OpenIDAuth(object):
         """
         Get the matched OpenID for given 
         """
-        query = db.alt_logins.username == oid and db.alt_logins.type == type_
+        query = ((db.alt_logins.username == oid) & (db.alt_logins.type == type_))
         alt_login = db(query).select().first() # Get the OpenID record
         return alt_login
 
@@ -290,7 +294,7 @@ class OpenIDAuth(object):
         Render the form for OpenID login
         """
         def warning_openid_fail(session):
-            session.warning = messages.flash_openid_fail_discover
+            session.warning = messages.openid_fail_discover
 
         style = style or """
 background-attachment: scroll;
@@ -312,7 +316,7 @@ width: 400px;
             hidden_next_input = INPUT(_type="hidden", _name="_next", _value=profile_url)
         form = FORM(openid_field_label or self.messages.label_alt_login_username,
                     INPUT(_type="input", _name="oid",
-                          requires=IS_NOT_EMPTY(),
+                          requires=IS_NOT_EMPTY(error_message=messages.openid_fail_discover),
                           _style=style),
                     hidden_next_input,
                     INPUT(_type="submit", _value=submit_button or messages.submit_button),
