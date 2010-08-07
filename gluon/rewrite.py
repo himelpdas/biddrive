@@ -44,26 +44,26 @@ for key, value in params_default.items():
 params = params_base
 
 def compile_re(k, v):
-    print >> sys.stderr, "\ncompile-0 k=%s v=%s" % (k,v)
+    #print >> sys.stderr, "\ncompile-0 k=%s v=%s" % (k,v)
     if not k[0] == '^':
         k = '^%s' % k
     if not k[-1] == '$':
         k = '%s$' % k
-    print >> sys.stderr, "compile-2 k=%s v=%s" % (k,v)
+    #print >> sys.stderr, "compile-2 k=%s v=%s" % (k,v)
     if k.find(':') < 0:
         k = '^.*?:%s' % k[1:]
-    print >> sys.stderr, "compile-3 k=%s v=%s" % (k,v)
+    #print >> sys.stderr, "compile-3 k=%s v=%s" % (k,v)
     if k.find('://') < 0:
         i = k.find(':/')
         k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
-    print >> sys.stderr, "compile-4 k=%s v=%s" % (k,v)
+    #print >> sys.stderr, "compile-4 k=%s v=%s" % (k,v)
     for item in regex_anything.findall(k):
         k = k.replace(item, '(?P<anything>.*)')
     for item in regex_at.findall(k):
         k = k.replace(item, '(?P<%s>[\\w_]+)' % item[1:])
     for item in regex_at.findall(v):
         v = v.replace(item, '\\g<%s>' % item[1:])
-    print >> sys.stderr, "compile-x k=%s v=%s" % (k,v)
+    #print >> sys.stderr, "compile-x k=%s v=%s" % (k,v)
     return (re.compile(k, re.DOTALL), v)
 
 def load(routes='routes.py', app=None):
@@ -130,14 +130,14 @@ def filter_uri(e, regexes, default=None):
         (e['REMOTE_ADDR'],
          e.get('WSGI_URL_SCHEME', 'http').lower(), host,
          e.get('REQUEST_METHOD', 'get').lower(), path)
-    print >> sys.stderr, "fu key=%s" % key
+    #print >> sys.stderr, "fu key=%s" % key
     for (regex, value) in regexes:
-        print >> sys.stderr, "fu re=%s value=%s" % (regex.pattern, value)
+        #print >> sys.stderr, "fu re=%s value=%s" % (regex.pattern, value)
         if regex.match(key):
-            print >> sys.stderr, "fu match value=%s" % value
-            print >> sys.stderr, "fu match ret=%s" % regex.sub(value, key)
+            #print >> sys.stderr, "fu match value=%s" % value
+            #print >> sys.stderr, "fu match ret=%s" % regex.sub(value, key)
             return (regex.sub(value, key), query, original_uri)
-    print >> sys.stderr, "fu nomatch"
+    #print >> sys.stderr, "fu nomatch"
     return (default, query, original_uri)
 
 def select(e=None):
@@ -149,7 +149,7 @@ def select(e=None):
     params = params_base
     app = None
     if e and params.routes_app:
-        print >> sys.stderr, "select e=%s" % e
+        #print >> sys.stderr, "select e=%s" % e
         (app, q, u) = filter_uri(e, params.routes_app)
         params = params_apps.get(app, params_base)
     print >> sys.stderr, "select app=%s" % app
