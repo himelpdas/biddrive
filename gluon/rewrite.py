@@ -11,6 +11,7 @@ import os
 import re
 import logging
 import traceback
+import sys # JKL DEBUG
 
 from storage import Storage
 from http import HTTP
@@ -19,8 +20,13 @@ regex_at = re.compile('(?<!\\\\)\$[a-zA-Z]\w*')
 regex_anything = re.compile('(?<!\\\\)\$anything')
 regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
-params = Storage()
+params_default = Storage()
+params = params_default
 
+params.default_application = "init"
+params.default_controller = "default"
+params.default_function = "index"
+params.routes_app = []
 params.routes_in = []
 params.routes_out = []
 params.routes_onerror = []
@@ -31,79 +37,128 @@ params.error_message_custom = '<html><body><h1>%s</h1></body></html>'
 params.error_message_ticket = \
     '<html><body><h1>Internal error</h1>Ticket issued: <a href="/admin/default/ticket/%(ticket)s" target="_blank">%(ticket)s</a></body><!-- this is junk text else IE does not display the page: '+('x'*512)+' //--></html>'
 
+params_apps = dict()
+params_base = Storage()
+for key, value in params_default.items():
+    params_base[key] = value
+params = params_base
+
 def compile_re(k, v):
+    print >> sys.stderr, "\ncompile-0 k=%s v=%s" % (k,v)
     if not k[0] == '^':
         k = '^%s' % k
     if not k[-1] == '$':
         k = '%s$' % k
+    print >> sys.stderr, "compile-2 k=%s v=%s" % (k,v)
     if k.find(':') < 0:
         k = '^.*?:%s' % k[1:]
+    print >> sys.stderr, "compile-3 k=%s v=%s" % (k,v)
     if k.find('://') < 0:
         i = k.find(':/')
         k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
+    print >> sys.stderr, "compile-4 k=%s v=%s" % (k,v)
     for item in regex_anything.findall(k):
         k = k.replace(item, '(?P<anything>.*)')
     for item in regex_at.findall(k):
         k = k.replace(item, '(?P<%s>[\\w_]+)' % item[1:])
     for item in regex_at.findall(v):
         v = v.replace(item, '\\g<%s>' % item[1:])
+    print >> sys.stderr, "compile-x k=%s v=%s" % (k,v)
     return (re.compile(k, re.DOTALL), v)
 
-def load(routes='routes.py'):
+def load(routes='routes.py', app=None):
+    """
+    load: read and parse routes.py
+    (called from main.py at web2py initialization time)
+    store results in params 
+    """
+    global params, params_base
     symbols = {}
-    if not os.path.exists(routes):
+
+    if app is None:
+        path = routes
+    else:
+        path = os.path.join('applications', app, routes)
+    if not os.path.exists(path):
         return
     try:
-        routesfp = open(routes, 'r')
+        routesfp = open(path, 'r')
         exec routesfp.read() in symbols
         routesfp.close()
-        logging.info('URL rewrite is on. configuration in %s' % routes)
+        logging.info('URL rewrite is on. configuration in %s' % path)
     except SyntaxError, e:
         routesfp.close()
-        logging.error('Your %s has a syntax error ' % routes + \
+        logging.error('Your %s has a syntax error ' % path + \
                           'Please fix it before you restart web2py\n' + \
                           traceback.format_exc())
         raise e
 
-    params.routes_in=[]
-    if 'routes_in' in symbols:        
-        for (k, v) in symbols['routes_in']:
-            params.routes_in.append(compile_re(k, v))
+    p = Storage()
+    for (k, v) in params_default.items():
+        p[k] = v
 
-    params.routes_out=[]
-    if 'routes_out' in symbols:
-        for (k, v) in symbols['routes_out']:
-            params.routes_out.append(compile_re(k, v))
+    for sym in ('routes_app', 'routes_in', 'routes_out'):
+        if sym in symbols:
+            for (k, v) in symbols[sym]:
+                p[sym].append(compile_re(k, v))
 
-    if 'routes_onerror' in symbols:
-        params.routes_onerror = symbols['routes_onerror']
-    if 'error_handler' in symbols:
-        params.error_handler = symbols['error_handler']
-    if 'error_message' in symbols:
-        params.error_message = symbols['error_message']
-    if 'error_message_ticket' in symbols:
-        params.error_message_ticket = symbols['error_message_ticket']
-    if 'routes_apps_raw' in symbols:
-        params.routes_apps_raw = symbols['routes_apps_raw']
+    for sym in ('routes_onerror', 'routes_apps_raw',
+                'error_handler','error_message', 'error_message_ticket',
+                'default_application','default_controller', 'default_function'):
+        if sym in symbols:
+            p[sym] = symbols[sym]
 
+    if app is None:
+        params_base = p
+        params = params_base
+        for app in os.listdir('applications'):
+            if os.path.exists(os.path.join('applications', app, routes)):
+                load(routes, app)
+    else:
+        params_apps[app] = p
+
+def filter_uri(e, regexes, default=None):
+    "filter incoming URI against a list of regexes"
+    query = e.get('QUERY_STRING', None)
+    path = e['PATH_INFO']
+    host = e.get('HTTP_HOST', 'localhost').lower()
+    original_uri = path + (query and '?'+query or '')
+    i = host.find(':')
+    if i > 0:
+        host = host[:i]
+    key = '%s:%s://%s:%s %s' % \
+        (e['REMOTE_ADDR'],
+         e.get('WSGI_URL_SCHEME', 'http').lower(), host,
+         e.get('REQUEST_METHOD', 'get').lower(), path)
+    print >> sys.stderr, "fu key=%s" % key
+    for (regex, value) in regexes:
+        print >> sys.stderr, "fu re=%s value=%s" % (regex.pattern, value)
+        if regex.match(key):
+            print >> sys.stderr, "fu match value=%s" % value
+            print >> sys.stderr, "fu match ret=%s" % regex.sub(value, key)
+            return (regex.sub(value, key), query, original_uri)
+    print >> sys.stderr, "fu nomatch"
+    return (default, query, original_uri)
+
+def select(e=None):
+    """
+    select a set of rewrite params for the current request
+    called from main.wsgibase before any URL rewriting
+    """
+    global params
+    params = params_base
+    app = None
+    if e and params.routes_app:
+        print >> sys.stderr, "select e=%s" % e
+        (app, q, u) = filter_uri(e, params.routes_app)
+        params = params_apps.get(app, params_base)
+    print >> sys.stderr, "select app=%s" % app
+    return app  # for doctest
 
 def filter_in(e):
+    "called from main.wsgibase to rewrite incoming URL"
     if params.routes_in:
-        query = e.get('QUERY_STRING', None)
-        path = e['PATH_INFO']
-        host = e.get('HTTP_HOST', 'localhost').lower()
-        original_uri = path + (query and '?'+query or '')
-        i = host.find(':')
-        if i > 0:
-            host = host[:i]
-        key = '%s:%s://%s:%s %s' % \
-            (e['REMOTE_ADDR'],
-             e.get('WSGI_URL_SCHEME', 'http').lower(), host,
-             e.get('REQUEST_METHOD', 'get').lower(), path)
-        for (regex, value) in params.routes_in:
-            if regex.match(key):
-                path = regex.sub(value, key)
-                break
+        (path, query, original_uri) = filter_uri(e, params.routes_in, e['PATH_INFO'])
         if path.find('?') < 0:
             e['PATH_INFO'] = path
         else:
@@ -115,6 +170,7 @@ def filter_in(e):
     return e
 
 def filter_out(url, e=None):
+    "called from html.URL to rewrite outgoing URL"
     if params.routes_out:
         items = url.split('?', 1)
         if e:
@@ -135,6 +191,7 @@ def filter_out(url, e=None):
 
 
 def try_redirect_on_error(http_object, request, ticket=None):
+    "called from main.wsgibase to rewrite the http response"
     status = int(str(http_object.status).split()[0])
     if status>399 and params.routes_onerror:
         keys=set(('%s/%s' % (request.application, status),
@@ -154,7 +211,7 @@ def try_redirect_on_error(http_object, request, ticket=None):
                             Location=url)
     return http_object
 
-def filter_url(url, method='get', remote='0.0.0.0', out=False):
+def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False):
     "doctest interface to filter_in() and filter_out()"
     regex_url = re.compile('^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>\S*)')
     match = regex_url.match(url)
@@ -181,6 +238,8 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False):
     }
     if out:
         return filter_out(uri, e)
+    elif app:
+        return select(e)
     else:
         e = filter_in(e)
         if e['PATH_INFO'] == '':

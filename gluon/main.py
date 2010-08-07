@@ -290,6 +290,7 @@ def wsgibase(environ, responder):
       - file and sub may also contain '-', '=', '.' and '/'
     """
 
+    rewrite.select(environ)
     if rewrite.params.routes_in:
         environ = rewrite.filter_in(environ)
 
@@ -783,11 +784,11 @@ def parse_url(request, environ):
                    web2py_error='invalid path')
 
     request.application = \
-        regex_space.sub('_', match.group('a') or 'init')
+        regex_space.sub('_', match.group('a') or rewrite.params.default_application)
     request.controller = \
-        regex_space.sub('_', match.group('c') or 'default')
+        regex_space.sub('_', match.group('c') or rewrite.params.default_controller)
     request.function = \
-        regex_space.sub('_', match.group('f') or 'index')
+        regex_space.sub('_', match.group('f') or rewrite.params.default_function)
     group_e = match.group('e')
     raw_extension = group_e and regex_space.sub('_',group_e) or None
     request.extension = raw_extension or 'html'
@@ -816,7 +817,7 @@ def parse_url(request, environ):
     # ##################################################
 
     if not os.path.exists(request.folder):
-        if request.application=='init':
+        if request.application == rewrite.params.default_application:
             request.application = 'welcome'
             redirect(URL(r=request))
         elif rewrite.params.error_handler:

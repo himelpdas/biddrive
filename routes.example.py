@@ -1,5 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+# default_application, default_controller, default_function
+# are used when the respective element is missing from the
+# (possibly rewritten) incoming URL
+#
+default_application = 'init'    # ordinarily set in base routes.py
+default_controller = 'default'  # ordinarily set in app-specific routes.py
+default_function = 'index'      # ordinarily set in app-specific routes.py
+
+# routes_app is a tuple of tuples.  The first item in each is a regexp that will
+# be used to match the incoming request URL. The second item in the tuple is
+# an applicationname.  This mechanism allows you to specify the use of an
+# app-specific routes.py. This entry is meaningful only in the base routes.py.
+#
+# Example: support welcome, admin, app and myapp, with myapp the default:
+
+routes_app = ((r'/(?P<app>welcome|admin|app)\b.*', '\g<app>'),
+              (r'(.*)', 'myapp'),
+              (r'/?(.*)', 'myapp'))
+
 # routes_in is a tuple of tuples.  The first item in each is a regexp that will
 # be used to match the incoming request URL. The second item in the tuple is
 # what it will be replaced with.  This mechanism allows you to redirect incoming
@@ -85,7 +105,7 @@ def __routes_doctest():
     >>> filter_out('/app/ctr/fcn')
     '/ctr/fcn'
     >>> filter_url('https://otherdomain.com/app/ctr/fcn', out=True)
-    '/app/ctr/fcn'
+    '/ctr/fcn'
     >>> filter_url('http://otherdomain.com/app/ctr/fcn', out=True)
     '/fcn'
     >>> filter_url('http://otherdomain.com/app/ctr/fcn?query', out=True)
@@ -98,11 +118,18 @@ def __routes_doctest():
     399
     >>> filter_err(400)
     400
+    >>> filter_url('http://domain.com/welcome', app=True)
+    'welcome'
+    >>> filter_url('http://domain.com/', app=True)
+    'myapp'
+    >>> filter_url('http://domain.com', app=True)
+    'myapp'
     '''
     pass
 
 if __name__ == '__main__':
     import doctest
-    from gluon.rewrite import *
+    from gluon.rewrite import select, load, filter_url, filter_out, filter_err
+    select()
     load(routes=__file__)
     doctest.testmod()
