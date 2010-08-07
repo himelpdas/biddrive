@@ -175,10 +175,12 @@ def URL(
     if c:
         controller = c
     if f:
-        if isinstance(f, str):
-            function = f
-        else:
+        if not isinstance(f, str):
             function = f.__name__
+        elif '.' in f:
+            function, extension = f.split('.',1)
+        else:
+            function = f
 
     if not (application and controller and function):
         raise SyntaxError, 'not enough information to build the url'
