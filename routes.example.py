@@ -124,12 +124,20 @@ def __routes_doctest():
     'myapp'
     >>> filter_url('http://domain.com', app=True)
     'myapp'
+    >>> compile_re('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')[0].pattern
+    '^.*http://otherdomain.com.* (?P<any>.*)$'
+    >>> compile_re('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')[1]
+    '/app/ctr\\\\g<any>'
+    >>> compile_re('/$c/$f', '/init/$c/$f')[0].pattern
+    '^.*?:https?://[^:/]+:[a-z]+ /(?P<c>[\\\\w_]+)/(?P<f>[\\\\w_]+)$'
+    >>> compile_re('/$c/$f', '/init/$c/$f')[1]
+    '/init/\\\\g<c>/\\\\g<f>'
     '''
     pass
 
 if __name__ == '__main__':
     import doctest
-    from gluon.rewrite import select, load, filter_url, filter_out, filter_err
+    from gluon.rewrite import select, load, filter_url, filter_out, filter_err, compile_re
     select()
     load(routes=__file__)
     doctest.testmod()
