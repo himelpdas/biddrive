@@ -1053,10 +1053,13 @@ class HR(DIV):
     tag = 'hr/'
 
 
-class A(DIV):
-
+class A(DIV):    
     tag = 'a'
-
+    def xml(self):
+        if self['cid']:
+            self['_onclick']='web2py_component("%s","%s");return false;' % \
+                (self['_href'],self['cid'])
+        return DIV.xml(self)
 
 class EM(DIV):
 

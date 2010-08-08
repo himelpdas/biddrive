@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -413,11 +413,18 @@ def wsgibase(environ, responder):
             # ##################################################
             # store cookies in headers
             # ##################################################
-
+            
+            if request.cid:
+                if response.flash and not 'web2py-component-flash' in http_response.headers:
+                    http_response.headers['web2py-component-flash'] = \
+                        str(response.flash).replace('\n','')
+                if response.js and not 'web2py-component-command' in http_response.headers:
+                    http_response.headers['web2py-component-command'] = \
+                        str(response.js).replace('\n','')
             if session._forget:
                 del response.cookies[response.session_id_name]
             elif session._secure:
-                response.cookies[response.session_id_name]['secure'] = True
+                response.cookies[response.session_id_name]['secure'] = True            
             if len(response.cookies)>0:
                 http_response.headers['Set-Cookie'] = \
                     [str(cookie)[11:] for cookie in response.cookies.values()]
@@ -811,6 +818,7 @@ def parse_url(request, environ):
     request.folder = os.path.join(request.env.web2py_path,
             'applications', request.application) + '/'
     request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
+    request.cid = request.env.http_web2py_component_element
 
     # ##################################################
     # access the requested application
