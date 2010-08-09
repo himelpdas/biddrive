@@ -472,9 +472,10 @@ class DIV(XmlComponent):
         eg for wrapping some components in another component or blocking them.
         """
         return
-
-    def _wrap_components(self, allowed_parents, wrap_parent = None,
-        wrap_lambda = None):
+    
+    def _wrap_components(self, allowed_parents,
+                         wrap_parent = None,
+                         wrap_lambda = None):
         """
         helper for _fixup. Checks if a component is in allowed_parents,
         otherwise wraps it in wrap_parent
@@ -488,12 +489,14 @@ class DIV(XmlComponent):
         components = []
         for c in self.components:
             if isinstance(c, allowed_parents):
-                components.append(c)
+                pass
+            elif wrap_lambda:
+                c = wrap_lambda(c)
             else:
-                if wrap_lambda:
-                    components.append(wrap_lambda(c))
-                else:
-                    components.append(wrap_parent(c))
+                c = wrap_parent(c)
+            if isinstance(c,DIV):
+                c.parent = self
+            components.append(c)
         self.components = components
 
     def _postprocessing(self):
@@ -1186,20 +1189,28 @@ class TR(DIV):
     def _fixup(self):
         self._wrap_components((TD, TH), TD)
 
-
 class THEAD(DIV):
 
     tag = 'thead'
+
+    def _fixup(self):
+        self._wrap_components(TR, TR)
 
 
 class TBODY(DIV):
 
     tag = 'tbody'
 
+    def _fixup(self):
+        self._wrap_components(TR, TR)
+
 
 class TFOOT(DIV):
 
     tag = 'tfoot'
+
+    def _fixup(self):
+        self._wrap_components(TR, TR)
 
 
 class TABLE(DIV):
