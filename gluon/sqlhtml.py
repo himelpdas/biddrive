@@ -173,7 +173,6 @@ class OptionsWidget(FormWidget):
 
         see also: :meth:`FormWidget.widget`
         """
-
         default = dict(
             value=value,
             )
@@ -702,7 +701,7 @@ class SQLFORM(FORM):
                 # ## format everything else
 
                 if field.represent:
-                    inp = field.represent(default)
+                    inp = field.represent(default)                    
                 elif field.type in ['blob']:
                     continue
                 elif field.type == 'upload':

@@ -53,6 +53,9 @@ SQL_DIALECTS = {'google': {
     'datetime': gae.DateTimeProperty,
     'id': None,
     'reference': gae.IntegerProperty,
+    'list:integer': gae.ListProperty(int,default=None),
+    'list:string': gae.StringListProperty(default=None),
+    'list:reference': gae.ListProperty(int,default=None),
     'lower': None,
     'upper': None,
     'is null': 'IS NULL',
@@ -327,6 +330,14 @@ class Expression(object):
 
     def belongs(self, value):
         return Query(self, 'IN', value)
+
+    def contains(self, value):
+        if self.type.startswth('list:string'):
+            return Query(self, '=', str(value))
+        elif self.type.startswth('list:'):
+            return Query(self, '=', int(value))
+        else:
+            raise RuntimeError, "Not supported"
 
     # def like(self, value): return Query(self, ' LIKE ', value)
     # for use in both Query and sortby

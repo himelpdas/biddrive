@@ -329,7 +329,7 @@ class IS_IN_SET(Validator):
                 return (value, None)
             return (value, self.error_message)
         if self.multiple:
-            return ('|%s|' % '|'.join(values), None)
+            return (values, None)
         return (value, None)
 
 
@@ -436,7 +436,7 @@ class IS_IN_DB(Validator):
             else:
                 values = []
             if not [x for x in values if not x in self.theset]:
-                return ('|%s|' % '|'.join(values), None)
+                return (values, None)
         elif self.theset:
             if value in self.theset:
                 if self._and:

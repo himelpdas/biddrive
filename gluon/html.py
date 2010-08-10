@@ -1435,10 +1435,10 @@ class SELECT(INPUT):
                     else:
                         c['_selected'] = None
             else:
-                if isinstance(value,list):
-                    values=value
+                if isinstance(value,(list,tuple)):
+                    values = [str(item) for item in value]
                 else:
-                    values=value.split('|')
+                    values = [str(value)]
                 for c in options: # my patch
                     if value and str(c['_value']) in values:
                         c['_selected'] = 'selected'

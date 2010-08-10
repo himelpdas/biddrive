@@ -152,7 +152,9 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-
+        'list:integer': 'TEXT',
+        'list:string': 'TEXT',
+        'list:reference': 'TEXT',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -180,6 +182,9 @@ SQL_DIALECTS = {
         'id': 'INT AUTO_INCREMENT NOT NULL',
         'autoincrement': 'INT AUTO_INCREMENT NOT NULL',
         'reference': 'INT, INDEX %(field_name)s__idx (%(field_name)s), FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'LONGTEXT',
+        'list:string': 'LONGTEXT',
+        'list:reference': 'LONGTEXT',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -206,6 +211,9 @@ SQL_DIALECTS = {
         'id': 'SERIAL PRIMARY KEY',
         'autoincrement': 'INTEGER DEFAULT SERIAL',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'TEXT',
+        'list:string': 'TEXT',
+        'list:reference': 'TEXT',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -231,6 +239,9 @@ SQL_DIALECTS = {
         'datetime': 'DATE',
         'id': 'NUMBER PRIMARY KEY',
         'reference': 'NUMBER, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'CLOB',
+        'list:string': 'CLOB',
+        'list:reference': 'CLOB',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -258,6 +269,9 @@ SQL_DIALECTS = {
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
+        'list:integer': 'TEXT',
+        'list:string': 'TEXT',
+        'list:reference': 'TEXT',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -287,6 +301,9 @@ SQL_DIALECTS = {
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
+        'list:integer': 'NTEXT',
+        'list:string': 'NTEXT',
+        'list:reference': 'NTEXT',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -312,6 +329,9 @@ SQL_DIALECTS = {
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'BLOB SUB_TYPE 1',
+        'list:string': 'BLOB SUB_TYPE 1',
+        'list:reference': 'BLOB SUB_TYPE 1',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -339,6 +359,9 @@ SQL_DIALECTS = {
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s CONSTRAINT FK_%(table_name)s_%(field_name)s',
         'reference TFK': 'FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s CONSTRAINT TFK_%(table_name)s_%(field_name)s',
+        'list:integer': 'BLOB SUB_TYPE 1',
+        'list:string': 'BLOB SUB_TYPE 1',
+        'list:reference': 'BLOB SUB_TYPE 1',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -366,6 +389,9 @@ SQL_DIALECTS = {
         'reference': 'INT, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
+        'list:integer': 'CLOB',
+        'list:string': 'CLOB',
+        'list:reference': 'CLOB',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -394,6 +420,9 @@ SQL_DIALECTS = {
         'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
+        'list:integer': 'CLOB',
+        'list:string': 'CLOB',
+        'list:reference': 'CLOB',
         'lower': 'LOWER(%(field)s)',
         'upper': 'UPPER(%(field)s)',
         'is null': 'IS NULL',
@@ -433,6 +462,17 @@ def sqlhtml_validators(field):
     elif not isinstance(field_type,str):
         return []
     requires=[]
+    def ff(r,id):
+        row=r[id]
+        if not row:
+            return id
+        elif hasattr(r,'_format') and isinstance(r._format,str):
+            return r._format % row
+        elif hasattr(r,'_format'):
+            return r._format(row)
+        else:
+            return id
+    
     if field_type == 'string':
         requires.append(validators.IS_LENGTH(field_length))
     elif field_type == 'text':
@@ -443,7 +483,7 @@ def sqlhtml_validators(field):
         requires.append(validators.IS_FLOAT_IN_RANGE(-1e100, 1e100))
     elif field_type == 'integer':
         requires.append(validators.IS_INT_IN_RANGE(-1e100, 1e100))
-    elif field_type[:7] == 'decimal':
+    elif field_type.startswith('decimal'):
         requires.append(validators.IS_DECIMAL_IN_RANGE(-10**10, 10**10))
     elif field_type == 'date':
         requires.append(validators.IS_DATE())
@@ -451,24 +491,25 @@ def sqlhtml_validators(field):
         requires.append(validators.IS_TIME())
     elif field_type == 'datetime':
         requires.append(validators.IS_DATETIME())
-    elif field._db and field_type[:9] == 'reference' and \
+    elif field._db and field_type.startswith('reference') and \
             field_type.find('.')<0 and \
             field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
+        field.represent = lambda id, r=referenced, f=ff: f(r,id)
         if hasattr(referenced,'_format') and referenced._format:
-            def f(r,id):
-                row=r[id]
-                if not row:
-                    return id
-                elif isinstance(r._format,str):
-                    return r._format % row
-                else:
-                    return r._format(row)
-            field.represent = lambda id, r=referenced, f=f: f(r,id)
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)
             if field.unique:
                 requires._and = validators.IS_NOT_IN_DB(field._db,field)
+            return requires
+    elif field._db and field_type.startswith('list:reference') and \
+            field_type.find('.')<0 and \
+            field_type[15:] in field._db.tables:
+        referenced = field._db[field_type[15:]]
+        field.represent = lambda ids, r=referenced, f=ff: ', '.join(f(r,id) for id in ids)
+        if hasattr(referenced,'_format') and referenced._format:
+            requires = validators.IS_IN_DB(field._db,referenced.id,
+                                           referenced._format,multiple=True)
             return requires
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
@@ -479,9 +520,14 @@ def sqlhtml_validators(field):
         requires[-1]=validators.IS_EMPTY_OR(requires[-1])
     return requires
 
+def bar_escape(item):
+    return str(item).replace('|','||')
+
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if type(obj) in (types.LambdaType, types.FunctionType):
         obj = obj()
+    if isinstance(obj, (list, tuple)):
+        obj = '|%s|' % '|'.join(bar_escape(item) for item in obj)
     if isinstance(obj, (Expression, Field)):
         return obj
     if isinstance(fieldtype, SQLCustomType):
@@ -501,11 +547,11 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
                 return "'T'"
             else:
                 return "'F'"
-    if fieldtype[0] == 'i':
+    if fieldtype.startswith('i'):
         return str(int(obj))
-    if fieldtype[:7] == 'decimal':
+    if fieldtype.startswith('decimal'):
         return str(obj)
-    elif fieldtype[0] == 'r': # reference
+    elif fieldtype.startswith('r'): # reference
         if fieldtype.find('.')>0:
             return repr(obj)
         elif isinstance(obj, (Row, Reference)):
@@ -868,7 +914,7 @@ class SQLDB(dict):
 
         # Now connect to database
 
-        if self._uri[:14] == 'sqlite:memory:':
+        if self._uri.startswith('sqlite:memory:'):
             self._dbname = 'sqlite'
             self._pool_connection(lambda: \
                     sqlite3.Connection(':memory:',
@@ -878,7 +924,7 @@ class SQLDB(dict):
             # self._connection.row_factory = sqlite3.Row
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif not is_jdbc and self._uri[:9] == 'sqlite://':
+        elif not is_jdbc and self._uri.startswith('sqlite://'):
             self._dbname = 'sqlite'
             path_encoding = sys.getfilesystemencoding() or \
                 locale.getdefaultlocale()[1]
@@ -895,7 +941,7 @@ class SQLDB(dict):
             # self._connection.row_factory = sqlite3.Row
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif self._uri[:8] == 'mysql://':
+        elif self._uri.startswith('mysql://'):
             self._dbname = 'mysql'
             m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$'
                 ).match(self._uri[8:])
@@ -930,7 +976,7 @@ class SQLDB(dict):
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
             self._execute('SET FOREIGN_KEY_CHECKS=1;')
             self._execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
-        elif not is_jdbc and self._uri[:11] == 'postgres://':
+        elif not is_jdbc and self._uri.startswith('postgres://'):
             self._dbname = 'postgres'
             m = \
                 re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$'
@@ -963,7 +1009,7 @@ class SQLDB(dict):
             self._execute(query)
             self._execute("SET CLIENT_ENCODING TO 'UNICODE';")  # ## not completely sure but should work
             self._execute("SET standard_conforming_strings=on;")
-        elif self._uri[:9] == 'oracle://':
+        elif self._uri.startswith('oracle://'):
             self._dbname = 'oracle'
             self._pool_connection(lambda : \
                                   cx_Oracle.connect(self._uri[9:],threaded=True))
@@ -974,14 +1020,14 @@ class SQLDB(dict):
             self._execute("ALTER SESSION set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
             # self._execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';")
             self._execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
-        elif self._uri[:8] == 'mssql://' or self._uri[:9] == 'mssql2://':
+        elif self._uri.startswith('mssql://') or self._uri.startswith('mssql2://'):
 
             # ## read: http://bytes.com/groups/python/460325-cx_oracle-utf8
 
-            if self._uri[:8] == 'mssql://':
+            if self._uri.startswith('mssql://'):
                 skip = 8
                 self._dbname = 'mssql'
-            elif self._uri[:9] == 'mssql2://':
+            elif self._uri.startswith('mssql2://'):
                 skip = 9
                 self._dbname = 'mssql2'
             if '@' not in self._uri[skip:]:
@@ -1035,12 +1081,12 @@ class SQLDB(dict):
                     % (host, port, db, user, passwd, urlargs)
             self._pool_connection(lambda : pyodbc.connect(cnxn))
             self._cursor = self._connection.cursor()
-            if self._uri[:8] == 'mssql://':
+            if self._uri.startswith('mssql://'):
                 self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-            elif self._uri[:9] == 'mssql2://':
+            elif self._uri.startswith('mssql2://'):
                 self._execute = lambda a: \
                     self._cursor.execute(unicode(a, 'utf8'))
-        elif self._uri[:11] == 'firebird://':
+        elif self._uri.startswith('firebird://'):
             self._dbname = 'firebird'
             m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+?)(\?set_encoding=(?P<charset>\w+))?$').match(self._uri[11:])
             if not m:
@@ -1069,7 +1115,7 @@ class SQLDB(dict):
                                         charset=charset))
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif self._uri[:20] == 'firebird_embedded://':
+        elif self._uri.startswith('firebird_embedded://'):
             self._dbname = 'firebird'
             m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<path>[^\?]+)(\?set_encoding=(?P<charset>\w+))?$').match(self._uri[20:])
             if not m:
@@ -1095,7 +1141,7 @@ class SQLDB(dict):
                                         charset=charset))
             self._cursor = self._connection.cursor()
             self._execute = lambda *a, **b: self._cursor.execute(*a, **b)
-        elif self._uri[:11] == 'informix://':
+        elif self._uri.startswith('informix://'):
             self._dbname = 'informix'
             m = \
                 re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$'
@@ -1122,12 +1168,12 @@ class SQLDB(dict):
                                   password=passwd, autocommit=False))
             self._cursor = self._connection.cursor()
             self._execute = lambda a: self._cursor.execute(a[:-1])
-        elif self._uri[:4] == 'db2:':
+        elif self._uri.startswith('db2:'):
             self._dbname, cnxn = self._uri.split(':', 1)
             self._pool_connection(lambda : pyodbc.connect(cnxn))
             self._cursor = self._connection.cursor()
             self._execute = lambda a: self._cursor.execute(a[:-1])
-        elif is_jdbc and self._uri[:9] == 'sqlite://':
+        elif is_jdbc and self._uri.startswith('sqlite://'):
             self._dbname='sqlite'
             if uri[9] != '/':
                 dbpath = os.path.join(self._folder, uri[14:])
@@ -1136,7 +1182,7 @@ class SQLDB(dict):
             self._pool_connection(lambda dbpath=dbpath: zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath)))
             self._cursor = self._connection.cursor()
             self._execute = lambda a: self._cursor.execute(a[:-1])
-        elif is_jdbc and self._uri[:11] == 'postgres://':
+        elif is_jdbc and self._uri.startswith('postgres://'):
             self._dbname = 'postgres'
             m = \
                 re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$'
@@ -1284,7 +1330,7 @@ class SQLDB(dict):
             if self._dbname == 'postgres':
                 sequence_name = '%s_id_Seq' % tablename
 
-        if hasattr(self,tablename) or tablename[0] == '_':
+        if hasattr(self,tablename) or tablename.startswith('_'):
             raise SyntaxError, 'invalid table name: %s' % tablename
         if tablename in self.tables:
             raise SyntaxError, 'table already defined: %s' % tablename
@@ -1415,7 +1461,7 @@ class SQLDB(dict):
                 continue
             elif line == 'END':
                 return
-            elif not line[:6] == 'TABLE ' or not line[6:] in self.tables:
+            elif not line.startswith('TABLE ') or not line[6:] in self.tables:
                 raise SyntaxError, 'invalid file format'
             else:
                 tablename = line[6:]
@@ -1568,7 +1614,7 @@ class Table(dict):
         self._referenced_by = []
         for fieldname in self.fields:
             field=self[fieldname]
-            if isinstance(field.type,str) and field.type[:10] == 'reference ':
+            if isinstance(field.type,str) and field.type.startswith('reference '):
                 referenced = field.type[10:].strip()
                 if not referenced:
                     raise SyntaxError, 'Table: reference to nothing: %s' % referenced
@@ -1592,11 +1638,11 @@ class Table(dict):
             return dict.__getitem__(self, str(key))
 
     def __call__(self, key=None, **kwargs):
-        if key:
-            if not str(key).isdigit():
-                record = None
-            elif isinstance(key, Query):
+        if key!=None:
+            if isinstance(key, Query):
                 record = self._db(key).select(limitby=(0,1)).first()
+            elif not str(key).isdigit():
+                record = None
             else:
                 record = self._db(self.id == key).select(limitby=(0,1)).first()
             if record:
@@ -1662,7 +1708,7 @@ class Table(dict):
             field = self[k]
             if isinstance(field.type,SQLCustomType):
                 ftype = field.type.native or field.type.type
-            elif field.type[:10] == 'reference ':
+            elif field.type.startswith('reference '):
                 referenced = field.type[10:].strip()
                 constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
                 if self._db._dbname == 'oracle' and len(constraint_name)>30:
@@ -1673,7 +1719,9 @@ class Table(dict):
                             constraint_name=constraint_name,
                             foreign_key=referenced + ('(%s)' % self._db[referenced].fields[0]),
                             on_delete_action=field.ondelete)
-            elif field.type[:7] == 'decimal':
+            elif field.type.startswith('list:reference '):
+                ftype = self._db._translator[field.type[:14]]
+            elif field.type.startswith('decimal'):
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
                 ftype = self._db._translator[field.type[:7]] % \
                     dict(precision=precision,scale=scale)
@@ -1712,7 +1760,7 @@ class Table(dict):
         query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
            (self._tablename, fields, other)
 
-        if self._db._uri[:10] == 'sqlite:///':
+        if self._db._uri.startswith('sqlite:///'):
             path_encoding = sys.getfilesystemencoding() or \
                 locale.getdefaultlocale()[1]
             dbpath = self._db._uri[9:self._db._uri.rfind('/')]\
@@ -1721,7 +1769,7 @@ class Table(dict):
             dbpath = self._db._folder
         if not migrate:
             return query
-        elif self._db._uri[:14] == 'sqlite:memory:':
+        elif self._db._uri.startswith('sqlite:memory:'):
             self._dbt = None
         elif isinstance(migrate, str):
             self._dbt = os.path.join(dbpath, migrate)
@@ -2020,7 +2068,7 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
-            elif id_map and field.type[:10] == 'reference ':
+            elif id_map and field.type.startswith('reference '):
                 try:
                     value = id_map[field.type[9:].strip()][value]
                 except KeyError:
@@ -2189,7 +2237,7 @@ class KeyedTable(Table):
         self._referenced_by = []
         for fieldname in self.fields:
             field=self[fieldname]
-            if isinstance(field.type,str) and field.type[:10] == 'reference ':
+            if isinstance(field.type,str) and field.type.startswith('reference '):
                 ref = field.type[10:].strip()
                 refs = ref.split('.')
                 if not ref:
@@ -2297,7 +2345,7 @@ class KeyedTable(Table):
             field = self[k]
             if isinstance(field.type,SQLCustomType):
                 ftype = field.type.native or field.type.type
-            elif field.type[:10] == 'reference ':
+            elif field.type.startswith('reference '):
                 ref = field.type[10:].strip()
                 constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
                 if self._db._dbname == 'oracle' and len(constraint_name)>30:
@@ -2376,7 +2424,7 @@ class KeyedTable(Table):
         else:
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
                (self._tablename, fields, other)
-        if self._db._uri[:10] == 'sqlite:///':
+        if self._db._uri.startswith('sqlite:///'):
             path_encoding = sys.getfilesystemencoding() or \
                 locale.getdefaultlocale()[1]
             dbpath = self._db._uri[9:self._db._uri.rfind('/')]\
@@ -2385,7 +2433,7 @@ class KeyedTable(Table):
             dbpath = self._db._folder
         if not migrate:
             return query
-        elif self._db._uri[:14] == 'sqlite:memory:':
+        elif self._db._uri.startswith('sqlite:memory:'):
             self._dbt = None
         elif isinstance(migrate, str):
             self._dbt = os.path.join(dbpath, migrate)
@@ -2515,6 +2563,20 @@ class Expression(object):
 
     def belongs(self, value):
         return Query(self, ' IN ', value)
+
+    def startswith(self, value):
+        if self.type in ('string', 'text'):
+            return Query(self, ' LIKE ', '%s%%' % value)
+        else:
+            raise RuntimeError, "Not supported"
+
+    def contains(self, value):
+        if self.type in ('string', 'text'):
+            return Query(self, ' LIKE ', '%%%s%%' % value)
+        elif self.type.startswith('list:'):
+            return Query(self, ' LIKE ', '%%|%s|%%' % value)
+        else:
+            raise RuntimeError, "Not supported"
 
     def with_alias(self,value):
         return Expression(str(self) + ' AS %s' % value,
@@ -3247,13 +3309,22 @@ excluded + tables_to_merge.keys()])
                         else:
                             (h, mi, s) = time_items + [0]
                         colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
-                elif field.type[:7] == 'decimal' and value != None:
+                elif field.type.startswith('decimal') and value != None:
                     decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
                         value = ('%.'+str(decimals)+'f') % value
                     if not isinstance(value,decimal.Decimal):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
+                elif field.type.startswith('list:integer') and value != None:
+                    if not db._uri=='gae':
+                        colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
+                elif field.type.startswith('list:reference') and value != None:
+                    if not db._uri=='gae':
+                        colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
+                elif field.type.startswith('list:string') and value != None:
+                    if not db._uri=='gae':
+                        colset[fieldname] = [x.replace('||','|') for x in value.split('|') if x.strip()]
                 elif isinstance(field.type,SQLCustomType) and value != None:
                     colset[fieldname] = field.type.decoder(value)
                 else:
