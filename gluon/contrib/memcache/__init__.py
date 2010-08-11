@@ -5,7 +5,7 @@ import time
 """
 examle of usage:
 
-cache.memcache=MemcacheClient(request,[127.0.0.1:11211],debug=true)
+cache.memcache = MemcacheClient(request,[127.0.0.1:11211],debug=true)
 """
 
 import cPickle as pickle
@@ -32,8 +32,8 @@ class _MemcacheClient(Client):
             app = request.application
         else:
             app = ''
-        Client.__init__(self,servers,debug,pickleProtocol,
-                        pickler,unpickler,pload,pid)
+        Client.__init__(self, servers, debug, pickleProtocol,
+                        pickler, unpickler, pload, pid)
         if not app in self.meta_storage:
             self.storage = self.meta_storage[app] = {
                 CacheAbstract.cache_stats_name: {
@@ -44,42 +44,42 @@ class _MemcacheClient(Client):
             self.storage = self.meta_storage[app]
 
 
-    def __call__(self,key,f,time_expire=300):
-        if time_expire=None:
-            time_expire=10**10
-        #key=self.__keyFormat__(key)
-        value=None
-        obj=self.get(key)
+    def __call__(self, key, f, time_expire=300):
+        if time_expire == None:
+            time_expire = 10**10
+        #key = self.__keyFormat__(key)
+        value = None
+        obj = self.get(key)
         if obj:
-            value=obj
+            value = obj
         elif f is None:
             if obj: self.delete(key)
         else:
-            value=f()
-            self.set(key,value,time_expire)
+            value = f()
+            self.set(key, value, time_expire)
         return value
 
-    def increment(self,key,value=1,time_expire=300):
-        newKey=self.__keyFormat__(key)
-        obj=self.get(newKey)
+    def increment(self, key, value=1, time_expire=300):
+        newKey = self.__keyFormat__(key)
+        obj = self.get(newKey)
         if obj:
-            return Client.incr(self,newKey,value)
+            return Client.incr(self, newKey, value)
         else:
-            self.set(newKey,value,time_expire)
+            self.set(newKey, value, time_expire)
             return value
 
-    def set(self,key,value,time_expire=300):
+    def set(self, key, value, time_expire=300):
         newKey = self.__keyFormat__(key)
-        return Client.set(self,newKey,value,time_expire)
+        return Client.set(self, newKey, value, time_expire)
 
-    def get(self,key):
+    def get(self, key):
         newKey = self.__keyFormat__(key)
-        return Client.get(self,newKey)
+        return Client.get(self, newKey)
 
-    def delete(self,key):
+    def delete(self, key):
         newKey = self.__keyFormat__(key)
-        return Client.delete(self,newKey)
+        return Client.delete(self, newKey)
 
-    def __keyFormat__(self,key):
-        return '%s/%s' % (self.request.application,key.replace(' ','_'))
+    def __keyFormat__(self, key):
+        return '%s/%s' % (self.request.application, key.replace(' ', '_'))
 
