@@ -16,9 +16,11 @@ default_function = 'index'      # ordinarily set in app-specific routes.py
 #
 # Example: support welcome, admin, app and myapp, with myapp the default:
 
-routes_app = ((r'/(?P<app>welcome|admin|app)\b.*', '\g<app>'),
-              (r'(.*)', 'myapp'),
-              (r'/?(.*)', 'myapp'))
+routes_logging = False # set to False, 'debug', 'info', 'warning', 'error' or 'critical'
+
+routes_app = ((r'/(?P<app>welcome|admin|app)\b.*', r'\g<app>'),
+              (r'(.*)', r'myapp'),
+              (r'/?(.*)', r'myapp'))
 
 # routes_in is a tuple of tuples.  The first item in each is a regexp that will
 # be used to match the incoming request URL. The second item in the tuple is
@@ -27,19 +29,19 @@ routes_app = ((r'/(?P<app>welcome|admin|app)\b.*', '\g<app>'),
 #
 # Example: If you wish for your entire website to use init's static directory:
 #
-#   routes_in=( ('/static/(?P<file>[\w\./_-]+)','/init/static/\g<file>') )
+#   routes_in=( (r'/static/(?P<file>[\w./-]+)', r'/init/static/\g<file>') )
 #
 
-routes_in = (('.*:/favicon.ico', '/examples/static/favicon.ico'),
-             ('.*:/robots.txt', '/examples/static/robots.txt'),
-             (('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')))
+routes_in = ((r'.*:/favicon.ico', r'/examples/static/favicon.ico'),
+             (r'.*:/robots.txt', r'/examples/static/robots.txt'),
+             ((r'.*http://otherdomain.com.* (?P<any>.*)', r'/app/ctr\g<any>')))
 
 # routes_out, like routes_in translates URL paths created with the web2py URL()
 # function in the same manner that route_in translates inbound URL paths.
 #
 
-routes_out = (('.*http://otherdomain.com.* /app/ctr(?P<any>.*)', '\g<any>'),
-              ('/app(?P<any>.*)', '\g<any>'))
+routes_out = ((r'.*http://otherdomain.com.* /app/ctr(?P<any>.*)', r'\g<any>'),
+              (r'/app(?P<any>.*)', r'\g<any>'))
 
 # Error-handling redirects all HTTP errors (status codes >= 400) to a specified
 # path.  If you wish to use error-handling redirects, uncomment the tuple
@@ -52,10 +54,10 @@ routes_out = (('.*http://otherdomain.com.* /app/ctr(?P<any>.*)', '\g<any>'),
 # variables.  Traceback information will be stored in the ticket.
 #
 # routes_onerror = [
-#     ('init/400', '/init/default/login')
-#    ,('init/*', '/init/static/fail.html')
-#    ,('*/404', '/init/static/cantfind.html')
-#    ,('*/*', '/init/error/index')
+#     (r'init/400', r'/init/default/login')
+#    ,(r'init/*', r'/init/static/fail.html')
+#    ,(r'*/404', r'/init/static/cantfind.html')
+#    ,(r'*/*', r'/init/error/index')
 # ]
 
 # specify action in charge of error handling
@@ -129,7 +131,7 @@ def __routes_doctest():
     >>> compile_re('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')[1]
     '/app/ctr\\\\g<any>'
     >>> compile_re('/$c/$f', '/init/$c/$f')[0].pattern
-    '^.*?:https?://[^:/]+:[a-z]+ /(?P<c>[\\\\w_]+)/(?P<f>[\\\\w_]+)$'
+    '^.*?:https?://[^:/]+:[a-z]+ /(?P<c>\\\\w+)/(?P<f>\\\\w+)$'
     >>> compile_re('/$c/$f', '/init/$c/$f')[1]
     '/init/\\\\g<c>/\\\\g<f>'
     '''

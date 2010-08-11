@@ -12,12 +12,17 @@ import re
 import logging
 import traceback
 
+LEVELS = {'debug': logging.DEBUG,
+          'info': logging.INFO,
+          'warning': logging.WARNING,
+          'error': logging.ERROR,
+          'critical': logging.CRITICAL}
 
 from storage import Storage
 from http import HTTP
 
-regex_at = re.compile('(?<!\\\\)\$[a-zA-Z]\w*')
-regex_anything = re.compile('(?<!\\\\)\$anything')
+regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
+regex_anything = re.compile(r'(?<!\\)\$anything')
 regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
 params_default = Storage()
@@ -44,21 +49,40 @@ for key, value in params_default.items():
 params = params_base
 
 def compile_re(k, v):
+    """
+    Preprocess and compile the regular expressions in routes_app/in/out
+    
+    The resulting regex will match a pattern of the form:
+    
+        [remote address]:[protocol]://[host]:[method] [path]
+    
+    We allow abbreviated regexes on input; here we try to complete them.
+    """
+    k0 = k  # original k for error reporting
+    # bracket regex in ^...$ if not already done
     if not k[0] == '^':
         k = '^%s' % k
     if not k[-1] == '$':
         k = '%s$' % k
+    # if there are no :-separated parts, prepend a catch-all for the IP address
     if k.find(':') < 0:
-        k = '^.*?:%s' % k[1:]
+        # k = '^.*?:%s' % k[1:]
+        k = '^.*?:https?://[^:/]+:[a-z]+ %s' % k[1:]
+    # if there's no ://, provide a catch-all for the protocol, host & method
     if k.find('://') < 0:
         i = k.find(':/')
+        if i < 0:
+            raise SyntaxError, "routes pattern syntax error: path needs leading '/' [%s]" % k0
         k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
+    # $anything -> ?P<anything>.*
     for item in regex_anything.findall(k):
         k = k.replace(item, '(?P<anything>.*)')
+    # $a (etc) -> ?P<a>\w+
     for item in regex_at.findall(k):
-        k = k.replace(item, '(?P<%s>[\\w_]+)' % item[1:])
+        k = k.replace(item, r'(?P<%s>\w+)' % item[1:])
+    # same for replacement pattern, but with \g
     for item in regex_at.findall(v):
-        v = v.replace(item, '\\g<%s>' % item[1:])
+        v = v.replace(item, r'\g<%s>' % item[1:])
     return (re.compile(k, re.DOTALL), v)
 
 def load(routes='routes.py', app=None):
@@ -97,11 +121,13 @@ def load(routes='routes.py', app=None):
             for (k, v) in symbols[sym]:
                 p[sym].append(compile_re(k, v))
 
-    for sym in ('routes_onerror', 'routes_apps_raw',
+    for sym in ('routes_onerror', 'routes_apps_raw', 'routes_logging',
                 'error_handler','error_message', 'error_message_ticket',
                 'default_application','default_controller', 'default_function'):
         if sym in symbols:
             p[sym] = symbols[sym]
+    if p['routes_logging']:
+        p['loglevel'] = LEVELS.get(p['routes_logging'].lower(), logging.INFO)
 
     if app is None:
         params_base = p
@@ -112,7 +138,7 @@ def load(routes='routes.py', app=None):
     else:
         params_apps[app] = p
 
-def filter_uri(e, regexes, default=None):
+def filter_uri(e, regexes, tag, default=None):
     "filter incoming URI against a list of regexes"
     query = e.get('QUERY_STRING', None)
     path = e['PATH_INFO']
@@ -127,7 +153,12 @@ def filter_uri(e, regexes, default=None):
          e.get('REQUEST_METHOD', 'get').lower(), path)
     for (regex, value) in regexes:
         if regex.match(key):
-            return (regex.sub(value, key), query, original_uri)
+            rewritten = regex.sub(value, key)
+            if params.routes_logging:
+                logging.log(params.loglevel, '%s: [%s] [%s] -> %s' % (tag, key, value, rewritten))
+            return (rewritten, query, original_uri)
+    if params.routes_logging:
+        logging.log(params.loglevel, '%s: [%s] -> %s (not rewritten)' % (tag, key, default))
     return (default, query, original_uri)
 
 def select(e=None):
@@ -139,14 +170,14 @@ def select(e=None):
     params = params_base
     app = None
     if e and params.routes_app:
-        (app, q, u) = filter_uri(e, params.routes_app)
+        (app, q, u) = filter_uri(e, params.routes_app, "routes_app")
         params = params_apps.get(app, params_base)
     return app  # for doctest
 
 def filter_in(e):
     "called from main.wsgibase to rewrite incoming URL"
     if params.routes_in:
-        (path, query, original_uri) = filter_uri(e, params.routes_in, e['PATH_INFO'])
+        (path, query, original_uri) = filter_uri(e, params.routes_in, "routes_in", e['PATH_INFO'])
         if path.find('?') < 0:
             e['PATH_INFO'] = path
         else:
@@ -174,7 +205,12 @@ def filter_out(url, e=None):
             items[0] = ':http://localhost:get %s' % items[0]
         for (regex, value) in params.routes_out:
             if regex.match(items[0]):
-                return '?'.join([regex.sub(value, items[0])] + items[1:])
+                rewritten = '?'.join([regex.sub(value, items[0])] + items[1:])
+                if params.routes_logging:
+                    logging.log(params.loglevel, 'routes_out: [%s] -> %s' % (url, rewritten))
+                return rewritten
+    if params.routes_logging:
+        logging.log(params.loglevel, 'routes_out: [%s] not rewritten' % url)
     return url
 
 
@@ -201,7 +237,7 @@ def try_redirect_on_error(http_object, request, ticket=None):
 
 def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False):
     "doctest interface to filter_in() and filter_out()"
-    regex_url = re.compile('^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>\S*)')
+    regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>\S*)')
     match = regex_url.match(url)
     scheme = match.group('scheme').lower()
     host = match.group('host').lower()

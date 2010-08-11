@@ -510,6 +510,8 @@ def sqlhtml_validators(field):
         if hasattr(referenced,'_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format,multiple=True)
+            if field.unique:
+                requires._and = validators.IS_NOT_IN_DB(field._db,field)
             return requires
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
