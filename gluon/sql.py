@@ -455,7 +455,7 @@ def sqlhtml_validators(field):
     """
     field_type, field_length = field.type, field.length
     if isinstance(field_type, SQLCustomType):
-        if hasattr(field_type,'validator'):
+        if hasattr(field_type, 'validator'):
             return field_type.validator
         else:
             field_type = field_type.type
@@ -536,7 +536,7 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
         return fieldtype.encoder(obj)
     if obj is None:
         return 'NULL'
-    if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+    if obj == '' and not fieldtype[:2] in ['st', 'te', 'pa', 'up']:
         return 'NULL'
     if fieldtype == 'boolean':
         if dbname == 'mssql':
@@ -1708,12 +1708,12 @@ class Table(dict):
         sql_fields_aux = {}
         for k in self.fields:
             field = self[k]
-            if isinstance(field.type,SQLCustomType):
+            if isinstance(field.type, SQLCustomType):
                 ftype = field.type.native or field.type.type
             elif field.type.startswith('reference'):
                 referenced = field.type[10:].strip()
                 constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
-                if self._db._dbname == 'oracle' and len(constraint_name)>30:
+                if self._db._dbname == 'oracle' and len(constraint_name) > 30:
                     constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
                 ftype = self._db._translator[field.type[:9]]\
                      % dict(table_name=self._tablename,
@@ -1726,14 +1726,14 @@ class Table(dict):
             elif field.type.startswith('decimal'):
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
                 ftype = self._db._translator[field.type[:7]] % \
-                    dict(precision=precision,scale=scale)
+                    dict(precision=precision, scale=scale)
             elif not field.type in self._db._translator:
                 raise SyntaxError, 'Field: unknown field type: %s for %s' % \
                     (field.type, field.name)
             else:
                 ftype = self._db._translator[field.type]\
                      % dict(length=field.length)
-            if not field.type.startswith('id') and not field.type.startswith('reference'):
+            if not isinstance(field.type, SQLCustomType) and not field.type.startswith('id') and not field.type.startswith('reference'):
                 if field.notnull:
                     ftype += ' NOT NULL'
                 if field.unique:
@@ -1812,7 +1812,7 @@ class Table(dict):
                     # post create table auto inc code (if needed)
                     # modify table to btree for performance....
                     # Older Ingres releases could use rule/trigger like Oracle above.
-                    modify_tbl_sql='modify %s to btree unique on %s' % (self._tablename, 'id') # hard coded id column
+                    modify_tbl_sql = 'modify %s to btree unique on %s' % (self._tablename, 'id') # hard coded id column
                     self._db._execute(modify_tbl_sql)
                 self._db.commit()
             if self._dbt:
@@ -1852,9 +1852,9 @@ class Table(dict):
         fake_migrate=False,
         ):
         ### make sure all field names are lower case to avoid conflicts
-        sql_fields = dict((k.lower(),v) for k,v in sql_fields.items())
-        sql_fields_old = dict((k.lower(),v) for k,v in sql_fields_old.items())
-        sql_fields_aux = dict((k.lower(),v) for k,v in sql_fields_aux.items())
+        sql_fields = dict((k.lower(), v) for k, v in sql_fields.items())
+        sql_fields_old = dict((k.lower(), v) for k, v in sql_fields_old.items())
+        sql_fields_aux = dict((k.lower(), v) for k, v in sql_fields_aux.items())
 
         keys = sql_fields.keys()
         for key in sql_fields_old:
@@ -2345,12 +2345,12 @@ class KeyedTable(Table):
         TFK = {} # table level FK
         for k in self.fields:
             field = self[k]
-            if isinstance(field.type,SQLCustomType):
+            if isinstance(field.type, SQLCustomType):
                 ftype = field.type.native or field.type.type
             elif field.type.startswith('reference'):
                 ref = field.type[10:].strip()
                 constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
-                if self._db._dbname == 'oracle' and len(constraint_name)>30:
+                if self._db._dbname == 'oracle' and len(constraint_name) > 30:
                     constraint_name = '%s_%s__constraint' % (self._tablename[:10], field.name[:7])
                 rtablename,rfieldname = ref.split('.')
                 rtable = self._db[rtablename]
@@ -3223,10 +3223,10 @@ excluded + tables_to_merge.keys()])
             rows = list(rows)
         if db._dbname in ['mssql', 'mssql2', 'db2']:
             rows = rows[(attributes.get('limitby', None) or (0,))[0]:]
-        return self.parse(db,rows,self.colnames,SetClass=Set)
+        return self.parse(db, rows, self.colnames, SetClass=Set)
 
     @staticmethod
-    def parse(db,rows,colnames,blob_decode=True,SetClass=None):
+    def parse(db, rows, colnames, blob_decode=True, SetClass=None):
         virtualtables = []
         new_rows = []
         for (i,row) in enumerate(rows):
@@ -3247,7 +3247,7 @@ excluded + tables_to_merge.keys()])
                 table = db[tablename]
                 field = table[fieldname]
                 field_type = field.type
-                if isinstance(field_type,SQLCustomType):
+                if isinstance(field_type, SQLCustomType):
                     field_type = field_type.type
                 if field.type != 'blob' and isinstance(value, str):
                     try:
@@ -3261,9 +3261,9 @@ excluded + tables_to_merge.keys()])
                     virtualtables.append((tablename,db[tablename].virtualfields))
                 else:
                     colset = new_row[tablename]
-                if not isinstance(field_type,str):
+                if not isinstance(field_type, str):
                     colset[fieldname] = value
-                elif isinstance(field.type,str) and field.type.startswith('reference'):
+                elif isinstance(field.type, str) and field.type.startswith('reference'):
                     referee = field.type[10:].strip()
                     if not value:
                         colset[fieldname] = value
@@ -3311,11 +3311,13 @@ excluded + tables_to_merge.keys()])
                         else:
                             (h, mi, s) = time_items + [0]
                         colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
+                elif isinstance(field.type, SQLCustomType) and value != None:
+                    colset[fieldname] = field.type.decoder(value)
                 elif field.type.startswith('decimal') and value != None:
                     decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
-                        value = ('%.'+str(decimals)+'f') % value
-                    if not isinstance(value,decimal.Decimal):
+                        value = ('%.' + str(decimals) + 'f') % value
+                    if not isinstance(value, decimal.Decimal):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
                 elif field.type.startswith('list:integer') and value != None:
@@ -3330,11 +3332,9 @@ excluded + tables_to_merge.keys()])
                         colset[fieldname] = value
                 elif field.type.startswith('list:string') and value != None:
                     if db._uri != 'gae':
-                        colset[fieldname] = [x.replace('||','|') for x in value.split('|') if x.strip()]
+                        colset[fieldname] = [x.replace('||', '|') for x in value.split('|') if x.strip()]
                     else:
                         colset[fieldname] = value
-                elif isinstance(field.type,SQLCustomType) and value != None:
-                    colset[fieldname] = field.type.decoder(value)
                 else:
                     colset[fieldname] = value
                 if field.type == 'id':
@@ -3390,7 +3390,7 @@ excluded + tables_to_merge.keys()])
         if db._dbname=='sqlite' and counter:
             for tablename,fieldname in db[t]._referenced_by:
                 f = db[tablename][fieldname]
-                if f.type=='reference '+t and f.ondelete=='CASCADE':
+                if f.type == 'reference ' + t and f.ondelete == 'CASCADE':
                     db(db[tablename][fieldname].belongs(deleted)).delete()
         ### end special code to handle CASCADE in SQLite
         return counter
@@ -3514,12 +3514,12 @@ class Rows(object):
                             box[attribute]=method()
         return self
 
-    def __and__(self,other):
+    def __and__(self, other):
         if self.colnames!=other.colnames: raise Exception, 'Rows: different colnames'
         records = self.records+other.records
         return Rows(self.db,records,self.colnames)
 
-    def __or__(self,other):
+    def __or__(self, other):
         if self.colnames!=other.colnames: raise Exception, 'Rows: different colnames'
         records = self.records
         records += [record for record in other.records \
@@ -3547,7 +3547,7 @@ class Rows(object):
     def __getslice__(self, a, b):
         return Rows(self.db,self.records[a:b],self.colnames)
 
-    def find(self,f):
+    def find(self, f):
         """
         returns a new Rows object, a subset of the original object, filtered by the function f
         """
@@ -3558,9 +3558,9 @@ class Rows(object):
             row = self[i]
             if f(row):
                 records.append(self.records[i])
-        return Rows(self.db,records,self.colnames)
+        return Rows(self.db, records, self.colnames)
 
-    def exclude(self,f):
+    def exclude(self, f):
         """
         removes elements from the calling Rows object, filtered by the function f, 
         and returns a new Rows object containing the removed elements
@@ -3576,9 +3576,9 @@ class Rows(object):
                 del self.records[i]
             else:
                 i += 1
-        return Rows(self.db,removed,self.colnames)
+        return Rows(self.db, removed, self.colnames)
 
-    def sort(self,f,reverse=False):
+    def sort(self, f, reverse=False):
         """
         returns a list of sorted elements (not sorted in place)
         """
@@ -3674,7 +3674,7 @@ class Rows(object):
                 return null
             elif isinstance(value, unicode):
                 return value.encode('utf8')
-            elif isinstance(value,Reference):
+            elif isinstance(value, Reference):
                 return int(value)
             elif hasattr(value, 'isoformat'):
                 return value.isoformat()[:19].replace('T', ' ')
