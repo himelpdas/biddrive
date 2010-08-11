@@ -93,18 +93,18 @@ class TestBareHelpers(unittest.TestCase):
                          '<table a="1" b="2"><tr><td>&lt;&gt;</td></tr>' + \
                          '</table>')
         self.assertEqual(TBODY('<>', _a='1', _b='2').xml(),
-                         '<tbody a="1" b="2">&lt;&gt;</tbody>')
+                         '<tbody a="1" b="2"><tr><td>&lt;&gt;</td></tr></tbody>')
         self.assertEqual(TD('<>', _a='1', _b='2').xml(),
                          '<td a="1" b="2">&lt;&gt;</td>')
         self.assertEqual(TEXTAREA('<>', _a='1', _b='2').xml(),
                         '<textarea a="1" b="2" cols="40" rows="10">&lt;&gt;' + \
                         '</textarea>')
         self.assertEqual(TFOOT('<>', _a='1', _b='2').xml(),
-                         '<tfoot a="1" b="2">&lt;&gt;</tfoot>')
+                         '<tfoot a="1" b="2"><tr><td>&lt;&gt;</td></tr></tfoot>')
         self.assertEqual(TH('<>', _a='1', _b='2').xml(),
                          '<th a="1" b="2">&lt;&gt;</th>')
         self.assertEqual(THEAD('<>', _a='1', _b='2').xml(),
-                         '<thead a="1" b="2">&lt;&gt;</thead>')
+                         '<thead a="1" b="2"><tr><td>&lt;&gt;</td></tr></thead>')
         self.assertEqual(TITLE('<>', _a='1', _b='2').xml(),
                          '<title a="1" b="2">&lt;&gt;</title>')
         self.assertEqual(TR('<>', _a='1', _b='2').xml(),

@@ -9,7 +9,7 @@ import os
 sys.path.append(os.path.realpath('../'))
 
 import unittest
-from template_new import parse_template, TemplateParser, render
+from template import parse_template, TemplateParser, render
 
 class TestVirtualFields(unittest.TestCase):
 
