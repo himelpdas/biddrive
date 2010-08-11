@@ -126,7 +126,7 @@ def load(routes='routes.py', app=None):
                 'default_application','default_controller', 'default_function'):
         if sym in symbols:
             p[sym] = symbols[sym]
-    if p['routes_logging']:
+    if 'routes_logging' in p:
         p['loglevel'] = LEVELS.get(p['routes_logging'].lower(), logging.INFO)
 
     if app is None:
@@ -266,7 +266,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False):
         return select(e)
     else:
         e = filter_in(e)
-        if e['PATH_INFO'] == '':
+        if e.get('PATH_INFO','') == '':
             path = e['REQUEST_URI']
         elif query_string:
             path = e['PATH_INFO'] + '?' + query_string
