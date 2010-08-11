@@ -483,6 +483,7 @@ class IS_NOT_IN_DB(Validator):
         self.record_id = id
 
     def __call__(self, value):
+        value=str(value)
         if not value.strip():
             return (value, self.error_message)
         if value in self.allowed_override:
