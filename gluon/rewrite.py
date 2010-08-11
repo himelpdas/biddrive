@@ -36,6 +36,7 @@ params.routes_in = []
 params.routes_out = []
 params.routes_onerror = []
 params.routes_apps_raw = []
+params.routes_logging = []
 params.error_handler = None
 params.error_message = '<html><body><h1>Invalid request</h1></body></html>'
 params.error_message_custom = '<html><body><h1>%s</h1></body></html>'
@@ -113,14 +114,12 @@ def load(routes='routes.py', app=None):
         raise e
 
     p = Storage()
-    for (k, v) in params_default.items():
-        p[k] = v
-
+    for (sym, default) in params_default.items():
+        p[sym] = default
     for sym in ('routes_app', 'routes_in', 'routes_out'):
         if sym in symbols:
             for (k, v) in symbols[sym]:
                 p[sym].append(compile_re(k, v))
-
     for sym in ('routes_onerror', 'routes_apps_raw', 'routes_logging',
                 'error_handler','error_message', 'error_message_ticket',
                 'default_application','default_controller', 'default_function'):
