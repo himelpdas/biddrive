@@ -1073,7 +1073,7 @@ class SQLFORM(FORM):
 class SQLTABLE(TABLE):
 
     """
-    given a SQLRows object, as returned by a db().select(), generates
+    given a Rows object, as returned by a db().select(), generates
     an html table with the rows.
 
     optional arguments:
@@ -1162,14 +1162,14 @@ class SQLTABLE(TABLE):
                     continue
                 (tablename, fieldname) = colname.split('.')
                 field = sqlrows.db[tablename][fieldname]
-                if tablename in record and isinstance(record,
-                        Row) and isinstance(record[tablename],
-                        Row):
+                if tablename in record \
+                        and isinstance(record,Row) \
+                        and isinstance(record[tablename],Row):
                     r = record[tablename][fieldname]
                 elif fieldname in record:
                     r = record[fieldname]
                 else:
-                    raise SyntaxError, 'something wrong in SQLRows object'
+                    raise SyntaxError, 'something wrong in Rows object'
                 r_old = r
                 if field.represent:
                     r = field.represent(r)

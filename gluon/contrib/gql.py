@@ -108,6 +108,7 @@ class GQLDB(gluon.sql.SQLDB):
     """
 
     def __init__(self):
+        self._uri = 'gae'
         self._dbname = 'gql'
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
@@ -219,13 +220,20 @@ class Table(gluon.sql.Table):
                 ftype = self._db._translator[field.type.native or field.type.type](**attr)
             elif isinstance(field.type, gae.Property):
                 ftype = field.type
-            elif field.type[:2] == 'id':
+            elif field.type.startswith('id'):
                 continue
-            elif field.type[:10] == 'reference ':
+            elif field.type.startswith('reference'):
                 if field.notnull:
                     attr = dict(required=True)
                 referenced = field.type[10:].strip()
                 ftype = self._db._translator[field.type[:9]](self._db[referenced])
+            elif field.type.startswith('list:reference'):
+                if field.notnull:
+                    attr = dict(required=True)
+                referenced = field.type[15:].strip()
+                ftype = self._db._translator[field.type[:14]]
+            elif field.type.startswith('list:'):
+                ftype = self._db._translator[field.type]
             elif not field.type in self._db._translator\
                  or not self._db._translator[field.type]:
                 raise SyntaxError, 'Field: unknown field type: %s' % field.type
@@ -332,10 +340,8 @@ class Expression(object):
         return Query(self, 'IN', value)
 
     def contains(self, value):
-        if self.type.startswth('list:string'):
-            return Query(self, '=', str(value))
-        elif self.type.startswth('list:'):
-            return Query(self, '=', int(value))
+        if self.type.startswith('list:'):
+            return Query(self, 'IN', value)
         else:
             raise RuntimeError, "Not supported"
 
@@ -487,7 +493,7 @@ def obj_represent(obj, fieldtype, db):
             obj = long(obj)
         elif fieldtype == 'double':
             obj = float(obj)
-        elif fieldtype[:10] == 'reference ':
+        elif fieldtype.startswith('reference'):
             if isinstance(obj, (Row, Reference)):
                 obj = obj['id']
             obj = long(obj)
@@ -498,6 +504,14 @@ def obj_represent(obj, fieldtype, db):
                 obj = True
             else:
                 obj = False
+        elif fieldtype.startswith('list:string'):
+            if obj!=None and not isinstance(obj,(list,tuple)):
+                obj=[obj]
+            return [str(x) for x in obj]
+        elif fieldtype.startswith('list:'):
+            if obj!=None and not isinstance(obj,(list,tuple)):
+                obj=[obj]
+            return [int(x) for x in obj]
         elif isinstance(obj, str):
             obj = obj.decode('utf8')
         elif not isinstance(obj, unicode):
@@ -698,7 +712,6 @@ class Set(gluon.sql.Set):
                     orders = ['__key__']
                 else:
                     orders = orderby.name.split('|')
-                logging.info(orders)
                 for order in orders:
                     items = items.order(order)
             if attributes.get('limitby', None):

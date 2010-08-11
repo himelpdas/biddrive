@@ -1616,7 +1616,7 @@ class Table(dict):
         self._referenced_by = []
         for fieldname in self.fields:
             field=self[fieldname]
-            if isinstance(field.type,str) and field.type.startswith('reference '):
+            if isinstance(field.type,str) and field.type.startswith('reference'):
                 referenced = field.type[10:].strip()
                 if not referenced:
                     raise SyntaxError, 'Table: reference to nothing: %s' % referenced
@@ -1710,7 +1710,7 @@ class Table(dict):
             field = self[k]
             if isinstance(field.type,SQLCustomType):
                 ftype = field.type.native or field.type.type
-            elif field.type.startswith('reference '):
+            elif field.type.startswith('reference'):
                 referenced = field.type[10:].strip()
                 constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
                 if self._db._dbname == 'oracle' and len(constraint_name)>30:
@@ -1721,7 +1721,7 @@ class Table(dict):
                             constraint_name=constraint_name,
                             foreign_key=referenced + ('(%s)' % self._db[referenced].fields[0]),
                             on_delete_action=field.ondelete)
-            elif field.type.startswith('list:reference '):
+            elif field.type.startswith('list:reference'):
                 ftype = self._db._translator[field.type[:14]]
             elif field.type.startswith('decimal'):
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
@@ -1733,7 +1733,7 @@ class Table(dict):
             else:
                 ftype = self._db._translator[field.type]\
                      % dict(length=field.length)
-            if not field.type[:10] in ['id', 'reference ']:
+            if not field.type.startswith('id') and not field.type.startswith('reference'):
                 if field.notnull:
                     ftype += ' NOT NULL'
                 if field.unique:
@@ -1876,9 +1876,9 @@ class Table(dict):
                 else:
                     query = ['ALTER TABLE %s DROP %s;' % (self._tablename, key)]
             elif sql_fields[key] != sql_fields_old[key] and \
-                 not (self[key].type[:10]=='reference ' and \
-                      sql_fields[key][:4]=='INT,' and \
-                      sql_fields_old[key][:13]=='INT NOT NULL,'):
+                 not (self[key].type.startswith('reference') and \
+                      sql_fields[key].startswith('INT,') and \
+                      sql_fields_old[key].startswith('INT NOT NULL,')):
 
                 # ## FIX THIS WHEN DIFFERENCES IS ONLY IN DEFAULT
                 # 2
@@ -2070,7 +2070,7 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
-            elif id_map and field.type.startswith('reference '):
+            elif id_map and field.type.startswith('reference'):
                 try:
                     value = id_map[field.type[9:].strip()][value]
                 except KeyError:
@@ -2239,7 +2239,7 @@ class KeyedTable(Table):
         self._referenced_by = []
         for fieldname in self.fields:
             field=self[fieldname]
-            if isinstance(field.type,str) and field.type.startswith('reference '):
+            if isinstance(field.type,str) and field.type.startswith('reference'):
                 ref = field.type[10:].strip()
                 refs = ref.split('.')
                 if not ref:
@@ -2347,7 +2347,7 @@ class KeyedTable(Table):
             field = self[k]
             if isinstance(field.type,SQLCustomType):
                 ftype = field.type.native or field.type.type
-            elif field.type.startswith('reference '):
+            elif field.type.startswith('reference'):
                 ref = field.type[10:].strip()
                 constraint_name = '%s_%s__constraint' % (self._tablename, field.name)
                 if self._db._dbname == 'oracle' and len(constraint_name)>30:
@@ -2382,7 +2382,7 @@ class KeyedTable(Table):
             else:
                 ftype = self._db._translator[field.type]\
                      % dict(length=field.length)
-            if not field.type[:10] in ['id', 'reference ']:
+            if not field.type.startswith('id') and not field.type.startswith('reference'): 
                 if field.notnull:
                     ftype += ' NOT NULL'
                 if field.unique:
@@ -3263,7 +3263,7 @@ excluded + tables_to_merge.keys()])
                     colset = new_row[tablename]
                 if not isinstance(field_type,str):
                     colset[fieldname] = value
-                elif isinstance(field.type,str) and field.type[:10] == 'reference ':
+                elif isinstance(field.type,str) and field.type.startswith('reference'):
                     referee = field.type[10:].strip()
                     if not value:
                         colset[fieldname] = value
@@ -3319,14 +3319,20 @@ excluded + tables_to_merge.keys()])
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
                 elif field.type.startswith('list:integer') and value != None:
-                    if not db._uri=='gae':
+                    if db._uri != 'gae':
                         colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
+                    else:
+                        colset[fieldname] = value
                 elif field.type.startswith('list:reference') and value != None:
-                    if not db._uri=='gae':
+                    if db._uri != 'gae':
                         colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
+                    else:
+                        colset[fieldname] = value
                 elif field.type.startswith('list:string') and value != None:
-                    if not db._uri=='gae':
+                    if db._uri != 'gae':
                         colset[fieldname] = [x.replace('||','|') for x in value.split('|') if x.strip()]
+                    else:
+                        colset[fieldname] = value
                 elif isinstance(field.type,SQLCustomType) and value != None:
                     colset[fieldname] = field.type.decoder(value)
                 else:

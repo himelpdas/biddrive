@@ -822,14 +822,21 @@ Fixed gluon.tools to work work with load and base.css to nowrap labels
 Fixed a few bugs. The most important bugs we fixed are in memcache (thanks Scott) and in a process starvation issue with Rocket (thanks Mike Ellis and Tim).
 
 #1.82.1
-- request.ajax to detect if action is called via ajax, tahnks Jonathan and David Mako
-- more captcha options, thanks Vidul
-- openid and oauth2 thanks Michele and Keith
-- better PluginManager and load components
-- new template system, thanks Thadeus
-- new db.table(id,[field=value]) and db.table(query) syntax
-- URL('index') (no more r=request), thanks Thadeus
-- mail.send(message='<html>...</html>', ....)
-- DAL([....]) for load balancing
-- @service.soap(...) with mysimplesoap, thanks Mariano
-- hideerror
+request.ajax to detect if action is called via ajax, tahnks Jonathan and David Mako
+more captcha options, thanks Vidul
+openid and oauth2 thanks Michele and Keith
+better PluginManager and load components
+new template system, thanks Thadeus
+new db.table(id,[field=value]) and db.table(query) syntax
+URL('index') (no more r=request), thanks Thadeus
+mail.send(message='<html>...</html>', ....)
+DAL([....]) for load balancing
+@service.soap(...) with mysimplesoap, thanks Mariano
+hideerror
+
+1.83.1
+New error reporting mechanism (thanks Mariano)
+New routing system with app level routing (thanks Jonathan)
+Integrated GAE appstat and GAE precompilation (thanks Scott)
+New Field types "list:string", "list:integer", "list:reference"
+request.cid, request.ajax, A(cid=request.cid), response.js
