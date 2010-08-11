@@ -126,8 +126,8 @@ def load(routes='routes.py', app=None):
                 'default_application','default_controller', 'default_function'):
         if sym in symbols:
             p[sym] = symbols[sym]
-    if 'routes_logging' in p:
-        p['loglevel'] = LEVELS.get(p['routes_logging'].lower(), logging.INFO)
+    if p.routes_logging:
+        p.loglevel = LEVELS.get(p.routes_logging.lower(), logging.INFO)
 
     if app is None:
         params_base = p
