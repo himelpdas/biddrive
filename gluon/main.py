@@ -478,6 +478,7 @@ def wsgibase(environ, responder):
         newcron.softcron(web2py_path).start()
     return http_response.to(responder)
 
+
 def save_password(password, port):
     """
     used by main() to save the password in the parameters.py file.
