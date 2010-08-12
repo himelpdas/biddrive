@@ -18,17 +18,11 @@ def who():
 def download():
     return response.render(dict())
 
-def docs():
-    return response.render(dict())
-
 def support():
     return dict()
 
 def api():
     return dict()
-
-def dal():
-    return response.render(dict())
 
 def license():
     return response.render(dict())
@@ -36,17 +30,8 @@ def license():
 def version():
    return request.env.web2py_version
 
-def security():
-   return response.render(dict())
-
 def examples():
     return response.render(dict())
-
-def tools():
-    return response.render(dict())
-
-def cron():
-   return response.render(dict())
 
 def changelog():
     log=[]

@@ -12,8 +12,9 @@
 <a href="#testing_examples">testing</a> |
 <a href="#streaming_examples">streaming</a> |
 <a href="#xmlrpc_examples">xmlrpc</a> |
-<a href="{{=URL(r=request,f='dal')}}">dal</a> |
-<a href="{{=URL(r=request,f='tools')}}">tools</a>
+<a href="http://www.web2py.com/book/default/chapter/06">dal</a> |
+<a href="http://www.web2py.com/book/default/chapter/07">crud</a> |
+<a href="http://www.web2py.com/book/default/chapter/08">auth</a>
 
 <h2 id="simple_examples">Simple Examples</h2>
 
@@ -672,4 +673,4 @@ def tester():
     server=xmlrpclib.ServerProxy('http://hostname:port/app/controller/call/xmlrpc')
     return str(server.add(3,4)+server.sub(3,4))
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}
-<p>Read more <a href="{{=URL(r=request,f='tools')}}">here</a></p>
+
