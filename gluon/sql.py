@@ -468,7 +468,7 @@ def sqlhtml_validators(field):
             return id
         elif hasattr(r,'_format') and isinstance(r._format,str):
             return r._format % row
-        elif hasattr(r,'_format'):
+        elif hasattr(r,'_format') and callable(r._format):
             return r._format(row)
         else:
             return id

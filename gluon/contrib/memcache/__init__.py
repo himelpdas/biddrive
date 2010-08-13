@@ -47,7 +47,8 @@ class _MemcacheClient(Client):
     def __call__(self, key, f, time_expire=300):
         if time_expire == None:
             time_expire = 10**10
-        #key = self.__keyFormat__(key)
+        # this must be commented because get and set are redefined
+        # key = self.__keyFormat__(key)
         value = None
         obj = self.get(key)
         if obj:

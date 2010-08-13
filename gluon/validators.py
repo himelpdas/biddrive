@@ -263,7 +263,7 @@ class IS_IN_SET(Validator):
         >>> IS_IN_SET(['max', 'john'])('massimo')
         ('massimo', 'value not allowed')
         >>> IS_IN_SET(['max', 'john'], multiple=True)(('max', 'john'))
-        ('|max|john|', None)
+        (('max', 'john'), None)
         >>> IS_IN_SET(['max', 'john'], multiple=True)(('bill', 'john'))
         (('bill', 'john'), 'value not allowed')
         >>> IS_IN_SET(('id1','id2'), ['first label','second label'])('id1') # Traditional way
