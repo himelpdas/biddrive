@@ -501,12 +501,14 @@ def sqlhtml_validators(field):
                                            referenced._format)
             if field.unique:
                 requires._and = validators.IS_NOT_IN_DB(field._db,field)
+            # if not field.notnull:
+            #     return IS_EMPTY_OR(requires)
             return requires
     elif field._db and field_type.startswith('list:reference') and \
             field_type.find('.')<0 and \
             field_type[15:] in field._db.tables:
         referenced = field._db[field_type[15:]]
-        field.represent = lambda ids, r=referenced, f=ff: ', '.join(f(r,id) for id in ids)
+        field.represent = lambda ids, r=referenced, f=ff: (ids and ', '.join(f(r,id) for id in ids) or '')
         if hasattr(referenced,'_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format,multiple=True)

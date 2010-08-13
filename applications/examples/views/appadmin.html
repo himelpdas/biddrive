@@ -30,7 +30,7 @@ jQuery(document).ready(function(){
       {{pass}}
       <h2>{{=A("%s.%s" % (db,table),_href=URL(r=request,f='select',args=[db],vars=dict(query=qry)))}}
 </h2>
-      [ {{=A(str(T('insert new'))+''+table,_href=URL(r=request,f='insert',args=[db,table]))}} ]
+      [ {{=A(str(T('insert new'))+' '+table,_href=URL(r=request,f='insert',args=[db,table]))}} ]
     <br /><br />
     {{pass}}
   {{pass}}
