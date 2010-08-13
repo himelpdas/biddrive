@@ -265,7 +265,8 @@ class CheckboxesWidget(OptionsWidget):
         see also: :meth:`FormWidget.widget`
         """
 
-        values = re.compile('[\w\-:]+').findall(str(value))
+        # was values = re.compile('[\w\-:]+').findall(str(value))
+        values = not isinstance(value,(list,tuple)) and [value] or value 
 
         attr = OptionsWidget._attributes(field, {}, **attributes)
 
