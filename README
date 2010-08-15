@@ -840,3 +840,6 @@ New routing system with app level routing (thanks Jonathan)
 Integrated GAE appstat and GAE precompilation (thanks Scott)
 New Field types "list:string", "list:integer", "list:reference"
 request.cid, request.ajax, A(cid=request.cid), response.js
+
+#1.83.2
+mostly cleanup
