@@ -465,6 +465,8 @@ class ConsumerHelper(object):
         if resp:
             if resp.status == openid.consumer.consumer.SUCCESS:
                 self.resp = resp
+                if hasattr(resp, "identity_url"):
+                    self.session.w2popenid.oid = resp.identity_url
                 return "success"
             if resp.status == openid.consumer.consumer.FAILURE:
                 self.error_message = resp.message
