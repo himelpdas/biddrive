@@ -3315,24 +3315,24 @@ excluded + tables_to_merge.keys()])
                         colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
                 elif isinstance(field.type, SQLCustomType) and value != None:
                     colset[fieldname] = field.type.decoder(value)
-                elif field.type.startswith('decimal') and value != None:
+                elif value != None and field.type.startswith('decimal'):
                     decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
                         value = ('%.' + str(decimals) + 'f') % value
                     if not isinstance(value, decimal.Decimal):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
-                elif field.type.startswith('list:integer') and value != None:
+                elif value != None and field.type.startswith('list:integer'):
                     if db._uri != 'gae':
                         colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
                     else:
                         colset[fieldname] = value
-                elif field.type.startswith('list:reference') and value != None:
+                elif value != None and field.type.startswith('list:reference'):
                     if db._uri != 'gae':
                         colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
                     else:
                         colset[fieldname] = value
-                elif field.type.startswith('list:string') and value != None:
+                elif value != None and field.type.startswith('list:string'):
                     if db._uri != 'gae':
                         colset[fieldname] = [x.replace('||', '|') for x in value.split('|') if x.strip()]
                     else:

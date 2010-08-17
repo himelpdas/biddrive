@@ -15,6 +15,8 @@ syntax: glob
 *.orig
 .DS_Store
 index.yaml
+routes.py
+logging.conf
 gluon/tests/VERSION
 gluon/tests/sql.log
 ./httpserver.log
@@ -28,6 +30,7 @@ gluon/tests/sql.log
 ./optional_contrib
 ./ssl
 ./docs
+./logs
 ./*.zip
 ./gluon/*.1
 ./gluon/*.txt
