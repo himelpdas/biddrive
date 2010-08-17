@@ -51,6 +51,7 @@ table_field = re.compile('[\w_]+\.[\w_]+')
 oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
 regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
+string_unpack=re.compile('(?<!\|)\|(?!\|)')
 
 # list of drivers will be built on the fly
 # and lists only what is available
@@ -3334,7 +3335,7 @@ excluded + tables_to_merge.keys()])
                         colset[fieldname] = value
                 elif value != None and field.type.startswith('list:string'):
                     if db._uri != 'gae':
-                        colset[fieldname] = [x.replace('||', '|') for x in value.split('|') if x.strip()]
+                        colset[fieldname] = [x.replace('||','|') for x in string_unpack.split(value) if x.strip()]
                     else:
                         colset[fieldname] = value
                 else:
