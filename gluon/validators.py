@@ -731,7 +731,7 @@ class IS_DECIMAL_IN_RANGE(Validator):
                     return (value, None)
             elif self.minimum <= v <= self.maximum:
                     return (value, None)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, decimal.InvalidOperation):
             pass
         return (value, self.error_message)
 
