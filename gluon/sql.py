@@ -2080,29 +2080,38 @@ class Table(dict):
                     pass
             return (field.name, value)
 
+        def is_id(colname):
+            if colname in self:
+                return self[colname].type == 'id'
+            else:
+                return False
+
         for line in reader:
             if not line:
                 break
             if not colnames:
-                colnames = [x[x.find('.') + 1:] for x in line]
-                c = [i for i in xrange(len(line)) if colnames[i] != 'id']
-                cid = [i for i in xrange(len(line)) if colnames[i] == 'id']
-                if cid:
-                    cid = cid[0]
+                colnames = [x.split('.',1)[-1] for x in line][:len(line)]
+                cols, cid = [], []
+                for i,colname in enumerate(colnames):
+                    if is_id(colname):
+                        cid = i
+                    else:
+                        cols.append(i)
+                    if colname == unique:
+                        unique_idx = i
             else:
-                items = [fix(self[colnames[i]], line[i], id_map) for i in c]
+                items = [fix(self[colnames[i]], line[i], id_map) for i in cols]
+                # Validation. Check for duplicate of 'unique' &,
+                # if present, update instead of insert.
                 if not unique or unique not in colnames:
                     new_id = self.insert(**dict(items))
                 else:
-                    # Validation. Check for duplicate of 'unique' &,
-                    # if present, update instead of insert.
-                    for i in c:
-                        if colnames[i] == unique:
-                            _unique = line[i]
-                    query = self._db[self][unique]==_unique
-                    if self._db(query).count():
-                        self._db(query).update(**dict(items))
-                        new_id = self._db(query).select()[0].id
+                    unique_value = line[unique_idx]
+                    query = self._db[self][unique] == unique_value
+                    record = self._db(query).select().first()
+                    if record:
+                        record.update_record(**dict(items))
+                        new_id = record.id
                     else:
                         new_id = self.insert(**dict(items))
                 if id_map and cid != []:
