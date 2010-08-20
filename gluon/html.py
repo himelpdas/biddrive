@@ -314,7 +314,7 @@ class XML(XmlComponent):
         return str(self).lower()
 
     def upper(self):
-        return str(self).lower()
+        return str(self).upper()
 
     def __len__(self):
         return len(str(self))
