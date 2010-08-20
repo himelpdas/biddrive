@@ -2609,7 +2609,7 @@ class Expression(object):
         elif self.type in ['date','time','datetime','double']:
             result_type = 'double'
         else:
-            raise SyntaxError, "subscraction operation not supported for type"
+            raise SyntaxError, "subtraction operation not supported for type"
         return Expression('(%s-%s)' % (self, sql_represent(other,
                           self.type, self._db._dbname, self._db._db_codec)),
                           result_type,
@@ -2957,7 +2957,7 @@ class Query(object):
 
     """
     a query object necessary to define a set.
-    t can be stored or can be passed to SQLDB.__call__() to obtain a Set
+    it can be stored or can be passed to SQLDB.__call__() to obtain a Set
 
     Example::
 

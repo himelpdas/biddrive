@@ -2907,7 +2907,7 @@ class Expression(object):
         elif self.type in ['date','time','datetime','double']:
             result_type = 'double'
         else:
-            raise SyntaxError, "subscraction operation not supported for type"
+            raise SyntaxError, "subtraction operation not supported for type"
         return Expression(self._db,self._db._adapter.SUB,self,other,
                           result_type)
 
@@ -3260,7 +3260,7 @@ class Query(object):
 
     """
     a query object necessary to define a set.
-    t can be stored or can be passed to DAL.__call__() to obtain a Set
+    it can be stored or can be passed to DAL.__call__() to obtain a Set
 
     Example::
 
@@ -3268,7 +3268,6 @@ class Query(object):
         set = db(query)
         records = set.select()
 
-    :raises SyntaxError: when the query cannot be recognized
     """
 
     def __init__(
