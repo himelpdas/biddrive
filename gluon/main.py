@@ -225,7 +225,7 @@ def parse_get_post_vars(request, environ):
         # The same detection used by FieldStorage to detect multipart POSTs
         is_multipart = dpost.type[:10] == 'multipart/'
         request.body.seek(0)
-        isle25 = sys.version_info[1] == 5
+        isle25 = sys.version_info[1] <= 5
 
         def listify(a):
             return (not isinstance(a,list) and [a]) or a
