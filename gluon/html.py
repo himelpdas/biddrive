@@ -201,7 +201,7 @@ def URL(
 
     if regex_crlf.search(url):
         raise SyntaxError, 'CRLF Injection Detected'
-    return rewrite.filter_out(url, env)
+    return XML(rewrite.filter_out(url, env))
 
 def _gURL(request):
     """
@@ -306,6 +306,18 @@ class XML(XmlComponent):
 
     def __add__(self,other):
         return '%s%s' % (self,other)
+
+    def __radd__(self,other):
+        return '%s%s' % (other,self)
+
+    def lower(self):
+        return str(self).lower()
+
+    def upper(self):
+        return str(self).lower()
+
+    def __len__(self):
+        return len(str(self))
 
     def flatten(self,render=None):
         """
