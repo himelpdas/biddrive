@@ -11,6 +11,12 @@ import os
 import re
 import logging
 import traceback
+from storage import Storage
+from http import HTTP
+
+regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
+regex_anything = re.compile(r'(?<!\\)\$anything')
+regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
 LEVELS = {'debug': logging.DEBUG,
           'info': logging.INFO,
@@ -18,12 +24,7 @@ LEVELS = {'debug': logging.DEBUG,
           'error': logging.ERROR,
           'critical': logging.CRITICAL}
 
-from storage import Storage
-from http import HTTP
-
-regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
-regex_anything = re.compile(r'(?<!\\)\$anything')
-regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
+logger = logging.getLogger('web2py.rewrite')
 
 params_default = Storage()
 params = params_default
@@ -105,10 +106,10 @@ def load(routes='routes.py', app=None):
         routesfp = open(path, 'r')
         exec routesfp.read() in symbols
         routesfp.close()
-        logging.info('URL rewrite is on. configuration in %s' % path)
+        logger.info('URL rewrite is on. configuration in %s' % path)
     except SyntaxError, e:
         routesfp.close()
-        logging.error('Your %s has a syntax error ' % path + \
+        logger.error('Your %s has a syntax error ' % path + \
                           'Please fix it before you restart web2py\n' + \
                           traceback.format_exc())
         raise e
@@ -154,10 +155,10 @@ def filter_uri(e, regexes, tag, default=None):
         if regex.match(key):
             rewritten = regex.sub(value, key)
             if params.routes_logging:
-                logging.log(params.loglevel, '%s: [%s] [%s] -> %s' % (tag, key, value, rewritten))
+                logger.log(params.loglevel, '%s: [%s] [%s] -> %s' % (tag, key, value, rewritten))
             return (rewritten, query, original_uri)
     if params.routes_logging:
-        logging.log(params.loglevel, '%s: [%s] -> %s (not rewritten)' % (tag, key, default))
+        logger.log(params.loglevel, '%s: [%s] -> %s (not rewritten)' % (tag, key, default))
     return (default, query, original_uri)
 
 def select(e=None):
@@ -206,10 +207,10 @@ def filter_out(url, e=None):
             if regex.match(items[0]):
                 rewritten = '?'.join([regex.sub(value, items[0])] + items[1:])
                 if params.routes_logging:
-                    logging.log(params.loglevel, 'routes_out: [%s] -> %s' % (url, rewritten))
+                    logger.log(params.loglevel, 'routes_out: [%s] -> %s' % (url, rewritten))
                 return rewritten
     if params.routes_logging:
-        logging.log(params.loglevel, 'routes_out: [%s] not rewritten' % url)
+        logger.log(params.loglevel, 'routes_out: [%s] not rewritten' % url)
     return url
 
 

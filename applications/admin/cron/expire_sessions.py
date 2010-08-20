@@ -15,5 +15,5 @@ for file in os.listdir(path):
          except Exception,e:
             logging.warn('failure to unlink %s: %s' % (filename,e))
    except Exception, e:
-      logging.wanr('failure to stat %s: %s' % (filename,e))
+      logging.warn('failure to stat %s: %s' % (filename,e))
          

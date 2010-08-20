@@ -42,6 +42,7 @@ Version: $Id: portalocker.py,v 1.3 2001/05/29 18:47:55 Administrator Exp $
 
 import os
 import logging
+logger = logging.getLogger("web2py")
 
 os_locking = None
 try:
@@ -88,7 +89,7 @@ elif os_locking == 'posix':
 
 
 else:
-    logging.warning('no file locking')
+    logger.warning('no file locking')
     LOCK_EX = None
     LOCK_SH = None
     LOCK_NB = None

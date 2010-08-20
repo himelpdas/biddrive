@@ -26,6 +26,7 @@ from globals import Request, Response, Session
 from storage import Storage
 from admin import w2p_unpack
 
+logger = logging.getLogger("web2py")
 
 def exec_environment(
     pyfile='',
@@ -197,8 +198,8 @@ def run(
                 shell.mainloop()
                 return
             except:
-                logging.warning(
-                    'import IPython error, use default python shell')
+                logger.warning(
+                    'import IPython error; use default python shell')
         try:
             import readline
             import rlcompleter

@@ -58,6 +58,7 @@ if not sys.version[:3] in ['2.4', '2.5', '2.6']:
     msg = msg % sys.version
     sys.stderr.write(msg)
 
+logger = logging.getLogger("web2py")
 
 class IO(object):
     """   """
@@ -694,21 +695,16 @@ def console():
     if options.quiet:
         capture = cStringIO.StringIO()
         sys.stdout = capture
-        logging.getLogger().setLevel(logging.CRITICAL + 1)
+        logger.setLevel(logging.CRITICAL + 1)
     else:
-        logging.getLogger().setLevel(options.debuglevel)
+        logger.setLevel(options.debuglevel)
 
     if options.config[-3:] == '.py':
         options.config = options.config[:-3]
 
-    if not os.path.exists('applications'):
-        os.mkdir('applications')
-
-    if not os.path.exists('deposit'):
-        os.mkdir('deposit')
-
-    if not os.path.exists('site-packages'):
-        os.mkdir('site-packages')
+    for path in ('applications', 'deposit', 'site-packages', 'logs'):
+        if not os.path.exists(path):
+            os.mkdir(path)
 
     sys.path.append(os.path.join(os.getcwd(),'site-packages'))
 
@@ -816,7 +812,7 @@ def start(cron = True):
             import Tkinter
             havetk = True
         except ImportError:
-            logging.warn('GUI not available because Tk library is not installed')
+            logger.warn('GUI not available because Tk library is not installed')
             havetk = False
 
         if options.password == '<ask>' and havetk or options.taskbar and havetk:

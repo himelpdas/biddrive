@@ -19,7 +19,6 @@ import thread
 import cStringIO
 import csv
 import copy
-import logging
 import gluon.validators as validators
 from gluon.storage import Storage
 import random

@@ -20,7 +20,7 @@ including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase, Ingres
 Completely refactored by MDP on Dec 12, 2009
 
 TODO:
-- create more funcitons in adapters to abstract more
+- create more functions in adapters to abstract more
 - check logger and folder interaction not sure it works
 """
 
@@ -53,6 +53,8 @@ from serializers import json
 import portalocker
 import validators
 
+logger = logging.getLogger("web2py.dal")
+
 sql_locker = thread.allocate_lock()
 
 # internal representation of tables with field
@@ -73,61 +75,61 @@ except:
         from sqlite3 import dbapi2 as sqlite3
         drivers.append('SQLite3')
     except:
-        logging.debug('no sqlite3 or pysqlite2.dbapi2 driver')
+        logger.debug('no sqlite3 or pysqlite2.dbapi2 driver')
 
 try:
     import MySQLdb
     drivers.append('MySQL')
 except:
-    logging.debug('no MySQLdb driver')
+    logger.debug('no MySQLdb driver')
 
 try:
     import psycopg2
     drivers.append('PostgreSQL')
 except:
-    logging.debug('no psycopg2 driver')
+    logger.debug('no psycopg2 driver')
 
 try:
     import cx_Oracle
     drivers.append('Oracle')
 except:
-    logging.debug('no cx_Oracle driver')
+    logger.debug('no cx_Oracle driver')
 
 try:
     import pyodbc
     drivers.append('MSSQL/DB2')
 except:
-    logging.debug('no MSSQL/DB2 driver')
+    logger.debug('no MSSQL/DB2 driver')
 
 try:
     import kinterbasdb
     drivers.append('Interbase')
 except:
-    logging.debug('no kinterbasdb driver')
+    logger.debug('no kinterbasdb driver')
 
 try:
     import informixdb
     drivers.append('Informix')
-    logging.warning('Informix support is experimental')
+    logger.warning('Informix support is experimental')
 except:
-    logging.debug('no informixdb driver')
+    logger.debug('no informixdb driver')
 
 try:
     from com.ziclix.python.sql import zxJDBC
     import java.sql
     from org.sqlite import JDBC
     drivers.append('zxJDBC')
-    logging.warning('zxJDBC support is experimental')
+    logger.warning('zxJDBC support is experimental')
     is_jdbc = True
 except:
-    logging.debug('no zxJDBC driver')
+    logger.debug('no zxJDBC driver')
     is_jdbc = False
 
 try:
     import ingresdbi
     drivers.append('Ingres')
 except:
-    logging.debug('no Ingres driver')
+    logger.debug('no Ingres driver')
     # NOTE could try JDBC.......
 
 
@@ -1239,7 +1241,7 @@ class MSSQLAdapter(BaseAdapter):
                 if not dsn:
                     raise SyntaxError, 'DSN required'
             except SyntaxError, e:
-                logging.error('NdGpatch error')
+                logger.error('NdGpatch error')
                 raise e
             cnxn = 'DSN=%s' % dsn
         else:
@@ -3821,7 +3823,7 @@ def test_all():
     >>> len(db(db.person.birth!=None).select()) ### test NULL
     1
 
-    Examples of search consitions using lower, upper, and like
+    Examples of search conditions using lower, upper, and like
 
     >>> len(db(db.person.name.upper()=='MAX').select())
     1

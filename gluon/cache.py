@@ -28,6 +28,8 @@ import os
 import logging
 import re
 
+logger = logging.getLogger("web2py.cache")
+
 __all__ = ['Cache']
 
 
@@ -247,7 +249,7 @@ class CacheOnDisk(CacheAbstract):
         except ImportError, e:
             pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
         except:
-            logging.error('corrupted file: %s' % self.shelve_name)
+            logger.error('corrupted file: %s' % self.shelve_name)
         if locker_locked:
             portalocker.unlock(locker)
         if locker:
@@ -362,11 +364,11 @@ class Cache(object):
             try:
                 self.disk = CacheOnDisk(request)
             except IOError:
-                logging.warning('no cache.disk (IOError)')
+                logger.warning('no cache.disk (IOError)')
             except AttributeError:
                 # normally not expected anymore, as GAE has already
                 # been accounted for
-                logging.warning('no cache.disk (AttributeError)')
+                logger.warning('no cache.disk (AttributeError)')
 
     def __call__(self,
                 key = None,

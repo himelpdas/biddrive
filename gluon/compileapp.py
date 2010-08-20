@@ -36,11 +36,12 @@ from http import HTTP, redirect
 import marshal
 import imp
 import logging
+logger = logging.getLogger("web2py")
 
 try:
     import py_compile
 except:
-    logging.warning('unable to import py_compile')
+    logger.warning('unable to import py_compile')
 import rewrite
 
 is_gae = settings.web2py_runtime_gae

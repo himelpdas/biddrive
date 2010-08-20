@@ -26,6 +26,7 @@ import signal
 import socket
 import tempfile
 import logging
+import logging.config
 import random
 import rewrite
 import string
@@ -43,10 +44,6 @@ from cache import Cache
 from html import URL
 from storage import List
 import newcron
-try:
-    import rocket
-except:
-    logging.warn('unable to import Rocket')
 
 
 __all__ = ['wsgibase', 'save_password', 'appfactory', 'HttpServer']
@@ -63,6 +60,15 @@ web2py_path = os.environ.get('web2py_path', os.getcwd())
 version_info = open(os.path.join(web2py_path, 'VERSION'), 'r')
 web2py_version = version_info.read()
 version_info.close()
+logpath = os.path.join(web2py_path, "logging.conf")
+if os.path.exists(logpath):
+    logging.config.fileConfig(os.path.join(web2py_path, "logging.conf"))
+logger = logging.getLogger("web2py")
+
+try:
+    import rocket
+except:
+    logger.warn('unable to import Rocket')
 rewrite.load()
 
 def get_client(env):
@@ -551,7 +557,7 @@ def appfactory(wsgiapp=wsgibase,
         else:
             import cProfile
             import pstats
-            logging.warn('profiler is on. this makes web2py slower and serial')
+            logger.warn('profiler is on. this makes web2py slower and serial')
 
             locker.acquire()
             cProfile.runctx('ret[0] = wsgiapp(environ, responder2)',
@@ -638,24 +644,24 @@ class HttpServer(object):
         self.pid_filename = pid_filename
         if not server_name:
             server_name = socket.gethostname()
-        logging.info('starting web server...')
+        logger.info('starting web server...')
         rocket.SERVER_NAME = server_name
         sock_list = [ip, port]
         if not ssl_certificate or not ssl_private_key:
-              logging.info('SSL is off')
+              logger.info('SSL is off')
         elif not rocket.ssl:
-             logging.warning('Python "ssl" module unavailable. SSL is OFF')
+             logger.warning('Python "ssl" module unavailable. SSL is OFF')
         if not ssl_certificate or not ssl_private_key:
-            logging.info('SSL is off')
+            logger.info('SSL is off')
         elif not rocket.ssl:
-            logging.warning('Python "ssl" module unavailable. SSL is OFF')
+            logger.warning('Python "ssl" module unavailable. SSL is OFF')
         elif not os.path.exists(ssl_certificate):
-            logging.warning('unable to open SSL certificate. SSL is OFF')
+            logger.warning('unable to open SSL certificate. SSL is OFF')
         elif not os.path.exists(ssl_private_key):
-            logging.warning('unable to open SSL private key. SSL is OFF')
+            logger.warning('unable to open SSL private key. SSL is OFF')
         else:
             sock_list.extend([ssl_private_key, ssl_certificate])
-            logging.info('SSL is ON')
+            logger.info('SSL is ON')
         app_info = {'wsgi_app': appfactory(wsgibase,
                                            log_filename,
                                            profiler_filename) }

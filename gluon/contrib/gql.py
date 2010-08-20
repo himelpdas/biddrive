@@ -21,7 +21,6 @@ import cStringIO
 import csv
 import copy
 import socket
-import logging
 import gluon.validators as validators
 import gluon.sqlhtml as sqlhtml
 import gluon.sql

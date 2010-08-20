@@ -37,6 +37,8 @@ from sql import Field
 
 __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode', 'prettydate']
 
+logger = logging.getLogger("web2py")
+
 DEFAULT = lambda: None
 
 def callback(actions,form,tablename=None):
@@ -544,7 +546,7 @@ class Mail(object):
         result = {}
         try:
             if self.settings.server == 'logging':
-                logging.warn('email not sent\n%s\nFrom: %s\nTo: %s\n\n%s\n%s\n' % \
+                logger.warn('email not sent\n%s\nFrom: %s\nTo: %s\n\n%s\n%s\n' % \
                                  ('-'*40,self.settings.sender,
                                   ', '.join(to),text or html,'-'*40))
             elif self.settings.server == 'gae':
@@ -571,7 +573,7 @@ class Mail(object):
                 result = server.sendmail(self.settings.sender, to, payload.as_string())
                 server.quit()
         except Exception, e:
-            logging.warn('Mail.send failure:%s' % e)
+            logger.warn('Mail.send failure:%s' % e)
             self.result = result
             self.error = e
             return False

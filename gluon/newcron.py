@@ -19,6 +19,8 @@ import platform
 import gluon.portalocker as portalocker
 import cPickle
 
+logger = logging.getLogger("web2py.cron")
+
 class extcron(threading.Thread):
 
     def __init__(self, web2py_path):
@@ -28,7 +30,7 @@ class extcron(threading.Thread):
         crondance(self.path, 'external', startup=True)
 
     def run(self):
-        logging.debug('external cron invocation')
+        logger.debug('external cron invocation')
         crondance(self.path, 'external', startup=False)
 
 class hardcron(threading.Thread):
@@ -40,12 +42,12 @@ class hardcron(threading.Thread):
         crondance(self.path, 'hard', startup=True)
 
     def launch(self):
-        logging.debug('hard cron invocation')
+        logger.debug('hard cron invocation')
         crondance(self.path, 'hard', startup = False)
 
     def run(self):
         s = sched.scheduler(time.time, time.sleep)
-        logging.info('Hard cron daemon started')
+        logger.info('Hard cron daemon started')
         while True:
             now = time.time()
             s.enter(60 - now % 60, 1, self.launch, ())
@@ -59,7 +61,7 @@ class softcron(threading.Thread):
         crondance(self.path, 'soft', startup=True)
 
     def run(self):
-        logging.debug('soft cron invocation')
+        logger.debug('soft cron invocation')
         crondance(self.path, 'soft', startup=False)
 
 class Token:
@@ -84,7 +86,7 @@ class Token:
         a warning is issue "Stale cron.master detected"
         """
         if portalocker.LOCK_EX == None:
-            logging.warning('WEB2PY CRON: Disabled because no file locking')
+            logger.warning('WEB2PY CRON: Disabled because no file locking')
             return None
         self.master = open(self.path,'rb+')
         try:
@@ -98,8 +100,8 @@ class Token:
                 ret = self.now
                 if not stop:
                     # this happens if previous cron job longer than 1 minute
-                    logging.warning('WEB2PY CRON: Stale cron.master detected')
-                logging.debug('WEB2PY CRON: Acquiring lock')
+                    logger.warning('WEB2PY CRON: Stale cron.master detected')
+                logger.debug('WEB2PY CRON: Acquiring lock')
                 self.master.seek(0)
                 cPickle.dump((self.now,0),self.master)
         finally:
@@ -116,7 +118,7 @@ class Token:
         """
         if not self.master.closed:
             portalocker.lock(self.master,portalocker.LOCK_EX)
-            logging.debug('WEB2PY CRON: Releasing cron lock')
+            logger.debug('WEB2PY CRON: Releasing cron lock')
             self.master.seek(0)
             (start, stop) =  cPickle.load(self.master)
             if start == self.now: # if this is my lock
@@ -208,11 +210,11 @@ class cronlauncher(threading.Thread):
                                 shell=self.shell)
         (stdoutdata,stderrdata) = proc.communicate()
         if proc.returncode != 0:
-            logging.warning(
+            logger.warning(
                 'WEB2PY CRON Call returned code %s:\n%s' % \
                     (proc.returncode, stdoutdata+stderrdata))
         else:
-            logging.debug('WEB2PY CRON Call retruned success:\n%s' \
+            logger.debug('WEB2PY CRON Call retruned success:\n%s' \
                               % stdoutdata)
 
 def crondance(web2py_path, ctype='soft', startup=False):
@@ -244,7 +246,7 @@ def crondance(web2py_path, ctype='soft', startup=False):
             lines = [x.strip() for x in cronlines if x.strip() and not x.strip().startswith('#')]         
             tasks = [parsecronline(cline) for cline in lines]
         except Exception, e:
-            logging.error('WEB2PY CRON: crontab read error %s' % e)
+            logger.error('WEB2PY CRON: crontab read error %s' % e)
             continue
 
         for task in tasks:
@@ -259,7 +261,7 @@ def crondance(web2py_path, ctype='soft', startup=False):
                 continue
             elif task_min != [-1] and reduce(lambda a,b: a or b, citems):
                 continue
-            logging.info('WEB2PY CRON (%s): %s executing %s in %s at %s' \
+            logger.info('WEB2PY CRON (%s): %s executing %s in %s at %s' \
                              % (ctype, app, task.get('cmd'),
                                 os.getcwd(), datetime.datetime.now()))
             action, command, models = False, task['cmd'], ''
@@ -288,7 +290,7 @@ def crondance(web2py_path, ctype='soft', startup=False):
             try:
                 cronlauncher(commands, shell=shell).start()
             except Exception, e:
-                logging.warning(
+                logger.warning(
                     'WEB2PY CRON: Execution error for %s: %s' \
                         % (task.get('cmd'), e))
     token.release()

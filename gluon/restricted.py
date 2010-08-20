@@ -19,6 +19,8 @@ from utils import web2py_uuid
 from storage import Storage
 from http import HTTP
 
+logger = logging.getLogger("web2py")
+
 __all__ = ['RestrictedError', 'restricted', 'TicketStorage', 'compile2']
 
 
@@ -50,7 +52,7 @@ class TicketStorage(Storage):
         table.insert(ticket_id=ticket_id,
                      ticket_data=cPickle.dumps(ticket_data),
                      created_datetime=request.now)
-        logging.error('In FILE: %(layer)s\n\n%(traceback)s\n' % ticket_data)
+        logger.error('In FILE: %(layer)s\n\n%(traceback)s\n' % ticket_data)
 
     def _store_on_disk(self, request, ticket_id, ticket_data):
         cPickle.dump(ticket_data, self._error_file(request, ticket_id, 'wb'))
@@ -146,7 +148,7 @@ class RestrictedError:
             ticket_storage.store(request, f, d)
             return '%s/%s' % (a, f)
         except:
-            logging.error(self.traceback)
+            logger.error(self.traceback)
             return None
 
 
