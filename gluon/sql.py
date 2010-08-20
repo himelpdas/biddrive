@@ -467,9 +467,9 @@ def sqlhtml_validators(field):
         row=r[id]
         if not row:
             return id
-        elif hasattr(r,'_format') and isinstance(r._format,str):
+        elif hasattr(r, '_format') and isinstance(r._format,str):
             return r._format % row
-        elif hasattr(r,'_format') and callable(r._format):
+        elif hasattr(r, '_format') and callable(r._format):
             return r._format(row)
         else:
             return id
@@ -497,7 +497,7 @@ def sqlhtml_validators(field):
             field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
         field.represent = lambda id, r=referenced, f=ff: f(r,id)
-        if hasattr(referenced,'_format') and referenced._format:
+        if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)
             if field.unique:
@@ -510,7 +510,7 @@ def sqlhtml_validators(field):
             field_type[15:] in field._db.tables:
         referenced = field._db[field_type[15:]]
         field.represent = lambda ids, r=referenced, f=ff: (ids and ', '.join(f(r,id) for id in ids) or '')
-        if hasattr(referenced,'_format') and referenced._format:
+        if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format,multiple=True)
             if field.unique:
@@ -518,7 +518,7 @@ def sqlhtml_validators(field):
             return requires
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
-    sff=['in','do','da','ti','de']
+    sff = ['in', 'do', 'da', 'ti', 'de']
     if field.notnull and not field_type[:2] in sff:
         requires.insert(0,validators.IS_NOT_EMPTY())
     elif not field.notnull and field_type[:2] in sff and requires:
@@ -526,7 +526,7 @@ def sqlhtml_validators(field):
     return requires
 
 def bar_escape(item):
-    return str(item).replace('|','||')
+    return str(item).replace('|', '||')
 
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if type(obj) in (types.LambdaType, types.FunctionType):
@@ -585,7 +585,7 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
         else:
             obj = str(obj)
         if dbname in ['oracle', 'informix']:
-            return "to_date('%s','yyyy-mm-dd')" % obj
+            return "to_date('%s', 'yyyy-mm-dd')" % obj
     elif fieldtype == 'datetime':
         if isinstance(obj, datetime.datetime):
             if dbname == 'db2':
@@ -2073,7 +2073,7 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
-            elif id_map and field.type.startswith('reference'):
+            elif id_map and not isinstance(field.type, SQLCustomType) and field.type.startswith('reference'):
                 try:
                     value = id_map[field.type[9:].strip()][value]
                 except KeyError:
