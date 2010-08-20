@@ -201,7 +201,7 @@ def URL(
 
     if regex_crlf.search(url):
         raise SyntaxError, 'CRLF Injection Detected'
-    return XML(rewrite.filter_out(url, env))
+    return rewrite.filter_out(url, env)
 
 def _gURL(request):
     """
