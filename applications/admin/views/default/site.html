@@ -48,7 +48,7 @@ web2py {{=myversion}}<br />
 {{=A(T('click to check for upgrades'),_href="javascript:ajax('"+URL(r=request,f='check_version')+"',[],'check_version')")}}
 </div>
 {{pass}}
-<a href="{{=URL(r=request,f='upgrade_web2py')}}">upgrade web2py now</a>
+<a href="{{=URL(r=request,f='upgrade_web2py')}}">{{=T('upgrade web2py now')}}</a>
 </div><br/>
 
 <div style="background-color: #CCCCCC; padding: 5px;">
@@ -82,6 +82,6 @@ web2py {{=myversion}}<br />
 </div><br/>
 
 <div style="background-color: #CCCCCC; padding: 5px;">
-<a href="{{=URL(r=request,f='change_password')}}">change admin password</a>
+<a href="{{=URL(r=request,f='change_password')}}">{{=T('change admin password')}}</a>
 <br/>
 </td></tr></table>
