@@ -310,11 +310,8 @@ class XML(XmlComponent):
     def __radd__(self,other):
         return '%s%s' % (other,self)
 
-    def lower(self):
-        return str(self).lower()
-
-    def upper(self):
-        return str(self).upper()
+    def __getattr__(self,name):
+        return getattr(str(self),name)
 
     def __len__(self):
         return len(str(self))
