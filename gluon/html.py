@@ -313,6 +313,9 @@ class XML(XmlComponent):
     def __getattr__(self,name):
         return getattr(str(self),name)
 
+    def __iter__(self):
+        for c in str(self): yield c
+
     def __len__(self):
         return len(str(self))
 
