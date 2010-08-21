@@ -984,7 +984,7 @@ class Auth(object):
         request = self.environment.request
         args = request.args
         if not args:
-            redirect(self.url(args='login'))
+            redirect(self.url(args='login',vars=request.vars))
         elif args[0] in self.settings.actions_disabled:
             raise HTTP(404)
         if args[0] == 'login':
@@ -1435,7 +1435,7 @@ class Auth(object):
                 return cas.login_form()
             else:
                 # we need to pass through login again before going on
-                next = URL(r=request) + '?_next=' + next
+                next = self.url('user',args='login',vars=dict(_next=next))
                 redirect(cas.login_url(next))
 
 
