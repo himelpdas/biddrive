@@ -81,3 +81,5 @@ table.sortable tbody tr.highlight td { background-color: #FFFF99; }
  .flash { margin: 0 auto; text-align: center; clear: both; border: 1px #000000; background-color: #FF5C1F; color: white; margin-top: 0.0em; margin-bottom: 1.0em; padding-top: 1.0em; padding-bottom: 1.0em; cursor: pointer; -moz-border-radius: 5px; -webkit-border-radius: 5px; }
 div.error { background-color: red; color: white; padding: 3px}
  /* Footer */
+.untranslated { background-color: #FFCC00; }
+.translated { background-color: white; }

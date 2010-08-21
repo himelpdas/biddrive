@@ -521,13 +521,15 @@ def edit_language():
     for key in keys:
         name = md5_hash(key)
         if key==strings[key]:
-            style='background-color: #cc0000'
+            _class='untranslated'
         else:
-            style=None
+            _class='translated'
         if len(key) <= 40:
-            elem = INPUT(_type='text', _name=name,value=strings[key],_size=70,_style=style)
+            elem = INPUT(_type='text', _name=name,value=strings[key],
+                         _size=70,_class=_class)
         else:
-            elem = TEXTAREA(_name=name, value=strings[key], _cols=70, _rows=5, _style=style)
+            elem = TEXTAREA(_name=name, value=strings[key], _cols=70, 
+                            _rows=5, _class=_class)
 
         # Making the short circuit compatible with <= python2.4
         k = (strings[key] != key) and key or B(key)
