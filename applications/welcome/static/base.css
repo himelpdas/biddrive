@@ -274,7 +274,7 @@ li.sfHover > a > .sf-sub-indicator {
 
 /*********** web2py specific ***********/
 div.flash {
-    position: absolute;
+    position: fixed;
     float: right;
     padding: 10px;
     top: 0px;
