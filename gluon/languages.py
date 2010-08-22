@@ -126,6 +126,27 @@ class lazyT(object):
     def __ne__(self, other):
         return self.T.translate(self.m, self.s) != other
 
+    def __add__(self,other):
+        return '%s%s' % (self,other)
+
+    def __radd__(self,other):
+        return '%s%s' % (other,self)
+
+    def __getattr__(self,name):
+        return getattr(str(self),name)
+
+    def __getitem__(self,i):
+        return str(self)[i]
+
+    def __getslice__(self,i,j):
+        return str(self)[i:j]
+
+    def __iter__(self):
+        for c in str(self): yield c
+
+    def __len__(self):
+        return len(str(self))
+
     def xml(self):
         return cgi.escape(str(self))
 
