@@ -57,12 +57,13 @@ class OAuthAccount(object):
     def __redirect_uri(self):
         """Build the uri used by the authenticating server to redirect
         the client back to the page originating the auth request.
+        Appends the _next action to the generated url so the flows continues.
         """
         r = self.request
         http_host=self.request.env.http_x_forwarded_for
         if not http_host: http_host=self.request.env.http_host
 
-        return 'http://%s%s' %(http_host, self.request.env.path_info)
+        return 'http://%s%s' %(http_host, self.request.env.path_info + '?' + urlencode(dict(_next=self.request.vars._next)))
 
 
     def accessToken(self):
@@ -123,7 +124,8 @@ class OAuthAccount(object):
         
         
     def login_url(self, next="/"):
-        self.__oauth_login()
+        print ("next: %s, %s" % (next, self.request.vars._next))
+        self.__oauth_login(next)
         return next
 
     def logout_url(self, next="/"):
@@ -139,7 +141,7 @@ class OAuthAccount(object):
         '''
         raise NotImplementedError, "Must override get_user()"
 
-    def __oauth_login(self):
+    def __oauth_login(self, next):
         '''This method redirects the user to the authenticating form
         on authentication server if the authentication code
         and the authentication token are not available to the
@@ -150,13 +152,15 @@ class OAuthAccount(object):
         accessToken()
         '''
 
+       
         if not self.accessToken():
             # setup the client
             client = oauth.Client(self.consumer, None)
             # Get a request token.
             # oauth_callback *is REQUIRED* for OAuth1.0a
             # putting it in the body seems to work.
-            data = urlencode(dict(oauth_callback=self.__redirect_uri()))
+            callback_url = self.__redirect_uri()
+            data = urlencode(dict(oauth_callback=callback_url))
             resp, content = client.request(self.token_url, "POST",  body=data)
             if resp['status'] != '200':
                 
@@ -167,7 +171,7 @@ class OAuthAccount(object):
 
             # Redirect the user to the authentication URL and pass the callback url.
             data = urlencode(dict(oauth_token=request_token['oauth_token'],
-                                  oauth_callback=self.__redirect_uri()))
+                                  oauth_callback=callback_url))
             auth_request_url = self.auth_url + '?' +data
 
             

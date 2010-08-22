@@ -52,12 +52,14 @@ class OAuthAccount(object):
     def __redirect_uri(self):
         """Build the uri used by the authenticating server to redirect
         the client back to the page originating the auth request.
+        Appends the _next action to the generated url so the flows continues.
         """
         r = self.request
         http_host=self.request.env.http_x_forwarded_for
         if not http_host: http_host=self.request.env.http_host
 
-        return 'http://%s%s' %(http_host, self.request.env.path_info)
+        return 'http://%s%s' %(http_host, self.request.env.path_info + '?' + urlencode(dict(_next=self.request.vars._next)))
+
 
     def __build_url_opener(self, uri):
         """Build the url opener for managing HTTP Basic Athentication"""
@@ -83,9 +85,9 @@ class OAuthAccount(object):
             # reuse token until expiration
             if expires == 0 or expires > time.time():
                         return self.session.token['access_token']
-        if self.code:
+        if self.session.code:
             data = urlencode(dict(redirect_uri=self.__redirect_uri(),
-                          response_type='token', code=self.code))
+                          response_type='token', code=self.session.code))
             open_url = None
             try:
                 opener = self.__build_url_opener(self.token_url)
@@ -98,7 +100,7 @@ class OAuthAccount(object):
                     redirect_uri=self.__redirect_uri(),
                     client_id=self.client_id,
                     client_secret=self.client_secret,
-                    code=self.code))
+                    code=self.session.code))
                 open_url = urlopen(self.token_url + '?' + data)
             if open_url:
                 tokendata = cgi.parse_qs(open_url.read())
@@ -110,6 +112,7 @@ class OAuthAccount(object):
                 else:
                     exps = 'expires'
                 self.session.token['expires'] == int(self.session.token[exps]) + time.time()
+                del self.session.code
                 return self.session.token['access_token']
 
         
@@ -121,7 +124,6 @@ class OAuthAccount(object):
         self.globals = g
         self.client_id = client_id
         self.client_secret = client_secret
-        self.code = None
         self.request = g['request']
         self.session = g['session']
         self.auth_url = auth_url
@@ -132,7 +134,8 @@ class OAuthAccount(object):
         return next
 
     def logout_url(self, next="/"):
-        return ''
+        del self.session.token
+        return next
 
     def get_user(self):
         '''Returns the user using the Graph API.
@@ -181,7 +184,7 @@ class OAuthAccount(object):
                            "You are not authenticated: you are being redirected to the <a href='" + auth_request_url + "'> authentication server</a>",
                            Location=auth_request_url)
             else:
-                self.code = self.request.vars.code
+                self.session.code = self.request.vars.code
                 self.accessToken()
-                return self.code
+                return self.session.code
         return None
