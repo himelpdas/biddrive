@@ -1880,8 +1880,9 @@ class Table(dict):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
                 else:
                     query = ['ALTER TABLE %s DROP %s;' % (self._tablename, key)]
-            elif sql_fields[key] != sql_fields_old[key] and \
-                 not (self[key].type.startswith('reference') and \
+            elif sql_fields[key] != sql_fields_old[key] \
+                  and not isinstance(self[key].type, SQLCustomType) \
+                  and not (self[key].type.startswith('reference') and \
                       sql_fields[key].startswith('INT,') and \
                       sql_fields_old[key].startswith('INT NOT NULL,')):
 
