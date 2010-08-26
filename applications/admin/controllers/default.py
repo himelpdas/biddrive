@@ -9,7 +9,7 @@ def index():
 
     send = request.vars.send
     if not send:
-        send = URL(r=request, f='site')
+        send = URL('site')
 
     if session.authorized:
         redirect(send)
@@ -58,13 +58,13 @@ def logout():
     """ Logout handler """
 
     session.authorized = None
-    redirect(URL(r=request, f='index'))
+    redirect(URL('index'))
 
 
 def change_password():
     if session.pam_user:
         session.flash = T('PAM authenticated user, cannot change password here')
-        redirect(URL(r=request,f='site'))
+        redirect(URL('site'))
     form=SQLFORM.factory(Field('current_admin_password','password'),
                          Field('new_admin_password','password',requires=IS_STRONG()),
                          Field('new_admin_password_again','password'))
@@ -77,7 +77,7 @@ def change_password():
             path = os.path.join(request.env.web2py_path,'parameters_%s.py' % request.env.server_port)
             open(path,'w').write('password="%s"' % CRYPT()(request.vars.new_admin_password)[0])
             session.flash = T('password changed')
-            redirect(URL(r=request,f='site'))
+            redirect(URL('site'))
     return dict(form=form)
 
 def site():
@@ -93,7 +93,7 @@ def site():
         appname = cleanpath(request.vars.filename).replace('.', '_')
         if app_create(appname, request):            
             session.flash = T('new application "%s" created', appname)
-            redirect(URL(r=request,f='design',args=appname))
+            redirect(URL('design',args=appname))
         else:
             session.flash = \
                 T('unable to create application "%s"', request.vars.filename)
@@ -313,7 +313,7 @@ def edit():
         except IOError:
             session.flash = T('Invalid action')
             if 'from_ajax' in request.vars:
-                 return response.json({'error': T('Invalid action')})
+                 return response.json({'error': str(T('Invalid action'))})
             else:
                 redirect(URL(r=request, f='site'))
 
@@ -328,7 +328,7 @@ def edit():
         except IOError:
             session.flash = T('Invalid action')
             if 'from_ajax' in request.vars:
-                return response.json({'error': T('Invalid action')})
+                return response.json({'error': str(T('Invalid action'))})
             else:
                 redirect(URL(r=request, f='site'))
 
@@ -340,7 +340,9 @@ def edit():
             data = request.vars.data.replace('\r\n', '\n').strip() + '\n'
             open(path + '.1', 'w').write(data)
             if 'from_ajax' in request.vars:
-                return response.json({'error': T('file changed on disk'), 'redirect': URL(r=request, f='resolve', args=request.args)})
+                return response.json({'error': str(T('file changed on disk')), 
+                                      'redirect': URL('resolve',
+                                                      args=request.args)})
             else:
                 redirect(URL(r=request, f='resolve', args=request.args))
         elif request.vars.data:
@@ -392,7 +394,7 @@ def edit():
                 vf = os.path.split(v)[-1]
                 vargs = "/".join([viewpath.replace(os.sep,"/"),vf])
                 editviewlinks.append(A(T(vf.split(".")[0]),\
-                    _href=URL(r=request,f='edit',args=[vargs])))
+                    _href=URL('edit',args=[vargs])))
 
     if len(request.args) > 2 and request.args[1] == 'controllers':
         controller = (request.args[2])[:-3]
@@ -577,7 +579,7 @@ def design():
         if plugin_install(app, request.vars.pluginfile.file,
                           request, filename):
             session.flash = T('new plugin installed')
-            redirect(URL(r=request,f='design',args=app))
+            redirect(URL('design',args=app))
         else:
             session.flash = \
                 T('unable to create application "%s"', request.vars.filename)
@@ -671,7 +673,7 @@ def delete_plugin():
     plugin = request.args(1)
     plugin_name='plugin_'+plugin
     if 'nodelete' in request.vars:
-        redirect(URL(r=request,f='design',args=app))
+        redirect(URL('design',args=app))
     elif 'delete' in request.vars:
         try:
             for folder in ['models','views','controllers','static','modules']:
@@ -688,7 +690,7 @@ def delete_plugin():
         except Exception:
             session.flash = T('unable to delete file plugin "%(plugin)s"',
                               dict(plugin=plugin))
-        redirect(URL(r=request,f='design',args=request.args(0)))
+        redirect(URL('design',args=request.args(0)))
     return dict(plugin=plugin)
 
 def plugin():
