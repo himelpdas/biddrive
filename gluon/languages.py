@@ -12,6 +12,8 @@ import re
 import cgi
 import portalocker
 import logging
+import marshal
+import copy_reg
 from fileutils import listdir
 from settings import settings
 from cfs import getcfs
@@ -282,6 +284,12 @@ def findT(path, language='en-us'):
                 pass
     write_dict(filename, sentences)
 
+### important to allow safe session.flash=T(....)
+def lazyT_unpickle(data):
+    return marshal.loads(data)
+def lazyT_pickle(data):
+    return lazyT_unpickle, (marshal.dumps(str(data)),)
+copy_reg.pickle(lazyT, lazyT_pickle, lazyT_unpickle)
 
 def update_all_languages(application_path):
     path = os.path.join(application_path, 'languages/')

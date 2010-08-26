@@ -18,6 +18,8 @@ import sanitizer
 import rewrite
 import itertools
 import decoder
+import copy_reg
+import marshal
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
 from contrib.markmin import render
@@ -339,6 +341,13 @@ class XML(XmlComponent):
         another options could be TAG(self.text).elements(*args,**kargs)
         """
         return []
+
+### important to allow safe session.flash=T(....)                                                             
+def XML_unpickle(data):
+    return marshal.loads(data)
+def XML_pickle(data):
+    return XML_unpickle, (marshal.dumps(str(data)),)
+copy_reg.pickle(XML, XML_pickle, XML_unpickle)
 
 
 

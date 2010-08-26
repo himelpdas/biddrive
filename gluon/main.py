@@ -395,9 +395,6 @@ def wsgibase(environ, responder):
             if request.body:
                 request.body.close()
 
-            if session.flash:
-                session.flash = str(session.flash)
-
             # ##################################################
             # on success, try store session in database
             # ##################################################
