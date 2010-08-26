@@ -45,7 +45,7 @@ def status():
 def redirectme():
     """ redirects to /{{=request.application}}/{{=request.controller}}/hello3 """
 
-    redirect(URL(r=request, f='hello3'))
+    redirect(URL('hello3'))
 
 
 def raisehttp():

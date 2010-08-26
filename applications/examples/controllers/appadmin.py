@@ -37,9 +37,9 @@ ignore_rw = True
 response.view = 'appadmin.html'
 response.menu = [[T('design'), False, URL('admin', 'default', 'design',
                  args=[request.application])], [T('db'), False,
-                 URL(r=request, f='index')], [T('state'), False,
-                 URL(r=request, f='state')], [T('cache'), False,
-                 URL(r=request, f='ccache')]]
+                 URL('index')], [T('state'), False,
+                 URL('state')], [T('cache'), False,
+                 URL('ccache')]]
 
 # ##########################################################
 # ## auxiliary functions
@@ -72,7 +72,7 @@ def get_database(request):
         return eval_in_global_env(request.args[0])
     else:
         session.flash = T('invalid request')
-        redirect(URL(r=request, f='index'))
+        redirect(URL('index'))
 
 
 def get_table(request):
@@ -81,7 +81,7 @@ def get_table(request):
         return (db, request.args[1])
     else:
         session.flash = T('invalid request')
-        redirect(URL(r=request, f='index'))
+        redirect(URL('index'))
 
 
 def get_query(request):
@@ -259,7 +259,7 @@ def update():
     if not record:
         qry = query_by_table_type(table, db)
         session.flash = T('record does not exist')
-        redirect(URL(r=request, f='select', args=request.args[:1],
+        redirect(URL('select', args=request.args[:1],
                      vars=dict(query=qry)))
     
     if keyed:
@@ -268,14 +268,14 @@ def update():
     
     form = SQLFORM(db[table], record, deletable=True, delete_label=T('Check to delete'), 
                    ignore_rw=ignore_rw and not keyed,
-                   linkto=URL(r=request, f='select',
+                   linkto=URL('select',
                    args=request.args[:1]), upload=URL(r=request,
                    f='download', args=request.args[:1]))
 
     if form.accepts(request.vars, session):
         session.flash = T('done!')
         qry = query_by_table_type(table, db)
-        redirect(URL(r=request, f='select', args=request.args[:1],
+        redirect(URL('select', args=request.args[:1],
                  vars=dict(query=qry)))
     return dict(form=form,table=db[table])
 

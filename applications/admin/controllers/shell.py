@@ -24,7 +24,7 @@ def unlock():
         shell.runsource("SQLDB.close_all_instances(SQLDB.rollback)")
     else:
         shell.runsource("SQLDB.close_all_instances(SQLDB.commit)")
-    redirect(URL(r=request,c='default',f='design',args=app))
+    redirect(URL('default','design',args=app))
 
 def callback():    
     app = request.args[0]

@@ -1,9 +1,9 @@
 
 response.menu = [['Register User', False, URL(r=request,
                  f='register_user')], ['Register Dog', False,
-                 URL(r=request, f='register_dog')], ['Register Product'
-                 , False, URL(r=request, f='register_product')],
-                 ['Buy product', False, URL(r=request, f='buy')]]
+                 URL('register_dog')], ['Register Product'
+                 , False, URL('register_product')],
+                 ['Buy product', False, URL('buy')]]
 
 
 def register_user():
@@ -32,7 +32,7 @@ def register_dog():
     form = SQLFORM(db.dogs)
     if form.accepts(request.vars, session):
         response.flash = 'new record inserted'
-    download = URL(r=request, f='download')  # to see the picture
+    download = URL('download')  # to see the picture
     records = SQLTABLE(db().select(db.dogs.ALL), upload=download)
     return dict(form=form, records=records)
 
@@ -128,14 +128,14 @@ def delete_purchased():
     """ delete all records in purchases """
 
     db(db.purchases.id > 0).delete()
-    redirect(URL(r=request, f='buy'))
+    redirect(URL('buy'))
 
 
 def reset_purchased():
     """ set quantity=0 for all records in purchases """
 
     db(db.purchases.id > 0).update(quantity=0)
-    redirect(URL(r=request, f='buy'))
+    redirect(URL('buy'))
 
 
 def download():

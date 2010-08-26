@@ -14,7 +14,7 @@
   </a>
   .
   <br/>
-  <a href="{{=URL(r=request,f='download')}}">
+  <a href="{{=URL('download')}}">
     {{=request.env.web2py_version}}
   </a>
   Created by
@@ -32,9 +32,9 @@
 <b>Created by a community of professionals</b> and University professors in Computer Science and Software Engineering.<hr />
 <b>Always backward compatible</b>. We have not broken backward compatibility since version 1.0 in 2007, and we pledge not to break it in the future. <hr />
 <b>Easy to run</b>. It requires no installation and no configuration.<hr />
-<b>Includes</b> <a href="http://launchpad.net/rocket"> a SSL-enabled and streaming-capable web server</a>, <a href="http://www.sqlite.org/">a relational database</a>, <a href="{{=URL('demo_admin','default','index')}}">a web-based integrated development environment and web-based management interface</a>, <a href="http://www.web2py.com/book/default/chapter/06">a Database Abstraction Layer</a> that writes SQL for you in real time, <a href="{{=URL(r=request,f='examples')}}">internationalization support</a>, <a href="http://www.web2py.com/book/default/chapter/08#Authentication">multiple authentication methods</a>, <a href="http://www.web2py.com/book/default/chapter/08#Authorization">role based access control</a>, <a href="{{=URL('demo_admin','default','errors',args='demo_app')}}">an error logging and ticketing system</a>, <a href="{{=URL(r=request,f='examples',anchor='cache_examples')}}">multiple caching methods for scalability</a>, <a href="http://www.jquery.com">the jQuery library</a> for <a href="{{=URL(r=request,f='examples',anchor='ajax_examples')}}">AJAX</a> and <a href="http://docs.jquery.com/Effects">effects</a>.<hr />
+<b>Includes</b> <a href="http://launchpad.net/rocket"> a SSL-enabled and streaming-capable web server</a>, <a href="http://www.sqlite.org/">a relational database</a>, <a href="{{=URL('demo_admin','default','index')}}">a web-based integrated development environment and web-based management interface</a>, <a href="http://www.web2py.com/book/default/chapter/06">a Database Abstraction Layer</a> that writes SQL for you in real time, <a href="{{=URL('examples')}}">internationalization support</a>, <a href="http://www.web2py.com/book/default/chapter/08#Authentication">multiple authentication methods</a>, <a href="http://www.web2py.com/book/default/chapter/08#Authorization">role based access control</a>, <a href="{{=URL('demo_admin','default','errors',args='demo_app')}}">an error logging and ticketing system</a>, <a href="{{=URL('examples',anchor='cache_examples')}}">multiple caching methods for scalability</a>, <a href="http://www.jquery.com">the jQuery library</a> for <a href="{{=URL('examples',anchor='ajax_examples')}}">AJAX</a> and <a href="http://docs.jquery.com/Effects">effects</a>.<hr />
 <b>Runs on</b>
-<a href="{{=URL(r=request,f='download')}}">Windows</a>, <a href="{{=URL(r=request,f='download')}}">Mac</a>, <a href="{{=URL(r=request,f='download')}}">Unix/Linux</a>, <a href="http://code.google.com/appengine/">Google App Engine</a>, <a href="http://aws.amazon.com/ec2/">Amazon EC2</a>, and almost any web hosting via <a href="http://www.python.org">Python 2.4/2.5/2.6</a>, or <a href="http://java.com">Java</a> with <a href="http://sourceforge.net/projects/jython/">Jython</a>.<hr />
+<a href="{{=URL('download')}}">Windows</a>, <a href="{{=URL('download')}}">Mac</a>, <a href="{{=URL('download')}}">Unix/Linux</a>, <a href="http://code.google.com/appengine/">Google App Engine</a>, <a href="http://aws.amazon.com/ec2/">Amazon EC2</a>, and almost any web hosting via <a href="http://www.python.org">Python 2.4/2.5/2.6</a>, or <a href="http://java.com">Java</a> with <a href="http://sourceforge.net/projects/jython/">Jython</a>.<hr />
 <b>Runs with</b>
 <a href="http://www.apache.org">Apache</a>, <a href="http://www.lighttpd.net">Lighttpd</a>, <a href="http://www.cherokee-project.com/">Cherokee</a> and almost any other web server via <a href="http://en.wikipedia.org/wiki/Common_Gateway_Interface">CGI</a>, <a href="http://en.wikipedia.org/wiki/FastCGI">FastCGI</a>, <a href="http://en.wikipedia.org/wiki/Web_Server_Gateway_Interface">WSGI</a>, <a href="http://httpd.apache.org/docs/2.0/mod/mod_proxy.html">mod_proxy</a>, and/or <a href="http://en.wikipedia.org/wiki/Mod_python">mod_python</a>. It can embed third party <a href="http://web2py.com/examples/static/wsgi.jpg">WSGI apps and middleware</a>.<hr />
 <b>Talks to</b> 
@@ -90,7 +90,7 @@ that make the code more readable, scalable, and maintainable.<hr />
   uservoice
 </a>
 <br />
-<a href="{{=URL(r=request,f='examples')}}">
+<a href="{{=URL('examples')}}">
   Quick Examples
 </a>
 <br/>

@@ -157,7 +157,7 @@ def pack():
         return open(filename, 'rb').read()
     else:
         session.flash = T('internal error')
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
 
 def pack_plugin():
     if len(request.args) == 2:
@@ -170,7 +170,7 @@ def pack_plugin():
         return open(filename, 'rb').read()
     else:
         session.flash = T('internal error')
-        redirect(URL(r=request, f='plugin',args=request.args))
+        redirect(URL('plugin',args=request.args))
 
 def upgrade_web2py():
     if 'upgrade' in request.vars:
@@ -179,9 +179,9 @@ def upgrade_web2py():
             session.flash = T('web2py upgraded; please restart it')
         else:
             session.flash = T('unable to upgrade because "%s"', error)
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
     elif 'noupgrade' in request.vars:
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
     return dict()
 
 def uninstall():
@@ -193,9 +193,9 @@ def uninstall():
             session.flash = T('application "%s" uninstalled', app)
         else:
             session.flash = T('unable to uninstall "%s"', app)
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
     elif 'nodelete' in request.vars:
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
     return dict(app=app)
 
 
@@ -206,7 +206,7 @@ def cleanup():
     else:
         session.flash = T('cache, errors and sessions cleaned')
 
-    redirect(URL(r=request, f='site'))
+    redirect(URL('site'))
 
 
 def compile_app():
@@ -216,14 +216,14 @@ def compile_app():
     else:
         session.flash = DIV(T('Cannot compile: there are errors in your app:',
                               CODE(c)))    
-    redirect(URL(r=request, f='site'))
+    redirect(URL('site'))
 
 
 def remove_compiled_app():
     """ Remove the compiled application """
     remove_compiled_application(apath(request.args[0], r=request))
     session.flash = T('compiled application removed')
-    redirect(URL(r=request, f='site'))
+    redirect(URL('site'))
 
     
 def delete():
@@ -236,7 +236,7 @@ def delete():
         sender = sender[0]
 
     if 'nodelete' in request.vars:
-        redirect(URL(r=request, f=sender))
+        redirect(URL(sender))
     elif 'delete' in request.vars:
         try:
             os.unlink(apath(filename, r=request))
@@ -245,7 +245,7 @@ def delete():
         except Exception:
             session.flash = T('unable to delete file "%(filename)s"',
                               dict(filename=filename))
-        redirect(URL(r=request, f=sender))
+        redirect(URL(sender))
     return dict(filename=filename, sender=sender)
         
 def peek():
@@ -257,7 +257,7 @@ def peek():
         data = open(apath(filename, r=request), 'r').read().replace('\r','')
     except IOError:
         session.flash = T('file does not exist')
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
 
     extension = filename[filename.rfind('.') + 1:].lower()
 
@@ -315,7 +315,7 @@ def edit():
             if 'from_ajax' in request.vars:
                  return response.json({'error': str(T('Invalid action'))})
             else:
-                redirect(URL(r=request, f='site'))
+                redirect(URL('site'))
 
         open(path, 'w').write(data)
         file_hash = md5_hash(data)
@@ -330,7 +330,7 @@ def edit():
             if 'from_ajax' in request.vars:
                 return response.json({'error': str(T('Invalid action'))})
             else:
-                redirect(URL(r=request, f='site'))
+                redirect(URL('site'))
 
         file_hash = md5_hash(data)
         saved_on = time.ctime(os.stat(path)[stat.ST_MTIME])
@@ -344,7 +344,7 @@ def edit():
                                       'redirect': URL('resolve',
                                                       args=request.args)})
             else:
-                redirect(URL(r=request, f='resolve', args=request.args))
+                redirect(URL('resolve', args=request.args))
         elif request.vars.data:
             open(path + '.bak', 'w').write(data)
             data = request.vars.data.replace('\r\n', '\n').strip() + '\n'
@@ -372,7 +372,7 @@ def edit():
         cfilename = os.path.join(request.args[0], 'controllers',
                                  request.args[2] + '.py')
         if os.path.exists(apath(cfilename, r=request)):
-            edit_controller = URL(r=request, f='edit', args=[cfilename])
+            edit_controller = URL('edit', args=[cfilename])
             view = request.args[3].replace('.html','')
             view_link = A(T('view'),_href=URL(request.args[0],request.args[2],view))
     elif filetype == 'python' and request.args[1] == 'controllers':
@@ -456,7 +456,7 @@ def resolve():
         b = open(path + '.1', 'r').readlines()
     except IOError:
         session.flash = 'Other file, no longer there'
-        redirect(URL(r=request, f='edit', args=request.args))
+        redirect(URL('edit', args=request.args))
 
     d = difflib.ndiff(a, b)
 
@@ -492,7 +492,7 @@ def resolve():
                      == ' ' or 'line%i' % i in request.vars])
         open(path, 'w').write(c)
         session.flash = 'files merged'
-        redirect(URL(r=request, f='edit', args=request.args))
+        redirect(URL('edit', args=request.args))
     else:
         # Making the short circuit compatible with <= python2.4
         gen_data = lambda index,item: not item[:1] in ['+','-'] and "" \
@@ -591,7 +591,7 @@ def design():
     if os.path.exists(apath('%s/compiled' % app, r=request)):
         session.flash = \
             T('application is compiled and cannot be designed')
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
 
     # Get all models
     models = listdir(apath('%s/models/' % app, r=request), '.*\.py$')
@@ -708,7 +708,7 @@ def plugin():
     if os.path.exists(apath('%s/compiled' % app, r=request)):
         session.flash = \
             T('application is compiled and cannot be designed')
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
 
     # Get all models
     models = listdir(apath('%s/models/' % app, r=request), '.*\.py$')
@@ -879,7 +879,7 @@ def create_file():
         open(full_filename, 'w').write(text)
         session.flash = T('file "%(filename)s" created',
                           dict(filename=full_filename[len(path):]))
-        redirect(URL(r=request, f='edit',
+        redirect(URL('edit',
                  args=[os.path.join(request.vars.location, filename)]))
     except Exception, e:
         if not isinstance(e,HTTP):
@@ -1012,7 +1012,7 @@ def ticket():
 
     if len(request.args) != 2:
         session.flash = T('invalid ticket')
-        redirect(URL(r=request, f='site'))
+        redirect(URL('site'))
 
     app = request.args[0]
     ticket = request.args[1]
@@ -1034,7 +1034,7 @@ def update_languages():
     app = request.args[0]
     update_all_languages(apath(app, r=request))
     session.flash = T('Language files (static strings) updated')
-    redirect(URL(r=request, f='design/' + app))
+    redirect(URL('design',args=app))
 
 def twitter():
     session.forget()

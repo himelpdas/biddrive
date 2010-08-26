@@ -38,7 +38,7 @@ onclick="uncheck()" type="button">
 {{for ticket in tickets:}}
 <tr>
 <td><input type="checkbox" name="delete_{{=ticket}}"/></td>
-<td><a href="{{=URL(r=request,f='ticket',args=[app,ticket])}}">{{=ticket}}</a></td>
+<td><a href="{{=URL('ticket',args=[app,ticket])}}">{{=ticket}}</a></td>
 <td>{{=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(os.stat(os.path.join(request.folder,'../%s/errors/%s' % (app,ticket)))[stat.ST_CTIME]))}}</td>
 </tr>
 {{pass}}

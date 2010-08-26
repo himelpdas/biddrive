@@ -94,7 +94,7 @@ def status():
 <h3>Example {{=c}}{{c+=1}}</h3><b>In controller: simple_examples.py</b>
 {{=CODE("""
 def redirectme():
-    redirect(URL(r=request,f='hello3'))
+    redirect(URL('hello3'))
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}
 <p>You can do redirect.
 <br/>Try it here: <a href="/{{=request.application}}/simple_examples/redirectme">redirectme</a></p>
@@ -279,9 +279,9 @@ def beautify(): return dict(message=BEAUTIFY(request))
 <h3>Example {{=c}}{{c+=1}}</h3><b>In controller: layout_examples.py </b>
 {{=CODE("""
 def civilized():
-    response.menu=[['civilized',True,URL(r=request,f='civilized')],
-                   ['slick',False,URL(r=request,f='slick')],
-                   ['basic',False,URL(r=request,f='basic')]]
+    response.menu=[['civilized',True,URL('civilized')],
+                   ['slick',False,URL('slick')],
+                   ['basic',False,URL('basic')]]
     response.flash='you clicked on civilized'
     return dict(message="you clicked on civilized")
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}<b>and view: layout_examples/civilized.html</b>
@@ -292,9 +292,9 @@ def civilized():
 <h3>Example {{=c}}{{c+=1}}</h3><b>In controller: layout_examples.py </b>
 {{=CODE("""
 def slick():
-    response.menu=[['civilized',False,URL(r=request,f='civilized')],
-                   ['slick',True,URL(r=request,f='slick')],
-                   ['basic',False,URL(r=request,f='basic')]]
+    response.menu=[['civilized',False,URL('civilized')],
+                   ['slick',True,URL('slick')],
+                   ['basic',False,URL('basic')]]
     response.flash='you clicked on slick'
     return dict(message="you clicked on slick")
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}<b>and view: layout_examples/slick.html</b>
@@ -304,9 +304,9 @@ def slick():
 <h3>Example {{=c}}{{c+=1}}</h3><b>In controller: layout_examples.py </b>
 {{=CODE("""
 def basic():
-    response.menu=[['civilized',False,URL(r=request,f='civilized')],
-                   ['slick',False,URL(r=request,f='slick')],
-                   ['basic',True,URL(r=request,f='basic')]]
+    response.menu=[['civilized',False,URL('civilized')],
+                   ['slick',False,URL('slick')],
+                   ['basic',True,URL('basic')]]
     response.flash='you clicked on basic'
     return dict(message="you clicked on basic")
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}<b>and view: layout_examples/basic.html</b>
@@ -391,10 +391,10 @@ define_tables creates the table and attempts a migration if table has changed or
 
 <h3>Example {{=c}}{{c+=1}}</h3><b>In controller: database_examples.py </b>
 {{=CODE("""
-response.menu=[['Register User',False,URL(r=request,f='register_user')],
-               ['Register Dog',False,URL(r=request,f='register_dog')],
-               ['Register Product',False,URL(r=request,f='register_product')],
-               ['Buy product',False,URL(r=request,f='buy')]]
+response.menu=[['Register User',False,URL('register_user')],
+               ['Register Dog',False,URL('register_dog')],
+               ['Register Product',False,URL('register_product')],
+               ['Buy product',False,URL('buy')]]
 
 def register_user():
     ### create an insert form from the table
@@ -418,7 +418,7 @@ def register_dog():
     form=SQLFORM(db.dogs)
     if form.accepts(request.vars,session):
         response.flash='new record inserted'
-    download=URL(r=request,f='download') # to see the picture
+    download=URL('download') # to see the picture
     records=SQLTABLE(db().select(db.dogs.ALL),upload=download)
     return dict(form=form,records=records)
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}<b>and view: database_examples/register_dog.html</b>
@@ -480,14 +480,14 @@ def buy():
 {{=CODE("""
 def delete_purchased():
     db(db.purchases.id>0).delete()
-    redirect(URL(r=request,f='buy'))
+    redirect(URL('buy'))
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}Try it here: <a href="/{{=request.application}}/database_examples/delete_purchased">delete_purchased</a> 
 
 <h3>Example {{=c}}{{c+=1}}</h3><b>In controller: database_examples.py</b>
 {{=CODE("""
 def reset_purchased():
     db(db.purchases.id>0).update(quantity=0)
-    redirect(URL(r=request,f='buy'))
+    redirect(URL('buy'))
 """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'))}}
 <p>This is an update on an SQLSet. (db.purchase.id>0 identifies the set containing only table db.purchases.)
 <br/>Try it here: <a href="/{{=request.application}}/database_examples/reset_purchased">reset_purchased</a></p>
