@@ -1644,14 +1644,14 @@ class Table(dict):
         else:
             return dict.__getitem__(self, str(key))
 
-    def __call__(self, key=None, **kwargs):
-        if key!=None:
-            if isinstance(key, Query):
-                record = self._db(key).select(limitby=(0,1)).first()
-            elif not str(key).isdigit():
+    def __call__(self, id=None, **kwargs):
+        if id!=None:
+            if isinstance(id, Query):
+                record = self._db(id).select(limitby=(0,1)).first()
+            elif not str(id).isdigit():
                 record = None
             else:
-                record = self._db(self.id == key).select(limitby=(0,1)).first()
+                record = self._db(self.id == id).select(limitby=(0,1)).first()
             if record:
                 for k,v in kwargs.items():
                     if record[k]!=v: return None
