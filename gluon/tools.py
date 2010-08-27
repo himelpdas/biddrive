@@ -811,7 +811,7 @@ class Auth(object):
         self.settings.retrieve_password_captcha = None
         self.settings.captcha = None
         self.settings.expiration = 3600         # one day
-        self.settings.long_expiration = 3600*30 # one month
+        self.settings.long_expiration = 3600*30*24 # one month
         self.settings.remember_me_form = True
         self.settings.allow_basic_login = False
         self.settings.on_failed_authorization = \
