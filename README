@@ -843,3 +843,14 @@ request.cid, request.ajax, A(cid=request.cid), response.js
 
 #1.83.2
 mostly cleanup
+
+#1.84.1
+flash now stays put in the top right corner
+improved behavior for URL and T objects
+new app level logging with logging.conf (thanks Jonathan)
+improved OpenID (thanks Michele)
+web2py_ajax handles prepend, append, hide (thanks Juris)
+web2py_ajax also handels pre-validation of decimal fields
+ru-ru translation (thanks Michele)
+sk-sk translation (thanks Julius)
+fixed bugs in SQLCustomField, Field(default=...), IS_IMAGE, IS_DECIMAL_IN_RANGE and a few more.
