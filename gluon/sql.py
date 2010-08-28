@@ -1738,8 +1738,10 @@ class Table(dict):
             else:
                 ftype = self._db._translator[field.type]\
                      % dict(length=field.length)
-            if not isinstance(field.type, SQLCustomType) and not field.type.startswith('id') and not field.type.startswith('reference'):
-                if field.notnull:
+            if not isinstance(field.type, SQLCustomType) and \
+                    not field.type.startswith('id') and \
+                    not field.type.startswith('reference'):
+                if field.notnull:                    
                     ftype += ' NOT NULL'
                 if field.unique:
                     ftype += ' UNIQUE'
@@ -1748,13 +1750,17 @@ class Table(dict):
             sql_fields[field.name] = ftype
 
             if field.default:
-                sql_fields_aux[field.name] = ftype.replace('NOT NULL',
-                        self._db._translator['notnull']
-                         % dict(default=sql_represent(field.default,
-                        field.type, self._db._dbname, self._db._db_codec)))
-            else:
-                sql_fields_aux[field.name] = ftype
+                # caveat: sql_fields and sql_fields_aux differ for default values
+                # sql_fields is used to trigger migrations and sql_fields_aux
+                # are used for create table
+                # the reason is that we do not want to trigger a migration simply
+                # because a default value changes
+                ftype = ftype.replace('NOT NULL',
+                                      self._db._translator['notnull']
+                                      % dict(default=sql_represent(field.default,
+                                       field.type, self._db._dbname, self._db._db_codec)))
 
+            sql_fields_aux[field.name] = ftype            
             fields.append('%s %s' % (field.name, ftype))
         other = ';'
 
