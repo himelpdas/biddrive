@@ -9,6 +9,7 @@
 <a href="#form_examples">form</a> |
 <a href="#database_examples">database</a> |
 <a href="#cache_examples">cache</a> |
+<a href="#ajax_examples">xmlrpc</a> |
 <a href="#testing_examples">testing</a> |
 <a href="#streaming_examples">streaming</a> |
 <a href="#xmlrpc_examples">xmlrpc</a> |
@@ -181,8 +182,9 @@ gluon.contrib.<a href="http://www.feedparser.org/">feedparser</a>, developed by 
 <h3 id="example_wiki">Example {{=c}}{{c+=1}}</h3><b>In controller: simple_examples.py</b>
 {{=CODE("""
 def ajaxwiki():
-    form=FORM(TEXTAREA(_id='text'),INPUT(_type='button',_value='markmin',
-         _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
+    form=FORM(TEXTAREA(_id='text',_name='text'),
+             INPUT(_type='button',_value='markmin',
+                   _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
     return dict(form=form,html=DIV(_id='html'))
 
 def ajaxwiki_onclick():

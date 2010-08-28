@@ -105,13 +105,36 @@ def rss_aggregator():
 
 
 def ajaxwiki():
-    form = FORM(TEXTAREA(_id='text'), INPUT(_type='button',
-                                            _value='markmin',
-                                            _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
-    return dict(form=form, html=DIV(_id='html'))
+    default="""
+# section
 
+## subsection
+
+### sub subsection
+
+- **bold** text
+- ''italic''
+- [[link http://google.com]]
+
+``
+def index: return 'hello world'
+``
+
+-----------
+Quoted text
+-----------
+
+---------
+0 | 0 | 1
+0 | 2 | 0
+3 | 0 | 0
+---------
+"""
+    form = FORM(TEXTAREA(_id='text',_name='text',value=default),
+                INPUT(_type='button',
+                      _value='markmin',
+                      _onclick="ajax('ajaxwiki_onclick',['text'],'html')"))
+    return dict(form=form, html=DIV(_id='html'))
 
 def ajaxwiki_onclick():
     return MARKMIN(request.vars.text).xml()
-
-
