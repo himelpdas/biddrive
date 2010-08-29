@@ -63,7 +63,10 @@ class OAuthAccount(object):
         http_host=self.request.env.http_x_forwarded_for
         if not http_host: http_host=self.request.env.http_host
 
-        return 'http://%s%s' %(http_host, self.request.env.path_info + '?' + urlencode(dict(_next=self.request.vars._next)))
+        url = 'http://%s%s' %(http_host, self.request.env.path_info)
+        if self.request.vars._next:
+            url = url  + '?' + urlencode(dict(_next=self.request.vars._next))
+        return url
 
 
     def accessToken(self):
@@ -83,25 +86,24 @@ class OAuthAccount(object):
             return self.session.access_token
         if self.session.request_token:
             # Exchange the request token with an authorization token.
-            req_token = self.session.request_token
+            token = self.session.request_token
             self.session.request_token = None
 
             
-            token = oauth.Token(req_token['oauth_token'],
-                                      req_token['oauth_token_secret'])
+
             # Build an authorized client
             # OAuth1.0a put the verifier!
-            data = urlencode(
-                dict(oauth_verifier=self.request.vars.oauth_verifier))
+            token.set_verifier(self.request.vars.oauth_verifier)
             client = oauth.Client(self.consumer, token)
 
             
-            resp, content = client.request(self.access_token_url, "POST", body=data)
+            resp, content = client.request(self.access_token_url, "POST")
             if resp['status'] != '200':
-                
-                return None
+                self.session.request_token = None
+                self.globals['redirect'](self.globals['URL'](f='user',args='logout'))
 
-            self.session.access_token = dict(cgi.parse_qs(content))
+
+            self.session.access_token = oauth.Token.from_string(content)
             
             return self.session.access_token
             
@@ -124,12 +126,12 @@ class OAuthAccount(object):
         
         
     def login_url(self, next="/"):
-        print ("next: %s, %s" % (next, self.request.vars._next))
         self.__oauth_login(next)
         return next
 
     def logout_url(self, next="/"):
-        del self.session.access_token
+        self.session.request_token = None
+        self.session.access_token = None 
         return next
 
     def get_user(self):
@@ -151,7 +153,6 @@ class OAuthAccount(object):
         called to set the access token into the session by calling
         accessToken()
         '''
-
        
         if not self.accessToken():
             # setup the client
@@ -163,14 +164,14 @@ class OAuthAccount(object):
             data = urlencode(dict(oauth_callback=callback_url))
             resp, content = client.request(self.token_url, "POST",  body=data)
             if resp['status'] != '200':
+                self.session.request_token = None
+                self.globals['redirect'](self.globals['URL'](f='user',args='logout'))
                 
-                return None
-
             # Store the request token in session.
-            request_token = self.session.request_token = dict(cgi.parse_qsl(content))
+            request_token = self.session.request_token = oauth.Token.from_string(content)
 
             # Redirect the user to the authentication URL and pass the callback url.
-            data = urlencode(dict(oauth_token=request_token['oauth_token'],
+            data = urlencode(dict(oauth_token=request_token.key,
                                   oauth_callback=callback_url))
             auth_request_url = self.auth_url + '?' +data
 
