@@ -63,6 +63,8 @@ version_info.close()
 logpath = os.path.join(web2py_path, "logging.conf")
 if os.path.exists(logpath):
     logging.config.fileConfig(os.path.join(web2py_path, "logging.conf"))
+else:
+    logging.basicConfig()
 logger = logging.getLogger("web2py")
 
 try:
