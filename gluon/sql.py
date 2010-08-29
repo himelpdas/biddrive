@@ -536,7 +536,7 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if isinstance(obj, (list, tuple)):
         obj = '|%s|' % '|'.join(bar_escape(item) for item in obj)
     if isinstance(obj, (Expression, Field)):
-        return obj
+        return str(obj)
     if isinstance(fieldtype, SQLCustomType):
         return fieldtype.encoder(obj)
     if obj is None:
@@ -1832,7 +1832,6 @@ class Table(dict):
                 cPickle.dump(sql_fields, tfile)
                 portalocker.unlock(tfile)
                 tfile.close()
-            if self._dbt:
                 if fake_migrate:
                     logfile.write('faked!\n')
                 else:
@@ -1875,13 +1874,18 @@ class Table(dict):
             new_add = '; ALTER TABLE %s ADD ' % self._tablename
         else:
             new_add = ', ADD '
+
+        fields_changed = False
+        sql_fields_current = copy.copy(sql_fields_old)
         for key in keys:
             if not key in sql_fields_old:
+                sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
                          (self._tablename, key, sql_fields_aux[key].replace(', ', new_add))]
             elif self._db._dbname == 'sqlite':
                 query = None
             elif not key in sql_fields:
+                del sql_fields_current[key]
                 if not self._db._dbname in ('firebird',):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
                 else:
@@ -1891,10 +1895,7 @@ class Table(dict):
                   and not (self[key].type.startswith('reference') and \
                       sql_fields[key].startswith('INT,') and \
                       sql_fields_old[key].startswith('INT NOT NULL,')):
-
-                # ## FIX THIS WHEN DIFFERENCES IS ONLY IN DEFAULT
-                # 2
-
+                sql_field_current[key] = sql_field[key]
                 t = self._tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
                 if not self._db._dbname in ('firebird',):
@@ -1915,6 +1916,7 @@ class Table(dict):
                 query = None
 
             if query:
+                fields_changed = True
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
                 self._db['_lastsql'] = '\n'.join(query)
@@ -1922,24 +1924,30 @@ class Table(dict):
                     logfile.write(sub_query + '\n')
                     if not fake_migrate:
                         self._db._execute(sub_query)
-                        if self._db._dbname in ['mysql', 'oracle', 'firebird']:
+                        # caveat. mysql, oracle and firebird do not allow multiple alter table
+                        # in one transaction so we must commit partial transactions and
+                        # update self._dbt after alter table.
+                        if self._db._dbname in ['mysql', 'oracle', 'firebird']:                            
                             self._db.commit()
+                            tfile = open(self._dbt, 'w')
+                            portalocker.lock(tfile, portalocker.LOCK_EX)
+                            cPickle.dump(sql_fields_current, tfile)
+                            portalocker.unlock(tfile)
+                            tfile.close()
                             logfile.write('success!\n')
                     else:
                         logfile.write('faked!\n')
-                if key in sql_fields:
-                    sql_fields_old[key] = sql_fields[key]
-                else:
-                    del sql_fields_old[key]
-        tfile = open(self._dbt, 'w')
-        portalocker.lock(tfile, portalocker.LOCK_EX)
-        cPickle.dump(sql_fields_old, tfile)
-        portalocker.unlock(tfile)
-        tfile.close()
+
+        if fields_changed and not self._db._dbname in ['mysql', 'oracle', 'firebird']:
+            self._db.commit()
+            tfile = open(self._dbt, 'w')
+            portalocker.lock(tfile, portalocker.LOCK_EX)
+            cPickle.dump(sql_fields_current, tfile)
+            portalocker.unlock(tfile)
+            tfile.close()
 
     def create(self):
         """nothing to do; here for backward compatibility"""
-
         pass
 
     def _drop(self, mode = None):
@@ -3430,7 +3438,7 @@ excluded + tables_to_merge.keys()])
                                        for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].compute != None]))
-        sql_v = 'SET ' + ', '.join(['%s=%s' % (field,
+        sql_v = 'SET ' + ', '.join(['%s=%s' % (field, 
                                    sql_represent(value,
                                    table[field].type, dbname, self._db._db_codec))
                                    for (field, value) in
