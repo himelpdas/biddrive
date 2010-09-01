@@ -52,9 +52,9 @@ SQL_DIALECTS = {'google': {
     'datetime': gae.DateTimeProperty,
     'id': None,
     'reference': gae.IntegerProperty,
-    'list:integer': gae.ListProperty(int,default=None),
-    'list:string': gae.StringListProperty(default=None),
-    'list:reference': gae.ListProperty(int,default=None),
+    'list:string': (lambda: gae.StringListProperty(default=None)),
+    'list:integer': (lambda: gae.ListProperty(int,default=None)),
+    'list:reference': (lambda: gae.ListProperty(int,default=None)),
     'lower': None,
     'upper': None,
     'is null': 'IS NULL',
@@ -230,17 +230,16 @@ class Table(gluon.sql.Table):
                 if field.notnull:
                     attr = dict(required=True)
                 referenced = field.type[15:].strip()
-                ftype = self._db._translator[field.type[:14]]
+                ftype = self._db._translator[field.type[:14]](**attr)
             elif field.type.startswith('list:'):
-                ftype = self._db._translator[field.type]
+                ftype = self._db._translator[field.type](**attr)
             elif not field.type in self._db._translator\
                  or not self._db._translator[field.type]:
                 raise SyntaxError, 'Field: unknown field type: %s' % field.type
             else:
                 ftype = self._db._translator[field.type](**attr)
             myfields[field.name] = ftype
-        self._tableobj = classobj(self._tablename, (gae.Model, ),
-                                  myfields)
+        self._tableobj = classobj(self._tablename, (gae.Model, ), myfields)
         return None
 
     def create(self):
