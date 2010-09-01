@@ -31,7 +31,7 @@ function ajax(u,s,t) {
     } else {
         pcs = [];
         for(i=0; i<s.length; i++) {
-            q = jQuery("#"+s[i]).serialize();
+            q = jQuery("[name="+s[i]+"]").serialize();
             if(q){pcs.push(q);}
         }
         if (pcs.length>0){query = pcs.join("&");}

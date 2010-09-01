@@ -853,4 +853,6 @@ web2py_ajax handles prepend, append, hide (thanks Juris)
 web2py_ajax also handels pre-validation of decimal fields
 ru-ru translation (thanks Michele)
 sk-sk translation (thanks Julius)
+migrations save .table only if changed and after each ALTER TABLE (no more mysql inconsistencies)
 fixed bugs in SQLCustomField, Field(default=...), IS_IMAGE, IS_DECIMAL_IN_RANGE and a few more.
+
