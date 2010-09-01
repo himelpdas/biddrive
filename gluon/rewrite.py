@@ -18,36 +18,29 @@ regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
 regex_anything = re.compile(r'(?<!\\)\$anything')
 regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
-
 logger = logging.getLogger('web2py.rewrite')
 
-params_default = Storage()
-params = params_default
-
-params.default_application = "init"
-params.default_controller = "default"
-params.default_function = "index"
-params.routes_app = []
-params.routes_in = []
-params.routes_out = []
-params.routes_onerror = []
-params.routes_apps_raw = []
-params.routes_logging = []
-params.error_handler = None
-params.error_message = '<html><body><h1>Invalid request</h1></body></html>'
-params.error_message_custom = '<html><body><h1>%s</h1></body></html>'
-params.error_message_ticket = \
-    '<html><body><h1>Internal error</h1>Ticket issued: <a href="/admin/default/ticket/%(ticket)s" target="_blank">%(ticket)s</a></body><!-- this is junk text else IE does not display the page: '+('x'*512)+' //--></html>'
+def _params_default(app=None):
+    p = Storage()
+    p.name = app or "BASE"
+    p.default_application = app or "init"
+    p.default_controller = "default"
+    p.default_function = "index"
+    p.routes_app = []
+    p.routes_in = []
+    p.routes_out = []
+    p.routes_onerror = []
+    p.routes_apps_raw = []
+    p.error_handler = None
+    p.error_message = '<html><body><h1>Invalid request</h1></body></html>'
+    p.error_message_custom = '<html><body><h1>%s</h1></body></html>'
+    p.error_message_ticket = \
+        '<html><body><h1>Internal error</h1>Ticket issued: <a href="/admin/default/ticket/%(ticket)s" target="_blank">%(ticket)s</a></body><!-- this is junk text else IE does not display the page: '+('x'*512)+' //--></html>'
+    return p
 
 params_apps = dict()
-params_base = Storage()
-for key, value in params_default.items():
-    params_base[key] = value
+params_base = _params_default()
+
 params = params_base
 
 def compile_re(k, v):
@@ -114,20 +107,16 @@ def load(routes='routes.py', app=None):
                           traceback.format_exc())
         raise e
 
-    p = Storage()
-    for (sym, default) in params_default.items():
-        p[sym] = default
+    p = _params_default(app)
     for sym in ('routes_app', 'routes_in', 'routes_out'):
         if sym in symbols:
             for (k, v) in symbols[sym]:
                 p[sym].append(compile_re(k, v))
-    for sym in ('routes_onerror', 'routes_apps_raw', 'routes_logging',
+    for sym in ('routes_onerror', 'routes_apps_raw',
                 'error_handler','error_message', 'error_message_ticket',
                 'default_application','default_controller', 'default_function'):
         if sym in symbols:
             p[sym] = symbols[sym]
-    if p.routes_logging:
-        p.loglevel = LEVELS.get(p.routes_logging.lower(), logging.INFO)
 
     if app is None:
         params_base = p
@@ -154,11 +143,9 @@ def filter_uri(e, regexes, tag, default=None):
     for (regex, value) in regexes:
         if regex.match(key):
             rewritten = regex.sub(value, key)
-            if params.routes_logging:
-                logger.log(params.loglevel, '%s: [%s] [%s] -> %s' % (tag, key, value, rewritten))
+            logger.debug('%s: [%s] [%s] -> %s' % (tag, key, value, rewritten))
             return (rewritten, query, original_uri)
-    if params.routes_logging:
-        logger.log(params.loglevel, '%s: [%s] -> %s (not rewritten)' % (tag, key, default))
+    logger.debug('%s: [%s] -> %s (not rewritten)' % (tag, key, default))
     return (default, query, original_uri)
 
 def select(e=None):
@@ -172,6 +159,7 @@ def select(e=None):
     if e and params.routes_app:
         (app, q, u) = filter_uri(e, params.routes_app, "routes_app")
         params = params_apps.get(app, params_base)
+    logger.debug("select routing parameters: %s" % params.name)
     return app  # for doctest
 
 def filter_in(e):
@@ -206,11 +194,9 @@ def filter_out(url, e=None):
         for (regex, value) in params.routes_out:
             if regex.match(items[0]):
                 rewritten = '?'.join([regex.sub(value, items[0])] + items[1:])
-                if params.routes_logging:
-                    logger.log(params.loglevel, 'routes_out: [%s] -> %s' % (url, rewritten))
+                logger.debug('routes_out: [%s] -> %s' % (url, rewritten))
                 return rewritten
-    if params.routes_logging:
-        logger.log(params.loglevel, 'routes_out: [%s] not rewritten' % url)
+    logger.debug('routes_out: [%s] not rewritten' % url)
     return url
 
 
