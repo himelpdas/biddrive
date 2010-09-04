@@ -27,7 +27,7 @@ import gluon.sql
 from new import classobj
 from google.appengine.ext import db as gae
 from google.appengine.api.datastore_types import Key
-
+from google.appengine.ext.db.polymodel import PolyModel
 MAX_ITEMS = 1000 # GAE main limitation
 
 Row = gluon.sql.Row
@@ -131,7 +131,7 @@ class GQLDB(gluon.sql.SQLDB):
         t = self[tablename] = Table(self, tablename, *fields)
         self.tables.append(tablename)
         t._create_references()
-        t._create()
+        t._create(polymodel=args.get('polymodel',None))
         t._format = args.get('format', None)
         return t
 
@@ -209,7 +209,7 @@ class Table(gluon.sql.Table):
                 field.requires = gluon.sql.sqlhtml_validators(field)
         self.ALL = SQLALL(self)
 
-    def _create(self):
+    def _create(self,polymodel=None):
         fields = []
         myfields = {}
         for k in self.fields:
@@ -239,7 +239,16 @@ class Table(gluon.sql.Table):
             else:
                 ftype = self._db._translator[field.type](**attr)
             myfields[field.name] = ftype
-        self._tableobj = classobj(self._tablename, (gae.Model, ), myfields)
+        if not polymodel:
+            self._tableobj = classobj(self._tablename, (gae.Model, ), myfields)
+        elif polymodel==True:
+            self._tableobj = classobj(self._tablename, (PolyModel, ), myfields)
+        elif isinstance(polymodel,Table):
+            self._tableobj = classobj(self._tablename, (polymodel._tableobj, ), myfields)            
+        elif isinstance(polymodel,str) and polymodel in self._db.tables():
+            self._tableobj = classobj(self._tablename, (self._db[polymodel]._tableobj, ), myfields)            
+        else:
+            raise RuntimeError, "polymodel must be None, True, a table or a tablename"
         return None
 
     def create(self):
