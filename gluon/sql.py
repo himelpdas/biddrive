@@ -530,11 +530,20 @@ def sqlhtml_validators(field):
 def bar_escape(item):
     return str(item).replace('|', '||')
 
+def bar_encode(items):
+    return '|%s|' % '|'.join(bar_escape(item) for item in items)
+
+def bar_decode_integer(value):
+    return [int(x) for x in value.split('|') if x.strip()]
+
+def bar_decode_string(value):
+    return [x.replace('||','|') for x in string_unpack.split(value) if x.strip()]
+
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if type(obj) in (types.LambdaType, types.FunctionType):
         obj = obj()
     if isinstance(obj, (list, tuple)):
-        obj = '|%s|' % '|'.join(bar_escape(item) for item in obj)
+        obj = bar_encode(obj)
     if isinstance(obj, (Expression, Field)):
         return str(obj)
     if isinstance(fieldtype, SQLCustomType):
@@ -2090,6 +2099,10 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
+            elif field.type.startswith('list:string'):
+                value = bar_decode_string(value)
+            elif field.type.startswith('list:'):
+                value = bar_decode_integer(value)
             elif id_map and not isinstance(field.type, SQLCustomType) and field.type.startswith('reference'):
                 try:
                     value = id_map[field.type[9:].strip()][value]
@@ -3351,17 +3364,17 @@ excluded + tables_to_merge.keys()])
                     colset[fieldname] = value
                 elif value != None and field.type.startswith('list:integer'):
                     if db._uri != 'gae':
-                        colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
+                        colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif value != None and field.type.startswith('list:reference'):
                     if db._uri != 'gae':
-                        colset[fieldname] = [int(x) for x in value.split('|') if x.strip()]
+                        colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif value != None and field.type.startswith('list:string'):
                     if db._uri != 'gae':
-                        colset[fieldname] = [x.replace('||','|') for x in string_unpack.split(value) if x.strip()]
+                        colset[fieldname] = bar_decode_string(value)
                     else:
                         colset[fieldname] = value
                 else:
@@ -3707,6 +3720,8 @@ class Rows(object):
                 return int(value)
             elif hasattr(value, 'isoformat'):
                 return value.isoformat()[:19].replace('T', ' ')
+            elif isinstance(value, (list,tuple)): # for type='list:..'
+                return bar_encode(value)
             return value
 
         for record in self:
@@ -3714,17 +3729,16 @@ class Rows(object):
             for col in self.colnames:
                 if not table_field.match(col):
                     row.append(record._extra[col])
-                else:
+                else:                    
                     (t, f) = col.split('.')
+                    field = self.db[t][f]
                     if isinstance(record.get(t, None), (Row,dict)):
-                        row.append(none_exception(record[t][f]))
-                    elif represent:
-                        if self.db[t][f].represent:
-                            row.append(none_exception(self.db[t][f].represent(record[f])))
-                        else:
-                            row.append(none_exception(record[f]))
+                        value = record[t][f]
                     else:
-                        row.append(none_exception(record[f]))
+                        value = record[f]
+                    if represent and field.represent:
+                            value = field.represent(value)
+                    row.append(none_exception(value))
             writer.writerow(row)
 
     def __str__(self):
