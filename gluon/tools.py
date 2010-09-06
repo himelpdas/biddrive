@@ -2011,7 +2011,7 @@ class Auth(object):
         db = self.db
         table_user = self.settings.table_user
         usern = self.settings.table_user_name
-        s = db(table_user.email == self.user.email)
+        s = db(table_user.id == self.user.id)
 
         request = self.environment.request
         session = self.environment.session
