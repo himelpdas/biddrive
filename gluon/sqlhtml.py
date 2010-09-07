@@ -996,6 +996,7 @@ class SQLFORM(FORM):
                         fields[fieldname] = ''
                     else:
                         fields[fieldname] = self.record[fieldname]
+                    self.vars[fieldname] = fields[fieldname]
                     continue
                 elif hasattr(f,'file'):
                     (source_file, original_filename) = (f.file, f.filename)
