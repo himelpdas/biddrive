@@ -849,6 +849,7 @@ class Auth(object):
         self.settings.login_email_validate = True
 
         self.settings.logout_next = self.url('index')
+        self.settings.logout_onlogout = None
 
         self.settings.register_next = self.url('index')
         self.settings.register_onvalidation = []
