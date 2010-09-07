@@ -871,7 +871,7 @@ class SQLDB(dict):
                     db._execute("XA ROLLBACK;")
                 elif db._dbname == 'firebird':
                     db.rollback()
-            raise Exception, 'failure to commit distributed transaction'
+            raise RuntimeError, 'failure to commit distributed transaction'
         else:
             for (i, db) in instances:
                 if db._dbname == 'postgres':
@@ -1521,7 +1521,7 @@ class Reference(int):
         if not self._record:
             self._record = self._table[int(self)]
             if not self._record:
-                raise Exception, "undefined record"
+                raise RuntimeError, "Using a recursive select but encountered a broken reference"
 
     def __getattr__(self,key):
         if key == 'id':
@@ -2612,7 +2612,7 @@ class Expression(object):
         if self.type in ('string', 'text'):
             return Query(self, ' LIKE ', '%s%%' % value)
         else:
-            raise RuntimeError, "Not supported"
+            raise RuntimeError, "startswith used with incompatible field type"
 
     def contains(self, value):
         if self.type in ('string', 'text'):
@@ -2620,7 +2620,7 @@ class Expression(object):
         elif self.type.startswith('list:'):
             return Query(self, ' LIKE ', '%%|%s|%%' % value)
         else:
-            raise RuntimeError, "Not supported"
+            raise RuntimeError, "contains user with incopatible field type"
 
     def with_alias(self,value):
         return Expression(str(self) + ' AS %s' % value,
@@ -2639,7 +2639,7 @@ class Expression(object):
         elif self.type in ['date','time','datetime','double']:
             result_type = 'double'
         else:
-            raise SyntaxError, "subtraction operation not supported for type"
+            raise SyntaxError, "subtraction operation with incompatible field type"
         return Expression('(%s-%s)' % (self, sql_represent(other,
                           self.type, self._db._dbname, self._db._db_codec)),
                           result_type,
@@ -3557,12 +3557,12 @@ class Rows(object):
         return self
 
     def __and__(self, other):
-        if self.colnames!=other.colnames: raise Exception, 'Rows: different colnames'
+        if self.colnames!=other.colnames: raise Exception, 'Cannot & incompatible Rows objects'
         records = self.records+other.records
         return Rows(self.db,records,self.colnames)
 
     def __or__(self, other):
-        if self.colnames!=other.colnames: raise Exception, 'Rows: different colnames'
+        if self.colnames!=other.colnames: raise Exception, 'Cannot | incompatible Rows objects'
         records = self.records
         records += [record for record in other.records \
                         if not record in records]
