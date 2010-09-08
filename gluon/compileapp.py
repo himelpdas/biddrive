@@ -470,7 +470,8 @@ def run_view_in(environment):
                                             context=environment),layer))
         else:
             ccode = parse_template(response.view,
-                os.path.join(folder, 'views'), context=environment)
+                                   os.path.join(folder, 'views'),
+                                   context=environment)
         restricted(ccode, environment, layer)
 
 def remove_compiled_application(folder):

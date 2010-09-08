@@ -531,7 +531,7 @@ def bar_escape(item):
     return str(item).replace('|', '||')
 
 def bar_encode(items):
-    return '|%s|' % '|'.join(bar_escape(item) for item in items)
+    return '|%s|' % '|'.join(bar_escape(item) for item in items if str(item).strip())
 
 def bar_decode_integer(value):
     return [int(x) for x in value.split('|') if x.strip()]
