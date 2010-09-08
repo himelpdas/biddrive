@@ -34,10 +34,10 @@ data_type_map = dict(
         char = 'string',
         decimal = 'integer',
         timestamp = 'datetime',
+        datetime = 'datetime',         
         )
 
 def mysql(database_name, username, password):
-    table2sql = ''
     p = subprocess.Popen(['mysql',
                           '--user=%s' % username, 
                           '--password=%s'% password,
@@ -59,15 +59,10 @@ def mysql(database_name, username, password):
                               '--no-data', database_name, 
                               table_name], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         sql_create_stmnt,stderr = p.communicate()
-        if stderr:
-            table2sql[table_name] = stderr
         if 'CREATE' in sql_create_stmnt:#check if the table exists
-            #table2sql[table_name] = stdout if stdout else stderr #DEBUG
-            #----------------------------------------
             #remove garbage lines from sql statement
             sql_lines = sql_create_stmnt.split('\n') 
             sql_lines = [x for x in sql_lines if not(x.startswith('--') or x.startswith('/*') or x =='')]
-            #table2sql[table_name] = XML('<br/>'.join(sql_lines) ) #DEBUG
             #generate the web2py code from the create statement
             web2py_table_code = ''
             table_name = re.search('CREATE TABLE .(\S+). \(', sql_lines[0]).group(1)
@@ -76,12 +71,12 @@ def mysql(database_name, username, password):
                 if re.search('KEY', line) or re.search('PRIMARY', line) or re.search(' ID', line) or line.startswith(')'):
                     continue
                 hit = re.search('(\S+) (\S+) .*', line)
-                name, d_type = hit.group(1), hit.group(2)
-                d_type = re.sub(r'(\w+)\(.*',r'\1',d_type)
-                name = re.sub('`','',name)
-                web2py_table_code += "\n    Field('%s','%s'),"%(name,data_type_map[d_type])
-            web2py_table_code = "legacy_db.define_table('%s',%s\n    migrate=False)"%(table_name,web2py_table_code)
-            table2sql[table_name] = CODE(web2py_table_code)
+                if hit!=None:
+                    name, d_type = hit.group(1), hit.group(2)
+                    d_type = re.sub(r'(\w+)\(.*',r'\1',d_type)
+                    name = re.sub('`','',name)
+                    web2py_table_code += "\n    Field('%s','%s'),"%(name,data_type_map[d_type])
+            web2py_table_code = "legacy_db.define_table('%s',%s\n    migrate=False)"%(table_name,web2py_table_code)            
             legacy_db_table_web2py_code.append(web2py_table_code)
     #----------------------------------------
     #write the legacy db to file
@@ -94,7 +89,4 @@ if len(sys.argv)<2 or not regex.match(sys.argv[1]):
     print 'USAGE:\n\n    extract_mysql_models.py username:password@data_basename\n\n'
 else:
     m = regex.match(sys.argv[1])
-    print m.group(1)
-    print m.group(2)
-    print m.group(3)
-    print mysql(m.group(1),m.group(2),m.group(3))
+    print mysql(m.group(3),m.group(1),m.group(2))
