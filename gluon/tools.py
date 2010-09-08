@@ -919,6 +919,7 @@ class Auth(object):
 
         self.messages.register_log = 'User %(id)s Registered'
         self.messages.login_log = 'User %(id)s Logged-in'
+        self.messages.login_failed_log = None
         self.messages.logout_log = 'User %(id)s Logged-out'
         self.messages.profile_log = 'User %(id)s Profile updated'
         self.messages.verify_email_log = 'User %(id)s Verification email sent'
@@ -1436,6 +1437,8 @@ class Auth(object):
                                 user = self.get_or_create_user(form.vars)
                                 break
                 if not user:
+                    if self.settings.login_failed_log:
+                        self.log_event(self.settings.login_failed_log % self.user)                        
                     # invalid login
                     session.flash = self.messages.invalid_login
                     redirect(self.url(args=request.args))
