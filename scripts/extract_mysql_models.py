@@ -27,14 +27,16 @@ data_type_map = dict(
         varchar = 'string',
         int = 'integer',
         tinyint = 'integer',
-        binary = 'text',
+        binary = 'blob',
         text = 'text',
         date = 'date',
         float = 'double',
+        double = 'double',
         char = 'string',
         decimal = 'integer',
         timestamp = 'datetime',
-        datetime = 'datetime',         
+        datetime = 'datetime',
+        longtext = 'text'
         )
 
 def mysql(database_name, username, password):
@@ -70,7 +72,7 @@ def mysql(database_name, username, password):
             for line in sql_lines[1:-1]:
                 if re.search('KEY', line) or re.search('PRIMARY', line) or re.search(' ID', line) or line.startswith(')'):
                     continue
-                hit = re.search('(\S+) (\S+) .*', line)
+                hit = re.search('(\S+)\s+(\S+)( .*)?', line)
                 if hit!=None:
                     name, d_type = hit.group(1), hit.group(2)
                     d_type = re.sub(r'(\w+)\(.*',r'\1',d_type)
