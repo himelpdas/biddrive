@@ -120,9 +120,12 @@ class GQLDB(gluon.sql.SQLDB):
         *fields,
         **args
         ):
+        # these two lines are experimental
         if not fields and tablename.count(':'):
             (tablename, fields) = autofields(self, tablename)
-
+        # if this table extends a polymodel, inherit fields from polymodel
+        if isinstance(args.get('polymodel',None),Table): 
+            fields.insert(0,args['polymodel'])
         tablename = cleanup(tablename)
         if tablename in dir(self) or tablename[0] == '_':
             raise SyntaxError, 'invalid table name: %s' % tablename
@@ -245,8 +248,6 @@ class Table(gluon.sql.Table):
             self._tableobj = classobj(self._tablename, (PolyModel, ), myfields)
         elif isinstance(polymodel,Table):
             self._tableobj = classobj(self._tablename, (polymodel._tableobj, ), myfields)            
-        elif isinstance(polymodel,str) and polymodel in self._db.tables():
-            self._tableobj = classobj(self._tablename, (self._db[polymodel]._tableobj, ), myfields)            
         else:
             raise RuntimeError, "polymodel must be None, True, a table or a tablename"
         return None
