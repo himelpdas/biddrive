@@ -60,19 +60,20 @@ class BlockNode(Node):
             This is default block test
         {{ end }}
     """
-    def __init__(self, name = '', pre_extend = False):
+    def __init__(self, name = '', pre_extend = False, delimiters = ('{{','}}')):
         """
         name - Name of this Node.
         """
         self.nodes = []
         self.name = name
         self.pre_extend = pre_extend
+        self.left, self.right = delimiters
 
     def __repr__(self):
-        lines = ['{{block %s}}' % self.name]
+        lines = ['%sblock %s%s' % (self.left,self.name,self.right)]
         for node in self.nodes:
             lines.append(str(node))
-        lines.append('{{end}}')
+        lines.append('%send%s' % (self.left, self.right))
         return ''.join(lines)
 
     def __str__(self):
@@ -235,18 +236,21 @@ class TemplateParser(object):
     re_pass = re.compile('^pass( .*)?$', re.DOTALL)
 
     def __init__(self, text,
-            name    = "ParserContainer",
-            context = dict(),
-            path    = 'views/',
-            writer  = 'response.write',
-            lexers  = {},
-            _super_nodes = []):
+                 name    = "ParserContainer",
+                 context = dict(),
+                 path    = 'views/',
+                 writer  = 'response.write',
+                 lexers  = {},
+                 delimiters = ('{{','}}'),
+                 _super_nodes = [],
+                 ):
         """
         text -- text to parse
         context -- context to parse in
         path -- folder path to temlpates
         writer -- string of writer class to use
         lexers -- dict of custom lexers to use.
+        delimiters -- for example ('{{','}}')
         _super_nodes -- a list of nodes to check for inclusion
                         this should only be set by "self.extend"
                         It contains a list of SuperNodes from a child
@@ -273,6 +277,13 @@ class TemplateParser(object):
         self.path = path
         # Context for templates.
         self.context = context
+
+        # allow optional alterantive delimiters
+        self.delimiters = delimiters
+        if delimiters!=('{{','}}'):
+            escaped_delimiters = (re.escape(delimiters[0]),re.escape(delimiters[1]))
+            self.r_tag = re.compile(r'(%s.*?%s)' % escaped_delimiters, re.DOTALL)
+
 
         # Create a root level Content that everything will go into.
         self.content = Content(name=name)
@@ -441,7 +452,8 @@ class TemplateParser(object):
                            name    = filename,
                            context = self.context, 
                            path    = self.path, 
-                           writer  = self.writer)
+                           writer  = self.writer,
+                           delimiters = self.delimiters)
         
         content.append(t.content)
 
@@ -464,11 +476,12 @@ class TemplateParser(object):
                     context      = self.context, 
                     path         = self.path, 
                     writer       = self.writer,
+                    delimiters   = self.delimiters,
                     _super_nodes = super_nodes)
 
         # Make a temporary buffer that is unique for parent
         # template.
-        buf = BlockNode(name='__include__' + filename)
+        buf = BlockNode(name='__include__' + filename, delimiters=self.delimiters)
         pre = []
 
         # Iterate through each of our nodes
@@ -523,7 +536,7 @@ class TemplateParser(object):
         # Use a list to store everything in
         # This is because later the code will "look ahead"
         # for missing strings or brackets.
-        ij = TemplateParser.r_tag.split(text)
+        ij = self.r_tag.split(text)
         # j = current index
         # i = current item
         for j in range(len(ij)):
@@ -656,7 +669,8 @@ class TemplateParser(object):
                     elif name == 'block':
                         # Make a new node with name.
                         node = BlockNode(name = value.strip(), 
-                                            pre_extend = pre_extend)
+                                         pre_extend = pre_extend,
+                                         delimiters = self.delimiters)
                         
                         # Append this node to our active node
                         top.append(node)
@@ -704,7 +718,8 @@ class TemplateParser(object):
                         # That the child node will know to hook into.
                         else:
                             include_node = BlockNode(name = '__include__' + self.name,
-                                                        pre_extend = pre_extend)
+                                                     pre_extend = pre_extend,
+                                                     delimiters = self.delimiters)
                             top.append(include_node)
 
                     elif name == 'extend':
@@ -780,9 +795,11 @@ class TemplateParser(object):
         
 # We need this for integration with gluon
 def parse_template(filename,
-        path    = 'views/',
-        context = dict(),
-        lexers  = {}):
+                   path    = 'views/',
+                   context = dict(),
+                   lexers  = {},
+                   delimiters = ('{{','}}')
+                   ):
     """
     filename can be a view filename in the views folder or an input stream
     path is the path of a views folder
@@ -801,7 +818,7 @@ def parse_template(filename,
         text = filename.read()
 
     # Use the file contents to get a parsed template and return it.
-    return str(TemplateParser(text, context=context, path=path, lexers=lexers))
+    return str(TemplateParser(text, context=context, path=path, lexers=lexers, delimiters=delimiters))
         
 def get_parsed(text):
     """
@@ -813,11 +830,13 @@ def get_parsed(text):
 # And this is a generic render function.
 # Here for integration with gluon.
 def render(content = "hello world",
-        stream = None,
-        filename = None,
-        path = None,
-        context = {},
-        lexers  = {}):
+           stream = None,
+           filename = None,
+           path = None,
+           context = {},
+           lexers  = {},
+           delimiters = ('{{','}}')
+           ):
     """
     >>> render()
     'hello world'
@@ -836,6 +855,8 @@ def render(content = "hello world",
     >>> render(content="'''a\\'c'''")
     "'''a\'c'''"
     >>> render(content='{{for i in range(a):}}{{=i}}<br />{{pass}}', context=dict(a=5))
+    '0<br />1<br />2<br />3<br />4<br />'
+    >>> render(content='{%for i in range(a):%}{%=i%}<br />{%pass%}', context=dict(a=5),delimiters=('{%','%}'))
     '0<br />1<br />2<br />3<br />4<br />'
     >>> render(content="{{='''hello\\nworld'''}}")
     'hello\\nworld'
@@ -862,7 +883,7 @@ def render(content = "hello world",
     context['response'] = globals.Response()
 
     # Execute the template.
-    exec(str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers))) in context
+    exec(str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers, delimiters=delimiters))) in context
     
     if close_stream:
         stream.close()
