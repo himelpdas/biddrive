@@ -1438,7 +1438,7 @@ class Auth(object):
                                 break
                 if not user:
                     if self.settings.login_failed_log:
-                        self.log_event(self.settings.login_failed_log % self.user)                        
+                        self.log_event(self.settings.login_failed_log % request.post_vars)                        
                     # invalid login
                     session.flash = self.messages.invalid_login
                     redirect(self.url(args=request.args))
