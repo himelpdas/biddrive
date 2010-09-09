@@ -956,14 +956,15 @@ class SQLFORM(FORM):
                                '%s != %s' % (record_id, self.record_id)
 
         if requested_delete:
-            if keyed:
-                qry = reduce(lambda x,y: x & y,
-                             [self.table[k]==record_id[k] for k in self.table._primarykey])
-                if self.table._db(qry).delete():
-                    self.vars.update(record_id)
-            else:
-                self.table._db(self.table.id == self.record.id).delete()
-                self.vars.id = self.record.id
+            if dbio:
+                if keyed:
+                    qry = reduce(lambda x,y: x & y,
+                                 [self.table[k]==record_id[k] for k in self.table._primarykey])
+                    if self.table._db(qry).delete():
+                        self.vars.update(record_id)
+                else:
+                    self.table._db(self.table.id == self.record.id).delete()            
+                    self.vars.id = self.record.id
             self.errors.clear()
             for component in self.elements('input, select, textarea'):
                 component['_disabled'] = True
