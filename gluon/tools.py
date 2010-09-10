@@ -2746,7 +2746,7 @@ class Crud(object):
             upload=self.settings.download_url,
             formstyle=self.settings.formstyle
             )
-        self.acceped = False
+        self.accepted = False
         self.deleted = False
         captcha = self.settings.update_captcha or \
                   self.settings.captcha
