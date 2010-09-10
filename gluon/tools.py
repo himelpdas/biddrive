@@ -1939,8 +1939,10 @@ class Auth(object):
         if log == DEFAULT:
             log = self.messages.reset_password_log
         old_requires = table_user.email.requires
-        table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
-                                            error_message=self.messages.invalid_email)]
+        table_user.email.requires = [
+            IS_EMAIL(error_message=self.messages.invalid_email),
+            IS_IN_DB(self.db, table_user.email,
+                     error_message=self.messages.invalid_email)]
         form = SQLFORM(table_user,
                        fields=['email'],
                        hidden=dict(_next=next),
@@ -1953,7 +1955,8 @@ class Auth(object):
             self._addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
         if form.accepts(request.post_vars, session,
                         formname='reset_password', dbio=False,
-                        onvalidation=onvalidation,hideerror=self.settings.hideerror):
+                        onvalidation=onvalidation,
+                        hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
             if not user:
                 session.flash = self.messages.invalid_email
