@@ -750,14 +750,16 @@ class Row(dict):
         d = dict(self)
         for k in copy.copy(d.keys()):
             v=d[k]
-            if isinstance(v,Row):
+            if d[k]==None:
+                continue
+            elif isinstance(v,Row):
                 d[k]=v.as_dict()
             elif isinstance(v,Reference):
                 d[k]=int(v)
             elif isinstance(v, (datetime.date, datetime.datetime, datetime.time)):
                 if datetime_to_str:
                     d[k] = v.isoformat().replace('T',' ')[:19]
-            elif not isinstance(v,(str,unicode,int,long,float,bool)):
+            elif not isinstance(v,(str,unicode,int,long,float,bool,list)):
                 del d[k]
         return d
 
