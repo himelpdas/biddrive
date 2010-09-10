@@ -72,9 +72,12 @@ web2py_version = version_info.read()
 version_info.close()
 
 try:
+    ## this cannot go in "if gae:" else py2exe fails
     import rocket
 except:
-    logger.warn('unable to import Rocket')
+    if not settings.web2py_runtime_gae:
+        logger.warn('unable to import Rocket')
+
 rewrite.load()
 
 def get_client(env):
