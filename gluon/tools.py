@@ -2746,6 +2746,8 @@ class Crud(object):
             upload=self.settings.download_url,
             formstyle=self.settings.formstyle
             )
+        self.acceped = False
+        self.deleted = False
         captcha = self.settings.update_captcha or \
                   self.settings.captcha
         if record and captcha:
@@ -2767,10 +2769,12 @@ class Crud(object):
         if form.accepts(request.post_vars, _session, formname=_formname,
                         onvalidation=onvalidation, keepvalues=keepvalues,
                         hideerror=self.settings.hideerror):
+            self.accepted = True
             response.flash = message
             if log:
                 self.log_event(log % form.vars)
             if request.vars.delete_this_record:
+                self.deleted = True
                 message = self.messages.record_deleted
                 callback(ondelete,form,table._tablename)
             response.flash = message
