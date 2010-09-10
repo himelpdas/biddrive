@@ -347,9 +347,9 @@ class Expression(object):
     def belongs(self, value):
         return Query(self, 'IN', value)
 
-    def contains(self, value):
-        if self.type.startswith('list:'):
-            return Query(self, 'IN', value)
+    def contains(self, *values):
+        if self.type.startswith('list:'):            
+            return Query(self, 'IN', values)
         else:
             raise RuntimeError, "Not supported"
 
