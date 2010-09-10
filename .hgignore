@@ -13,6 +13,7 @@ syntax: glob
 *.class
 *.rej
 *.orig
+Thumbs.db
 .DS_Store
 index.yaml
 routes.py
