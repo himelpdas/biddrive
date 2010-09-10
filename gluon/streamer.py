@@ -12,7 +12,7 @@ import stat
 import time
 import re
 import errno
-import rewrite
+import main
 from http import HTTP
 from contenttype import contenttype
 
@@ -43,7 +43,7 @@ def stream_file_or_304_or_206(
     chunk_size = DEFAULT_CHUNK_SIZE,
     request = None,
     headers = {},
-    error_message = rewrite.params.error_message,
+    error_message = main.thread.routes.error_message % 'invalid request',
     ):
     try:
         fp = open(static_file)
