@@ -18,7 +18,7 @@ legacy_db(legacy_db.mytable.id>0).select()
 If the script crashes this is might be due to that fact that the data_type_map dictionary below is incomplete.
 Please complete it, improve it and continue.
 
-Created by Falko Krause, minor modifications by Massimo Di Pierro
+Created by Falko Krause, minor modifications by Massimo Di Pierro and Ron McOuat
 '''
 import subprocess
 import re
@@ -26,17 +26,29 @@ import sys
 data_type_map = dict(
         varchar = 'string',
         int = 'integer',
+        integer = 'integer',
         tinyint = 'integer',
-        binary = 'blob',
-        text = 'text',
-        date = 'date',
+        smallint = 'integer',
+        mediumint = 'integer',
+        bigint = 'integer',
         float = 'double',
         double = 'double',
         char = 'string',
         decimal = 'integer',
+        date = 'date',
+        #year = 'date',
+        time = 'time',
         timestamp = 'datetime',
         datetime = 'datetime',
-        longtext = 'text'
+        binary = 'blob',
+        blob = 'blob',
+        tinyblob = 'blob',
+        mediumblob = 'blob',
+        longblob = 'blob',
+        text = 'text',
+        tinytext = 'text',
+        mediumtext = 'text',
+        longtext = 'text',
         )
 
 def mysql(database_name, username, password):
@@ -72,7 +84,7 @@ def mysql(database_name, username, password):
             for line in sql_lines[1:-1]:
                 if re.search('KEY', line) or re.search('PRIMARY', line) or re.search(' ID', line) or line.startswith(')'):
                     continue
-                hit = re.search('(\S+)\s+(\S+)( .*)?', line)
+                hit = re.search('(\S+)\s+(\S+)(,| )( .*)?', line)
                 if hit!=None:
                     name, d_type = hit.group(1), hit.group(2)
                     d_type = re.sub(r'(\w+)\(.*',r'\1',d_type)
