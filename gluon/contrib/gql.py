@@ -125,7 +125,7 @@ class GQLDB(gluon.sql.SQLDB):
             (tablename, fields) = autofields(self, tablename)
         # if this table extends a polymodel, inherit fields from polymodel
         if isinstance(args.get('polymodel',None),Table): 
-            fields=[args['polymodel']]+[field fof field in fields]
+            fields=[args['polymodel']]+[field for field in fields]
         tablename = cleanup(tablename)
         if tablename in dir(self) or tablename[0] == '_':
             raise SyntaxError, 'invalid table name: %s' % tablename
@@ -216,6 +216,8 @@ class Table(gluon.sql.Table):
         fields = []
         myfields = {}
         for k in self.fields:
+            if isinstance(polymodel,Table) and k in polymodel.fields():
+                continue
             field = self[k]
             attr = {}
             if isinstance(field.type, gluon.sql.SQLCustomType):
