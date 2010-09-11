@@ -23,7 +23,7 @@ from restricted import restricted, compile2
 from fileutils import listdir
 from myregex import regex_expose
 from languages import translator
-from sql import SQLDB, SQLField, DAL, Field
+from sql import BaseAdapter, SQLDB, SQLField, DAL, Field
 from sqlhtml import SQLFORM, SQLTABLE
 from cache import Cache
 from settings import settings
@@ -231,15 +231,15 @@ def build_environment(request, response, session):
     environment['cache'] = Cache(request)
     environment['DAL'] = DAL
     environment['Field'] = Field
-    environment['SQLDB'] = SQLDB
-    environment['SQLField'] = SQLField
+    environment['SQLDB'] = SQLDB        # for backward compatibility
+    environment['SQLField'] = SQLField  # for backward compatibility
     environment['SQLFORM'] = SQLFORM
     environment['SQLTABLE'] = SQLTABLE
     environment['LOAD'] = LoadFactory(environment)
     environment['local_import'] = \
         lambda name, reload=False, app=request.application:\
         local_import_aux(name,reload,app)
-    SQLDB._set_thread_folder(os.path.join(request.folder, 'databases'))
+    BaseAdapter.set_folder(os.path.join(request.folder, 'databases'))
     response._view_environment = copy.copy(environment)
     return environment
 

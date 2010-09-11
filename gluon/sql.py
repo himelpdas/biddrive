@@ -27,7 +27,7 @@ import time
 import types
 import cPickle
 import datetime
-import thread
+import threading
 import cStringIO
 import csv
 import copy
@@ -127,7 +127,8 @@ except:
 import portalocker
 import validators
 
-sql_locker = thread.allocate_lock()
+sql_locker = threading.RLock()
+thread = threading.local()
 
 INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name (ANSI-SQL wants this form of name to be a delimited identifier)
 def gen_ingres_sequencename(table_name):
@@ -792,47 +793,28 @@ class SQLDB(dict):
 
     # ## this allows gluon to comunite a folder for this thread
 
-    _folders = {}
-    _connection_pools = {}
-    _instances = {}
-
     @staticmethod
-    def _set_thread_folder(folder):
-        sql_locker.acquire()
-        SQLDB._folders[thread.get_ident()] = folder
-        sql_locker.release()
+    def set_folder(folder):
+        thread.folder=folder
 
     # ## this allows gluon to commit/rollback all dbs in this thread
 
     @staticmethod
     def close_all_instances(action):
         """ to close cleanly databases in a multithreaded environment """
-
-        sql_locker.acquire()
-        pid = thread.get_ident()
-        if pid in SQLDB._folders:
-            del SQLDB._folders[pid]
-        if pid in SQLDB._instances:
-            instances = SQLDB._instances[pid]
-            while instances:
-                instance = instances.pop()
-                sql_locker.release()
-                action(instance)
-                sql_locker.acquire()
-
-                # ## if you want pools, recycle this connection
-                really = True
-                if instance._pool_size:
-                    pool = SQLDB._connection_pools[instance._uri]
-                    if len(pool) < instance._pool_size:
-                        pool.append(instance._connection)
-                        really = False
-                if really:
-                    sql_locker.release()
-                    instance._connection.close()
-                    sql_locker.acquire()
-            del SQLDB._instances[pid]
-        sql_locker.release()
+        instances = thread.instances
+        while instances:
+            instance = instances.pop()
+            action(instance)
+            # ## if you want pools, recycle this connection
+            really = True
+            if instance._pool_size:
+                pool = thread.pools[instance._uri]
+                if len(pool) < instance._pool_size:
+                    pool.append(instance._connection)
+                    really = False
+            if really:
+                instance._connection.close()
         return
 
     @staticmethod
@@ -851,7 +833,7 @@ class SQLDB(dict):
         if not instances:
             return
         instances = enumerate(instances)
-        thread_key = '%s.%i' % (socket.gethostname(), thread.get_ident())
+        thread_key = '%s.%i' % (socket.gethostname(), threading.currentThread())
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         for (i, db) in instances:
             if not db._dbname in ['postgres', 'mysql', 'firebird']:
@@ -892,14 +874,13 @@ class SQLDB(dict):
             self._connection = f()
             return
         uri = self._uri
-        sql_locker.acquire()
-        if not uri in self._connection_pools:
-            self._connection_pools[uri] = []
-        if self._connection_pools[uri]:
-            self._connection = self._connection_pools[uri].pop()
-            sql_locker.release()
+        if not hasattr(thread,'pools'):
+            thread.pools=[]
+        if not uri in pools:
+            pools[uri] = []
+        if pools[uri]:
+            self._connection = pools[uri].pop()
         else:
-            sql_locker.release()
             self._connection = f()
 
     def __init__(self, uri='sqlite://dummy.db', pool_size=0,
@@ -916,19 +897,16 @@ class SQLDB(dict):
         self._fake_migrate = fake_migrate
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
-        pid = thread.get_ident()
+        pid = threading.currentThread()
 
         # Check if there is a folder for this thread else use ''
 
         if folder:
             self._folder = folder
+        elif hasattr(thread,'folder'):
+            self._folder = thread.folder
         else:
-            sql_locker.acquire()
-            if pid in self._folders:
-                self._folder = self._folders[pid]
-            else:
-                self._folder = self._folders[pid] = ''
-            sql_locker.release()
+            self._folder = thread.folder = ''
 
         # Now connect to database
 
@@ -1282,13 +1260,9 @@ class SQLDB(dict):
         self._translator = SQL_DIALECTS[self._dbname]
 
         # ## register this instance of SQLDB
-
-        sql_locker.acquire()
-        if not pid in self._instances:
-            self._instances[pid] = []
-        self._instances[pid].append(self)
-        sql_locker.release()
-        pass
+        if not hasattr(thread,'instances'):
+            thread.instances = []
+        thread.instances.append(self)
 
     def check_reserved_keyword(self, name):
         """
@@ -1368,8 +1342,8 @@ class SQLDB(dict):
         t._create_references()
 
         if migrate:
-            sql_locker.acquire()
             try:
+                sql_locker.acquire()
                 t._create(migrate=migrate, fake_migrate=fake_migrate)
             finally:
                 sql_locker.release()

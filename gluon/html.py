@@ -138,8 +138,8 @@ def URL(
 
     example::
 
-        >>> URL(a='a', c='c', f='f', args=['x', 'y', 'z'],
-        ...     vars={'p':1, 'q':2}, anchor='1')
+        >>> str(URL(a='a', c='c', f='f', args=['x', 'y', 'z'],
+        ...     vars={'p':1, 'q':2}, anchor='1'))
         '/a/c/f/x/y/z#1?q=2&p=1'
 
     generates a url \"/a/c/f\" corresponding to application a, controller c

@@ -160,7 +160,7 @@ class ConnectionPool(object):
     _instances = {}
 
     @staticmethod
-    def set_thread_folder(folder):
+    def set_folder(folder):
         sql_locker.acquire()
         ConnectionPool._folders[thread.get_ident()] = folder
         sql_locker.release()
@@ -1956,12 +1956,12 @@ class DAL(dict):
     """
 
     @staticmethod
-    def _set_thread_folder(folder):
+    def set_folder(folder):
         """
         # ## this allows gluon to comunite a folder for this thread
         # ## <<<<<<<<< Should go away as new DAL replaces old sql.py
         """
-        BaseAdapter.set_thread_folder(folder)
+        BaseAdapter.set_folder(folder)
 
     @staticmethod
     def distributed_transaction_begin(*instances):

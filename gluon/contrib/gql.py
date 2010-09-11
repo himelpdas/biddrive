@@ -16,7 +16,6 @@ import os
 import types
 import cPickle
 import datetime
-import thread
 import cStringIO
 import csv
 import copy

@@ -42,6 +42,7 @@ def _params_default(app=None):
 
 params_apps = dict()
 params = _params_default(app=None)  # base (and legacy) rewrite parameters
+thread.routes = params # default to base rewrite parameters
 
 def compile_re(k, v):
     """
