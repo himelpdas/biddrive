@@ -802,9 +802,10 @@ class SQLDB(dict):
     @staticmethod
     def close_all_instances(action):
         """ to close cleanly databases in a multithreaded environment """
-        instances = thread.instances
-        while instances:
-            instance = instances.pop()
+        if not hasattr(thread,'instances'):
+            return
+        while thread.instances:
+            instance = thread.instances.pop()
             action(instance)
             # ## if you want pools, recycle this connection
             really = True
