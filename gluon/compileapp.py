@@ -17,7 +17,6 @@ sys.path.append('../gluon')
 import os
 import copy
 import random
-import main
 from storage import Storage, List
 from template import parse_template
 from restricted import restricted, compile2
@@ -36,6 +35,7 @@ import marshal
 import imp
 import logging
 logger = logging.getLogger("web2py")
+import rewrite
 
 try:
     import py_compile
@@ -367,7 +367,7 @@ def run_controller_in(controller, function, environment):
                                  % (controller, function))
         if not os.path.exists(filename):
             raise HTTP(400,
-                       main.thread.routes.error_message % 'invalid function',
+                       rewrite.thread.routes.error_message % 'invalid function',
                        web2py_error='invalid function')
         restricted(read_pyc(filename), environment, layer=filename)
     elif function == '_TEST':
@@ -375,7 +375,7 @@ def run_controller_in(controller, function, environment):
                                  % controller)
         if not os.path.exists(filename):
             raise HTTP(400,
-                       main.thread.routes.error_message % 'invalid controller',
+                       rewrite.thread.routes.error_message % 'invalid controller',
                        web2py_error='invalid controller')
         environment['__symbols__'] = environment.keys()
         fp = open(filename, 'r')
@@ -388,7 +388,7 @@ def run_controller_in(controller, function, environment):
                                  % controller)
         if not os.path.exists(filename):
             raise HTTP(400,
-                       main.thread.routes.error_message % 'invalid controller',
+                       rewrite.thread.routes.error_message % 'invalid controller',
                        web2py_error='invalid controller')
         fp = open(filename, 'r')
         code = fp.read()
@@ -396,7 +396,7 @@ def run_controller_in(controller, function, environment):
         exposed = regex_expose.findall(code)
         if not function in exposed:
             raise HTTP(400,
-                       main.thread.routes.error_message % 'invalid function',
+                       rewrite.thread.routes.error_message % 'invalid function',
                        web2py_error='invalid function')
         code = "%s\nresponse._vars=response._caller(%s)\n" % (code, function)
         if is_gae:
@@ -448,7 +448,7 @@ def run_view_in(environment):
                 restricted(code, environment, layer=filename)
                 return
         raise HTTP(400,
-                   main.thread.routes.error_message % 'invalid view',
+                   rewrite.thread.routes.error_message % 'invalid view',
                    web2py_error='invalid view')
     else:
         filename = os.path.join(folder, 'views', response.view)
@@ -457,7 +457,7 @@ def run_view_in(environment):
         filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
             raise HTTP(400,
-                       main.thread.routes.error_message % 'invalid view',
+                       rewrite.thread.routes.error_message % 'invalid view',
                        web2py_error='invalid view')
         layer = filename
         if is_gae:

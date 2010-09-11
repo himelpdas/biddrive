@@ -11,7 +11,7 @@ import os
 import re
 import logging
 import traceback
-import main
+import threading
 from storage import Storage
 from http import HTTP
 
@@ -20,6 +20,8 @@ regex_anything = re.compile(r'(?<!\\)\$anything')
 regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
 logger = logging.getLogger('web2py.rewrite')
+
+thread = threading.local()  # thread-local storage for routing parameters
 
 def _params_default(app=None):
     p = Storage()
@@ -40,7 +42,6 @@ def _params_default(app=None):
 
 params_apps = dict()
 params = _params_default(app=None)  # base (and legacy) rewrite parameters
-main.thread.routes = params
 
 def compile_re(k, v):
     """
@@ -156,16 +157,16 @@ def select(e=None):
     app = None
     if e and params.routes_app:
         (app, q, u) = filter_uri(e, params.routes_app, "routes_app")
-        main.thread.routes = params_apps.get(app, params)
+        thread.routes = params_apps.get(app, params)
     else:
-        main.thread.routes = params # default to base rewrite parameters
-    logger.debug("select routing parameters: %s" % main.thread.routes.name)
+        thread.routes = params # default to base rewrite parameters
+    logger.debug("select routing parameters: %s" % thread.routes.name)
     return app  # for doctest
 
 def filter_in(e):
     "called from main.wsgibase to rewrite incoming URL"
-    if main.thread.routes.routes_in:
-        (path, query, original_uri) = filter_uri(e, main.thread.routes.routes_in, "routes_in", e['PATH_INFO'])
+    if thread.routes.routes_in:
+        (path, query, original_uri) = filter_uri(e, thread.routes.routes_in, "routes_in", e['PATH_INFO'])
         if path.find('?') < 0:
             e['PATH_INFO'] = path
         else:
@@ -178,7 +179,7 @@ def filter_in(e):
 
 def filter_out(url, e=None):
     "called from html.URL to rewrite outgoing URL"
-    if main.thread.routes.routes_out:
+    if thread.routes.routes_out:
         items = url.split('?', 1)
         if e:
             host = e.get('http_host', 'localhost').lower()
@@ -191,7 +192,7 @@ def filter_out(url, e=None):
                   e.get('request_method', 'get').lower(), items[0])
         else:
             items[0] = ':http://localhost:get %s' % items[0]
-        for (regex, value) in main.thread.routes.routes_out:
+        for (regex, value) in thread.routes.routes_out:
             if regex.match(items[0]):
                 rewritten = '?'.join([regex.sub(value, items[0])] + items[1:])
                 logger.debug('routes_out: [%s] -> %s' % (url, rewritten))
@@ -203,12 +204,12 @@ def filter_out(url, e=None):
 def try_redirect_on_error(http_object, request, ticket=None):
     "called from main.wsgibase to rewrite the http response"
     status = int(str(http_object.status).split()[0])
-    if status>399 and main.thread.routes.routes_onerror:
+    if status>399 and thread.routes.routes_onerror:
         keys=set(('%s/%s' % (request.application, status),
                   '%s/*' % (request.application),
                   '*/%s' % (status),
                   '*/*'))
-        for (key,redir) in main.thread.routes.routes_onerror:
+        for (key,redir) in thread.routes.routes_onerror:
             if key in keys:
                 if redir == '!':
                     break
@@ -262,12 +263,12 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False):
 
 def filter_err(status, application='app', ticket='tkt'):
     "doctest interface to routes_onerror"
-    if status > 399 and main.thread.routes.routes_onerror:
+    if status > 399 and thread.routes.routes_onerror:
         keys = set(('%s/%s' % (application, status),
                   '%s/*' % (application),
                   '*/%s' % (status),
                   '*/*'))
-        for (key,redir) in main.thread.routes.routes_onerror:
+        for (key,redir) in thread.routes.routes_onerror:
             if key in keys:
                 if redir == '!':
                     break

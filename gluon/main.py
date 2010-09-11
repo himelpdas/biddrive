@@ -20,7 +20,7 @@ import re
 import copy
 import sys
 import time
-from thread import allocate_lock # 'thread' is a module variable below, so don't import thread
+import thread
 import datetime
 import signal
 import socket
@@ -38,10 +38,6 @@ if os.path.exists(logpath):
 else:
     logging.basicConfig()
 logger = logging.getLogger("web2py")
-
-# set up thread-local storage for subsequent imports
-import threading
-thread = threading.local()  # semi-public thread-local storage
 
 from restricted import RestrictedError
 from http import HTTP, redirect
@@ -304,7 +300,7 @@ def wsgibase(environ, responder):
     """
 
     rewrite.select(environ)
-    if thread.routes.routes_in:
+    if rewrite.thread.routes.routes_in:
         environ = rewrite.filter_in(environ)
 
     request = Request()
@@ -460,7 +456,7 @@ def wsgibase(environ, responder):
 
             http_response = \
                 HTTP(500,
-                     thread.routes.error_message_ticket % dict(ticket=ticket),
+                     rewrite.thread.routes.error_message_ticket % dict(ticket=ticket),
                      web2py_error='ticket %s' % ticket)
 
     except:
@@ -483,7 +479,7 @@ def wsgibase(environ, responder):
         ticket = e.log(request) or 'unrecoverable'
         http_response = \
             HTTP(500,
-                 thread.routes.error_message_ticket % dict(ticket=ticket),
+                 rewrite.thread.routes.error_message_ticket % dict(ticket=ticket),
                  web2py_error='ticket %s' % ticket)
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,request,ticket)
@@ -541,7 +537,7 @@ def appfactory(wsgiapp=wsgibase,
     """
     if profilerfilename and os.path.exists(profilerfilename):
         os.unlink(profilerfilename)
-    locker = allocate_lock()
+    locker = thread.allocate_lock()
 
     def app_with_logging(environ, responder):
         """
@@ -801,21 +797,21 @@ def parse_url(request, environ):
     match = regex_url.match(path)
     if not match or match.group('c') == 'static':
         raise HTTP(400,
-                   thread.routes.error_message % 'invalid request',
+                   rewrite.thread.routes.error_message % 'invalid request',
                    web2py_error='invalid path')
 
     request.application = \
-        regex_space.sub('_', match.group('a') or thread.routes.default_application)
+        regex_space.sub('_', match.group('a') or rewrite.thread.routes.default_application)
     request.controller = \
-        regex_space.sub('_', match.group('c') or thread.routes.default_controller)
+        regex_space.sub('_', match.group('c') or rewrite.thread.routes.default_controller)
     request.function = \
-        regex_space.sub('_', match.group('f') or thread.routes.default_function)
+        regex_space.sub('_', match.group('f') or rewrite.thread.routes.default_function)
     group_e = match.group('e')
     raw_extension = group_e and regex_space.sub('_',group_e) or None
     request.extension = raw_extension or 'html'
     request.raw_args = match.group('r')
     request.args = List([])
-    if request.application in thread.routes.routes_apps_raw:
+    if request.application in rewrite.thread.routes.routes_apps_raw:
         # application is responsible for parsing args
         request.args = None
     elif request.raw_args:
@@ -826,7 +822,7 @@ def parse_url(request, environ):
                 List((group_s and group_s.split('/')) or [])
         else:
             raise HTTP(400,
-                       thread.routes.error_message % 'invalid request',
+                       rewrite.thread.routes.error_message % 'invalid request',
                        web2py_error='invalid path')
     request.client = get_client(request.env)
     request.folder = os.path.join(request.env.web2py_path,
@@ -839,17 +835,17 @@ def parse_url(request, environ):
     # ##################################################
 
     if not os.path.exists(request.folder):
-        if request.application == thread.routes.default_application:
+        if request.application == rewrite.thread.routes.default_application:
             request.application = 'welcome'
             redirect(URL(r=request))
-        elif thread.routes.error_handler:
-            redirect(URL(thread.routes.error_handler['application'],
-                         thread.routes.error_handler['controller'],
-                         thread.routes.error_handler['function'],
+        elif rewrite.thread.routes.error_handler:
+            redirect(URL(rewrite.thread.routes.error_handler['application'],
+                         rewrite.thread.routes.error_handler['controller'],
+                         rewrite.thread.routes.error_handler['function'],
                          args=request.application))
         else:
             raise HTTP(400,
-                       thread.routes.error_message % 'invalid request',
+                       rewrite.thread.routes.error_message % 'invalid request',
                        web2py_error='invalid application')
     request.url = URL(r=request,args=request.args,
                            extension=raw_extension)
