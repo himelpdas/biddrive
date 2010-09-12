@@ -191,6 +191,49 @@ class OptionsWidget(FormWidget):
 
         return SELECT(*opts, **attr)
 
+class ListWidget(StringWidget):
+    @staticmethod
+    def widget(field,value,**attributes):
+        _id = '%s_%s' % (field._tablename, field.name)
+        _name = field.name
+        if field.type=='list:integer': _class = 'integer'
+        else: _class = 'string'
+        requires = field.requires
+        items=[LI(INPUT(_id=_id,_class=_class,_name=_name,value=v,hideerror=True)) \
+                   for v in value or ['']]
+        script=SCRIPT("""
+// from http://refactormycode.com/codes/694-expanding-input-list-using-jquery
+(function(){
+jQuery.fn.grow_input = function() {
+  return this.each(function() {
+    var ul = this;
+    jQuery(ul).find(":text").keypress(function (e) { return (e.which == 13) ? pe(ul) : true; });
+  });
+};
+function pe(ul) {
+  var new_line = ml(ul);
+  rel(ul);
+  new_line.appendTo(ul);
+  new_line.find(":text").focus();
+  return false;
+}
+function ml(ul) {
+  var line = jQuery(ul).find("li:first").clone(true);
+  line.find(':text').val('');
+  return line;
+}
+function rel(ul) {
+  jQuery(ul).find("li").each(function() {
+    var trimmed = jQuery.trim(jQuery(this.firstChild).val());
+    if (trimmed=='') jQuery(this).remove(); else jQuery(this.firstChild).val(trimmed);
+  });
+}
+})();
+jQuery(document).ready(function(){jQuery('#%s_grow_input').grow_input();});
+""" % _id)
+        attributes['_id']=_id+'_grow_input'
+        return TAG[''](UL(*items,**attributes),script)
+
 
 class MultipleOptionsWidget(OptionsWidget):
 
@@ -555,6 +598,7 @@ class SQLFORM(FORM):
         radio = RadioWidget,
         checkboxes = CheckboxesWidget,
         autocomplete = AutocompleteWidget,
+        list = ListWidget,
         ))
 
     FIELDNAME_REQUEST_DELETE = 'delete_this_record'
@@ -726,6 +770,8 @@ class SQLFORM(FORM):
                     inp = self.widgets.multiple.widget(field, default)
                 if fieldname in keepopts:
                     inpval = TAG[''](*inp.components)
+            elif str(field.type).startswith('list'):
+                inp = self.widgets.list.widget(field,default)
             elif field.type == 'text':
                 inp = self.widgets.text.widget(field, default)
             elif field.type == 'password':

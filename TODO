@@ -4,3 +4,5 @@ http://groups.google.com/group/web2py/browse_thread/thread/0e10f85de6ac9dac/d635
 
 new dal
 it does not like select('fieldname') only select(db.table['fieldname']).
+
+fix _tablename in sql.py with polymodel
