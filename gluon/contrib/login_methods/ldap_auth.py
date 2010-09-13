@@ -63,6 +63,12 @@ def ldap_auth(server='ldap', port=None,
 
             if ldap_mode == 'ad':
                 # Microsoft Active Directory
+                if '@' not in username:
+                    domain = []
+                    for x in ldap_basedn.split(','):
+                        if "DC=" in x.upper():
+                            domain.append(x.split('=')[-1])
+                    username = "%s@%s" % (username, '.'.join(domain))
                 con.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
                 if ldap_binddn:
                     # need to search directory with an admin account 1st
