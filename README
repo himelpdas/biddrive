@@ -855,4 +855,8 @@ ru-ru translation (thanks Michele)
 sk-sk translation (thanks Julius)
 migrations save .table only if changed and after each ALTER TABLE (no more mysql inconsistencies)
 fixed bugs in SQLCustomField, Field(default=...), IS_IMAGE, IS_DECIMAL_IN_RANGE and a few more.
-
+Better validators (IS_DECIMAL_IN_RANGE, IS_INT_IN_RANGE, etc) thanks Jonatham
+Polymmodel support on GAE
+Experimental ListWidget
+extract_mysql_models.py
+moved DAL and routes to thread.local (thanks Jonathan, again)
