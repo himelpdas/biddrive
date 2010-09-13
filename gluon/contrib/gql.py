@@ -655,7 +655,9 @@ class Set(gluon.sql.Set):
             raise SyntaxError, 'Set: no tables selected'
         if len(tablenames) > 1:
             raise SyntaxError, 'Set: no join in appengine'
-        return self._db[tablenames[0]]._tableobj
+        tablename = tablenames[0]
+        tableobj = self._db[tablename]._tableobj
+        return (tablename,tableobj)
 
     def _select(self, *fields, **attributes):
         valid_attributes = [
@@ -673,9 +675,8 @@ class Set(gluon.sql.Set):
             raise SyntaxError, 'invalid select attribute: %s' % key
         if fields and isinstance(fields[0], SQLALL):
             self._tables.insert(0, fields[0].table._tablename)
-        table = self._get_table_or_raise()
-        tablename = table.kind()
-        items = gae.Query(table)
+        (tablename, tableobj) = self._get_table_or_raise()        
+        items = tableobj.all() # was: items = gae.Query(tableobj)
         if not self.where:
             self.where = Query(fields[0].table.id,'>',0)
         for filter in self.where.filters:
@@ -687,7 +688,7 @@ class Set(gluon.sql.Set):
                 items = []
             elif filter.one():
                 #this is id == x
-                item = self._db[tablename]._tableobj.get_by_id(filter.right)
+                item = tableobj.get_by_id(filter.right)
                 items = (item and [item]) or []
             elif isinstance(items,list):
                 (name, op, value) = \
@@ -736,7 +737,7 @@ class Set(gluon.sql.Set):
 
         (items, tablename, fields) = self._select(*fields, **attributes)
         self._db['_lastsql'] = 'SELECT WHERE %s' % self.where
-        rows = []
+        rows = []        
         for item in items:
             new_item = []
             for t in fields:
