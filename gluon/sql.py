@@ -876,7 +876,7 @@ class SQLDB(dict):
             return
         uri = self._uri
         if not hasattr(thread,'pools'):
-            thread.pools=[]
+            thread.pools=pools={}
         if not uri in pools:
             pools[uri] = []
         if pools[uri]:
