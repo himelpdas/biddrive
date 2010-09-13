@@ -488,12 +488,10 @@ def obj_represent(obj, fieldtype, db):
         elif fieldtype == 'datetime':
             if not isinstance(obj, datetime.datetime):
                 (y, m, d) = [int(x) for x in str(obj)[:10].strip().split('-')]
-                time_items = [int(x) for x in
-                              str(obj)[11:].strip().split(':')[:3]]
-                if len(time_items) == 3:
-                    (h, mi, s) = time_items
-                else:
-                    (h, mi, s) = time_items + [0]
+                time_items = [int(x) for x in str(obj)[11:].strip().split(':')[:3]]
+                while len(time_items)<3:
+                    item_items.append(0)
+                (h, mi, s) = time_items
                 obj = datetime.datetime(y, m, d, h, mi, s)
         elif fieldtype == 'integer':
             obj = long(obj)
