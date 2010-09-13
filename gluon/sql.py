@@ -791,7 +791,7 @@ class SQLDB(dict):
 
     """
 
-    # ## this allows gluon to comunite a folder for this thread
+    # ## this allows gluon to set a folder for this thread
 
     @staticmethod
     def set_folder(folder):

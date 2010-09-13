@@ -1958,7 +1958,7 @@ class DAL(dict):
     @staticmethod
     def set_folder(folder):
         """
-        # ## this allows gluon to comunite a folder for this thread
+        # ## this allows gluon to set a folder for this thread
         # ## <<<<<<<<< Should go away as new DAL replaces old sql.py
         """
         BaseAdapter.set_folder(folder)
