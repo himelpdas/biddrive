@@ -1735,7 +1735,7 @@ class Table(dict):
             # add to list of fields
             sql_fields[field.name] = ftype
 
-            if field.default:
+            if field.default!=None:
                 # caveat: sql_fields and sql_fields_aux differ for default values
                 # sql_fields is used to trigger migrations and sql_fields_aux
                 # are used for create table
