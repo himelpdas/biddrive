@@ -1,4 +1,4 @@
-'''
+Falko Krause, minor modifications by Massimo Di Pierro and Ron McOuat '''
 Create the web2py code needed to access your mysql legacy db.
 
 To make this work all the legacy tables you want to access need to have an "id" field.

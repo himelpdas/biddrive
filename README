@@ -858,5 +858,6 @@ fixed bugs in SQLCustomField, Field(default=...), IS_IMAGE, IS_DECIMAL_IN_RANGE 
 Better validators (IS_DECIMAL_IN_RANGE, IS_INT_IN_RANGE, etc) thanks Jonatham
 Polymmodel support on GAE
 Experimental ListWidget
-extract_mysql_models.py
 moved DAL and routes to thread.local (thanks Jonathan, again)
+scripts/extract_mysql_models.py, thanks Falko Krause and Ron McOuat 
+scripts/dbsessions2trash.py, thanks Scott
