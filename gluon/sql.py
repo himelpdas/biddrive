@@ -812,7 +812,7 @@ class SQLDB(dict):
             really = True
             if instance._pool_size:
                 sql_locker.acquire()
-                pool = self._connection_pools[instance._uri]
+                pool = SQLDB._connection_pools[instance._uri]
                 if len(pool) < instance._pool_size:
                     pool.append(instance._connection)                    
                     really = False
@@ -879,10 +879,10 @@ class SQLDB(dict):
             return
         uri = self._uri
         sql_locker.acquire()
-        if not uri in self._connection_pools:
-            self._connection_pools[uri] = []
-        if self._connection_pools[uri]:
-            self._connection = self._connection_pools[uri].pop()
+        if not uri in SQLDB._connection_pools:
+            SQLDB._connection_pools[uri] = []
+        if SQLDB._connection_pools[uri]:
+            self._connection = SQLDB._connection_pools[uri].pop()
             sql_locker.release()
         else:
             sql_locker.release()
