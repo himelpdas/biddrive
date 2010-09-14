@@ -792,6 +792,7 @@ class SQLDB(dict):
     """
 
     # ## this allows gluon to set a folder for this thread
+    _connection_pools={}
 
     @staticmethod
     def set_folder(folder):
@@ -810,10 +811,12 @@ class SQLDB(dict):
             # ## if you want pools, recycle this connection
             really = True
             if instance._pool_size:
-                pool = thread.pools[instance._uri]
+                sql_locker.acquire()
+                pool = self._connection_pools[instance._uri]
                 if len(pool) < instance._pool_size:
-                    pool.append(instance._connection)
+                    pool.append(instance._connection)                    
                     really = False
+                sql_locker.release()
             if really:
                 instance._connection.close()
         return
@@ -875,13 +878,14 @@ class SQLDB(dict):
             self._connection = f()
             return
         uri = self._uri
-        if not hasattr(thread,'pools'):
-            thread.pools=pools={}
-        if not uri in pools:
-            pools[uri] = []
-        if pools[uri]:
-            self._connection = pools[uri].pop()
+        sql_locker.acquire()
+        if not uri in self._connection_pools:
+            self._connection_pools[uri] = []
+        if self._connection_pools[uri]:
+            self._connection = self._connection_pools[uri].pop()
+            sql_locker.release()
         else:
+            sql_locker.release()
             self._connection = f()
 
     def __init__(self, uri='sqlite://dummy.db', pool_size=0,
