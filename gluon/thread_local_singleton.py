@@ -46,19 +46,11 @@ class Singleton(dict):
     def __str__(self):
         return str(getattr(Singleton.thread,str(self.__class__)))
     def __getstate__(self):
-        return ingleton.thread.storage
+        return Singleton.thread.storage
     def __setstate__(self, value):
         setattr(Singleton.thread,str(self.__class__),value)
     def __cmp__(self,other):
         return 0
-    def __gt__(self,other):
-        return False
-    def __lt__(self,pther):
-        return False
-    def __ge__(self,other):
-        return False
-    def __le__(self,pther):
-        return False
     def __contains__(self,value):
         return value in getattr(Singleton.thread,str(self.__class__))
     def __hash__(self):
