@@ -2884,7 +2884,8 @@ class Crud(object):
             del table[record_id]
             callback(self.settings.delete_onaccept,record,table._tablename)
             session.flash = message
-        redirect(next)
+        if next: # Only redirect when explicit                                   
+            redirect(next)
 
     def select(
         self,
