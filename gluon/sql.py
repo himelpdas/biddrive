@@ -2080,9 +2080,9 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
-            elif field.type.startswith('list:string'):
+            elif not isinstance(field.type, SQLCustomType) and field.type.startswith('list:string'):
                 value = bar_decode_string(value)
-            elif field.type.startswith('list:'):
+            elif not isinstance(field.type, SQLCustomType) and field.type.startswith('list:'):
                 value = bar_decode_integer(value)
             elif id_map and not isinstance(field.type, SQLCustomType) and field.type.startswith('reference'):
                 try:
