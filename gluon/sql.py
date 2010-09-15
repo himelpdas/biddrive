@@ -1885,7 +1885,7 @@ class Table(dict):
                   and not (self[key].type.startswith('reference') and \
                       sql_fields[key].startswith('INT,') and \
                       sql_fields_old[key].startswith('INT NOT NULL,')):
-                sql_field_current[key] = sql_field[key]
+                sql_fields_current[key] = sql_fields[key]
                 t = self._tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
                 if not self._db._dbname in ('firebird',):
