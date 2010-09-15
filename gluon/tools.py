@@ -971,24 +971,24 @@ class Auth(object):
             # sets for appropriate cookie an appropriate expiration time
             response.cookies[response.session_id_name]["expires"] = auth.expiration
 
-    def _addrow(self, form,a,b,c,style,_id):
+    def _addrow(self,form,a,b,c,style,_id,position=-1):
         if style == "divs":
-            form[0].insert(-1, DIV(DIV(LABEL(a),_class='w2p_fl'),
-                                  DIV(b, _class='w2p_fw'),
-                                  DIV(c, _class='w2p_fc'),
-                                  _id = _id))
+            form[0].insert(position, DIV(DIV(LABEL(a),_class='w2p_fl'),
+                                         DIV(b, _class='w2p_fw'),
+                                         DIV(c, _class='w2p_fc'),
+                                         _id = _id))
         elif style == "table2cols":
-            form[0].insert(-1, TR(LABEL(a),
-                                  b, _id = _id))
+            form[0].insert(position, TR(LABEL(a),
+                                        b, _id = _id))
         elif style == "ul":
-            form[0].insert(-1, LI(DIV(LABEL(a),_class='w2p_fl'),
-                                  DIV(b, _class='w2p_fw'),
-                                  DIV(c, _class='w2p_fc'),
-                                  _id = _id))
+            form[0].insert(position, LI(DIV(LABEL(a),_class='w2p_fl'),
+                                        DIV(b, _class='w2p_fw'),
+                                        DIV(c, _class='w2p_fc'),
+                                        _id = _id))
         else:
-            form[0].insert(-1, TR(LABEL(a),
-                                  b,c,
-                                  _id = _id))
+            form[0].insert(position, TR(LABEL(a),
+                                        b,c,
+                                        _id = _id))
 
 
     def _HTTP(self, *a, **b):
@@ -1587,7 +1587,9 @@ class Auth(object):
                                     error_message=self.messages.mismatched_password)),
                               self.messages.verify_password_comment,
                               self.settings.formstyle,
-                              '%s_%s__row' % (table_user, 'password_two'))
+                              '%s_%s__row' % (table_user, 'password_two'),
+                             position=i+1)
+                break
         captcha = self.settings.register_captcha or self.settings.captcha
         if captcha:
             self._addrow(form, captcha.label, captcha, captcha.comment,self.settings.formstyle, 'captcha__row')
