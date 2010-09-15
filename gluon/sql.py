@@ -3284,83 +3284,77 @@ excluded + tables_to_merge.keys()])
                     virtualtables.append((tablename,db[tablename].virtualfields))
                 else:
                     colset = new_row[tablename]
-                if not isinstance(field_type, str):
+
+                if isinstance(field_type, SQLCustomType):
+                    colset[fieldname] = field_type.decoder(value)
+                elif not isinstance(field_type, str) or value==None:
                     colset[fieldname] = value
-                elif isinstance(field.type, str) and field.type.startswith('reference'):
-                    referee = field.type[10:].strip()
-                    if not value:
-                        colset[fieldname] = value
-                    elif not '.' in referee:
+                elif isinstance(field_type, str) and \
+                        field_type.startswith('reference'):
+                    referee = field_type[10:].strip()
+                    if not '.' in referee:
                         colset[fieldname] = rid = Reference(value)
                         (rid._table, rid._record) = (db[referee], None)
                     else: ### reference not by id
                         colset[fieldname] = value
-                elif field.type == 'blob' and value != None and blob_decode:
-                    colset[fieldname] = base64.b64decode(str(value))
-                elif field.type == 'boolean' and value != None:
+                elif field_type == 'boolean':
                     if value == True or value == 'T' or value == 't':
                         colset[fieldname] = True
                     else:
                         colset[fieldname] = False
-                elif field.type == 'date' and value != None\
+                elif field_type == 'date' \
                         and (not isinstance(value, datetime.date)\
                                  or isinstance(value, datetime.datetime)):
-                    if not value: colset[fieldname] = None
-                    else:
-                        (y, m, d) = [int(x) for x in
-                                     str(value)[:10].strip().split('-')]
-                        colset[fieldname] = datetime.date(y, m, d)
-                elif field.type == 'time' and value != None\
+                    (y, m, d) = [int(x) for x in
+                                 str(value)[:10].strip().split('-')]
+                    colset[fieldname] = datetime.date(y, m, d)
+                elif field_type == 'time' \
                         and not isinstance(value, datetime.time):
-                    if not value: colset[fieldname] = None
+                    time_items = [int(x) for x in
+                                  str(value)[:8].strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
                     else:
-                        time_items = [int(x) for x in
-                                      str(value)[:8].strip().split(':')[:3]]
-                        if len(time_items) == 3:
-                            (h, mi, s) = time_items
-                        else:
-                            (h, mi, s) = time_items + [0]
-                        colset[fieldname] = datetime.time(h, mi, s)
-                elif field.type == 'datetime' and value != None\
+                        (h, mi, s) = time_items + [0]
+                    colset[fieldname] = datetime.time(h, mi, s)
+                elif field_type == 'datetime'\
                         and not isinstance(value, datetime.datetime):
-                    if not value: colset[fieldname] = None
+                    (y, m, d) = [int(x) for x in
+                                 str(value)[:10].strip().split('-')]
+                    time_items = [int(x) for x in
+                                  str(value)[11:19].strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
                     else:
-                        (y, m, d) = [int(x) for x in
-                                     str(value)[:10].strip().split('-')]
-                        time_items = [int(x) for x in
-                                      str(value)[11:19].strip().split(':')[:3]]
-                        if len(time_items) == 3:
-                            (h, mi, s) = time_items
-                        else:
-                            (h, mi, s) = time_items + [0]
-                        colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
-                elif isinstance(field.type, SQLCustomType) and value != None:
-                    colset[fieldname] = field.type.decoder(value)
-                elif value != None and field.type.startswith('decimal'):
-                    decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
+                        (h, mi, s) = time_items + [0]
+                    colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
+                elif field_type == 'blob' and blob_decode:
+                    colset[fieldname] = base64.b64decode(str(value))
+                elif field_type.startswith('decimal'):
+                    decimals = [int(x) for x in field_type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
                         value = ('%.' + str(decimals) + 'f') % value
                     if not isinstance(value, decimal.Decimal):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
-                elif value != None and field.type.startswith('list:integer'):
+                elif field_type.startswith('list:integer'):
                     if db._uri != 'gae':
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
-                elif value != None and field.type.startswith('list:reference'):
+                elif field_type.startswith('list:reference'):
                     if db._uri != 'gae':
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
-                elif value != None and field.type.startswith('list:string'):
+                elif field_type.startswith('list:string'):
                     if db._uri != 'gae':
                         colset[fieldname] = bar_decode_string(value)
                     else:
                         colset[fieldname] = value
                 else:
                     colset[fieldname] = value
-                if field.type == 'id':
+                if field_type == 'id':
                     id = colset[field.name]
                     colset.update_record = lambda _ = (colset, table, id), **a: update_record(_, a)
                     colset.delete_record = lambda t = table, i = id: t._db(t.id==i).delete()
