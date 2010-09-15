@@ -844,7 +844,7 @@ request.cid, request.ajax, A(cid=request.cid), response.js
 #1.83.2
 mostly cleanup
 
-#1.84.1
+#1.84.1-4
 flash now stays put in the top right corner
 improved behavior for URL and T objects
 new app level logging with logging.conf (thanks Jonathan)
@@ -861,3 +861,7 @@ Experimental ListWidget
 moved DAL and routes to thread.local (thanks Jonathan, again)
 scripts/extract_mysql_models.py, thanks Falko Krause and Ron McOuat 
 scripts/dbsessions2trash.py, thanks Scott
+
+1.85.1
+fixed some bugs
+added pyfpdf, thank Mariano
