@@ -847,6 +847,7 @@ class Auth(object):
         self.settings.login_methods = [self]
         self.settings.login_form = self
         self.settings.login_email_validate = True
+        self.settings.login_userfield = None 
 
         self.settings.logout_next = self.url('index')
         self.settings.logout_onlogout = None
@@ -1295,9 +1296,12 @@ class Auth(object):
         session = self.environment.session
         table_user = self.settings.table_user
         if 'username' in table_user.fields:
+            if self.settings.login_userfield:
+                userfield = self.settings.login_userfield
+        elif 'username' in table_user.fields:
             userfield = 'username'
         else:
-            userfield = 'email'
+            userfield = 'email' 
         passfield = self.settings.password_field
         user = self.db(table_user[userfield] == username).select().first()
         password = table_user[passfield].validate(password)[0]
@@ -1326,7 +1330,9 @@ class Auth(object):
         """
 
         table_user = self.settings.table_user
-        if 'username' in table_user.fields:
+        if self.settings.login_userfield:
+            username = self.settings.login_userfield
+        elif 'username' in table_user.fields: 
             username = 'username'
         else:
             username = 'email'
