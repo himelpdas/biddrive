@@ -46,7 +46,7 @@ class Singleton(dict):
     def __str__(self):
         return str(getattr(Singleton.thread,str(self.__class__)))
     def __getstate__(self):
-        return Singleton.thread.storage
+        return getattr(Singleton.thread,str(self.__class__))
     def __setstate__(self, value):
         setattr(Singleton.thread,str(self.__class__),value)
     def __cmp__(self,other):
