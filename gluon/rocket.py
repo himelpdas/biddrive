@@ -819,7 +819,8 @@ class Worker(Thread):
             else:
                 self.status = "999 Utter Server Failure"
                 if not self.pool.stop_server:
-                    tb = traceback.format_exception(*exc)
+                    # was tb = traceback.format_exception(*exc)
+                    tb = traceback.format_exception((typ, val, tb))
                     self.err_log.error('Unhandled Error when serving connection:\n' + tb)
                 return False
 
