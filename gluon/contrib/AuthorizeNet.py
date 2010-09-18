@@ -85,11 +85,11 @@ class AIM:
 
     def __init__(self, login, transkey, testmode=False):
         if str(login).strip() == '' or login == None:
-            raise AIMError('No login name provided')
+            raise AIM.AIMError('No login name provided')
         if str(transkey).strip() == '' or transkey == None:
-            raise AIMError('No transaction key provided')
+            raise AIM.AIMError('No transaction key provided')
         if testmode != True and testmode != False:
-            raise AIMError('Invalid value for testmode. Must be True or False. "{0}" given.'.format(testmode))
+            raise AIM.AIMError('Invalid value for testmode. Must be True or False. "{0}" given.'.format(testmode))
 
         self.testmode = testmode
         self.proxy = None;
@@ -140,15 +140,15 @@ class AIM:
             self.success = False
             self.declined = True
         else:
-            raise AIMError(self.response.ResponseText)
+            raise AIM.AIMError(self.response.ResponseText)
 
     def setTransaction(self, creditcard, expiration, total, cvv=None, tax=None, invoice=None):
         if str(creditcard).strip() == '' or creditcard == None:
-            raise AIMError('No credit card number passed to setTransaction(): {0}'.format(creditcard))
+            raise AIM.AIMError('No credit card number passed to setTransaction(): {0}'.format(creditcard))
         if str(expiration).strip() == '' or expiration == None:
-            raise AIMError('No expiration number to setTransaction(): {0}'.format(expiration))
+            raise AIM.AIMError('No expiration number to setTransaction(): {0}'.format(expiration))
         if str(total).strip() == '' or total == None:
-            raise AIMError('No total amount passed to setTransaction(): {0}'.format(total))
+            raise AIM.AIMError('No total amount passed to setTransaction(): {0}'.format(total))
 
         self.setParameter('x_card_num', creditcard)
         self.setParameter('x_exp_date', expiration)
@@ -163,19 +163,19 @@ class AIM:
     def setTransactionType(self, transtype=None):
         types = ['AUTH_CAPTURE', 'AUTH_ONLY', 'PRIOR_AUTH_CAPTURE', 'CREDIT', 'CAPTURE_ONLY', 'VOID']
         if transtype.upper() not in types:
-            raise AIMError('Incorrect Transaction Type passed to setTransactionType(): {0}'.format(transtype))
+            raise AIM.AIMError('Incorrect Transaction Type passed to setTransactionType(): {0}'.format(transtype))
         self.setParameter('x_type', transtype.upper())
 
     def setProxy(self, proxy=None):
         if str(proxy).strip() == '' or proxy == None:
-            raise AIMError('No proxy passed to setProxy()')
+            raise AIM.AIMError('No proxy passed to setProxy()')
         self.proxy = {'http': str(proxy).strip()}
 
     def setParameter(self, key=None, value=None):
         if key != None and value != None and str(key).strip() != '' and str(value).strip() != '':
             self.parameters[key] = str(value).strip()
         else:
-            raise AIMError('Incorrect parameters passed to setParameter(): {0}:{1}'.format(key, value))
+            raise AIM.AIMError('Incorrect parameters passed to setParameter(): {0}:{1}'.format(key, value))
 
     def isApproved(self):
         return self.success
@@ -233,7 +233,7 @@ def test():
         elif payment.isDeclined():
             print 'Your credit card was declined by your bank'
         elif payment.isError():
-            raise AIMError('An uncaught error occurred')
+            raise AIM.AIMError('An uncaught error occurred')
     except AIM.AIMError, e:
         print "Exception thrown:", e
         print 'An error occured'

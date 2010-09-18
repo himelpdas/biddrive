@@ -323,10 +323,10 @@ class IS_IN_SET(Validator):
                 values = []
         else:
             values = [value]
-        failures = [x for x in values if not x in self.theset]
+        failures = [x for x in values if not x in self.theset]        
         if failures:
-            if self.multiple and value == None:
-                return (value, None)
+            if self.multiple and (value == None or value == ''):
+                return ([], None)
             return (value, self.error_message)
         if self.multiple:
             return (values, None)
