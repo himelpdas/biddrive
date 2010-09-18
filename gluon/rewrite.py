@@ -150,14 +150,15 @@ def filter_uri(e, regexes, tag, default=None):
     logger.debug('%s: [%s] -> %s (not rewritten)' % (tag, key, default))
     return (default, query, original_uri)
 
-def select(e=None):
+def select(env=None, app=None):
     """
     select a set of rewrite params for the current request
     called from main.wsgibase before any URL rewriting
     """
-    app = None
-    if e and params.routes_app:
-        (app, q, u) = filter_uri(e, params.routes_app, "routes_app")
+    if app:
+        thread.routes = params_apps.get(app, params)
+    elif env and params.routes_app:
+        (app, q, u) = filter_uri(env, params.routes_app, "routes_app")
         thread.routes = params_apps.get(app, params)
     else:
         thread.routes = params # default to base rewrite parameters
@@ -180,6 +181,8 @@ def filter_in(e):
 
 def filter_out(url, e=None):
     "called from html.URL to rewrite outgoing URL"
+    if not hasattr(thread, 'routes'):
+        select()    # ensure thread.routes is set (for application threads)
     if thread.routes.routes_out:
         items = url.split('?', 1)
         if e:
