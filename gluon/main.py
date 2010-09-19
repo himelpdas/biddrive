@@ -50,7 +50,7 @@ from sql import BaseAdapter
 from settings import settings
 from validators import CRYPT
 from cache import Cache
-from html import URL
+from html import URL as Url
 from storage import List
 import newcron
 import rewrite
@@ -837,9 +837,9 @@ def parse_url(request, environ):
     if not os.path.exists(request.folder):
         if request.application == rewrite.thread.routes.default_application:
             request.application = 'welcome'
-            redirect(URL(r=request))
+            redirect(Url(r=request))
         elif rewrite.thread.routes.error_handler:
-            redirect(URL(rewrite.thread.routes.error_handler['application'],
+            redirect(Url(rewrite.thread.routes.error_handler['application'],
                          rewrite.thread.routes.error_handler['controller'],
                          rewrite.thread.routes.error_handler['function'],
                          args=request.application))
@@ -847,6 +847,6 @@ def parse_url(request, environ):
             raise HTTP(400,
                        rewrite.thread.routes.error_message % 'invalid request',
                        web2py_error='invalid application')
-    request.url = URL(r=request,args=request.args,
+    request.url = Url(r=request,args=request.args,
                            extension=raw_extension)
     return None

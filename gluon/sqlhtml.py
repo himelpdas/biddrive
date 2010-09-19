@@ -15,11 +15,12 @@ Holds:
 """
 
 from http import HTTP
-from html import *
-from validators import *
+from html import XML, SPAN, TAG, A, DIV, UL, LI, TEXTAREA, BR, IMG, SCRIPT
+from html import FORM, INPUT, LABEL, OPTION, SELECT
+from html import TABLE, THEAD, TBODY, TR, TD, TH
+from html import URL as Url
 from sql import SQLDB, Table, Row
 from storage import Storage
-from serializers import json
 
 import urllib
 import re
@@ -468,7 +469,7 @@ class AutocompleteWidget:
         else:
             self.is_reference = False
         if hasattr(request,'application'):
-            self.url = URL(r=request,args=request.args)
+            self.url = Url(r=request, args=request.args)
             self.callback()
         else:
             self.url = request

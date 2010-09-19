@@ -5,7 +5,7 @@ License: GPL v2
 """
 import datetime
 from storage import Storage
-from html import *
+from html import TAG
 import contrib.simplejson as simplejson
 import contrib.rss2 as rss2
 
