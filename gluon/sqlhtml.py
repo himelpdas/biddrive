@@ -198,7 +198,6 @@ class ListWidget(StringWidget):
         _name = field.name
         if field.type=='list:integer': _class = 'integer'
         else: _class = 'string'
-        requires = field.requires
         items=[LI(INPUT(_id=_id,_class=_class,_name=_name,value=v,hideerror=True)) \
                    for v in value or ['']]
         script=SCRIPT("""
