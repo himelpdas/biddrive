@@ -45,20 +45,35 @@ class OAuthAccount(object):
     
         CLIENT_ID=\"<put your fb application id here>\"
         CLIENT_SECRET=\"<put your fb application secret here>\"
+        AUTH_URL="http://..."
+        TOKEN_URL="http://..."
         from gluon.contrib.login_methods.oauth20_account import OAuthAccount
-        auth.settings.login_form=OAuthAccount(globals(),CLIENT_ID,CLIENT_SECRET)
-
+        auth.settings.login_form=OAuthAccount(globals(),CLIENT_ID,CLIENT_SECRET,AUTH_URL, TOKEN_URL, **args )
+    Any optional arg will be passed as is to remote server for requests.
+    It can be used for the optional "scope" parameters for Facebook.
     """
-    def __redirect_uri(self):
+    def __redirect_uri(self, next=None):
         """Build the uri used by the authenticating server to redirect
         the client back to the page originating the auth request.
         Appends the _next action to the generated url so the flows continues.
         """
         r = self.request
-        http_host=self.request.env.http_x_forwarded_for
-        if not http_host: http_host=self.request.env.http_host
+        http_host=r.env.http_x_forwarded_for
+        if not http_host: http_host=r.env.http_host
 
-        return 'http://%s%s' %(http_host, self.request.env.path_info + '?' + urlencode(dict(_next=self.request.vars._next)))
+        url_scheme = r.env.wsgi_url_scheme
+        url_port = ''
+        if (url_scheme,r.env.server_port) not in (('https', '443'), ('http', '80')):
+            url_port = ':' + r.env.server_port
+
+        if next:
+            path_info = next
+        else:
+            path_info = r.env.path_info
+        uri = '%s://%s%s%s' %(url_scheme, http_host, url_port, path_info)
+        if r.get_vars and not next:
+            uri += '?' + urlencode(r.get_vars)
+        return uri
 
 
     def __build_url_opener(self, uri):
@@ -86,22 +101,23 @@ class OAuthAccount(object):
             if expires == 0 or expires > time.time():
                         return self.session.token['access_token']
         if self.session.code:
-            data = urlencode(dict(redirect_uri=self.__redirect_uri(),
-                          response_type='token', code=self.session.code))
+            data = dict(client_id=self.client_id,
+                        client_secret=self.client_secret,
+                        redirect_uri=self.session.redirect_uri,
+                        response_type='token', code=self.session.code)
+
+
+            if self.args:
+                data.update(self.args)
             open_url = None
+            opener = self.__build_url_opener(self.token_url)
             try:
-                opener = self.__build_url_opener(self.token_url)
-                open_url = opener.open(self.token_url, data)
+                open_url = opener.open(self.token_url, urlencode(data))
             except urllib2.HTTPError, e:
-                # does not support POST or Basic Auth?
-                # fall back to GET
-                data = urlencode(dict(
-                    response_type='token',
-                    redirect_uri=self.__redirect_uri(),
-                    client_id=self.client_id,
-                    client_secret=self.client_secret,
-                    code=self.session.code))
-                open_url = urlopen(self.token_url + '?' + data)
+                raise Exception(e.read())
+            finally:
+                del self.session.code # throw it away
+
             if open_url:
                 tokendata = cgi.parse_qs(open_url.read())
                 self.session.token = dict([(k,v[-1]) for k,v in tokendata.items()])
@@ -112,7 +128,7 @@ class OAuthAccount(object):
                 else:
                     exps = 'expires'
                 self.session.token['expires'] == int(self.session.token[exps]) + time.time()
-                del self.session.code
+
                 return self.session.token['access_token']
 
         
@@ -120,7 +136,7 @@ class OAuthAccount(object):
         self.session.token = None
         return None
 
-    def __init__(self, g, client_id, client_secret, auth_url, token_url):
+    def __init__(self, g, client_id, client_secret, auth_url, token_url, **args):
         self.globals = g
         self.client_id = client_id
         self.client_secret = client_secret
@@ -128,9 +144,10 @@ class OAuthAccount(object):
         self.session = g['session']
         self.auth_url = auth_url
         self.token_url = token_url
-
+        self.args = args
+        
     def login_url(self, next="/"):
-        self.__oauth_login()
+        self.__oauth_login(next)
         return next
 
     def logout_url(self, next="/"):
@@ -161,7 +178,7 @@ class OAuthAccount(object):
 
 
 
-    def __oauth_login(self):
+    def __oauth_login(self, next):
         '''This method redirects the user to the authenticating form
         on authentication server if the authentication code
         and the authentication token are not available to the
@@ -173,12 +190,13 @@ class OAuthAccount(object):
         '''
         if not self.accessToken():
             if not self.request.vars.code:
-                data = urlencode(dict(redirect_uri=self.__redirect_uri(),
+                self.session.redirect_uri=self.__redirect_uri(next)
+                data = dict(redirect_uri=self.session.redirect_uri,
                                   response_type='code',
-                                  client_id=self.client_id))
-                          
-
-                auth_request_url = self.auth_url + "?"+data
+                                  client_id=self.client_id)
+                if self.args:
+                    data.update(self.args)
+                auth_request_url = self.auth_url + "?" +urlencode(data)
                 HTTP = self.globals['HTTP']
                 raise HTTP(307,
                            "You are not authenticated: you are being redirected to the <a href='" + auth_request_url + "'> authentication server</a>",

@@ -54,19 +54,29 @@ class OAuthAccount(object):
         auth.settings.login_form=OAuthAccount(globals(),CLIENT_ID,CLIENT_SECRET, AUTH_URL, TOKEN_URL, ACCESS_TOKEN_URL)
 
     """
-    def __redirect_uri(self):
+
+    def __redirect_uri(self, next=None):
         """Build the uri used by the authenticating server to redirect
         the client back to the page originating the auth request.
         Appends the _next action to the generated url so the flows continues.
         """
         r = self.request
-        http_host=self.request.env.http_x_forwarded_for
-        if not http_host: http_host=self.request.env.http_host
+        http_host=r.env.http_x_forwarded_for
+        if not http_host: http_host=r.env.http_host
 
-        url = 'http://%s%s' %(http_host, self.request.env.path_info)
-        if self.request.vars._next:
-            url = url  + '?' + urlencode(dict(_next=self.request.vars._next))
-        return url
+        url_scheme = r.env.wsgi_url_scheme
+        url_port = ''
+        if (url_scheme,r.env.server_port) not in (('https', '443'), ('http', '80')):
+            url_port = ':' + r.env.server_port
+
+        if next:
+            path_info = next
+        else:
+            path_info = r.env.path_info
+        uri = '%s://%s%s%s' %(url_scheme, http_host, url_port, path_info)
+        if r.get_vars and not next:
+            uri += '?' + urlencode(r.get_vars)
+        return uri
 
 
     def accessToken(self):
@@ -77,9 +87,6 @@ class OAuthAccount(object):
         
         """
         
-
-        
-        
         if self.session.access_token:
             # return the token (TODO: does it expire?)
             
@@ -88,8 +95,6 @@ class OAuthAccount(object):
             # Exchange the request token with an authorization token.
             token = self.session.request_token
             self.session.request_token = None
-
-            
 
             # Build an authorized client
             # OAuth1.0a put the verifier!
@@ -160,7 +165,7 @@ class OAuthAccount(object):
             # Get a request token.
             # oauth_callback *is REQUIRED* for OAuth1.0a
             # putting it in the body seems to work.
-            callback_url = self.__redirect_uri()
+            callback_url = self.__redirect_uri(next)
             data = urlencode(dict(oauth_callback=callback_url))
             resp, content = client.request(self.token_url, "POST",  body=data)
             if resp['status'] != '200':
