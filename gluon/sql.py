@@ -3270,8 +3270,6 @@ excluded + tables_to_merge.keys()])
                 table = db[tablename]
                 field = table[fieldname]
                 field_type = field.type
-                if isinstance(field_type, SQLCustomType):
-                    field_type = field_type.type
                 if field.type != 'blob' and isinstance(value, str):
                     try:
                         value = value.decode(db._db_codec)
@@ -3287,6 +3285,7 @@ excluded + tables_to_merge.keys()])
 
                 if isinstance(field_type, SQLCustomType):
                     colset[fieldname] = field_type.decoder(value)
+                    # field_type = field_type.type
                 elif not isinstance(field_type, str) or value==None:
                     colset[fieldname] = value
                 elif isinstance(field_type, str) and \
