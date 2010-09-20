@@ -79,6 +79,74 @@ class Storage(dict):
     def __setstate__(self, value):
         for (k, v) in value.items():
             self[k] = v
+            
+    def getlist(self, obj):
+        """Returns a list given a request.vars style object attribute.
+    
+        If object is list it will be returned as is.  If object is None, an empty
+        list will be returned.  Otherwise, [object] will be returned.
+    
+        Simulated output with a query string of ?x=abc&y=abc&y=def
+        >>> request.vars.x = 'abc'
+        >>> request.vars.y = ['abc', 'def']
+        >>> request.vars.getlist('x')
+        ['abc']
+        >>> request.vars.getlist('y')
+        ['abc', 'def']
+        >>> request.vars.getlist('z')
+        []
+    
+        """
+        value = self.get(obj, None)
+        if isinstance(value, list):
+            return value
+        elif value is None:
+            return []
+        return [value]
+    
+    def getfirst(self, obj):
+        """Returns a single value when given a request.vars style object attribute.
+    
+        If object is list, the first item will be returned, otherwise, object
+        will be returned as is.
+    
+        Simulated output with a query string of ?x=abc&y=abc&y=def
+        >>> request.vars.x = 'abc'
+        >>> request.vars.y = ['abc', 'def']
+        >>> request.vars.getfirst('x')
+        'abc'
+        >>> request.vars.getfirst('y')
+        'abc'
+        >>> request.vars.getfirst('z')
+        None
+    
+        """
+        value = self.getlist(obj)
+        if len(value):
+            return value[0]
+        return None 
+    
+    def getlast(self, obj):
+        """Returns a single value when given a request.vars style object attribute.
+    
+        If object is list, the last item will be returned, otherwise, object
+        will be returned as is.
+    
+        Simulated output with a query string of ?x=abc&y=abc&y=def
+        >>> request.vars.x = 'abc'
+        >>> request.vars.y = ['abc', 'def']
+        >>> request.vars.getlast('x')
+        'abc'
+        >>> request.vars.getlast('y')
+        'def'
+        >>> request.vars.getlast('z')
+        None
+    
+        """
+        value = self.getlist(obj)
+        if len(value):
+            return value[-1]
+        return None
 
 class StorageList(Storage):
     """
