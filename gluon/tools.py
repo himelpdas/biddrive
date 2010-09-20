@@ -1295,9 +1295,8 @@ class Auth(object):
         request = self.environment.request
         session = self.environment.session
         table_user = self.settings.table_user
-        if 'username' in table_user.fields:
-            if self.settings.login_userfield:
-                userfield = self.settings.login_userfield
+        if self.settings.login_userfield:
+            userfield = self.settings.login_userfield
         elif 'username' in table_user.fields:
             userfield = 'username'
         else:
