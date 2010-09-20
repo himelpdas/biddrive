@@ -139,7 +139,7 @@ def filter_uri(e, regexes, tag, default=None):
     if i > 0:
         host = host[:i]
     key = '%s:%s://%s:%s %s' % \
-        (e['REMOTE_ADDR'],
+        (e.get('REMOTE_ADDR','localhost'),
          e.get('WSGI_URL_SCHEME', 'http').lower(), host,
          e.get('REQUEST_METHOD', 'get').lower(), path)
     for (regex, value) in regexes:
