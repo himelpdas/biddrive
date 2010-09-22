@@ -1586,6 +1586,7 @@ class Table(dict):
                     'define_table argument is not a Field: %s' % field
         fields = new_fields
         self._db = db
+        self._id = fields[0]
         self._tablename = tablename
         self._trigger_name = args.get('trigger_name', None)
         self._sequence_name = args.get('sequence_name', None)
