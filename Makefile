@@ -58,6 +58,7 @@ mdp:
 	make app
 	make win
 app:
+	echo 'did you uncomment import_all in gluon/main.py?'
 	python2.5 -c 'import compileall; compileall.compile_dir("gluon/")'
 	#python web2py.py -S welcome -R __exit__.py
 	find gluon -path '*.pyc' -exec cp {} ../web2py_osx/site-packages/{} \;
@@ -75,6 +76,7 @@ app:
 	cd ../web2py_osx; zip -r web2py_osx.zip web2py
 	mv ../web2py_osx/web2py_osx.zip .
 win:
+	echo 'did you uncomment import_all in gluon/main.py?'
 	python2.5 -c 'import compileall; compileall.compile_dir("gluon/")'
 	find gluon -path '*.pyc' -exec cp {} ../web2py_win/library/{} \;
 	cd ../web2py_win/library/; zip -r ../library.zip *

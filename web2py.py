@@ -13,7 +13,7 @@ if not path in sys.path:
     sys.path.append(path)
 os.chdir(path)
 
-import gluon.import_all
+# import gluon.import_all ##### This should be uncommented for py2exe.py
 import gluon.widget
 
 # Start Web2py and Web2py cron service!
