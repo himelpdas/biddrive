@@ -15,11 +15,9 @@ from sqlhtml import *
 from http import *
 from utils import web2py_uuid
 
-import thread
 import base64
 import cPickle
 import datetime
-from email import *
 import thread
 import logging
 import sys
@@ -30,6 +28,8 @@ import smtplib
 import urllib
 import urllib2
 import Cookie
+
+from email import *
 
 import serializers
 import contrib.simplejson as simplejson
@@ -368,8 +368,7 @@ class Mail(object):
                 return False
 
             # need a python-pyme package and gpgme lib
-            from pyme import core, constants, errors
-            import pyme.constants.validity
+            from pyme import core, errors
             from pyme.constants.sig import mode
             ############################################
             #                   sign                   #
@@ -1873,7 +1872,7 @@ class Auth(object):
 
         table_user = self.settings.table_user
         request = self.environment.request
-        response = self.environment.response
+        # response = self.environment.response
         session = self.environment.session
 
         if next == DEFAULT:
@@ -1887,7 +1886,7 @@ class Auth(object):
             if time.time()-t0 > 60*60*24: raise Exception
             user = self.db(table_user.reset_password_key == key).select().first()
             if not user: raise Exception
-        except Exception, e:
+        except Exception:
             session.flash = self.messages.invalid_reset_password
             redirect(next)
         passfield = self.settings.password_field
@@ -1945,7 +1944,7 @@ class Auth(object):
             onaccept = self.settings.reset_password_onaccept
         if log == DEFAULT:
             log = self.messages.reset_password_log
-        old_requires = table_user.email.requires
+        # old_requires = table_user.email.requires <<< perhaps should be restored
         table_user.email.requires = [
             IS_EMAIL(error_message=self.messages.invalid_email),
             IS_IN_DB(self.db, table_user.email,
@@ -2621,7 +2620,6 @@ class Crud(object):
         return self.settings.auth.has_permission(name, str(table), record_id)
 
     def tables(self):
-        request = self.environment.request
         return TABLE(*[TR(A(name,
                             _href=self.url(args=('select',name)))) \
                            for name in self.db.tables])
@@ -3665,7 +3663,6 @@ def prettydate(d,T=lambda x:x):
         return T('now')
 
 def test_thread_separation():
-    import thread, time
     def f():
         c=PluginManager()
         lock1.acquire()
