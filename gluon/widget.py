@@ -53,8 +53,8 @@ ProgramInfo = '''%s
                  %s
                  %s''' % (ProgramName, ProgramAuthor, ProgramVersion)
 
-if not sys.version[:3] in ['2.4', '2.5', '2.6']:
-    msg = 'Warning: web2py requires Python 2.4, 2.5 (recommended), or 2.6 but you are running:\n%s'
+if not sys.version[:3] in ['2.4', '2.5', '2.6', '2.7']:
+    msg = 'Warning: web2py requires Python 2.4, 2.5 (recommended), 2.6 or 2.7 but you are running:\n%s'
     msg = msg % sys.version
     sys.stderr.write(msg)
 
