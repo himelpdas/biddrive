@@ -1643,7 +1643,7 @@ class Table(dict):
             elif not str(id).isdigit():
                 record = None
             else:
-                record = self._db(self.id == id).select(limitby=(0,1)).first()
+                record = self._db(self._id == id).select(limitby=(0,1)).first()
             if record:
                 for k,v in kwargs.items():
                     if record[k]!=v: return None
@@ -1658,14 +1658,14 @@ class Table(dict):
         if str(key).isdigit():
             if key == 0:
                 self.insert(**self._filter_fields(value))
-            elif not self._db(self.id == key)\
+            elif not self._db(self._id == key)\
                     .update(**self._filter_fields(value)):
                 raise SyntaxError, 'No such record: %s' % key
         else:
             dict.__setitem__(self, str(key), value)
 
     def __delitem__(self, key):
-        if not str(key).isdigit() or not self._db(self.id == key).delete():
+        if not str(key).isdigit() or not self._db(self._id == key).delete():
             raise SyntaxError, 'No such record: %s' % key
 
     def __getattr__(self, key):
@@ -2124,7 +2124,7 @@ class Table(dict):
                     record = self._db(query).select().first()
                     if record:
                         record.update_record(**dict(items))
-                        new_id = record.id
+                        new_id = record[self._id.name]
                     else:
                         new_id = self.insert(**dict(items))
                 if id_map and cid != []:
@@ -3176,8 +3176,8 @@ excluded + tables_to_merge.keys()])
             (lmin, lmax) = attributes['limitby']
             if self._db._dbname in ['oracle']:
                 if not attributes.get('orderby', None) and w2p_tablenames:
-                    sql_o += ' ORDER BY %s' % ', '.join([t + '.id'
-                            for t in w2p_tablenames])
+                    sql_o += ' ORDER BY %s' % ', '.join(
+                        ['%s.%s'%(t,self._db[t]._id.name) for t in w2p_tablenames])
                 if len(sql_w) > 1:
                     sql_w_row = sql_w + ' AND w_row > %i' % lmin
                 else:
@@ -3187,19 +3187,15 @@ excluded + tables_to_merge.keys()])
             elif self._db._dbname == 'mssql' or \
                  self._db._dbname == 'mssql2':
                 if not attributes.get('orderby', None) and w2p_tablenames:
-#                     sql_o += ' ORDER BY %s' % ', '.join([t + '.id'
-#                             for t in w2p_tablenames ])
                     sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or ['id'])])
                 sql_s += ' TOP %i' % lmax
             elif self._db._dbname == 'firebird':
                 if not attributes.get('orderby', None) and w2p_tablenames:
-                    sql_o += ' ORDER BY %s' % ', '.join([t + '.id'
-                            for t in w2p_tablenames])
+                    sql_o += ' ORDER BY %s' % ', '.join(
+                        ['%s.%s'%(t,self._db[t]._id.name) for t in w2p_tablenames])
                 sql_s += ' FIRST %i SKIP %i' % (lmax - lmin, lmin)
             elif self._db._dbname == 'db2':
                 if not attributes.get('orderby', None) and w2p_tablenames:
-#                     sql_o += ' ORDER BY %s' % ', '.join([t + '.id'
-#                             for t in w2p_tablenames])
                     sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or ['id'])])
                 sql_o += ' FETCH FIRST %i ROWS ONLY' % lmax
             elif self._db._dbname == 'ingres':
@@ -3358,7 +3354,7 @@ excluded + tables_to_merge.keys()])
                 if field_type == 'id':
                     id = colset[field.name]
                     colset.update_record = lambda _ = (colset, table, id), **a: update_record(_, a)
-                    colset.delete_record = lambda t = table, i = id: t._db(t.id==i).delete()
+                    colset.delete_record = lambda t = table, i = id: t._db(t._id==i).delete()
                     if SetClass:
                         for (referee_table, referee_name) in \
                                 table._referenced_by:
@@ -3394,9 +3390,10 @@ excluded + tables_to_merge.keys()])
         self.delete_uploaded_files()
         ### special code to handle CASCADE in SQLite
         db=self._db
-        t = self._tables[0]
+        t = self._tables[0]            
         if db._dbname=='sqlite' and db[t]._referenced_by:
-            deleted = [x.id for x in self.select(db[t].id)]
+            table = db[t]
+            deleted = [x[table._id.name] for x in self.select(table._id)]
         ### end special code to handle CASCADE in SQLite
         self._db['_lastsql'] = query
         self._db._execute(query)
@@ -3487,7 +3484,7 @@ def update_record(pack, a={}):
     b = a or dict(colset)
     c = dict([(k,v) for (k,v) in b.items() \
                   if k in table.fields and not k=='id'])
-    table._db(table.id==id).update(**c)
+    table._db(table._id==id).update(**c)
     for (k, v) in c.items():
         colset[k] = v
 
