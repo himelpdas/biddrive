@@ -43,6 +43,7 @@ import struct
 from utils import md5_hash, web2py_uuid
 from serializers import json
 from http import HTTP
+import settings
 
 logger = logging.getLogger("web2py.sql")
 

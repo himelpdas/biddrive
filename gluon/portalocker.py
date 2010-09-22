@@ -89,7 +89,7 @@ elif os_locking == 'posix':
 
 
 else:
-    logger.warning('no file locking')
+    logger.debug('no file locking')
     LOCK_EX = None
     LOCK_SH = None
     LOCK_NB = None

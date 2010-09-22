@@ -99,7 +99,7 @@ def load(routes='routes.py', app=None):
         routesfp = open(path, 'r')
         exec routesfp.read().replace('\r\n','\n') in symbols
         routesfp.close()
-        logger.info('URL rewrite is on. configuration in %s' % path)
+        logger.debug('URL rewrite is on. configuration in %s' % path)
     except SyntaxError, e:
         routesfp.close()
         logger.error('Your %s has a syntax error ' % path + \

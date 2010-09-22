@@ -67,7 +67,7 @@ def log_stats(fun):
     return newfun
 
 
-logging.basicConfig(level=35)
+logging.basicConfig(level=logging.INFO)
 
 
 def wsgiapp(env, res):
