@@ -218,9 +218,11 @@ def try_redirect_on_error(http_object, request, ticket=None):
                 if redir == '!':
                     break
                 elif '?' in redir:
-                    url = redir + '&' + 'code=%s&ticket=%s&requested_uri=%s' % (status,ticket, request.env.request_uri)
+                    url = '%s&code=%s&ticket=%s&requested_uri=%s&request_url=%s' % \
+                        (redir,status,ticket,request.env.request_uri,request.url)
                 else:
-                    url = redir + '?' + 'code=%s&ticket=%s&requested_uri=%s' % (status,ticket, request.env.request_uri)
+                    url = '%s?code=%s&ticket=%s&requested_uri=%s&request_url=%s' % \
+                        (redir,status,ticket,request.env.request_uri,request.url)
                 return HTTP(303,
                             'You are being redirected <a href="%s">here</a>' % url,
                             Location=url)
