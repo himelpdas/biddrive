@@ -14,12 +14,17 @@ import time
 import sched
 import re
 import datetime
-import traceback
 import platform
 import gluon.portalocker as portalocker
 import cPickle
 
 logger = logging.getLogger("web2py.cron")
+_cron_stopping = False
+
+def stopcron():
+    "graceful shutdown of cron"
+    global _cron_stopping
+    _cron_stopping = True
 
 class extcron(threading.Thread):
 
@@ -30,8 +35,9 @@ class extcron(threading.Thread):
         crondance(self.path, 'external', startup=True)
 
     def run(self):
-        logger.debug('external cron invocation')
-        crondance(self.path, 'external', startup=False)
+        if not _cron_stopping:
+            logger.debug('external cron invocation')
+            crondance(self.path, 'external', startup=False)
 
 class hardcron(threading.Thread):
 
@@ -42,13 +48,14 @@ class hardcron(threading.Thread):
         crondance(self.path, 'hard', startup=True)
 
     def launch(self):
-        logger.debug('hard cron invocation')
-        crondance(self.path, 'hard', startup = False)
+        if not _cron_stopping:
+            logger.debug('hard cron invocation')
+            crondance(self.path, 'hard', startup = False)
 
     def run(self):
         s = sched.scheduler(time.time, time.sleep)
         logger.info('Hard cron daemon started')
-        while True:
+        while not _cron_stopping:
             now = time.time()
             s.enter(60 - now % 60, 1, self.launch, ())
             s.run()
@@ -61,8 +68,9 @@ class softcron(threading.Thread):
         crondance(self.path, 'soft', startup=True)
 
     def run(self):
-        logger.debug('soft cron invocation')
-        crondance(self.path, 'soft', startup=False)
+        if not _cron_stopping:
+            logger.debug('soft cron invocation')
+            crondance(self.path, 'soft', startup=False)
 
 class Token:
 
@@ -76,12 +84,12 @@ class Token:
     def acquire(self,startup=False):
         """
         returns the time when the lock is acquired or
-        None if cron already runing
+        None if cron already running
 
-        lock is implemnted by writing a pickle (start, stop) in cron.master
+        lock is implemented by writing a pickle (start, stop) in cron.master
         start is time when cron job starts and stop is time when cron completed
         stop == 0 if job started but did not yet complete
-        if a cron job started within less than 60 secods, acquire returns None
+        if a cron job started within less than 60 seconds, acquire returns None
         if a cron job started before 60 seconds and did not stop,
         a warning is issue "Stale cron.master detected"
         """
@@ -113,7 +121,7 @@ class Token:
 
     def release(self):
         """
-        this function writes into cron.msater the time when cron job
+        this function writes into cron.master the time when cron job
         was completed
         """
         if not self.master.closed:
@@ -235,6 +243,8 @@ def crondance(web2py_path, ctype='soft', startup=False):
             if os.path.isdir(os.path.join(apppath, x))]
 
     for app in apps:
+        if _cron_stopping:
+            break;
         apath = os.path.join(apppath,app)
         cronpath = os.path.join(apath, 'cron')
         crontab = os.path.join(cronpath, 'crontab')
@@ -250,6 +260,8 @@ def crondance(web2py_path, ctype='soft', startup=False):
             continue
 
         for task in tasks:
+            if _cron_stopping:
+                break;
             commands = [sys.executable]
             if os.path.exists('web2py.py'):
                 commands.append('web2py.py')

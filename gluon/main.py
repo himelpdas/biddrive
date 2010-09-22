@@ -177,7 +177,7 @@ def start_response_aux(status, headers, exc_info, response=None):
     - request.wsgi.environ
     - request.wsgi.start_response
 
-    to call third party WSGI applicaitons
+    to call third party WSGI applications
     """
     response.status = str(status).split(' ',1)[0]
     response.headers = dict(headers)
@@ -693,6 +693,7 @@ class HttpServer(object):
         """
         try:
             signal.signal(signal.SIGTERM, lambda a, b, s=self: s.stop())
+            signal.signal(signal.SIGINT, lambda a, b, s=self: s.stop())
         except:
             pass
         fp = open(self.pid_filename, 'w')
@@ -702,8 +703,9 @@ class HttpServer(object):
 
     def stop(self, stoplogging=False):
         """
-        stop the web server
+        stop cron and the web server
         """
+        newcron.stopcron()
         self.server.stop(stoplogging)
         try:
             os.unlink(self.pid_filename)
