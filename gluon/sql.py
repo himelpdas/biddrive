@@ -1448,7 +1448,7 @@ class SQLDB(dict):
     def export_to_csv_file(self, ofile, *args, **kwargs):
         for table in self.tables:
             ofile.write('TABLE %s\r\n' % table)
-            self(self[table]['id'] > 0).select().export_to_csv_file(ofile, *args, **kwargs)
+            self(self[table]._id > 0).select().export_to_csv_file(ofile, *args, **kwargs)
             ofile.write('\r\n\r\n')
         ofile.write('END')
 
@@ -3187,7 +3187,7 @@ excluded + tables_to_merge.keys()])
             elif self._db._dbname == 'mssql' or \
                  self._db._dbname == 'mssql2':
                 if not attributes.get('orderby', None) and w2p_tablenames:
-                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or ['id'])])
+                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or [self._db[t]._id.name]) for t in w2p_tablenames])
                 sql_s += ' TOP %i' % lmax
             elif self._db._dbname == 'firebird':
                 if not attributes.get('orderby', None) and w2p_tablenames:
@@ -3196,7 +3196,7 @@ excluded + tables_to_merge.keys()])
                 sql_s += ' FIRST %i SKIP %i' % (lmax - lmin, lmin)
             elif self._db._dbname == 'db2':
                 if not attributes.get('orderby', None) and w2p_tablenames:
-                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in w2p_tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or ['id'])])
+                    sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or [self._db[t].name]) for t in w2p_tablenames])
                 sql_o += ' FETCH FIRST %i ROWS ONLY' % lmax
             elif self._db._dbname == 'ingres':
                 fetch_amt = lmax - lmin
