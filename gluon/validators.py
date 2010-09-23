@@ -467,7 +467,7 @@ class IS_NOT_IN_DB(Validator):
         self,
         dbset,
         field,
-        error_message='value already in database',
+        error_message='value already in database or empty',
         allowed_override=[],
         ):
         if hasattr(dbset, 'define_table'):

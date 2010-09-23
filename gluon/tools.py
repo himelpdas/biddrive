@@ -809,7 +809,7 @@ class Auth(object):
         self.settings.retrieve_username_captcha = None
         self.settings.retrieve_password_captcha = None
         self.settings.captcha = None
-        self.settings.expiration = 3600         # one day
+        self.settings.expiration = 3600            # one hour
         self.settings.long_expiration = 3600*30*24 # one month
         self.settings.remember_me_form = True
         self.settings.allow_basic_login = False
