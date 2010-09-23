@@ -95,7 +95,7 @@
 'about': '\xc3\xa0 propos',
 'additional code for your application': 'code suppl\xc3\xa9mentaire pour votre application',
 'admin disabled because no admin password': 'admin d\xc3\xa9sactiv\xc3\xa9 car aucun mot de passe admin',
-'admin disabled because not supported on google apps engine': 'admin d\xc3\xa9sactiv\xc3\xa9 car non pris en charge sur Google Apps engine',
+'admin disabled because not supported on google app engine': 'admin d\xc3\xa9sactiv\xc3\xa9 car non pris en charge sur Google Apps engine',
 'admin disabled because unable to access password file': "admin d\xc3\xa9sactiv\xc3\xa9 car incapable d'acc\xc3\xa9der au fichier mot de passe",
 'and rename it (required):': 'et renommez-la (obligatoire):',
 'and rename it:': 'et renommez-le:',

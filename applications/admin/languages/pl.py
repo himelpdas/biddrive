@@ -100,7 +100,7 @@
 'about': 'informacje',
 'additional code for your application': 'dodatkowy kod Twojej aplikacji',
 'admin disabled because no admin password': 'panel administracyjny wy\xc5\x82\xc4\x85czony z powodu braku has\xc5\x82a administracyjnego',
-'admin disabled because not supported on google apps engine': 'panel administracyjny wy\xc5\x82\xc4\x85czony z powodu braku wsparcia na google apps engine',
+'admin disabled because not supported on google app engine': 'panel administracyjny wy\xc5\x82\xc4\x85czony z powodu braku wsparcia na google apps engine',
 'admin disabled because unable to access password file': 'panel administracyjny wy\xc5\x82\xc4\x85czony z powodu braku dost\xc4\x99pu do pliku z has\xc5\x82em',
 'and rename it (required):': 'i nadaj jej now\xc4\x85 nazw\xc4\x99 (wymagane):',
 'and rename it:': 'i nadaj mu now\xc4\x85 nazw\xc4\x99:',

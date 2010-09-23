@@ -128,7 +128,7 @@
 'about': 'acerca de',
 'additional code for your application': 'código adicional para su aplicación',
 'admin disabled because no admin password': ' por falta de contraseña',
-'admin disabled because not supported on google apps engine': 'admin deshabilitado, no es soportado en GAE',
+'admin disabled because not supported on google app engine': 'admin deshabilitado, no es soportado en GAE',
 'admin disabled because unable to access password file': 'admin deshabilitado, imposible acceder al archivo con la contraseña',
 'and rename it (required):': 'y renombrela (requerido):',
 'and rename it:': ' y renombrelo:',

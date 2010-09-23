@@ -148,7 +148,7 @@
 'about': '關於',
 'additional code for your application': '應用程式額外的程式碼',
 'admin disabled because no admin password': '管理介面關閉原因是沒有設定管理員密碼 ',
-'admin disabled because not supported on google apps engine': '管理介面關閉原因是不支援在google apps engine環境下運作',
+'admin disabled because not supported on google app engine': '管理介面關閉原因是不支援在google apps engine環境下運作',
 'admin disabled because unable to access password file': '管理介面關閉原因是無法存取密碼檔',
 'amy_ajax': 'amy_ajax',
 'and rename it (required):': '同時更名為(必要的):',

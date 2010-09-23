@@ -118,7 +118,7 @@
 'about': '关于',
 'additional code for your application': '给你的应用附加代码',
 'admin disabled because no admin password': '管理员需要设定密码，否则无法管理',
-'admin disabled because not supported on google apps engine': '未支持GAE,无法管理',
+'admin disabled because not supported on google app engine': '未支持GAE,无法管理',
 'admin disabled because unable to access password file': '需要可以操作密码文件，否则无法进行管理',
 'and rename it (required):': '重命名为 (必须):',
 'and rename it:': ' 重命名为:',

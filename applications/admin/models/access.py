@@ -38,7 +38,7 @@ except IOError:
             session.last_time = time.time()
         else:
             raise HTTP(200,
-                       T('admin disabled because not supported on google apps engine'))
+                       T('admin disabled because not supported on google app engine'))
     else:
         raise HTTP(200, T('admin disabled because unable to access password file'))
 

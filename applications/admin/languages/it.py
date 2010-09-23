@@ -108,7 +108,7 @@
 'about': 'informazioni',
 'additional code for your application': 'righe di codice aggiuntive per la tua applicazione',
 'admin disabled because no admin password': 'amministrazione disabilitata per mancanza di password amministrativa',
-'admin disabled because not supported on google apps engine': 'amministrazione non supportata da Google Apps Engine',
+'admin disabled because not supported on google app engine': 'amministrazione non supportata da Google Apps Engine',
 'admin disabled because unable to access password file': 'amministrazione disabilitata per impossibilità di leggere il file delle password',
 'and rename it (required):': 'e rinominala (obbligatorio):',
 'and rename it:': 'e rinominala:',
