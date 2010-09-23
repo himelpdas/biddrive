@@ -90,7 +90,11 @@ def utf8_repr(s):
 
 
 def write_dict(filename, contents):
-    fp = open(filename, 'w')
+    try:
+        fp = open(filename, 'w')
+    except IOError:
+        logging.error('Unable to write to file %s' % filename)
+        return 
     portalocker.lock(fp, portalocker.LOCK_EX)
     fp.write('# coding: utf8\n{\n')
     for key in sorted(contents):
