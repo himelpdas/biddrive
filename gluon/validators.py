@@ -22,7 +22,6 @@ import unicodedata
 from cStringIO import StringIO
 from utils import hash, get_digest
 
-
 __all__ = [
     'CLEANUP',
     'CRYPT',
