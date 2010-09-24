@@ -57,20 +57,17 @@ class OAuthAccount(object):
         the client back to the page originating the auth request.
         Appends the _next action to the generated url so the flows continues.
         """
+
         r = self.request
         http_host=r.env.http_x_forwarded_for
         if not http_host: http_host=r.env.http_host
 
         url_scheme = r.env.wsgi_url_scheme
-        url_port = ''
-        if (url_scheme,r.env.server_port) not in (('https', '443'), ('http', '80')):
-            url_port = ':' + r.env.server_port
-
         if next:
             path_info = next
         else:
             path_info = r.env.path_info
-        uri = '%s://%s%s%s' %(url_scheme, http_host, url_port, path_info)
+        uri = '%s://%s%s' %(url_scheme, http_host, path_info)
         if r.get_vars and not next:
             uri += '?' + urlencode(r.get_vars)
         return uri
