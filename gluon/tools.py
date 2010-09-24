@@ -822,8 +822,6 @@ class Auth(object):
         self.settings.on_failed_authorization = \
             self.url('user',args='not_authorized')
         
-        call_or_redirect(self.settings.on_failed_authentication,
-        call_or_redirect(self.settings.on_failed_authentication,
         self.settings.on_failed_authentication = lambda x: redirect(x)
 
         self.settings.formstyle = 'table3cols'
