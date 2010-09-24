@@ -17,21 +17,29 @@ class CasAuth( object ):
     Include in your model (eg db.py)::
         
         from gluon.contrib.login_methods.cas_auth import CasAuth
-        auth.settings.login_form=CasAuth()
-        auth.settings.login_form.settings( globals(),
-                 urlbase = "https://web2py.com/cas/cas" )
+        auth.define_tables(username=True)
+        auth.settings.login_form=CasAuth(
+            globals(),
+            urlbase = "https://web2py.com/cas/cas",
+                 actions=['login','check','logout'])
 
     where urlbase is the actual CAS server url without the login,logout...
     Enjoy.
     """
-    def settings( self, g, urlbase = "https://web2py.com/cas/cas" ):
+    def __init__(self, g, 
+                 urlbase = "https://web2py.com/cas/cas",
+                 actions=['login','check','logout'],
+                 maps=dict(username=lambda v:v[2],
+                           email=lambda v:v[1],
+                           user_id=lambda v:v[0])):
         self.urlbase=urlbase
-        self.cas_login_url="%s/login"%self.urlbase
-        self.cas_check_url="%s/check"%self.urlbase
-        self.cas_logout_url="%s/logout"%self.urlbase
+        self.cas_login_url="%s/%s"%(self.urlbase,actions[0])
+        self.cas_check_url="%s/%s"%(self.urlbase,actions[1])
+        self.cas_logout_url="%s/%s"%(self.urlbase,actions[2])
         self.globals=g
         self.request=self.globals['request']
         self.session=self.globals['session']
+        self.maps=maps
         http_host=self.request.env.http_x_forwarded_for
         if not http_host: http_host=self.request.env.http_host
         self.cas_my_url='http://%s%s'%( http_host, self.request.env.path_info )
@@ -40,13 +48,17 @@ class CasAuth( object ):
         return next
     def logout_url( self, next = "/" ):
         self.session.token=None
+        self.session.auth=None
         self._CAS_logout()
         return next
     def get_user( self ):
         user=self.session.token
         if user:
-            return dict( nickname = user[2], email = user[1],
-                        user_id = user[0], source = "web2py cas" )
+            d = {'source':'web2py cas'}
+            for key in self.maps:
+                d[key]=self.maps[key](user)
+            return d
+        return None
     def _CAS_login( self ):
         """
         exposed as CAS.login(request)
