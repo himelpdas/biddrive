@@ -58,6 +58,11 @@ def validators(*a):
             b.append(item)
     return b
 
+def call_or_redirect(f,*args):
+    if callable(f):
+        redirect(f(*args))
+    else:
+        redirect(f)
 
 class Mail(object):
     """
@@ -813,8 +818,14 @@ class Auth(object):
         self.settings.long_expiration = 3600*30*24 # one month
         self.settings.remember_me_form = True
         self.settings.allow_basic_login = False
+        self.settings.allow_basic_login_only = False
         self.settings.on_failed_authorization = \
             self.url('user',args='not_authorized')
+        
+        call_or_redirect(self.settings.on_failed_authentication,
+        call_or_redirect(self.settings.on_failed_authentication,
+        self.settings.on_failed_authentication = lambda x: redirect(x)
+
         self.settings.formstyle = 'table3cols'
 
         # ## table names to be used
@@ -846,7 +857,7 @@ class Auth(object):
         self.settings.login_methods = [self]
         self.settings.login_form = self
         self.settings.login_email_validate = True
-        self.settings.login_userfield = None 
+        self.settings.login_userfield = None
 
         self.settings.logout_next = self.url('index')
         self.settings.logout_onlogout = None
@@ -1299,7 +1310,7 @@ class Auth(object):
         elif 'username' in table_user.fields:
             userfield = 'username'
         else:
-            userfield = 'email' 
+            userfield = 'email'
         passfield = self.settings.password_field
         user = self.db(table_user[userfield] == username).select().first()
         password = table_user[passfield].validate(password)[0]
@@ -1330,7 +1341,7 @@ class Auth(object):
         table_user = self.settings.table_user
         if self.settings.login_userfield:
             username = self.settings.login_userfield
-        elif 'username' in table_user.fields: 
+        elif 'username' in table_user.fields:
             username = 'username'
         else:
             username = 'email'
@@ -1442,7 +1453,7 @@ class Auth(object):
                                 break
                 if not user:
                     if self.settings.login_failed_log:
-                        self.log_event(self.settings.login_failed_log % request.post_vars)                        
+                        self.log_event(self.settings.login_failed_log % request.post_vars)
                     # invalid login
                     session.flash = self.messages.invalid_login
                     redirect(self.url(args=request.args))
@@ -2208,17 +2219,21 @@ class Auth(object):
         def decorator(action):
 
             def f(*a, **b):
+                if self.settings.allow_basic_login_only and not self.basic():
+                    return call_or_redirect(self.settings.on_failed_authorization)
+
                 if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    redirect(self.settings.login_url + \
-                                 '?_next='+urllib.quote(next))
+                    return call_or_redirect(self.settings.on_failed_authentication,
+                                            self.settings.login_url + \
+                                                '?_next='+urllib.quote(next)
+                                            )
                 if not condition:
                     self.environment.session.flash = \
                         self.messages.access_denied
-                    next = self.settings.on_failed_authorization
-                    redirect(next)
+                    return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
@@ -2236,12 +2251,16 @@ class Auth(object):
 
             def f(*a, **b):
 
+                if self.settings.allow_basic_login_only and not self.basic():
+                    return call_or_redirect(self.settings.on_failed_authorization)
                 if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    redirect(self.settings.login_url + \
-                                 '?_next='+urllib.quote(next))
+                    return call_or_redirect(self.settings.on_failed_authentication,
+                                            self.settings.login_url + \
+                                                '?_next='+urllib.quote(next)
+                                            )
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
@@ -2261,17 +2280,21 @@ class Auth(object):
         def decorator(action):
 
             def f(*a, **b):
+                if self.settings.allow_basic_login_only and not self.basic():
+                    return call_or_redirect(self.settings.on_failed_authorization)
+
                 if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    redirect(self.settings.login_url + \
-                                 '?_next='+urllib.quote(next))
+                    return call_or_redirect(self.settings.on_failed_authentication,
+                                            self.settings.login_url + \
+                                                '?_next='+urllib.quote(next)
+                                            )
                 if not self.has_membership(group_id=group_id, role=role):
                     self.environment.session.flash = \
                         self.messages.access_denied
-                    next = self.settings.on_failed_authorization
-                    redirect(next)
+                    return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
@@ -2295,17 +2318,22 @@ class Auth(object):
         def decorator(action):
 
             def f(*a, **b):
+                if self.settings.allow_basic_login_only and not self.basic():
+                    return call_or_redirect(self.settings.on_failed_authorization)
+
                 if not self.basic() and not self.is_logged_in():
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    redirect(self.settings.login_url +
-                             '?_next='+urllib.quote(next))
+                    return call_or_redirect(self.settings.on_failed_authentication,
+                                            self.settings.login_url +
+                                            '?_next='+urllib.quote(next)
+                                            )
+
                 if not self.has_permission(name, table_name, record_id):
                     self.environment.session.flash = \
                         self.messages.access_denied
-                    next = self.settings.on_failed_authorization
-                    redirect(next)
+                    return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
@@ -2889,7 +2917,7 @@ class Crud(object):
             del table[record_id]
             callback(self.settings.delete_onaccept,record,table._tablename)
             session.flash = message
-        if next: # Only redirect when explicit                                   
+        if next: # Only redirect when explicit
             redirect(next)
 
     def select(
