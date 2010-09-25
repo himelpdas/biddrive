@@ -1382,6 +1382,10 @@ class SQLDB(dict):
         return '<SQLDB ' + dict.__repr__(self) + '>'
 
     def __call__(self, where=None):
+        if isinstance(where,Table):
+            where = where._id>0
+        elif isinstance(where,Field):
+            where = where!=None
         return Set(self, where)
 
     def prepare(self):
@@ -3089,6 +3093,10 @@ class Set(object):
 
 
     def __call__(self, where):
+        if isinstance(where,Table):
+            where = where._id>0
+        elif isinstance(where,Field):
+            where = where!=None
         if self.sql_w:
             return Set(self._db, Query(self.sql_w) & where)
         else:

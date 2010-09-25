@@ -135,8 +135,12 @@ class GQLDB(gluon.sql.SQLDB):
         return t
 
     def __call__(self, where=''):
-        if not where:
-            where = ''
+        if isinstance(where,Table):
+            where = where.id>0
+        elif isinstance(where,Field):
+            where = where!=None
+        if isinstance(where,Table):
+            where = where.id>0
         return Set(self, where)
 
     def commit(self):
@@ -642,6 +646,10 @@ class Set(gluon.sql.Set):
             self.where = None
 
     def __call__(self, where):
+        if isinstance(where,Table):
+            where = where.id>0
+        elif isinstance(where,Field):
+            where = where!=None
         if self.where:
             return Set(self._db, self.where & where)
         else:
