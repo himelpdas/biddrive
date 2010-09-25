@@ -612,7 +612,7 @@ class Query(object):
         return Query(filter.left, new_op, filter.right)
 
     def __str__(self):
-        return ' AND '.join([str(filter) for filter in self.filters])
+        return ' AND '.join([unicode(filter) for filter in self.filters])
 
 
 class Set(gluon.sql.Set):
