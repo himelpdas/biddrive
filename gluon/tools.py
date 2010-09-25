@@ -2220,18 +2220,18 @@ class Auth(object):
                 if self.settings.allow_basic_login_only and not self.basic():
                     return call_or_redirect(self.settings.on_failed_authorization)
 
-                if not self.basic() and not self.is_logged_in():
-                    request = self.environment.request
-                    next = URL(r=request,args=request.args,
-                               vars=request.get_vars)
-                    return call_or_redirect(self.settings.on_failed_authentication,
-                                            self.settings.login_url + \
-                                                '?_next='+urllib.quote(next)
-                                            )
                 if not condition:
-                    self.environment.session.flash = \
-                        self.messages.access_denied
-                    return call_or_redirect(self.settings.on_failed_authorization)
+                    if not self.basic() and not self.is_logged_in():
+                        request = self.environment.request
+                        next = URL(r=request,args=request.args,
+                                   vars=request.get_vars)
+                        return call_or_redirect(self.settings.on_failed_authentication,
+                                                self.settings.login_url + \
+                                                    '?_next='+urllib.quote(next))
+                    else:                                                
+                        self.environment.session.flash = \
+                            self.messages.access_denied
+                        return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
