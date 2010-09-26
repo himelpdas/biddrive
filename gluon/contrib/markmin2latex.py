@@ -200,6 +200,7 @@ HEADER = """
 \\usepackage{listings}
 \\usepackage{color}
 \\usepackage{graphicx}
+\\usepackage{grffile}
 \\usepackage[utf8x]{inputenc}
 \\definecolor{lg}{rgb}{0.9,0.9,0.9}
 \\definecolor{dg}{rgb}{0.3,0.3,0.3}
