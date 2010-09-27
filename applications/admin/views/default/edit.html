@@ -44,9 +44,9 @@ jQuery(document).ready(function(){
 {{=T('Last saved on:')}} <input type="input" name="saved_on" value="{{=saved_on}}" readonly="readonly"/>
 <br/>
 {{if TEXT_EDITOR=='amy':}}
-<textarea style="width: auto; height:400px" rows="58" cols="100" -amy-enabled="true" id="body" name="data">{{=data}}</textarea>
+<textarea style="width: auto; height:400px;direction:ltr;" rows="58" cols="100" -amy-enabled="true" id="body" name="data">{{=data}}</textarea>
 {{else:}}
-<textarea cols="80" rows="25" id="body" style="width: 100%;" name="data">{{=data}}</textarea>
+<textarea cols="80" rows="25" id="body" style="width: 100%;direction:ltr;" name="data">{{=data}}</textarea>
 {{pass}}
 <button onclick="window.location.reload(); return false">{{=T('restore')}}</button> {{=T('currently saved or')}} <input type="submit" name="revert" value="{{=T('revert')}}" />
 {{=T('to  previous version.')}}

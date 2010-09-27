@@ -171,6 +171,7 @@
 'delete all checked': 'eliminar marcados',
 'delete plugin': 'eliminar plugin',
 'design': 'modificar',
+'direction: ltr': 'direction: ltr',
 'done!': 'listo!',
 'edit': 'editar',
 'edit controller': 'editar controlador',

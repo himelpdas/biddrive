@@ -7,7 +7,7 @@
   {{include 'web2py_ajax.html'}}
   <script>jQuery.noConflict();</script>
 </head>
-<body>
+<body{{if T('direction: ltr') == 'direction: rtl':}} class="RTLbody"{{pass}}>
 <div id="header">
  <div id="header_inner" class="fixed">
    <div id="logo">

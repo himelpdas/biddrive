@@ -31,7 +31,7 @@ def file_create_form(location):
     return form
 }}
 <h1>{{=T('Plugin "%s" in application', request.args(1))}} "{{=app}}"</h1>
-<div style="text-align: left">
+<div class="right_aligned">
 [ <a href="{{=URL('design',args=app)}}">{{=T("back")}}</a>
 | <a href="{{=URL('delete_plugin',args=request.args)}}">{{=T("delete plugin")}}</a>
 | <a href="{{=URL('pack_plugin',args=request.args)}}">{{=T("pack plugin")}}</a>
