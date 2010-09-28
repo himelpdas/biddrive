@@ -21,6 +21,7 @@ regex_maps = [
     (re.compile('^#{5} (?P<t>[^\n]+)',re.M),'\n\n{\\\\bf \g<t>}\n'),
     (re.compile('^#{4} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\subsubsection*{\g<t>}\n'),
     (re.compile('^#{3} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\subsection{\g<t>}\n'),
+    (re.compile('^#{2} Appendix:(?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\section*{Appendix:\g<t>}\n'),
     (re.compile('^#{2} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\section{\g<t>}\n'),
     (re.compile('^#{1} (?P<t>[^\n]+)',re.M),''),
     (re.compile('^\- +(?P<t>.*)',re.M),'\\\\begin{itemize}\n\\item \g<t>\n\\end{itemize}'),
@@ -81,7 +82,7 @@ def render(text,extra={},allowed={},sep='p',image_mapper=lambda x:x):
 
     text = latex_escape(text,pound=False)
 
-    texts = text.split('## Bibliography',1)
+    texts = text.split('## References',1)
     text = regex_anchor.sub('\\label{\g<t>}', texts[0])
     if len(texts)==2:
         text += '\n\\begin{thebibliography}{999}\n'
