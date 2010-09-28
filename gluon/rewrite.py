@@ -258,6 +258,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False):
     elif app:
         return select(e)
     else:
+        select(app=select(e))
         e = filter_in(e)
         if e.get('PATH_INFO','') == '':
             path = e['REQUEST_URI']
