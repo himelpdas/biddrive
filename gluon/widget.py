@@ -21,9 +21,6 @@ import signal
 import math
 import logging
 
-from optparse import *
-from textwrap import dedent
-
 import newcron
 import main
 
@@ -452,6 +449,8 @@ class web2pyDialog(object):
 
 def console():
     """ Defines the behavior of the console web2py execution """
+    import optparse
+    import textwrap
 
     usage = "python web2py.py"
 
@@ -460,9 +459,9 @@ def console():
     ATTENTION: unless a password is specified (-a 'passwd') web2py will
     attempt to run a GUI. In this case command line options are ignored."""
 
-    description = dedent(description)
+    description = textwrap.dedent(description)
 
-    parser = OptionParser(usage, None, Option, ProgramVersion)
+    parser = optparse.OptionParser(usage, None, optparse.Option, ProgramVersion)
 
     parser.description = description
 
@@ -766,7 +765,7 @@ def start(cron = True):
     # ## if -C start cron run (extcron) and exit
     # ## if -N or not cron disable cron in this *process*
     # ## if --softcron use softcron
-    # ## use hardcron in all ther cases
+    # ## use hardcron in all other cases
     if options.extcron:
         print 'Starting extcron...'
         settings.web2py_crontype = 'external'
@@ -808,7 +807,6 @@ def start(cron = True):
 
     if not options.nogui:
         try:
-            import tkMessageBox
             import Tkinter
             havetk = True
         except ImportError:
@@ -871,4 +869,4 @@ def start(cron = True):
         server.start()
     except KeyboardInterrupt:
         server.stop()
-        #os.kill(os.getpid(),signal.SIGKILL)
+    logging.shutdown()

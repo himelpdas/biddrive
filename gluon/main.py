@@ -675,7 +675,8 @@ class HttpServer(object):
                                         app_info,
                                         min_threads=int(numthreads),
                                         queue_size=int(request_queue_size),
-                                        timeout=int(timeout)
+                                        timeout=int(timeout),
+                                        no_sigterm=True,
                                         )
         else:
             self.server = rocket.Rocket(interfaces,
@@ -683,7 +684,8 @@ class HttpServer(object):
                                         app_info,
                                         min_threads=int(numthreads),
                                         queue_size=int(request_queue_size),
-                                        timeout=int(timeout)
+                                        timeout=int(timeout),
+                                        no_sigterm=True,
                                         )
 
 

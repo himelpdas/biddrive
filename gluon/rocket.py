@@ -11,7 +11,7 @@ import logging
 import platform
 
 # Define Constants
-VERSION = '1.0.6'
+VERSION = '1.0.6a'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
@@ -165,7 +165,9 @@ class Rocket:
                  min_threads=DEFAULTS['MIN_THREADS'],
                  max_threads=DEFAULTS['MAX_THREADS'],
                  queue_size = None,
-                 timeout = 600):
+                 timeout = 600,
+                 no_sigterm = False,
+                 ):
 
         if not isinstance(interfaces, list):
             self.interfaces = [interfaces]
@@ -193,13 +195,15 @@ class Rocket:
 
         self._monitor.out_queue = T.queue
         self._monitor.timeout = timeout
+        self._no_sigterm = no_sigterm
 
     def start(self):
         log.info('Starting %s' % SERVER_SOFTWARE)
 
         # Set up our shutdown signals
         try:
-            signal.signal(signal.SIGTERM, self._sigterm)
+            if not self._no_sigterm:
+                signal.signal(signal.SIGTERM, self._sigterm)
             signal.signal(signal.SIGUSR1, self._sighup)
         except:
             log.debug('This platform does not support signals.')
