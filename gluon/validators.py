@@ -719,8 +719,10 @@ class IS_DECIMAL_IN_RANGE(Validator):
         minimum=None,
         maximum=None,
         error_message=None,
+        dot='.'
         ):
         self.minimum = self.maximum = None
+        self.dot = dot
         if minimum is None:
             if maximum is None:
                 if error_message is None:
@@ -742,15 +744,18 @@ class IS_DECIMAL_IN_RANGE(Validator):
 
     def __call__(self, value):
         try:
-            v = decimal.Decimal(str(value))
+            if self.dot=='.':
+                v = decimal.Decimal(str(value))
+            else:
+                v = decimal.Decimal(str(value).replace(self.dot,'.'))
             if self.minimum is None:
                 if self.maximum is None or v <= self.maximum:
-                    return (value, None)
+                    return (v, None)
             elif self.maximum is None:
                 if v >= self.minimum:
-                    return (value, None)
+                    return (v, None)
             elif self.minimum <= v <= self.maximum:
-                    return (value, None)
+                    return (v, None)
         except (ValueError, TypeError, decimal.InvalidOperation):
             pass
         return (value, self.error_message)
