@@ -68,7 +68,8 @@ def stream_file_or_304_or_206(
     headers['Cache-Control'] = 'private'
 
     if request and request.env.http_if_modified_since == mtime:
-        raise HTTP(304)
+        raise HTTP(304, **{'Content-Type': headers['Content-Type']})
+
     elif request and request.env.http_range:
         start_items = regex_start_range.findall(request.env.http_range)
         if not start_items:
