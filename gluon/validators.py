@@ -760,6 +760,8 @@ class IS_DECIMAL_IN_RANGE(Validator):
             pass
         return (value, self.error_message)
 
+    def formatter(self, value):
+        return str(value).replace('.',self.dot)
 
 def is_empty(value, empty_regex=None):
     "test empty field"
