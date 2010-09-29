@@ -2120,12 +2120,13 @@ class Auth(object):
         form = SQLFORM(
             table_user,
             self.user.id,
-            hidden=dict(_next=next),
-            showid=self.settings.showid,
-            submit_button=self.messages.submit_button,
-            delete_label=self.messages.delete_label,
-            upload=self.settings.download_url,
-            formstyle=self.settings.formstyle
+            fields = self.settings.register_fields,
+            hidden = dict(_next=next),
+            showid = self.settings.showid,
+            submit_button = self.messages.submit_button,
+            delete_label = self.messages.delete_label,
+            upload = self.settings.download_url,
+            formstyle = self.settings.formstyle
             )
         if form.accepts(request.post_vars, session,
                         formname='profile',
