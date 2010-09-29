@@ -863,6 +863,7 @@ class Auth(object):
         self.settings.register_next = self.url('index')
         self.settings.register_onvalidation = []
         self.settings.register_onaccept = []
+        self.settings.register_fields = None
 
         self.settings.verify_email_next = self.url('user', args='login')
         self.settings.verify_email_onaccept = []
@@ -1578,6 +1579,7 @@ class Auth(object):
 
         passfield = self.settings.password_field
         form = SQLFORM(table_user,
+                       fields = self.settings.register_fields,
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
