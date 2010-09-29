@@ -981,7 +981,7 @@ class SQLDB(dict):
         elif not is_jdbc and self._uri.startswith('postgres://'):
             self._dbname = 'postgres'
             m = \
-                re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$'
+                re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$'
                            ).match(self._uri[11:])
             if not m:
                 raise SyntaxError, "Invalid URI string in SQLDB"
@@ -999,9 +999,16 @@ class SQLDB(dict):
                 raise SyntaxError, 'Database name required'
             port = m.group('port') or '5432'
 
-            msg = \
-                "dbname='%s' user='%s' host='%s' port=%s password='%s'"\
-                 % (db, user, host, port, passwd)
+            sslmode = m.group('sslmode')
+            if sslmode:
+                msg = ("dbname='%s' user='%s' host='%s'"
+                       "port=%s password='%s' sslmode='%s'") \
+                       % (db, user, host, port, passwd, sslmode)
+            else:
+                msg = ("dbname='%s' user='%s' host='%s'"
+                       "port=%s password='%s'") \
+                       % (db, user, host, port, passwd)
+
             self._pool_connection(lambda : psycopg2.connect(msg))
             self._connection.set_client_encoding('UTF8')
             self._cursor = self._connection.cursor()
