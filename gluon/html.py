@@ -312,6 +312,12 @@ class XML(XmlComponent):
     def __radd__(self,other):
         return '%s%s' % (other,self)
 
+    def __cmp__(self,other):
+        return cmp(str(self),str(other))
+
+    def __hash__(self):
+        return hash(str(self))
+
     def __getattr__(self,name):
         return getattr(str(self),name)
 
