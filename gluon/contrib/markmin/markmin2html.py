@@ -34,19 +34,21 @@ We wanted a markup language with the following requirements:
 - support html5 video and audio elements (html serialization only)
 - can align images and resize them
 - can specify class for tables and code elements
-- can add anchors anywhere
+- can add anchors
 - does not use _ for markup (since it creates odd behavior)
 - automatically links urls
 - fast 
+- easy to extend
 - supports latex and pdf including references
+- allows to describe the markup in the markup (this document is generated from markmin syntax)
 
 (results depend on text but in average for text ~100K markmin is 30% faster than markdown, for text ~10K it is 10x faster)
 
-## Where
+## Download
 
-[[markmin2html http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2html.py]]
-[[markmin2latex http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2latex.py]]
-[[markmin2pdf http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2pdf.py]]
+- http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2html.py
+- http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2latex.py
+- http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2pdf.py
 
 ## Examples
 
@@ -75,9 +77,10 @@ You can then link the anchor with [[link #myanchor]], i.e. ``[[link #myanchor]]`
 
 ### Images
 
-[[some image http://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Example.svg/600px-Example.svg.png right 200px]]
+[[some image http://www.web2py.com/examples/static/web2py_logo.png right 200px]]
 This paragraph has an image aligned to the right with a width of 200px. Its is placed using the code
-``[[some image http://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Example.svg/600px-Example.svg.png right 200px]]``.
+
+``[[some image http://www.web2py.com/examples/static/web2py_logo.png right 200px]]``.
 
 ### Unordered Lists
 
@@ -148,7 +151,10 @@ Optionally a ` inside a ``!`!`...`!`!`` block can be inserted escaped with !`!.
 The ``:python`` after the markup is also optional. If present, by default, it is used to set the class of the <code> block.
 The behavior can be overridden by passing an argument ``extra`` to the ``render`` function. For example:
 
-``>>> markmin2html("!`!!`!aaa!`!!`!:custom",extra=dict(custom=lambda text: 'x'+text+'x'))``:python
+``
+>>> markmin2html("!`!!`!aaa!`!!`!:custom",
+       extra=dict(custom=lambda text: 'x'+text+'x'))
+``:python
 
 generates
 
@@ -176,7 +182,7 @@ nter"/>'
 >>> markmin2html(text,{'latex':lambda code: LATEX % code.replace('"','\"')})
 ``
 
-### References and citations
+### Citations and References
 
 Citations are treated as internal links in html and proper citations in latex if there is a final section called "Referenced". Items like
 

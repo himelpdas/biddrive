@@ -5,7 +5,7 @@ import re
 import cgi    
 import sys
 
-__all__ = ['render']
+__all__ = ['render','markmin2latex']
 
 META = 'META'
 regex_newlines = re.compile('(\n\r)|(\r\n)')

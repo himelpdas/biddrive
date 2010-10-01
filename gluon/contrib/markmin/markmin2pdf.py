@@ -10,6 +10,8 @@ import re
 import sys
 from tempfile import mkstemp, mkdtemp, NamedTemporaryFile
 from markmin2latex import markmin2latex
+
+__all__ = ['markmin2pdf']
     
 def removeall(path):
 
