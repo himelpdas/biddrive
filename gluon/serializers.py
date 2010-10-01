@@ -17,6 +17,8 @@ def xml_rec(value, key):
         return TAG[key](*[TAG.item(xml_rec(item, '')) for item in value])
     elif value == None:
         return 'None'
+    elif isinstance(value,unicode):
+        return value.encode('utf-8')
     else:
         return str(value)
 
