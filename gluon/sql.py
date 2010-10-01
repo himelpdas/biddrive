@@ -2861,7 +2861,7 @@ class Field(Expression):
             return (filename, cStringIO.StringIO(row[self.uploadfield]))
         elif isinstance(self.uploadfield,Field):
             blob_uploadfield_name = self.uploadfield.uploadfield
-            query = self.uploadfield == newfilename
+            query = self.uploadfield == name
             data = self.uploadfield._table(query)[blob_uploadfield_name]
             return (filename, cStringIO.StringIO(data))
         else:
