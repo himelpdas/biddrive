@@ -340,6 +340,9 @@ def render(text,extra={},allowed={},sep='p'):
                 if code[:1]=='\n': code=code[1:]
                 if code[-1:]=='\n': code=code[:-1]
                 html = extra[b](code)
+            elif b=='cite':
+                html = '['+','.join('<a href="#%s" class="%s">%s</a>' % (d,b,d) \
+                                        for d in cgi.escape(code).split(','))+']'
             elif code[:1]=='\n' or code[-1:]=='\n':
                 if code[:1]=='\n': code=code[1:]
                 if code[-1:]=='\n': code=code[:-1]

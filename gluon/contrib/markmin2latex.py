@@ -21,7 +21,6 @@ regex_maps = [
     (re.compile('^#{5} (?P<t>[^\n]+)',re.M),'\n\n{\\\\bf \g<t>}\n'),
     (re.compile('^#{4} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\subsubsection*{\g<t>}\n'),
     (re.compile('^#{3} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\subsection{\g<t>}\n'),
-    (re.compile('^#{2} Appendix:(?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\section*{Appendix:\g<t>}\n'),
     (re.compile('^#{2} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\section{\g<t>}\n'),
     (re.compile('^#{1} (?P<t>[^\n]+)',re.M),''),
     (re.compile('^\- +(?P<t>.*)',re.M),'\\\\begin{itemize}\n\\item \g<t>\n\\end{itemize}'),
@@ -31,6 +30,7 @@ regex_maps = [
 regex_table = re.compile('^\-{4,}\n(?P<t>.*?)\n\-{4,}(:(?P<c>\w+))?\n',re.M|re.S)
 
 regex_anchor = re.compile('\[\[(?P<t>\S+)\]\]')
+regex_bibitem = re.compile('\-\s*\[\[(?P<t>\S+)\]\]')
 regex_image_width = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center) +(?P<w>\d+px)\]\]')
 regex_image = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +(?P<p>left|right|center)\]\]')
 #regex_video = re.compile('\[\[(?P<t>.*?) +(?P<k>\S+) +video\]\]')
@@ -86,7 +86,7 @@ def render(text,extra={},allowed={},sep='p',image_mapper=lambda x:x):
     text = regex_anchor.sub('\\label{\g<t>}', texts[0])
     if len(texts)==2:
         text += '\n\\begin{thebibliography}{999}\n'
-        text += regex_anchor.sub('\n\\\\bibitem{\g<t>}', texts[1])
+        text += regex_bibitem.sub('\n\\\\bibitem{\g<t>}', texts[1])
         text += '\n\\end{thebibliography}\n'
 
     text = '\n'.join(t.strip() for t in text.split('\n'))
@@ -120,8 +120,9 @@ def render(text,extra={},allowed={},sep='p',image_mapper=lambda x:x):
     #############################################################
 
     def sub(x):
-        return '\n\\begin{center}\\includegraphics[width=8cm]{%s}\\end{center}\n' % \
-            image_mapper(x.group('k'))
+        f=image_mapper(x.group('k'))
+        if not f: return None
+        return '\n\\begin{center}\\includegraphics[width=8cm]{%s}\\end{center}\n' % (f)
     text = regex_image_width.sub(sub,text)
     text = regex_image.sub(sub,text)
 
