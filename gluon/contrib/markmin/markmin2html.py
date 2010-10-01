@@ -8,9 +8,9 @@ __all__ = ['render', 'markmin2html']
 __doc__ = """
 # Markmin markup language
 
-## What?
+## About
 
-This is a new markup language that we call markmin. We provide serializers for html, latex and pdf. It is implemented in the ``markmin2html`` function in the ``markmin2html.py``. 
+This is a new markup language that we call markmin designed to produce high quality scientific papers and books and also put them online. We provide serializers for html, latex and pdf. It is implemented in the ``markmin2html`` function in the ``markmin2html.py``. 
 
 Example of usage:
 
@@ -44,11 +44,15 @@ We wanted a markup language with the following requirements:
 
 (results depend on text but in average for text ~100K markmin is 30% faster than markdown, for text ~10K it is 10x faster)
 
+The [[web2py book http://www.lulu.com/product/paperback/web2py-%283rd-edition%29/12822827]] published by lulu, for example, was entirely generated with markmin2pdf from the online [[web2py wiki http://www.web2py.com/book]]
+
 ## Download
 
 - http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2html.py
 - http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2latex.py
 - http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2pdf.py
+
+markmin2html.py and markmin2latex.py are single files and have no web2py dependence. Their license is BSD.
 
 ## Examples
 
@@ -184,7 +188,7 @@ nter"/>'
 
 ### Citations and References
 
-Citations are treated as internal links in html and proper citations in latex if there is a final section called "Referenced". Items like
+Citations are treated as internal links in html and proper citations in latex if there is a final section called "References". Items like
 
 ``
 - [[key]] value
