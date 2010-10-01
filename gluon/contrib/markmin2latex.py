@@ -55,7 +55,7 @@ def render(text,extra={},allowed={},sep='p',image_mapper=lambda x:x):
     # store them into segments they will be treated as code
     #############################################################
     segments, i = [], 0
-    text = regex_dd.sub('``\g<latex>``:latex',text)
+    text = regex_dd.sub('``\g<latex>``:latex~',text)
     text = regex_newlines.sub('\n',text)
     while True:
         item = regex_code.search(text,i)
