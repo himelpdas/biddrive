@@ -2818,7 +2818,12 @@ class Field(Expression):
         newfilename = '%s.%s.%s.%s' % \
             (self._tablename, self.name, uuid_key, encoded_filename)
         newfilename = newfilename[:200] + '.' + extension
-        if self.uploadfield == True:
+        if isinstance(self.uploadfield,Field):            
+            blob_uploadfield_name = self.uploadfield.uploadfield
+            keys={self.uploadfield.name: newfilename,
+                  blob_uploadfield_name: file.read()}
+            self.uploadfield._table.insert(**keys)
+        elif self.uploadfield == True:
             if path:
                 pass
             elif self.uploadfolder:
@@ -2833,11 +2838,6 @@ class Field(Expression):
             dest_file = open(pathfilename, 'wb')
             shutil.copyfileobj(file, dest_file)
             dest_file.close()
-        elif isinstance(self.uploadfield,Field):            
-            blob_uploadfield_name = self.uploadfield.uploadfield
-            keys={self.uploadfield.name: newfilename,
-                  blob_uploadfield_name: file.read()}
-            self.uploadfield._table.insert(**keys)
         return newfilename
 
     def retrieve(self, name, path=None):
