@@ -1055,7 +1055,7 @@ class SQLFORM(FORM):
                 # this line is for backward compatibility only
                 self.vars['%s_newfilename' % fieldname] = newfilename
                 fields[fieldname] = newfilename
-                if field.uploadfield in self.table.fields:
+                if isinstance(field.uploadfield,str):
                     fields[field.uploadfield] = source_file.read()
                 # proposed by Hamdy (accept?) do we need fields at this point?
                 self.vars[fieldname] = fields[fieldname]
