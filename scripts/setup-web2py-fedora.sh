@@ -1,6 +1,6 @@
 echo "This script will:
 1) install all modules need to run web2py on Ubuntu/Debian
-2) install web2py in /home/www-data/
+2) install web2py in /home/apache/
 3) create a self signed sll certificate
 4) setup web2py with mod_wsgi
 5) overwrite /etc/apache2/sites-available/default

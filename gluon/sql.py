@@ -2833,6 +2833,11 @@ class Field(Expression):
             dest_file = open(pathfilename, 'wb')
             shutil.copyfileobj(file, dest_file)
             dest_file.close()
+        elif isinstance(self.uploadfield,Field):            
+            blob_uploadfield_name = self.uploadfield.uploadfield
+            keys={self.uploadfield.name: newfilename,
+                  blob_uploadfield_name: file.read()}
+            self.uploadfield._table.insert(**keys)
         return newfilename
 
     def retrieve(self, name, path=None):
@@ -2854,6 +2859,11 @@ class Field(Expression):
             filename = name
         if isinstance(self.uploadfield, str):  # ## if file is in DB
             return (filename, cStringIO.StringIO(row[self.uploadfield]))
+        elif isinstance(self.uploadfield,Field):
+            blob_uploadfield_name = self.uploadfield.uploadfield
+            query = self.uploadfield == newfilename
+            data = self.uploadfield._table(query)[blob_uploadfield_name]
+            return (filename, cStringIO.StringIO(data))
         else:
             # ## if file is on filesystem
             if path:
