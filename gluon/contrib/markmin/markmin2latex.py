@@ -198,7 +198,7 @@ def render(text,extra={},allowed={},sep='p',image_mapper=lambda x:x):
 
 HEADER = """
 \\documentclass[12pt]{article}
-\\usepackage{url}
+\\usepackage{hyperref}
 \\usepackage{listings}
 \\usepackage{color}
 \\usepackage{graphicx}
@@ -233,7 +233,15 @@ def markmin2latex(data, image_mapper=lambda x:x):
     author = '\n\\and\n'.join(a.replace('\n','\\\\\n\\footnotesize ') for a in authors)
     return HEADER % (title, author) + latex + FOOTER    
 
-if __name__=='__main__':
-    files=sys.argv[1:]
-    data='\n'.join(open(file,'r').read() for file in files)
-    print markmin2latex(data)
+
+if __name__ == '__main__':
+    import sys
+    import doctest
+    import markmin2html
+    if sys.argv[1:2]==['-h']:
+        print markmin2latex(markmin2html.__doc__)
+    elif len(sys.argv)>1:
+        print markmin2latex(open(sys.argv[1],'r').read())
+    else:
+        doctest.testmod()
+

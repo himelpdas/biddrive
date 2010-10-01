@@ -22,7 +22,7 @@ import copy_reg
 import marshal
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
-from contrib.markmin import render
+from contrib.markmin.markmin2html.py import render
 
 from storage import Storage
 from validators import *

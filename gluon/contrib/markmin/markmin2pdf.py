@@ -91,10 +91,23 @@ def markmin2pdf(text, image_mapper=lambda x: None):
     return latex2pdf(markmin2latex(text,image_mapper=image_mapper))
 
 
-if __name__=='__main__':   
-    data, warnings, errors = markmin2pdf(open(sys.argv[1],'rb').read())
-    if errors:
-        print 'ERRORS:'+'\n'.join(errors)
-        print 'WARNGINS:'+'\n'.join(warnings)
+if __name__ == '__main__':
+    import sys
+    import doctest
+    import markmin2html
+    if sys.argv[1:2]==['-h']:
+        data, warnings, errors = markmin2pdf(markmin2html.__doc__)
+        if errors:
+            print 'ERRORS:'+'\n'.join(errors)
+            print 'WARNGINS:'+'\n'.join(warnings)
+        else:
+            print data
+    elif len(sys.argv)>1:
+        data, warnings, errors = markmin2pdf(open(sys.argv[1],'rb').read())
+        if errors:
+            print 'ERRORS:'+'\n'.join(errors)
+            print 'WARNGINS:'+'\n'.join(warnings)
+        else:
+            print data
     else:
-        print data
+        doctest.testmod()

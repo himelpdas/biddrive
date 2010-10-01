@@ -3,14 +3,26 @@
 import re
 import cgi    
 
-__all__ = ['render']
+__all__ = ['render', 'markmin2html']
 
 __doc__ = """
 # Markmin markup language
 
 ## What?
 
-This is a new markup language that we call markmin, it is implemented in the ``render`` function in the ``markmin.py`` module. 
+This is a new markup language that we call markmin. We provide serializers for html, latex and pdf. It is implemented in the ``markmin2html`` function in the ``markmin2html.py``. 
+
+Example of usage:
+
+``
+>>> m = "Hello **world** [[link http://web2py.com]]"
+>>> from markmin2html import markmin2html
+>>> print markmin2html(m)
+>>> from markmin2latex import markmin2latex
+>>> print markmin2latex(m)
+>>> from markmin2pdf import markmin2pdf # requires pdflatex
+>>> print markmin2pdf(m)
+``
 
 ## Why?
 
@@ -19,28 +31,22 @@ We wanted a markup language with the following requirements:
 - easy to read
 - secure
 - support table, ul, ol, code
-- support html5 video and audio elements
+- support html5 video and audio elements (html serialization only)
 - can align images and resize them
 - can specify class for tables and code elements
 - can add anchors anywhere
 - does not use _ for markup (since it creates odd behavior)
 - automatically links urls
 - fast 
+- supports latex and pdf including references
 
 (results depend on text but in average for text ~100K markmin is 30% faster than markdown, for text ~10K it is 10x faster)
 
 ## Where
 
-[[download http://web2py.googlecode.com/hg/gluon/contrib/markmin.py]]
-
-## Usage
-
-``
->>> from markmin import render
->>> render('hello **world**')
-'<p>hello <b>world</b></p>'
-
-``:python
+[[markmin2html http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2html.py]]
+[[markmin2latex http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2latex.py]]
+[[markmin2pdf http://web2py.googlecode.com/hg/gluon/contrib/markmin/markmin2pdf.py]]
 
 ## Examples
 
@@ -48,6 +54,9 @@ We wanted a markup language with the following requirements:
 
 --------------------------------------------------
 **SOURCE**                 | **OUTPUT**
+``# title``                | **title**
+``## section``             | **section**
+``### subsection``         | **subsection**
 ``**bold**``               | **bold** 
 ``''italic''``             | ''italic'' 
 ``!`!`verbatim`!`!``       | ``verbatim``
@@ -66,9 +75,9 @@ You can then link the anchor with [[link #myanchor]], i.e. ``[[link #myanchor]]`
 
 ### Images
 
-[[some image http://www.google.it/images/srpr/nav_logo13.png right 200px]]
+[[some image http://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Example.svg/600px-Example.svg.png right 200px]]
 This paragraph has an image aligned to the right with a width of 200px. Its is placed using the code
-``[[some image http://www.google.it/images/srpr/nav_logo13.png right 200px]]``.
+``[[some image http://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Example.svg/600px-Example.svg.png right 200px]]``.
 
 ### Unordered Lists
 
@@ -104,6 +113,7 @@ is rendered as
 Something like this
 ``
 ---------
+**A** | **B** | **C**
 0 | 0 | X
 0 | X | 0
 X | 0 | 0
@@ -111,6 +121,7 @@ X | 0 | 0
 ``
 is a table and is rendered as
 ---------
+**A** | **B** | **C**
 0 | 0 | X
 0 | X | 0
 X | 0 | 0
@@ -137,7 +148,7 @@ Optionally a ` inside a ``!`!`...`!`!`` block can be inserted escaped with !`!.
 The ``:python`` after the markup is also optional. If present, by default, it is used to set the class of the <code> block.
 The behavior can be overridden by passing an argument ``extra`` to the ``render`` function. For example:
 
-``>>> render("!`!!`!aaa!`!!`!:custom",extra=dict(custom=lambda text: 'x'+text+'x'))``:python
+``>>> markmin2html("!`!!`!aaa!`!!`!:custom",extra=dict(custom=lambda text: 'x'+text+'x'))``:python
 
 generates
 
@@ -152,6 +163,40 @@ Markmin also supports the <video> and <audio> html5 tags using the notation:
 ``
 [[title link video]]
 [[title link audio]]
+``
+
+### Latex
+
+Formulas can be embedded into HTML with ``$````$``formula``$````$``.
+You can use Google charts to render the formula:
+
+``
+>>> LATEX = '<img src="http://chart.apis.google.com/chart?cht=tx&chl=%s" align="ce\
+nter"/>'
+>>> markmin2html(text,{'latex':lambda code: LATEX % code.replace('"','\"')})
+``
+
+### References and citations
+
+Citations are treated as internal links in html and proper citations in latex if there is a final section called "Referenced". Items like
+
+``
+- [[key]] value
+``
+
+in the References will be translated into Latex
+
+``
+\\bibitem{key} value
+``
+
+Here is an example of usage:
+
+``
+As shown in Ref.!`!`mdipierro`!`!:cite
+
+## References
+- [[mdipierro]] web2py Manual, 3rd Edition, lulu.com
 ``
 
 ### Caveats
@@ -355,10 +400,15 @@ def render(text,extra={},allowed={},sep='p'):
     return text
 
 
+def markmin2html(text,extra={},allowed={},sep='p'):
+    return render(text,extra,allowed,sep)
+
 if __name__ == '__main__':
     import sys
     import doctest
-    if len(sys.argv)>1:
-        open(sys.argv[1],'w').write('<html><body>'+render(__doc__)+'</body></html>')
+    if sys.argv[1:2]==['-h']:
+        print '<html><body>'+markmin2html(__doc__)+'</body></html>'
+    elif len(sys.argv)>1:
+        print '<html><body>'+markmin2html(open(sys.argv[1],'r').read())+'</body></html>'
     else:
         doctest.testmod()
