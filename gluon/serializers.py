@@ -40,12 +40,12 @@ def rss(feed):
         feed['entries'] = feed['items']
     now=datetime.datetime.now()
     rss = rss2.RSS2(title = feed['title'],
-                    link = feed['link'],
+                    link = str(feed['link']),
                     description = feed['description'],
                     lastBuildDate = feed.get('created_on', now),
                     items = [rss2.RSSItem(\
                                         title=entry['title'],
-                                        link=entry['link'],
+                                        link=str(entry['link']),
                                         description=entry['description'],
                                         pubDate=entry.get('created_on', now)
                                         )\
