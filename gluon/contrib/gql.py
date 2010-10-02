@@ -198,7 +198,7 @@ class Table(gluon.sql.Table):
 
         for field in fields:
             if isinstance(field, Field) and field.type == 'upload'\
-                 and field.uploadfield == True:
+                 and field.uploadfield is True:
                 tmp = field.uploadfield = '%s_blob' % field.name
                 fields.append(self._db.Field(tmp, 'blob', default=''))
 
