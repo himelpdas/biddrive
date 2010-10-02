@@ -630,8 +630,10 @@ class IS_FLOAT_IN_RANGE(Validator):
         minimum=None,
         maximum=None,
         error_message=None,
+        dot='.'
         ):
         self.minimum = self.maximum = None
+        self.dot = dot
         if minimum is None:
             if maximum is None:
                 if error_message is None:
@@ -653,18 +655,27 @@ class IS_FLOAT_IN_RANGE(Validator):
 
     def __call__(self, value):
         try:
-            value = float(value)
+            if self.dot=='.':
+                fvalue = float(value)
+            else:
+                fvalue = float(str(value).replace(self.dot,'.'))
             if self.minimum is None:
-                if self.maximum is None or value <= self.maximum:
-                    return (value, None)
+                if self.maximum is None or fvalue <= self.maximum:
+                    return (fvalue, None)
             elif self.maximum is None:
-                if value >= self.minimum:
-                    return (value, None)
-            elif self.minimum <= value <= self.maximum:
-                    return (value, None)
+                if fvalue >= self.minimum:
+                    return (fvalue, None)
+            elif self.minimum <= fvalue <= self.maximum:
+                    return (fvalue, None)
         except (ValueError, TypeError):
             pass
         return (value, self.error_message)
+
+    def formatter(self,value):
+        if self.dot=='.':
+            return str(value)
+        else:
+            return str(value).replace('.',self.dot)
 
 
 class IS_DECIMAL_IN_RANGE(Validator):

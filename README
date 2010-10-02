@@ -865,3 +865,15 @@ scripts/dbsessions2trash.py, thanks Scott
 #1.85.1-3
 fixed some bugs
 added pyfpdf, thank Mariano
+
+#1.86.1
+markmin2latex 
+markmin2pdf
+fixed some bugs
+Storage getfirst, getlast, getall by Kevin and Nathan
+db(db.table), db(db.table.id) both suported and equivalent to db(db.table.id>0)
+postresql ssl support
+less un-necessary logging and warnings on GAE
+IS_DECIMAL_IN_RANGE and IS_FLOAT_IN_RANGE support dot="," (dot="." is default)
+on_failed_authorization can be a function, thanks Niphold
+gluon/contrib/login_methods/cas_auth.py for integration between CAS and Auth.
