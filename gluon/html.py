@@ -1862,14 +1862,14 @@ def markmin_serializer(text,tag=None,attr={}):
     if tag=='h2': return '#'*2+' '+text+'\n\n'
     if tag=='h3': return '#'*3+' '+text+'\n\n'
     if tag=='h4': return '#'*4+' '+text+'\n\n'
-    if tag=='li': return '\n- '+text.replace('\n',' ')
-    if tag=='table': return '\n-----\n'+text+'\n------\n'
-    if tag=='tr': return text[3:].replace('\n',' ')+'\n'
-    if tag=='td': return ' | '+text
     if tag=='p': return text+'\n\n'
-    if tag=='b' or tag=='strong': return '**%s**' % text
-    if tag=='em' or tag=='i': return "''%s''" % text
-    if tag=='tt' or tag=='code': return '``%s``' % text
+    if tag=='li': return '\n- '+text.replace('\n',' ')
+    if tag=='tr': return text[3:].replace('\n',' ')+'\n'
+    if tag in ['table','blockquote']: return '\n-----\n'+text+'\n------\n'
+    if tag in ['td','th']: return ' | '+text
+    if tag in ['b','strong','label']: return '**%s**' % text
+    if tag in ['em','i']: return "''%s''" % text
+    if tag in ['tt','code']: return '``%s``' % text
     if tag=='a': return '[[%s %s]]' % (text,attr.get('_href',''))
     if tag=='img': return '[[%s %s left]]' % (attr.get('_alt','no title'),attr.get('_src',''))
     return text
