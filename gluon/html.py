@@ -1858,10 +1858,14 @@ def markdown_serializer(text,tag=None,attr={}):
 def markmin_serializer(text,tag=None,attr={}):
     if tag==None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
-    if tag=='h1': return '#'+text+'\n\n'
-    if tag=='h2': return '#'*2+text+'\n\n'
-    if tag=='h3': return '#'*3+text+'\n\n'
-    if tag=='h4': return '#'*4+text+'\n\n'
+    if tag=='h1': return '# '+text+'\n\n'
+    if tag=='h2': return '#'*2+' '+text+'\n\n'
+    if tag=='h3': return '#'*3+' '+text+'\n\n'
+    if tag=='h4': return '#'*4+' '+text+'\n\n'
+    if tag=='li': return '\n- '+text.replace('\n',' ')
+    if tag=='table': return '\n-----\n'+text+'\n------\n'
+    if tag=='tr': return text[3:].replace('\n',' ')+'\n'
+    if tag=='td': return ' | '+text
     if tag=='p': return text+'\n\n'
     if tag=='b' or tag=='strong': return '**%s**' % text
     if tag=='em' or tag=='i': return "''%s''" % text
