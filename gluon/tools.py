@@ -542,7 +542,6 @@ class Mail(object):
             payload['Cc'] = encode_header(', '.join(cc).decode(encoding))
             to.extend(cc)
         if bcc:
-            payload['Bcc'] = encode_header(', '.join(bcc).decode(encoding))
             to.extend(bcc)
         payload['Subject'] = encode_header(subject.decode(encoding))
         payload['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000",
