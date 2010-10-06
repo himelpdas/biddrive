@@ -272,7 +272,7 @@ class IS_IN_SET(Validator):
         >>> import itertools
         >>> IS_IN_SET(itertools.chain(['1','3','5'],['2','4','6']))('1')
         ('1', None)
-        >>> IS_IN_SET([('id1','id2'), ('first label','second label')])('id1') # Redundant way
+        >>> IS_IN_SET([('id1','first label'), ('id2','second label')])('id1') # Redundant way
         ('id1', None)
     """
 
