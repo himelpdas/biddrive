@@ -38,7 +38,7 @@ jQuery(document).ready(function(){
 <br/><br/>
 
 <form action="{{=URL('edit',args=filename)}}" method="post">
-<input type="submit" value="save" onclick="return doClickSave();"/>
+<input type="submit" value="save" name="save" onclick="return doClickSave();"/>
 {{=T('Saved file hash:')}}
 <input type="input" name="file_hash" value="{{=file_hash}}" readonly="readonly"/>
 {{=T('Last saved on:')}} <input type="input" name="saved_on" value="{{=saved_on}}" readonly="readonly"/>

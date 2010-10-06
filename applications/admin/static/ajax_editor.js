@@ -47,16 +47,36 @@ function doClickSave() {
 	  dataType: "json",
 	  data: dataForPost[0],
 	  timeout: 5000,
-	  success: function(json){
+      beforeSend: function(xhr) {
+            xhr.setRequestHeader('web2py-component-location',document.location);
+            xhr.setRequestHeader('web2py-component-element','doClickSave');},
+	  success: function(json,text,xhr){
+	  
+	        // show flash message (if any)
+	        var flash=xhr.getResponseHeader('web2py-component-flash');
+            if (flash) jQuery('.flash').html(flash).slideDown();
+            else jQuery('.flash').hide();
+
+            // reenable disabled submit button
+		    var t=jQuery("input[name='save']");
+		    t.attr('class','');
+            t.attr('disabled','');
+
 		    try {
-                        if (json.error) {
+			if (json.error) {
 			    window.location.href=json.redirect;
 			} else {
 			    // console.info( json.file_hash );
 			    jQuery("input[name='file_hash']").val(json.file_hash);
 			    jQuery("input[name='saved_on']").val(json.saved_on);
-			    jQuery("input[name='saved_on']").attr('style','background-color:#99FF99');
+			    if (json.highlight) {
+			        editAreaLoader.setSelectionRange('body', json.highlight.start, json.highlight.end);
+			    } else {
+			        jQuery("input[name='saved_on']").attr('style','background-color:#99FF99');
+			        jQuery(".flash").delay(1000).fadeOut('slow'); 
+			    }
 			    // console.info(jQuery("input[name='file_hash']").val());
+			    
 			    var output = 'exposes ';
 			    for ( var i in json.functions) {
 				output += ' <a href="/' + json.application + '/' + json.controller + '/' + json.functions[i] + '">' + json.functions[i] + '</a>,'; 

@@ -29,9 +29,7 @@
   <div id="main_inner" class="fixed">
     <div id="primaryContent_columnless">
       <div id="columnA_columnless">
-        {{if response.flash:}}
-        <div class="flash">{{=response.flash}}</div>
-        {{pass}}
+        <div class="flash">{{=response.flash or ''}}</div>
         {{include}}
       </div>
     </div>

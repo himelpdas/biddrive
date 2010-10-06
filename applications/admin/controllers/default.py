@@ -355,6 +355,30 @@ def edit():
 
     data_or_revert = (request.vars.data or request.vars.revert)
 
+    # Check compile errors
+    highlight = None
+    if filetype == 'python' and request.vars.data:
+        import _ast
+        try:
+            tree = compile(request.vars.data, path, "exec", _ast.PyCF_ONLY_AST)
+        except Exception, e:
+            start = sum([len(line)+1 for l, line 
+                            in enumerate(request.vars.data.split("\n")) 
+                            if l < e.lineno-1]) 
+            if e.text and e.offset:
+                offset = e.offset - (len(e.text) - len(e.text.splitlines()[-1]))
+            else:
+                offset = 0
+            highlight = {'start': start, 'end': start + offset + 1} 
+            try:
+                ex_name = e.__class__.__name__
+            except:
+                ex_name = 'unknown exception!'
+            response.flash = DIV(T('failed to compile file because:'), BR(),
+                                 B(ex_name), T(' at line %s') % e.lineno,
+                                 offset and T(' at char %s') % offset or '',
+                                 PRE(str(e)))
+
     if data_or_revert and request.args[1] == 'modules':
         # Lets try to reload the modules
         try:
@@ -403,7 +427,7 @@ def edit():
         (controller, functions) = (None, None)
 
     if 'from_ajax' in request.vars:
-        return response.json({'file_hash': file_hash, 'saved_on': saved_on, 'functions':functions, 'controller': controller, 'application': request.args[0] })
+        return response.json({'file_hash': file_hash, 'saved_on': saved_on, 'functions':functions, 'controller': controller, 'application': request.args[0], 'highlight': highlight })
     else:
 
         editarea_preferences = {}
