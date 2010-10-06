@@ -749,6 +749,7 @@ class Row(dict):
         return not (self == other)
 
     def as_dict(self,datetime_to_str=True):
+        SERIALIZABLE_TYPES = (str,unicode,int,long,float,bool,list)
         d = dict(self)
         for k in copy.copy(d.keys()):
             v=d[k]
@@ -758,10 +759,12 @@ class Row(dict):
                 d[k]=v.as_dict()
             elif isinstance(v,Reference):
                 d[k]=int(v)
+            elif isinstance(v,decimal.Decimal):
+                d[k]=float(v)
             elif isinstance(v, (datetime.date, datetime.datetime, datetime.time)):
                 if datetime_to_str:
                     d[k] = v.isoformat().replace('T',' ')[:19]
-            elif not isinstance(v,(str,unicode,int,long,float,bool,list)):
+            elif not isinstance(v,SERIALIZABLE_TYPES):
                 del d[k]
         return d
 
