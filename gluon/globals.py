@@ -376,6 +376,7 @@ class Session(Storage):
             portalocker.lock(response.session_file, portalocker.LOCK_EX)
         if response.session_file:
             cPickle.dump(dict(self), response.session_file)        
+            response.session_file.truncate()
             try:
                 portalocker.unlock(response.session_file)
                 response.session_file.close()
