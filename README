@@ -866,7 +866,7 @@ scripts/dbsessions2trash.py, thanks Scott
 fixed some bugs
 added pyfpdf, thank Mariano
 
-#1.86.1
+#1.86.1-1.86.3
 markmin2latex 
 markmin2pdf
 fixed some bugs
@@ -877,3 +877,7 @@ less un-necessary logging and warnings on GAE
 IS_DECIMAL_IN_RANGE and IS_FLOAT_IN_RANGE support dot="," (dot="." is default)
 on_failed_authorization can be a function, thanks Niphold
 gluon/contrib/login_methods/cas_auth.py for integration between CAS and Auth.
+
+#1.86.3
+Error reporting on save, thanks Mariano
+
