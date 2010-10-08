@@ -47,6 +47,8 @@ import settings
 
 logger = logging.getLogger("web2py.sql")
 
+DEFAULT = lambda:0
+
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
@@ -1650,8 +1652,8 @@ class Table(dict):
         else:
             return dict.__getitem__(self, str(key))
 
-    def __call__(self, id=None, **kwargs):
-        if id!=None:
+    def __call__(self, id=DEFAULT, **kwargs):
+        if id!=DEFAULT:
             if isinstance(id, Query):
                 record = self._db(id).select(limitby=(0,1)).first()
             elif not str(id).isdigit():
