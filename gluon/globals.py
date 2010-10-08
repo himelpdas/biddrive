@@ -266,6 +266,10 @@ class Session(Storage):
                     response.session_file.seek(0)
                 except:
                     self._unlock(response)
+                    if response.session_file:
+                        # Only if open succeeded and later an exception was raised
+                        response.session_file.close()
+                        del response.session_file
                     response.session_id = None
             if not response.session_id:
                 response.session_id = '%s-%s'\
@@ -375,7 +379,7 @@ class Session(Storage):
             response.session_file = open(response.session_filename, 'wb')
             portalocker.lock(response.session_file, portalocker.LOCK_EX)
         if response.session_file:
-            cPickle.dump(dict(self), response.session_file)        
+            cPickle.dump(dict(self), response.session_file)
             response.session_file.truncate()
             try:
                 portalocker.unlock(response.session_file)

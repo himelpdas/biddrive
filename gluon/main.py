@@ -309,178 +309,184 @@ def wsgibase(environ, responder):
     static_file = False
     try:
         try:
-
-            # ##################################################
-            # parse the environment variables
-            # ##################################################
-
-            for (key, value) in environ.items():
-                request.env[key.lower().replace('.', '_')] = value
-            request.env.web2py_path = web2py_path
-            request.env.web2py_version = web2py_version
-            request.env.update(settings)
-
-            # ##################################################
-            # invoke the legacy URL parser and serve static file
-            # ##################################################
-
-            static_file = parse_url(request, environ)
-            if static_file:
-                if request.env.get('query_string', '')[:10] == 'attachment':
-                    response.headers['Content-Disposition'] = 'attachment'
-                response.stream(static_file, request=request)
-
-            # ##################################################
-            # build missing folder
-            # ##################################################
-
-            if not request.env.web2py_runtime_gae:
-                for subfolder in ['models','views','controllers', 'databases',
-                                  'modules','cron','errors','sessions',
-                                  'languages','static','private','uploads']:
-                    path =  os.path.join(request.folder,subfolder)
-                    if not os.path.exists(path):
-                        os.mkdir(path)
-
-            # ##################################################
-            # get the GET and POST data
-            # ##################################################
-
-            parse_get_post_vars(request, environ)
-
-            # ##################################################
-            # expose wsgi hooks for convenience
-            # ##################################################
-
-            request.wsgi.environ = environ_aux(environ,request)
-            request.wsgi.start_response = lambda status='200', headers=[], \
-                exec_info=None, response=response: \
-                start_response_aux(status, headers, exec_info, response)
-            request.wsgi.middleware = lambda *a: middleware_aux(request,response,*a)
-
-            # ##################################################
-            # load cookies
-            # ##################################################
-
-            if request.env.http_cookie:
-                try:
-                    request.cookies.load(request.env.http_cookie)
-                except Cookie.CookieError, e:
-                    pass # invalid cookies
-
-            # ##################################################
-            # try load session or create new session file
-            # ##################################################
-
-            session.connect(request, response)
-
-            # ##################################################
-            # set no-cache headers
-            # ##################################################
-
-            response.headers['Content-Type'] = contenttype('.'+request.extension)
-            response.headers['Cache-Control'] = \
-                'no-store, no-cache, must-revalidate, post-check=0, pre-check=0'
-            response.headers['Expires'] = \
-                time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
-            response.headers['Pragma'] = 'no-cache'
-
-            # ##################################################
-            # run controller
-            # ##################################################
-
-            serve_controller(request, response, session)
-
-        except HTTP, http_response:
-            if static_file:
-                return http_response.to(responder)
-
+            try:
+    
+                # ##################################################
+                # parse the environment variables
+                # ##################################################
+    
+                for (key, value) in environ.items():
+                    request.env[key.lower().replace('.', '_')] = value
+                request.env.web2py_path = web2py_path
+                request.env.web2py_version = web2py_version
+                request.env.update(settings)
+    
+                # ##################################################
+                # invoke the legacy URL parser and serve static file
+                # ##################################################
+    
+                static_file = parse_url(request, environ)
+                if static_file:
+                    if request.env.get('query_string', '')[:10] == 'attachment':
+                        response.headers['Content-Disposition'] = 'attachment'
+                    response.stream(static_file, request=request)
+    
+                # ##################################################
+                # build missing folder
+                # ##################################################
+    
+                if not request.env.web2py_runtime_gae:
+                    for subfolder in ['models','views','controllers', 'databases',
+                                      'modules','cron','errors','sessions',
+                                      'languages','static','private','uploads']:
+                        path =  os.path.join(request.folder,subfolder)
+                        if not os.path.exists(path):
+                            os.mkdir(path)
+    
+                # ##################################################
+                # get the GET and POST data
+                # ##################################################
+    
+                parse_get_post_vars(request, environ)
+    
+                # ##################################################
+                # expose wsgi hooks for convenience
+                # ##################################################
+    
+                request.wsgi.environ = environ_aux(environ,request)
+                request.wsgi.start_response = lambda status='200', headers=[], \
+                    exec_info=None, response=response: \
+                    start_response_aux(status, headers, exec_info, response)
+                request.wsgi.middleware = lambda *a: middleware_aux(request,response,*a)
+    
+                # ##################################################
+                # load cookies
+                # ##################################################
+    
+                if request.env.http_cookie:
+                    try:
+                        request.cookies.load(request.env.http_cookie)
+                    except Cookie.CookieError, e:
+                        pass # invalid cookies
+    
+                # ##################################################
+                # try load session or create new session file
+                # ##################################################
+    
+                session.connect(request, response)
+    
+                # ##################################################
+                # set no-cache headers
+                # ##################################################
+    
+                response.headers['Content-Type'] = contenttype('.'+request.extension)
+                response.headers['Cache-Control'] = \
+                    'no-store, no-cache, must-revalidate, post-check=0, pre-check=0'
+                response.headers['Expires'] = \
+                    time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
+                response.headers['Pragma'] = 'no-cache'
+    
+                # ##################################################
+                # run controller
+                # ##################################################
+    
+                serve_controller(request, response, session)
+    
+            except HTTP, http_response:
+                if static_file:
+                    return http_response.to(responder)
+    
+                if request.body:
+                    request.body.close()
+    
+                # ##################################################
+                # on success, try store session in database
+                # ##################################################
+                session._try_store_in_db(request, response)
+    
+                # ##################################################
+                # on success, commit database
+                # ##################################################
+    
+                if response._custom_commit:
+                    response._custom_commit()
+                else:
+                    BaseAdapter.close_all_instances(BaseAdapter.commit)
+    
+                # ##################################################
+                # if session not in db try store session on filesystem
+                # this must be done after trying to commit database!
+                # ##################################################
+    
+                session._try_store_on_disk(request, response)
+    
+                # ##################################################
+                # store cookies in headers
+                # ##################################################
+                
+                if request.cid:
+                    if response.flash and not 'web2py-component-flash' in http_response.headers:
+                        http_response.headers['web2py-component-flash'] = \
+                            str(response.flash).replace('\n','')
+                    if response.js and not 'web2py-component-command' in http_response.headers:
+                        http_response.headers['web2py-component-command'] = \
+                            str(response.js).replace('\n','')
+                if session._forget:
+                    del response.cookies[response.session_id_name]
+                elif session._secure:
+                    response.cookies[response.session_id_name]['secure'] = True            
+                if len(response.cookies)>0:
+                    http_response.headers['Set-Cookie'] = \
+                        [str(cookie)[11:] for cookie in response.cookies.values()]
+                ticket=None
+    
+            except RestrictedError, e:
+    
+                if request.body:
+                    request.body.close()
+    
+                # ##################################################
+                # on application error, rollback database
+                # ##################################################
+    
+                ticket = e.log(request) or 'unknown'
+                if response._custom_rollback:
+                    response._custom_rollback()
+                else:
+                    BaseAdapter.close_all_instances(BaseAdapter.rollback)
+    
+                http_response = \
+                    HTTP(500,
+                         rewrite.thread.routes.error_message_ticket % dict(ticket=ticket),
+                         web2py_error='ticket %s' % ticket)
+                
+        except:
+    
             if request.body:
                 request.body.close()
-
-            # ##################################################
-            # on success, try store session in database
-            # ##################################################
-            session._try_store_in_db(request, response)
-
-            # ##################################################
-            # on success, commit database
-            # ##################################################
-
-            if response._custom_commit:
-                response._custom_commit()
-            else:
-                BaseAdapter.close_all_instances(BaseAdapter.commit)
-
-            # ##################################################
-            # if session not in db try store session on filesystem
-            # this must be done after trying to commit database!
-            # ##################################################
-
-            session._try_store_on_disk(request, response)
-
-            # ##################################################
-            # store cookies in headers
-            # ##################################################
-            
-            if request.cid:
-                if response.flash and not 'web2py-component-flash' in http_response.headers:
-                    http_response.headers['web2py-component-flash'] = \
-                        str(response.flash).replace('\n','')
-                if response.js and not 'web2py-component-command' in http_response.headers:
-                    http_response.headers['web2py-component-command'] = \
-                        str(response.js).replace('\n','')
-            if session._forget:
-                del response.cookies[response.session_id_name]
-            elif session._secure:
-                response.cookies[response.session_id_name]['secure'] = True            
-            if len(response.cookies)>0:
-                http_response.headers['Set-Cookie'] = \
-                    [str(cookie)[11:] for cookie in response.cookies.values()]
-            ticket=None
-
-        except RestrictedError, e:
-
-            if request.body:
-                request.body.close()
-
+    
             # ##################################################
             # on application error, rollback database
             # ##################################################
-
-            ticket = e.log(request) or 'unknown'
-            if response._custom_rollback:
-                response._custom_rollback()
-            else:
-                BaseAdapter.close_all_instances(BaseAdapter.rollback)
-
+    
+            try:
+                if response._custom_rollback:
+                    response._custom_rollback()
+                else:
+                    BaseAdapter.close_all_instances(BaseAdapter.rollback)
+            except:
+                pass
+            e = RestrictedError('Framework', '', '', locals())
+            ticket = e.log(request) or 'unrecoverable'
             http_response = \
                 HTTP(500,
                      rewrite.thread.routes.error_message_ticket % dict(ticket=ticket),
                      web2py_error='ticket %s' % ticket)
 
-    except:
+    finally:
+        if response and hasattr(response, 'session_file') and response.session_file:
+            response.session_file.close()
 
-        if request.body:
-            request.body.close()
-
-        # ##################################################
-        # on application error, rollback database
-        # ##################################################
-
-        try:
-            if response._custom_rollback:
-                response._custom_rollback()
-            else:
-                BaseAdapter.close_all_instances(BaseAdapter.rollback)
-        except:
-            pass
-        e = RestrictedError('Framework', '', '', locals())
-        ticket = e.log(request) or 'unrecoverable'
-        http_response = \
-            HTTP(500,
-                 rewrite.thread.routes.error_message_ticket % dict(ticket=ticket),
-                 web2py_error='ticket %s' % ticket)
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,request,ticket)
     if settings.web2py_crontype == 'soft':
