@@ -189,6 +189,7 @@ class Table(gluon.sql.Table):
                 raise SyntaxError, 'define_table argument \'%s\'is not a Field'%field
         fields = new_fields
         self._db = db
+        self._id = fields[0]
         self._tablename = tablename
         self.fields = SQLCallableList()
         self.virtualfields = []
