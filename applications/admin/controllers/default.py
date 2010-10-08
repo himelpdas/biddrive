@@ -360,7 +360,8 @@ def edit():
     if filetype == 'python' and request.vars.data:
         import _ast
         try:
-            tree = compile(request.vars.data, path, "exec", _ast.PyCF_ONLY_AST)
+            code = request.vars.data.rstrip().replace('\r\n','\n')+'\n'
+            tree = compile(code, path, "exec", _ast.PyCF_ONLY_AST)
         except Exception, e:
             start = sum([len(line)+1 for l, line 
                             in enumerate(request.vars.data.split("\n")) 
