@@ -29,8 +29,11 @@ import wsgiref.handlers
 import datetime
 
 
-sys.path.append(os.path.dirname(__file__))
-sys.path.append(os.path.join(os.path.dirname(__file__),'site-packages'))
+try:
+    sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
+except ValueError:
+    pass
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 sys.modules['cPickle'] = sys.modules['pickle']
 

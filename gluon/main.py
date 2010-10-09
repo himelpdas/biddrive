@@ -28,10 +28,27 @@ import tempfile
 import random
 import string
 
+#  calling script has inserted path to script directory into sys.path
+#  web2py_path (path to applications/, site-packages/ etc) defaults to that directory
+#  set sys.path to ("", web2py_path/site-packages, web2py_path, ...)
+#  
+web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+web2py_path = os.environ.get('web2py_path', web2py_path)
+os.chdir(web2py_path)
+try:
+    sys.path.remove(os.path.join(web2py_path, 'site-packages'))
+except ValueError:
+    pass
+sys.path.insert(0, os.path.join(web2py_path, 'site-packages'))
+try:
+    sys.path.remove("")
+except ValueError:
+    pass
+sys.path.insert(0, "")
+
 # set up logging for subsequent imports
 import logging
 import logging.config
-web2py_path = os.environ.get('web2py_path', os.getcwd())
 logpath = os.path.join(web2py_path, "logging.conf")
 if os.path.exists(logpath):
     logging.config.fileConfig(os.path.join(web2py_path, "logging.conf"))
@@ -646,8 +663,23 @@ class HttpServer(object):
             # runs from there instead of cwd or os.environ['web2py_path'] 
             global web2py_path
             path = os.path.normpath(path)
-            web2py_path = path            
-            sys.path.insert(0,path)
+            web2py_path = path
+            os.chdir(web2py_path)
+            try:
+                sys.path.remove(path)
+            except ValueError:
+                pass
+            sys.path.insert(0, path)
+            try:
+                sys.path.remove(os.path.join(path, 'site-packages'))
+            except ValueError:
+                pass
+            sys.path.insert(0, os.path.join(path, 'site-packages'))
+            try:
+                sys.path.remove("")
+            except ValueError:
+                pass
+            sys.path.insert(0, "")
 
         save_password(password, port)
         self.pid_filename = pid_filename

@@ -28,11 +28,12 @@ SOFTCRON = False
 import sys
 import os
 
-# Append the file path in python path
-path = os.path.dirname(os.path.abspath(__file__))
-if not path in sys.path:
-    sys.path.append(path)
-    sys.path.append(os.path.join(path,'site-packages'))
+try:
+    sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
+except ValueError:
+    pass
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import gluon.main
 import gluon.contrib.gateways.fcgi as fcgi
 

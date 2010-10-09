@@ -5,12 +5,11 @@ import os
 import sys
 import wsgiref.handlers
 
-sys.path.insert(0, '')
-path = os.path.dirname(os.path.abspath(__file__))
-if not path in sys.path:
-    sys.path.append(path)
-    sys.path.append(os.path.join(path,'site-packages'))
-os.chdir(path)
+try:
+    sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
+except ValueError:
+    pass
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import gluon.main
 

@@ -7,11 +7,13 @@ import sys
 try:
     path = os.path.dirname(os.path.abspath(__file__))
 except NameError:
-    path=os.getcwd() # Seems necessary for py2exe
+    path = os.getcwd() # Seems necessary for py2exe
 
-if not path in sys.path:
-    sys.path.append(path)
-os.chdir(path)
+try:
+    sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
+except ValueError:
+    pass
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # import gluon.import_all ##### This should be uncommented for py2exe.py
 import gluon.widget
