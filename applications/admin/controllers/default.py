@@ -5,12 +5,12 @@ from glob import glob
 import shutil
 import StringIO
 
-if DEMO_MODE and request.applications in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','errors','update_languages']:
-    response.flash = T('disabled in demo mode')
+if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','errors','update_languages']:
+    session.flash = T('disabled in demo mode')
     redirect(URL('site'))
 
 if FILTER_APPS and request.args(0) and not request.args(0) in FILTER_APPS:
-    response.flash = T('disabled in demo mode')
+    session.flash = T('disabled in demo mode')
     redirect(URL('site'))
 
 def safe_open(a,b):
