@@ -32,6 +32,12 @@ REPLACE_TAB_BY_SPACES = 4
 # Toggle on/off the code editor instead of textarea on startup
 DISPLAY = "onload" or "later"
 
+# if demo mode is True then admin works readonly and does not require login
+DEMO_MODE = False
+
+# if visible_apps is not empty only listed apps will be accessible
+FILTER_APPS = []
+
 # To upload on google app engine this has to point to the proper appengine
 # config file
 import os

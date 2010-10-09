@@ -1,6 +1,10 @@
 import sys
 import cStringIO
 
+if DEMO_MODE:
+    response.flash = T('disabled in demo mode')
+    redirect(URL('default','site'))
+
 FE=10**9
 
 def index():

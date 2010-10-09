@@ -20,7 +20,7 @@ if request.env.http_x_forwarded_for \
         or request.env.wsgi_url_scheme in ['https', 'HTTPS'] \
         or request.env.https == 'on':
     session.secure()
-elif not remote_addr in hosts:
+elif not remote_addr in hosts and not DEMO_MODE:
     raise HTTP(200, T('Admin is disabled because insecure channel'))
 
 try:
@@ -45,7 +45,9 @@ except IOError:
 
 def verify_password(password):
     session.pam_user = None
-    if not 'password' in _config:
+    if DEMO_MODE:
+        return True
+    elif not 'password' in _config:
         return False
     elif _config['password'].startswith('pam_user:'):
         session.pam_user = _config['password'][9:].strip()

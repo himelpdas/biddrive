@@ -1,6 +1,8 @@
-
 from mercurial import cmdutil
 
+if DEMO_MODE:
+    response.flash = T('disabled in demo mode')
+    redirect(URL('default','site'))
 
 _hgignore_content = """\
 syntax: glob
@@ -15,7 +17,6 @@ errors/*
 """
 
 def commit():
-
     app = request.args[0]
     path = apath(app, r=request)
 
