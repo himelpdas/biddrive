@@ -21,6 +21,8 @@ want to review it to verify that it meets your needs.
 Finally, if you require a proxy to access the Internet, please
 set up your machine to do so before running this script.
 
+(author: berubejd)
+
 Press ENTER to continue...[ctrl+C to abort]"
 
 read CONFIRM
