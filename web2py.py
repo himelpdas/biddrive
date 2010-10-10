@@ -6,6 +6,7 @@ import sys
 
 try:
     path = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(path)
 except NameError:
     path = os.getcwd() # Seems necessary for py2exe
 

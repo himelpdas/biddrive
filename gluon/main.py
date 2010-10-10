@@ -34,7 +34,6 @@ import string
 #  
 web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 web2py_path = os.environ.get('web2py_path', web2py_path)
-os.chdir(web2py_path)
 try:
     sys.path.remove(os.path.join(web2py_path, 'site-packages'))
 except ValueError:
