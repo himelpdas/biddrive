@@ -14,7 +14,7 @@ html, body {
 
 h1,h2,h3,h4,h5,h6 {
 	font-family: Helvetica,"Helvetica Neue",Arial,sans-serif; //'Garamond','Georgia',serif;
-	margin:10px 0 5px;
+	margin:15px 0 10px;
 	padding:0;
 	color: #678A86;
 	
@@ -37,7 +37,7 @@ a:hover {
 p { 
 	border-bottom: 10px solid transparent; 
 	color:#383838;
-	font-size:13px;
+	font-size:15px;
 	line-height:24px;
 	}	
 
@@ -108,7 +108,7 @@ pre {
 	
 .onecolcontent{
     color:#383838;
-    font-size:13px;
+    font-size:15px;
     line-height:24px;
 	width:850px;
 	margin:0 auto;
@@ -117,7 +117,7 @@ pre {
 	
 .contentleft{
     color:#383838;
-    font-size:13px;
+    font-size:15px;
     line-height:24px;
 	float:left;
 	width:650px;
@@ -126,7 +126,7 @@ pre {
 		
 .contentright{
 	color:#383838;
-    font-size:13px;
+    font-size:15px;
     line-height:24px;
 	float:right;
 	width:300px;
@@ -152,7 +152,7 @@ pre {
 .footerExt{
 	background-image:url(../img/back-R-02.png); 
 	background-repeat:repeat-x ;
-	background-position:0px -13px;
+	background-position:0px -15px;
 	height:100px;
 	position:absolute;
 	bottom:0;
@@ -172,13 +172,13 @@ pre {
 	position:absolute;
 	bottom:0px;
 	left:30px;
-	top:3px;
+	top:5px;
 	}
 	
 .Boxfooter2{
 	position:absolute;
 	left:130px;
-	top:3px;
+	top:5px;
 	}
 	
 .Boxfooter3{
@@ -287,7 +287,7 @@ a.login:visited{
 	text-decoration:none;
 	position:absolute;
 	left:35px;
-	top:13px;
+	top:15px;
     }
 #textBtDownload2{
 	font-weight:bold;
@@ -311,9 +311,9 @@ a.btDownload{
 	-moz-background-clip:border;
 	-moz-background-inline-policy:continuous;
 	-moz-background-origin:padding;
-	border-radius:3px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
+	border-radius:5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
 	background-image:url(../img/back-03.png);
 	background-position:bottom;
 	background-repeat:repeat-x; 
@@ -336,9 +336,9 @@ a.btDownload:hover {
 	-moz-background-clip:border;
 	-moz-background-inline-policy:continuous;
 	-moz-background-origin:padding;
-	border-radius:3px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
+	border-radius:5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
 	color:#1B211F;
 	display:block;
 	font-size:93%;
@@ -381,6 +381,9 @@ a.btDownload:hover {
 /********************************* BOX INFO 1 *****************************/	
 
 .boxInfo{
+	width: 90%;
+	margin:10px;
+	padding: 5px;
 	/*margin:20px auto;
 	background-color:#f1f6f2;
 	text-align:left;
@@ -390,24 +393,24 @@ a.btDownload:hover {
 	-moz-background-clip:border;
 	-moz-background-inline-policy:continuous;
 	-moz-background-origin:padding;
-	border-radius:3px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
+	border-radius:5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
 	background-image:url(../img/fund-03.png);
 	background-position:bottom;
 	background-repeat:repeat-x;
-	padding:10px 10px 0 10px;
+	padding: 5px;
 	padding-bottom:0
 	*/
         
 	border-width: 1px;
 	border-style: solid;
 	border-color:#CCC;
-	border-radius:3px;
+	border-radius:5px;
 	background-color:#FFF;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
-	margin:20px auto;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
+	//	margin:20px auto;
 	text-align:left;
 	background: -moz-linear-gradient(top, #fbfbfb, #f1f1f1) repeat-X;
 	background: -webkit-gradient(linear, left top, left bottom, from(#fbfbfb), to(#f1f1f1)) repeat-X;
@@ -416,14 +419,12 @@ a.btDownload:hover {
 	border-width: 1px;
 	border-style: solid;
 	border-color:#CCC;
-	border-radius:3px;
+	border-radius:5px;
 	background-color:#FFF;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
-	padding:10px 10px 0 10px;
-	padding-bottom:0
-	
-
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
+	//	padding:10px 10px 0 10px;
+	// padding-bottom:0
 	}
 	
 .boxInfo ul{
@@ -450,6 +451,7 @@ a.btDownload:hover {
 
 
 .boxCode{
+	width: 90%;
 	margin:10px;
 	background-color:#fff;
 	text-align:left;
@@ -459,9 +461,9 @@ a.btDownload:hover {
 	-moz-background-clip:border;
 	-moz-background-inline-policy:continuous;
 	-moz-background-origin:padding;
-	border-radius:3px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
+	border-radius:5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
 	padding:5px;
 	}
 
@@ -495,9 +497,9 @@ a.btDownload:hover {
 	-moz-background-clip:border;
 	-moz-background-inline-policy:continuous;
 	-moz-background-origin:padding;
-	border-radius:3px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
+	border-radius:5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
 	background-image:url(../img/online_book_cover.jpg);
 	background-position:center;
 	background-repeat:no-repeat;
@@ -527,9 +529,9 @@ a.btDownload:hover {
 	-moz-background-clip:border;
 	-moz-background-inline-policy:continuous;
 	-moz-background-origin:padding;
-	border-radius:3px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
+	border-radius:5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
 	
 	background-position:center;
 	background-repeat:no-repeat;
@@ -557,9 +559,9 @@ a.btDownload:hover {
 	-moz-background-clip:border;
 	-moz-background-inline-policy:continuous;
 	-moz-background-origin:padding;
-	border-radius:3px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius:3px;
+	border-radius:5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius:5px;
 	background-image:url(../img/back-04.png);
 	background-position:bottom;
 	background-repeat:repeat-x;
