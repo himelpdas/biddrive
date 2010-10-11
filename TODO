@@ -1,8 +1,24 @@
-routes patch
-fix select(*fields) on GAE
-http://groups.google.com/group/web2py/browse_thread/thread/0e10f85de6ac9dac/d6359068f648966f#d6359068f648966f
 
-new dal
-it does not like select('fieldname') only select(db.table['fieldname']).
+I keep getting this errors...
 
-fix _tablename in sql.py with polymodel
+WARNING:web2py.cron:WEB2PY CRON Call returned code 1:
+Traceback (most recent call last):
+File "web2py.py", line 23, in <module>
+  gluon.widget.start(cron=True)
+File "/Users/mdipierro/web2py/gluon/widget.py", line 728, in start
+  (options, args) = console()
+File "/Users/mdipierro/web2py/gluon/widget.py", line 717, in console
+  w2p_pack('welcome.w2p','applications/welcome')
+File "/Users/mdipierro/web2py/gluon/fileutils.py", line 172, in w2p_pack
+  os.unlink(tarname)
+OSError: [Errno 2] No such file or directory: 'welcome.w2p.tar'
+
+
+That's pretty strange. Is the file actually there? I don't see how the open can succeed and the unlink fail. I'd throw in some prints, including getcwd.
+
+(As an aside, I think it'd be better not to use the cwd for the operations in console(), but I can't see how that's relevant to your error.)
+
+
+
+
+T(variable) -> '#'?

@@ -256,7 +256,11 @@ class translator(object):
         T(' hello world ## token') -> 'hello world'
         T('hello ## world ## token') -> 'hello ## world'
         """
-        tokens = message.rsplit('##', 1)
+        if not message.startswith('#') and not '\n' in message:
+            tokens = message.rsplit('##', 1)
+        else:
+            # this allows markmin syntax in translations
+            tokens = [message]
         if len(tokens) == 2:
             tokens[0] = tokens[0].strip()
             message = tokens[0] + '##' + tokens[1].strip()
@@ -289,12 +293,16 @@ def findT(path, language='en-us'):
         items = regex_translate.findall(data)
         for item in items:
             try:
-                msg = eval(item)
-                tokens = msg.rsplit('##', 1)
+                message = eval(item)
+                if not message.startswith('#') and not '\n' in message:
+                    tokens = message.rsplit('##', 1)
+                else:
+                    # this allows markmin syntax in translations
+                    tokens = [message]
                 if len(tokens) == 2:
-                    msg = tokens[0].strip() + '##' + tokens[1].strip()
-                if msg and not msg in sentences:
-                    sentences[msg] = msg
+                    message = tokens[0].strip() + '##' + tokens[1].strip()
+                if message and not message in sentences:
+                    sentences[message] = message
             except:
                 pass
     write_dict(filename, sentences)
