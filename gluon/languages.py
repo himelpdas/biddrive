@@ -255,6 +255,9 @@ class translator(object):
         T(' hello world ') -> ' hello world '
         T(' hello world ## token') -> 'hello world'
         T('hello ## world ## token') -> 'hello ## world'
+
+        the ## notation is ignored in multiline strings and strings that
+        start with ##. this is to allow markmin syntax to be translated
         """
         if not message.startswith('#') and not '\n' in message:
             tokens = message.rsplit('##', 1)
