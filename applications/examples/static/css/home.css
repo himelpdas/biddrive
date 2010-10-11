@@ -383,7 +383,7 @@ a.btDownload:hover {
 
 /********************************* BOX INFO 1 *****************************/	
 
-.boxInfo{
+blockquote{
 	width: 90%;
 	margin:10px;
 	padding: 5px;
@@ -431,12 +431,12 @@ a.btDownload:hover {
 	font-size:12px;
 	}
 	
-.boxInfo ul {
+blockquote ul {
 	padding-left:15px;
 //        list-style-image: url(bullet.gif);
 	}
 	
-.boxInfo h5{
+blockquote h5{
 	margin:0;
 	padding:0;
 	font-size:12px;

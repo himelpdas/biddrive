@@ -1,7 +1,7 @@
 {{extend 'layout.html'}} {{import os}}
 <div class="contentleft">
     <h2>What is web2py<sup style="font-size:0.5em;">TM</sup></h2>
-    <blockquote class="boxInfo">
+    <blockquote>
     <p>The best way to understand web2py is to try it.
     You can try it online <a href="http://www.web2py.com/demo_admin">here</a>.<br /> 
     This online version is identical to the actual web2py although some functions are disabled for security reasons.</p>
@@ -12,7 +12,7 @@
 
     <p>web2py is less verbose than Java-based frameworks and its syntax is much cleaner than PHP-based frameworks. This makes applications simpler to develop, and easier to read
     and maintain.</p>
-    <blockquote class="boxInfo">
+    <blockquote>
         <p><a href="http://www.web2py.com/examples/static/web2py_vs_others.pdf">Here</a> is a features comparison of web2py vs other popular web frameworks</a>
     </blockquote>
     <p>web2py comes in source code version (for any Operating System that runs Python) and in binary versions for OSX and Windows. web2py does not need to be installed. You unzip it, click on it, and choose a one-time administrator password. It then opens the browser for you and directs you to the administrative interface. Everything it needs to make this happen (the Python interpreter, the web-server, the relational database, etc.) is already packaged with web2py. If you need more power you customize your applications to use your preferred web-server (for example Apache) and your preferred database engine (for example PostgreSQL or Oracle).</p>
@@ -52,7 +52,7 @@ def index():
 [[= form]]""".replace('[','{').replace(']','}'),counter=None,_class='boxCode')}}
    
     <p>Uploaded images are safely renamed to avoid directory traversal vulnerabilities, stored on the filesystem (or database) and a corresponding entry is inserted in the database, linking the file. A built-in mechanism prevents involuntary double form submission. All DB IO is transaction safe by default. Any exception in the code causes the transaction to rollback.</p>
-    <blockquote class="boxInfo">
+    <blockquote>
     <p>Examples of more complex sample applications can be found <a href="{{=URL(r=request,c='default',f='examples')}}">here</a></p>
      </blockquote>
 </div>

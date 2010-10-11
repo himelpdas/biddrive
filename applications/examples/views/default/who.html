@@ -1,110 +1,311 @@
 {{extend 'layout.html'}}
 <div class="contentleft">
-<h2>web2py&trade; Developers</h2>
-
-<h3>Lead developer</h3>
-<ul>
-<li><a target="_blank" href="http://mycti.cti.depaul.edu/people/facultyInfo_mycti.asp?id=343">Massimo Di Pierro</a> (Associate Professor of Computer Science at DePaul University in Chicago)</li>
-</ul>
-
-<h3>Contributor Agreement</h3>
-<p>
-By contributing to web2py you implicitly agree to the <a target="_blank" href="{{=URL(r=request,c='static',f='web2py_contributor_agreement.pdf')}}">web2py contributor agreement</a>. Please also send us a signed copy by fax or, scanned, by email.
-<p/>
-
-<div class="boxInfo">
-<h3>Main Contributors</h3>
-<ul>
-     <li>Alexey Nezhdanov (GAE and database performance)
-</li><li>Alvaro Justen (dynamical translations)
-</li><li>Attila Csipa (cron job)
-</li><li>Bill Ferrett (modular DAL design)
-</li><li>Boris Manojlovic (ajax edit) 
-</li><li>Brian Meredyk (SQLite and executesql)
-</li><li><a target="_blank" href="http://rochacbruno.com.br">Bruno Rocha</a> (book, layout)
-</li><li>Carsten Haese (Informix)
-</li><li>Chris Clark (Ingres)
-</li><li>Chris Steel
-</li><li>Christian Foster Howes
-</li><li>Christopher Smiga (Informix)
-</li><li>CJ Lazell (tester)
-</li><li>Craig Younkins (Security)
-</li><li>Daniel Lin (Taiwanese internationalization)
-</li><li>Denes Lengyel (validators, DB2 support, DAL, custom forms, legacy table support)
-</li><li>Douglas Soares de Andrade (2.4 and 2.6 compliance, docstrings)
-</li><li>Fran Boon (authorization and authentication)
-</li><li>Francisco Gama (bug fixing)
-</li><li>Fred Yanowski (XHTML compliance)
-</li><li>Graham Dumpleton (WSGI)
-</li><li>Gyuris Szabolcs (PGP Mail)
-</li><li>Hamdy Abdel-Badeea (crud)
-</li><li>Hans Donner (GAE support, Google login, widgets, Sphinx documentation)
-</li><li>Hans Murx (Database support)
-</li><li>Hans C. v. Stockhausen (OpenID, Google Wave)
-</li><li>Ian Reinhart Geiser (html helpers)
-</li><li>Jonathan Benn (is_url validator and tests)
-</li><li>Jonathan Lundell (multiple contributions)
-</li><li>Josh Goldfoot (xaml/html sanitizer)
-</li><li>Jose Jachuf (Firebird support)
-</li><li><a href="http://twitter.com/josev2010" target="_blank" >José Vicente Sousa</a> (Logo, Stickers, Layout, Design)
-</li><li>Keith Yang (openid)
-</li><li>Kyle Smith (javascript)
-</li><li><a target="_blank" href="http://blog.donews.com/limodou/">Limodou</a> (winservice)
-</li><li><a target="_blank" href="http://www.mlsystems.ch">Marcel Leuthi</a> (Oracle support)
-</li><li>Marcello Della Longa (italian translation)
-</li><li>Mariano Reingart (pysoaplib)
-</li><li>Mark Larsen (taskbar widget)
-</li><li>Mark Moore (databases and daemon scripts)
-</li><li>Markus Gritsch (bug fixing)
-</li><li>Martin Hufsky (expressions in DAL)
-</li><li>Mateusz Banach (stickers, IS_EMAIL, IS_IMAGE, contenttype)
-</li><li>Michael Willis (shell)
-</li><li>Michele Comitini (faceboook)
-</li><li>Nathan Freeze (admin design, IS_STRONG, DAL features, <a target="_blank" href="http://web2pyslices.com">web2pyslices.com</a>)
-</li><li>Niall Sweeny (MSSQL support)
-</li><li>Niccolo Polo (epydoc)
-</li><li>Nicolas Bruxer (memcache support)
-</li><li>Ondrej Such (MSSQL support)
-</li><li>Pai (internationalization)
-</li><li><a target="_blank" href="mailto:phyo.arkarlwin@star-nix.net">Phyo Arkar Lwin</a> (web hosting and Jython tester)
-</li><li><a target="_blank" href="http://robinbhattacharyya.com/">Robin Bhattacharyya</a> (Google App Engine support)
-</li><li>Ruijun Luo (a.k.a. Iceberg) (setup_exe.py)
-</li><li>Scott Roberts (testing, book)
-</li><li>Sergey Podlesnyi (Oracle and migrations tester)
-</li><li>Sharriff Aina (tester and PyAMF integration)
-</li><li>Sriram Durbha (book)
-</li><li>Sterling Hankins (tester, book)
-</li><li>Stuart Rackham (MSSQL support)
-</li><li>Telman Yusupov (Oracle support)
-</li><li>Thadeus Burgess (validators)
-</li><li>Tim Michelsen (Sphinx documentation)
-</li><li>Timothy Farrell (python 2.6 compliance, windows support)
-</li><li>Yair Eshel (internationalizaiton)
-</li><li>Yarko Tymciurak (design, Sphinx documentation)
-</li><li>Younghyun Jo (internationalization)
-</li><li>Vidul Nikolaev Petrov (captcha)
-</li><li>Zahariash (memory management)
-</li>
-</ul>
-
-</div>
-<div class="boxInfo">
-<h3>Third party software included in web2py</h3>
-<ul>
-<li><a target="_blank" href="http://www.python.org">Python</a> created by Guido van Rossum.</li>
-<li>Rocket Web Server developed by Timothy Farrell.</li>
-<li><a target="_blank" href="http://www.cdolivet.com/index.php?page=editArea">EditArea</a> developed by Christophe Dolivet</li>
-<li><a target="_blank" href="http://nicedit.com">nicEdit</a> developed by <a target="_blank" href="http://bkirchoff.com">Brian Kirchoff</a></li>
-<li><a target="_blank" href="http://cheeseshop.python.org/pypi/simplejson">simplejson</a> developed by Bob Ippolito</li>
-<li><a target="_blank" href="http://pyrtf.sourceforge.net/">PyRTF</a> developed by Simon Cusack and revised by Grant Edwards</li>
-<li><a target="_blank" href="http://www.dalkescientific.com/Python/PyRSS2Gen.html">PyRSS2Gen</a> developed by Dalke Scientific Software</li>
-<li><a target="_blank" href="http://www.feedparser.org/">feedparser</a> developed by Mark Pilgrim</li>
-<li><a target="_blank" href="http://code.google.com/p/python-markdown2/">markdown2</a> developed by Trent Mick</li>
-<li><a target="_blank" href="http://svn.saddi.com/py-lib/trunk/fcgi.py">fcgi.py</a> devloped by Allan Saddi (for production Lighttpd servers)</li>
-<li><a target="_blank" href="http://www.danga.com/memcached/">memcache</a> developed by Evan Martin</li>
-<li><a target="_blank" href="http://jquery.com/">jQuery</a> developed by John Resig</li> 
-<li>A syntax highlighter inspired by the code of <a target="_blank" href="http://www.petersblog.org/node/763">Peter Wilkinson</a></li>
-</ul>
-</div>
-
-</div>
+  <h2>
+    The Web2py&trade; Team
+  </h2>
+  <h3>
+    Lead Developer
+  </h3>
+  <ul>
+    <li>
+      <a target="_blank" href="http://mycti.cti.depaul.edu/people/facultyinfo_mycti.asp?id=343">massimo di pierro</a>
+      (associate professor of computer science at depaul university in chicago)
+    </li>
+  </ul>
+  <h3>
+    Contributor Agreement
+  </h3>
+  <p>
+    by contributing to web2py you implicitly agree to the
+    <a target="_blank" href="{{=URL(r=request,c='static',f='web2py_contributor_agreement.pdf')}}">web2py contributor agreement</a>.
+     please also send us a signed copy by fax or, scanned, by email.
+    <p/>
+    <blockquote>
+      <h3>
+        Main Contributors
+      </h3>
+      <ul>
+        <li>
+          alexey nezhdanov (gae and database performance)
+        </li>
+        <li>
+          alvaro justen (dynamical translations)
+        </li>
+        <li>
+          attila csipa (cron job)
+        </li>
+        <li>
+          bill ferrett (modular dal design)
+        </li>
+        <li>
+          boris manojlovic (ajax edit)
+        </li>
+        <li>
+          brian meredyk (sqlite and executesql)
+        </li>
+        <li>
+          <a target="_blank" href="http://rochacbruno.com.br">bruno rocha</a>
+          (book, layout)
+        </li>
+        <li>
+          carsten haese (informix)
+        </li>
+        <li>
+          chris clark (ingres)
+        </li>
+        <li>
+          chris steel
+        </li>
+        <li>
+          christian foster howes
+        </li>
+        <li>
+          christopher smiga (informix)
+        </li>
+        <li>
+          cj lazell (tester)
+        </li>
+        <li>
+          craig younkins (security)
+        </li>
+        <li>
+          daniel lin (taiwanese internationalization)
+        </li>
+        <li>
+          denes lengyel (validators, db2 support, dal, custom forms, legacy table support)
+        </li>
+        <li>
+          douglas soares de andrade (2.4 and 2.6 compliance, docstrings)
+        </li>
+        <li>
+          fran boon (authorization and authentication)
+        </li>
+        <li>
+          francisco gama (bug fixing)
+        </li>
+        <li>
+          fred yanowski (xhtml compliance)
+        </li>
+        <li>
+          graham dumpleton (wsgi)
+        </li>
+        <li>
+          gyuris szabolcs (pgp mail)
+        </li>
+        <li>
+          hamdy abdel-badeea (crud)
+        </li>
+        <li>
+          hans donner (gae support, google login, widgets, sphinx documentation)
+        </li>
+        <li>
+          hans murx (database support)
+        </li>
+        <li>
+          hans c. v. stockhausen (openid, google wave)
+        </li>
+        <li>
+          ian reinhart geiser (html helpers)
+        </li>
+        <li>
+          jonathan benn (is_url validator and tests)
+        </li>
+        <li>
+          jonathan lundell (multiple contributions)
+        </li>
+        <li>
+          josh goldfoot (xaml/html sanitizer)
+        </li>
+        <li>
+          jose jachuf (firebird support)
+        </li>
+        <li>
+          <a href="http://twitter.com/josev2010" target="_blank" >
+            josé vicente sousa
+          </a>
+          (logo, stickers, layout, design)
+        </li>
+        <li>
+          keith yang (openid)
+        </li>
+        <li>
+          kyle smith (javascript)
+        </li>
+        <li>
+          <a target="_blank" href="http://blog.donews.com/limodou/">limodou</a>
+          (winservice)
+        </li>
+        <li>
+          <a target="_blank" href="http://www.mlsystems.ch">marcel leuthi</a>
+          (oracle support)
+        </li>
+        <li>
+          marcello della longa (italian translation)
+        </li>
+        <li>
+          mariano reingart (pysoaplib)
+        </li>
+        <li>
+          mark larsen (taskbar widget)
+        </li>
+        <li>
+          mark moore (databases and daemon scripts)
+        </li>
+        <li>
+          markus gritsch (bug fixing)
+        </li>
+        <li>
+          martin hufsky (expressions in dal)
+        </li>
+        <li>
+          mateusz banach (stickers, is_email, is_image, contenttype)
+        </li>
+        <li>
+          michael willis (shell)
+        </li>
+        <li>
+          michele comitini (faceboook)
+        </li>
+        <li>
+          nathan freeze (admin design, is_strong, dal features,
+          <a target="_blank" href="http://web2pyslices.com">
+            web2pyslices.com
+          </a>
+          )
+        </li>
+        <li>
+          niall sweeny (mssql support)
+        </li>
+        <li>
+          niccolo polo (epydoc)
+        </li>
+        <li>
+          nicolas bruxer (memcache support)
+        </li>
+        <li>
+          ondrej such (mssql support)
+        </li>
+        <li>
+          pai (internationalization)
+        </li>
+        <li>
+          <a target="_blank" href="mailto:phyo.arkarlwin@star-nix.net">phyo arkar lwin</a>
+          (web hosting and jython tester)
+        </li>
+        <li>
+          <a target="_blank" href="http://robinbhattacharyya.com/">robin bhattacharyya</a>
+          (google app engine support)
+        </li>
+        <li>
+          ruijun luo (a.k.a. iceberg) (setup_exe.py)
+        </li>
+        <li>
+          scott roberts (testing, book)
+        </li>
+        <li>
+          sergey podlesnyi (oracle and migrations tester)
+        </li>
+        <li>
+          sharriff aina (tester and pyamf integration)
+        </li>
+        <li>
+          sriram durbha (book)
+        </li>
+        <li>
+          sterling hankins (tester, book)
+        </li>
+        <li>
+          stuart rackham (mssql support)
+        </li>
+        <li>
+          telman yusupov (oracle support)
+        </li>
+        <li>
+          thadeus burgess (validators)
+        </li>
+        <li>
+          tim michelsen (sphinx documentation)
+        </li>
+        <li>
+          timothy farrell (python 2.6 compliance, windows support)
+        </li>
+        <li>
+          yair eshel (internationalizaiton)
+        </li>
+        <li>
+          yarko tymciurak (design, sphinx documentation)
+        </li>
+        <li>
+          younghyun jo (internationalization)
+        </li>
+        <li>
+          vidul nikolaev petrov (captcha)
+        </li>
+        <li>
+          zahariash (memory management)
+        </li>
+      </ul>
+    </blockquote>
+    <blockquote>
+      <h3>
+        Third party software included in web2py
+      </h3>
+      <ul>
+        <li>
+          <a target="_blank" href="http://www.python.org">python</a>
+          created by guido van rossum.
+        </li>
+        <li>
+          rocket web server developed by timothy farrell.
+        </li>
+        <li>
+          <a target="_blank" href="http://www.cdolivet.com/index.php?page=editarea">editarea</a>
+          developed by christophe dolivet
+        </li>
+        <li>
+          <a target="_blank" href="http://nicedit.com">nicedit</a>
+          developed by
+          <a target="_blank" href="http://bkirchoff.com">brian kirchoff</a>
+        </li>
+        <li>
+          <a target="_blank" href="http://cheeseshop.python.org/pypi/simplejson">simplejson</a>
+          developed by bob ippolito
+        </li>
+        <li>
+          <a target="_blank" href="http://pyrtf.sourceforge.net/">pyrtf</a>
+          developed by simon cusack and revised by grant edwards
+        </li>
+        <li>
+          <a target="_blank" href="http://www.dalkescientific.com/python/pyrss2gen.html">pyrss2gen</a>
+          developed by dalke scientific software
+        </li>
+        <li>
+          <a target="_blank" href="http://www.feedparser.org/">feedparser</a>
+          developed by mark pilgrim
+        </li>
+        <li>
+          <a target="_blank" href="http://code.google.com/p/python-markdown2/">markdown2</a>
+          developed by trent mick
+        </li>
+        <li>
+          <a target="_blank" href="http://svn.saddi.com/py-lib/trunk/fcgi.py">
+            fcgi.py
+          </a>
+          devloped by allan saddi (for production lighttpd servers)
+        </li>
+        <li>
+          <a target="_blank" href="http://www.danga.com/memcached/">memcache</a>
+          developed by evan martin
+        </li>
+        <li>
+          <a target="_blank" href="http://jquery.com/">jquery</a>
+          developed by john resig
+        </li>
+        <li>
+          a syntax highlighter inspired by the code of
+          <a target="_blank" href="http://www.petersblog.org/node/763">peter wilkinson</a>
+        </li>
+      </ul>
+    </blockquote>
+  </div>
+  
