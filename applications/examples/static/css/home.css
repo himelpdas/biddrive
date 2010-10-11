@@ -21,6 +21,10 @@ h1,h2,h3,h4,h5,h6 {
 	}
 	
 th, th {vertical-align:top}	
+
+li {
+	padding-bottom:5px;
+	}
 	
 a {
 	color: #832D20; //#732F2C;
@@ -36,7 +40,7 @@ a:hover {
 p { 
 	border-bottom: 10px solid transparent; 
 	color:#383838;
-	font-size:15px;
+	font-size:14px;
 	line-height:24px;
 	}	
 
@@ -105,27 +109,27 @@ pre {
 	padding-bottom:100px;
 	}
 	
-.onecolcontent{
+.onecolcontent {
     color:#383838;
-    font-size:15px;
+    font-size:14px;
     line-height:24px;
 	width:850px;
 	margin:0 auto;
 	height:auto;
 	}	
 	
-.contentleft{
+.contentleft {
     color:#383838;
-    font-size:15px;
+    font-size:14px;
     line-height:24px;
 	float:left;
 	width:650px;
 	height:auto;
 	}
 		
-.contentright{
+.contentright {
 	color:#383838;
-    font-size:15px;
+    font-size:14px;
     line-height:24px;
 	float:right;
 	width:300px;
@@ -424,13 +428,14 @@ a.btDownload:hover {
 	-moz-border-radius:5px;
 	//	padding:10px 10px 0 10px;
 	// padding-bottom:0
+	font-size:12px;
 	}
 	
-.boxInfo ul{
+.boxInfo ul {
 	padding-left:15px;
-
+//        list-style-image: url(bullet.gif);
 	}
-
+	
 .boxInfo h5{
 	margin:0;
 	padding:0;
@@ -592,7 +597,7 @@ a.btleftlink:hover{
 	}	
 
 .leftlink{
-	margin:10px auto;
+	margin-left:30px;
 	width:245px;
 	height:30px;
 	background-repeat:no-repeat;
