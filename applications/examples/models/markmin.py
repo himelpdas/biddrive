@@ -11,7 +11,7 @@ markmin_dict = dict(template=lambda \
 def get_content(b=None,\
                 c=request.controller,\
                 f=request.function,\
-                l=T.accepted_language,\
+                l='en',\
                 format='markmin'):
     """Gets and renders the file in
     <app>/private/content/<lang>/<controller>/<function>/<block>.<format> 
@@ -30,8 +30,8 @@ def get_content(b=None,\
         openedfile = openfile()
         
     if format == 'markmin':
-        html = MARKMIN(openedfile.read(),markmin_dict)
+        html = MARKMIN(str(T(openedfile.read())),markmin_dict)
     else:
-        html = openedfile.read()
+        html = str(T(openedfile.read()))
     
     return html  
