@@ -5,6 +5,9 @@ import os
 import sys
 import wsgiref.handlers
 
+path = os.path.dirname(os.path.abspath(__file__))
+os.chdir(path)
+
 try:
     sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
 except ValueError:

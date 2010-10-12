@@ -28,6 +28,9 @@ SOFTCRON = False
 import sys
 import os
 
+path = os.path.dirname(os.path.abspath(__file__))
+os.chdir(path)
+
 try:
     sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
 except ValueError:
