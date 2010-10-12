@@ -664,7 +664,8 @@ class HttpServer(object):
             global web2py_path
             path = os.path.normpath(path)
             web2py_path = path
-            os.chdir(web2py_path)
+            # os.chdir(web2py_path)
+
             try:
                 sys.path.remove(path)
             except ValueError:
