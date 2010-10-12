@@ -165,7 +165,7 @@ class web2pyDialog(object):
         self.options = options
         self.menu = Tkinter.Menu(self.root)
         servermenu = Tkinter.Menu(self.menu, tearoff=0)
-        httplog = os.path.join(os.getcwd(), 'httpserver.log')
+        httplog = os.path.join(self.options.folder, 'httpserver.log')
 
         # Building the Menu
         item = lambda: try_start_browser(httplog)
@@ -705,7 +705,7 @@ def console():
         if not os.path.exists(path):
             os.mkdir(path)
 
-    sys.path.append(os.path.join(os.getcwd(),'site-packages'))
+    sys.path.append(os.path.join(options.folder,'site-packages'))
 
     # If we have the applications package or if we should upgrade
     if not os.path.exists('applications/__init__.py'):
@@ -769,7 +769,7 @@ def start(cron = True):
     if options.extcron:
         print 'Starting extcron...'
         settings.web2py_crontype = 'external'
-        extcron = newcron.extcron(os.getcwd())
+        extcron = newcron.extcron(options.folder)
         extcron.start()
         extcron.join()
         return
@@ -779,7 +779,7 @@ def start(cron = True):
     elif cron and not options.nocron:
         print 'Starting hardcron...'
         settings.web2py_crontype = 'hard'
-        newcron.hardcron(os.getcwd()).start()
+        newcron.hardcron(options.folder).start()
 
     # ## if -W install/start/stop web2py as service
     if options.winservice:
