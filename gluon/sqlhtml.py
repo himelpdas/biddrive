@@ -997,7 +997,7 @@ class SQLFORM(FORM):
                     self.custom.widget[ fieldname ] = widget
             return ret
 
-        if record_id and record_id != self.record_id:
+        if record_id and str(record_id) != str(self.record_id):
             raise SyntaxError, 'user is tampering with form\'s record_id: ' \
                                '%s != %s' % (record_id, self.record_id)
 
