@@ -31,9 +31,12 @@ import string
 #  calling script has inserted path to script directory into sys.path
 #  web2py_path (path to applications/, site-packages/ etc) defaults to that directory
 #  set sys.path to ("", web2py_path/site-packages, web2py_path, ...)
-#  
-web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-web2py_path = os.environ.get('web2py_path', web2py_path)
+# 
+# this is wrong:
+# web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# because we do not want the path to this file which may be Library.zip
+#
+web2py_path = os.environ.get('web2py_path', os.getcwd())
 
 try:
     sys.path.remove(os.path.join(web2py_path, 'site-packages'))
@@ -664,7 +667,7 @@ class HttpServer(object):
             global web2py_path
             path = os.path.normpath(path)
             web2py_path = path
-            # os.chdir(web2py_path)
+            os.chdir(web2py_path)
 
             try:
                 sys.path.remove(path)
