@@ -88,3 +88,7 @@ elif session.authorized and \
     redirect(URL(request.application, 'default', 'site'))
 
 
+if request.controller=='appadmin' and DEMO_MODE:
+    session.flash = 'Appadmin disabled in demo mode'
+    redirect(URL('default','sites'))
+

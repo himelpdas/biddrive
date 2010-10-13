@@ -11,10 +11,6 @@ import copy
 import gluon.contenttype
 import gluon.fileutils
 
-if DEMO_MODE:
-    response.flash = T('disabled in demo mode')
-    redirect(URL('default','site'))
-
 # ## critical --- make a copy of the environment
 
 global_env = copy.copy(globals())
