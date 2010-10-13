@@ -887,3 +887,8 @@ recalled
 - new layout for examples, thanks Bruno and Martin
 - admin allow ``DEMO_MODE=True`` and ``FILTER_APPS=['welcome']``
 - fixed a possible problem with CRON and paths
+
+
+## 1.87.3
+- fixed a major bug introduced in 1.87.1 that prevents appadmin from working for new apps created with 1.87.1-2.
+- upgraded to clockpick 1.28, thanks villas
