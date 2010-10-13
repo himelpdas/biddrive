@@ -1001,7 +1001,7 @@ class SQLFORM(FORM):
             raise SyntaxError, 'user is tampering with form\'s record_id: ' \
                                '%s != %s' % (record_id, self.record_id)
 
-        if requested_delete:
+        if requested_delete and self.custom.deletable:
             if dbio:
                 if keyed:
                     qry = reduce(lambda x,y: x & y,

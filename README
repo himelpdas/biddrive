@@ -883,7 +883,7 @@
 - Error reporting on save, thanks Mariano
 recalled
 
-## 1.87.0
+## 1.87.1-2
 - new layout for examples, thanks Bruno and Martin
 - admin allow ``DEMO_MODE=True`` and ``FILTER_APPS=['welcome']``
 - fixed a possible problem with CRON and paths
