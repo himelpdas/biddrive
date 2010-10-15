@@ -185,7 +185,7 @@ def parsecronline(line):
             task[id] = []
             vals = s.split(',')
             for val in vals:
-                if '-' in val and '/' not in val:
+                if val != '-1' and '-' in val and '/' not in val:
                     val = '%s/1' % val
                 if '/' in val:
                     task[id] += rangetolist(val, id)
