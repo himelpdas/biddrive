@@ -535,13 +535,15 @@ def bar_escape(item):
     return str(item).replace('|', '||')
 
 def bar_encode(items):
-    return '|%s|' % '|'.join(bar_escape(item) for item in items if str(item).strip())
+    return '|%s|' % '|'.join(bar_escape(item) for item in items \
+                                 if str(item).strip())
 
 def bar_decode_integer(value):
     return [int(x) for x in value.split('|') if x.strip()]
 
 def bar_decode_string(value):
-    return [x.replace('||','|') for x in string_unpack.split(value) if x.strip()]
+    return [x.replace('||','|') for x in string_unpack.split(value[1:-1]) \
+                if x.strip()]
 
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if type(obj) in (types.LambdaType, types.FunctionType):
