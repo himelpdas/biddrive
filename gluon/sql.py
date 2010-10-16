@@ -508,8 +508,8 @@ def sqlhtml_validators(field):
                                            referenced._format)
             if field.unique:
                 requires._and = validators.IS_NOT_IN_DB(field._db,field)
-            # if not field.notnull:
-            #     return IS_EMPTY_OR(requires)
+            if field._tablename == field_type[10:]:
+                return IS_EMPTY_OR(requires)
             return requires
     elif field._db and field_type.startswith('list:reference') and \
             field_type.find('.')<0 and \
