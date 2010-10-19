@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*- 
 
-if DEMO_MODE:
-    response.flash = T('disabled in demo mode')
-    redirect(URL('default','site'))
+import os, uuid, re, pickle
+from gluon.admin import app_create
 
 if not session.app:
+    myuuid='sha512:'+str(uuid.uuid4())
     session.app={
         'params':[('name','app'),
                   ('title','My First App'),
                   ('subtitle','it rocks'),
-                  ('author','you'),
+                  ('author_email','you'),
                   ('author','you@example.com'),
                   ('email_server','localhost'),
                   ('email_sender','you@example.com'),
                   ('email_login',''),
                   ('login_method','local'),
                   ('login_config',''),
-                  ('layout_theme','')],
+                  ('layout_theme','one')],
         'tables':['auth_user'],
         'table_auth_user':['username','first_name','last_name','email','password'],
-        'pages':['index'],
-        'page_index':['# welcome to my first app']
+        'pages':['index','error'],
+        'page_index':'# Welcome to my first app',
+        'page_error':'# Error: the document does not exist',
         }
 
 THEMES=['one','two','three']
@@ -31,21 +32,19 @@ def listify(x):
     return x
 
 def clean(name):
-    import re
     return re.sub('\W+','_',name.strip().lower())
 
 def index():
     redirect(URL('step1'))
 
 def step1():    
-    import os
     response.view='wizard/step.html'
     apps=os.listdir(os.path.join(request.folder,'..'))
     params = dict(session.app['params'])
     form=SQLFORM.factory(Field('name',
                                requires=(IS_ALPHANUMERIC(),
                                          IS_EXPR('not value in %s'%apps,
-                                                 error_message='exists')),
+                                                 error_message='app already exists')),
                                default=params.get('name',None)),
                          Field('title',default=params.get('title',None)),
                          Field('subtitle',default=params.get('subtitle',None)),
@@ -54,7 +53,7 @@ def step1():
                          Field('email_server',default=params.get('email_server',None)),
                          Field('email_sender',default=params.get('email_sender',None)),
                          Field('email_login',default=params.get('email_login',None)),
-                         Field('login_method',requires=IS_IN_SET(('local','cas','rpx')),
+                         Field('login_method',requires=IS_IN_SET(('local','janrain')),
                                default=params.get('login_method','local')),
                          Field('login_config',default=params.get('login_config',None)),
                          Field('layout_theme',requires=IS_IN_SET(THEMES),
@@ -79,7 +78,7 @@ def step2():
                     name = table+'_'+key
                     if not name in session.app['pages']:
                         session.app['pages'].append(name)
-                        session.app['page_name']=['# %s %s' % (key,table)]
+                        session.app['page_name']='# %s %s' % (key,table)
         if session.app['tables']:
             redirect(URL('step3',args=0))
         else:
@@ -97,7 +96,7 @@ def step3():
     if form.accepts(request.vars) and form.vars.field_names:        
         fields=listify(form.vars.field_names)
         if table=='auth_user':
-            for field in ['first_name','last_name','email','password']:
+            for field in ['first_name','last_name','username','email','password']:
                 if not field in fields:
                     fields.append(field)
         session.app['table_%s'%table]=[t.strip().lower()
@@ -130,13 +129,12 @@ def step5():
     if n>=m: redirect(URL('step4'))
     page=session.app['pages'][n]
     markmin_url='http://web2py.com/examples/static/markmin.html'
-    form=SQLFORM.factory(Field('objects','list:string',
+    form=SQLFORM.factory(Field('content','text',
                                default=session.app.get('page_%s'%page,[]),
-                               comment=A('use markmin',_href=markmin_url,_target='_blank')))
-    if form.accepts(request.vars) and form.vars.objects:
-        session.app['page_%s' % page]=[t.strip().lower()
-                                       for t in listify(form.vars.objects)
-                                       if t.strip()] 
+                               comment=A('use markmin',_href=markmin_url,_target='_blank')),
+                         formstyle='table2cols')
+    if form.accepts(request.vars):
+        session.app['page_%s' % page]=form.vars.content
         if n<m-1:
             redirect(URL('step5',args=n+1))
         else:
@@ -145,16 +143,20 @@ def step5():
 
 def step6():
     response.view='wizard/step.html'
-    form=FORM(INPUT(_type='submit',_value='generate!'))
+    params = dict(session.app['params'])
+    app = params['name']
+    form=FORM(DIV(INPUT(_type='submit',_value='generate app "%s" now!' % app),
+                  _style="padding:30px"))
     if form.accepts(request.vars):
         redirect(URL('create'))
     return dict(step='6',form=form)
 
-def make_table(file,table,fields):
-    file.write('\n'+'#'*40+'\n')
-    file.write("db.define_table('%s',\n" % table)
-    file.write("    Field('id','id',\n")
-    file.write("          represent=lambda id:A('view',_href=URL('%s_read',args=id))),\n"%table)
+def make_table(table,fields):
+    s=''
+    s+='\n'+'#'*40+'\n'
+    s+="db.define_table('%s',\n" % table
+    s+="    Field('id','id',\n"
+    s+="          represent=lambda id:A('view',_href=URL('%s_read',args=id))),\n"%table
     first_field=None
     for field in fields:
         items=[x.lower() for x in field.split()]
@@ -180,80 +182,150 @@ def make_table(file,table,fields):
             if key in session.app['tables']:
                 type='reference %s' % key
                 break
-        file.write("    Field('%s', type='%s'" % (name, type))
+        s+="    Field('%s', type='%s'" % (name, type)
         if 'notnull' in has:
-            file.write(', notnull=True')
+            s+=', notnull=True'
         if 'unique' in has:
-            file.write(', unique=True')
+            s+=', unique=True'        
         if type=='boolean' and 'true' in has:
-            file.write(",\n          default=True")
+            s+=",\n          default=True"
         if 'wiki' in has:
-            file.write(",\n          represent=lambda x: MARKMIN(x)")
+            s+=",\n          represent=lambda x: MARKMIN(x)"
         elif 'html' in has:
-            file.write(",\n          represent=lambda x: XML(x,sanitize=True)")
+            s+=",\n          represent=lambda x: XML(x,sanitize=True)"
         if 'hidden' in has:
-            file.write(",\n          writable=False, readable=False")
+            s+=",\n          writable=False, readable=False"
         elif 'readonly' in has:
-            file.write(",\n          writable=False")
-        file.write(",\n          label=T('%s')),\n" % \
-                       ' '.join(x.capitalize() for x in name.split('_')))
+            s+=",\n          writable=False"
+        s+=",\n          label=T('%s')),\n" % \
+            ' '.join(x.capitalize() for x in name.split('_'))
     if not table=='auth_user' and 'auth_user' in session.app['tables']:
-        file.write("    Field('created_on','datetime',default=request.now,\n")
-        file.write("          writable=False,readable=False),\n")
-        file.write("    Field('created_by',db.auth_user,default=auth.user_id,\n")
-        file.write("          writable=False,readable=False),\n")
-        file.write("    Field('modified_on','datetime',default=request.now,\n")
-        file.write("          writable=False,readable=False,update=request.now),\n")
-        file.write("    Field('modified_by',db.auth_user,default=auth.user_id,\n")
-        file.write("          writable=False,readable=False,update=auth.user_id),\n")
-    file.write("    format='%("+first_field+")s',\n")
-    file.write("    migrate=settings.migrate)\n\n")
+        s+="    Field('created_on','datetime',default=request.now,\n"
+        s+="          writable=False,readable=False),\n"
+        s+="    Field('created_by',db.auth_user,default=auth.user_id,\n"
+        s+="          writable=False,readable=False),\n"
+        s+="    Field('modified_on','datetime',default=request.now,\n"
+        s+="          writable=False,readable=False,update=request.now),\n"
+        s+="    Field('modified_by',db.auth_user,default=auth.user_id,\n"
+        s+="          writable=False,readable=False,update=auth.user_id),\n"
+    elif table=='auth_user':
+        s+="    Field('registration_key',default='',\n"
+        s+="          writable=False,readable=False),\n"
+        s+="    Field('reset_password_key',default='',\n"
+        s+="          writable=False,readable=False),\n"
+        s+="    Field('registration_id',default='',\n"
+        s+="          writable=False,readable=False),\n"
+    s+="    format='%("+first_field+")s',\n"
+    s+="    migrate=settings.migrate)\n\n"
+    if table=='auth_user':
+        s+="""
+db.auth_user.first_name.requires = IS_NOT_EMPTY(error_message=auth.messages.is_empty)
+db.auth_user.last_name.requires = IS_NOT_EMPTY(error_message=auth.messages.is_empty)
+db.auth_user.requires = CRYPT(key=auth.settings.hmac_key)
+db.auth_user.username.requires = IS_NOT_IN_DB(db, db.auth_user.username)
+db.auth_user.registration_id.requires = IS_NOT_IN_DB(db, db.auth_user.registration_id)
+db.auth_user.email.requires = IS_EMAIL(error_message=auth.messages.invalid_email)
 
-def make_page(file,page,contents):
-    file.write("def %s():\n" % page)
+"""
+    return s
+
+
+def fix_db(filename):
+    params=dict(session.app['params'])
+    content=open(filename,'rb').read()
+    auth_user = make_table('auth_user',session.app['table_auth_user'])
+    content=content.replace('auth.define_tables()',auth_user+'auth.define_tables(migrate=settings.migrate)')
+    content+="""
+mail.settings.server = settings.email_server
+mail.settings.sender = settings.email_sender
+mail.settings.login = settings.email_login
+"""
+    if params['login_method']=='janrain':
+        content+="""
+from gluon.contrib.login_methods.rpx_account import RPXAccount
+auth.settings.actions_disabled=['register','change_password','request_reset_password']
+auth.settings.login_form = RPXAccount(request,
+    api_key = settings.login_config.split(':')[-1],
+    domain = settings.login_config.split(':')[0],
+    url = "http://%s/%s/default/user/login" % (request.env.http_host,request.application))
+"""
+    open(filename,'wb').write(content)
+
+def make_menu(pages):
+    s="""
+response.title = settings.title
+response.subtitle = settings.subtitle
+response.meta.author = settings.author
+response.meta.keywords = ""
+response.meta.description = ""
+response.menu = [
+"""
+    for page in pages:
+        if not page.endswith('_read') and \
+                not page.endswith('_update') and \
+                not page.startswith('_') and not page.startswith('error'):
+            s+="    (T('%s'),URL('%s').xml()==URL().xml(),URL('%s'),[]),\n" % \
+                (' '.join(x.capitalize() for x in page.split('_')),page,page)
+    s+=']'
+    return s
+
+def make_page(page,contents):
+    s="def %s():\n" % page
     items=page.rsplit('_',1)
     if items[0] in session.app['tables'] and len(items)==2:
         t=items[0]
         if items[1]=='read':
-            file.write("    record = db.%s(request.args(0)) or redirect(URL('error'))\n" % t)
-            file.write("    form=crud.read(db.%s,record)\n" % t)
-            file.write("    return dict(form=form)\n\n")
+            s+="    record = db.%s(request.args(0)) or redirect(URL('error'))\n" % t
+            s+="    form=crud.read(db.%s,record)\n" % t
+            s+="    return dict(form=form)\n\n"
         elif items[1]=='update':
-            file.write("    record = db.%s(request.args(0)) or redirect(URL('error'))\n" % t)
-            file.write("    form=crud.update(db.%s,record,next='%s_read/[id]')\n" % (t,t))
-            file.write("    return dict(form=form)\n\n")
+            s+="    record = db.%s(request.args(0)) or redirect(URL('error'))\n" % t
+            s+="    form=crud.update(db.%s,record,next='%s_read/[id]')\n" % (t,t)
+            s+="    return dict(form=form)\n\n"
         elif items[1]=='create':
-            file.write("    form=crud.create(db.%s,next='%s_read/[id]')\n" % (t,t))
-            file.write("    return dict(form=form)\n\n")
+            s+="    form=crud.create(db.%s,next='%s_read/[id]')\n" % (t,t)
+            s+="    return dict(form=form)\n\n"
         elif items[1]=='search':
-            file.write("    form, rows=crud.search(db.%s)\n" % t)
-            file.write("    return dict(form=form, rows=rows)\n\n")
+            s+="    form, rows=crud.search(db.%s)\n" % t
+            s+="    return dict(form=form, rows=rows)\n\n"
         else:
             t=None
     else:
         t=None
     if not t:
-        file.write("    return dict()\n\n")
+        s+="    return dict()\n\n"
+    return s
 
-def make_view(file,page,contents):
-    file.write("{{extend 'layout.html'}}\n\n")
-    file.write(str(MARKMIN('\n'.join(contents))))
+def make_view(page,contents):
+    s="{{extend 'layout.html'}}\n\n"
+    s+=str(MARKMIN(contents))
     items=page.rsplit('_',1)
     if items[0] in session.app['tables'] and len(items)==2:
         t=items[0]
         if items[1] in ('read', 'update' ,'create'):
-            file.write('\n{{=form}}\n')
+            s+='\n{{=form}}\n'
         elif items[1]=='search':
-            file.write('\n{{=form}}\n')
-            file.write('\n{{=rows}}\n')
+            s+='\n{{=form}}\n'
+            s+='\n{{=rows}}\n'
+    return s
+
 
 def create():
-    import os
-    from gluon.admin import app_create
+    if DEMO_MODE:
+        session.flash = T('disabled in demo mode')
+        redirect(URL('default','step6'))
     params = dict(session.app['params'])
     app = params['name']
     try: app_create(app,request)
     except: pass
+
+    ### save metadata in newapp/wizard.metadata
+    meta = os.path.join(request.folder,'..',app,'wizard.metadata')
+    file=open(meta,'wb')
+    pickle.dump(session.app,file)
+    file.close()
+
+    ### write configuration file into newapp/models/0.py
     model = os.path.join(request.folder,'..',app,'models','0.py')
     file = open(model,'wb')
     file.write("from gluon.storage import Storage\n")
@@ -261,32 +333,47 @@ def create():
     file.write("settings.migrate = True\n")
     for key,value in session.app['params']:
         file.write("settings.%s = '%s'\n" % (key,value))
-    file.write('response.title = settings.title\n')
-    file.write('response.subtitle = settings.subtitle\n')
     file.close()
+
+    ### write configuration file into newapp/models/menu.py
+    model = os.path.join(request.folder,'..',app,'models','menu.py')
+    file = open(model,'wb')
+    file.write(make_menu(session.app['pages']))
+    file.close()
+
+    ### customize the auth_user table
+    model = os.path.join(request.folder,'..',app,'models','db.py')
+    fix_db(model)
+
+    ### create newapp/models/db_wizard.py
     model = os.path.join(request.folder,'..',app,'models','db_wizard.py')
     file = open(model,'wb')
     for table in session.app['tables']:
         if table=='auth_user': continue
-        make_table(file,table,session.app['table_'+table])    
+        file.write(make_table(table,session.app['table_'+table]))
     file.close()
+
+    ### create newapp/controllers/default.py
     controller = os.path.join(request.folder,'..',app,'controllers','default.py')
     file = open(controller,'wb')
     file.write("""# -*- coding: utf-8 -*- 
+### required - do no delete
 def user(): return dict(form=auth())
 def download(): return response.download(request,db)
 def call():
     session.forget()
     return service()
-
+### end requires
 """)
     for page in session.app['pages']:
-        make_page(file,page,session.app.get('page_'+page,[]))
+        file.write(make_page(page,session.app.get('page_'+page,'')))
     file.close()
+
+    ### create newapp/views/default/*.html
     for page in session.app['pages']:
         view = os.path.join(request.folder,'..',app,'views','default',page+'.html')
         file = open(view,'wb')
-        make_view(file,page,session.app.get('page_'+page,[]))
+        file.write(make_view(page,session.app.get('page_'+page,'')))
         file.close()
     redirect(URL(params['name'],'default','index'))
 

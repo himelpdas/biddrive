@@ -1,13 +1,31 @@
 {{extend 'layout.html'}}
-
+<style>
+  #wizard_form ul {
+  list-style: none;
+  }
+  #wizard_form li, #wizard_form tr, #wizard_form td {
+  padding: 2px;
+  border: 0px;
+  }
+  #wizard_form label {
+  font-weight: bold;
+  }
+  #wizard_form table {
+  border-spacing: 0px;
+  }
+  #wizard_form input[type=text] {
+  width: 300px;  
+  }
+</style>
 <table>
   <tr>
-    <td>
+    <td width="200px">
       <h2><a href="{{=URL('step1')}}">Params</a></h2>
       <ul>
-	{{for key,value in session.app['params']:}}
+	{{for key,value in session.app['params'][:2]:}}
 	<li><b>{{=key}}:</b> {{=value}}</li>
 	{{pass}}
+	<li>...</li>
       </ul>
       <h2><a href="{{=URL('step2')}}">Tables</a></h2>
       <ul>
@@ -23,7 +41,7 @@
       </ul>
       <h2><a href="{{=URL('step6')}}">Generate</a></h2>
     </td>
-    <td>
+    <td id="wizard_form">
       <h2>Step {{=step}}</h2>
       {{=form}}
     </td>
