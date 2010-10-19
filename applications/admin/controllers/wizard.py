@@ -3,7 +3,9 @@
 import os, uuid, re, pickle
 from gluon.admin import app_create
 
-if not session.app:
+THEMES=['one','two','three']
+
+def reset(session):
     myuuid='sha512:'+str(uuid.uuid4())
     session.app={
         'params':[('name','app'),
@@ -24,7 +26,7 @@ if not session.app:
         'page_error':'# Error: the document does not exist',
         }
 
-THEMES=['one','two','three']
+if not session.app: reset(session)
 
 def listify(x):
     if not isinstance(x,(list,tuple)):
@@ -35,6 +37,7 @@ def clean(name):
     return re.sub('\W+','_',name.strip().lower())
 
 def index():
+    reset(session)
     redirect(URL('step1'))
 
 def step1():    
@@ -43,7 +46,7 @@ def step1():
     params = dict(session.app['params'])
     form=SQLFORM.factory(Field('name',
                                requires=(IS_ALPHANUMERIC(),
-                                         IS_EXPR('not value in %s'%apps,
+                                         IS_EXPR('not value in %s' % apps,
                                                  error_message='app already exists')),
                                default=params.get('name',None)),
                          Field('title',default=params.get('title',None)),
@@ -73,12 +76,14 @@ def step2():
                                for t in listify(form.vars.table_names)
                                if t.strip()]
         for table in session.app['tables']:
+            if not 'table_'+table in session.app:
+                session.app['table_'+table]=['name']
             if not table=='auth_user':
                 for key in ['create','read','update','select','search']:
                     name = table+'_'+key
                     if not name in session.app['pages']:
                         session.app['pages'].append(name)
-                        session.app['page_name']='# %s %s' % (key,table)
+                        session.app['page_'+name]='# %s %s' % (key,table)
         if session.app['tables']:
             redirect(URL('step3',args=0))
         else:
@@ -92,14 +97,14 @@ def step3():
     if n>=m: redirect(URL('step2'))
     table=session.app['tables'][n]
     form=SQLFORM.factory(Field('field_names','list:string',
-                               default=session.app.get('table_%s'%table,[])))
+                               default=session.app.get('table_'+table,[])))
     if form.accepts(request.vars) and form.vars.field_names:        
         fields=listify(form.vars.field_names)
         if table=='auth_user':
             for field in ['first_name','last_name','username','email','password']:
                 if not field in fields:
                     fields.append(field)
-        session.app['table_%s'%table]=[t.strip().lower()
+        session.app['table_'+table]=[t.strip().lower()
                                        for t in listify(form.vars.field_names)
                                        if t.strip()]
         if n<m-1:
@@ -130,11 +135,11 @@ def step5():
     page=session.app['pages'][n]
     markmin_url='http://web2py.com/examples/static/markmin.html'
     form=SQLFORM.factory(Field('content','text',
-                               default=session.app.get('page_%s'%page,[]),
+                               default=session.app.get('page_'+page,[]),
                                comment=A('use markmin',_href=markmin_url,_target='_blank')),
                          formstyle='table2cols')
     if form.accepts(request.vars):
-        session.app['page_%s' % page]=form.vars.content
+        session.app['page_'+page]=form.vars.content
         if n<m-1:
             redirect(URL('step5',args=n+1))
         else:
@@ -157,7 +162,7 @@ def make_table(table,fields):
     s+="db.define_table('%s',\n" % table
     s+="    Field('id','id',\n"
     s+="          represent=lambda id:A('view',_href=URL('%s_read',args=id))),\n"%table
-    first_field=None
+    first_field='id'
     for field in fields:
         items=[x.lower() for x in field.split()]
         has={}
