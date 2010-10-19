@@ -29,6 +29,17 @@ import cStringIO
 
 table_field = re.compile('[\w_]+\.[\w_]+')
 
+def safe_int(x):    
+    try:
+        return int(x)
+    except ValueError:
+        return 0
+
+def safe_float(x):
+    try:
+        return float(x)
+    except ValueError:
+        return 0
 
 class FormWidget(object):
     """
@@ -1065,16 +1076,22 @@ class SQLFORM(FORM):
             elif field.default == None and field.type!='blob':
                 self.errors[fieldname] = 'no data'
                 return False
-
-            if field.type == 'integer':
-                if fields[fieldname] != None:
-                    fields[fieldname] = int(fields[fieldname])
+            value = fields[fieldname]
+            if field.type == 'list:string':
+                if not isinstance(value,list):
+                    fields[fieldname] = value and [value] or []
+            elif str(field.type).startswith('list:'):
+                if not isinstance(value,list):
+                    fields[fieldname] = [safe_int(x) for x in (value and [value] or [])]
+            elif field.type == 'integer':
+                if value != None:
+                    fields[fieldname] = safe_int(value)
             elif str(field.type).startswith('reference'):
-                if fields[fieldname] != None and isinstance(self.table,Table) and not keyed:
-                    fields[fieldname] = int(fields[fieldname])
+                if value != None and isinstance(self.table,Table) and not keyed:
+                    fields[fieldname] = safe_int(value)
             elif field.type == 'double':
-                if fields[fieldname] != None:
-                    fields[fieldname] = float(fields[fieldname])
+                if value != None:
+                    fields[fieldname] = safe_float(value)
 
         for fieldname in self.vars:
             if fieldname != 'id' and fieldname in self.table.fields\

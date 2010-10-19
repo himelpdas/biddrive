@@ -548,7 +548,7 @@ def bar_decode_string(value):
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if type(obj) in (types.LambdaType, types.FunctionType):
         obj = obj()
-    if fieldtype.startswith('list:'):
+    if str(fieldtype).startswith('list:'):
         if not obj:
             obj=[]
         if not isinstance(obj,(list,tuple)):
