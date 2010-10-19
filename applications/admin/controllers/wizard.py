@@ -74,7 +74,7 @@ def step2():
                                if t.strip()]
         for table in session.app['tables']:
             if not table=='auth_user':
-                for key in ['create','read','update','search']:
+                for key in ['create','read','update','select','search']:
                     name = table+'_'+key
                     if not name in session.app['pages']:
                         session.app['pages'].append(name)
@@ -145,10 +145,10 @@ def step6():
     response.view='wizard/step.html'
     params = dict(session.app['params'])
     app = params['name']
-    form=FORM(DIV(INPUT(_type='submit',_value='generate app "%s" now!' % app),
-                  _style="padding:30px"))
-    if form.accepts(request.vars):
-        redirect(URL('create'))
+    url = URL('create')
+    form=DIV(TAG.button('generate app "%s" now!' % app,
+                        _onclick="window.open('%s','_blank',status='yes')" % url),
+             _style="padding:30px")
     return dict(step='6',form=form)
 
 def make_table(table,fields):
@@ -163,10 +163,10 @@ def make_table(table,fields):
         has={}
         for key in ['notnull','unique','integer','double','boolean','float','boolean',
                     'date','time','datetime','text','wiki','html','file','upload','true',
-                    'hidden','readonly']:
-            if key in items:
+                    'hidden','readonly','multiple']:
+            if key in items[1:]:
                 has[key]=True
-                items = [x for x in items if not x==key]                    
+                items = [x for x in items if not x==key]
         name = '_'.join(items)
         if not first_field: first_field=name
         type='string'
@@ -179,9 +179,16 @@ def make_table(table,fields):
         if 'file' in has:
             type='upload'
         for key in items:
-            if key in session.app['tables']:
+            if key in session.app['tables'] and not 'multiple' in has:
                 type='reference %s' % key
                 break
+            if key in session.app['tables'] and 'multiple' in has:
+                type='list:reference %s' % key
+                break
+        if type=='string' and 'multiple' in has:
+            type='list:string'
+        if type=='integer' and 'multiple' in has:
+            type='list:integer'
         s+="    Field('%s', type='%s'" % (name, type)
         if 'notnull' in has:
             s+=', notnull=True'
@@ -233,8 +240,9 @@ db.auth_user.email.requires = IS_EMAIL(error_message=auth.messages.invalid_email
 def fix_db(filename):
     params=dict(session.app['params'])
     content=open(filename,'rb').read()
-    auth_user = make_table('auth_user',session.app['table_auth_user'])
-    content=content.replace('auth.define_tables()',auth_user+'auth.define_tables(migrate=settings.migrate)')
+    if 'auth_user' in session.app['tables']:
+        auth_user = make_table('auth_user',session.app['table_auth_user'])
+        content=content.replace('auth.define_tables()',auth_user+'auth.define_tables(migrate=settings.migrate)')
     content+="""
 mail.settings.server = settings.email_server
 mail.settings.sender = settings.email_sender
@@ -263,6 +271,7 @@ response.menu = [
     for page in pages:
         if not page.endswith('_read') and \
                 not page.endswith('_update') and \
+                not page.endswith('_search') and \
                 not page.startswith('_') and not page.startswith('error'):
             s+="    (T('%s'),URL('%s').xml()==URL().xml(),URL('%s'),[]),\n" % \
                 (' '.join(x.capitalize() for x in page.split('_')),page,page)
@@ -270,7 +279,10 @@ response.menu = [
     return s
 
 def make_page(page,contents):
-    s="def %s():\n" % page
+    if page in ('index','error'):
+        s="def %s():\n" % page
+    else:
+        s="@auth.requires_login()\ndef %s():\n" % page
     items=page.rsplit('_',1)
     if items[0] in session.app['tables'] and len(items)==2:
         t=items[0]
@@ -285,10 +297,12 @@ def make_page(page,contents):
         elif items[1]=='create':
             s+="    form=crud.create(db.%s,next='%s_read/[id]')\n" % (t,t)
             s+="    return dict(form=form)\n\n"
+        elif items[1]=='select':
+            s+="    rows=crud.select(db.%s)\n" % t
+            s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
             s+="    form, rows=crud.search(db.%s)\n" % t
             s+="    return dict(form=form, rows=rows)\n\n"
-        else:
             t=None
     else:
         t=None
@@ -302,13 +316,24 @@ def make_view(page,contents):
     items=page.rsplit('_',1)
     if items[0] in session.app['tables'] and len(items)==2:
         t=items[0]
-        if items[1] in ('read', 'update' ,'create'):
+        if items[1]=='read':
+            s+="\n{{=A(T('edit %s'),_href=URL('%s_update',args=request.args(0)))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
+        elif items[1]=='create':
+            s+="\n{{=A(T('select %s'),_href=URL('%s_select'))}}\n<br/>\n"%(t,t)
+            s+='\n{{=form}}\n'
+        elif items[1]=='update':
+            s+="\n{{=A(T('show %s'),_href=URL('%s_read',args=request.args(0)))}}\n<br/>\n"%(t,t)
+            s+='\n{{=form}}\n'
+        elif items[1]=='select':
+            s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
+            s+="\n{{=A(T('search %s'),_href=URL('%s_search'))}}\n<br/>\n"%(t,t)
+            s+="\n{{=rows or TAG.blockquote(T('No Data'))}}\n"
         elif items[1]=='search':
+            s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
-            s+='\n{{=rows}}\n'
+            s+="\n{{=rows or TAG.blockquote(T('No Data'))}}\n"
     return s
-
 
 def create():
     if DEMO_MODE:
@@ -375,5 +400,5 @@ def call():
         file = open(view,'wb')
         file.write(make_view(page,session.app.get('page_'+page,'')))
         file.close()
-    redirect(URL(params['name'],'default','index'))
+    redirect(URL(app,'default','index'))
 

@@ -44,6 +44,29 @@
     <td id="wizard_form">
       <h2>Step {{=step}}</h2>
       {{=form}}
+      <h2>Info</h2>
+      {{if request.function=='step1':}}
+      <ul>
+	<li>This Wizard will help you build a new web2py app.</li>	
+	<li>You can create an app with a name that already exists</li>
+	<li>If you do not have an email server set email server to "logging"</li>
+	<li>If you want to use jarnain login: 1) get addoung with "janrain.com"; 2) register you hostname, domain, and obtain an api key; 3) set login config to "domain:api_key"</li>
+      </ul>
+      {{elif request.function=='step2':}}
+      List the names of table that you need. If you need authentication leave the table "auth_user" in the list. Press enter to create a new input row. Do not worry about empty rows. You will be able to add fields to your tables later.
+      {{elif request.function=='step3':}}
+      List the fields for this table (do not include an id field, it is automatic). The first field will be used to represent records. You can use special attributes like "integer", "boolean", "float", "file", "date", "time", "datetime" to specify the fields type. You can also use "multiple", "notnull" and "unique" to add attributes. To create a reference just add the name of the table you want to reference.
+      Table "auth_user" is a bit special and it must have a "username", "first_name", "last_name", "email" and "password". Do not add any attributes to these fields, they will be handled automatically.
+      {{elif request.function=='step4':}}
+      List the names of the pages you want to expose.
+      Some are here automatically because they expose Create/Read/Update/Delete for the tables you have created. If a page has a name starting in underscore it will not appear in menus. All the other pages will apper in menu in the order listed. You can change this later.
+      You should have page "index", the starting point of your app, and page "error", where web2py will redirect to in case of error.
+      {{elif request.function=='step5':}}
+      Use the markdown syntax to add text to your pages.
+      {{elif request.function=='step6':}}
+      Almost done. Click on the button above to create your new app.
+      Once done you will be able to edit it as any normal web2py app.
+      {{pass}}
     </td>
   </tr>
 </table>
