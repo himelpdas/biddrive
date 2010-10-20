@@ -1347,10 +1347,10 @@ class SQLDB(dict):
             if self._dbname == 'postgres':
                 sequence_name = '%s_id_Seq' % tablename
 
-        if hasattr(self,tablename) or tablename.startswith('_'):
-            raise SyntaxError, 'invalid table name: %s' % tablename
-        if tablename in self.tables:
+        if tablename in self.tables or hasattr(self,tablename):
             raise SyntaxError, 'table already defined: %s' % tablename
+        if tablename.startswith('_'):
+            raise SyntaxError, 'invalid table name: %s' % tablename
         if self.check_reserved:
             self.check_reserved_keyword(tablename)
 
