@@ -2,7 +2,10 @@
 <h1>Error ticket for "{{=app}}"</h1>
 <h2>Ticket {{=ticket}}</h2>
 <h3>{{=output}}</h3>
-<br/><br/>
+<br />
+<h3>{{=T('Version')}}</h3>
+web2py {{=myversion}}
+<br /><br />
 <h3>Error traceback</h3>
 {{=traceback}}
 
@@ -64,7 +67,7 @@
 {{pass}}    
 {{pass}}
 
-<br/><br/>
+<br /><br />
 <h3>In file: {{=layer}}</h3>
 {{=CODE(code,language='python',link='/examples/global/vars/')}}
 

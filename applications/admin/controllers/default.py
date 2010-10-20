@@ -3,7 +3,6 @@
 from gluon.admin import *
 from glob import glob
 import shutil
-import StringIO
 
 if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','errors','update_languages']:
     session.flash = T('disabled in demo mode')
@@ -387,7 +386,7 @@ def edit():
         import _ast
         try:
             code = request.vars.data.rstrip().replace('\r\n','\n')+'\n'
-            tree = compile(code, path, "exec", _ast.PyCF_ONLY_AST)
+            compile(code, path, "exec", _ast.PyCF_ONLY_AST)
         except Exception, e:
             start = sum([len(line)+1 for l, line 
                             in enumerate(request.vars.data.split("\n")) 
@@ -483,20 +482,6 @@ def resolve():
     """  """
 
     filename = '/'.join(request.args)
-
-    if filename[-3:] == '.py':
-        filetype = 'python'
-
-    elif filename[-5:] == '.html':
-        filetype = 'html'
-
-    elif filename[-4:] == '.css':
-        filetype = 'css'
-
-    elif filename[-3:] == '.js':
-        filetype = 'js'
-    else:
-        filetype = 'text'
 
     # ## check if file is not there
 
@@ -862,7 +847,6 @@ def create_file():
             if len(filename) == 3:
                 raise SyntaxError
 
-            fn = re.sub('\W', '', filename[:-3].lower())
             text = '# coding: utf8\n'
 
         elif path[-13:] == '/controllers/':
@@ -1067,6 +1051,7 @@ def ticket():
         session.flash = T('invalid ticket')
         redirect(URL('site'))
 
+    myversion = request.env.web2py_version
     app = request.args[0]
     ticket = request.args[1]
     e = RestrictedError()
@@ -1078,8 +1063,12 @@ def ticket():
                 traceback=(e.traceback and TRACEBACK(e.traceback)),
                 snapshot=e.snapshot,
                 code=e.code,
-                layer=e.layer)
+                layer=e.layer,
+                myversion=myversion)
 
+def error():
+    """ Generate a ticket (for testing) """
+    raise RuntimeError('admin ticket generator at your service')
 
 def update_languages():
     """ Update available languages """
