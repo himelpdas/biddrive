@@ -173,8 +173,7 @@ def w2p_pack(filename, path, compiled=False):
     w2pfp.close()
     tarfp.close()
     os.unlink(tarname)
-
-
+    
 def w2p_unpack(filename, path, delete_tar=True):
     filename = abspath(filename)
     path = abspath(path)
