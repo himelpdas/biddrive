@@ -953,6 +953,7 @@ class SQLFORM(FORM):
         fields = {}
         for key in self.vars:
             fields[key] = self.vars[key]
+
         ret = FORM.accepts(
             self,
             request_vars,
@@ -962,14 +963,6 @@ class SQLFORM(FORM):
             onvalidation,
             hideerror=hideerror,
             )
-
-        # fix problem with list types when only one entry submitted
-        for fieldname in self.table.fields():
-            value = self.vars.get(fieldname,None)
-            # str because of SQLCustomType possibility
-            if self.table[fieldname].type.startswith('list:') and value and \
-                    not isinstance(value,(tuple,list)):
-                self.vars[fieldname] = value
 
         if not ret and self.record and self.errors:
             ### if there are errors in update mode
@@ -1000,19 +993,21 @@ class SQLFORM(FORM):
         if not ret and not auch:
             for fieldname in self.fields:
                 field = self.table[fieldname]
-                if fieldname in self.vars:
-                    value = self.vars[fieldname]
-                elif self.record:
-                    value = self.record[fieldname]
-                else:
-                    value = self.table[fieldname].default
-                #was value = request_vars[fieldname]
-                if hasattr(field, 'widget') and field.widget\
-                                 and fieldname in request_vars:
+                ### this is a workaround! widgets should always have default not None!
+                if not field.widget and field.type.startswith('list:'):
+                    field.widget = self.widgets.list.widget
+                if hasattr(field, 'widget') and field.widget and fieldname in request_vars:
+                    if fieldname in self.vars:
+                        value = self.vars[fieldname]
+                    elif self.record:
+                        value = self.record[fieldname]
+                    else:
+                        value = self.table[fieldname].default
                     row_id = '%s_%s%s' % (self.table,fieldname,SQLFORM.ID_ROW_SUFFIX)
                     widget = field.widget(field, value)
                     self.field_parent[row_id].components = [ widget ]
-                    self.field_parent[row_id]._traverse(False,hideerror)
+                    if not field.type.startswith('list:'):
+                        self.field_parent[row_id]._traverse(False,hideerror)
                     self.custom.widget[ fieldname ] = widget
             return ret
 
@@ -1086,15 +1081,15 @@ class SQLFORM(FORM):
                 return False
             value = fields[fieldname]
             if field.type == 'list:string':
-                if not isinstance(value,list):
+                if not isinstance(value,(tuple,list)):
                     fields[fieldname] = value and [value] or []
-            elif str(field.type).startswith('list:'):
+            elif field.type.startswith('list:'):
                 if not isinstance(value,list):
                     fields[fieldname] = [safe_int(x) for x in (value and [value] or [])]
             elif field.type == 'integer':
                 if value != None:
                     fields[fieldname] = safe_int(value)
-            elif str(field.type).startswith('reference'):
+            elif field.type.startswith('reference'):
                 if value != None and isinstance(self.table,Table) and not keyed:
                     fields[fieldname] = safe_int(value)
             elif field.type == 'double':
@@ -1273,7 +1268,7 @@ class SQLTABLE(TABLE):
                     except TypeError:
                         href = '%s/%s/%s' % (linkto, tablename, r_old)
                     r = A(r, _href=href)
-                elif linkto and str(field.type).startswith('reference'):
+                elif linkto and field.type.startswith('reference'):
                     ref = field.type[10:]
                     try:
                         href = linkto(r, 'reference', ref)

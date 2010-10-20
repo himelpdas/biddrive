@@ -301,23 +301,23 @@ def make_page(page,contents):
         s="@auth.requires_login()\ndef %s():\n" % page
     items=page.rsplit('_',1)
     if items[0] in session.app['tables'] and len(items)==2:
-        t='t_'+items[0]
+        t=items[0]
         if items[1]=='read':
-            s+="    record = db.%s(request.args(0)) or redirect(URL('error'))\n" % t
-            s+="    form=crud.read(db.%s,record)\n" % t
+            s+="    record = db.t_%s(request.args(0)) or redirect(URL('error'))\n" % t
+            s+="    form=crud.read(db.t_%s,record)\n" % t
             s+="    return dict(form=form)\n\n"
         elif items[1]=='update':
-            s+="    record = db.%s(request.args(0)) or redirect(URL('error'))\n" % t
-            s+="    form=crud.update(db.%s,record,next='%s_read/[id]')\n" % (t,t)
+            s+="    record = db.t_%s(request.args(0)) or redirect(URL('error'))\n" % t
+            s+="    form=crud.update(db.t_%s,record,next='%s_read/[id]')\n" % (t,t)
             s+="    return dict(form=form)\n\n"
         elif items[1]=='create':
-            s+="    form=crud.create(db.%s,next='%s_read/[id]')\n" % (t,t)
+            s+="    form=crud.create(db.t_%s,next='%s_read/[id]')\n" % (t,t)
             s+="    return dict(form=form)\n\n"
         elif items[1]=='select':
-            s+="    rows=crud.select(db.%s)\n" % t
+            s+="    rows=crud.select(db.t_%s)\n" % t
             s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
-            s+="    form, rows=crud.search(db.%s)\n" % t
+            s+="    form, rows=crud.search(db.t_%s)\n" % t
             s+="    return dict(form=form, rows=rows)\n\n"
             t=None
     else:
