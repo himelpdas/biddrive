@@ -157,69 +157,80 @@ def step6():
     return dict(step='6',form=form)
 
 def make_table(table,fields):
+    rawtable=table
+    if table!='auth_user': table='t_'+table
     s=''
     s+='\n'+'#'*40+'\n'
     s+="db.define_table('%s',\n" % table
     s+="    Field('id','id',\n"
-    s+="          represent=lambda id:A('view',_href=URL('%s_read',args=id))),\n"%table
+    s+="          represent=lambda id:A('view',_href=URL('%s_read',args=id))),\n"%rawtable
     first_field='id'
     for field in fields:
         items=[x.lower() for x in field.split()]
         has={}
         for key in ['notnull','unique','integer','double','boolean','float','boolean',
                     'date','time','datetime','text','wiki','html','file','upload','true',
-                    'hidden','readonly','multiple']:
+                    'hidden','readonly','writeonly','multiple']:
             if key in items[1:]:
-                has[key]=True
+                has[key] = True
                 items = [x for x in items if not x==key]
-        name = '_'.join(items)
-        if not first_field: first_field=name
-        type='string'
+        barename = name = '_'.join(items)
+        if table[:2]=='t_': name='f_'+name
+        if first_field=='id': first_field=name
+        ftype='string'
         for key in ['integer','double','boolean','float','boolean',
                     'date','time','datetime','text','file']:
             if key in has:
-                type=key
+                ftype=key
         if 'wiki' in has or 'html' in has:
-            type='text'
+            ftype='text'
         if 'file' in has:
-            type='upload'
+            ftype='upload'
         for key in items:
             if key in session.app['tables'] and not 'multiple' in has:
-                type='reference %s' % key
+                if not key=='auth_user': key='t_'+key
+                ftype='reference %s' % key
                 break
             if key in session.app['tables'] and 'multiple' in has:
-                type='list:reference %s' % key
+                if not key=='auth_user': key='t_'+key
+                ftype='list:reference %s' % key
                 break
-        if type=='string' and 'multiple' in has:
-            type='list:string'
-        if type=='integer' and 'multiple' in has:
-            type='list:integer'
-        s+="    Field('%s', type='%s'" % (name, type)
+        if ftype=='string' and 'multiple' in has:
+            ftype='list:string'
+        if ftype=='integer' and 'multiple' in has:
+            ftype='list:integer'
+        if name=='password':
+            ftype='password'
+        s+="    Field('%s', type='%s'" % (name, ftype)
         if 'notnull' in has:
             s+=', notnull=True'
         if 'unique' in has:
             s+=', unique=True'        
-        if type=='boolean' and 'true' in has:
+        if ftype=='boolean' and 'true' in has:
             s+=",\n          default=True"
         if 'wiki' in has:
             s+=",\n          represent=lambda x: MARKMIN(x)"
         elif 'html' in has:
             s+=",\n          represent=lambda x: XML(x,sanitize=True)"
-        if 'hidden' in has:
+        if name=='password' or 'writeonly' in has:
+            s+=",\n          readable=False"
+        elif 'hidden' in has:
             s+=",\n          writable=False, readable=False"
         elif 'readonly' in has:
             s+=",\n          writable=False"
         s+=",\n          label=T('%s')),\n" % \
-            ' '.join(x.capitalize() for x in name.split('_'))
+            ' '.join(x.capitalize() for x in barename.split('_'))
     if not table=='auth_user' and 'auth_user' in session.app['tables']:
-        s+="    Field('created_on','datetime',default=request.now,\n"
-        s+="          writable=False,readable=False),\n"
-        s+="    Field('created_by',db.auth_user,default=auth.user_id,\n"
-        s+="          writable=False,readable=False),\n"
-        s+="    Field('modified_on','datetime',default=request.now,\n"
-        s+="          writable=False,readable=False,update=request.now),\n"
-        s+="    Field('modified_by',db.auth_user,default=auth.user_id,\n"
-        s+="          writable=False,readable=False,update=auth.user_id),\n"
+        s+="    Field('f_created_on','datetime',default=request.now,\n"
+        s+="          label=T('Created On'),writable=False,readable=False),\n"
+        s+="    Field('f_created_by',db.auth_user,default=auth.user_id,\n"
+        s+="          label=T('Created By'),writable=False,readable=False),\n"
+        s+="    Field('f_modified_on','datetime',default=request.now,\n"
+        s+="          label=T('Modified On'),writable=False,readable=False,\n"
+        s+="          update=request.now),\n"
+        s+="    Field('f_modified_by',db.auth_user,default=auth.user_id,\n"
+        s+="          label=T('Modified By'),writable=False,readable=False,\n"
+        s+="          update=auth.user_id),\n"
     elif table=='auth_user':
         s+="    Field('registration_key',default='',\n"
         s+="          writable=False,readable=False),\n"
@@ -233,11 +244,11 @@ def make_table(table,fields):
         s+="""
 db.auth_user.first_name.requires = IS_NOT_EMPTY(error_message=auth.messages.is_empty)
 db.auth_user.last_name.requires = IS_NOT_EMPTY(error_message=auth.messages.is_empty)
-db.auth_user.requires = CRYPT(key=auth.settings.hmac_key)
+db.auth_user.password.requires = CRYPT(key=auth.settings.hmac_key)
 db.auth_user.username.requires = IS_NOT_IN_DB(db, db.auth_user.username)
 db.auth_user.registration_id.requires = IS_NOT_IN_DB(db, db.auth_user.registration_id)
-db.auth_user.email.requires = IS_EMAIL(error_message=auth.messages.invalid_email)
-
+db.auth_user.email.requires = (IS_EMAIL(error_message=auth.messages.invalid_email),
+                               IS_NOT_IN_DB(db, db.auth_user.email))
 """
     return s
 
@@ -290,7 +301,7 @@ def make_page(page,contents):
         s="@auth.requires_login()\ndef %s():\n" % page
     items=page.rsplit('_',1)
     if items[0] in session.app['tables'] and len(items)==2:
-        t=items[0]
+        t='t_'+items[0]
         if items[1]=='read':
             s+="    record = db.%s(request.args(0)) or redirect(URL('error'))\n" % t
             s+="    form=crud.read(db.%s,record)\n" % t
@@ -332,12 +343,13 @@ def make_view(page,contents):
             s+='\n{{=form}}\n'
         elif items[1]=='select':
             s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
-            s+="\n{{=A(T('search %s'),_href=URL('%s_search'))}}\n<br/>\n"%(t,t)
+            s+="\n{{=A(T('search %s'),_href=URL('%s_search'))}}\n<br/>\n"%(t,t)            
             s+="\n{{=rows or TAG.blockquote(T('No Data'))}}\n"
         elif items[1]=='search':
             s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
-            s+="\n{{=rows or TAG.blockquote(T('No Data'))}}\n"
+            s+="\n{{headers=dict((str(k),k.label) for k in db.t_%s)}}" % t
+            s+="\n{{=rows and SQLTABLE(rows,headers=headers) or TAG.blockquote(T('No Data'))}}\n"
     return s
 
 def create():

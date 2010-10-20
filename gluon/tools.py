@@ -1069,12 +1069,18 @@ class Auth(object):
         else:
             login=A(T('login'),_href=action+'/login')
             register=A(T('register'),_href=action+'/register')
+            retrieve_username=A(T('forgot username?'),
+                            _href=action+'/retrieve_username')
             lost_password=A(T('lost password?'),
                             _href=action+'/request_reset_password')
             bar = SPAN('[ ',login,' ]',_class='auth_navbar')
+
             if not 'register' in self.settings.actions_disabled:
                 bar.insert(2, ' | ')
                 bar.insert(3, register)
+            if 'username' in self.settings.table_user.fields():
+                bar.insert(-1, ' | ')
+                bar.insert(-1, retrieve_username)
             if not 'request_reset_password' in self.settings.actions_disabled:
                 bar.insert(-1, ' | ')
                 bar.insert(-1, lost_password)
@@ -2953,6 +2959,8 @@ class Crud(object):
             attr['upload'] = self.url('download')
         if not request.extension in ('html','load'):
             return rows.as_list()
+        if not headers:
+            headers = dict((str(k),k.label) for k in table)
         return SQLTABLE(rows, headers=headers, **attr)
 
     def get_format(self, field):
@@ -3042,7 +3050,7 @@ class Crud(object):
             opval = request.vars.get('op' + fieldname, None)
             row = TR(TD(INPUT(_type = "checkbox", _name = "chk" + fieldname,
                               value = chkval == 'on')),
-                     TD(field_labels.get(fieldname,fieldname)),
+                     TD(field_labels.get(fieldname,field.label)),
                         TD(SELECT([OPTION(query_labels.get(op,op),
                                                  _value=op) for op in ops],
                                                  _name = "op" + fieldname,

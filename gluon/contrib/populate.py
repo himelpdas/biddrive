@@ -91,7 +91,7 @@ def populate(table, n, default=True):
             elif field.type=='integer' and hasattr(field.requires,'options'):                
                 options=field.requires.options()
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
-            elif field.type in ['integer','double']:
+            elif field.type in ['integer','double'] or str(field.type).startswith('decimal'):
                 try:
                     record[fieldname] = random.randint(field.requires.minimum,field.requires.maximum-1)
                 except:
