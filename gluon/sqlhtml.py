@@ -967,7 +967,7 @@ class SQLFORM(FORM):
         for fieldname in self.table.fields():
             value = self.vars.get(fieldname,None)
             # str because of SQLCustomType possibility
-            if self.table[filename].startswith('list:') and value and \
+            if self.table[fieldname].startswith('list:') and value and \
                     not isinstance(value,(tuple,list)):
                 self.vars[fieldname] = value
 
