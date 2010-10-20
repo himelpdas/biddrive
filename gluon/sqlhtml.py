@@ -781,7 +781,7 @@ class SQLFORM(FORM):
                     inp = self.widgets.multiple.widget(field, default)
                 if fieldname in keepopts:
                     inpval = TAG[''](*inp.components)
-            elif str(field.type).startswith('list'):
+            elif field.type.startswith('list:'):
                 inp = self.widgets.list.widget(field,default)
             elif field.type == 'text':
                 inp = self.widgets.text.widget(field, default)
@@ -967,7 +967,7 @@ class SQLFORM(FORM):
         for fieldname in self.table.fields():
             value = self.vars.get(fieldname,None)
             # str because of SQLCustomType possibility
-            if self.table[fieldname].startswith('list:') and value and \
+            if self.table[fieldname].type.startswith('list:') and value and \
                     not isinstance(value,(tuple,list)):
                 self.vars[fieldname] = value
 
