@@ -548,7 +548,7 @@ def bar_decode_string(value):
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if type(obj) in (types.LambdaType, types.FunctionType):
         obj = obj()
-    if str(fieldtype).startswith('list:'):
+    if fieldtype.startswith('list:'):
         if not obj:
             obj=[]
         if not isinstance(obj,(list,tuple)):
@@ -2709,6 +2709,9 @@ class SQLCustomType:
         self.decoder = decoder or (lambda x: x)
         self.validator = validator
         self._class = _class or type
+
+    def startswith(self):
+        return False
 
     def __getslice__(self, a=0, b=100):
         return None

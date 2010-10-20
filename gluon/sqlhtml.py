@@ -963,6 +963,14 @@ class SQLFORM(FORM):
             hideerror=hideerror,
             )
 
+        # fix problem with list types when only one entry submitted
+        for fieldname in self.table.fields():
+            value = self.vars.get(fieldname,None)
+            # str because of SQLCustomType possibility
+            if self.table[filename].startswith('list:') and value and \
+                    not isinstance(value,(tuple,list)):
+                self.vars[fieldname] = value
+
         if not ret and self.record and self.errors:
             ### if there are errors in update mode
             # and some errors refers to an already uploaded file
