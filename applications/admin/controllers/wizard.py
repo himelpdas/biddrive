@@ -390,6 +390,7 @@ def create():
     ### create newapp/models/db_wizard.py
     model = os.path.join(request.folder,'..',app,'models','db_wizard.py')
     file = open(model,'wb')
+    file.write('### we prepend t_ to tablenames and f_ to fieldnames for disambiguity\n\n')
     for table in session.app['tables']:
         if table=='auth_user': continue
         file.write(make_table(table,session.app['table_'+table]))
