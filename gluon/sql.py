@@ -43,7 +43,6 @@ import struct
 from utils import md5_hash, web2py_uuid
 from serializers import json
 from http import HTTP
-import settings
 
 logger = logging.getLogger("web2py.sql")
 
@@ -509,7 +508,7 @@ def sqlhtml_validators(field):
             if field.unique:
                 requires._and = validators.IS_NOT_IN_DB(field._db,field)
             if field._tablename == field_type[10:]:
-                return IS_EMPTY_OR(requires)
+                return validators.IS_EMPTY_OR(requires)
             return requires
     elif field._db and field_type.startswith('list:reference') and \
             field_type.find('.')<0 and \
@@ -915,7 +914,6 @@ class SQLDB(dict):
         self._fake_migrate = fake_migrate
         self['_lastsql'] = ''
         self.tables = SQLCallableList()
-        pid = threading.currentThread()
 
         # Check if there is a folder for this thread else use ''
 
@@ -1856,7 +1854,7 @@ class Table(dict):
             portalocker.lock(tfile, portalocker.LOCK_SH)
             try:
                 sql_fields_old = cPickle.load(tfile)
-            except EOFError, e:
+            except EOFError:
                 portalocker.unlock(tfile)
                 tfile.close()
                 raise RuntimeError, 'File %s appears corrupted' % self._dbt
@@ -2045,7 +2043,6 @@ class Table(dict):
             self._db._execute('select last_insert_id();')
             id = int(self._db._cursor.fetchone()[0])
         elif self._db._dbname in ['oracle']:
-            t = self._tablename
             self._db._execute('SELECT %s.currval FROM dual;'
                                % self._sequence_name)
             id = int(self._db._cursor.fetchone()[0])
@@ -3311,7 +3308,7 @@ excluded + tables_to_merge.keys()])
                 if field.type != 'blob' and isinstance(value, str):
                     try:
                         value = value.decode(db._db_codec)
-                    except Exception, e:
+                    except Exception:
                         pass
                 if isinstance(value, unicode):
                     value = value.encode('utf-8')
