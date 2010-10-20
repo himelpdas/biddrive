@@ -26,7 +26,7 @@ import main
 
 from fileutils import w2p_pack
 from shell import run, test
-from settings import settings
+from settings import global_settings
 
 try:
     import Tkinter, tkMessageBox
@@ -701,6 +701,8 @@ def console():
     if options.config[-3:] == '.py':
         options.config = options.config[:-3]
 
+    options.folder = os.path.abspath(options.folder)
+
     for path in ('applications', 'deposit', 'site-packages', 'logs'):
         if not os.path.exists(path):
             os.mkdir(path)
@@ -768,17 +770,17 @@ def start(cron = True):
     # ## use hardcron in all other cases
     if options.extcron:
         print 'Starting extcron...'
-        settings.web2py_crontype = 'external'
+        global_settings.web2py_crontype = 'external'
         extcron = newcron.extcron(options.folder)
         extcron.start()
         extcron.join()
         return
     elif cron and not options.nocron and options.softcron:
         print 'Using softcron (but this is not very efficient)'
-        settings.web2py_crontype = 'soft'
+        global_settings.web2py_crontype = 'soft'
     elif cron and not options.nocron:
         print 'Starting hardcron...'
-        settings.web2py_crontype = 'hard'
+        global_settings.web2py_crontype = 'hard'
         newcron.hardcron(options.folder).start()
 
     # ## if -W install/start/stop web2py as service

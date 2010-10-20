@@ -15,12 +15,12 @@ import logging
 import marshal
 import copy_reg
 from fileutils import listdir
-from settings import settings
+import settings
 from cfs import getcfs
 
 __all__ = ['translator', 'findT', 'update_all_languages']
 
-is_gae = settings.web2py_runtime_gae
+is_gae = settings.global_settings.web2py_runtime_gae
 
 # pattern to find T(blah blah blah) expressions
 

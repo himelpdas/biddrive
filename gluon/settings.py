@@ -6,4 +6,5 @@ License: GPL v2
 
 from storage import Storage
 
-settings = Storage()
+global_settings = Storage()
+settings = global_settings  # legacy compatibility

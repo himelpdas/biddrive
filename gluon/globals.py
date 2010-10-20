@@ -23,7 +23,7 @@ from html import xmlescape
 from http import HTTP
 from fileutils import up
 from serializers import json
-from settings import settings
+import settings
 from utils import web2py_uuid
 
 import portalocker
@@ -280,7 +280,7 @@ class Session(Storage):
                                  'sessions', response.session_id)
                 response.session_new = True
         else:
-            if settings.web2py_runtime_gae:
+            if settings.global_settings.web2py_runtime_gae:
                 # in principle this could work without GAE
                 request.tickets_db = db
             if masterapp == request.application:

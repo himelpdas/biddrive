@@ -14,6 +14,7 @@ import tarfile
 import glob
 from http import HTTP
 from gzip import open as gzopen
+from main import abspath
 
 
 __all__ = [
@@ -40,8 +41,8 @@ def listdir(
     add_dirs=False,
     ):
     """
-    like os.listdir() but you can specify a regex patter to filter filed.
-    if add_dirs==True the returned items will have the full path.
+    like os.listdir() but you can specify a regex pattern to filter files.
+    if add_dirs is True, the returned items will have the full path.
     """
 
     if path[-1:] != '/':
@@ -159,6 +160,8 @@ def untar(file, dir):
 
 
 def w2p_pack(filename, path, compiled=False):
+    filename = abspath(filename)
+    path = abspath(path)
     tarname = filename + '.tar'
     if compiled:
         tar_compiled(tarname, path, '^[\w\.\-]+$')
@@ -173,6 +176,8 @@ def w2p_pack(filename, path, compiled=False):
 
 
 def w2p_unpack(filename, path, delete_tar=True):
+    filename = abspath(filename)
+    path = abspath(path)
     if filename[-4:] == '.w2p' or filename[-3:] == '.gz':
         if filename[-4:] == '.w2p':
             tarname = filename[:-4] + '.tar'
@@ -196,6 +201,8 @@ def w2p_pack_plugin(filename, path, plugin_name):
         <path>/*/plugin_[name].*
         <path>/*/plugin_[name]/*
     """
+    filename = abspath(filename)
+    path = abspath(path)
     if not filename.endswith('web2py.plugin.%s.w2p' % plugin_name):
         raise Exception, "Not a web2py plugin name"
     plugin_tarball = tarfile.open(filename, 'w:gz')
@@ -210,6 +217,8 @@ def w2p_pack_plugin(filename, path, plugin_name):
 
 
 def w2p_unpack_plugin(filename, path, delete_tar=True):
+    filename = abspath(filename)
+    path = abspath(path)
     if not os.path.basename(filename).startswith('web2py.plugin.'):
         raise Exception, "Not a web2py plugin"
     w2p_unpack(filename,path,delete_tar)

@@ -38,18 +38,19 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.modules['cPickle'] = sys.modules['pickle']
 
 
-from gluon.settings import settings
+from gluon.settings import global_settings
 from google.appengine.api.labs import taskqueue
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
+global_settings.web2py_runtime_gae = True
 if os.environ.get('SERVER_SOFTWARE', '').startswith('Devel'):
-    (settings.web2py_runtime, settings.web2py_runtime_gae, DEBUG) = \
-        ('gae:development', True, True)
+    (global_settings.web2py_runtime, DEBUG) = \
+        ('gae:development', True)
 else:
-    (settings.web2py_runtime, settings.web2py_runtime_gae, DEBUG) = \
-        ('gae:production', True, False)
+    (global_settings.web2py_runtime, DEBUG) = \
+        ('gae:production', False)
 
 
 import gluon.main

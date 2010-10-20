@@ -12,9 +12,11 @@ import traceback
 import zipfile
 import urllib
 from utils import web2py_uuid
-from shutil import rmtree, copyfile
-from fileutils import *
+from shutil import rmtree
+from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
+from fileutils import up, listdir, fix_newlines
 from restricted import RestrictedError
+from main import abspath
 
 def apath(path='', r=None):
     """
@@ -164,7 +166,7 @@ def app_create(app, request):
         os.mkdir(path)
         did_mkdir = True
         w2p_unpack('welcome.w2p', path)
-        db = os.path.join(path,'models/db.py')
+        db = os.path.join(path, 'models', 'db.py')
         if os.path.exists(db):
             fp = open(db,'r')
             data = fp.read()
@@ -354,6 +356,7 @@ def unzip(filename, dir, subfolder=''):
     Unzips filename into dir (.zip only, no .gz etc)
     if subfolder!='' it unzip only files in subfolder
     """
+    filename = abspath(filename)
     if not zipfile.is_zipfile(filename):
         raise RuntimeError, 'Not a valid zipfile'
     zf = zipfile.ZipFile(filename)
@@ -374,7 +377,7 @@ def unzip(filename, dir, subfolder=''):
             outfile.close()
 
 
-def upgrade(request, url = 'http://web2py.com'):
+def upgrade(request, url='http://web2py.com'):
     """
     Upgrades web2py (src, osx, win) is a new version is posted.
     It detects whether src, osx or win is running and downloads the right one
@@ -413,8 +416,7 @@ def upgrade(request, url = 'http://web2py.com'):
         subfolder = 'web2py/'
 
     full_url = url+'/examples/static/web2py_%s.zip' % version_type
-    filename = os.path.join(web2py_path,
-                            'web2py_%s_downloaded.zip' % version_type)
+    filename = abspath('web2py_%s_downloaded.zip' % version_type)
     try:
         file = open(filename,'wb')
         file.write(urllib.urlopen(full_url).read())

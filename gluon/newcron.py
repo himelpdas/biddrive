@@ -16,7 +16,9 @@ import re
 import datetime
 import platform
 import gluon.portalocker as portalocker
+import gluon.main as main
 import cPickle
+from gluon.settings import global_settings
 
 logger = logging.getLogger("web2py.cron")
 _cron_stopping = False
@@ -222,7 +224,7 @@ class cronlauncher(threading.Thread):
                 'WEB2PY CRON Call returned code %s:\n%s' % \
                     (proc.returncode, stdoutdata+stderrdata))
         else:
-            logger.debug('WEB2PY CRON Call retruned success:\n%s' \
+            logger.debug('WEB2PY CRON Call returned success:\n%s' \
                               % stdoutdata)
 
 def crondance(web2py_path, ctype='soft', startup=False):
@@ -263,8 +265,11 @@ def crondance(web2py_path, ctype='soft', startup=False):
             if _cron_stopping:
                 break;
             commands = [sys.executable]
-            if os.path.exists('web2py.py'):
-                commands.append('web2py.py')
+            w2p_path = main.abspath('web2py.py', gluon=True)
+            if os.path.exists(w2p_path):
+                commands.append(w2p_path)
+            if global_settings.applications_parent != global_settings.gluon_parent:
+                commands.extend(('-f', global_settings.applications_parent))
             citems = [(k in task and not v in task[k]) for k,v in checks]
             task_min= task.get('min',[])
             if not task:

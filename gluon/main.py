@@ -30,31 +30,44 @@ import string
 
 #  calling script has inserted path to script directory into sys.path
 #  web2py_path (path to applications/, site-packages/ etc) defaults to that directory
-#  set sys.path to ("", web2py_path/site-packages, web2py_path, ...)
+#  set sys.path to ("", gluon_path/site-packages, gluon_path, ...)
 # 
-# this is wrong:
-# web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# because we do not want the path to this file which may be Library.zip
+#  this is wrong:
+#  web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#  because we do not want the path to this file which may be Library.zip
 #
+#  gluon_path is the directory containing gluon, web2py.py, logging.conf and the handlers.
+#  web2py_path is the directory containing applications/ and routes.py
+#  The two are identical unless web2py_path is changed via the web2py.py -f folder option
+#
+from settings import global_settings
 web2py_path = os.environ.get('web2py_path', os.getcwd())
+global_settings.applications_parent = web2py_path
+global_settings.gluon_parent = global_settings.applications_parent
 
-try:
-    sys.path.remove(os.path.join(web2py_path, 'site-packages'))
-except ValueError:
-    pass
-sys.path.insert(0, os.path.join(web2py_path, 'site-packages'))
-try:
-    sys.path.remove("")
-except ValueError:
-    pass
-sys.path.insert(0, "")
+def abspath(*relpath, **base):
+    "convert relative path to absolute path based (by default) on web2py_path"
+    path = os.path.join(*relpath)
+    gluon = base.get('gluon', False)
+    if os.path.isabs(path):
+        return path
+    if gluon:
+        return os.path.join(global_settings.gluon_parent, path)
+    return os.path.join(global_settings.applications_parent, path)    
+
+for path in (global_settings.gluon_parent, abspath('site-packages', gluon=True), ""):
+    try:
+        sys.path.remove(path)
+    except ValueError:
+        pass
+    sys.path.insert(0, path)
 
 # set up logging for subsequent imports
 import logging
 import logging.config
-logpath = os.path.join(web2py_path, "logging.conf")
+logpath = abspath("logging.conf")
 if os.path.exists(logpath):
-    logging.config.fileConfig(os.path.join(web2py_path, "logging.conf"))
+    logging.config.fileConfig(abspath("logging.conf"))
 else:
     logging.basicConfig()
 logger = logging.getLogger("web2py")
@@ -67,7 +80,7 @@ from compileapp import build_environment, run_models_in, \
 from fileutils import copystream
 from contenttype import contenttype
 from sql import BaseAdapter
-from settings import settings
+from settings import global_settings
 from validators import CRYPT
 from cache import Cache
 from html import URL as Url
@@ -83,14 +96,14 @@ __all__ = ['wsgibase', 'save_password', 'appfactory', 'HttpServer']
 # pattern used to validate client address
 regex_client = re.compile('[\w\-:]+(\.[\w\-]+)*\.?')  # ## to account for IPV6
 
-version_info = open(os.path.join(web2py_path, 'VERSION'), 'r')
+version_info = open(abspath('VERSION'), 'r')
 web2py_version = version_info.read()
 version_info.close()
 
 try:
     import rocket
 except:
-    if not settings.web2py_runtime_gae:
+    if not global_settings.web2py_runtime_gae:
         logger.warn('unable to import Rocket')
 
 rewrite.load()
@@ -337,9 +350,9 @@ def wsgibase(environ, responder):
     
                 for (key, value) in environ.items():
                     request.env[key.lower().replace('.', '_')] = value
-                request.env.web2py_path = web2py_path
+                request.env.web2py_path = global_settings.applications_parent
                 request.env.web2py_version = web2py_version
-                request.env.update(settings)
+                request.env.update(global_settings)
 
                 # ##################################################
                 # invoke the legacy URL parser and serve static file
@@ -509,8 +522,8 @@ def wsgibase(environ, responder):
 
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,request,ticket)
-    if settings.web2py_crontype == 'soft':
-        newcron.softcron(web2py_path).start()
+    if global_settings.web2py_crontype == 'soft':
+        newcron.softcron(global_settings.applications_parent).start()
     return http_response.to(responder)
 
 
@@ -667,7 +680,8 @@ class HttpServer(object):
             global web2py_path
             path = os.path.normpath(path)
             web2py_path = path
-            os.chdir(web2py_path)
+            global_settings.applications_parent = path
+            os.chdir(path)
 
             try:
                 sys.path.remove(path)
@@ -675,10 +689,10 @@ class HttpServer(object):
                 pass
             sys.path.insert(0, path)
             try:
-                sys.path.remove(os.path.join(path, 'site-packages'))
+                sys.path.remove(abspath('site-packages'))
             except ValueError:
                 pass
-            sys.path.insert(0, os.path.join(path, 'site-packages'))
+            sys.path.insert(0, abspath('site-packages'))
             try:
                 sys.path.remove("")
             except ValueError:

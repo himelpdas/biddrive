@@ -26,7 +26,7 @@ from languages import translator
 from sql import BaseAdapter, SQLDB, SQLField, DAL, Field
 from sqlhtml import SQLFORM, SQLTABLE
 from cache import Cache
-from settings import settings
+import settings
 from cfs import getcfs
 import html
 import validators
@@ -42,7 +42,7 @@ try:
 except:
     logger.warning('unable to import py_compile')
 
-is_gae = settings.web2py_runtime_gae
+is_gae = settings.global_settings.web2py_runtime_gae
 
 TEST_CODE = \
     r"""

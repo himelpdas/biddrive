@@ -38,5 +38,5 @@ else:
     application = gluon.main.wsgibase
 
 if SOFTCRON:
-    from settings import settings
-    settings.web2py_crontype = 'soft'
+    from gluon.settings import global_settings
+    global_settings.web2py_crontype = 'soft'

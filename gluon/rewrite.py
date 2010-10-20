@@ -14,6 +14,7 @@ import traceback
 import threading
 from storage import Storage
 from http import HTTP
+from main import abspath
 
 regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
 regex_anything = re.compile(r'(?<!\\)\$anything')
@@ -90,9 +91,9 @@ def load(routes='routes.py', app=None):
     symbols = {}
 
     if app is None:
-        path = routes
+        path = abspath(routes)
     else:
-        path = os.path.join('applications', app, routes)
+        path = abspath('applications', app, routes)
     if not os.path.exists(path):
         return
     try:
@@ -124,7 +125,7 @@ def load(routes='routes.py', app=None):
 
     if app is None:
         for appname in os.listdir('applications'):
-            if os.path.exists(os.path.join('applications', appname, routes)):
+            if os.path.exists(abspath('applications', appname, routes)):
                 load(routes, appname)
     else:
         params_apps[app] = p
