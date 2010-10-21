@@ -33,7 +33,7 @@
 'Checking for upgrades...': '是否有升级版本检查ing...',
 'Client IP': '客户端IP',
 'Controllers': '控制器s',
-'Create new application': '创建一个新应用',
+'Create new simple application': '创建一个新应用',
 'Current request': '当前请求',
 'Current response': '当前返回',
 'Current session': '当前会话',

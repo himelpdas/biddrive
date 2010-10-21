@@ -148,7 +148,7 @@ def app_compile(app, request):
         remove_compiled_application(folder)
         return tb
 
-def app_create(app, request):
+def app_create(app, request,force=False,key=None):
     """
     Create a copy of welcome.w2p (scaffolding) app
 
@@ -164,21 +164,24 @@ def app_create(app, request):
     try:
         path = apath(app, request)
         os.mkdir(path)
-        did_mkdir = True
+    except:
+        if not force:
+            return False
+    try:
         w2p_unpack('welcome.w2p', path)
         db = os.path.join(path, 'models', 'db.py')
         if os.path.exists(db):
             fp = open(db,'r')
             data = fp.read()
             fp.close()
-            data = data.replace('<your secret key>','sha512:'+web2py_uuid())
+            data = data.replace('<your secret key>',
+                                'sha512:'+(key or web2py_uuid()))
             fp = open(db,'w')
             fp.write(data)
             fp.close()
         return True
     except:
-        if did_mkdir:
-            rmtree(path)
+        rmtree(path)
         return False
 
 
@@ -395,27 +398,27 @@ def upgrade(request, url='http://web2py.com'):
         True on success, False on failure (network problem or old version)
     """
     web2py_version = request.env.web2py_version
-    web2py_path = request.env.web2py_path
-    if not web2py_path.endswith('/'):
-        web2py_path = web2py_path + '/'
+    gluon_parent = request.env.gluon_parent
+    if not gluon_parent.endswith('/'):
+        gluon_parent = gluon_parent + '/'
     (check, version) = check_new_version(web2py_version,
                                          url+'/examples/default/version')
     if not check:
         return (False, 'Already latest version')
-    if os.path.exists(os.path.join(web2py_path,'web2py.exe')):
+    if os.path.exists(os.path.join(gluon_parent, 'web2py.exe')):
         version_type = 'win'
-        destination = web2py_path
+        destination = gluon_parent
         subfolder = 'web2py/'
-    elif web2py_path.endswith('/Contents/Resources/'):
+    elif gluon_parent.endswith('/Contents/Resources/'):
         version_type = 'osx'
-        destination = web2py_path[:-len('/Contents/Resources/')]
+        destination = gluon_parent[:-len('/Contents/Resources/')]
         subfolder = 'web2py/web2py.app/'
     else:
         version_type = 'src'
-        destination = web2py_path
+        destination = gluon_parent
         subfolder = 'web2py/'
 
-    full_url = url+'/examples/static/web2py_%s.zip' % version_type
+    full_url = url + '/examples/static/web2py_%s.zip' % version_type
     filename = abspath('web2py_%s_downloaded.zip' % version_type)
     try:
         file = open(filename,'wb')
@@ -425,7 +428,7 @@ def upgrade(request, url='http://web2py.com'):
         file.close()
         return False, e
     try:
-        unzip(filename,destination,subfolder)
+        unzip(filename, destination, subfolder)
         return True, None
     except Exception,e:
         return False, e

@@ -514,7 +514,8 @@ def sqlhtml_validators(field):
             field_type.find('.')<0 and \
             field_type[15:] in field._db.tables:
         referenced = field._db[field_type[15:]]
-        field.represent = lambda ids, r=referenced, f=ff: (ids and ', '.join(f(r,id) for id in ids) or '')
+        field.represent = lambda ids, r=referenced, f=ff: \
+            (ids and ', '.join(f(r,id) for id in ids) or '')
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format,multiple=True)
@@ -2805,6 +2806,8 @@ class Field(Expression):
         self.update = update
         self.authorize = authorize
         self.autodelete = autodelete
+        if not represent and type in ('list:integer','list:string'):
+            represent=lambda x: ', '.join(str(y) for y in x or [])
         self.represent = represent
         self.compute = compute
         self.isattachment = True

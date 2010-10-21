@@ -26,7 +26,7 @@
 'Controller': 'Controller',
 'Controllers': 'Controllers',
 'Copyright': 'Copyright',
-'Create new application': 'Crea nuova applicazione',
+'Create new simple application': 'Crea nuova applicazione',
 'Current request': 'Richiesta (request) corrente',
 'Current response': 'Risposta (response) corrente',
 'Current session': 'Sessione (session) corrente',

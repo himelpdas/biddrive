@@ -50,7 +50,7 @@ def api():
 @cache('license')
 def license():
     import os
-    filename = os.path.join(request.env.web2py_path,'LICENSE')
+    filename = os.path.join(request.env.gluon_parent, 'LICENSE')
     return response.render(dict(license=MARKMIN(open(filename,'r').read())))
 
 def version():
@@ -63,5 +63,5 @@ def examples():
 @cache('changelog')
 def changelog():
     import os
-    filename = os.path.join(request.env.web2py_path,'README')
+    filename = os.path.join(request.env.gluon_parent, 'README')
     return response.render(dict(changelog=MARKMIN(open(filename,'r').read())))

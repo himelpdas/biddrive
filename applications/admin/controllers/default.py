@@ -93,7 +93,7 @@ def change_password():
         elif form.vars.new_admin_password != form.vars.new_admin_password_again:
             form.errors.new_admin_password_again = T('no match')
         else:
-            path = os.path.join(request.env.web2py_path,'parameters_%s.py' % request.env.server_port)
+            path = os.path.join(request.env.applications_path,'parameters_%s.py' % request.env.server_port)
             safe_open(path,'w').write('password="%s"' % CRYPT()(request.vars.new_admin_password)[0])
             session.flash = T('password changed')
             redirect(URL('site'))

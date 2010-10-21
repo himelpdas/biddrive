@@ -48,7 +48,7 @@ def deploy():
         data = regex.sub('(applications/(%s)/.*)|' % '|'.join(ignore_apps),data)
         open(yaml,'w').write(data)
 
-        path = request.env.web2py_path
+        path = request.env.applications_parent
         cmd = '%s --email=%s --passin update %s' % \
             (GAE_APPCFG, form.vars.email, path)
         p = cache.ram('gae_upload',

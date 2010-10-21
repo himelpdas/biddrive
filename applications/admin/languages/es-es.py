@@ -30,7 +30,7 @@
 'Checking for upgrades...': 'Buscando actulizaciones...',
 'Client IP': 'IP del Cliente',
 'Controllers': 'Controladores',
-'Create new application': 'Cree una nueva aplicación',
+'Create new simple application': 'Cree una nueva aplicación',
 'Current request': 'Solicitud en curso',
 'Current response': 'Respuesta en curso',
 'Current session': 'Sesión en curso',

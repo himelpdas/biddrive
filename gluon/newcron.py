@@ -30,10 +30,10 @@ def stopcron():
 
 class extcron(threading.Thread):
 
-    def __init__(self, web2py_path):
+    def __init__(self, applications_parent):
         threading.Thread.__init__(self)
         self.setDaemon(False)
-        self.path = web2py_path
+        self.path = applications_parent
         crondance(self.path, 'external', startup=True)
 
     def run(self):
@@ -43,10 +43,10 @@ class extcron(threading.Thread):
 
 class hardcron(threading.Thread):
 
-    def __init__(self, web2py_path):
+    def __init__(self, applications_parent):
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.path = web2py_path
+        self.path = applications_parent
         crondance(self.path, 'hard', startup=True)
 
     def launch(self):
@@ -64,9 +64,9 @@ class hardcron(threading.Thread):
 
 class softcron(threading.Thread):
 
-    def __init__(self, web2py_path):
+    def __init__(self, applications_parent):
         threading.Thread.__init__(self)
-        self.path = web2py_path
+        self.path = applications_parent
         crondance(self.path, 'soft', startup=True)
 
     def run(self):
@@ -227,8 +227,8 @@ class cronlauncher(threading.Thread):
             logger.debug('WEB2PY CRON Call returned success:\n%s' \
                               % stdoutdata)
 
-def crondance(web2py_path, ctype='soft', startup=False):
-    apppath = os.path.join(web2py_path,'applications')
+def crondance(applications_parent, ctype='soft', startup=False):
+    apppath = os.path.join(applications_parent,'applications')
     cron_path = os.path.join(apppath,'admin','cron')
     token = Token(cron_path)
     cronmaster = token.acquire(startup=startup)

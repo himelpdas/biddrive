@@ -26,7 +26,7 @@
 'Check to delete': 'Cocher pour supprimer',
 'Checking for upgrades...': 'Vérification des mises à jour ... ',
 'Controllers': 'Contrôleurs',
-'Create new application': 'Créer une nouvelle application',
+'Create new simple application': 'Créer une nouvelle application',
 'Current request': 'Requête actuel',
 'Current response': 'Réponse actuelle',
 'Current session': 'Session en cours',

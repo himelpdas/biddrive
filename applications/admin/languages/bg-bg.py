@@ -28,7 +28,7 @@
 'Check to delete': 'Check to delete',
 'Checking for upgrades...': 'Checking for upgrades...',
 'Controllers': 'Controllers',
-'Create new application': 'Create new application',
+'Create new simple application': 'Create new simple application',
 'Current request': 'Current request',
 'Current response': 'Current response',
 'Current session': 'Current session',

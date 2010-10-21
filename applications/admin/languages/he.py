@@ -25,7 +25,7 @@
 'Check to delete': 'סמן כדי למחוק',
 'Checking for upgrades...': 'מחפש עדכונים',
 'Controllers': 'בקרים',
-'Create new application': 'צור אפליקציה חדשה',
+'Create new simple application': 'צור אפליקציה חדשה',
 'Current request': 'בקשה נוכחית',
 'Current response': 'מענה נוכחי',
 'Current session': 'סשן זה',

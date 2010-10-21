@@ -28,7 +28,7 @@
 'Check to delete': 'Zaznacz aby usunąć',
 'Checking for upgrades...': 'Sprawdzanie aktualizacji...',
 'Controllers': 'Kontrolery',
-'Create new application': 'Utwórz nową aplikację',
+'Create new simple application': 'Utwórz nową aplikację',
 'Current request': 'Aktualne żądanie',
 'Current response': 'Aktualna odpowiedź',
 'Current session': 'Aktualna sesja',

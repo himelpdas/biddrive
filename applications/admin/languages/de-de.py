@@ -33,7 +33,7 @@
 'Controller': 'Controller',
 'Controllers': 'Controller',
 'Copyright': 'Urheberrecht',
-'Create new application': 'Erzeuge neue Anwendung',
+'Create new simple application': 'Erzeuge neue Anwendung',
 'Current request': 'Aktuelle Anfrage (request)',
 'Current response': 'Aktuelle Antwort (response)',
 'Current session': 'Aktuelle Sitzung (session)',

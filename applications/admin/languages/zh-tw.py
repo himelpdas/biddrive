@@ -34,7 +34,7 @@
 'Controller': '控件',
 'Controllers': '控件',
 'Copyright': '版權所有',
-'Create new application': '創建應用程式',
+'Create new simple application': '創建應用程式',
 'Current request': '目前網路資料要求(request)',
 'Current response': '目前網路資料回應(response)',
 'Current session': '目前網路連線資訊(session)',

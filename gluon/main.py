@@ -29,24 +29,25 @@ import random
 import string
 
 #  calling script has inserted path to script directory into sys.path
-#  web2py_path (path to applications/, site-packages/ etc) defaults to that directory
-#  set sys.path to ("", gluon_path/site-packages, gluon_path, ...)
+#  applications_parent (path to applications/, site-packages/ etc) defaults to that directory
+#  set sys.path to ("", gluon_parent/site-packages, gluon_parent, ...)
 # 
 #  this is wrong:
 #  web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #  because we do not want the path to this file which may be Library.zip
 #
-#  gluon_path is the directory containing gluon, web2py.py, logging.conf and the handlers.
-#  web2py_path is the directory containing applications/ and routes.py
+#  gluon_parent is the directory containing gluon, web2py.py, logging.conf and the handlers.
+#  applications_parent (web2py_path) is the directory containing applications/ and routes.py
 #  The two are identical unless web2py_path is changed via the web2py.py -f folder option
+#  main.web2py_path is the same as applications_parent (for backward compatibility)
 #
 from settings import global_settings
-web2py_path = os.environ.get('web2py_path', os.getcwd())
-global_settings.applications_parent = web2py_path
-global_settings.gluon_parent = global_settings.applications_parent
+global_settings.gluon_parent = os.environ.get('web2py_path', os.getcwd())
+global_settings.applications_parent = global_settings.gluon_parent
+web2py_path = global_settings.applications_parent # backward compatibility
 
 def abspath(*relpath, **base):
-    "convert relative path to absolute path based (by default) on web2py_path"
+    "convert relative path to absolute path based (by default) on applications_parent"
     path = os.path.join(*relpath)
     gluon = base.get('gluon', False)
     if os.path.isabs(path):
@@ -844,7 +845,7 @@ def parse_url(request, environ):
 
     match = regex_static.match(regex_space.sub('_', path))
     if match and match.group('x'):
-        static_file = os.path.join(request.env.web2py_path,
+        static_file = os.path.join(request.env.applications_parent,
                                    'applications', match.group('b'),
                                    'static', match.group('x'))
         return static_file
@@ -885,7 +886,7 @@ def parse_url(request, environ):
                        rewrite.thread.routes.error_message % 'invalid request',
                        web2py_error='invalid path')
     request.client = get_client(request.env)
-    request.folder = os.path.join(request.env.web2py_path,
+    request.folder = os.path.join(request.env.applications_parent,
             'applications', request.application) + '/'
     request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
     request.cid = request.env.http_web2py_component_element

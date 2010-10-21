@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*- 
 
-import os, uuid, re, pickle
+import os, uuid, re, pickle, urllib, glob
 from gluon.admin import app_create, plugin_install
-
+from gluon.main import abspath
 
 def reset(session):
-    myuuid='sha512:'+str(uuid.uuid4())
     session.app={
-        'params':[('name','app'),
-                  ('title','My First App'),
+        'name':'',
+        'params':[('title','My First App'),
                   ('subtitle','it rocks'),
                   ('author_email','you'),
                   ('author','you@example.com'),
+                  ('keywords',''),
+                  ('description',''),
+                  ('database_uri','sqlite://storage.sqlite'),
+                  ('security_key',str(uuid.uuid4())),
                   ('email_server','localhost'),
                   ('email_sender','you@example.com'),
-                  ('email_login',''),
+                  ('email_login',''),                  
                   ('login_method','local'),
                   ('login_config',''),
                   ('layout_theme','Default')],
@@ -36,45 +39,61 @@ def clean(name):
     return re.sub('\W+','_',name.strip().lower())
 
 def index():
+    response.view='wizard/step.html'
     reset(session)
-    redirect(URL('step1'))
+    apps=os.listdir(os.path.join(request.folder,'..'))
+    form=SQLFORM.factory(Field('name',requires=(IS_ALPHANUMERIC())))
+    if form.accepts(request.vars):
+        app = form.vars.name
+        session.app['name'] = app
+        if app in apps:
+            meta = os.path.join(request.folder,'..',app,'wizard.metadata')
+            if os.path.exists(meta):
+                try:
+                    session.app=pickle.load(open(meta,'rb'))
+                    session.flash = "The app exists, was created by wizard, continue to overwrite!"
+                except:
+                    session.flash = "The app exists, was NOT created by wizard, continue to overwrite!"
+        redirect(URL('step1'))
+    return dict(step='Start',form=form)
+                         
 
 def step1():    
     from simplejson import loads
     import urllib
     if not session.themes:
+        url='http://web2py.com/layouts/default/layouts.json'
         try:
-            data = urllib.urlopen('http://web2py.com/layouts/default/layouts.json').read()
+            data = urllib.urlopen(url).read()
             session.themes = ['Default']+loads(data)['layouts']
         except:
             session.themes = ['Default']
-    THEMES = session.themes
-
+    themes = session.themes
     response.view='wizard/step.html'
-    apps=os.listdir(os.path.join(request.folder,'..'))
     params = dict(session.app['params'])
-    form=SQLFORM.factory(Field('name',
-                               requires=(IS_ALPHANUMERIC(),
-                                         IS_EXPR('not value in %s' % apps,
-                                                 error_message='app already exists')),
-                               default=params.get('name',None)),
-                         Field('title',default=params.get('title',None)),
-                         Field('subtitle',default=params.get('subtitle',None)),
-                         Field('author',default=params.get('author',None)),
-                         Field('author_email',default=params.get('author_email',None)),
-                         Field('email_server',default=params.get('email_server',None)),
-                         Field('email_sender',default=params.get('email_sender',None)),
-                         Field('email_login',default=params.get('email_login',None)),
-                         Field('login_method',requires=IS_IN_SET(('local','janrain')),
-                               default=params.get('login_method','local')),
-                         Field('login_config',default=params.get('login_config',None)),
-                         Field('layout_theme',requires=IS_IN_SET(THEMES),
-                               default=params.get('layout_theme',THEMES[0])))
+    form=SQLFORM.factory(
+                Field('title',default=params.get('title',None)),
+                Field('subtitle',default=params.get('subtitle',None)),
+                Field('author',default=params.get('author',None)),
+                Field('author_email',default=params.get('author_email',None)),
+                Field('keywords',default=params.get('keywords',None)),
+                Field('description','text',
+                      default=params.get('description',None)),
+                Field('database_uri',default=params.get('database_uri',None)),
+                Field('security_key',default=params.get('security_key',None)),
+                Field('email_server',default=params.get('email_server',None)),
+                Field('email_sender',default=params.get('email_sender',None)),
+                Field('email_login',default=params.get('email_login',None)),
+                Field('login_method',requires=IS_IN_SET(('local','janrain')),
+                      default=params.get('login_method','local')),
+                Field('login_config',default=params.get('login_config',None)),
+                Field('layout_theme',requires=IS_IN_SET(themes),
+                      default=params.get('layout_theme',themes[0])))
     if form.accepts(request.vars):
         session.app['params']=[(key,form.vars.get(key,None)) 
                                for key,value in session.app['params']]
         redirect(URL('step2'))
-    return dict(step='1',form=form)
+    return dict(step='1) Setting Parameters',form=form)
         
 def step2():  
     response.view='wizard/step.html'
@@ -97,7 +116,7 @@ def step2():
             redirect(URL('step3',args=0))
         else:
             redirect(URL('step4'))
-    return dict(step='2',form=form)
+    return dict(step='2) Declaring Tables',form=form)
 
 def step3():
     response.view='wizard/step.html'
@@ -120,7 +139,7 @@ def step3():
             redirect(URL('step3',args=n+1))
         else:
             redirect(URL('step4'))
-    return dict(step='3 (%s of %s)' %(n+1,m),table=table,form=form)
+    return dict(step='3) Editing Fields for %s (%s of %s)' % (table,n+1,m),table=table,form=form)
 
 def step4():
     response.view='wizard/step.html'
@@ -134,7 +153,7 @@ def step4():
             redirect(URL('step5',args=0))
         else:
             redirect(URL('step6'))
-    return dict(step='4',form=form)
+    return dict(step='4) Declaring Pages',form=form)
 
 def step5():
     response.view='wizard/step.html'
@@ -153,16 +172,31 @@ def step5():
             redirect(URL('step5',args=n+1))
         else:
             redirect(URL('step6'))
-    return dict(step='5 (%s of %s)' % (n+1,m),form=form)
+    return dict(step='5) Editing Page View for %s (%s of %s)' % (page,n+1,m),form=form)
 
 def step6():
     response.view='wizard/step.html'
     params = dict(session.app['params'])
-    app = params['name']
-    url = URL('create')
-    form=DIV(TAG.button('generate app "%s" now!' % app,
-                        _onclick="window.open('%s','_blank',status='yes')" % url),
-             _style="padding:30px")
+    app = session.app['name']
+    form=SQLFORM.factory(
+        Field('generate_model','boolean',default=True),
+        Field('generate_controller','boolean',default=True),
+        Field('generate_views','boolean',default=True),
+        Field('generate_menu','boolean',default=True),
+        Field('apply_layout','boolean',default=True),
+        Field('erase_database','boolean',default=True),
+        Field('populate_database','boolean',default=True))
+    if form.accepts(request.vars):
+        create(form.vars)       
+        form = TABLE(
+            A('click to open',_href=URL(app,'default','index'),
+              _target='_blank'),
+            A('engineer',_href=URL('admin','default','design',args=app),
+              _target='_blank'),
+            A('manage',_href=URL(app,'appadmin','index'),
+              _target='_blank')
+            )
+        response.flash='Application %s created' % app
     return dict(step='6',form=form)
 
 def make_table(table,fields):
@@ -229,14 +263,14 @@ def make_table(table,fields):
             s+=",\n          writable=False"
         s+=",\n          label=T('%s')),\n" % \
             ' '.join(x.capitalize() for x in barename.split('_'))
+    s+="    Field('f_created_on','datetime',default=request.now,\n"
+    s+="          label=T('Created On'),writable=False,readable=False),\n"
+    s+="    Field('f_modified_on','datetime',default=request.now,\n"
+    s+="          label=T('Modified On'),writable=False,readable=False,\n"
+    s+="          update=request.now),\n"
     if not table=='auth_user' and 'auth_user' in session.app['tables']:
-        s+="    Field('f_created_on','datetime',default=request.now,\n"
-        s+="          label=T('Created On'),writable=False,readable=False),\n"
         s+="    Field('f_created_by',db.auth_user,default=auth.user_id,\n"
         s+="          label=T('Created By'),writable=False,readable=False),\n"
-        s+="    Field('f_modified_on','datetime',default=request.now,\n"
-        s+="          label=T('Modified On'),writable=False,readable=False,\n"
-        s+="          update=request.now),\n"
         s+="    Field('f_modified_by',db.auth_user,default=auth.user_id,\n"
         s+="          label=T('Modified By'),writable=False,readable=False,\n"
         s+="          update=auth.user_id),\n"
@@ -267,7 +301,10 @@ def fix_db(filename):
     content=open(filename,'rb').read()
     if 'auth_user' in session.app['tables']:
         auth_user = make_table('auth_user',session.app['table_auth_user'])
-        content=content.replace('auth.define_tables()',auth_user+'auth.define_tables(migrate=settings.migrate)')
+        content=content.replace('sqlite://storage.sqlite',
+                                params['database_uri'])
+        content=content.replace('auth.define_tables()',\
+            auth_user+'auth.define_tables(migrate=settings.migrate)')
     content+="""
 mail.settings.server = settings.email_server
 mail.settings.sender = settings.email_sender
@@ -289,8 +326,8 @@ def make_menu(pages):
 response.title = settings.title
 response.subtitle = settings.subtitle
 response.meta.author = settings.author
-response.meta.keywords = ""
-response.meta.description = ""
+response.meta.keywords = settings.keywords
+response.meta.description = settings.description
 response.menu = [
 """
     for page in pages:
@@ -361,17 +398,22 @@ def make_view(page,contents):
             s+="\n{{=rows and SQLTABLE(rows,headers=headers) or TAG.blockquote(T('No Data'))}}\n"
     return s
 
-def create():
-    import urllib
-    from gluon.main import abspath
-    from gluon.admin import *
+def populate(tables):
+
+    s = 'from gluon.contrib.populate import populate\n'
+    s+= 'if not db(db.auth_user).count():\n'
+    for table in tables:
+        t=table=='auth_user' and 'auth_user' or 't_'+table
+        s+="     populate(db.%s,100)\n" % t
+    return s
+
+def create(options):
     if DEMO_MODE:
         session.flash = T('disabled in demo mode')
         redirect(URL('default','step6'))
     params = dict(session.app['params'])
-    app = params['name']
-    try: app_create(app,request)
-    except: pass    
+    app = session.app['name']
+    app_create(app,request,force=True,key=params['security_key'])
 
     ### save metadata in newapp/wizard.metadata
     meta = os.path.join(request.folder,'..',app,'wizard.metadata')
@@ -380,10 +422,9 @@ def create():
     file.close()
 
     ### apply theme
-    if params['layout_theme']!='Default':
+    if options.apply_layout and params['layout_theme']!='Default':
         try:
             fn = 'web2py.plugin.layout_%s.w2p' % params['layout_theme']
-            print 'http://web2py.com/layouts/static/plugin_layouts/plugins/'+fn
             theme = urllib.urlopen('http://web2py.com/layouts/static/plugin_layouts/plugins/'+fn)
             plugin_install(app, theme, request, fn)
         except: response.flash = T("unable to install there")
@@ -395,32 +436,43 @@ def create():
     file.write("settings = Storage()\n\n")
     file.write("settings.migrate = True\n")
     for key,value in session.app['params']:
-        file.write("settings.%s = '%s'\n" % (key,value))
+        file.write("settings.%s = %s\n" % (key,repr(value)))
     file.close()
 
     ### write configuration file into newapp/models/menu.py
-    model = os.path.join(request.folder,'..',app,'models','menu.py')
-    file = open(model,'wb')
-    file.write(make_menu(session.app['pages']))
-    file.close()
+    if options.generate_menu:
+        model = os.path.join(request.folder,'..',app,'models','menu.py')
+        file = open(model,'wb')
+        file.write(make_menu(session.app['pages']))
+        file.close()
 
     ### customize the auth_user table
     model = os.path.join(request.folder,'..',app,'models','db.py')
     fix_db(model)
 
     ### create newapp/models/db_wizard.py
-    model = os.path.join(request.folder,'..',app,'models','db_wizard.py')
-    file = open(model,'wb')
-    file.write('### we prepend t_ to tablenames and f_ to fieldnames for disambiguity\n\n')
-    for table in session.app['tables']:
-        if table=='auth_user': continue
-        file.write(make_table(table,session.app['table_'+table]))
-    file.close()
+    if options.generate_model:
+        model = os.path.join(request.folder,'..',app,'models','db_wizard.py')
+        file = open(model,'wb')
+        file.write('### we prepend t_ to tablenames and f_ to fieldnames for disambiguity\n\n')
+        for table in session.app['tables']:
+            if table=='auth_user': continue
+            file.write(make_table(table,session.app['table_'+table]))
+        file.close()
+
+    if options.populate_database:        
+        model = os.path.join(request.folder,'..',app,
+                             'models','db_wizard_populate.py')
+        if os.path.exists(model): os.unlink(model)
+        file = open(model,'wb')
+        file.write(populate(session.app['tables']))
+        file.close()
 
     ### create newapp/controllers/default.py
-    controller = os.path.join(request.folder,'..',app,'controllers','default.py')
-    file = open(controller,'wb')
-    file.write("""# -*- coding: utf-8 -*- 
+    if options.generate_controller:
+        controller = os.path.join(request.folder,'..',app,'controllers','default.py')
+        file = open(controller,'wb')
+        file.write("""# -*- coding: utf-8 -*- 
 ### required - do no delete
 def user(): return dict(form=auth())
 def download(): return response.download(request,db)
@@ -429,15 +481,20 @@ def call():
     return service()
 ### end requires
 """)
-    for page in session.app['pages']:
-        file.write(make_page(page,session.app.get('page_'+page,'')))
-    file.close()
+        for page in session.app['pages']:
+            file.write(make_page(page,session.app.get('page_'+page,'')))
+        file.close()
 
     ### create newapp/views/default/*.html
-    for page in session.app['pages']:
-        view = os.path.join(request.folder,'..',app,'views','default',page+'.html')
-        file = open(view,'wb')
-        file.write(make_view(page,session.app.get('page_'+page,'')))
-        file.close()
-    redirect(URL(app,'default','index'))
+    if options.generate_views:
+        for page in session.app['pages']:
+            view = os.path.join(request.folder,'..',app,'views','default',page+'.html')
+            file = open(view,'wb')
+            file.write(make_view(page,session.app.get('page_'+page,'')))
+            file.close()
+
+    if options.erase_database:
+        path = os.path.join(request.folder,'..',app,'database','*')
+        for file in glob.glob(path): os.unlink(file)
+
 
