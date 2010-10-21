@@ -206,20 +206,24 @@ def make_table(table,fields):
     s+='\n'+'#'*40+'\n'
     s+="db.define_table('%s',\n" % table
     s+="    Field('id','id',\n"
-    s+="          represent=lambda id:A('view',_href=URL('%s_read',args=id))),\n"%rawtable
+    s+="          represent=lambda id:SPAN(id,' ',A('view',_href=URL('%s_read',args=id)))),\n"%rawtable
     first_field='id'
     for field in fields:
         items=[x.lower() for x in field.split()]
         has={}
-        for key in ['notnull','unique','integer','double','boolean','float','boolean',
-                    'date','time','datetime','text','wiki','html','file','upload','true',
-                    'hidden','readonly','writeonly','multiple']:
+        for key in ['notnull','unique','integer','double','boolean','float',
+                    'boolean', 'date','time','datetime','text','wiki',
+                    'html','file','upload','image','true',
+                    'hidden','readonly','writeonly','multiple',
+                    'notempty','required']:
             if key in items[1:]:
                 has[key] = True
                 items = [x for x in items if not x==key]
         barename = name = '_'.join(items)
         if table[:2]=='t_': name='f_'+name
         if first_field=='id': first_field=name
+
+        ### determine field type
         ftype='string'
         for key in ['integer','double','boolean','float','boolean',
                     'date','time','datetime','text','file']:
@@ -227,7 +231,7 @@ def make_table(table,fields):
                 ftype=key
         if 'wiki' in has or 'html' in has:
             ftype='text'
-        if 'file' in has:
+        elif 'file' in has or 'upload' in has or 'image' in has:
             ftype='upload'
         for key in items:
             if key in session.app['tables'] and not 'multiple' in has:
@@ -240,27 +244,40 @@ def make_table(table,fields):
                 break
         if ftype=='string' and 'multiple' in has:
             ftype='list:string'
-        if ftype=='integer' and 'multiple' in has:
+        elif ftype=='integer' and 'multiple' in has:
             ftype='list:integer'
-        if name=='password':
+        elif name=='password':
             ftype='password'
         s+="    Field('%s', type='%s'" % (name, ftype)
-        if 'notnull' in has:
+
+        ### determine field attributes
+        if 'notnull' in has or 'notempty' in has or 'required' in has:
             s+=', notnull=True'
         if 'unique' in has:
             s+=', unique=True'        
         if ftype=='boolean' and 'true' in has:
             s+=",\n          default=True"
-        if 'wiki' in has:
+
+        ### determine field representation
+        if 'image' in has:
+            s+=",\n          represent=lambda x: x and IMG(_alt='image',_src=URL('download',args=x), _width='200px') or ''"
+        elif ftype in ('file','upload'):
+            s+=",\n          represent=lambda x: x and A('download',_href=URL('download',args=x)) or ''"
+        elif 'wiki' in has:
             s+=",\n          represent=lambda x: MARKMIN(x)"
+            s+=",\n          comment='WIKI (markmin)'"
         elif 'html' in has:
             s+=",\n          represent=lambda x: XML(x,sanitize=True)"
+            s+=",\n          comment='HTML (sanitized)'"
+        ### determine field access
         if name=='password' or 'writeonly' in has:
             s+=",\n          readable=False"
         elif 'hidden' in has:
             s+=",\n          writable=False, readable=False"
         elif 'readonly' in has:
             s+=",\n          writable=False"
+
+        ### make up a label
         s+=",\n          label=T('%s')),\n" % \
             ' '.join(x.capitalize() for x in barename.split('_'))
     s+="    Field('f_created_on','datetime',default=request.now,\n"
@@ -494,7 +511,7 @@ def call():
             file.close()
 
     if options.erase_database:
-        path = os.path.join(request.folder,'..',app,'database','*')
+        path = os.path.join(request.folder,'..',app,'databases','*')
         for file in glob.glob(path): os.unlink(file)
 
 

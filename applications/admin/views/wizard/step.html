@@ -57,8 +57,14 @@
       {{pass}}
     </td>
     <td id="wizard_form">
-      <h2>Step {{=step}}</h2><br />
-      <img src="" alt="" align="right" id="preview"/>
+      <h2>Step {{=step}}</h2>
+      {{if request.function!='step6':}}
+      <a href="{{=URL('step6')}}">skip to generate</a>
+      {{pass}}
+      <br /><br />
+      {{if request.function in ('step1','step6'):}}
+      <img src="http://web2py.com/layouts/static/plugin_layouts/layouts/{{=dict(session.app['params'])['layout_theme']}}/preview.png" alt="" align="right" id="preview"/>
+      {{pass}}
       {{=form}}
       <script>
 	jQuery(document).ready(function(){
