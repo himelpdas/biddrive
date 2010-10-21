@@ -9,8 +9,8 @@ def reset(session):
         'name':'',
         'params':[('title','My First App'),
                   ('subtitle','it rocks'),
-                  ('author_email','you'),
-                  ('author','you@example.com'),
+                  ('author','you'),
+                  ('author_email','you@example.com'),
                   ('keywords',''),
                   ('description',''),
                   ('database_uri','sqlite://storage.sqlite'),
@@ -325,7 +325,7 @@ def make_menu(pages):
     s="""
 response.title = settings.title
 response.subtitle = settings.subtitle
-response.meta.author = settings.author
+response.meta.author = '%s <%s>' % (settings.author, settings.author_email)
 response.meta.keywords = settings.keywords
 response.meta.description = settings.description
 response.menu = [
