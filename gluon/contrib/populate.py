@@ -91,6 +91,13 @@ def populate(table, n, default=True):
             elif field.type=='integer' and hasattr(field.requires,'options'):                
                 options=field.requires.options()
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
+            elif field.type=='list:integer' and hasattr(field.requires,'options'):                
+                options=field.requires.options()
+                if len(options) > 0:
+                    vals = []
+                    for i in range(0, random.randint(0,len(options)-1)/2):
+                        vals.append(options[random.randint(0,len(options)-1)][0])
+                    record[fieldname] = vals
             elif field.type in ['integer','double'] or str(field.type).startswith('decimal'):
                 try:
                     record[fieldname] = random.randint(field.requires.minimum,field.requires.maximum-1)
@@ -108,6 +115,28 @@ def populate(table, n, default=True):
                     record[fieldname] = ids[tablename][random.randint(0,n-1)]
                 else:
                     record[fieldname] = 0
+            elif field.type[:15] == 'list:reference ':
+                tablename = field.type[15:]
+                if not tablename in ids:
+                    if table._db._dbname=='gql':
+                        ids[tablename] = [x.id for x in table._db(table._db[field.type[15:]].id>0).select()]
+                    else:
+                        ids[tablename] = [x.id for x in table._db(table._db[field.type[15:]].id>0).select()]
+                n = len(ids[tablename])
+                if n:
+                    vals = []
+                    for i in range(0, random.randint(0,n-1)/2):
+                        vals.append(ids[tablename][random.randint(0,n-1)])
+                    record[fieldname] = vals
+                else:
+                    record[fieldname] = 0
+            elif field.type=='list:string' and hasattr(field.requires,'options'):                
+                options=field.requires.options()
+                if len(options) > 0:
+                    vals = []
+                    for i in range(0, random.randint(0,len(options)-1)/2):
+                        vals.append(options[random.randint(0,len(options)-1)][0])
+                    record[fieldname] = vals
             elif field.type=='string' and hasattr(field.requires,'options'):                
                 options=field.requires.options()
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
