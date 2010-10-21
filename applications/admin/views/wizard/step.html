@@ -48,7 +48,16 @@
     </td>
     <td id="wizard_form">
       <h2>Step {{=step}}</h2>
+      <img src="" alt="" align="right" id="preview"/>
       {{=form}}
+      <script>
+	jQuery(document).ready(function(){
+            var t=jQuery('#no_table_layout_theme');
+	    t.change(function(){
+               jQuery('#preview').attr('src','http://web2py.com/layouts/static/plugin_layouts/layouts/'+t.val()+'/preview.png');
+          });
+	});
+      </script>
       <h2>Info</h2>
       {{if request.function=='step1':}}
       <ul>

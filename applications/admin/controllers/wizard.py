@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*- 
 
 import os, uuid, re, pickle
-from gluon.admin import app_create
+from gluon.admin import app_create, plugin_install
 
-THEMES=['one','two','three']
 
 def reset(session):
     myuuid='sha512:'+str(uuid.uuid4())
@@ -18,7 +17,7 @@ def reset(session):
                   ('email_login',''),
                   ('login_method','local'),
                   ('login_config',''),
-                  ('layout_theme','one')],
+                  ('layout_theme','Default')],
         'tables':['auth_user'],
         'table_auth_user':['username','first_name','last_name','email','password'],
         'pages':['index','error'],
@@ -41,6 +40,16 @@ def index():
     redirect(URL('step1'))
 
 def step1():    
+    from simplejson import loads
+    import urllib
+    if not session.themes:
+        try:
+            data = urllib.urlopen('http://web2py.com/layouts/default/layouts.json').read()
+            session.themes = ['Default']+loads(data)['layouts']
+        except:
+            session.themes = ['Default']
+    THEMES = session.themes
+
     response.view='wizard/step.html'
     apps=os.listdir(os.path.join(request.folder,'..'))
     params = dict(session.app['params'])
@@ -353,13 +362,16 @@ def make_view(page,contents):
     return s
 
 def create():
+    import urllib
+    from gluon.main import abspath
+    from gluon.admin import *
     if DEMO_MODE:
         session.flash = T('disabled in demo mode')
         redirect(URL('default','step6'))
     params = dict(session.app['params'])
     app = params['name']
     try: app_create(app,request)
-    except: pass
+    except: pass    
 
     ### save metadata in newapp/wizard.metadata
     meta = os.path.join(request.folder,'..',app,'wizard.metadata')
@@ -367,6 +379,15 @@ def create():
     pickle.dump(session.app,file)
     file.close()
 
+    ### apply theme
+    if params['layout_theme']!='Default':
+        try:
+            fn = 'web2py.plugin.layout_%s.w2p' % params['layout_theme']
+            print 'http://web2py.com/layouts/static/plugin_layouts/plugins/'+fn
+            theme = urllib.urlopen('http://web2py.com/layouts/static/plugin_layouts/plugins/'+fn)
+            plugin_install(app, theme, request, fn)
+        except: response.flash = T("unable to install there")
+    
     ### write configuration file into newapp/models/0.py
     model = os.path.join(request.folder,'..',app,'models','0.py')
     file = open(model,'wb')
