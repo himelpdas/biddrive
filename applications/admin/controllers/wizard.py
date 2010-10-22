@@ -59,7 +59,7 @@ def index():
                          
 
 def step1():    
-    from simplejson import loads
+    from gluon.contrib.simplejson import loads
     import urllib
     if not session.themes:
         url='http://web2py.com/layouts/default/layouts.json'
