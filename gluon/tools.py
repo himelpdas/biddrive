@@ -2948,7 +2948,7 @@ class Crud(object):
         if not query:
             query = table.id > 0
         if not fields:
-            fields = [table.ALL]
+            fields = [field for field in table if field.readable]
         rows = self.db(query).select(*fields, **dict(orderby=orderby,
                                                      limitby=limitby))
         if not rows:
@@ -3043,8 +3043,9 @@ class Crud(object):
         query_labels = args.get('query_labels', {})
         query = args.get('query',table.id > 0)
         field_labels = args.get('field_labels',{})
-        for fieldname in fields:
-            field = table[fieldname]
+        for field in table:
+            if not field.readable: continue
+            fieldname = field.name
             chkval = request.vars.get('chk' + fieldname, None)
             txtval = request.vars.get('txt' + fieldname, None)
             opval = request.vars.get('op' + fieldname, None)
