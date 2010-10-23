@@ -498,10 +498,10 @@ def sqlhtml_validators(field):
     elif field_type == 'datetime':
         requires.append(validators.IS_DATETIME())
     elif field._db and field_type.startswith('reference') and \
-            field_type.find('.')<0 and \
+            field_type.find('.') < 0 and \
             field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
-        field.represent = lambda id, r=referenced, f=ff: f(r,id)
+        field.represent = lambda id, r=referenced, f=ff: f(r, id)
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format)
@@ -511,7 +511,7 @@ def sqlhtml_validators(field):
                 return validators.IS_EMPTY_OR(requires)
             return requires
     elif field._db and field_type.startswith('list:reference') and \
-            field_type.find('.')<0 and \
+            field_type.find('.') < 0 and \
             field_type[15:] in field._db.tables:
         referenced = field._db[field_type[15:]]
         field.represent = lambda ids, r=referenced, f=ff: \
@@ -526,9 +526,9 @@ def sqlhtml_validators(field):
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
     sff = ['in', 'do', 'da', 'ti', 'de']
     if field.notnull and not field_type[:2] in sff:
-        requires.insert(0,validators.IS_NOT_EMPTY())
+        requires.insert(0, validators.IS_NOT_EMPTY())
     elif not field.notnull and field_type[:2] in sff and requires:
-        requires[-1]=validators.IS_EMPTY_OR(requires[-1])
+        requires[-1] = validators.IS_EMPTY_OR(requires[-1])
     return requires
 
 def bar_escape(item):
@@ -542,7 +542,7 @@ def bar_decode_integer(value):
     return [int(x) for x in value.split('|') if x.strip()]
 
 def bar_decode_string(value):
-    return [x.replace('||','|') for x in string_unpack.split(value[1:-1]) \
+    return [x.replace('||', '|') for x in string_unpack.split(value[1:-1]) \
                 if x.strip()]
 
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
@@ -550,9 +550,9 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
         obj = obj()
     if fieldtype.startswith('list:'):
         if not obj:
-            obj=[]
-        if not isinstance(obj,(list,tuple)):
-            obj=[obj]
+            obj = []
+        if not isinstance(obj, (list, tuple)):
+            obj = [obj]
     if isinstance(obj, (list, tuple)):
         obj = bar_encode(obj)
     if isinstance(obj, (Expression, Field)):
@@ -579,7 +579,7 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if fieldtype.startswith('decimal'):
         return str(obj)
     elif fieldtype.startswith('r'): # reference
-        if fieldtype.find('.')>0:
+        if fieldtype.find('.') > 0:
             return repr(obj)
         elif isinstance(obj, (Row, Reference)):
             return str(obj['id'])
@@ -1247,14 +1247,14 @@ class SQLDB(dict):
             """
             self._dbname, connstr = self._uri.split(':', 1)
             # Simple URI processing
-            connstr=connstr.lstrip()
+            connstr = connstr.lstrip()
             while connstr.startswith('/'):
                 connstr = connstr[1:]
 
             database_name=connstr # Assume only (local) dbname is passed in
-            vnode='(local)'
-            servertype='ingres'
-            trace=(0, None) # No tracing
+            vnode = '(local)'
+            servertype = 'ingres'
+            trace = (0, None) # No tracing
             self._pool_connection(lambda : \
                                     ingresdbi.connect(
                                         database=database_name,
@@ -1531,11 +1531,11 @@ class Reference(int):
         if key == 'id':
             return int(self)
         self.__allocate()
-        return self._record.get(key,None)
+        return self._record.get(key, None)
 
     def __setattr__(self,key,value):
-        if key[:1]=='_':
-            int.__setattr__(self,key,value)
+        if key[:1] == '_':
+            int.__setattr__(self, key, value)
             return
         self.__allocate()
         self._record[key] =  value
@@ -1546,9 +1546,9 @@ class Reference(int):
         self.__allocate()
         return self._record.get(key, None)
 
-    def __setitem__(self,key,value):
+    def __setitem__(self, key, value):
         self.__allocate()
-        self._record[key] =  value
+        self._record[key] = value
 
 def Reference_unpickler(data):
     return marshal.loads(data)
@@ -1557,7 +1557,7 @@ def Reference_pickler(data):
     try:
         marshal_dump = marshal.dumps(int(data))
     except AttributeError:
-        marshal_dump = 'i%s' % struct.pack('<i',int(data))
+        marshal_dump = 'i%s' % struct.pack('<i', int(data))
     return (Reference_unpickler, (marshal_dump,))
 
 copy_reg.pickle(Reference, Reference_pickler, Reference_unpickler)
@@ -1593,7 +1593,7 @@ class Table(dict):
         """
         new_fields = [ Field('id', 'id') ]
         for field in fields:
-            if hasattr(field,'_db'):
+            if hasattr(field, '_db'):
                 field = copy.copy(field)
             if isinstance(field, Field):
                 if field.type == 'id':
@@ -1648,31 +1648,31 @@ class Table(dict):
 
     def _filter_fields(self, record, id=False):
         return dict([(k, v) for (k, v) in record.items() if k
-                     in self.fields and (k!='id' or id)])
+                     in self.fields and (k != 'id' or id)])
 
     def __getitem__(self, key):
         if not key:
             return None
         elif str(key).isdigit():
-            return self._db(self.id == key).select(limitby=(0,1)).first()
+            return self._db(self.id == key).select(limitby=(0, 1)).first()
         else:
             return dict.__getitem__(self, str(key))
 
     def __call__(self, id=DEFAULT, **kwargs):
         if id!=DEFAULT:
             if isinstance(id, Query):
-                record = self._db(id).select(limitby=(0,1)).first()
+                record = self._db(id).select(limitby=(0, 1)).first()
             elif not str(id).isdigit():
                 record = None
             else:
-                record = self._db(self._id == id).select(limitby=(0,1)).first()
+                record = self._db(self._id == id).select(limitby=(0, 1)).first()
             if record:
                 for k,v in kwargs.items():
-                    if record[k]!=v: return None
+                    if record[k] != v: return None
             return record
         elif kwargs:
-            query = reduce(lambda a,b:a&b,[self[k]==v for k,v in kwargs.items()])
-            return self._db(query).select(limitby=(0,1)).first()            
+            query = reduce(lambda a, b:a & b, [self[k] == v for k, v in kwargs.items()])
+            return self._db(query).select(limitby=(0, 1)).first()            
         else:
             return None
 
@@ -1696,7 +1696,7 @@ class Table(dict):
     def __setattr__(self, key, value):
         if key in self:
             raise SyntaxError, 'Object exists and cannot be redefined: %s' % key
-        dict.__setitem__(self,key,value)
+        dict.__setitem__(self, key, value)
 
     def __iter__(self):
         for fieldname in self.fields:
@@ -2708,7 +2708,7 @@ class SQLCustomType:
         self.validator = validator
         self._class = _class or type
 
-    def startswith(self):
+    def startswith(self, dummy=None):
         return False
 
     def __getslice__(self, a=0, b=100):
