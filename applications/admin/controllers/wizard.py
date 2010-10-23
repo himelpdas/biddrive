@@ -62,7 +62,7 @@ def step1():
     from gluon.contrib.simplejson import loads
     import urllib
     if not session.themes:
-        url='http://web2py.com/layouts/default/layouts.json'
+        url=LAYOUTS_APP+'/default/layouts.json'
         try:
             data = urllib.urlopen(url).read()
             session.themes = ['Default']+loads(data)['layouts']
@@ -442,7 +442,7 @@ def create(options):
     if options.apply_layout and params['layout_theme']!='Default':
         try:
             fn = 'web2py.plugin.layout_%s.w2p' % params['layout_theme']
-            theme = urllib.urlopen('http://web2py.com/layouts/static/plugin_layouts/plugins/'+fn)
+            theme = urllib.urlopen(LAYOUTS_APP+'/static/plugin_layouts/plugins/'+fn)
             plugin_install(app, theme, request, fn)
         except: response.flash = T("unable to install there")
     

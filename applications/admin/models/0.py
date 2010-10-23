@@ -47,3 +47,5 @@ import os
 GAE_APPCFG = os.path.abspath(os.path.join('applications/admin/private/appcfg.py'))
 
 
+# parameter for downloading LAYOUTS
+LAYOUTS_APP = 'http://web2py.com/layouts'
