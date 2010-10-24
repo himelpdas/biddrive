@@ -1,0 +1,15 @@
+{{extend 'layout.html'}}
+
+<h2>Revision {{=rev}}</h2>
+
+{{=form}}
+
+<h3>Changelog</h3>
+
+{{=desc}}
+
+<h3>Files added</h3>
+
+{{=TABLE(*[TR(f) for f in files])}}
+
+
