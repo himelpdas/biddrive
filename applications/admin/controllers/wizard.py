@@ -7,8 +7,8 @@ from gluon.main import abspath
 def reset(session):
     session.app={
         'name':'',
-        'params':[('title','My First App'),
-                  ('subtitle','it rocks'),
+        'params':[('title','My New App'),
+                  ('subtitle','powered by web2py'),
                   ('author','you'),
                   ('author_email','you@example.com'),
                   ('keywords',''),
@@ -24,7 +24,7 @@ def reset(session):
         'tables':['auth_user'],
         'table_auth_user':['username','first_name','last_name','email','password'],
         'pages':['index','error'],
-        'page_index':'# Welcome to my first app',
+        'page_index':'# Welcome to my new app',
         'page_error':'# Error: the document does not exist',
         }
 
@@ -42,7 +42,7 @@ def index():
     response.view='wizard/step.html'
     reset(session)
     apps=os.listdir(os.path.join(request.folder,'..'))
-    form=SQLFORM.factory(Field('name',requires=(IS_ALPHANUMERIC())))
+    form=SQLFORM.factory(Field('name',requires=[IS_NOT_EMPTY(),IS_ALPHANUMERIC()]))
     if form.accepts(request.vars):
         app = form.vars.name
         session.app['name'] = app
@@ -72,7 +72,8 @@ def step1():
     response.view='wizard/step.html'
     params = dict(session.app['params'])
     form=SQLFORM.factory(
-                Field('title',default=params.get('title',None)),
+                Field('title',default=params.get('title',None),
+                                      requires=IS_NOT_EMPTY()),
                 Field('subtitle',default=params.get('subtitle',None)),
                 Field('author',default=params.get('author',None)),
                 Field('author_email',default=params.get('author_email',None)),
