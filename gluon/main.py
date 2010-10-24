@@ -27,6 +27,8 @@ import socket
 import tempfile
 import random
 import string
+from fileutils import abspath
+from settings import global_settings
 
 #  calling script has inserted path to script directory into sys.path
 #  applications_parent (path to applications/, site-packages/ etc) defaults to that directory
@@ -41,20 +43,9 @@ import string
 #  The two are identical unless web2py_path is changed via the web2py.py -f folder option
 #  main.web2py_path is the same as applications_parent (for backward compatibility)
 #
-from settings import global_settings
 global_settings.gluon_parent = os.environ.get('web2py_path', os.getcwd())
 global_settings.applications_parent = global_settings.gluon_parent
 web2py_path = global_settings.applications_parent # backward compatibility
-
-def abspath(*relpath, **base):
-    "convert relative path to absolute path based (by default) on applications_parent"
-    path = os.path.join(*relpath)
-    gluon = base.get('gluon', False)
-    if os.path.isabs(path):
-        return path
-    if gluon:
-        return os.path.join(global_settings.gluon_parent, path)
-    return os.path.join(global_settings.applications_parent, path)    
 
 for path in (global_settings.gluon_parent, abspath('site-packages', gluon=True), ""):
     try:
@@ -334,31 +325,38 @@ def wsgibase(environ, responder):
       - file and sub may also contain '-', '=', '.' and '/'
     """
 
-    rewrite.select(environ)
-    if rewrite.thread.routes.routes_in:
-        environ = rewrite.filter_in(environ)
-
     request = Request()
     response = Response()
     session = Session()
+    request.env.web2py_path = global_settings.applications_parent
+    request.env.web2py_version = web2py_version
+    request.env.update(global_settings)
     static_file = False
     try:
         try:
             try:
                 # ##################################################
-                # parse the environment variables
+                # handle fcgi missing path_info and query_string 
+                # select rewrite parameters
+                # rewrite incoming URL
+                # parse rewritten header variables
+                # parse rewritten URL
+                # serve file if static
                 # ##################################################
-    
+
+                if not environ['PATH_INFO'] and environ['REQUEST_URI']:
+                    # for fcgi, get path_info and query_string from request_uri
+                    items = environ['REQUEST_URI'].split('?')
+                    environ['PATH_INFO'] = items[0]
+                    if len(items) > 1:
+                        environ['QUERY_STRING'] = items[1]
+                    else:
+                        environ['QUERY_STRING'] = ''
+                rewrite.select(environ)
+                if rewrite.thread.routes.routes_in:
+                    environ = rewrite.filter_in(environ)
                 for (key, value) in environ.items():
                     request.env[key.lower().replace('.', '_')] = value
-                request.env.web2py_path = global_settings.applications_parent
-                request.env.web2py_version = web2py_version
-                request.env.update(global_settings)
-
-                # ##################################################
-                # invoke the legacy URL parser and serve static file
-                # ##################################################
-    
                 static_file = parse_url(request, environ)
                 if static_file:
                     if request.env.get('query_string', '')[:10] == 'attachment':
@@ -823,20 +821,8 @@ regex_args = re.compile(r'''
      ''', re.X)
 
 def parse_url(request, environ):
-    "parse and rewrite the incoming URL"
+    "parse rewritten incoming URL"
 
-    # ##################################################
-    # validate the path in url
-    # ##################################################
-
-    if not request.env.path_info and request.env.request_uri:
-        # for fcgi, decode path_info and query_string
-        items = request.env.request_uri.split('?')
-        request.env.path_info = items[0]
-        if len(items) > 1:
-            request.env.query_string = items[1]
-        else:
-            request.env.query_string = ''
     path = request.env.path_info.replace('\\', '/')
 
     # ##################################################

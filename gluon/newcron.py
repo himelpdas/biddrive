@@ -15,8 +15,8 @@ import sched
 import re
 import datetime
 import platform
-import gluon.portalocker as portalocker
-import gluon.main as main
+import portalocker
+import main
 import cPickle
 from gluon.settings import global_settings
 

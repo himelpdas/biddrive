@@ -14,7 +14,7 @@ import tarfile
 import glob
 from http import HTTP
 from gzip import open as gzopen
-from main import abspath
+from settings import global_settings
 
 
 __all__ = [
@@ -33,6 +33,16 @@ __all__ = [
     'fix_newlines',
     ]
 
+
+def abspath(*relpath, **base):
+    "convert relative path to absolute path based (by default) on applications_parent"
+    path = os.path.join(*relpath)
+    gluon = base.get('gluon', False)
+    if os.path.isabs(path):
+        return path
+    if gluon:
+        return os.path.join(global_settings.gluon_parent, path)
+    return os.path.join(global_settings.applications_parent, path)    
 
 def listdir(
     path,
