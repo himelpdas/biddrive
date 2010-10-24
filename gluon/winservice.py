@@ -22,9 +22,10 @@ import win32service
 import win32event
 import servicemanager
 import _winreg
-#from fileutils import up
+from fileutils import up
 
 __all__ = ['web2py_windows_service_handler']
+
 
 class Service(win32serviceutil.ServiceFramework):
 
@@ -133,9 +134,6 @@ class Web2pyService(Service):
             self.server.stop()
         time.sleep(1)
 
-
-def up(path):
-    return os.path.dirname(os.path.normpath(path))
 
 def web2py_windows_service_handler(argv=None, opt_file='options'):
     path = os.path.dirname(__file__)
