@@ -385,6 +385,7 @@ def make_page(page,contents):
         elif items[1]=='search':
             s+="    form, rows=crud.search(db.t_%s)\n" % t
             s+="    return dict(form=form, rows=rows)\n\n"
+        else:
             t=None
     else:
         t=None
