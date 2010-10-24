@@ -379,7 +379,7 @@ def make_page(page,contents):
             s+="    return dict(form=form)\n\n"
         elif items[1]=='select':
             s+="    f,v=request.args(0),request.args(1)\n"
-            s+="    query=f and db.t_%s[f].readable and db.t_%s[f]==v or None\n" % (t,t)
+            s+="    query=f and db.t_%s[f]==v or None\n" % (t,t)
             s+="    rows=crud.select(db.t_%s,query=query)\n" % t
             s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
