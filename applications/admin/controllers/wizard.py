@@ -378,7 +378,9 @@ def make_page(page,contents):
             s+="    form=crud.create(db.t_%s,next='%s_read/[id]')\n" % (t,t)
             s+="    return dict(form=form)\n\n"
         elif items[1]=='select':
-            s+="    rows=crud.select(db.t_%s)\n" % t
+            s+="    f,v=request.args(0),request.args(1)\n"
+            s+="    query=f and db.t_%s[f].readable and db.t_%s[f]==v or None\n" % (t,t)
+            s+="    rows=crud.select(db.t_%s,query=query)\n" % t
             s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
             s+="    form, rows=crud.search(db.t_%s)\n" % t
@@ -398,7 +400,10 @@ def make_view(page,contents):
         t=items[0]
         if items[1]=='read':
             s+="\n{{=A(T('edit %s'),_href=URL('%s_update',args=request.args(0)))}}\n<br/>\n"%(t,t)
-            s+='\n{{=form}}\n'
+            s+='\n{{=form}}\n'            
+            s+='{{for t,f in db.t_%s._referenced_by:}}' % t
+            s+="[{{=A(t[2:],_href=URL('%s_select'%t[2:],args=(f,form.record.id)))}}]"
+            s+='{{pass}}'
         elif items[1]=='create':
             s+="\n{{=A(T('select %s'),_href=URL('%s_select'))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
@@ -406,6 +411,7 @@ def make_view(page,contents):
             s+="\n{{=A(T('show %s'),_href=URL('%s_read',args=request.args(0)))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
         elif items[1]=='select':
+            s+="\n{{if request.args:}}<h3>{{=T('For %s #%s' % (request.args(0)[2:],request.args(1)))}}</h3>{{pass}}\n" 
             s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
             s+="\n{{=A(T('search %s'),_href=URL('%s_search'))}}\n<br/>\n"%(t,t)            
             s+="\n{{=rows or TAG.blockquote(T('No Data'))}}\n"
