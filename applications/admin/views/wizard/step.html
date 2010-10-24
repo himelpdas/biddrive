@@ -85,9 +85,9 @@
 	<li>If you want to use jarnain login: 1) get addoung with "janrain.com"; 2) register you hostname, domain, and obtain an api key; 3) set login config to "domain:api_key"</li>
       </ul>
       {{elif request.function=='step2':}}
-      List the names of table that you need. If you need authentication leave the table "auth_user" in the list. Press enter to create a new input row. Do not worry about empty rows. You will be able to add fields to your tables later.
+      List the names of table that you need. If you need authentication leave the table "auth_user" in the list. Press enter to create a new input row. Do not worry about empty rows. You will be able to add fields to your tables later. 
       {{elif request.function=='step3':}}
-      List the fields for this table (do not include an id field, it is automatic). The first field will be used to represent records. You can use special attributes like "integer", "boolean", "float", "file", "date", "time", "datetime" to specify the fields type. You can also use "multiple", "notnull" and "unique" to add attributes. To create a reference just add the name of the table you want to reference.
+      List the fields for this table (do not include an id field, it is automatic). The first field will be used to represent records. You can use special attributes like "integer", "boolean", "float", "file", "date", "time", "datetime" to specify the fields type. You can also use "multiple", "notnull" and "unique" to add attributes. To create a reference just add the name of the table you want to reference. Again, press enter to create a new input row.
       Table "auth_user" is a bit special and it must have a "username", "first_name", "last_name", "email" and "password". Do not add any attributes to these fields, they will be handled automatically.
       {{elif request.function=='step4':}}
       List the names of the pages you want to expose.
