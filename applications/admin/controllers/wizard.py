@@ -94,7 +94,7 @@ def step1():
         session.app['params']=[(key,form.vars.get(key,None)) 
                                for key,value in session.app['params']]
         redirect(URL('step2'))
-    return dict(step='1) Setting Parameters',form=form)
+    return dict(step='1: Setting Parameters',form=form)
         
 def step2():  
     response.view='wizard/step.html'
@@ -117,7 +117,7 @@ def step2():
             redirect(URL('step3',args=0))
         else:
             redirect(URL('step4'))
-    return dict(step='2) Declaring Tables',form=form)
+    return dict(step='2: Tables',form=form)
 
 def step3():
     response.view='wizard/step.html'
@@ -140,7 +140,7 @@ def step3():
             redirect(URL('step3',args=n+1))
         else:
             redirect(URL('step4'))
-    return dict(step='3) Editing Fields for %s (%s of %s)' % (table,n+1,m),table=table,form=form)
+    return dict(step='3: Fields for table "%s" (%s of %s)' % (table,n+1,m),table=table,form=form)
 
 def step4():
     response.view='wizard/step.html'
@@ -154,7 +154,7 @@ def step4():
             redirect(URL('step5',args=0))
         else:
             redirect(URL('step6'))
-    return dict(step='4) Declaring Pages',form=form)
+    return dict(step='4: Pages',form=form)
 
 def step5():
     response.view='wizard/step.html'
@@ -173,7 +173,7 @@ def step5():
             redirect(URL('step5',args=n+1))
         else:
             redirect(URL('step6'))
-    return dict(step='5) Editing Page View for %s (%s of %s)' % (page,n+1,m),form=form)
+    return dict(step='5: View for page "%s" (%s of %s)' % (page,n+1,m),form=form)
 
 def step6():
     response.view='wizard/step.html'
@@ -198,7 +198,7 @@ def step6():
               _target='_blank')
             )
         response.flash='Application %s created' % app
-    return dict(step='6',form=form)
+    return dict(step='6: Generate app "%s"' % app,form=form)
 
 def make_table(table,fields):
     rawtable=table
