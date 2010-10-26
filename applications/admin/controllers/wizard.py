@@ -112,7 +112,7 @@ def step2():
                     name = table+'_'+key
                     if not name in session.app['pages']:
                         session.app['pages'].append(name)
-                        session.app['page_'+name]='# %s %s' % (key,table)
+                        session.app['page_'+name]='## %s %s' % (key.capitalize(),table)
         if session.app['tables']:
             redirect(URL('step3',args=0))
         else:
@@ -385,8 +385,8 @@ def make_page(page,contents):
             s+="    return dict(form=form)\n\n"
         elif items[1]=='select':
             s+="    f,v=request.args(0),request.args(1)\n"
-            s+="    query=f and db.t_%s[f]==v or None\n" % t
-            s+="    rows=crud.select(db.t_%s,query=query)\n" % t
+            s+="    query=f and db.t_%s[f]==v or db.t_%s\n" % (t,t)
+            s+="    rows=db(query).select()\n"
             s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
             s+="    form, rows=crud.search(db.t_%s)\n" % t
@@ -420,13 +420,22 @@ def make_view(page,contents):
         elif items[1]=='select':
             s+="\n{{if request.args:}}<h3>{{=T('For %s #%s' % (request.args(0)[2:],request.args(1)))}}</h3>{{pass}}\n" 
             s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
-            s+="\n{{=A(T('search %s'),_href=URL('%s_search'))}}\n<br/>\n"%(t,t)            
-            s+="\n{{=rows or TAG.blockquote(T('No Data'))}}\n"
+            s+="\n{{=A(T('search %s'),_href=URL('%s_search'))}}\n<br/>\n"%(t,t)
+            s+="\n{{if rows:}}"
+            s+="\n  {{headers=dict((str(k),k.label) for k in db.t_%s)}}" % t
+            s+="\n  {{=SQLTABLE(rows,headers=headers)}}"
+            s+="\n{{else:}}"
+            s+="\n  {{=TAG.blockquote(T('No Data'))}}"
+            s+="\n{{pass}}\n"
         elif items[1]=='search':
             s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
-            s+="\n{{headers=dict((str(k),k.label) for k in db.t_%s)}}" % t
-            s+="\n{{=rows and SQLTABLE(rows,headers=headers) or TAG.blockquote(T('No Data'))}}\n"
+            s+="\n{{if rows:}}"
+            s+="\n  {{headers=dict((str(k),k.label) for k in db.t_%s)}}" % t
+            s+="\n  {{=SQLTABLE(rows,headers=headers)}}"
+            s+="\n{{else:}}"
+            s+="\n  {{=TAG.blockquote(T('No Data'))}}"
+            s+="\n{{pass}}\n"
     return s
 
 def populate(tables):
