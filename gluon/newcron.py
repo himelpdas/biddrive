@@ -18,7 +18,7 @@ import platform
 import portalocker
 import main
 import cPickle
-from gluon.settings import global_settings
+from settings import global_settings
 
 logger = logging.getLogger("web2py.cron")
 _cron_stopping = False

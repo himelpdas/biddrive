@@ -969,19 +969,60 @@ def upload_file():
 
 def errors():
     """ Error handler """
+    import operator
+    import os
+    import pickle
+    import hashlib
 
     app = request.args[0]
-
-    for item in request.vars:
-        if item[:7] == 'delete_':
-            os.unlink(apath('%s/errors/%s' % (app, item[7:]), r=request))
-
-    func = lambda p: os.stat(apath('%s/errors/%s' % (app, p), r=request)).st_mtime
-    tickets = sorted(listdir(apath('%s/errors/' % app, r=request), '^\w.*'),
-                     key=func,
-                     reverse=True)
-
-    return dict(app=app, tickets=tickets)
+    
+    method = request.args(1) or 'new'
+            
+            
+    if method == 'new':
+        errors_path = apath('%s/errors' % app, r=request)
+        
+        delete_hashes = []
+        for item in request.vars:
+            if item[:7] == 'delete_':
+                delete_hashes.append(item[7:])        
+        
+        hash2error = dict()
+                
+        for fn in listdir(errors_path, '^\w.*'):
+            try:
+                error = pickle.load(open(os.path.join(errors_path, fn), 'r'))
+            except IOError:
+                continue
+            
+            hash = hashlib.md5(error['traceback']).hexdigest()
+            
+            if hash in delete_hashes:
+                os.unlink(os.path.join(errors_path, fn))
+            else:
+                try:
+                    hash2error[hash]['count'] += 1
+                except KeyError:
+                    error_lines = error['traceback'].split("\n")
+                    last_line = error_lines[-2]
+                    error_causer = os.path.split(error['layer'])[1]
+                    hash2error[hash] = dict(count=1, pickel=error, causer=error_causer,
+                                            last_line=last_line,hash=hash, ticket=fn)
+                
+        decorated = [(x['count'], x) for x in hash2error.values()]
+        decorated.sort(key=operator.itemgetter(0), reverse=True)
+        
+        return dict(errors = [x[1] for x in decorated], app=app, method=method)
+    else:
+        for item in request.vars:
+            if item[:7] == 'delete_':
+                os.unlink(apath('%s/errors/%s' % (app, item[7:]), r=request))
+        func = lambda p: os.stat(apath('%s/errors/%s' % (app, p), r=request)).st_mtime
+        tickets = sorted(listdir(apath('%s/errors/' % app, r=request), '^\w.*'),
+                         key=func,
+                         reverse=True)
+    
+        return dict(app=app, tickets=tickets, method=method)
 
 
 def make_link(path):

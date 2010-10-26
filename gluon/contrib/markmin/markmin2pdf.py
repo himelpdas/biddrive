@@ -89,8 +89,8 @@ def latex2pdf(latex, pdflatex='pdflatex', passes=3):
     return data, warnings, errors
     
 
-def markmin2pdf(text, image_mapper=lambda x: None):
-    return latex2pdf(markmin2latex(text,image_mapper=image_mapper))
+def markmin2pdf(text, image_mapper=lambda x: None, extra={}):
+    return latex2pdf(markmin2latex(text,image_mapper=image_mapper, extra=extra))
 
 
 if __name__ == '__main__':

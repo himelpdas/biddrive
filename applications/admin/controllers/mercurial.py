@@ -44,7 +44,7 @@ def commit():
         if repo[repo.lookup('.')] == oldid:
             response.flash = 'no changes' 
     files = TABLE(*[TR(file) for file in repo[repo.lookup('.')].files()])
-    changes = TABLE(TR(TH('revision','description')))
+    changes = TABLE(TR(TH('revision'),TH('description')))
     for change in repo.changelog:
         ctx=repo.changectx(change)
         revision, description = ctx.rev(), ctx.description()
@@ -59,10 +59,11 @@ def revision():
     repo = hg_repo(path)
     revision = request.args(1)
     ctx=repo.changectx(revision)
-    form='' #FORM(INPUT(_type='submit',_value='revert'))
-    #if form.accepts(request.vars):
-    #    session.flash = "reverted to revision %s" % ctx.rev()
-    #    redirect(URL('commit',args=app))
+    form=FORM(INPUT(_type='submit',_value='revert'))
+    if form.accepts(request.vars):
+        hg.update(repo, revision)
+        session.flash = "reverted to revision %s" % ctx.rev()
+        redirect(URL('default','design',args=app))
     return dict(
         files=ctx.files(),
         rev=str(ctx.rev()),

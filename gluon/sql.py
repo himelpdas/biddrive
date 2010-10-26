@@ -4028,8 +4028,8 @@ def DAL(uri='sqlite:memory:',
         check_reserved=None,
         migrate=True, fake_migrate=False):
     if uri == 'gae':
-        import gluon.contrib.gql
-        return gluon.contrib.gql.GQLDB()
+        import contrib.gql
+        return contrib.gql.GQLDB()
     else:
         uris = isinstance(uri,(list,tuple)) and uri or [uri]
         for k in range(5):

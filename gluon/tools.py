@@ -572,7 +572,7 @@ class Mail(object):
                         server.ehlo()
                         server.starttls()
                         server.ehlo()
-                    server.login(*self.settings.login.split(':'))
+                    server.login(*self.settings.login.split(':',1))
                 result = server.sendmail(self.settings.sender, to, payload.as_string())
                 server.quit()
         except Exception, e:

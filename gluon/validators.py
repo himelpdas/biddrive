@@ -2482,7 +2482,7 @@ class IS_STRONG(object):
         if len(failures) == 0:
             return (value, None)
         if not self.error_message:
-            from gluon.html import XML
+            from html import XML
             return (value, XML('<br />'.join(failures)))
         else:
             return (value, self.error_message)

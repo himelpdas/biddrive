@@ -1,47 +1,90 @@
 {{extend 'layout.html'}}
 {{import os, stat, time}}
+
 <style>
-table.sortable thead {
-    background-color:#eee;
-    color:#666666;
-    font-weight: bold;
-    cursor: default;
-}
+	table.sortable thead {
+	    background-color:#eee;
+	    color:#666666;
+	    font-weight: bold;
+	    cursor: default;
+	}
+	
+	tr.error_ticket:hover {
+		cursor: pointer;
+		background-color: #eee;
+	}
 </style>
+
 <SCRIPT LANGUAGE="JavaScript">
-function check(){
-  for (var i = 0; i < document.myform.elements.length; i++) {
-    var e = document.myform.elements[i];
-    if (e.type == 'checkbox') e.checked = true;
-  }
-}
-function uncheck(){
-  for (var i = 0; i < document.myform.elements.length; i++) {
-    var e = document.myform.elements[i];
-    if (e.type == 'checkbox') e.checked = false;
-  }
-}
+	function check(){
+	  for (var i = 0; i < document.myform.elements.length; i++) {
+	    var e = document.myform.elements[i];
+	    if (e.type == 'checkbox') e.checked = true;
+	  }
+	}
+	function uncheck(){
+	  for (var i = 0; i < document.myform.elements.length; i++) {
+	    var e = document.myform.elements[i];
+	    if (e.type == 'checkbox') e.checked = false;
+	  }
+	}
+	
+	jQuery(document).ready(function() {
+		jQuery('.traceback').hide();
+	});
 </SCRIPT>
 
 <h1>{{=T('Error logs for "%(app)s"',dict(app=app))}}</h1>
+
 <form name="myform" method="post">
-<input name="CheckAll" value="{{=T('check all')}}" 
-onclick="check()" type="button">
-<input name="CheckAll" value="{{=T('uncheck all')}}" 
-onclick="uncheck()" type="button">
-<input value="{{=T('delete all checked')}}" type="submit"><br><br>
-<table class="sortable">
-<thead>
-<tr><th>{{=T("Delete")}}</th><th>{{=T("Ticket")}}</th><th>{{=T("Date and Time")}}</th></tr>
-</thead>
-<tbody>
-{{for ticket in tickets:}}
-<tr>
-<td><input type="checkbox" name="delete_{{=ticket}}"/></td>
-<td><a href="{{=URL('ticket',args=[app,ticket])}}">{{=ticket}}</a></td>
-<td>{{=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(os.stat(os.path.join(request.folder,'../%s/errors/%s' % (app,ticket)))[stat.ST_CTIME]))}}</td>
-</tr>
-{{pass}}
-</tbody>
-</table>
+	<input name="CheckAll" value="{{=T('check all')}}" 
+	onclick="check()" type="button">
+	<input name="CheckAll" value="{{=T('uncheck all')}}" 
+	onclick="uncheck()" type="button">
+	<input value="{{=T('delete all checked')}}" type="submit"><br><br>
+	
+	{{ if method == 'new': }}
+		<h3>{{=T('Click row to expand traceback')}}</h3>
+	
+		<table id="trck_errors" class="sortable">
+			{{=THEAD(TR(TH(T('Delete')), TH(T('Count')), TH(T('File')), TH(T('Error'))))}}
+			<tbody>
+				{{for e in errors:}}
+					<tr class="error_ticket"
+						onclick="collapse('{{=e['hash']}}');">
+						<td><input type="checkbox" name="delete_{{=e['hash']}}" /></td>
+						<td>{{=e['count']}}</td>
+						<td>{{=e['causer']}}</td>
+						<td>{{=e['last_line']}}</td>
+						<td>+</td>
+						<td><a href="{{=URL('ticket', args=[app, e['ticket']])}}">{{=T('details')}}</a></td>
+					</tr>
+					<tr id="{{=e['hash']}}" class="traceback">
+						<td colspan=4><div>
+							{{=CODE(e['pickel']['traceback'])}}
+						</div></td>
+					</tr>
+				{{pass}}
+			</tbody>
+		</table>
+		
+		<a href="{{=URL(args=[app, 'old'])}}">old error layout</a>
+	{{ else: }}
+		<table class="sortable">
+			<thead>
+				<tr><th>{{=T("Delete")}}</th><th>{{=T("Ticket")}}</th><th>{{=T("Date and Time")}}</th></tr>
+			</thead>
+			<tbody>
+				{{for ticket in tickets:}}
+					<tr>
+					<td><input type="checkbox" name="delete_{{=ticket}}"/></td>
+					<td><a href="{{=URL('ticket',args=[app,ticket])}}">{{=ticket}}</a></td>
+					<td>{{=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(os.stat(os.path.join(request.folder,'../%s/errors/%s' % (app,ticket)))[stat.ST_CTIME]))}}</td>
+					</tr>
+				{{pass}}
+			</tbody>
+		</table>
+		
+		<a href="{{=URL(args=[app, 'new'])}}">new error layout</a>
+	{{ pass }}
 </form>

@@ -228,8 +228,8 @@ FOOTER = """
 \\end{document}
 """
 
-def markmin2latex(data, image_mapper=lambda x:x):
-    latex, title, authors = render(data,image_mapper=image_mapper)
+def markmin2latex(data, image_mapper=lambda x:x, extra={}):
+    latex, title, authors = render(data, extra=extra, image_mapper=image_mapper)
     author = '\n\\and\n'.join(a.replace('\n','\\\\\n\\footnotesize ') for a in authors)
     return HEADER % (title, author) + latex + FOOTER    
 
