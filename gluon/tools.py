@@ -1404,7 +1404,7 @@ class Auth(object):
             if captcha:
                 self._addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
             accepted_form = False
-            if form.accepts(request.post_vars, session,
+            if form.accepts(request, session,
                             formname='login', dbio=False,
                             onvalidation=onvalidation,
                             hideerror=self.settings.hideerror):
@@ -1609,7 +1609,7 @@ class Auth(object):
             self._addrow(form, captcha.label, captcha, captcha.comment,self.settings.formstyle, 'captcha__row')
 
         table_user.registration_key.default = key = web2py_uuid()
-        if form.accepts(request.post_vars, session, formname='register',
+        if form.accepts(request, session, formname='register',
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
             description = self.messages.group_description % form.vars
             if self.settings.create_user_groups:
@@ -1751,7 +1751,7 @@ class Auth(object):
         if captcha:
             self._addrow(form, captcha.label, captcha, captcha.comment,self.settings.formstyle, 'captcha__row')
 
-        if form.accepts(request.post_vars, session,
+        if form.accepts(request, session,
                         formname='retrieve_username', dbio=False,
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
@@ -1833,7 +1833,7 @@ class Auth(object):
                        delete_label=self.messages.delete_label,
                        formstyle=self.settings.formstyle
                        )
-        if form.accepts(request.post_vars, session,
+        if form.accepts(request, session,
                         formname='retrieve_password', dbio=False,
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
@@ -1916,7 +1916,7 @@ class Auth(object):
                                     self.messages.mismatched_password)]),
             submit_button=self.messages.submit_button
         )
-        if form.accepts(request.post_vars,session,hideerror=self.settings.hideerror):
+        if form.accepts(request,session,hideerror=self.settings.hideerror):
             user.update_record(**{passfield:form.vars.new_password,
                                   'registration_key':'',
                                   'reset_password_key':''})
@@ -1975,7 +1975,7 @@ class Auth(object):
                        )
         if captcha:
             self._addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
-        if form.accepts(request.post_vars, session,
+        if form.accepts(request, session,
                         formname='reset_password', dbio=False,
                         onvalidation=onvalidation,
                         hideerror=self.settings.hideerror):
@@ -2071,7 +2071,7 @@ class Auth(object):
                               self.messages.mismatched_password)]),
             submit_button=self.messages.submit_button
         )
-        if form.accepts(request.post_vars, session,
+        if form.accepts(request, session,
                         formname='change_password',
                         onvalidation=onvalidation,
                         hideerror=self.settings.hideerror):
@@ -2133,7 +2133,7 @@ class Auth(object):
             upload = self.settings.download_url,
             formstyle = self.settings.formstyle
             )
-        if form.accepts(request.post_vars, session,
+        if form.accepts(request, session,
                         formname='profile',
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
             self.user.update(table_user._filter_fields(form.vars))
@@ -2604,6 +2604,7 @@ class Crud(object):
         self.settings.captcha = None
         self.settings.formstyle = 'table3cols'
         self.settings.hideerror = False
+        self.settings.detect_record_change = True
         self.settings.lock_keys = True
 
         self.messages = Messages(self.environment.T)
@@ -2793,11 +2794,13 @@ class Crud(object):
         captcha = self.settings.update_captcha or \
                   self.settings.captcha
         if record and captcha:
-            self._addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
+            self._addrow(form, captcha.label, captcha, captcha.comment,
+                         self.settings.formstyle,'captcha__row')
         captcha = self.settings.create_captcha or \
                   self.settings.captcha
         if not record and captcha:
-            self._addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
+            self._addrow(form, captcha.label, captcha, captcha.comment,
+                         self.settings.formstyle,'captcha__row')
         if not request.extension in ('html','load'):
             (_session, _formname) = (None, None)
         else:
@@ -2808,9 +2811,10 @@ class Crud(object):
             keepvalues = False
         if isinstance(onvalidation,dict):
             onvalidation=onvalidation.get(table._tablename,[])
-        if form.accepts(request.post_vars, _session, formname=_formname,
+        if form.accepts(request, _session, formname=_formname,
                         onvalidation=onvalidation, keepvalues=keepvalues,
-                        hideerror=self.settings.hideerror):
+                        hideerror=self.settings.hideerror,
+                        detect_record_change = self.settings.detect_record_change):
             self.accepted = True
             response.flash = message
             if log:
