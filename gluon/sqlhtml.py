@@ -21,6 +21,7 @@ from html import TABLE, THEAD, TBODY, TR, TD, TH
 from html import URL as Url
 from sql import SQLDB, Table, Row
 from storage import Storage
+from utils import md5_hash
 
 import urllib
 import re
@@ -910,19 +911,38 @@ class SQLFORM(FORM):
         onvalidation=None,
         dbio=True,
         hideerror=False,
+        detect_record_change=False,
         ):
+
         """
-        same as FORM.accepts but also does insert, update or delete in SQLDB.
+        similar FORM.accepts but also does insert, update or delete in SQLDB.
+        but if detect_record_change == True than:
+          form.record_changed = False (record is properly validated/submitted)
+          form.record_changed = True (record cannot be submitted because changed)
+        elseif detect_record_change == False than:
+          form.record_changed = None
         """
 
         keyed = hasattr(self.table,'_primarykey')
+
+        # implement logic to detect whether record exist but has been modified
+        # server side
+        self.record_changed = None            
+        if detect_record_change:
+            if self.record:
+                self.record_changed = False
+                serialized = '|'.join(str(self.record[k]) for k in self.table.fields())
+                self.record_hash = md5_hash(serialized)
+
+        # logic to deal with record_id for keyed tables
         if self.record:
             if keyed:
-                formname_id = '.'.join([str(self.record[k]) for k in self.table._primarykey if hasattr(self.record,k)])
-                record_id = dict([(k,request_vars[k]) for k in self.table._primarykey])
+                formname_id = '.'.join(str(self.record[k]) 
+                                       for k in self.table._primarykey
+                                       if hasattr(self.record,k))
+                record_id = dict((k,request_vars[k]) for k in self.table._primarykey)
             else:
-                (formname_id, record_id) = \
-                    (self.record.id, request_vars.get('id', None))
+                (formname_id, record_id) = (self.record.id, request_vars.get('id', None))
             keepvalues = True
         else:
             if keyed:

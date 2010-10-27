@@ -1540,9 +1540,15 @@ class FORM(DIV):
         # check formname and formkey
 
         status = True
-        if self.session and self.session.get('_formkey[%s]'
-                 % self.formname, None) != self.request_vars._formkey:
-            status = False
+        if self.session:
+            formkey = self.session.get('_formkey[%s]' % self.formname, None)            
+            # check if user tampering with form and void CSRF
+            if formkey != self.request_vars._formkey:
+                status = False
+            # check if editing a record that has been modified by the server
+            if hasattr(self,'record_hash') and self.record_hash != formkey:
+                status = False
+                self.record_changed = True
         if self.formname != self.request_vars._formname:
             status = False
         status = self._traverse(status,hideerror)
@@ -1554,7 +1560,11 @@ class FORM(DIV):
         if self.errors:
             status = False
         if session != None:
-            self.formkey = session['_formkey[%s]' % formname] = web2py_uuid()
+            if hasattr(self,'record_hash'):
+                formkey = self.record_hash
+            else:
+                formkey = web2py_uuid()
+            self.formkey = session['_formkey[%s]' % formname] = formkey
         if status and not keepvalues:
             self._traverse(False,hideerror)
         return status
