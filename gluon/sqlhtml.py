@@ -923,6 +923,9 @@ class SQLFORM(FORM):
           form.record_changed = None
         """
 
+        if request_vars.__class__.__name__ == 'Request':
+            request_vars = request_vars.post_vars
+
         keyed = hasattr(self.table,'_primarykey')
 
         # implement logic to detect whether record exist but has been modified

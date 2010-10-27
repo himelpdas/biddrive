@@ -1529,6 +1529,8 @@ class FORM(DIV):
         onvalidation=None,
         hideerror=False,
         ):
+        if vars.__class__.__name__ == 'Request':
+            vars=vars.post_vars
         self.errors.clear()
         self.request_vars = Storage()
         self.request_vars.update(vars)
@@ -1545,12 +1547,13 @@ class FORM(DIV):
             # check if user tampering with form and void CSRF
             if formkey != self.request_vars._formkey:
                 status = False
+        if self.formname != self.request_vars._formname:
+            status = False
+        if status and self.session:
             # check if editing a record that has been modified by the server
             if hasattr(self,'record_hash') and self.record_hash != formkey:
                 status = False
                 self.record_changed = True
-        if self.formname != self.request_vars._formname:
-            status = False
         status = self._traverse(status,hideerror)
         if status and onvalidation:
             if isinstance(onvalidation, (list, tuple)):
@@ -1578,11 +1581,12 @@ class FORM(DIV):
             self['_enctype'] = 'multipart/form-data'
 
     def hidden_fields(self):
-        c = []
+        c = []        
         if 'hidden' in self.attributes:
             for (key, value) in self.attributes.get('hidden',
                     {}).items():
                 c.append(INPUT(_type='hidden', _name=key, _value=value))
+            
         if hasattr(self, 'formkey') and self.formkey:
             c.append(INPUT(_type='hidden', _name='_formkey',
                      _value=self.formkey))
