@@ -14,7 +14,7 @@ import traceback
 import threading
 from storage import Storage
 from http import HTTP
-from main import abspath
+from fileutils import abspath
 
 regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
 regex_anything = re.compile(r'(?<!\\)\$anything')

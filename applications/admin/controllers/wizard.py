@@ -2,7 +2,7 @@
 
 import os, uuid, re, pickle, urllib, glob
 from gluon.admin import app_create, plugin_install
-from gluon.main import abspath
+from gluon.fileutils import abspath
 
 def reset(session):
     session.app={

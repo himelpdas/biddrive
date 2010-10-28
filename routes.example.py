@@ -138,6 +138,7 @@ def __routes_doctest():
     pass
 
 if __name__ == '__main__':
+    import gluon.main
     import doctest
     from gluon.rewrite import select, load, filter_url, filter_out, filter_err, compile_re
     select()

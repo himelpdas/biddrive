@@ -16,7 +16,7 @@ import re
 import datetime
 import platform
 import portalocker
-import main
+import fileutils
 import cPickle
 from settings import global_settings
 
@@ -265,7 +265,7 @@ def crondance(applications_parent, ctype='soft', startup=False):
             if _cron_stopping:
                 break;
             commands = [sys.executable]
-            w2p_path = main.abspath('web2py.py', gluon=True)
+            w2p_path = fileutils.abspath('web2py.py', gluon=True)
             if os.path.exists(w2p_path):
                 commands.append(w2p_path)
             if global_settings.applications_parent != global_settings.gluon_parent:

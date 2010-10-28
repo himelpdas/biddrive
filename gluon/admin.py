@@ -14,9 +14,8 @@ import urllib
 from utils import web2py_uuid
 from shutil import rmtree
 from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
-from fileutils import up, listdir, fix_newlines
+from fileutils import up, listdir, fix_newlines, abspath
 from restricted import RestrictedError
-from main import abspath
 
 def apath(path='', r=None):
     """
