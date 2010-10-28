@@ -176,8 +176,13 @@ def run(
     if c:
         cfile = os.path.join('applications', a, 'controllers', c + '.py')
         if not os.path.isfile(cfile):
-            die(errmsg)
-        execfile(cfile, _env)
+            cfile = os.path.join('applications', a, 'compiled', "controllers_%s_%s.pyc" % (c,f))
+            if not os.path.isfile(cfile):
+                die(errmsg)
+            else:
+                exec read_pyc(cfile) in _env
+        else:
+            execfile(cfile, _env)
 
     if f:
         exec ('print %s()' % f, _env)

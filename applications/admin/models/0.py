@@ -44,7 +44,7 @@ import os
 # extract google_appengine_x.x.x.zip to web2py root directory
 #GAE_APPCFG = os.path.abspath(os.path.join('appcfg.py'))
 # extract google_appengine_x.x.x.zip to applications/admin/private/
-GAE_APPCFG = os.path.abspath(os.path.join('applications/admin/private/appcfg.py'))
+GAE_APPCFG = os.path.abspath(os.path.join('/usr/local/bin/appcfg.py'))
 
 
 # parameter for downloading LAYOUTS
