@@ -218,14 +218,18 @@ def make_table(table,fields):
     for field in fields:
         items=[x.lower() for x in field.split()]
         has={}
+        keys=[]
         for key in ['notnull','unique','integer','double','boolean','float',
                     'boolean', 'date','time','datetime','text','wiki',
                     'html','file','upload','image','true',
                     'hidden','readonly','writeonly','multiple',
                     'notempty','required']:
             if key in items[1:]:
+                keys.append(key)
                 has[key] = True
-                items = [x for x in items if not x==key]
+        tables = session.app['tables']
+        refs = [t for t in tables if t in items]
+        items = items[:1] + [x for x in items[1:] if not x in keys and not x in tables]
         barename = name = '_'.join(items)
         if table[:2]=='t_': name='f_'+name
         if first_field=='id': first_field=name
@@ -240,15 +244,13 @@ def make_table(table,fields):
             ftype='text'
         elif 'file' in has or 'upload' in has or 'image' in has:
             ftype='upload'
-        for key in items:
-            if key in session.app['tables'] and not 'multiple' in has:
-                if not key=='auth_user': key='t_'+key
-                ftype='reference %s' % key
-                break
-            if key in session.app['tables'] and 'multiple' in has:
-                if not key=='auth_user': key='t_'+key
+        if refs:
+            key = refs[0]
+            if not key=='auth_user': key='t_'+key
+            if 'multiple' in has:
                 ftype='list:reference %s' % key
-                break
+            else:
+                ftype='reference %s' % key
         if ftype=='string' and 'multiple' in has:
             ftype='list:string'
         elif ftype=='integer' and 'multiple' in has:
