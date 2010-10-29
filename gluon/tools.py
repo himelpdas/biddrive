@@ -2667,13 +2667,13 @@ class Crud(object):
 
             form=crud.update(db.mytable,myrecord,onaccept=crud.archive)
 
-        crud.archive will define a new table "mytable_history" and store the
+        crud.archive will define a new table "mytable_archive" and store the
         previous record in the newly created table including a reference
         to the current record.
 
         If you want to access such table you need to define it yourself in a model::
 
-            db.define_table('mytable_history',
+            db.define_table('mytable_archive',
                 Field('current_record',db.mytable),
                 db.mytable)
 
@@ -2690,7 +2690,7 @@ class Crud(object):
         there is nothing special about these fields since they are filled before
         the record is archived.
 
-        If you want to change the history table name and the name of the reference field
+        If you want to change the archive table name and the name of the reference field
         you can do, for example::
 
             db.define_table('myhistory',

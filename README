@@ -893,7 +893,7 @@ recalled
 - fixed a major bug introduced in 1.87.1 that prevents appadmin from working for new apps created with 1.87.1-2.
 - upgraded to clockpick 1.28, thanks villas
 
-## 1.88.1
+## 1.88.1-2
 - better list: string support, thanks Bob
 - jquery 1.4.3
 - scripts/autoroutes.py

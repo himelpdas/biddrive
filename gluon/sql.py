@@ -2622,7 +2622,9 @@ class Expression(object):
         if self.type in ('string', 'text'):
             return Query(self, ' LIKE ', '%%%s%%' % value)
         elif self.type.startswith('list:'):
-            return Query(self, ' LIKE ', '%%|%s|%%' % value)
+            return Query(self, ' LIKE ',
+                         Expression("'%%|%s|%%'" \
+                                        % bar_escape(value).replace("'","''")))
         else:
             raise RuntimeError, "contains user with incopatible field type"
 
