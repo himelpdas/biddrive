@@ -524,7 +524,7 @@ def sqlhtml_validators(field):
             return requires
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
-    sff = ['in', 'do', 'da', 'ti', 'de']
+    sff = ['in', 'do', 'da', 'ti', 'de', 'bo']
     if field.notnull and not field_type[:2] in sff:
         requires.insert(0, validators.IS_NOT_EMPTY())
     elif not field.notnull and field_type[:2] in sff and requires:
