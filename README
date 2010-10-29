@@ -892,3 +892,20 @@ recalled
 ## 1.87.3
 - fixed a major bug introduced in 1.87.1 that prevents appadmin from working for new apps created with 1.87.1-2.
 - upgraded to clockpick 1.28, thanks villas
+
+## 1.88.1
+- better list: string support, thanks Bob
+- jquery 1.4.3
+- scripts/autoroutes.py
+- new admin wizard
+- added retrieve_username to navbar (if username)
+- internal rewrite for arbitrary paths (abspath), thanks Jonathan
+- populate support for list: and decimal, thanks Chirstian
+- markmin2latex has extra attribute
+- better mercual admin allows list of files, versions and retrieve
+- new error report system, thanks Thadeus and Selecta
+- SQLFORM.accepts(detect_record_change).record_changed
+- fixed cron for bytecode compiled apps, thanks Álvaro J. Iradier Muro
+- other bugs fixes and pep8 compliant fixes
+
+
