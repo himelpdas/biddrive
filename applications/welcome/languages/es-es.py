@@ -122,6 +122,7 @@
 'User ID': 'ID de Usuario',
 'View': 'Vista',
 'Views': 'Vistas',
+'Welcome': 'Welcome',
 'Welcome %s': 'Bienvenido %s',
 'Welcome to web2py': 'Bienvenido a web2py',
 'Which called the function': 'La cual llamó la función',

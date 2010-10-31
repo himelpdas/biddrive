@@ -13,14 +13,14 @@ def reset(session):
                   ('author_email','you@example.com'),
                   ('keywords',''),
                   ('description',''),
+                  ('layout_theme','Default'),
                   ('database_uri','sqlite://storage.sqlite'),
                   ('security_key',str(uuid.uuid4())),
                   ('email_server','localhost'),
                   ('email_sender','you@example.com'),
                   ('email_login',''),                  
                   ('login_method','local'),
-                  ('login_config',''),
-                  ('layout_theme','Default')],
+                  ('login_config','')],
         'tables':['auth_user'],
         'table_auth_user':['username','first_name','last_name','email','password'],
         'pages':['index','error'],
@@ -80,6 +80,8 @@ def step1():
                 Field('keywords',default=params.get('keywords',None)),
                 Field('description','text',
                       default=params.get('description',None)),
+                Field('layout_theme',requires=IS_IN_SET(themes),
+                      default=params.get('layout_theme',themes[0])),
                 Field('database_uri',default=params.get('database_uri',None)),
                 Field('security_key',default=params.get('security_key',None)),
                 Field('email_server',default=params.get('email_server',None)),
@@ -87,9 +89,8 @@ def step1():
                 Field('email_login',default=params.get('email_login',None)),
                 Field('login_method',requires=IS_IN_SET(('local','janrain')),
                       default=params.get('login_method','local')),
-                Field('login_config',default=params.get('login_config',None)),
-                Field('layout_theme',requires=IS_IN_SET(themes),
-                      default=params.get('layout_theme',themes[0])))
+                Field('login_config',default=params.get('login_config',None)))
+                
     if form.accepts(request.vars):
         session.app['params']=[(key,form.vars.get(key,None)) 
                                for key,value in session.app['params']]

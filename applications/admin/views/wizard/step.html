@@ -43,8 +43,8 @@
 	<li><b>App Name:</b> {{=session.app['name']}}</li>
       </ul>
       <h2><a href="{{=URL('step1')}}">Current settings</a></h2>      
-      <ul>
-	{{for key,value in session.app['params'][:2]:}}
+      <ul style="overflow-y: scroll; height: 200px">
+	{{for key,value in session.app['params']:}}
 	<li><b>{{=key}}:</b> {{=value}}</li>
 	{{pass}}
 	<li>...</li>
