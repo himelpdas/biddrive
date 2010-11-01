@@ -2,7 +2,8 @@
 
 <h1>{{=T("Peeking at file")}} "{{=filename}}"</h1><br/><br/>
 
-[<a href="{{=URL('edit',args=request.args)}}">edit</a>]
+<a class="button" href="{{=URL('design',args=request.args[0])}}">back</a>
+<a class="button" href="{{=URL('edit',args=request.args)}}">edit</a>
 
 {{
 if filename[-3:]=='.py': language='python'

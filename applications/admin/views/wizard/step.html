@@ -69,12 +69,12 @@
     <td id="wizard_form">      
       {{if 'step' in request.function:}}
       <h2>Step {{=step}}</h2>
-      [<a href="{{=URL('step' + str(int(request.function[-1])-1))}}">back</a>]
+      <a class="button" href="{{=URL('step' + str(int(request.function[-1])-1))}}">back</a>
       {{else:}}
       <h2>Begin</h2>
       {{pass}}
       {{if request.function in ('step1','step2','step3','step4','step5'):}}
-      [<a href="{{=URL('step6')}}">skip to generate</a>]
+      <a class="button" href="{{=URL('step6')}}">skip to generate</a>
       {{pass}}
       <br /><br />
       {{if request.function in ('step1','step6'):}}
@@ -89,9 +89,11 @@
           });
 	});
       </script>
+      <br/><br/>
+      <div class="box">
       <h2>Instructions</h2>
       {{if request.function=='index':}}
-      <ul>
+      <ul class="box">
 	<li>Insert the name of a new app.</li>
 	<li>If the app exists and was created with the wizard, you will be able to edit it, but any manual editing to the app <b>will be lost</b>.</li>
       </ul>
@@ -141,6 +143,7 @@
 	<li>Once done you will be able to edit it as any normal web2py app.</li>
       </ul>
       {{pass}}
+      </div>
     </td>
   </tr>
 </table>

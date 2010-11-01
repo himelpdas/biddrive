@@ -424,7 +424,7 @@ def edit():
         if os.path.exists(apath(cfilename, r=request)):
             edit_controller = URL('edit', args=[cfilename])
             view = request.args[3].replace('.html','')
-            view_link = A(T('view'),_href=URL(request.args[0],request.args[2],view))
+            view_link = URL(request.args[0],request.args[2],view)
     elif filetype == 'python' and request.args[1] == 'controllers':
         ## it's a controller file.
         ## Create links to all of the associated view files.

@@ -17,21 +17,25 @@ jQuery(document).ready(function(){
 
 <div style="text-align:left;" id="exposed">
 {{if functions:}}
-  {{if editviewlinks:}}
-  {{=T('edit views:')}} {{=XML(', '.join([v.xml() for v in editviewlinks]))}}<br/>
+  {{=B(T('exposes'))}}
+  {{=XML(', '.join([A(f,_href=URL(a=app,c=controller,f=f)).xml() for f in functions]))}}
+  {{if editviewlinks:}}<br/>
+    {{=B(T('edit views:'))}}
+    {{=XML(', '.join([v.xml() for v in editviewlinks]))}}
   {{pass}}
-{{=T('exposes')}} {{=XML(', '.join([A(f,_href=URL(a=app,c=controller,f=f)).xml() for f in functions]))}}
-{{pass}}
+{{pass}}<br/>
 
-[
 {{if edit_controller:}}
-<a href="{{=edit_controller}}">{{=T('edit controller')}}</a>{{if view_link:}} | {{=T("try")}} {{=view_link}}{{pass}}
+<a class="button" href="{{=edit_controller}}">{{=T('edit controller')}}</a>
 {{pass}}
-<a href="http://www.web2py.com/examples/static/epydoc/index.html" target="_blank">docs</a>
+{{if view_link:}} 
+  <a class="button" href="{{=view_link}}">{{=T("try")}} {{=T("view")}}</a>
+{{pass}}
 {{if request.args[1]=='models':}}
-| <a href="http://www.web2py.com/sqldesigner" target="_blank">online designer</a>
+  <a class="button" href="http://www.web2py.com/sqldesigner" target="_blank">online designer</a>
 {{pass}}
-]
+<a class="button" href="http://www.web2py.com/examples/static/epydoc/index.html" target="_blank">docs</a>
+
 
 </div>
 
