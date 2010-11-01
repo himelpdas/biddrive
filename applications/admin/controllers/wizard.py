@@ -290,15 +290,18 @@ def make_table(table,fields):
         ### make up a label
         s+=",\n          label=T('%s')),\n" % \
             ' '.join(x.capitalize() for x in barename.split('_'))
-    s+="    Field('f_created_on','datetime',default=request.now,\n"
+    if table!='auth_user':
+        s+="    Field('active','boolean',default=True,\n"
+        s+="          label=T('Active'),writable=False,readable=False),\n"
+    s+="    Field('created_on','datetime',default=request.now,\n"
     s+="          label=T('Created On'),writable=False,readable=False),\n"
-    s+="    Field('f_modified_on','datetime',default=request.now,\n"
+    s+="    Field('modified_on','datetime',default=request.now,\n"
     s+="          label=T('Modified On'),writable=False,readable=False,\n"
     s+="          update=request.now),\n"
     if not table=='auth_user' and 'auth_user' in session.app['tables']:
-        s+="    Field('f_created_by',db.auth_user,default=auth.user_id,\n"
+        s+="    Field('created_by',db.auth_user,default=auth.user_id,\n"
         s+="          label=T('Created By'),writable=False,readable=False),\n"
-        s+="    Field('f_modified_by',db.auth_user,default=auth.user_id,\n"
+        s+="    Field('modified_by',db.auth_user,default=auth.user_id,\n"
         s+="          label=T('Modified By'),writable=False,readable=False,\n"
         s+="          update=auth.user_id),\n"
     elif table=='auth_user':
@@ -320,6 +323,8 @@ db.auth_user.registration_id.requires = IS_NOT_IN_DB(db, db.auth_user.registrati
 db.auth_user.email.requires = (IS_EMAIL(error_message=auth.messages.invalid_email),
                                IS_NOT_IN_DB(db, db.auth_user.email))
 """
+    else:
+        s+="db.define_table('%s_archive',db.%s,Field('current_record','reference %s'))\n" % (table,table,table)
     return s
 
 
@@ -368,10 +373,10 @@ response.menu = [
     return s
 
 def make_page(page,contents):
-    if page in ('index','error'):
-        s="def %s():\n" % page
-    else:
+    if 'auth_user' in session.app['tables'] and not page in ('index','error'):
         s="@auth.requires_login()\ndef %s():\n" % page
+    else:
+        s="def %s():\n" % page
     items=page.rsplit('_',1)
     if items[0] in session.app['tables'] and len(items)==2:
         t=items[0]
@@ -380,8 +385,8 @@ def make_page(page,contents):
             s+="    form=crud.read(db.t_%s,record)\n" % t
             s+="    return dict(form=form)\n\n"
         elif items[1]=='update':
-            s+="    record = db.t_%s(request.args(0)) or redirect(URL('error'))\n" % t
-            s+="    form=crud.update(db.t_%s,record,next='%s_read/[id]')\n" % (t,t)
+            s+="    record = db.t_%s(request.args(0),active=True) or redirect(URL('error'))\n" % t
+            s+="    form=crud.update(db.t_%s,record,next='%s_read/[id]',onaccept=crud.archive)\n" % (t,t)
             s+="    return dict(form=form)\n\n"
         elif items[1]=='create':
             s+="    form=crud.create(db.t_%s,next='%s_read/[id]')\n" % (t,t)
@@ -389,10 +394,10 @@ def make_page(page,contents):
         elif items[1]=='select':
             s+="    f,v=request.args(0),request.args(1)\n"
             s+="    query=f and db.t_%s[f]==v or db.t_%s\n" % (t,t)
-            s+="    rows=db(query).select()\n"
+            s+="    rows=db(query)(db.t_%s.active==True).select()\n" % t
             s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
-            s+="    form, rows=crud.search(db.t_%s)\n" % t
+            s+="    form, rows=crud.search(db.t_%s,query=db.t_%s.active==True)\n" % (t,t)
             s+="    return dict(form=form, rows=rows)\n\n"
         else:
             t=None
@@ -411,9 +416,9 @@ def make_view(page,contents):
         if items[1]=='read':
             s+="\n{{=A(T('edit %s'),_href=URL('%s_update',args=request.args(0)))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'            
-            s+='{{for t,f in db.t_%s._referenced_by:}}' % t
+            s+="{{for t,f in db.t_%s._referenced_by:}}{{if not t[-8:]=='_archive':}}" % t        
             s+="[{{=A(t[2:],_href=URL('%s_select'%t[2:],args=(f,form.record.id)))}}]"
-            s+='{{pass}}'
+            s+='{{pass}}{{pass}}'
         elif items[1]=='create':
             s+="\n{{=A(T('select %s'),_href=URL('%s_select'))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
