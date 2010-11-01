@@ -11,7 +11,7 @@ def editlanguagefile(path,file):
     return A(T('edit'),_class="button",_href=URL('edit_language/%s/%s/%s' % (app, path, file)))
 def file_upload_form(location):
     form=FORM(T("upload file:")," ",
-              INPUT(_type="file",_name="file"),
+              INPUT(_type="file",_name="file"),BR(),
               T("and rename it:")," ",
               INPUT(_type="text",_name="filename",requires=IS_NOT_EMPTY),
               INPUT(_type="hidden",_name="location",_value=location),
