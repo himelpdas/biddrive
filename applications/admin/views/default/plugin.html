@@ -38,6 +38,7 @@ def upload_plugin_form(app):
 <a class="button" href="{{=URL('pack_plugin',args=request.args)}}">{{=T("pack plugin")}}</a>
 </div>
 <div class="right_aligned">
+<a class="button" href="#" onclick="jQuery('h2').click();return false">{{=T("collapse")}}</a>
 <a class="button" href="#models">{{=T("models")}}</a>
 <a class="button" href="#controllers">{{=T("controllers")}}</a>
 <a class="button" href="#views">{{=T("views")}}</a>
@@ -46,13 +47,12 @@ def upload_plugin_form(app):
 </div>
 <br/>
 
-<h2 id="models" onclick="collapse('models_inner');">{{=T("Models")}}</h2>
+<h2 id="models" onclick="collapse('models_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Models")}}</h2>
 <div id="models_inner">
 <i>{{=T("the data representation, define database tables and sets")}}</i>
 <br/><br/>
-{{if not models:}}{{=T("There are no models")}}{{else:}}
-<a class="button" href="{{=URL(a=app,c='appadmin',f='index')}}">{{=T("database administration")}}</a>
-{{if os.access(os.path.join(request.folder,'..',app,'databases','sql.log'),os.R_OK):}}{{=A('sql.log',_class="button",_href=URL('peek/%s/databases/sql.log'%app))}}{{pass}}{{pass}}
+{{if not models:}}{{=T("There are no models")}}{{pass}}
 <ul>
 {{for m in models:}}<li>{{=peekfile('models',m)}}
 {{=editfile('models',m)}}
@@ -67,15 +67,11 @@ def upload_plugin_form(app):
 controller_functions=[]
 for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functions[c]]
 }}
-<h2 id="controllers" onclick="collapse('controllers_inner');">{{=T("Controllers")}}</h2>
+<h2 id="controllers" onclick="collapse('controllers_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Controllers")}}</h2>
 <div id="controllers_inner"><i>{{=T("the application logic, each URL path is mapped in one exposed function in the controller")}}</i>
 <br/><br/>
-{{if not controllers:}}{{=T("There are no controllers")}}{{else:}}
-<a class="button" href='{{=URL(r=request,c='shell',f='index',args=app)}}'>{{=T("shell")}}</a> 
-<a class="button" href='{{=URL('test',args=app)}}'>{{=T("test")}}</a>
-<a class="button" href='{{=URL('edit',args=[app,'cron','crontab'])}}'>{{=T("crontab")}}</a>
-
-{{pass}}
+{{if not controllers:}}{{=T("There are no controllers")}}{{pass}}
 <ul>
 {{for c in controllers:}}
   <li>
@@ -90,7 +86,8 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </ul>
 </div>
 
-<h2 id="views" onclick="collapse('views_inner');">{{=T("Views")}}</h2>
+<h2 id="views" onclick="collapse('views_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Views")}}</h2>
 <div id="views_inner"><i>{{=T("the presentations layer, views are also known as templates")}}</i>
 <br/><br/>
 {{if not views:}}{{=T("There are no views")}}{{pass}}
@@ -109,7 +106,8 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </div>
 
 
-<h2 id="static" onclick="collapse('static_inner');">{{=T("Static files")}}</h2>
+<h2 id="static" onclick="collapse('static_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Static files")}}</h2>
 <div id="static_inner"><i>{{=T("these files are served without processing, your images go here")}}</i>
 <br/><br/>
 {{if not statics:}}{{=T("There are no static files")}}{{pass}}
@@ -146,7 +144,8 @@ for file in statics+['']:
 </ul>
 </div>
 
-<h2 id="modules" onclick="collapse('modules_inner');">{{=T("Modules")}}</h2>
+<h2 id="modules" onclick="collapse('modules_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Modules")}}</h2>
 <div id="modules_inner"><i>{{=T("additional code for your application")}}</i>
 <br/><br/>
 {{if not modules:}}

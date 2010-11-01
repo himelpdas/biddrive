@@ -50,3 +50,8 @@ GAE_APPCFG = os.path.abspath(os.path.join('/usr/local/bin/appcfg.py'))
 # parameter for downloading LAYOUTS
 LAYOUTS_APP = 'http://web2py.com/layouts'
 #LAYOUTS_APP = 'http://127.0.0.1:8000/layouts'
+
+
+# parameter for downloading PLUGINS
+PLUGINS_APP = 'http://web2py.com/plugins'
+#PLUGINS_APP = 'http://127.0.0.1:8000/plugins'

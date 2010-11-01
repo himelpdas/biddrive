@@ -6,9 +6,9 @@
 <table padding="5px"><tr><td width="60%">
 {{for a in apps:}} 
 {{if a==request.application:}}
-<h2><a href="#nil">{{=a}}</a></h2>  
+<h2><img src="{{=URL('static','folder.gif')}}"/><a href="#nil">{{=a}}</a></h2>  
 {{else:}}
-<h2><a href="{{=URL(a,'default','index')}}">{{=a}}</a></h2> 
+<h2><img src="{{=URL('static','folder.gif')}}"/><a href="{{=URL(a,'default','index')}}">{{=a}}</a></h2> 
 {{if not os.path.exists('applications/%s/compiled' % a):}}
 <a class="button" href="{{=URL('design',args=a)}}">{{=T("EDIT")}}</a>
 {{else:}}
@@ -53,7 +53,8 @@ web2py {{=myversion}}<br />
 
 <div class="box">
 <h3>{{=T("Create new application using the Wizard")}}</h3>
-<a href="{{=URL('wizard','index')}}">Start Wizard</a> (requires network)
+<a href="{{=URL('wizard','index')}}">{{=T('start wizard')}}</a>
+(requires network)
 </div><br/>
 
 <div class="box">
