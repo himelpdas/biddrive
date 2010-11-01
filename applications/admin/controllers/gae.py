@@ -18,24 +18,27 @@ def kill():
     os.kill(p.pid, signal.SIGKILL)
     cache.ram('gae_upload',lambda:None,-1)
 
+class EXISTS:
+    def __init__(self, error_message='file not found'):
+        self.error_message = error_message
+    def __class__(self, value):
+        if os.path.exists(value):
+            return (value,None)
+        return (value,self.error_message)
+        
+    
 def deploy():
-    if not os.path.exists(GAE_APPCFG):
-        redirect(URL(request.application,'default','site'))
     regex = re.compile('^\w+$')
-    apps = sorted([(file.upper(), file) for file in \
-                       os.listdir(apath(r=request)) if regex.match(file)])
-    options = [OPTION(item[1]) for item in apps]
-    form = FORM(TABLE(TR('Applications to deploy',
-                         SELECT(_name='applications',_multiple='multiple',
-                                _id='applications',*options)),
-                      TR('GAE Email:',
-                         INPUT(_name='email',requires=IS_EMAIL())),
-                      TR('GAE Password:',
-                         INPUT(_name='password',_type='password',
-                               requires=IS_NOT_EMPTY())),
-                      TR('',INPUT(_type='submit',value='deploy'))))
-    cmd = output = errors= "" 
-    if form.accepts(request.vars,session):
+    apps = sorted(file for file in os.listdir(apath(r=request)) if regex.match(file))
+    form = SQLFORM.factory(
+        Field('appcfg',default=GAE_APPCFG,label='Path to appcgf.py',
+              requires=EXISTS(error_message=T('file not found'))),
+        Field('applications',requires=IS_IN_SET(apps,multiple=True),
+              label=T('Applications to deploy')),
+        Field('email',label=T('GAE Email')),
+        Field('password',requires=IS_EMAIL(),label=T('GAE Password')))
+    cmd = output = errors= ""
+    if form.accepts(request,session):
         try:
             kill()
         except:
@@ -50,7 +53,7 @@ def deploy():
 
         path = request.env.applications_parent
         cmd = '%s --email=%s --passin update %s' % \
-            (GAE_APPCFG, form.vars.email, path)
+            (form.vars.appcfg, form.vars.email, path)
         p = cache.ram('gae_upload',
                       lambda s=subprocess,c=cmd:s.Popen(c, shell=True,
                                                         stdin=s.PIPE,

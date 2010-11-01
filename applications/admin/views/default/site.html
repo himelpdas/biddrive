@@ -73,12 +73,10 @@ web2py {{=myversion}}<br />
 
 </div><br/>
 
-{{if GAE_APPCFG and os.path.exists(GAE_APPCFG):}}
 <div class="box">
 <h3>{{=T("Deploy on Google App Engine")}}</h3>
-<center><a href="{{=URL(request.application,'gae','deploy')}}"><img src="{{=URL(r=request,c='static',f='gae.png')}}" alt="deploy"/></a></center>
+<a href="{{=URL(request.application,'gae','deploy')}}"><img src="{{=URL(r=request,c='static',f='gae.png')}}" alt="deploy"/></a>
 </div><br/>
-{{pass}}
 
 <div class="box">
 <h3>{{=T("web2py Recent Tweets")}}</h3>
