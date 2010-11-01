@@ -3,6 +3,9 @@ from mercurial import cmdutil
 if DEMO_MODE:
     session.flash = T('disabled in demo mode')
     redirect(URL('default','site'))
+if not have_mercurial:
+    session.flash=T("Sorry, could not find mercurial installed")
+    redirect('default','design',args=request.args(0))
 
 _hgignore_content = """\
 syntax: glob

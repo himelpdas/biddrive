@@ -18,11 +18,9 @@ if request.args:
     response.menu.append((T('errors'), _c == 'default' and _f == 'errors',
                          URL(_a,'default','errors',args=_t)))
 
-    if have_mercurial:
-        response.menu.append((T('versioning'),
-                              _c == 'mercurial' and _f == 'commit',
-                              URL(_a,'mercurial','commit',args=_t)))
-    
+    response.menu.append((T('versioning'),
+                          _c == 'mercurial' and _f == 'commit',
+                          URL(_a,'mercurial','commit',args=_t)))
 
 if not session.authorized:
     response.menu = [(T('login'), True, '')]
