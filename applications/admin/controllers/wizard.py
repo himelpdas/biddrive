@@ -190,22 +190,12 @@ def step6():
         Field('populate_database','boolean',default=True))
     if form.accepts(request.vars):
         create(form.vars)       
-        links = [
-            A(T('click to open'),_href=URL(app,'default','index'),
-              _target='_blank'),            
-            A(T('design'),_href=URL('admin','default','design',args=app),
-              _target='_blank'),
-            A(T('manage'),_href=URL(app,'appadmin','index'),
-              _target='_blank')
-            ]
-        if have_mercurial:
-            links.append(
-                A(T('commit (mercurial)'),
-                  _href=URL('admin','mercurial','commit',args=app),
-                  _target='_blank'))
-        form = TABLE(*links)
-        response.flash = 'Application %s created' % app
+        session.flash = 'Application %s created' % app
+        redirect(URL('generated'))
     return dict(step='6: Generate app "%s"' % app,form=form)
+
+def generated():
+    return dict(app=session.app['name'])
 
 def make_table(table,fields):
     rawtable=table
