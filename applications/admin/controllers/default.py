@@ -1128,5 +1128,5 @@ def twitter():
         page = gluon.tools.fetch('http://twitter.com/web2py?format=json')
         return sj.loads(page)['#timeline']
     except Exception, e:
-        return DIV(T('Unable to download because'),PRE(str(e)))
+        return DIV(T('Unable to download because:'),BR(),str(e))
 
