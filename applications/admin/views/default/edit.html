@@ -16,17 +16,17 @@ jQuery(document).ready(function(){
 <h1>{{=T('Editing file "%s"',filename)}}</h1>
 
 <div style="text-align:left;" id="exposed">
-{{if functions:}}
-  {{=B(T('exposes'))}}
+  {{if functions:}}
+  {{=B(T('exposes:'))}}
   {{=XML(', '.join([A(f,_href=URL(a=app,c=controller,f=f)).xml() for f in functions]))}}
   {{if editviewlinks:}}<br/>
-    {{=B(T('edit views:'))}}
-    {{=XML(', '.join([v.xml() for v in editviewlinks]))}}
+  {{=B(T('edit views:'))}}
+  {{=XML(', '.join([v.xml() for v in editviewlinks]))}}
   {{pass}}
-{{pass}}<br/>
+  {{pass}}
+</div>
 
 <a class="button" href="{{=URL('design',args=request.args[0])}}">back</a>
-
 {{if edit_controller:}}
 <a class="button" href="{{=edit_controller}}">{{=T('edit controller')}}</a>
 {{pass}}
@@ -37,9 +37,6 @@ jQuery(document).ready(function(){
   <a class="button" href="http://www.web2py.com/sqldesigner" target="_blank">online designer</a>
 {{pass}}
 <a class="button" href="http://www.web2py.com/examples/static/epydoc/index.html" target="_blank">docs</a>
-
-
-</div>
 
 <br/><br/>
 
@@ -54,12 +51,14 @@ jQuery(document).ready(function(){
 {{else:}}
 <textarea cols="80" rows="25" id="body" style="width: 100%;direction:ltr;" name="data">{{=data}}</textarea>
 {{pass}}
+<br/>
 <button onclick="window.location.reload(); return false">{{=T('restore')}}</button> {{=T('currently saved or')}} <input type="submit" name="revert" value="{{=T('revert')}}" />
 {{=T('to  previous version.')}}
 <br/>
 </form>
 
 <br/><br/>
+<div class="box">
 {{if filetype=='html':}}
 <h2>Key bindings for ZenCoding Plugin</h2>
 <table>
@@ -78,3 +77,4 @@ jQuery(document).ready(function(){
   <tr><td><code>Ctrl+S</code></td><td>Save via Ajax</td></tr>
 </table>
 {{pass}}
+</div>

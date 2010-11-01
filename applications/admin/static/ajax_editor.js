@@ -77,11 +77,11 @@ function doClickSave() {
 			    }
 			    // console.info(jQuery("input[name='file_hash']").val());
 			    
-			    var output = 'exposes ';
+			    var output = '<b>exposes:</b> ';
 			    for ( var i in json.functions) {
 				output += ' <a href="/' + json.application + '/' + json.controller + '/' + json.functions[i] + '">' + json.functions[i] + '</a>,'; 
 			    }
-			    if(output!='exposes ') {
+			    if(output!='<b>exposes:</b> ') {
 				jQuery("#exposed").html( output.substring(0, output.length-1));
 			    }
 			}
