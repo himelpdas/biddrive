@@ -31,7 +31,7 @@ def upload_plugin_form(app):
               INPUT(_type="submit",_value=T("submit")))
     return form
 }}
-<h1>{{=T("Edit application")}} "{{=app}}"</h1>
+<h1>{{=T("Edit application")}} "{{=A(app,_href=URL(app,'default','index'),_target="_blank")}}"</h1>
 <div class="right_aligned">
 <a class="button" href="#" onclick="jQuery('h2').click();return false">{{=T("collapse")}}</a>
 <a class="button" href="#models">{{=T("models")}}</a>

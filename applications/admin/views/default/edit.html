@@ -25,6 +25,8 @@ jQuery(document).ready(function(){
   {{pass}}
 {{pass}}<br/>
 
+<a class="button" href="{{=URL('design',args=request.args[0])}}">back</a>
+
 {{if edit_controller:}}
 <a class="button" href="{{=edit_controller}}">{{=T('edit controller')}}</a>
 {{pass}}
