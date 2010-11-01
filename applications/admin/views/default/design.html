@@ -94,7 +94,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <img src="{{=URL('static','folder.gif')}}"/> {{=T("Views")}}</h2>
 <div id="views_inner"><i>{{=T("the presentations layer, views are also known as templates")}}</i>
 <br/><br/>
-<a class="button" href="{{=LAYOUTS_APP}}">{{=T("download layout")}}</a>
+<a class="button" href="{{=LAYOUTS_APP}}">{{=T("download layouts")}}</a>
 {{if not views:}}{{=T("There are no views")}}{{pass}}
 <ul>
 {{for c in views:}}
