@@ -29,6 +29,7 @@ import cStringIO
 
 
 table_field = re.compile('[\w_]+\.[\w_]+')
+widget_class = re.compile('^\w*')
 
 def safe_int(x):    
     try:
@@ -59,7 +60,7 @@ class FormWidget(object):
         """
         attr = dict(
             _id = '%s_%s' % (field._tablename, field.name),
-            _class = isinstance(field.type,str) and field.type or None,
+            _class = widget_class.match(str(field.type)).group(),
             _name = field.name,
             requires = field.requires,
             )
@@ -110,6 +111,11 @@ class IntegerWidget(StringWidget):
 
 
 class DoubleWidget(StringWidget):
+
+    pass
+
+
+class DecimalWidget(StringWidget):
 
     pass
 
@@ -599,6 +605,7 @@ class SQLFORM(FORM):
         password = PasswordWidget,
         integer = IntegerWidget,
         double = DoubleWidget,
+        decimal = DecimalWidget,
         time = TimeWidget,
         date = DateWidget,
         datetime = DatetimeWidget,
