@@ -332,7 +332,7 @@
                         TR("Sure?",SELECT('yes','no',_name="sure",requires=IS_IN_SET(['yes','no']))),
                         TR("Profile",TEXTAREA(_name="profile",value="write something here")),
                         TR("",INPUT(_type="submit",_value="SUBMIT"))))
-        if form.accepts(request.vars,session):
+        if form.accepts(request,session):
             response.flash="form accepted"
         elif form.errors:
             response.flash="form is invalid"
@@ -406,7 +406,7 @@
         ### create an insert form from the table
         form=SQLFORM(db.users)
         ### if form is correct, perform the insert
-        if form.accepts(request.vars,session):
+        if form.accepts(request,session):
             response.flash='new record inserted'
         ### and get a list of all users
         records=SQLTABLE(db().select(db.users.ALL))
@@ -422,7 +422,7 @@
     {{=CODE("""
     def register_dog():
         form=SQLFORM(db.dogs)
-        if form.accepts(request.vars,session):
+        if form.accepts(request,session):
             response.flash='new record inserted'
         download=URL('download') # to see the picture
         records=SQLTABLE(db().select(db.dogs.ALL),upload=download)
@@ -436,7 +436,7 @@
     {{=CODE("""
     def register_product():
         form=SQLFORM(db.products)
-        if form.accepts(request.vars,session):
+        if form.accepts(request,session):
             response.flash='new record inserted'
         records=SQLTABLE(db().select(db.products.ALL))
         return dict(form=form,records=records)
@@ -452,7 +452,7 @@
                TR("Product id:",INPUT(_type="text",_name="product_id",requires=IS_NOT_EMPTY())),
                TR("Quantity:",INPUT(_type="text",_name="quantity",requires=IS_INT_IN_RANGE(1,100))),
                TR("",INPUT(_type="submit",_value="Order"))))
-        if form.accepts(request.vars,session):
+        if form.accepts(request,session):
             ### check if user is in the database
             if len(db(db.users.id==form.vars.buyer_id).select())==0:
                 form.errors.buyer_id="buyer not in database"
