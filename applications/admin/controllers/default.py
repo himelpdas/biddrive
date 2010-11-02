@@ -23,9 +23,10 @@ def index():
     """ Index handler """
 
     send = request.vars.send
+    if DEMO_MODE:
+        session.authorized = True
     if not send:
         send = URL('site')
-
     if session.authorized:
         redirect(send)
     elif request.vars.password:
@@ -45,12 +46,8 @@ def index():
         else:
             response.flash = T('invalid password')
             
-    if DEMO_MODE:
-        response.flash = T('Demo mode: any random passoword will get you in')
-
     # f == file
     apps = [f for f in os.listdir(apath(r=request)) if f.find('.') < 0]
-
     return dict(apps=apps, send=send)
 
 
