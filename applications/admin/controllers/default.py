@@ -25,6 +25,7 @@ def index():
     send = request.vars.send
     if DEMO_MODE:
         session.authorized = True
+        session.last_time = t0
     if not send:
         send = URL('site')
     if session.authorized:
