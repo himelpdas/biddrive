@@ -1,16 +1,17 @@
 {{extend 'layout.html'}}
 {{import os, glob}}
 
-<h1>{{=T("Installed applications")}}</h1>
-
 <table padding="5px"><tr><td width="60%">
+<div class="main_panel box">
+<h3>{{=T("Installed applications")}}</h3>
 {{for a in apps:}} 
+<div class="application">
 {{if a==request.application:}}
-<h2><img src="{{=URL('static','folder.gif')}}"/><a href="#nil">{{=a}}</a></h2>  
+<h4><img src="{{=URL('static','folder_current.gif')}}"/>{{=a}}</h2>  
 {{else:}}
-<h2><img src="{{=URL('static','folder.gif')}}"/><a href="{{=URL(a,'default','index')}}">{{=a}}</a></h2> 
+<h4><img src="{{=URL('static','folder.gif')}}"/><a href="{{=URL(a,'default','index')}}">{{=a}}</a></h2> 
 {{if not os.path.exists('applications/%s/compiled' % a):}}
-<a class="button" href="{{=URL('design',args=a)}}">{{=T("EDIT")}}</a>
+<a class="button editbutton" href="{{=URL('design',args=a)}}">{{=T("edit")}}</a>
 {{else:}}
 <a class="button" href="{{=URL(a,'appadmin','index')}}">{{=T("appadmin")}}</a>
 {{pass}}
@@ -31,13 +32,19 @@
 <a class="button" href="{{=URL('uninstall',args=a)}}">{{=T("uninstall")}}</a> 
 {{pass}}
 <br/>
+</div>
 {{pass}}
 <br/>
+</div>
 
 </td><td align="right">
+<div class="box pwbox">
+<a class="button" href="{{=URL('change_password')}}">{{=T('change admin password')}}</a>
+</div>
+<br/>
 <div class="box">
-<h3>{{=T('Version')}}</h3>
-web2py {{=myversion}}<br />
+<h3>{{=T('web2py Version')}}</h3>
+<strong id="vernum">{{=myversion}}</strong><br />
 {{if session.check_version:}}
 <div id="check_version">
 {{=T('Checking for upgrades...')}}
@@ -45,28 +52,41 @@ web2py {{=myversion}}<br />
 <script>ajax('{{=URL('check_version')}}',[],'check_version');</script>{{session.check_version=False}}
 {{else:}}
 <div id="check_version">
-{{=A(T('click to check for upgrades'),_href="javascript:ajax('"+URL('check_version')+"',[],'check_version')")}}
+{{=A(T('click to check for upgrades'),_class="button",_href="javascript:ajax('"+URL('check_version')+"',[],'check_version')")}}
 </div>
 {{pass}}
-<a href="{{=URL('upgrade_web2py')}}">{{=T('upgrade web2py now')}}</a>
+<a class="button" href="{{=URL('upgrade_web2py')}}">{{=T('upgrade web2py now')}}</a>
 </div><br/>
 
 <div class="box">
-<h3>{{=T("Create new application using the Wizard")}}</h3>
-<a href="{{=URL('wizard','index')}}">{{=T('start wizard')}}</a>
-(requires network)
+<h3>{{=T("New application wizard")}}</h3>
+<a class="button" href="{{=URL('wizard','index')}}">{{=T('start wizard')}}</a>
+<strong>requires network</strong>
 </div><br/>
 
 <div class="box">
-<h3>{{=T("Create new simple application")}}</h3>
-<form action="" enctype="multipart/form-data" method="post"><table padding="0"><tr><td class="nowrap">{{=T("create new application:")}} </td><td><input name="filename" type="text" /></td></tr><tr><td></td><td><input type="submit" value="{{=T('create')}}" /></td></tr></table><div class="hidden"></div></form>
+<h3>{{=T("New simple application")}}</h3>
+<form action="" enctype="multipart/form-data" method="post">{{=T("Application name:")}} <input name="filename" type="text" /> <button type="submit">{{=T('create')}}</button> <div class="hidden"></div></form>
 </div><br/>
 
 
 <div class="box">
 <h3>{{=T("Upload & install packed application")}}</h3>
-<form action="" enctype="multipart/form-data" method="post"><table padding="0"><tr><td class="nowrap">{{=T("upload application:")}} </td><td><input name="file" type="file" /></td></tr><tr><td class="nowrap">{{=T("or provide app url:")}} </td><td><input name="appurl" type="text" /></td></tr><tr><td class="nowrap">{{=T("and rename it (required):")}}</td><td><input name="filename" type="text" /></td></tr><tr><td class="nowrap">{{=T("overwrite installed app")}}</td><td><input type="checkbox" name="overwrite_check"}}/></td></tr><tr><td></td><td><input type="submit" value="{{=T('install')}}" />
-</td></tr></table><div class="hidden"></div></form>
+<form action="" enctype="multipart/form-data" method="post">
+<div class="subbox">
+<h4>{{=T("Upload a package")}}</h4>
+<label for="file">File:</label> <input id="file" name="file" type="file" />
+</div>
+<div class="subbox">
+<h4>{{=T("or provide app url:")}}</h4>
+<label for="appurl">URL:</label> <input id="appurl" name="appurl" type="text" /><br />
+<label for="url_filename">{{=T("Rename (required):")}}</label> <input id="url_filename" name="filename" type="text" />
+</div>
+<div class="subbox">
+<input type="checkbox" name="overwrite_check"}}/> {{=T("overwrite installed app")}}
+</div>
+<button type="submit">{{=T('install')}}</button>
+<div class="hidden"></div></form>
 
 
 
@@ -75,7 +95,7 @@ web2py {{=myversion}}<br />
 
 <div class="box">
 <h3>{{=T("Deploy on Google App Engine")}}</h3>
-<a href="{{=URL(request.application,'gae','deploy')}}"><img src="{{=URL(r=request,c='static',f='gae.png')}}" alt="deploy"/></a>
+<a class="button" href="{{=URL(request.application,'gae','deploy')}}">deploy</a>
 </div><br/>
 
 <div class="box">
@@ -85,8 +105,4 @@ web2py {{=myversion}}<br />
   jQuery(document).ready(function(){jQuery('#tweets').load('{{=URL('twitter')}}')});
 </script>
 </div><br/>
-
-<div class="box">
-<a href="{{=URL('change_password')}}">{{=T('change admin password')}}</a>
-<br/>
 </td></tr></table>

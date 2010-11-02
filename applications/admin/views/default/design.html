@@ -2,9 +2,9 @@
 {{
 import os
 def peekfile(path,file):
-    return A(file.replace('\\\\','/'),_href=URL('peek/%s/%s/%s' % (app, path, file)))
+    return A(file.replace('\\\\','/'),_class='button filebutton',_href=URL('peek/%s/%s/%s' % (app, path, file)))
 def editfile(path,file):
-    return A(T('edit'),_class="button",_href=URL('edit/%s/%s/%s' % (app, path, file)))
+    return A(T('edit'),_class="button editbutton",_href=URL('edit/%s/%s/%s' % (app, path, file)))
 def testfile(path,file):
     return A(T('test'),_class="button",_href=URL('test/%s/%s' % (app, file)))
 def editlanguagefile(path,file):
@@ -31,9 +31,8 @@ def upload_plugin_form(app):
               INPUT(_type="submit",_value=T("submit")))
     return form
 }}
-<h1>{{=T("Edit application")}} "{{=A(app,_href=URL(app,'default','index'),_target="_blank")}}"</h1>
 <div class="right_aligned">
-<a class="button" href="#" onclick="jQuery('h2').click();return false">{{=T("collapse")}}</a>
+<a class="button" href="#" onclick="jQuery('h4').click();return false">{{=T("collapse")}}</a>
 <a class="button" href="#models">{{=T("models")}}</a>
 <a class="button" href="#controllers">{{=T("controllers")}}</a>
 <a class="button" href="#views">{{=T("views")}}</a>
@@ -44,8 +43,11 @@ def upload_plugin_form(app):
 </div>
 <br/>
 
-<h2 id="models" onclick="collapse('models_inner');">
-<img src="{{=URL('static','folder.gif')}}"/> {{=T("Models")}}</h2>
+<div class="box appcontents">
+<div class="subbox">
+<h3>{{=T("Edit application")}} "{{=A(app,_href=URL(app,'default','index'),_target="_blank")}}"</h3>
+<h4 id="models" onclick="collapse('models_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Models")}}</h4>
 <div id="models_inner">
 <i>{{=T("the data representation, define database tables and sets")}}</i>
 <br/><br/>
@@ -61,13 +63,15 @@ def upload_plugin_form(app):
 <li>{{=file_create_form('%s/models/' % app)}}</li>
 </ul>
 </div>
+</div>
 
+<div class="subbox">
 {{
 controller_functions=[]
 for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functions[c]]
 }}
-<h2 id="controllers" onclick="collapse('controllers_inner');">
-<img src="{{=URL('static','folder.gif')}}"/> {{=T("Controllers")}}</h2>
+<h4 id="controllers" onclick="collapse('controllers_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Controllers")}}</h4>
 <div id="controllers_inner"><i>{{=T("the application logic, each URL path is mapped in one exposed function in the controller")}}</i>
 <br/><br/>
 {{if not controllers:}}{{=T("There are no controllers")}}{{else:}}
@@ -89,9 +93,12 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   <li>{{=file_create_form('%s/controllers/' % app)}}</li>
 </ul>
 </div>
+</div>
 
-<h2 id="views" onclick="collapse('views_inner');">
-<img src="{{=URL('static','folder.gif')}}"/> {{=T("Views")}}</h2>
+
+<div class="subbox">
+<h4 id="views" onclick="collapse('views_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Views")}}</h4>
 <div id="views_inner"><i>{{=T("the presentations layer, views are also known as templates")}}</i>
 <br/><br/>
 <a class="button" href="{{=LAYOUTS_APP}}">{{=T("download layouts")}}</a>
@@ -109,9 +116,12 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <li>{{=file_create_form('%s/views/' % app)}}</li>
 </ul>
 </div>
+</div>
 
-<h2 id="languages" onclick="collapse('languages_inner');">
-<img src="{{=URL('static','folder.gif')}}"/> {{=T("Languages")}}</h2>
+
+<div class="subbox">
+<h4 id="languages" onclick="collapse('languages_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Languages")}}</h4>
 <div id="languages_inner"><i>{{=T("translation strings for the application")}}</i>
 <br/><br/>
 {{=A(T('update all languages'),_class="button",_href=URL('update_languages/'+app))}}<br/>
@@ -124,9 +134,12 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <li>{{=file_create_form('%s/languages/' % app)}}{{=T('(something like "it-it")')}}</li>
 </ul>
 </div>
+</div>
 
-<h2 id="static" onclick="collapse('static_inner');">
-<img src="{{=URL('static','folder.gif')}}"/> {{=T("Static files")}}</h2>
+
+<div class="subbox">
+<h4 id="static" onclick="collapse('static_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Static files")}}</h4>
 <div id="static_inner"><i>{{=T("these files are served without processing, your images go here")}}</i>
 <br/><br/>
 {{if not statics:}}{{=T("There are no static files")}}{{pass}}
@@ -142,7 +155,7 @@ for file in statics+['']:
         if i>=len(path):
             path.append(file_path[i])
             thispath='static__'+'__'.join(path)
-}}<li>{{='/'.join(file_path[:i]+[''])}}<a href="javascript:collapse('{{=thispath}}');">{{=file_path[i]}}/</a></li><div id="{{=thispath}}" style="display: none;">{{
+            }}<li>{{='/'.join(file_path[:i]+[''])}}<a class="button" href="javascript:collapse('{{=thispath}}');"><img src="{{=URL('static', 'folder_sm.gif')}}" /> {{=file_path[i]}}/</a></li><div id="{{=thispath}}" style="display: none;">{{
         elif i>=len(file_path) or path[i]!=file_path[i]:
             file_path=file_path[:i]
             for j in range(len(path)-1,i-1,-1):
@@ -153,7 +166,7 @@ for file in statics+['']:
         i=i+1
         pass
     if filename:
-}}<li>{{='/'.join(file_path[:i]+[''])}}<a href="{{=URL(a=app,c='static',f=file)}}">{{=filename}}</a> {{=editfile('static',file)}} <a class="button" href="{{=URL('delete',args=[app,'static',file],vars=dict(sender=request.function+'/'+app))}}">{{=T("delete")}}</a></li>{{
+}}<li>{{='/'.join(file_path[:i]+[''])}}<a class="button filebutton" href="{{=URL(a=app,c='static',f=file)}}">{{=filename}}</a> {{=editfile('static',file)}} <a class="button" href="{{=URL('delete',args=[app,'static',file],vars=dict(sender=request.function+'/'+app))}}">{{=T("delete")}}</a></li>{{
         pass
     pass
 }}
@@ -162,9 +175,11 @@ for file in statics+['']:
 <li>{{=file_upload_form('%s/static/' % app)}}</li>
 </ul>
 </div>
+</div>
 
-<h2 id="modules" onclick="collapse('modules_inner');">
-<img src="{{=URL('static','folder.gif')}}"/> {{=T("Modules")}}</h2>
+<div class="subbox">
+<h4 id="modules" onclick="collapse('modules_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Modules")}}</h4>
 <div id="modules_inner"><i>{{=T("additional code for your application")}}</i>
 <br/><br/>
 {{if not modules:}}
@@ -179,16 +194,22 @@ for file in statics+['']:
 <li>{{=file_upload_form('%s/modules/' % app)}}</li>
 </ul>
 </div>
+</div>
 
-<h2 id="plugins" onclick="collapse('plugins_inner');">
-<img src="{{=URL('static','folder.gif')}}"/> {{=T("Plugins")}}</h2>
+
+<div class="subbox">
+<h4 id="plugins" onclick="collapse('plugins_inner');">
+<img src="{{=URL('static','folder.gif')}}"/> {{=T("Plugins")}}</h4>
 <div id="plugins_inner"><i>{{=T("To create a plugin, name a file/folder plugin_[name]")}}</i>
 <br/><br/>
 <a class="button" href="{{=PLUGINS_APP}}">{{=T("download plugins")}}</a>
 <ul>
 {{for plugin in plugins:}}
-<li><a href="{{=URL('plugin',args=[app,plugin])}}">{{=plugin}}</a></li>
+<li><a class="button editbutton" href="{{=URL('plugin',args=[app,plugin])}}">{{=plugin}}</a></li>
 {{pass}}
 <li>{{=upload_plugin_form(app)}}</li>
 </ul>
+</div>
+</div>
+
 </div>

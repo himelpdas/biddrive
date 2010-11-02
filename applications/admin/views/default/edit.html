@@ -12,7 +12,6 @@ jQuery(document).ready(function(){
 });
 </script>
 {{pass}}
-
 <h1>{{=T('Editing file "%s"',filename)}}</h1>
 
 <div style="text-align:left;" id="exposed">
@@ -41,10 +40,11 @@ jQuery(document).ready(function(){
 <br/><br/>
 
 <form action="{{=URL('edit',args=filename)}}" method="post">
-<input type="submit" value="save" name="save" onclick="return doClickSave();"/>
+  <button class="editbutton" type="submit" value="save" name="save" onclick="return doClickSave();">{{=T('Save')}}</button>
 {{=T('Saved file hash:')}}
 <input type="input" name="file_hash" value="{{=file_hash}}" readonly="readonly"/>
 {{=T('Last saved on:')}} <input type="input" name="saved_on" value="{{=saved_on}}" readonly="readonly"/>
+<br/>
 <br/>
 {{if TEXT_EDITOR=='amy':}}
 <textarea style="width: auto; height:400px;direction:ltr;" rows="58" cols="100" -amy-enabled="true" id="body" name="data">{{=data}}</textarea>
@@ -52,7 +52,7 @@ jQuery(document).ready(function(){
 <textarea cols="80" rows="25" id="body" style="width: 100%;direction:ltr;" name="data">{{=data}}</textarea>
 {{pass}}
 <br/>
-<button onclick="window.location.reload(); return false">{{=T('restore')}}</button> {{=T('currently saved or')}} <input type="submit" name="revert" value="{{=T('revert')}}" />
+<button class="editbutton" onclick="window.location.reload(); return false">{{=T('restore')}}</button> {{=T('currently saved or')}} <button class="editbutton" type="submit" name="revert">{{=T('revert')}}</button>
 {{=T('to  previous version.')}}
 <br/>
 </form>
