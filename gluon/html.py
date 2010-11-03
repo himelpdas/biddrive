@@ -1713,7 +1713,9 @@ class MENU(DIV):
             ul = UL(_class=self['ul_class'])
         for item in data:
             (name, active, link) = item[:3]
-            if 'no_link_url' in self.attributes and self['no_link_url']==link:
+            if isinstance(link,DIV):
+                li = LI(link)
+            elif 'no_link_url' in self.attributes and self['no_link_url']==link:
                 li = LI(DIV(name))            
             elif link:
                 li = LI(A(name, _href=link))
