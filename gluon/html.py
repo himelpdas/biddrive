@@ -1713,14 +1713,16 @@ class MENU(DIV):
             ul = UL(_class=self['ul_class'])
         for item in data:
             (name, active, link) = item[:3]
-            if link:
+            if 'no_link_url' in self.attributes and self['no_link_url']==link:
+                li = LI(DIV(name))            
+            elif link:
                 li = LI(A(name, _href=link))
             else:
                 li = LI(A(name, _href='#null'))
             if len(item) > 3 and item[3]:
                 li['_class'] = self['li_class']
                 li.append(self.serialize(item[3], level+1))
-            if active:
+            if active or ('active_url' in self.attributes and self['active_url']==link):
                 if li['_class']:
                     li['_class'] = li['_class']+' '+self['li_active']
                 else:
