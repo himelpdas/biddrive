@@ -392,6 +392,7 @@ class UploadWidget(FormWidget):
     DEFAULT_WIDTH = '150px'
     ID_DELETE_SUFFIX = '__delete'
     GENERIC_DESCRIPTION = 'file'
+    DELETE_FILE = 'delete'
 
     @staticmethod
     def widget(field, value, download_url=None, **attributes):
@@ -424,7 +425,7 @@ class UploadWidget(FormWidget):
                       A(UploadWidget.GENERIC_DESCRIPTION, _href = url), '|',
                       INPUT(_type='checkbox',
                             _name=field.name + UploadWidget.ID_DELETE_SUFFIX),
-                      'delete]', br, image)
+                      '%s]' % UploadWidget.DELETE_FILE, br, image)
         return inp
 
     @staticmethod
