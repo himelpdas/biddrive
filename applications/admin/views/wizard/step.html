@@ -68,7 +68,9 @@
     <td id="wizard_form">      
       {{if 'step' in request.function:}}
       <h2>Step {{=step}}</h2>
+      {{if request.function!='step1':}}
       <a class="button" href="{{=URL('step' + str(int(request.function[-1])-1))}}">back</a>
+      {{pass}}
       {{else:}}
       <h2>Begin</h2>
       {{pass}}

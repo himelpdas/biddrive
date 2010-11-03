@@ -189,6 +189,9 @@ def step6():
         Field('erase_database','boolean',default=True),
         Field('populate_database','boolean',default=True))
     if form.accepts(request.vars):
+        if DEMO_MODE:
+            session.flash = T('Application cannot be generated in demo mode')
+            redirect(URL('index'))
         create(form.vars)       
         session.flash = 'Application %s created' % app
         redirect(URL('generated'))

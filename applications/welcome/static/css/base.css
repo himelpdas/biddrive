@@ -384,9 +384,9 @@ div.flash {
     display: none;
     position: fixed;    
     padding: 10px;
-    top: 10px;
+    top: 40px;
     right: 10px;
-    width: 280px;
+    min-width: 280px;
     opacity: 0.85;
     margin: 0px 0px 10px 10px;    
     color: #fff;    
@@ -399,9 +399,6 @@ div.flash {
     z-index: 2;
 }
 div.error {
-/*   -moz-border-radius: 5px;     */
-/*    -webkit-border-radius: 5px; */
-/*    border: 1px solid #666;     */
     background-color: red;
     color: white;
     padding: 3px;
