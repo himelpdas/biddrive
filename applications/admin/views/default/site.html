@@ -7,9 +7,9 @@
 {{for a in apps:}} 
 <div class="application">
 {{if a==request.application:}}
-<h4><img src="{{=URL('static','folder_current.gif')}}"/>{{=a}}</h2>  
+<h4><img src="{{=URL('static','folder_current.gif')}}"/>{{=a}}</h4>  
 {{else:}}
-<h4><img src="{{=URL('static','folder.gif')}}"/><a href="{{=URL(a,'default','index')}}">{{=a}}</a></h2> 
+<h4><img src="{{=URL('static','folder.gif')}}"/><a href="{{=URL(a,'default','index')}}">{{=a}}</a></h4> 
 {{if not os.path.exists('applications/%s/compiled' % a):}}
 <a class="button editbutton" href="{{=URL('design',args=a)}}">{{=T("edit")}}</a>
 {{else:}}
