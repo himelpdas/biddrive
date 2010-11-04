@@ -175,7 +175,7 @@ Markmin also supports the <video> and <audio> html5 tags using the notation:
 [[title link audio]]
 ``
 
-### Latex
+### Latex and other extensions
 
 Formulas can be embedded into HTML with ``$````$``formula``$````$``.
 You can use Google charts to render the formula:
@@ -184,6 +184,26 @@ You can use Google charts to render the formula:
 >>> LATEX = '<img src="http://chart.apis.google.com/chart?cht=tx&chl=%s" align="ce\
 nter"/>'
 >>> markmin2html(text,{'latex':lambda code: LATEX % code.replace('"','\"')})
+``
+
+### Code with syntax highlighting
+
+This requires a syntax highlighting tool, such as the web2py CODE helper.
+
+``
+>>> extra={'code_cpp':lambda text: CODE(text,language='cpp').xml(),
+           'code_java':lambda text: CODE(text,language='java').xml(),
+           'code_python':lambda text: CODE(text,language='python').xml(),
+           'code_html':lambda text: CODE(text,language='html').xml()}
+>>> markmin2html(text,extra=extra)
+`` 
+
+Code can now be marked up as in this example:
+
+``
+!`!`
+<html><body>example</body></html>
+!`!`:code_html
 ``
 
 ### Citations and References
