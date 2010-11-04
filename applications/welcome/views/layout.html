@@ -30,6 +30,9 @@
     <!-- Place favicon.ico and apple-touch-icon.png in the root of your domain and delete these references -->
     <link rel="shortcut icon" href="{{=URL(request.application,'static','favicon.ico')}}" type="image/x-icon">
     <link rel="apple-touch-icon" href="{{=URL(request.application,'static','favicon.png')}}">
+
+    <!-- For the less-enabled mobile browsers like Opera Mini -->
+    <link rel="stylesheet" media="handheld" href="{{=URL('static','css/handheld.css')}}">
     
     <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
     <script src="{{=URL(request.application,'static','js/modernizr-1.6.min.js')}}"></script>

@@ -1,7 +1,9 @@
+<!-- Grab Google CDN's jQuery. fall back to local if necessary -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>
+<script>!window.jQuery && document.write(unescape('%3Cscript src="{{=URL('static','js/jquery.js')}}"%3E%3C/script%3E'))</script>
 {{
-response.files.insert(0,URL(r=request,c='static',f='jquery.js'))
-response.files.insert(1,URL(r=request,c='static',f='calendar.css'))
-response.files.insert(2,URL(r=request,c='static',f='calendar.js'))
+response.files.append(URL('static','css/calendar.css'))
+response.files.append(URL('static','js/calendar.js'))
 for _item in response.meta or []:}}
      <meta name="{{=_item}}" content="{{=response.meta[_item]}}" />{{
 pass
@@ -16,6 +18,7 @@ for _k,_file in enumerate(response.files or []):
   pass
 pass
 }}
+  
 <script type="text/javascript"><!--
 function popup(url) {
   newwindow=window.open(url,'name','height=400,width=600');
@@ -39,6 +42,7 @@ function ajax(u,s,t) {
     }
     jQuery.ajax({type: "POST", url: u, data: query, success: function(msg) { if(t) { if(t==':eval') eval(msg); else jQuery("#" + t).html(msg); } } }); 
 }
+
 String.prototype.reverse = function () { return this.split('').reverse().join('');};
 function web2py_ajax_init() {
   jQuery('.hidden').hide();
@@ -58,11 +62,13 @@ function web2py_ajax_init() {
       starthour:0, endhour:23, showminutes:true, military:true
   }); } catch(e) {};
 };
-jQuery(document).ready(function(){
-   jQuery('.flash').hide();
-   if(jQuery('.flash').html()!='') jQuery('.flash').slideDown('slow');
-   web2py_ajax_init();});
 
+jQuery(document).ready(function() {   
+   var flash = jQuery('.flash');
+   flash.hide();
+   if(flash.html()) flash.slideDown();
+   web2py_ajax_init();
+});
 function web2py_trap_form(action,target) {
    jQuery('#'+target+' form').each(function(i){
       var form=jQuery(this);
@@ -74,7 +80,6 @@ function web2py_trap_form(action,target) {
       });
    });
 }
-
 function web2py_ajax_page(method,action,data,target) {
   jQuery.ajax({'type':method,'url':action,'data':data,
     'beforeSend':function(xhr) {

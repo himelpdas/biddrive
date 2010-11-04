@@ -10,16 +10,14 @@ pass
 for _k,_file in enumerate(response.files or []):
   if _file in response.files[:_k]:
      continue
-  elif _file.lower().endswith('.css'):}}
+  _file0=_file.lower().split('?')[0]
+  if _file0.endswith('.css'):}}
      <link href="{{=_file}}" rel="stylesheet" type="text/css" />{{
-  elif _file.lower().endswith('.js'):}}
+  elif _file0.endswith('.js'):}}
      <script src="{{=_file}}" type="text/javascript"></script>{{
   pass
 pass
 }}
-
-<!-- For the less-enabled mobile browsers like Opera Mini -->
-<link rel="stylesheet" media="handheld" href="{{=URL('static','css/handheld.css')}}">
   
 <script type="text/javascript"><!--
 function popup(url) {
@@ -66,8 +64,9 @@ function web2py_ajax_init() {
 };
 
 jQuery(document).ready(function() {   
-   var flash = jQuery('.flash').html();
-   if(flash) jQuery('.flash').html(flash).slideDown('fast');
+   var flash = jQuery('.flash');
+   flash.hide();
+   if(flash.html()) flash.slideDown();
    web2py_ajax_init();
 });
 function web2py_trap_form(action,target) {
@@ -98,7 +97,7 @@ function web2py_ajax_page(method,action,data,target) {
       web2py_trap_form(action,target);
       web2py_ajax_init();      
       if(command) eval(command);
-      if(flash) jQuery('.flash').html(flash).slideDown('fast');
+      if(flash) jQuery('.flash').html(flash).slideDown();
       }
     });
 }
