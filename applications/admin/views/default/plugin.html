@@ -2,13 +2,13 @@
 {{
 import os
 def peekfile(path,file):
-    return A(file.replace('\\\\','/'),_href=URL('peek/%s/%s/%s' % (app, path, file)))
+    return A(file.replace('\\\\','/'),_href=URL('peek', args=(app, path, file)))
 def editfile(path,file):
-    return A('edit',_class='button editbutton',_href=URL('peek/%s/%s/%s' % (app, path, file)))
+    return A('edit',_class='button editbutton',_href=URL('edit', args=(app, path, file)))
 def testfile(path,file):
-    return A(IMG(_src=URL('static', 'test_icon.png'), _alt=T('test')),_href=URL('test/%s/%s' % (app, file)))
+    return A(IMG(_src=URL('static', 'test_icon.png'), _alt=T('test')),_href=URL('test', args=(app, file)))
 def editlanguagefile(path,file):
-    return A('edit',_class='button editbutton',_href=URL('edit_language/%s/%s/%s' % (app, path, file)))
+    return A('edit',_class='button editbutton',_href=URL('edit_language', args=(app, path, file)))
 def file_upload_form(location):
     form=FORM(T("upload file:")," ",
               INPUT(_type="file",_name="file")," ",T("and rename it:")," ",

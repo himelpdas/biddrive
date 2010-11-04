@@ -15,17 +15,18 @@ jQuery(document).ready(function(){
 <div class="editor">
 <h3 class="section">{{=T('Editing file "%s"',filename)}}</h3>
 
+{{if functions:}}
 <div style="text-align:left;" id="exposed">
-  {{if functions:}}
   {{=B(T('exposes:'))}}
   {{=XML(', '.join([A(f,_href=URL(a=app,c=controller,f=f)).xml() for f in functions]))}}
   {{if editviewlinks:}}<br/>
   {{=B(T('edit views:'))}}
   {{=XML(', '.join([v.xml() for v in editviewlinks]))}}
   {{pass}}
-  {{pass}}
 </div>
+{{pass}}
 
+<div class="right">
 <a class="button" href="{{=URL('design',args=request.args[0])}}">back</a>
 {{if edit_controller:}}
 <a class="button" href="{{=edit_controller}}">{{=T('edit controller')}}</a>
@@ -37,8 +38,7 @@ jQuery(document).ready(function(){
   <a class="button" href="http://www.web2py.com/sqldesigner" target="_blank">online designer</a>
 {{pass}}
 <a class="button" href="http://www.web2py.com/examples/static/epydoc/index.html" target="_blank">docs</a>
-
-<br/><br/>
+</div>
 
 <form action="{{=URL('edit',args=filename)}}" method="post">
   <a value="save" name="save" onclick="return doClickSave();">{{=IMG(_src=URL('static', 'save_icon.png'), _alt=T('Save'))}}</a>
