@@ -50,8 +50,11 @@ def upload_plugin_form(app):
 <i>{{=T("the data representation, define database tables and sets")}}</i>
 
 {{if not models:}}{{=T("There are no models")}}{{else:}}
+<div class="right">
 <a class="button" href="{{=URL(a=app,c='appadmin',f='index')}}">{{=T("database administration")}}</a>
-{{if os.access(os.path.join(request.folder,'..',app,'databases','sql.log'),os.R_OK):}}{{=A('sql.log',_class="button",_href=URL('peek/%s/databases/sql.log'%app))}}{{pass}}{{pass}}
+{{if os.access(os.path.join(request.folder,'..',app,'databases','sql.log'),os.R_OK):}}{{=A('sql.log',_class="button",_href=URL('peek/%s/databases/sql.log'%app))}}{{pass}}
+</div>
+{{pass}}
 <ul>
 {{for m in models:}}<li>
 {{=editfile('models',m)}}
@@ -71,10 +74,11 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Controllers")}}</h4>
 <div id="controllers_inner"><i>{{=T("the application logic, each URL path is mapped in one exposed function in the controller")}}</i>
 {{if not controllers:}}{{=T("There are no controllers")}}{{else:}}
+<div class="right">
 <a class="button" href='{{=URL(r=request,c='shell',f='index',args=app)}}'>{{=T("shell")}}</a> 
 <a class="button" href='{{=URL('test',args=app)}}'>{{=T("test")}}</a>
 <a class="button" href='{{=URL('edit',args=[app,'cron','crontab'])}}'>{{=T("crontab")}}</a>
-
+</div>
 {{pass}}
 <ul>
 {{for c in controllers:}}
@@ -94,7 +98,9 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <h4 id="views" onclick="collapse('views_inner');">
 <img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Views")}}</h4>
 <div id="views_inner"><i>{{=T("the presentations layer, views are also known as templates")}}</i>
+<div class="right">
 <a class="button" href="{{=LAYOUTS_APP}}">{{=T("download layouts")}}</a>
+</div>
 {{if not views:}}{{=T("There are no views")}}{{pass}}
 <ul>
 {{for c in views:}}
@@ -114,7 +120,8 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <h4 id="languages" onclick="collapse('languages_inner');">
 <img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Languages")}}</h4>
 <div id="languages_inner"><i>{{=T("translation strings for the application")}}</i>
-{{=A(T('update all languages'),_class="button",_href=URL('update_languages/'+app))}}<br/>
+<div class="right">
+{{=A(T('update all languages'),_class="button",_href=URL('update_languages/'+app))}}</div>
 {{if not languages:}}{{=T("There are no translators, only default language is supported")}}{{pass}}
 <ul>
 {{for file in languages:}}<li>

@@ -36,8 +36,7 @@ def upload_plugin_form(app):
 <div class="right">
 <a class="button" href="{{=URL('design',args=app)}}">{{=T("back")}}</a>
 <a class="button editbutton" href="{{=URL('delete_plugin',args=request.args)}}">{{=T("delete plugin")}}</a>
-<a class="button editbutton" href="{{=URL('pack_plugin',args=request.args)}}">{{=T("pack plugin")}}</a>
-|
+<a class="button editbutton" href="{{=URL('pack_plugin',args=request.args)}}">{{=T("pack plugin")}}</a><br/>
 <a class="button" href="#" onclick="jQuery('h2').click();return false">{{=T("collapse")}}</a>
 <a class="button" href="#models">{{=T("models")}}</a>
 <a class="button" href="#controllers">{{=T("controllers")}}</a>
