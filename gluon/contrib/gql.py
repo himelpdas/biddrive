@@ -769,7 +769,7 @@ class Set(gluon.sql.Set):
         try:
             return len(items)
         except TypeError:
-            return items.count()
+            return items.count(limit=None)
 
     def count(self):
         (items, tablename, fields) = self._select()
