@@ -1,19 +1,21 @@
 {{extend 'layout.html'}}
-<h1>Error ticket for "{{=app}}"</h1>
-<h2>Ticket {{=ticket}}</h2>
-<h3>{{=output}}</h3>
+<div class="ticket">
+<h3 class="section">Error ticket for "{{=app}}"</h3>
+<h4>Ticket {{=ticket}}</h4>
+<h5>{{=output}}</h5>
 <br />
-<h3>{{=T('Version')}}</h3>
-web2py {{=myversion}}
+<h5>{{=T('web2py Version')}}</h5>
+<br/>
+<strong>{{=myversion}}</strong>
 <br /><br />
-<h3>Error traceback</h3>
+<h5>Error traceback</h5>
 {{=traceback}}
 
 {{if snapshot:}}
 {{try:}}
-    <h3>Error snapshot</h3>
+    <h5>Error snapshot</h5>
     <i>Detailed traceback description</i>
-    <ul>
+    <ul id="snapshot">
       <li><a onclick="collapse('exception_inner');">Exception:</a> {{=snapshot['etype']}}({{=snapshot['evalue']}})
       <div id="exception_inner" style="display: none;">
         <i>{{=T("Exception instance attributes")}}</i>
@@ -25,15 +27,14 @@ web2py {{=myversion}}
       </div></li>
       <li>{{=snapshot['pyver']}}</li>
     </ul>
-
     {{for i, frame in enumerate(snapshot['frames']):}}
     {{style = (i != len(snapshot['frames'])-1 and 'display: none;' or '')}}
-    <h4>File {{="%s in %s at line %s" % (frame['file'], frame['func'], frame['lnum'])}}</h4>
-    [ <a onclick="collapse('{{="%s_code_inner" % i}}');">{{=T("code")}}</a> 
-    | <a onclick="collapse('{{="%s_args_inner" % i}}');">{{=T("arguments")}}</a> 
-    | <a onclick="collapse('{{="%s_vars_inner" % i}}');">{{=T("variables")}}</a> 
-    ]
+    <h6>File {{="%s in %s at line %s" % (frame['file'], frame['func'], frame['lnum'])}}</h6>
+    <a class="button tbbutton" onclick="collapse('{{="%s_code_inner" % i}}');">{{=T("code")}}</a> 
+    <a class="button tbbutton" onclick="collapse('{{="%s_args_inner" % i}}');">{{=T("arguments")}}</a> 
+    <a class="button tbbutton" onclick="collapse('{{="%s_vars_inner" % i}}');">{{=T("variables")}}</a> 
     <div id="{{="%s_args_inner" % i}}" style="{{=style}}">
+    <br/>
     <i>Function argument list: {{=frame['call']}}</i>
     </div>
     <div id="{{="%s_code_inner" % i}}" style="{{=style}}">
@@ -52,13 +53,13 @@ web2py {{=myversion}}
     {{pass}}
 
     <button onclick="jQuery('#locals').slideToggle()">locals</button>
-    <div class="hidden" id="locals"><h4>locals</h4>{{=BEAUTIFY(snapshot['locals'])}}</div>
+    <div class="hidden" id="locals"><h6>locals</h6>{{=BEAUTIFY(snapshot['locals'])}}</div>
     <button onclick="jQuery('#request').slideToggle()">request</button>
-    <div class="hidden" id="request"><h4>request</h4>{{=BEAUTIFY(snapshot['request'])}}</div>
+    <div class="hidden" id="request"><h6>request</h6>{{=BEAUTIFY(snapshot['request'])}}</div>
     <button onclick="jQuery('#session').slideToggle()">session</button>
-    <div class="hidden" id="session"><h4>session</h4>{{=BEAUTIFY(snapshot['session'])}}</div>
+    <div class="hidden" id="session"><h6>session</h6>{{=BEAUTIFY(snapshot['session'])}}</div>
     <button onclick="jQuery('#response').slideToggle()">response</button>
-    <div class="hidden" id="response"><h4>response</h4>{{=BEAUTIFY(snapshot['response'])}}</div>
+    <div class="hidden" id="response"><h6>response</h6>{{=BEAUTIFY(snapshot['response'])}}</div>
     <script>jQuery('.hidden').hide();</script>
 {{except Exception, e:}}
     <!-- this should not happen, just in case... (cannot output normal hmtl as we don't know current open tags) -->
@@ -68,6 +69,6 @@ web2py {{=myversion}}
 {{pass}}
 
 <br /><br />
-<h3>In file: {{=layer}}</h3>
+<h5>In file: {{=layer}}</h5>
 {{=CODE(code,language='python',link='/examples/global/vars/')}}
 

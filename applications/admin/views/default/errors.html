@@ -35,7 +35,7 @@ tr.error_ticket:hover {
   jQuery(document).ready(function() { jQuery('.traceback').hide(); });
 </script>
 
-<h1>{{=T('Error logs for "%(app)s"',dict(app=app))}}</h1>
+<h3 class="section">{{=T('Error logs for "%(app)s"',dict(app=app))}}</h3>
 
 <form name="myform" method="post">
   <input name="CheckAll" value="{{=T('check all')}}" 

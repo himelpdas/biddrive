@@ -12,7 +12,8 @@ jQuery(document).ready(function(){
 });
 </script>
 {{pass}}
-<h1>{{=T('Editing file "%s"',filename)}}</h1>
+<div class="editor">
+<h3 class="section">{{=T('Editing file "%s"',filename)}}</h3>
 
 <div style="text-align:left;" id="exposed">
   {{if functions:}}
@@ -40,7 +41,7 @@ jQuery(document).ready(function(){
 <br/><br/>
 
 <form action="{{=URL('edit',args=filename)}}" method="post">
-  <button class="editbutton" type="submit" value="save" name="save" onclick="return doClickSave();">{{=T('Save')}}</button>
+  <a value="save" name="save" onclick="return doClickSave();">{{=IMG(_src=URL('static', 'save_icon.png'), _alt=T('Save'))}}</a>
 {{=T('Saved file hash:')}}
 <input type="input" name="file_hash" value="{{=file_hash}}" readonly="readonly"/>
 {{=T('Last saved on:')}} <input type="input" name="saved_on" value="{{=saved_on}}" readonly="readonly"/>
@@ -77,4 +78,6 @@ jQuery(document).ready(function(){
   <tr><td><code>Ctrl+S</code></td><td>Save via Ajax</td></tr>
 </table>
 {{pass}}
+</div>
+
 </div>

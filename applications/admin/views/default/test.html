@@ -1,10 +1,10 @@
 {{extend 'layout.html'}}
 
-<h1>{{=T('Testing application')}} "{{=app}}"</h1>
+<h3 class="section">{{=T('Testing application')}} "{{=app}}"</h3>
 
 {{for controller in sorted(controllers):}}
 
-<div id='output_{{=controller[:-3]}}'><h2>Testing controller "{{=controller}}"... <blink>please wait!</blink></h2></div>
+<div id='output_{{=controller[:-3]}}'><h4>Testing controller "{{=controller}}"... <blink>please wait!</blink></h4></div>
 
 <script><!--
 ajax('{{=URL(a=app,c=controller[:-3],f='_TEST')}}',[],'output_{{=controller[:-3]}}');

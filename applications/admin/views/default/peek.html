@@ -1,9 +1,9 @@
 {{extend 'layout.html'}}
 
-<h1>{{=T("Peeking at file")}} "{{=filename}}"</h1><br/><br/>
+<h3 class="section">{{=T("Peeking at file")}} "{{=filename}}"</h3><br/><br/>
 
 <a class="button" href="{{=URL('design',args=request.args[0])}}">back</a>
-<a class="button" href="{{=URL('edit',args=request.args)}}">edit</a>
+<a class="button editbutton" href="{{=URL('edit',args=request.args)}}">edit</a>
 
 {{
 if filename[-3:]=='.py': language='python'

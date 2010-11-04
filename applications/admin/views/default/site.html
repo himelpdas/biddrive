@@ -2,8 +2,8 @@
 {{import os, glob}}
 
 <table padding="5px"><tr><td width="60%">
-<div class="main_panel box">
-<h3>{{=T("Installed applications")}}</h3>
+<div class="main_panel">
+<h3 class="section">{{=T("Installed applications")}}</h3>
 {{for a in apps:}} 
 <div class="application">
 {{if a==request.application:}}
@@ -38,13 +38,12 @@
 </div>
 
 </td><td align="right">
-<div class="box pwbox">
+<div class="right_aligned">
 <a class="button" href="{{=URL('change_password')}}">{{=T('change admin password')}}</a>
 </div>
 <br/>
 <div class="box">
-<h3>{{=T('web2py Version')}}</h3>
-<strong id="vernum">{{=myversion}}</strong><br />
+<h3>{{=myversion}}</h3>
 {{if session.check_version:}}
 <div id="check_version">
 {{=T('Checking for upgrades...')}}
@@ -61,7 +60,7 @@
 <div class="box">
 <h3>{{=T("New application wizard")}}</h3>
 <a class="button" href="{{=URL('wizard','index')}}">{{=T('start wizard')}}</a>
-<strong>requires network</strong>
+{{=T("(requires internet access)")}}
 </div><br/>
 
 <div class="box">
@@ -73,24 +72,29 @@
 <div class="box">
 <h3>{{=T("Upload & install packed application")}}</h3>
 <form action="" enctype="multipart/form-data" method="post">
-<div class="subbox">
-<h4>{{=T("Upload a package")}}</h4>
-<label for="file">File:</label> <input id="file" name="file" type="file" />
-</div>
-<div class="subbox">
-<h4>{{=T("or provide app url:")}}</h4>
-<label for="appurl">URL:</label> <input id="appurl" name="appurl" type="text" /><br />
-<label for="url_filename">{{=T("Rename (required):")}}</label> <input id="url_filename" name="filename" type="text" />
-</div>
-<div class="subbox">
-<input type="checkbox" name="overwrite_check"}}/> {{=T("overwrite installed app")}}
-</div>
-<button type="submit">{{=T('install')}}</button>
-<div class="hidden"></div></form>
-
-
-
-
+<table>
+<tr>
+<td>{{=T("Upload a package")}}</td>
+<td><input id="file" name="file" type="file" /></td>
+</tr>
+<tr>
+<td>{{=T("or provide app url:")}}</td>
+<td><input id="appurl" name="appurl" type="text" /></td>
+</tr>
+<tr>
+<td>{{=T("Rename (required):")}}</td>
+<td><input id="url_filename" name="filename" type="text" /></td>
+</tr>
+<tr>
+<td></td>
+<td><input type="checkbox" name="overwrite_check"}}/> {{=T("overwrite installed app")}}</td>
+</tr>
+<tr>
+<td></td>
+<td><button type="submit">{{=T('install')}}</button></td>
+</tr>
+</table>
+</form>
 </div><br/>
 
 <div class="box">
