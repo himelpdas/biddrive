@@ -289,17 +289,17 @@ def crondance(applications_parent, ctype='soft', startup=False):
             else:
                 action=False
             if action and command.endswith('.py'):
-                commands.extend(('-P',
-                                 '-N',models,
-                                 '-S',app,
-                                 '-a','"<recycle>"',
-                                 '-R',command))
+                commands.extend(('-J',                # cron job
+                                 models,              # import models?
+                                 '-S', app,           # app name
+                                 '-a', '"<recycle>"', # password
+                                 '-R', command))      # command
                 shell = True
             elif action:
-                commands.extend(('-P',
-                                 '-N',models,
-                                 '-S',app+'/'+command,
-                                 '-a','"<recycle>"'))
+                commands.extend(('-J',                  # cron job
+                                 models,                # import models?
+                                 '-S', app+'/'+command, # app name
+                                 '-a', '"<recycle>"'))  # password
                 shell = True
             else:
                 commands = command

@@ -644,6 +644,13 @@ def console():
                       default=False,
                       help='do not start cron automatically')
 
+    parser.add_option('-J',
+                      '--cronjob',
+                      action='store_true',
+                      dest='cronjob',
+                      default=False,
+                      help='identify cron-initiated command')
+
     parser.add_option('-L',
                       '--config',
                       dest='config',
@@ -701,6 +708,11 @@ def console():
     if options.config[-3:] == '.py':
         options.config = options.config[:-3]
 
+    if options.cronjob:
+        global_settings.cronjob = True  # tell the world
+        options.nocron = True   # don't start cron jobs
+        options.plain = True    # cronjobs use a plain shell
+
     options.folder = os.path.abspath(options.folder)
 
     for path in ('applications', 'deposit', 'site-packages', 'logs'):
@@ -709,20 +721,21 @@ def console():
 
     sys.path.append(os.path.join(options.folder,'site-packages'))
 
-    # If we have the applications package or if we should upgrade
-    if not os.path.exists('applications/__init__.py'):
-        fp = open('applications/__init__.py', 'w')
-        fp.write('')
-        fp.close()
-
-    if not os.path.exists('welcome.w2p') or os.path.exists('NEWINSTALL'):
-        w2p_pack('welcome.w2p','applications/welcome')
-        os.unlink('NEWINSTALL')
+    if not options.cronjob:
+        # If we have the applications package or if we should upgrade
+        if not os.path.exists('applications/__init__.py'):
+            fp = open('applications/__init__.py', 'w')
+            fp.write('')
+            fp.close()
+    
+        if not os.path.exists('welcome.w2p') or os.path.exists('NEWINSTALL'):
+            w2p_pack('welcome.w2p','applications/welcome')
+            os.unlink('NEWINSTALL')
 
     return (options, args)
 
 
-def start(cron = True):
+def start(cron=True):
     """ Start server  """
 
     # ## get command line arguments
