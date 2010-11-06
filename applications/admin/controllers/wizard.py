@@ -58,7 +58,7 @@ def index():
     return dict(step='Start',form=form)
                          
 
-def step1():    
+def step1():
     from gluon.contrib.simplejson import loads
     import urllib
     if not session.themes:
@@ -137,10 +137,15 @@ def step3():
         session.app['table_'+table]=[t.strip().lower()
                                        for t in listify(form.vars.field_names)
                                        if t.strip()]
-        if n<m-1:
-            redirect(URL('step3',args=n+1))
+        try:
+            tables=sort_tables(session.app['tables'])
+        except RuntimeError:
+            response.flash=T('invalid circual reference')
         else:
-            redirect(URL('step4'))
+            if n<m-1:
+                redirect(URL('step3',args=n+1))
+            else:
+                redirect(URL('step4'))
     return dict(step='3: Fields for table "%s" (%s of %s)' % (table,n+1,m),table=table,form=form)
 
 def step4():
@@ -199,6 +204,26 @@ def step6():
 
 def generated():
     return dict(app=session.app['name'])
+
+def sort_tables(tables):
+    import re
+    regex = re.compile('(%s)' % '|'.join(tables))
+    is_auth_user = 'auth_user' in tables
+    d={}
+    for table in tables:
+        d[table]=[]
+        for field in session.app['table_%s' % table]:
+            d[table]+=regex.findall(field)
+    tables=[]
+    if is_auth_user:
+        tables.append('auth_user')
+    def append(table,trail=[]):
+        if table in trail: 
+            raise RuntimeError
+        for t in d[table]: append(t,trail=trail+[table])
+        if not table in tables: tables.append(table)
+    for table in d: append(table)
+    return tables
 
 def make_table(table,fields):
     rawtable=table
@@ -379,7 +404,9 @@ def make_page(page,contents):
             s+="    return dict(form=form)\n\n"
         elif items[1]=='update':
             s+="    record = db.t_%s(request.args(0),active=True) or redirect(URL('error'))\n" % t
-            s+="    form=crud.update(db.t_%s,record,next='%s_read/[id]',onaccept=crud.archive)\n" % (t,t)
+            s+="    form=crud.update(db.t_%s,record,next='%s_read/[id]',\n"  % (t,t)
+            s+="                     ondelete=lambda form: redirect(URL('%s_select')),\n" % t
+            s+="                     onaccept=crud.archive)\n"
             s+="    return dict(form=form)\n\n"
         elif items[1]=='create':
             s+="    form=crud.create(db.t_%s,next='%s_read/[id]')\n" % (t,t)
@@ -496,7 +523,8 @@ def create(options):
         model = os.path.join(request.folder,'..',app,'models','db_wizard.py')
         file = open(model,'wb')
         file.write('### we prepend t_ to tablenames and f_ to fieldnames for disambiguity\n\n')
-        for table in session.app['tables']:
+        tables=sort_tables(session.app['tables'])
+        for table in tables:
             if table=='auth_user': continue
             file.write(make_table(table,session.app['table_'+table]))
         file.close()
