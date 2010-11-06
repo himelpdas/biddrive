@@ -80,7 +80,7 @@ response.menu+=[
 ##########################################
 
 
-response.menu+=[(T('Resources'), False, 'http://www.web2py.com/book',
+response.menu+=[(T('Resources'), False, None,
      [
     (T('Documentation'), False, 'http://www.web2py.com/book',
         [
@@ -100,7 +100,7 @@ response.menu+=[(T('Resources'), False, 'http://www.web2py.com/book',
         (T('Buy this book'), False, 'http://stores.lulu.com/web2py'),            
         ]),    
         
-    (T('Community'), False, 'http://www.web2py.com/examples/default/usergroups',
+    (T('Community'), False, None,
         [
         (T('Groups'), False, 'http://www.web2py.com/examples/default/usergroups'),            
         (T('Twitter'), False, 'http://twitter.com/web2py'),

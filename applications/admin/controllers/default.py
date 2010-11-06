@@ -4,7 +4,7 @@ from gluon.admin import *
 from glob import glob
 import shutil
 
-if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','errors','update_languages']:
+if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','update_languages']:
     session.flash = T('disabled in demo mode')
     redirect(URL('site'))
 

@@ -1720,7 +1720,8 @@ class MENU(DIV):
             elif link:
                 li = LI(A(name, _href=link))
             else:
-                li = LI(A(name, _href='#null'))
+                li = LI(A(name, _href='#',
+                          _onclick='javascript:void(0):return false'))
             if len(item) > 3 and item[3]:
                 li['_class'] = self['li_class']
                 li.append(self.serialize(item[3], level+1))
