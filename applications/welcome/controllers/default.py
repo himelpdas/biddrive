@@ -8,16 +8,12 @@
 ## - call exposes all registered services (none by default)
 #########################################################################
 
-def flash(message,mode='warn'):
-    """ mode can be 'ok', 'warn', or 'error' """
-    return SPAN(IMG(_src=URL('static','images/%s.png' % mode)),' ',message)
-
 def index():
     """
     example action using the internationalization operator T and flash
     rendered by views/default/index.html or views/generic.html
     """
-    response.flash = flash(T('You are successfully running web2py.'))
+    response.flash = T('You are successfully running web2py.')
     return dict(message=T('Hello World'))
 
 def user():
