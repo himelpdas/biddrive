@@ -321,10 +321,11 @@ class Expression(object):
 
     def __or__(self, other):  # for use in sortby
         assert_filter_fields(self, other)
-        return Expression((self.name if self.type!='id' else '__key__') \
-                              + '|' + \
-                              (other.name if other.type!='id' else '__key__'),
-                          None, None)
+        def ks(obj):
+            if obj.type == 'id':
+                return '-__key__' if obj.name.startswith('-') else '__key__'
+            return obj.name
+        return Expression(ks(self)+'|'+ks(other),None,None)
 
     def __invert__(self):
         assert_filter_fields(self)
