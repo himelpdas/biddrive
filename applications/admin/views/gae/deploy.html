@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 <script>$=jQuery</script>
-<link rel="stylesheet" type="text/css" href="{{=URL(r=request,c='static',f='jqueryMultiSelect.css')}}" />
-<script src="{{=URL(r=request,c='static',f='jqueryMultiSelect.js')}}"></script>
+<link rel="stylesheet" type="text/css" href="{{=URL(r=request,c='static',f='css/jqueryMultiSelect.css')}}" />
+<script src="{{=URL(r=request,c='static',f='js/jqueryMultiSelect.js')}}"></script>
 <script>
 function callback() {
   $.get('{{=URL(r=request,f='callback')}}','',function(data,status){ if(data!='<done/>') { $('#target').html($('#target').html()+data); callback(); } });
