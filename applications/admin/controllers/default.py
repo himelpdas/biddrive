@@ -307,6 +307,20 @@ def test():
 def keepalive():
     return ''
 
+def search():
+    keywords=request.vars.keywords or ''
+    def match(filename,keywords):
+        filename=os.path.join(apath(request.args[0], r=request),filename)
+        if keywords in open(filename,'rb').read():
+            return True
+        return False
+    path=apath(request.args[0], r=request)
+    files1 = glob(os.path.join(path,'*/*.py'))
+    files2 = glob(os.path.join(path,'*/*.html'))
+    files3 = glob(os.path.join(path,'*/*/*.html'))
+    files=[x[len(path)+1:] for x in files1+files2+files3 if match(x,keywords)]
+    return response.json({'files':files})
+
 def edit():
     """ File edit handler """
     # Load json only if it is ajax edited...
