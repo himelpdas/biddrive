@@ -897,7 +897,7 @@ ul#snapshot > li {
 .errors table.sortable th {
   background: url('header_bg.png') repeat-x;
   color: #eee;
-  border-right: 1px solid #eee;
+  //  border-right: 1px solid #eee;
   padding-top: 0.5em;
 }
 
