@@ -1627,7 +1627,7 @@ class Table(dict):
             field._tablename = self._tablename
             field._table = self
             field._db = self._db
-            if field.requires == '<default>':
+            if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
 
@@ -2268,7 +2268,7 @@ class KeyedTable(Table):
             field._tablename = self._tablename
             field._table = self
             field._db = self._db
-            if field.requires == '<default>':
+            if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
 
@@ -2762,9 +2762,9 @@ class Field(Expression):
         fieldname,
         type='string',
         length=None,
-        default=None,
+        default=DEFAULT,
         required=False,
-        requires='<default>',
+        requires=DEFAULT,
         ondelete='CASCADE',
         notnull=False,
         unique=False,
@@ -2792,7 +2792,10 @@ class Field(Expression):
             length = 512
         self.type = type  # 'string', 'integer'
         self.length = length # the length of the string
-        self.default = default==None and update or default
+        if default==DEFAULT:
+            self.default = update or None 
+        else:
+            self.default = default
         self.required = required  # is this field required
         self.ondelete = ondelete.upper()  # this is for reference fields only
         self.notnull = notnull
