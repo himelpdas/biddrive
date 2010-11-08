@@ -31,8 +31,6 @@ def upload_plugin_form(app):
     return form
 def deletefile(arglist):
   return A(IMG(_src=URL('static', 'images/delete_icon.png')), _class='icon delete', _href=URL('delete',args=arglist,vars=dict(sender=request.function+'/'+app)))
-def component_folder():
-  return IMG(_src=URL('static', 'images/folder_compo.png'))
 }}
 
 {{block sectionclass}}plugin{{end}}
@@ -95,7 +93,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <!-- CONTROLLERS -->
 
 <h3 id="controllers" onclick="collapse('controllers_inner');" class="component">
-  <img src="{{=URL('static','images/folder_compo.png')}}"/> {{=T("Controllers")}}
+  {{=T("Controllers")}}
 </h3>
 <div id="controllers_inner" class="component_contents">
   {{if not controllers:}}
@@ -126,7 +124,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <!-- VIEWS -->
 
 <h3 id="views" onclick="collapse('views_inner');" class="component">
-  {{=component_folder()}} {{=T("Views")}}
+  {{=T("Views")}}
 </h3>
 <div id="views_inner" class="component_contents">
   {{if not views:}}
@@ -157,7 +155,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <!-- STATIC -->
 
 <h3 id="static" onclick="collapse('static_inner');" class="component">
-  {{=component_folder()}} {{=T("Static files")}}
+  {{=T("Static files")}}
 </h3>
 <div id="static_inner" class="component_contents">
   {{if not statics:}}
@@ -210,7 +208,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <!-- MODULES -->
 
 <h3 id="modules" onclick="collapse('modules_inner');" class="component">
-  {{=component_folder()}} {{=T("Modules")}}
+  {{=T("Modules")}}
 </h3>
 <div id="modules_inner" class="component_contents">
   {{if not modules:}}
