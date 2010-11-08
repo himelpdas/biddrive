@@ -529,10 +529,10 @@ def create(options):
             file.write(make_table(table,session.app['table_'+table]))
         file.close()
 
+    model = os.path.join(request.folder,'..',app,
+                         'models','db_wizard_populate.py')
+    if os.path.exists(model): os.unlink(model)
     if options.populate_database:        
-        model = os.path.join(request.folder,'..',app,
-                             'models','db_wizard_populate.py')
-        if os.path.exists(model): os.unlink(model)
         file = open(model,'wb')
         file.write(populate(session.app['tables']))
         file.close()
