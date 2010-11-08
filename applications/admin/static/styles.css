@@ -195,6 +195,7 @@ fieldset.inline {
 .left { float:left !important; }
 .right,.right-right { float:right !important; }
 .right-right { text-align:right !important; }
+.right-full { width:100%; text-align:right !important; }
 
 /* 4.6. Clear */
 .clear,.content,.page,.expanded-page { display:block; }
@@ -499,13 +500,16 @@ h3 {
   font-size: 130%;
 }
 
-.formfield,
-.buttongroup {
+.formfield {
   padding: 0.7em 0.5em;
   -moz-border-radius: 0.3em;
   border-radius: 0.3em;
   margin: 1em 0;
   border: 1px solid #ddd;
+}
+
+.buttongroup {
+  padding: 0.7em 0.5em;
 }
 
 .formfield {
@@ -679,9 +683,9 @@ h3 {
 .applist li {
   list-style: none;
   padding: 0;
-  padding-bottom: 0.2em;
-  margin-bottom: 0.2em;
-  border-bottom: 1px solid #ddd;
+  // padding-bottom: 0.2em;
+  // margin-bottom: 0.2em;
+  // border-bottom: 1px solid #ddd;
 }
 
 h3.editableapp,
@@ -717,6 +721,7 @@ h3.currentapp {
 
 .pwdchange {
   padding: 1em;
+  float: right !important;
 }
 
 .sidebar .box {
@@ -761,12 +766,15 @@ h3.currentapp {
   cursor: pointer;
 }
 
+.component_contents {
+  padding-left: 20px;
+}
+
 .component_contents li {
   list-style: none;
 }
 
 .component_contents div.comptools {
-  border-bottom: 1px dotted #ddd;
   margin-bottom: 1em;
   padding-bottom: 0.5em;
 }

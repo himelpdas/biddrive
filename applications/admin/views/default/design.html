@@ -37,7 +37,7 @@ def deletefile(arglist):
 <h2>{{=T("Edit application")}} "{{=A(app,_href=URL(app,'default','index'),_target="_blank")}}"</h2>
 
 <!-- COLLAPSE/JUMP-TO BUTTONS -->
-<div class="right controls">
+<div class="right-full controls">
   <p>
     <a class="button special" href="#" onclick="jQuery('h3').click();return false"><span>{{=T("collapse/expand all")}}</span></a>
     <span class="buttongroup">
@@ -61,7 +61,6 @@ def deletefile(arglist):
 <div id="models_inner" class="component_contents">
   {{if not models:}}<p><strong>{{=T("There are no models")}}</strong></p>{{else:}}
   <div class="controls comptools">
-    {{=searchbox('search_models')}}
     {{=button(URL(a=app,c='appadmin',f='index'), T('database administration'))}}
     {{if os.access(os.path.join(request.folder,'..',app,'databases','sql.log'),os.R_OK):}}
       {{=button(URL('peek/%s/databases/sql.log'%app), 'sql.log')}}
@@ -103,7 +102,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <div id="controllers_inner" class="component_contents">
   {{if not controllers:}}<p></strong>{{=T("There are no controllers")}}</strong></p>{{else:}}
   <div class="controls comptools">
-      {{=searchbox('search_controllers')}}
       {{=button(URL(r=request,c='shell',f='index',args=app), T("shell"))}}
       {{=button(URL('test',args=app), T("test"))}}
       {{=button(URL('edit',args=[app,'cron','crontab']), T("crontab"))}}
@@ -137,7 +135,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </h3>
 <div id="views_inner" class="component_contents">
   <div class="controls comptools">
-    {{=searchbox('search_views')}}
     {{=button(LAYOUTS_APP, T("download layouts"))}}
   </div>
   {{if not views:}}<p><strong>{{=T("There are no views")}}</strong></p>{{pass}}
@@ -169,7 +166,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </h3>
 <div id="languages_inner" class="component_contents">
   <div class="controls comptools">
-    {{=searchbox('search_languages')}}
     {{=button(URL('update_languages/'+app), T('update all languages'))}}
   </div>
   {{if not languages:}}<p><strong>{{=T("There are no translators, only default language is supported")}}</strong></p>{{pass}}
@@ -197,7 +193,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </h3>
 <div id="static_inner" class="component_contents">
   <div class="controls comptools">
-    {{=searchbox('search_static')}}
   </div>
   {{if not statics:}}<p><strong>{{=T("There are no static files")}}</strong></p>{{pass}}
   <ul>
@@ -245,7 +240,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </h3>
 <div id="modules_inner" class="component_contents">
   <div class="controls comptools">
-    {{=searchbox('search_modules')}}
   </div>
   {{if not modules:}}<p><strong>{{=T("There are no modules")}}</strong></p>{{pass}}
   <ul>
@@ -273,7 +267,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </h3>
 <div id="plugins_inner" class="component_contents">
   <div class="controls comptools">
-    {{=searchbox('search_plugins')}}
     {{=button(PLUGINS_APP, T('download plugins'))}}
   </div>
   <div class="controls">
@@ -292,14 +285,3 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   <div class="controls formfield">{{=upload_plugin_form(app)}}</div>
 </div>
 
-<script type="text/javascript" language="javascript">
-  jQuery(document).ready(function () {
-    jQuery('#models_inner ul').listFilter('#search_models', '.file');
-    jQuery('#controllers_inner ul').listFilter('#search_controllers', '.file');
-    jQuery('#views_inner ul').listFilter('#search_views', '.file');
-    jQuery('#languages_inner ul').listFilter('#search_languages', '.file');
-    jQuery('#static_inner ul').listFilter('#search_static', '.file');
-    jQuery('#modules_inner ul').listFilter('#search_modules', '.file');
-    jQuery('#plugins_inner ul').listFilter('#search_plugins', '.file');
-  });
-</script>

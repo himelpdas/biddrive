@@ -40,7 +40,7 @@ def component_folder():
 <h2>
   {{=T('Plugin "%s" in application', request.args(1))}} "{{=app}}"
 </h2>
-<div class="right controls">
+<div class="right-full controls">
   <a class="button special" href="#" onclick="jQuery('h3').click();return false"><span>{{=T("collapse/expand all")}}</span></a>
   <span class="buttongroup">
   {{=button("#models", T("models"))}}
@@ -66,7 +66,6 @@ def component_folder():
   <p><strong>{{=T("There are no models")}}</strong></p>
   {{pass}}
   <div class="controls comptools">
-    {{=searchbox('search_models')}}
   </div>
   <ul>
     {{for m in models:}}
@@ -103,7 +102,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   <p><strong>{{=T("There are no controllers")}}</strong></p>
   {{pass}}
   <div class="controls comptools">
-    {{=searchbox('search_controllers')}}
   </div>
   <ul>
     {{for c in controllers:}}
@@ -135,7 +133,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   <p><strong>{{=T("There are no views")}}</strong></p>
   {{pass}}
   <div class="controls comptools">
-    {{=searchbox('search_views')}}
   </div>
   <ul>
     {{for c in views:}}
@@ -167,7 +164,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   <p><strong>{{=T("There are no static files")}}</strong></p>
   {{pass}}
   <div class="controls comptools">
-    {{=searchbox('search_static')}}
   </div>
   <ul>
     {{
@@ -221,7 +217,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   <p><strong>{{=T("There are no modules")}}</strong></p>
   {{pass}}
   <div class="controls comptools">
-    {{=searchbox('search_modules')}}
   </div>
   <ul>
     {{for m in modules:}}
@@ -237,14 +232,3 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 </div>
 
 
-<script type="text/javascript" language="javascript">
-  jQuery(document).ready(function () {
-    jQuery('#models_inner ul').listFilter('#search_models', '.file');
-    jQuery('#controllers_inner ul').listFilter('#search_controllers', '.file');
-    jQuery('#views_inner ul').listFilter('#search_views', '.file');
-    jQuery('#languages_inner ul').listFilter('#search_languages', '.file');
-    jQuery('#static_inner ul').listFilter('#search_static', '.file');
-    jQuery('#modules_inner ul').listFilter('#search_modules', '.file');
-    jQuery('#plugins_inner ul').listFilter('#search_plugins', '.file');
-  });
-</script>
