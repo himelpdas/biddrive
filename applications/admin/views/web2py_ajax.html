@@ -1,10 +1,9 @@
 <!-- Grab Google CDN's jQuery. fall back to local if necessary -->
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.js"></script>
 <script>!window.jQuery && document.write(unescape('%3Cscript src="{{=URL('static','js/jquery.js')}}"%3E%3C/script%3E'))</script>
 {{
 response.files.append(URL('static','css/calendar.css'))
 response.files.append(URL('static','js/calendar.js'))
-response.files.append(URL('static','jquery-listfilter.js'))
 for _item in response.meta or []:}}
      <meta name="{{=_item}}" content="{{=response.meta[_item]}}" />{{
 pass

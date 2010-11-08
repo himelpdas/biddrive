@@ -3,7 +3,7 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <title>{{=response.title or URL()}}</title>
-        {{response.files.append(URL('static','styles.css'))}}
+        {{response.files.append(URL('static','css/styles.css'))}}
         {{include 'web2py_ajax.html'}}
         <script>jQuery.noConflict();</script>
     </head>
