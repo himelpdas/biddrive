@@ -328,8 +328,8 @@ class Mail(object):
         elif isinstance(message, (list, tuple)):
             text, html = message
         elif message.strip().startswith('<html') and message.strip().endswith('</html>'):
-            text=None
-            html=message
+            text = self.settings.server=='gae' and message or None
+            html = message
         else:
             text = message
             html = None
