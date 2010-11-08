@@ -599,6 +599,7 @@ class Recaptcha(DIV):
         use_ssl=False,
         error=None,
         error_message='invalid',
+        label = 'Verify:'
         ):
         self.remote_addr = request.env.remote_addr
         self.public_key = public_key
@@ -609,7 +610,7 @@ class Recaptcha(DIV):
         self.error_message = error_message
         self.components = []
         self.attributes = {}
-        self.label = 'Verify:'
+        self.label = label
         self.comment = ''
 
     def _validate(self):
