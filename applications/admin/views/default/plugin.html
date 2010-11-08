@@ -6,7 +6,7 @@ def peekfile(path,file):
 def editfile(path,file):
     return A(SPAN(T('edit')),_class='button editbutton',_href=URL('edit', args=(app, path, file)))
 def testfile(path,file):
-    return A(IMG(_src=URL('static', 'test_icon.png'), _alt=T('test')), _class='icon test',_href=URL('test', args=(app, file)))
+    return A(IMG(_src=URL('static', 'images/test_icon.png'), _alt=T('test')), _class='icon test',_href=URL('test', args=(app, file)))
 def editlanguagefile(path,file):
     return A(SPAN(T('edit')),_class='button editbutton',_href=URL('edit_language', args=(app, path, file))) 
 def file_upload_form(location):
@@ -30,9 +30,9 @@ def upload_plugin_form(app):
               INPUT(_type="submit",_value=T("submit")))
     return form
 def deletefile(arglist):
-  return A(IMG(_src=URL('static', 'delete_icon.png')), _class='icon delete', _href=URL('delete',args=arglist,vars=dict(sender=request.function+'/'+app)))
+  return A(IMG(_src=URL('static', 'images/delete_icon.png')), _class='icon delete', _href=URL('delete',args=arglist,vars=dict(sender=request.function+'/'+app)))
 def component_folder():
-  return IMG(_src=URL('static', 'folder_compo.png'))
+  return IMG(_src=URL('static', 'images/folder_compo.png'))
 }}
 
 {{block sectionclass}}plugin{{end}}
@@ -95,7 +95,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
 <!-- CONTROLLERS -->
 
 <h3 id="controllers" onclick="collapse('controllers_inner');" class="component">
-  <img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Controllers")}}
+  <img src="{{=URL('static','images/folder_compo.png')}}"/> {{=T("Controllers")}}
 </h3>
 <div id="controllers_inner" class="component_contents">
   {{if not controllers:}}

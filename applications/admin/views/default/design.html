@@ -5,7 +5,7 @@ def peekfile(path,file):
 def editfile(path,file):
     return A(SPAN(T('edit')),_class='button editbutton',_href=URL('edit', args=(app, path, file)))  
 def testfile(path,file):
-    return A(IMG(_src=URL('static', 'test_icon.png'), _alt=T('test')), _class='icon test',_href=URL('test', args=(app, file))) 
+    return A(IMG(_src=URL('static', 'images/test_icon.png'), _alt=T('test')), _class='icon test',_href=URL('test', args=(app, file))) 
 def editlanguagefile(path,file):
     return A(SPAN(T('edit')),_class='button editbutton',_href=URL('edit_language', args=(app, path, file))) 
 def file_upload_form(location):
@@ -29,7 +29,7 @@ def upload_plugin_form(app):
               INPUT(_type="submit",_value=T("upload")))
     return form
 def deletefile(arglist):
-  return A(IMG(_src=URL('static', 'delete_icon.png')), _class='icon delete', _href=URL('delete',args=arglist,vars=dict(sender=request.function+'/'+app)))
+  return A(IMG(_src=URL('static', 'images/delete_icon.png')), _class='icon delete', _href=URL('delete',args=arglist,vars=dict(sender=request.function+'/'+app)))
 }}
 
 {{block sectionclass}}design{{end}}
