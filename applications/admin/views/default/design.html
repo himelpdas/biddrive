@@ -39,6 +39,7 @@ def deletefile(arglist):
 <!-- COLLAPSE/JUMP-TO BUTTONS -->
 <div class="right-full controls">
   <p>
+    {{=searchbox('search')}}
     <a class="button special" href="#" onclick="jQuery('h3').click();return false"><span>{{=T("collapse/expand all")}}</span></a>
     <span class="buttongroup">
     {{=button('#models', T("models"))}}
@@ -70,7 +71,7 @@ def deletefile(arglist):
 
   <ul>
     {{for m in models:}}
-    <li>
+    <li id="models__{{=m.replace('.','__')}}">
     <span class="filetools controls">
       {{=editfile('models',m)}}
       {{=deletefile([app, 'models', m])}}
@@ -109,7 +110,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   {{pass}}
   <ul>
     {{for c in controllers:}}
-    <li>
+    <li id="controllers__{{=m.replace('.','__')}}">
     <span class="filetools controls">
       {{=editfile('controllers',c)}}
       {{=deletefile([app, 'controllers', c])}}
@@ -140,7 +141,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   {{if not views:}}<p><strong>{{=T("There are no views")}}</strong></p>{{pass}}
   <ul>
     {{for c in views:}}
-    <li>
+    <li id="views__{{=c.replace('/','__').replace('.','__')}}">
     <span class="filetools controls">
       {{=editfile('views',c)}}
       {{=deletefile([app, 'views', c])}}
@@ -171,7 +172,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   {{if not languages:}}<p><strong>{{=T("There are no translators, only default language is supported")}}</strong></p>{{pass}}
   <ul>
     {{for file in languages:}}
-    <li>
+    <li id="languages__{{=file.replace('.','__')}}">
     <span class="filetools controls">
       {{=editlanguagefile('languages',file)}}
       {{=deletefile([app, 'languages', file])}}
@@ -244,7 +245,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   {{if not modules:}}<p><strong>{{=T("There are no modules")}}</strong></p>{{pass}}
   <ul>
     {{for m in modules:}}
-    <li>
+    <li id="modules__{{=m.replace('/','__').replace('.','__')}}">
     <span class="filetols controls">
       {{=editfile('modules',m)}}
       {{if m!='__init__.py':}}{{=deletefile([app, 'modules', m])}}{{pass}}
@@ -285,3 +286,20 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   <div class="controls formfield">{{=upload_plugin_form(app)}}</div>
 </div>
 
+
+<script>
+jQuery(document).ready(function(){
+   jQuery('#search').keyup(function(e){
+      var code = (e.keyCode ? e.keyCode : e.which);
+      if(code==13 && jQuery('#search').val()){
+        jQuery.getJSON('{{=URL('search',args=request.args)}}?keywords='+escape(jQuery('#search').val()),null,function(data, textStatus, xhr){
+          jQuery('.component_contents li, .formfield, .comptools').hide();
+          files=data['files'];
+          for(var i=0; i<files.length; i++)
+            jQuery('li#'+files[i].replace('/','__').replace('.','__')).slideDown();
+          }				     
+        );
+      } else if(code==13) jQuery('.component_contents li, .formfield, .comptools').slideDown();
+   });
+});
+</script>
