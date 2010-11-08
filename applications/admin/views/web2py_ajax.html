@@ -4,6 +4,7 @@
 {{
 response.files.append(URL('static','css/calendar.css'))
 response.files.append(URL('static','js/calendar.js'))
+response.files.append(URL('static','jquery-listfilter.js'))
 for _item in response.meta or []:}}
      <meta name="{{=_item}}" content="{{=response.meta[_item]}}" />{{
 pass

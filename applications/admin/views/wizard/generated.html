@@ -1,5 +1,7 @@
 {{extend 'layout.html'}}
 
+{{block sectionclass}}generated{{end}}
+
 <a class="button" href="{{=URL(app,'default','index')}}">Open new app in new window</a>
 <a class="button" href="{{=URL('step1')}}">Back to wizard</a>
 <a class="button" href="{{=URL('default','design',args=app)}}">Admin design page</a>

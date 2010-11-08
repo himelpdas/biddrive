@@ -1,16 +1,16 @@
 {{extend 'layout.html'}}
 
-<h3 class="section">Revision {{=rev}}</h3>
+<h2 class="section">Revision {{=rev}}</h2>
 
 {{=form}}
 
 <br/><br/>
-<h4>Changelog</h4>
+<h3>Changelog</h3>
 
 {{=desc}}
 
 <br/><br/>
-<h4>Files added</h4>
+<h3>Files added</h3>
 
 {{=TABLE(*[TR(f) for f in files])}}
 

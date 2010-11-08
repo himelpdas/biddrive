@@ -4,11 +4,11 @@ import os
 def peekfile(path,file):
     return A(file.replace('\\\\','/'),_href=URL('peek', args=(app, path, file)))
 def editfile(path,file):
-    return A('edit',_class='button editbutton',_href=URL('edit', args=(app, path, file)))
+    return A(SPAN(T('edit')),_class='button editbutton',_href=URL('edit', args=(app, path, file)))
 def testfile(path,file):
-    return A(IMG(_src=URL('static', 'test_icon.png'), _alt=T('test')),_href=URL('test', args=(app, file)))
+    return A(IMG(_src=URL('static', 'test_icon.png'), _alt=T('test')), _class='icon test',_href=URL('test', args=(app, file)))
 def editlanguagefile(path,file):
-    return A('edit',_class='button editbutton',_href=URL('edit_language', args=(app, path, file)))
+    return A(SPAN(T('edit')),_class='button editbutton',_href=URL('edit_language', args=(app, path, file))) 
 def file_upload_form(location):
     form=FORM(T("upload file:")," ",
               INPUT(_type="file",_name="file")," ",T("and rename it:")," ",
@@ -29,133 +29,222 @@ def upload_plugin_form(app):
               INPUT(_type="file",_name="pluginfile"),
               INPUT(_type="submit",_value=T("submit")))
     return form
+def deletefile(arglist):
+  return A(IMG(_src=URL('static', 'delete_icon.png')), _class='icon delete', _href=URL('delete',args=arglist,vars=dict(sender=request.function+'/'+app)))
+def component_folder():
+  return IMG(_src=URL('static', 'folder_compo.png'))
 }}
 
-<div class="plugins">
-<h3 class="section">{{=T('Plugin "%s" in application', request.args(1))}} "{{=app}}"</h3>
-<div class="right">
-<a class="button" href="{{=URL('design',args=app)}}">{{=T("back")}}</a>
-<a class="button editbutton" href="{{=URL('delete_plugin',args=request.args)}}">{{=T("delete plugin")}}</a>
-<a class="button editbutton" href="{{=URL('pack_plugin',args=request.args)}}">{{=T("pack plugin")}}</a><br/>
-<a class="button" href="#" onclick="jQuery('h2').click();return false">{{=T("collapse")}}</a>
-<a class="button" href="#models">{{=T("models")}}</a>
-<a class="button" href="#controllers">{{=T("controllers")}}</a>
-<a class="button" href="#views">{{=T("views")}}</a>
-<a class="button" href="#static">{{=T("static")}}</a>
-<a class="button" href="#modules">{{=T("modules")}}</a>
-</div>
-<br/>
+{{block sectionclass}}plugin{{end}}
 
-<h4 id="models" onclick="collapse('models_inner');">
-<img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Models")}}</h4>
-<div id="models_inner">
-
-{{if not models:}}{{=T("There are no models")}}{{pass}}
-<ul>
-{{for m in models:}}<li>
-{{=editfile('models',m)}}
-<a href="{{=URL('delete',args=[app,'models',m],vars=dict(sender=request.function+'/'+app))}}">{{=IMG(_src=URL('static', 'delete_icon.png'), _alt=T("delete"))}}</a>
-{{=peekfile('models',m)}}
-{{if len(defines[m]):}}{{=T("defines tables")}} {{pass}}{{=XML(', '.join([B(table).xml() for table in defines[m]]))}}
-</li>{{pass}}
-<li>{{=file_create_form('%s/models/' % app)}}</li>
-</ul>
+<h2>
+  {{=T('Plugin "%s" in application', request.args(1))}} "{{=app}}"
+</h2>
+<div class="right controls">
+  <a class="button special" href="#" onclick="jQuery('h3').click();return false"><span>{{=T("collapse/expand all")}}</span></a>
+  <span class="buttongroup">
+  {{=button("#models", T("models"))}}
+  {{=button("#controllers", T("controllers"))}}
+  {{=button("#views", T("views"))}}
+  {{=button("#static", T("static"))}}
+  {{=button("#modules", T("modules"))}}
+  </span>
+  <span class="buttongroup">
+  {{=sp_button(URL('design',args=app), T("back"))}}
+  {{=sp_button(URL('delete_plugin',args=request.args), T("delete plugin"))}}
+  {{=sp_button(URL('pack_plugin',args=request.args), T("pack plugin"))}}
+  </span>
 </div>
 
+<!-- MODELS -->
+
+<h3 id="models" onclick="collapse('models_inner');" class="component">
+  {{=T("Models")}}
+</h3>
+<div id="models_inner" class="component_contents">
+  {{if not models:}}
+  <p><strong>{{=T("There are no models")}}</strong></p>
+  {{pass}}
+  <div class="controls comptools">
+    {{=searchbox('search_models')}}
+  </div>
+  <ul>
+    {{for m in models:}}
+    <li>
+    <span class="filetools controls">
+      {{=editfile('models',m)}}
+      {{=deletefile([app, 'models', m])}}
+    </span>
+    <span class="file">
+      {{=peekfile('models',m)}}
+    </span>
+    <span class="extras">
+      {{if len(defines[m]):}}{{=T("defines tables")}} {{pass}}{{=XML(', '.join([B(table).xml() for table in defines[m]]))}}
+    </span>
+    </li>
+    {{pass}}
+  </ul>
+  <div class="controls formfield">{{=file_create_form('%s/models/' % app)}}</div>
+</div>
+
+<!-- FIND CONTROLLER FUNCTIONS -->
 {{
 controller_functions=[]
 for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functions[c]]
 }}
-<h4 id="controllers" onclick="collapse('controllers_inner');">
-<img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Controllers")}}</h4>
-<div id="controllers_inner">
-{{if not controllers:}}{{=T("There are no controllers")}}{{pass}}
-<ul>
-{{for c in controllers:}}
-  <li>
-     {{=editfile('controllers',c)}}
-     <a href="{{=URL('delete',args=[app,'controllers',c],vars=dict(sender=request.function+'/'+app))}}">{{=IMG(_src=URL('static', 'delete_icon.png'), _alt=T("delete"))}}</a>
-     {{=testfile('controllers',c)}}
-     {{=peekfile('controllers',c)}}
-     {{if functions[c]:}}{{=T("exposes")}} {{pass}}{{=XML(', '.join([A(f,_href=URL(a=app,c=c[:-3],f=f)).xml() for f in functions[c]]))}}
-  </li>
+
+<!-- CONTROLLERS -->
+
+<h3 id="controllers" onclick="collapse('controllers_inner');" class="component">
+  <img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Controllers")}}
+</h3>
+<div id="controllers_inner" class="component_contents">
+  {{if not controllers:}}
+  <p><strong>{{=T("There are no controllers")}}</strong></p>
   {{pass}}
-  <li>{{=file_create_form('%s/controllers/' % app)}}</li>
-</ul>
+  <div class="controls comptools">
+    {{=searchbox('search_controllers')}}
+  </div>
+  <ul>
+    {{for c in controllers:}}
+    <li>
+    <span class="filetools controls">
+      {{=editfile('controllers',c)}}
+      {{=deletefile([app,'controllers',c])}}
+      {{=testfile('controllers',c)}}
+    </span>
+    <span class="file">
+      {{=peekfile('controllers',c)}}
+    </span>
+    <span class="extras">
+      {{if functions[c]:}}{{=T("exposes")}} {{pass}}{{=XML(', '.join([A(f,_href=URL(a=app,c=c[:-3],f=f)).xml() for f in functions[c]]))}}
+    </span>
+    </li>
+    {{pass}}
+  </ul>
+  <div class="controls formfield">{{=file_create_form('%s/controllers/' % app)}}</div>
 </div>
 
+<!-- VIEWS -->
 
-<h4 id="views" onclick="collapse('views_inner');">
-<img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Views")}}</h4>
-<div id="views_inner">
-{{if not views:}}{{=T("There are no views")}}{{pass}}
-<ul>
-{{for c in views:}}
-  <li>
-    {{=editfile('views',c)}}
-    <a href="{{=URL('delete',args=[app,'views',c],vars=dict(sender=request.function+'/'+app))}}">{{=IMG(_src=URL('static', 'delete_icon.png'), _alt=T("delete"))}}</a>
-    {{=peekfile('views',c)}}
-    {{if extend.has_key(c):}}{{=T("extends")}} <b>{{=extend[c]}}</b> {{pass}}
-    {{if include[c]:}}{{=T("includes")}} {{pass}}{{=XML(', '.join([B(f).xml() for f in include[c]]))}}
-  </li>
-{{pass}}
-<li>{{=file_create_form('%s/views/' % app)}}</li>
-</ul>
+<h3 id="views" onclick="collapse('views_inner');" class="component">
+  {{=component_folder()}} {{=T("Views")}}
+</h3>
+<div id="views_inner" class="component_contents">
+  {{if not views:}}
+  <p><strong>{{=T("There are no views")}}</strong></p>
+  {{pass}}
+  <div class="controls comptools">
+    {{=searchbox('search_views')}}
+  </div>
+  <ul>
+    {{for c in views:}}
+    <li>
+      <span class="filetools controls">
+      {{=editfile('views',c)}}
+      {{=deletefile([app,'views',c])}}
+      </span>
+      <span class="file">
+      {{=peekfile('views',c)}}
+      </span>
+      <span class="extras">
+      {{if extend.has_key(c):}}{{=T("extends")}} <b>{{=extend[c]}}</b> {{pass}}
+      {{if include[c]:}}{{=T("includes")}} {{pass}}{{=XML(', '.join([B(f).xml() for f in include[c]]))}}
+      </span>
+    </li>
+    {{pass}}
+  </ul>
+  <div class="controls formfield">{{=file_create_form('%s/views/' % app)}}</div>
 </div>
 
-<h4 id="static" onclick="collapse('static_inner');">
-<img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Static files")}}</h4>
-<div id="static_inner">
-{{if not statics:}}{{=T("There are no static files")}}{{pass}}
-<ul>
-{{
-path=[]
-for file in statics+['']:
-    items=file.split('/')
-    file_path=items[:-1]
-    filename=items[-1]
-    i=0
-    while i<max(len(path),len(file_path)):
-        if i>=len(path):
-            path.append(file_path[i])
-            thispath='static__'+'__'.join(path)
-}}<li>{{='/'.join(file_path[:i]+[''])}} {{=IMG(_src=URL('static', 'folder_sm.gif'))}} <a href="javascript:collapse('{{=thispath}}');">{{=file_path[i]}}/</a></li><div id="{{=thispath}}" style="display: none;">{{
-        elif i>=len(file_path) or path[i]!=file_path[i]:
-            file_path=file_path[:i]
-            for j in range(len(path)-1,i-1,-1):
-}}</div>{{
-                pass
-            path=path[:i]
-            break
-        i=i+1
+<!-- STATIC -->
+
+<h3 id="static" onclick="collapse('static_inner');" class="component">
+  {{=component_folder()}} {{=T("Static files")}}
+</h3>
+<div id="static_inner" class="component_contents">
+  {{if not statics:}}
+  <p><strong>{{=T("There are no static files")}}</strong></p>
+  {{pass}}
+  <div class="controls comptools">
+    {{=searchbox('search_static')}}
+  </div>
+  <ul>
+    {{
+    path=[]
+    for file in statics+['']:
+        items=file.split('/')
+        file_path=items[:-1]
+        filename=items[-1]
+        i=0
+        while i<max(len(path),len(file_path)):
+            if i>=len(path):
+                path.append(file_path[i])
+                thispath='static__'+'__'.join(path)
+    }}<li class="folder"><a class="file" href="javascript:collapse('{{=thispath}}');">{{='/'.join(file_path[:i]+[''])}}{{=file_path[i]}}/</a></li><div id="{{=thispath}}" style="display: none;" class="sublist">{{
+            elif i>=len(file_path) or path[i]!=file_path[i]:
+                file_path=file_path[:i]
+                for j in range(len(path)-1,i-1,-1):
+    }}</div>{{
+                    pass
+                path=path[:i]
+                break
+            i=i+1
+            pass
+        if filename:
+      }}
+      <li>
+      <span class="filetools controls">
+        {{=editfile('static',file)}} 
+        {{=deletefile([app,'static',file])}}
+      </span>
+      <span class="file">
+        {{='/'.join(file_path[:i]+[''])}}{{=A(filename,_href=URL(a=app,c='static',f=file))}}
+      </span>
+      </li>{{
+            pass
         pass
-    if filename:
-}}<li>{{=editfile('static',file)}} <a href="{{=URL('delete',args=[app,'static',file],vars=dict(sender=request.function+'/'+app))}}">{{=IMG(_src=URL('static', 'delete_icon.png'), _alt=T("delete"))}}</a> {{='/'.join(file_path[:i]+[''])}}<a href="{{=URL(a=app,c='static',f=file)}}">{{=filename}}</a></li>{{
-        pass
-    pass
-}}
-{{pass}}
-<li>{{=file_create_form('%s/static/' % app)}}</li>
-<li>{{=file_upload_form('%s/static/' % app)}}</li>
-</ul>
+    }}
+    {{pass}}
+  </ul>
+  <div class="controls formfield">{{=file_create_form('%s/static/' % app)}}
+  {{=file_upload_form('%s/static/' % app)}}</div>
 </div>
 
-<h4 id="modules" onclick="collapse('modules_inner');">
-<img src="{{=URL('static','folder_compo.png')}}"/> {{=T("Modules")}}</h4>
-<div id="modules_inner">
-{{if not modules:}}
-{{=T("There are no modules")}}
-{{pass}}
-<ul>
-{{for m in modules:}}
-<li>
-{{=editfile('modules',m)}}
-{{if m!='__init__.py':}}<a class="button" href="{{=URL('delete',args=[app,'modules',m],vars=dict(sender=request.function+'/'+app))}}">{{=T("delete")}}</a>{{pass}}
-{{=peekfile('modules',m)}}
-</li>{{pass}}
-<li>{{=file_create_form('%s/modules/' % app)}}</li>
-<li>{{=file_upload_form('%s/modules/' % app)}}</li>
-</ul>
+<!-- MODULES -->
+
+<h3 id="modules" onclick="collapse('modules_inner');" class="component">
+  {{=component_folder()}} {{=T("Modules")}}
+</h3>
+<div id="modules_inner" class="component_contents">
+  {{if not modules:}}
+  <p><strong>{{=T("There are no modules")}}</strong></p>
+  {{pass}}
+  <div class="controls comptools">
+    {{=searchbox('search_modules')}}
+  </div>
+  <ul>
+    {{for m in modules:}}
+    <li>
+    {{=editfile('modules',m)}}
+    {{if m!='__init__.py':}}<a class="button" href="{{=URL('delete',args=[app,'modules',m],vars=dict(sender=request.function+'/'+app))}}">{{=T("delete")}}</a>{{pass}}
+    {{=peekfile('modules',m)}}
+    </li>
+    {{pass}}
+  </ul>
+  <div class="controls formfield">{{=file_create_form('%s/modules/' % app)}}
+  {{=file_upload_form('%s/modules/' % app)}}</div>
 </div>
 
-</div>
+
+<script type="text/javascript" language="javascript">
+  jQuery(document).ready(function () {
+    jQuery('#models_inner ul').listFilter('#search_models', '.file');
+    jQuery('#controllers_inner ul').listFilter('#search_controllers', '.file');
+    jQuery('#views_inner ul').listFilter('#search_views', '.file');
+    jQuery('#languages_inner ul').listFilter('#search_languages', '.file');
+    jQuery('#static_inner ul').listFilter('#search_static', '.file');
+    jQuery('#modules_inner ul').listFilter('#search_modules', '.file');
+    jQuery('#plugins_inner ul').listFilter('#search_plugins', '.file');
+  });
+</script>

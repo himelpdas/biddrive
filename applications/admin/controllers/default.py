@@ -64,8 +64,8 @@ def check_version():
     if new_version == -1:
         return A(T('Unable to check for upgrades'), _href=WEB2PY_URL)
     elif new_version == True:
-        return A(T('A new version of web2py is available: %s'
-                                            % version_number), _href=WEB2PY_URL)
+        return sp_button(URL('upgrade_web2py'), T('upgrade now')) \
+          + XML(' <strong class="upgrade_version">%s</strong>' % version_number)
     else:
         return A(T('web2py is up to date'), _href=WEB2PY_URL)
 
