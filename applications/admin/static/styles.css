@@ -861,7 +861,7 @@ ul#snapshot > li {
 .inspect th,
 .versions th {
   padding: 0.3em;
-  border: 1px solid #aaa;
+  // border: 1px solid #aaa;
 }
 
 .inspect th,
@@ -877,12 +877,6 @@ ul#snapshot > li {
   text-transform: uppercase;
 }
 
-.ticket .inspect {
-  padding: 1em;
-  -moz-border-radius: 0.5em;
-  border-radius: 0.5em;
-  border: 1px solid #ddd;
-}
 
 .ticket .inspect li {
   list-style: none;
