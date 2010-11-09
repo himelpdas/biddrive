@@ -23,5 +23,4 @@ from gluon.fileutils import tar, tar_compiled, untar, fix_newlines
 from gluon.languages import findT, update_all_languages
 from gluon.myregex import *
 from gluon.restricted import *
-from gluon.contrib.markdown import WIKI
 from gluon.compileapp import compile_application, remove_compiled_application

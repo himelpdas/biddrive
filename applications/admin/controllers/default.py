@@ -610,7 +610,7 @@ def about():
     about = safe_open(apath('%s/ABOUT' % app, r=request), 'r').read()
     license = safe_open(apath('%s/LICENSE' % app, r=request), 'r').read()
 
-    return dict(app=app, about=WIKI(about), license=WIKI(license))
+    return dict(app=app, about=MARKMIN(about), license=MARKMIN(license))
 
 
 def design():
