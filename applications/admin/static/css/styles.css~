@@ -788,7 +788,7 @@ h3.currentapp {
   font-weight: bold;
 }
 
-.folder a {
+.folder {
   display: block;
   padding: 4px 0 4px 40px;
   background: url(../images/folder_sm.png) no-repeat;
@@ -797,10 +797,11 @@ h3.currentapp {
 }
 
 .sublist {
-  margin-left: 1.5em;
+  margin-left: 0;
   border-left: 1px dotted #aaa;
   padding-left: 0.5em;
-  margin-bottom: 1em;
+  margin-top: 0.5em;
+  margin-bottom: 0.0em;
 }
 
 
