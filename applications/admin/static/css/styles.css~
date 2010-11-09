@@ -316,7 +316,7 @@ ul.button li.select a span {
 a.button,
 .button a,
 .button span {
-	background-image: url(button.png);
+	background-image: url(../images/button.png);
 	}
 
 /* 2.2. Normal status (Example for padding 10px) */
@@ -452,7 +452,7 @@ html, body {
   color: #333;
   padding: 0;
   margin: 0;
-  background: #fff url('header_shadow.png') repeat-x left 33px;
+  background: #fff url(../images/header_shadow.png) repeat-x left 33px;
 }
 
 a {
@@ -494,7 +494,7 @@ td, th {
 
 h3 {
   padding-left: 18px;
-  background: url('sidebar_bullet.gif') no-repeat;
+  background: url(../images/sidebar_bullet.gif) no-repeat;
   color: #555;
   font-weight: normal;
   font-size: 130%;
@@ -573,7 +573,7 @@ h3 {
 
 .controls a.button,
 .controls a.button span {
-  background-image: url('small_button.png');
+  background-image: url(../images/small_button.png);
 }
 
 .controls a.button span {
@@ -586,7 +586,7 @@ h3 {
 
 .controls a.special,
 .controls a.special span {
-  background-image: url('small_special_button.png');
+  background-image: url(../images/small_special_button.png);
 }
 
 .controls a.special {
@@ -596,7 +596,7 @@ h3 {
 /* Header */
 
 #header {
-  background: #292929 url('header_bg.png') repeat-x;
+  background: #292929 url(../images/header_bg.png) repeat-x;
   height: 33px;
   overflow: hidden;
 }
@@ -612,7 +612,7 @@ h3 {
 
 #start a.button,
 #start a.button span {
-  background-image: url('start.png');
+  background-image: url(../images/start.png);
 }
 
 #start a {
@@ -644,7 +644,7 @@ h3 {
 
 #menu a.button,
 #menu a.button span {
-  background-image: url('menu.png');
+  background-image: url(../images/menu.png);
   width: 56px;
 }
 
@@ -665,7 +665,7 @@ h3 {
   text-transform: uppercase;
   border-bottom: 1px dotted #aaa;
   padding-left: 18px;
-  background: transparent url('section_bullet.png') no-repeat left 3px;
+  background: transparent url(../images/section_bullet.png) no-repeat left 3px;
   color: #aaa;
 }
 
@@ -694,11 +694,11 @@ h3.currentapp {
 }
 
 h3.editableapp {
-  background: #fff url('folder.png') no-repeat;
+  background: #fff url(../images/folder.png) no-repeat;
 }
 
 h3.currentapp {
-  background: #fff url('folder_locked.png') no-repeat;
+  background: #fff url(../images/folder_locked.png) no-repeat;
 }
 
 .applist .controls {
@@ -732,7 +732,7 @@ h3.currentapp {
 }
 
 .sidebar .box {
-  background: url('sidebar_background.jpg') no-repeat;
+  background: url(../images/sidebar_background.jpg) no-repeat;
 }
 
 .sidebar .upgrade_version {
@@ -791,7 +791,7 @@ h3.currentapp {
 .folder a {
   display: block;
   padding: 4px 0 4px 40px;
-  background: url('folder_sm.png') no-repeat;
+  background: url(../images/folder_sm.png) no-repeat;
   font-weight: bold;
   margin: 0.5em 0;
 }
@@ -803,10 +803,11 @@ h3.currentapp {
   margin-bottom: 1em;
 }
 
+
 /* About */
 
 .legalese {
-  background: #eee url('embossed.png') repeat-y;
+  background: #eee url(../images/embossed.png) repeat-y;
   padding: 1em 1em 1em 2em;
 }
 
@@ -872,7 +873,7 @@ ul#snapshot > li {
 
 .ticket h3 {
   margin-top: 0.5em;
-  background: url('ticket_section.png') no-repeat;
+  background: url(../images/ticket_section.png) no-repeat;
   padding: 0.5em 0 0.2em 2em;
   text-transform: uppercase;
 }
@@ -895,7 +896,7 @@ ul#snapshot > li {
 /* Errors */
 
 .errors table.sortable th {
-  background: url('header_bg.png') repeat-x;
+  background: url(../images/header_bg.png) repeat-x;
   color: #eee;
   //  border-right: 1px solid #eee;
   padding-top: 0.5em;
@@ -909,11 +910,11 @@ ul#snapshot > li {
 /* Tests */
 
 .test h3.failed {
-  background-image: url('red_bullet.gif');
+  background-image: url(../images/red_bullet.gif);
 }
 
 .test h3.nodoctests {
-  background-image: url('dim_bullet.gif');
+  background-image: url(../images/dim_bullet.gif);
 }
 
 /* Footer */
@@ -922,7 +923,7 @@ ul#snapshot > li {
   padding: 1em 0 0;
   color: #eee;
   text-align: center;
-  background: #292929 url('header_bg.png') repeat-x;
+  background: #292929 url(../images/header_bg.png) repeat-x;
   height: 33px;
   overflow: hidden;
   clear: both;

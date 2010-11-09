@@ -203,27 +203,30 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
       items=file.split('/')
       file_path=items[:-1]
       filename=items[-1]
-      i=0
-      while i<max(len(path),len(file_path)):
-          if i>=len(path):
-              path.append(file_path[i])
+      while path!=file_path:          
+          if '/'.join(file_path).startswith('/'.join(path)):
+              path.append(file_path[len(path)])
               thispath='static__'+'__'.join(path)
     }}
     <li class="folder">
-    <a href="javascript:collapse('{{=thispath}}');" class="file">{{='/'.join(file_path[:i]+[''])}}{{=file_path[i]}}/</a>
-    </li>
-    <div id="{{=thispath}}" style="display: none;" class="sublist">{{
-          elif i>=len(file_path) or path[i]!=file_path[i]:
-              file_path=file_path[:i]
-              for j in range(len(path)-1,i-1,-1):
-          }}</div>{{
-                  pass
-              path=path[:i]
-              break
-          i=i+1
+    <a href="javascript:collapse('{{=thispath}}');" class="file">{{=path[-1]}}/</a>
+    <ul id="{{=thispath}}" style="display: none;" class="sublist">{{
+          else:
+              path = path[:-1]
+      }}
+    </ul></li>
+    {{
+              pass
           pass
       if filename:
-      }}<li><span class="filetools controls">{{=editfile('static',file)}} {{=deletefile([app,'static',file])}}</span> <span class="file">{{='/'.join(file_path[:i]+[''])}}<a href="{{=URL(a=app,c='static',f=file)}}">{{=filename}}</a></span></li>{{
+      }}<li>
+      <span class="filetools controls">
+	{{=editfile('static',file)}} {{=deletefile([app,'static',file])}}
+      </span>
+      <span class="file">{{='/'.join(path)}}
+	<a href="{{=URL(a=app,c='static',f=file)}}">{{=filename}}</a>
+      </span>
+    </li>{{
           pass
       pass
     }}

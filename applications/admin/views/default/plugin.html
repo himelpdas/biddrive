@@ -81,7 +81,6 @@ def deletefile(arglist):
     </li>
     {{pass}}
   </ul>
-  <div class="controls formfield">{{=file_create_form('%s/models/' % app)}}</div>
 </div>
 
 <!-- FIND CONTROLLER FUNCTIONS -->
@@ -118,7 +117,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
     </li>
     {{pass}}
   </ul>
-  <div class="controls formfield">{{=file_create_form('%s/controllers/' % app)}}</div>
 </div>
 
 <!-- VIEWS -->
@@ -149,7 +147,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
     </li>
     {{pass}}
   </ul>
-  <div class="controls formfield">{{=file_create_form('%s/views/' % app)}}</div>
 </div>
 
 <!-- STATIC -->
@@ -158,51 +155,43 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   {{=T("Static files")}}
 </h3>
 <div id="static_inner" class="component_contents">
-  {{if not statics:}}
-  <p><strong>{{=T("There are no static files")}}</strong></p>
-  {{pass}}
-  <div class="controls comptools">
-  </div>
+  {{if not statics:}}<p><strong>{{=T("There are no static files")}}</strong></p>{{pass}}
   <ul>
     {{
     path=[]
     for file in statics+['']:
-        items=file.split('/')
-        file_path=items[:-1]
-        filename=items[-1]
-        i=0
-        while i<max(len(path),len(file_path)):
-            if i>=len(path):
-                path.append(file_path[i])
-                thispath='static__'+'__'.join(path)
-    }}<li class="folder"><a class="file" href="javascript:collapse('{{=thispath}}');">{{='/'.join(file_path[:i]+[''])}}{{=file_path[i]}}/</a></li><div id="{{=thispath}}" style="display: none;" class="sublist">{{
-            elif i>=len(file_path) or path[i]!=file_path[i]:
-                file_path=file_path[:i]
-                for j in range(len(path)-1,i-1,-1):
-    }}</div>{{
-                    pass
-                path=path[:i]
-                break
-            i=i+1
-            pass
-        if filename:
+      items=file.split('/')
+      file_path=items[:-1]
+      filename=items[-1]
+      while path!=file_path:          
+          if '/'.join(file_path).startswith('/'.join(path)):
+              path.append(file_path[len(path)])
+              thispath='static__'+'__'.join(path)
+    }}
+    <li class="folder">
+    <a href="javascript:collapse('{{=thispath}}');" class="file">{{=path[-1]}}/</a>
+    <ul id="{{=thispath}}" style="display: none;" class="sublist">{{
+          else:
+              path = path[:-1]
       }}
-      <li>
+    </ul></li>
+    {{
+              pass
+          pass
+      if filename:
+      }}<li>
       <span class="filetools controls">
-        {{=editfile('static',file)}} 
-        {{=deletefile([app,'static',file])}}
+	{{=editfile('static',file)}} {{=deletefile([app,'static',file])}}
       </span>
-      <span class="file">
-        {{='/'.join(file_path[:i]+[''])}}{{=A(filename,_href=URL(a=app,c='static',f=file))}}
+      <span class="file">{{='/'.join(path)}}
+	<a href="{{=URL(a=app,c='static',f=file)}}">{{=filename}}</a>
       </span>
-      </li>{{
-            pass
-        pass
+    </li>{{
+          pass
+      pass
     }}
     {{pass}}
   </ul>
-  <div class="controls formfield">{{=file_create_form('%s/static/' % app)}}
-  {{=file_upload_form('%s/static/' % app)}}</div>
 </div>
 
 <!-- MODULES -->
@@ -225,8 +214,6 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
     </li>
     {{pass}}
   </ul>
-  <div class="controls formfield">{{=file_create_form('%s/modules/' % app)}}
-  {{=file_upload_form('%s/modules/' % app)}}</div>
 </div>
 
 
