@@ -8,7 +8,7 @@
     <h2>{{=T("Installed applications")}}</h2>
     <ul>
       {{for a in apps:}} 
-      <li class="application" onmouseover="jQuery(this).children('p').show()" onmouseout="jQuery(this).children('p').hide()">
+      <li class="application"> <!-- onmouseover="jQuery(this).children('p').show()" onmouseout="jQuery(this).children('p').hide()"-->
         {{if a==request.application:}}
         <h3 class="currentapp">{{=a}} ({{=T('currently running')}})</h3>  
         <p class="controls hidden">
