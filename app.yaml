@@ -53,3 +53,7 @@ skip_files: |
  (applications/.*?/cache/.*)|
  (applications/.*?/sessions/.*)|
  )$
+
+builtins:
+- remote_api: on
+- datastore_admin: on
