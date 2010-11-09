@@ -1,5 +1,3 @@
-from mercurial import cmdutil
-
 if DEMO_MODE:
     session.flash = T('disabled in demo mode')
     redirect(URL('default','site'))

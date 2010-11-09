@@ -12,7 +12,7 @@ import socket
 from textwrap import dedent
 
 try:
-    from mercurial import ui, hg
+    from mercurial import ui, hg, cmdutil
     have_mercurial = True
 except ImportError:
     have_mercurial = False
