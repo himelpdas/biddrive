@@ -8,13 +8,13 @@
     <h2>{{=T("Installed applications")}}</h2>
     <ul>
       {{for a in apps:}} 
-      <li class="application">
+      <li class="application" onmouseover="jQuery(this).children('p').show()" onmouseout="jQuery(this).children('p').hide()">
         {{if a==request.application:}}
         <h3 class="currentapp">{{=a}} ({{=T('currently running')}})</h3>  
-        <p class="controls">
+        <p class="controls hidden">
         {{else:}}
         <h3 class="editableapp">{{=A(a,_href=URL(a,'default','index'))}}</h3> 
-        <p class="controls">
+        <p class="controls hidden">
         {{if not os.path.exists('applications/%s/compiled' % a):}}
         {{=sp_button(URL('design',args=a), T("edit"))}}
         {{else:}}
