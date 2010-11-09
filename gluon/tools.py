@@ -2516,7 +2516,7 @@ class Auth(object):
                                record_id=long(record_id))
         log = self.messages.add_permission_log
         if log:
-            self.log_event(log % dict(permission_id, group_id=group_id,
+            self.log_event(log % dict(permission_id=id, group_id=group_id,
                            name=name, table_name=table_name,
                            record_id=record_id))
         return id
