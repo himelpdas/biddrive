@@ -1110,7 +1110,7 @@ class SQLFORM(FORM):
             elif field.default == None and field.type!='blob':
                 self.errors[fieldname] = 'no data'
                 return False
-            value = fields[fieldname]
+            value = fields.get(fieldname,None)
             if field.type == 'list:string':
                 if not isinstance(value,(tuple,list)):
                     fields[fieldname] = value and [value] or []
