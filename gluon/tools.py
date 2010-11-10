@@ -2433,7 +2433,11 @@ class Auth(object):
         if not user_id and self.user:
             user_id = self.user.id
         membership = self.settings.table_membership
-        id = membership.insert(group_id=group_id, user_id=user_id)
+        record = membership(user_id = user_id,group_id = group_id)
+        if record:
+            return record.id
+        else:
+            id = membership.insert(group_id=group_id, user_id=user_id)
         log = self.messages.add_membership_log
         if log:
             self.log_event(log % dict(user_id=user_id,
