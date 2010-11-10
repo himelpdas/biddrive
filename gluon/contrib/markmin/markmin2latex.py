@@ -54,6 +54,7 @@ def render(text,extra={},allowed={},sep='p',image_mapper=lambda x:x):
     # replace all blocks marked with ``...``:class with META
     # store them into segments they will be treated as code
     #############################################################
+    text = str(text or '')
     segments, i = [], 0
     text = regex_dd.sub('``\g<latex>``:latex ',text)
     text = regex_newlines.sub('\n',text)

@@ -329,6 +329,7 @@ def render(text,extra={},allowed={},sep='p'):
     >>> render(r"$$\int_a^b sin(x)dx$$")
     '<code class="latex">\\\\int_a^b sin(x)dx</code>'
     """
+    text = str(text or '')
     #############################################################
     # replace all blocks marked with ``...``:class with META
     # store them into segments they will be treated as code
