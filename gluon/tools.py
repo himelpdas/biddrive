@@ -1079,7 +1079,8 @@ class Auth(object):
             if not 'register' in self.settings.actions_disabled:
                 bar.insert(2, ' | ')
                 bar.insert(3, register)
-            if 'username' in self.settings.table_user.fields():
+            if 'username' in self.settings.table_user.fields() and \
+                    not 'retrieve_username' in self.settings.actions_disabled:
                 bar.insert(-1, ' | ')
                 bar.insert(-1, retrieve_username)
             if not 'request_reset_password' in self.settings.actions_disabled:
