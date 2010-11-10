@@ -299,10 +299,13 @@ jQuery(document).ready(function(){
           jQuery('.component_contents li, .formfield, .comptools').hide();
           files=data['files'];
           for(var i=0; i<files.length; i++)
-            jQuery('li#'+files[i].replace('/','__').replace('.','__')).slideDown();
-          }				     
-        );
-      } else if(code==13) jQuery('.component_contents li, .formfield, .comptools').slideDown();
+            jQuery('li#'+files[i].replace('/','__').replace('.','__')).slideDown();          
+          jQuery('.flash').html('{{=T("Searching:")}} '+files.length+' {{=T("files")}}').slideDown();
+        });
+      } else if(code==13) {
+          jQuery('.component_contents li, .formfield, .comptools').slideDown();
+          jQuery('.flash').html('').hide();
+      }
    });
 });
 </script>
