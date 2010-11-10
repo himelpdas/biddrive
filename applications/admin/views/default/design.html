@@ -223,7 +223,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
       <span class="filetools controls">
 	{{=editfile('static',file)}} {{=deletefile([app,'static',file])}}
       </span>
-      <span class="file">{{='/'.join(path)}}
+      <span class="file">
 	<a href="{{=URL(a=app,c='static',f=file)}}">{{=filename}}</a>
       </span>
     </li>{{
