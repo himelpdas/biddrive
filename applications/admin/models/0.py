@@ -55,3 +55,7 @@ LAYOUTS_APP = 'http://web2py.com/layouts'
 # parameter for downloading PLUGINS
 PLUGINS_APP = 'http://web2py.com/plugins'
 #PLUGINS_APP = 'http://127.0.0.1:8000/plugins'
+
+# set the language
+if 'adminLanguage' in request.cookies and not (request.cookies['adminLanguage'] is None):
+    T.force(request.cookies['adminLanguage'].value)

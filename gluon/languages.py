@@ -207,6 +207,15 @@ class translator(object):
         self.requested_languages = self.force(self.http_accept_language)
         self.lazy = True
 
+    def get_possible_languages(self):
+        possible_languages = self.current_languages
+	file_ending = re.compile("\.py$")
+	for langfile in os.listdir(self.folder+'languages/'):
+	    if file_ending.search(langfile):
+	        possible_languages.append(file_ending.sub('',langfile))
+
+        return possible_languages
+
     def set_current_languages(self, *languages):
         if len(languages) == 1 and isinstance(languages[0], (tuple, list)):
             languages = languages[0]
