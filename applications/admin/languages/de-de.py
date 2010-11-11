@@ -18,6 +18,7 @@
 'Additional code for your application': 'Additional code for your application',
 'Admin is disabled because insecure channel': 'Appadmin ist deaktiviert, wegen der Benutzung eines unsicheren Kanals',
 'Admin is disabled because unsecure channel': 'Appadmin ist deaktiviert, wegen der Benutzung eines unsicheren Kanals',
+'Admin language': 'Admin language',
 'Administrator Password:': 'Administrator Passwort:',
 'Are you sure you want to delete file "%s"?': 'Sind Sie sich sicher, dass Sie diese Datei löschen wollen "%s"?',
 'Are you sure you want to uninstall application "%s"': 'Sind Sie sich sicher, dass Sie diese Anwendung deinstallieren wollen "%s"',

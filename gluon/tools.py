@@ -3459,6 +3459,10 @@ class Service:
             return response.json(s)
         self.error()
 
+    class JsonRpcException:
+        def __init__(self,code,info):
+            self.code,self.info = code,info
+
     def serve_jsonrpc(self):
         import contrib.simplejson as simplejson
         def return_response(id, result):
@@ -3483,6 +3487,8 @@ class Service:
             if hasattr(s, 'as_list'):
                 s = s.as_list()
             return return_response(id, s)
+        except Service.JsonRpcException, e:
+            return return_error(e.code, e.info)
         except BaseException:
             etype, eval, etb = sys.exc_info()
             return return_error(id, 100, '%s: %s' % (etype.__name__, eval))
