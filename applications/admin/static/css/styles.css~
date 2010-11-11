@@ -518,8 +518,8 @@ h3 {
 
 .flash {
   position: absolute;
-  top: 1em;
-  left: 1em;
+  top: 2em;
+  right: 2em;
   background: #e8953c;
   color: #fff;
   border: 2px solid #fff;
@@ -610,6 +610,10 @@ h3 {
   margin: 0;
 }
 
+#start a.button {
+  display: block;
+}
+
 #start a.button,
 #start a.button span {
   background-image: url(../images/start.png);
@@ -645,7 +649,14 @@ h3 {
 #menu a.button,
 #menu a.button span {
   background-image: url(../images/menu.png);
-  width: 56px;
+}
+
+#menu a.button {
+  padding-right: 1em;
+}
+
+#menu a.button span {
+  padding-left: 1em;
 }
 
 #menu a {
@@ -683,9 +694,6 @@ h3 {
 .applist li {
   list-style: none;
   padding: 0;
-  // padding-bottom: 0.2em;
-  // margin-bottom: 0.2em;
-  // border-bottom: 1px solid #ddd;
 }
 
 h3.editableapp,
@@ -713,6 +721,7 @@ h3.currentapp {
   -moz-border-radius: 0.5em;
   border-radius: 0.5em;
   border: 1px solid #ddd;
+  min-width:400px;
 }
 
 .sidebar h4 {
@@ -803,7 +812,6 @@ h3.currentapp {
   margin-top: 0.5em;
   margin-bottom: 0.0em;
 }
-
 
 /* About */
 
@@ -928,4 +936,10 @@ ul#snapshot > li {
   height: 33px;
   overflow: hidden;
   clear: both;
+}
+
+/* IE7 hacks */
+
+.sublist {
+  zoom: 1;
 }

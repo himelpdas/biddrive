@@ -517,9 +517,9 @@ h3 {
 }
 
 .flash {
-  position: absolute;
-  top: 1em;
-  left: 1em;
+  position: fixed;
+  top: 2em;
+  right: 2em;
   background: #e8953c;
   color: #fff;
   border: 2px solid #fff;

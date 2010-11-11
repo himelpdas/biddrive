@@ -110,7 +110,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
   {{pass}}
   <ul>
     {{for c in controllers:}}
-    <li id="controllers__{{=m.replace('.','__')}}">
+    <li id="controllers__{{=c.replace('.','__')}}">
     <span class="filetools controls">
       {{=editfile('controllers',c)}}
       {{=deletefile([app, 'controllers', c])}}
@@ -297,11 +297,11 @@ jQuery(document).ready(function(){
       if(code==13 && jQuery('#search').val()){
         jQuery.getJSON('{{=URL('search',args=request.args)}}?keywords='+escape(jQuery('#search').val()),null,function(data, textStatus, xhr){
           jQuery('.component_contents li, .formfield, .comptools').hide();
-          files=data['files'];
+		  files=data['files'];
           for(var i=0; i<files.length; i++)
-            jQuery('li#'+files[i].replace('/','__').replace('.','__')).slideDown();          
+            jQuery('li#'+files[i].replace(/\//g,'__').replace('.','__')).slideDown();   
           jQuery('.flash').html('{{=T("Searching:")}} '+files.length+' {{=T("files")}}').slideDown();
-        });
+		  });
       } else if(code==13) {
           jQuery('.component_contents li, .formfield, .comptools').slideDown();
           jQuery('.flash').html('').hide();

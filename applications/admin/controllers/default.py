@@ -318,7 +318,7 @@ def search():
     files1 = glob(os.path.join(path,'*/*.py'))
     files2 = glob(os.path.join(path,'*/*.html'))
     files3 = glob(os.path.join(path,'*/*/*.html'))
-    files=[x[len(path)+1:].replace('\\\\','/') for x in files1+files2+files3 if match(x,keywords)]
+    files=[x[len(path)+1:].replace('\\','/') for x in files1+files2+files3 if match(x,keywords)]
     return response.json({'files':files})
 
 def edit():
