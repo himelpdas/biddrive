@@ -8,4 +8,9 @@
 {{if not 'request_reset_password' in auth.settings.actions_disabled:}}
 <br/><a href="{{=URL(r=request,args='request_reset_password')}}">lost password</a>
 {{pass}}
+<script language="javascript">
+<!--
+    try document.forms[0].username.focus(); catch(e) document.forms[0].email.focus();
+//-->
+</script> 
 {{pass}}
