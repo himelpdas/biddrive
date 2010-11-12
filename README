@@ -908,4 +908,15 @@ recalled
 - fixed cron for bytecode compiled apps, thanks Álvaro J. Iradier Muro
 - other bugs fixes and pep8 compliant fixes
 
-
+1.89.1
+- new admin layout (thanks Branko Vukelic)
+- new admin search
+- new admin language selector (thanks Yair)
+- new Welcome app (thanks Martin Mulone)
+- beter wizard
+- admin support for DEMO_MODE=True
+- admin exposes GAE deployment button (always)
+- MENU support None links (thanks Michael Wolfe)
+- web2py.py -J for running cron (thanks Jonathan Lundell)
+- fixed ~db.table.id on GAE (thanks MicLee)
+- service.jsonrpc supports service.JsonRpcException (thanks Matt)
