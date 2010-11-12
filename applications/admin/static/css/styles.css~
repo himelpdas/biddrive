@@ -517,7 +517,7 @@ h3 {
 }
 
 .flash {
-  position: absolute;
+  position: fixed;
   top: 2em;
   right: 2em;
   background: #e8953c;
@@ -933,7 +933,7 @@ ul#snapshot > li {
   color: #eee;
   text-align: center;
   background: #292929 url(../images/header_bg.png) repeat-x;
-  height: 33px;
+  height: 45px;
   overflow: hidden;
   clear: both;
 }

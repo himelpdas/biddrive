@@ -943,3 +943,6 @@ ul#snapshot > li {
 .sublist {
   zoom: 1;
 }
+
+.untranslated { background-color: #FFCC00; }
+.translated { background-color: white; }
