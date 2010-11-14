@@ -903,7 +903,8 @@ class SQLDB(dict):
 
     def __init__(self, uri='sqlite://dummy.db', pool_size=0,
                  folder=None, db_codec='UTF-8', check_reserved=None,
-                 migrate=True, fake_migrate=False, decode_credentials=False):
+                 migrate=True, fake_migrate=False,
+                 decode_credentials=False):
         if not decode_credentials:
             credential_decoder = lambda cred: cred
         else:
