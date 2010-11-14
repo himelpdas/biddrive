@@ -3488,7 +3488,7 @@ class Service:
                 s = s.as_list()
             return return_response(id, s)
         except Service.JsonRpcException, e:
-            return return_error(e.code, e.info)
+            return return_error(id, e.code, e.info)
         except BaseException:
             etype, eval, etb = sys.exc_info()
             return return_error(id, 100, '%s: %s' % (etype.__name__, eval))
