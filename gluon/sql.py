@@ -903,7 +903,13 @@ class SQLDB(dict):
 
     def __init__(self, uri='sqlite://dummy.db', pool_size=0,
                  folder=None, db_codec='UTF-8', check_reserved=None,
-                 migrate=True, fake_migrate=False):
+                 migrate=True, fake_migrate=False, decode_credentials=False):
+        if not decode_credentials:
+            credential_decoder = lambda cred: cred
+        else:
+            import urllib
+            credential_decoder = lambda cred: urllib.unquote(cred)
+
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
         self._db_codec = db_codec
@@ -961,10 +967,10 @@ class SQLDB(dict):
             if not m:
                 raise SyntaxError, \
                     "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
+            user = credential_decoder(m.group('user'))
             if not user:
                 raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
+            passwd = credential_decoder(m.group('passwd'))
             if not passwd:
                 passwd = ''
             host = m.group('host')
@@ -996,10 +1002,10 @@ class SQLDB(dict):
                            ).match(self._uri[11:])
             if not m:
                 raise SyntaxError, "Invalid URI string in SQLDB"
-            user = m.group('user')
+            user = credential_decoder(m.group('user'))
             if not user:
                 raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
+            passwd = credential_decoder(m.group('passwd'))
             if not passwd:
                 passwd = ''
             host = m.group('host')
@@ -1071,10 +1077,10 @@ class SQLDB(dict):
                 if not m:
                     raise SyntaxError, \
                         "Invalid URI string in SQLDB: %s" % self._uri
-                user = m.group('user')
+                user = credential_decoder(m.group('user'))
                 if not user:
                     raise SyntaxError, 'User required'
-                passwd = m.group('passwd')
+                passwd = credential_decoder(m.group('passwd'))
                 if not passwd:
                     passwd = ''
                 host = m.group('host')
@@ -1112,10 +1118,10 @@ class SQLDB(dict):
             if not m:
                 raise SyntaxError, \
                     "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
+            user = credential_decoder(m.group('user'))
             if not user:
                 raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
+            passwd = credential_decoder(m.group('passwd'))
             if not passwd:
                 passwd = ''
             host = m.group('host')
@@ -1141,10 +1147,10 @@ class SQLDB(dict):
             if not m:
                 raise SyntaxError, \
                     "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
+            user = credential_decoder(m.group('user'))
             if not user:
                 raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
+            passwd = credential_decoder(m.group('passwd'))
             if not passwd:
                 passwd = ''
             pathdb = m.group('path')
@@ -1169,10 +1175,10 @@ class SQLDB(dict):
             if not m:
                 raise SyntaxError, \
                     "Invalid URI string in SQLDB: %s" % self._uri
-            user = m.group('user')
+            user = credential_decoder(m.group('user'))
             if not user:
                 raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
+            passwd = credential_decoder(m.group('passwd'))
             if not passwd:
                 passwd = ''
             host = m.group('host')
@@ -1209,10 +1215,10 @@ class SQLDB(dict):
                            ).match(self._uri[11:])
             if not m:
                 raise SyntaxError, "Invalid URI string in SQLDB"
-            user = m.group('user')
+            user = credential_decoder(m.group('user'))
             if not user:
                 raise SyntaxError, 'User required'
-            passwd = m.group('passwd')
+            passwd = credential_decoder(m.group('passwd'))
             if not passwd:
                 passwd = ''
             host = m.group('host')
@@ -4031,7 +4037,9 @@ def DAL(uri='sqlite:memory:',
         folder=None,
         db_codec='UTF-8',
         check_reserved=None,
-        migrate=True, fake_migrate=False):
+        migrate=True,
+        fake_migrate=False,
+        decode_credentials=False):
     if uri == 'gae':
         import contrib.gql
         return contrib.gql.GQLDB()
@@ -4042,7 +4050,8 @@ def DAL(uri='sqlite:memory:',
                 try:
                     return SQLDB(uri, pool_size=pool_size, folder=folder,
                                  db_codec=db_codec, check_reserved=check_reserved,
-                                 migrate=migrate, fake_migrate=fake_migrate)
+                                 migrate=migrate, fake_migrate=fake_migrate,
+                                 decode_credentials=decode_credentials)
                 except SyntaxError, exception:
                     raise SyntaxError, exception
                 except Exception, exception:
