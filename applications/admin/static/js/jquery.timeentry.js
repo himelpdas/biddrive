@@ -224,9 +224,13 @@
 	    */
 	    _doKeyDown: function(event) {
 		if (event.keyCode >= 48) return true;
-		var inst = jQuery.data(event.target, PROP_NAME);				
+		var inst = jQuery.data(event.target, PROP_NAME);
+		
 		switch (event.keyCode) {		
-		case 9: if(event.shiftKey) inst.input.prev('input,texarea').focus(); else inst.input.next('input,texarea').focus(); break;
+		case 9: 
+		    var its = jQuery(':input');
+		    its.eq(its.index(this)+(event.shiftKey?-1:+1)).focus();
+		    break;
 		case 37: jQuery.timeEntry._changeField(inst, -1, false); break; // Previous field on left		    
 		case 38: jQuery.timeEntry._adjustField(inst, -1); break; // Increment time field on down
 		case 16: if(!event.shiftKey) jQuery.timeEntry._changeField(inst, +1, false); break; // Next field on right
