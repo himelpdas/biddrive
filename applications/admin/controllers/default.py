@@ -332,12 +332,14 @@ def edit():
         filetype = 'python'
     elif filename[-5:] == '.html':
         filetype = 'html'
+    elif filename[-5:] == '.load':
+        filetype = 'html'
     elif filename[-4:] == '.css':
         filetype = 'css'
     elif filename[-3:] == '.js':
         filetype = 'js'
     else:
-        filetype = 'text'
+        filetype = 'html'
 
     # ## check if file is not there
 
