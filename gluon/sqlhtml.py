@@ -1271,7 +1271,10 @@ class SQLTABLE(TABLE):
                     row.append(TD(r))
                     continue
                 (tablename, fieldname) = colname.split('.')
-                field = sqlrows.db[tablename][fieldname]
+                try:
+                    field = sqlrows.db[tablename][fieldname]
+                except KeyError:
+                    field = None
                 if tablename in record \
                         and isinstance(record,Row) \
                         and isinstance(record[tablename],Row):
@@ -1281,7 +1284,9 @@ class SQLTABLE(TABLE):
                 else:
                     raise SyntaxError, 'something wrong in Rows object'
                 r_old = r
-                if field.represent:
+                if not field:
+                    pass
+                elif field.represent:
                     r = field.represent(r)
                 elif field.type == 'blob' and r:
                     r = 'DATA'
