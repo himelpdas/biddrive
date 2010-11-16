@@ -29,6 +29,7 @@
         </div>
         <div id="footer" class="fixed">
             {{=T('Powered by')}} {{=A('web2py', _href='http://www.web2py.com')}}&trade; {{=T('created by')}} Massimo Di Pierro &copy;2007-2010 -
+	    {{if hasattr(T,'get_possible_languages'):}}
 	    <span>
 	      {{=T('Admin language')}}
 	      <select name="adminlanguage" onchange="var date = new Date();cookieDate=date.setTime(date.getTime()+(100*24*60*60*1000));document.cookie='adminLanguage='+this.value+'; expires='+cookieDate+'; path=/';window.location.reload()">
@@ -37,6 +38,7 @@
 		{{pass}}
 	      </select>
 	    </span>
+	    {{pass}}
         </div>
     </body>
 </html>
