@@ -43,6 +43,7 @@ applications/*/errors/*
 applications/*/cache/*
 applications/*/uploads/*
 applications/examples/static/epydoc
+applications/examples/static/sphinx
 applications/admin/cron/cron.master
 
 syntax: re
