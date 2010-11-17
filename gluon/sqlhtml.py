@@ -1029,7 +1029,8 @@ class SQLFORM(FORM):
             for fieldname in self.fields:
                 field = self.table[fieldname]
                 ### this is a workaround! widgets should always have default not None!
-                if not field.widget and field.type.startswith('list:'):
+                if not field.widget and field.type.startswith('list:') and \
+                        not OptionsWidget.has_options(field):
                     field.widget = self.widgets.list.widget
                 if hasattr(field, 'widget') and field.widget and fieldname in request_vars:
                     if fieldname in self.vars:
