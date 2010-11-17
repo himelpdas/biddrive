@@ -432,7 +432,7 @@ def edit():
     edit_controller = None
     editviewlinks = None
     view_link = None
-    if filetype == 'html' and request.args >= 3:
+    if filetype == 'html' and len(request.args) >= 3:
         cfilename = os.path.join(request.args[0], 'controllers',
                                  request.args[2] + '.py')
         if os.path.exists(apath(cfilename, r=request)):
