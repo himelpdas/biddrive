@@ -284,10 +284,8 @@ class IS_IN_SET(Validator):
         multiple=False,
         zero='',
         sort=False,
-        nrange=(0,100),
         ):
         self.multiple = multiple
-        self.nrange = nrange
         if isinstance(theset, dict):
             self.theset = [str(item) for item in theset]
             self.labels = theset.values()
@@ -329,8 +327,9 @@ class IS_IN_SET(Validator):
             if self.multiple and (value == None or value == ''):
                 return ([], None)
             return (value, self.error_message)
-        if self.multiple:
-            if not self.nrange[0]<=len(values)<self.nrange[1]:
+        if self.multiple:            
+            if isinstance(self.multiple,(tuple,list)) and \
+                    not self.multiple[0]<=len(values)<self.multiple[1]:
                 return (values, self.error_message)
             return (values, None)
         return (value, None)
@@ -362,7 +361,6 @@ class IS_IN_DB(Validator):
         multiple=False,
         zero='',
         sort=False,
-        nrange=(0,100),
         _and=None,
         ):
         if hasattr(dbset, 'define_table'):
@@ -396,7 +394,6 @@ class IS_IN_DB(Validator):
         self.multiple = multiple
         self.zero = zero
         self.sort = sort
-        self.nrange = nrange
         self._and = _and
 
     def set_self_id(self, id):
@@ -440,7 +437,8 @@ class IS_IN_DB(Validator):
                 values = [value]
             else:
                 values = []
-            if not self.nrange[0]<=len(values)<self.nrange[1]:
+            if isinstance(self.multiple,(tuple,list)) and \
+                    not self.multiple[0]<=len(values)<self.multiple[1]:
                 return (values, self.error_message)
             if not [x for x in values if not x in self.theset]:
                 return (values, None)
