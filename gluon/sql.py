@@ -2627,6 +2627,12 @@ class Expression(object):
         else:
             raise RuntimeError, "startswith used with incompatible field type"
 
+   def endswith(self, value):
+       if self.type in ('string', 'text'):
+           return Query(self, ' LIKE ', '%%%s' % value)
+       else:
+           raise RuntimeError, "startswith used with incompatible field type"
+
     def contains(self, value):
         if self.type in ('string', 'text'):
             return Query(self, ' LIKE ', '%%%s%%' % value)
