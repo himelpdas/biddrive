@@ -425,12 +425,13 @@ def upgrade(request, url='http://web2py.com'):
 
     full_url = url + '/examples/static/web2py_%s.zip' % version_type
     filename = abspath('web2py_%s_downloaded.zip' % version_type)
+    file = None
     try:
         file = open(filename,'wb')
         file.write(urllib.urlopen(full_url).read())
         file.close()
     except Exception,e:
-        file.close()
+        file and file.close()
         return False, e
     try:
         unzip(filename, destination, subfolder)
