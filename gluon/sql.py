@@ -514,8 +514,10 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[15:] in field._db.tables:
         referenced = field._db[field_type[15:]]
-        field.represent = lambda ids, r=referenced, f=ff: \
-            (ids and ', '.join(f(r,id) for id in ids) or '')
+        def list_ref_repr(ids, r=referenced, f=ff):
+            refs = r._db(r.id.belongs(ids)).select(r.id)
+            return (ids and ', '.join(f(r,ref.id) for ref in refs) or '')
+        field.represent = list_ref_repr     
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format,multiple=True)
