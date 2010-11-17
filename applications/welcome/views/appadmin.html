@@ -55,7 +55,7 @@ jQuery(document).ready(function(){
     {{if rows:}}
        <div style="overflow: auto;" width="80%">
        {{linkto=URL('update',args=request.args[0])}}
-       {{upload=URL('download',args=request.args[0])}}    
+       {{upload=URL('download',args=request.args[0])}}
        {{=SQLTABLE(rows,linkto,upload,orderby=True,_class='sortable')}}
        </div>
     {{pass}}
