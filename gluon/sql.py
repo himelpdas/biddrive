@@ -2631,7 +2631,7 @@ class Expression(object):
        if self.type in ('string', 'text'):
            return Query(self, ' LIKE ', '%%%s' % value)
        else:
-           raise RuntimeError, "startswith used with incompatible field type"
+           raise RuntimeError, "endswith used with incompatible field type"
 
     def contains(self, value):
         if self.type in ('string', 'text'):
