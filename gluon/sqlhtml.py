@@ -1287,22 +1287,6 @@ class SQLTABLE(TABLE):
                 r_old = r
                 if not field:
                     pass
-                elif field.represent:
-                    r = field.represent(r)
-                elif field.type == 'blob' and r:
-                    r = 'DATA'
-                elif field.type == 'upload':
-                    if upload and r:
-                        r = A('file', _href='%s/%s' % (upload, r))
-                    elif r:
-                        r = 'file'
-                    else:
-                        r = ''
-                elif field.type in ['string','text']:
-                    r = str(field.formatter(r))
-                    ur = unicode(r, 'utf8')
-                    if truncate!=None and len(ur) > truncate:
-                        r = ur[:truncate - 3].encode('utf8') + '...'
                 elif linkto and field.type == 'id':
                     try:
                         href = linkto(r, 'table', tablename)
@@ -1329,6 +1313,22 @@ class SQLTABLE(TABLE):
                                  (k, record[tablename][k])) or (k, record[k]) \
                                     for k in field._table._primarykey ] ))
                     r = A(r, _href='%s/%s?%s' % (linkto, tablename, key))
+                elif field.represent:
+                    r = field.represent(r)
+                elif field.type == 'blob' and r:
+                    r = 'DATA'
+                elif field.type == 'upload':
+                    if upload and r:
+                        r = A('file', _href='%s/%s' % (upload, r))
+                    elif r:
+                        r = 'file'
+                    else:
+                        r = ''
+                elif field.type in ['string','text']:
+                    r = str(field.formatter(r))
+                    ur = unicode(r, 'utf8')
+                    if truncate!=None and len(ur) > truncate:
+                        r = ur[:truncate - 3].encode('utf8') + '...'
                 row.append(TD(r))
             tbody.append(TR(_class=_class, *row))
         components.append(TBODY(*tbody))
