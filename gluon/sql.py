@@ -3425,7 +3425,11 @@ excluded + tables_to_merge.keys()])
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
         for table, virtualfields in virtualtables:
             for item in virtualfields:
-                rowsobj = rowsobj.setvirtualfields(**{table:item})
+                try:
+                    rowsobj = rowsobj.setvirtualfields(**{table:item})
+                except KeyError: 
+                    # to avoid breaking virtualfields when partial select
+                    pass
         return rowsobj
 
     def _count(self):
