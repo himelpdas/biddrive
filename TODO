@@ -1,24 +1,22 @@
+Undocumented features:
 
-I keep getting this errors...
-
-WARNING:web2py.cron:WEB2PY CRON Call returned code 1:
-Traceback (most recent call last):
-File "web2py.py", line 23, in <module>
-  gluon.widget.start(cron=True)
-File "/Users/mdipierro/web2py/gluon/widget.py", line 728, in start
-  (options, args) = console()
-File "/Users/mdipierro/web2py/gluon/widget.py", line 717, in console
-  w2p_pack('welcome.w2p','applications/welcome')
-File "/Users/mdipierro/web2py/gluon/fileutils.py", line 172, in w2p_pack
-  os.unlink(tarname)
-OSError: [Errno 2] No such file or directory: 'welcome.w2p.tar'
-
-
-That's pretty strange. Is the file actually there? I don't see how the open can succeed and the unlink fail. I'd throw in some prints, including getcwd.
-
-(As an aside, I think it'd be better not to use the cwd for the operations in console(), but I can't see how that's relevant to your error.)
-
-
-
-
-T(variable) -> '#'?
+- app level logging
+- polymodel on GAE
+- web2py_ajax handles prepend, append, hide, pre-validation of decimal
+fields
+- dbsessions2trash.py
+- pyfpdf
+- markmin2latex, markmin2pdf
+- Storage getfirst, getlast, getall
+- db(db.table), db(db.table.id) equivalent to db(db.table.id>0)
+- on_failed_authorization can be a function
+- gluon/contrib/login_methods/cas_auth.py for integration between CAS
+and Auth
+- scripts/autoroutes.py
+- admin wizard
+- mercurial admin now allows list of files, versions, and retrieve
+- new error report system
+- SQLFORM.accepts(detect_record_change).record_changed
+- MENU supports None links
+- web2py.py -J for running cron
+- service.jsonrpc supports service.JsonRpcException 

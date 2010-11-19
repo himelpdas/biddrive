@@ -1419,7 +1419,7 @@ class Auth(object):
                     if temp_user.registration_key == 'pending':
                         response.flash = self.messages.registration_pending
                         return form
-                    elif temp_user.registration_key == 'disabled':
+                    elif temp_user.registration_key in ('disabled','blocked'):
                         response.flash = self.messages.login_disabled
                         return form
                     elif temp_user.registration_key!=None and temp_user.registration_key.strip():
@@ -1843,7 +1843,7 @@ class Auth(object):
                 self.environment.session.flash = \
                     self.messages.invalid_email
                 redirect(self.url(args=request.args))
-            elif user.registration_key in ['pending', 'disabled']:
+            elif user.registration_key in ('pending','disabled','blocked'):
                 self.environment.session.flash = \
                     self.messages.registration_pending
                 redirect(self.url(args=request.args))
@@ -1985,7 +1985,7 @@ class Auth(object):
             if not user:
                 session.flash = self.messages.invalid_email
                 redirect(self.url(args=request.args))
-            elif user.registration_key in ['pending', 'disabled']:
+            elif user.registration_key in ('pending','disabled','blocked'):
                 session.flash = self.messages.registration_pending
                 redirect(self.url(args=request.args))
             reset_password_key = str(int(time.time()))+'-' + web2py_uuid()
