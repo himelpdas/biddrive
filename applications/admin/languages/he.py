@@ -16,6 +16,7 @@
 'About application': 'אודות אפליקציה',
 'Additional code for your application': 'Additional code for your application',
 'Admin is disabled because insecure channel': 'ממשק האדמין נוטרל בשל גישה לא מאובטחת',
+'Admin language': 'Admin language',
 'Administrator Password:': 'סיסמת מנהל',
 'Application name:': 'Application name:',
 'Are you sure you want to delete file "%s"?': 'האם אתה בטוח שברצונך למחוק את הקובץ "%s"?',
