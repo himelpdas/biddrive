@@ -2175,7 +2175,7 @@ class Auth(object):
                                        self.settings.table_user_name,
                                        user_id):
                 raise HTTP(403, "Forbidden")
-            user = self.settings.table_user[request.args[1]]
+            user = self.settings.table_user(user_id)
             if not user:
                 raise HTTP(401, "Not Authorized")
             auth.impersonator = cPickle.dumps(session)
