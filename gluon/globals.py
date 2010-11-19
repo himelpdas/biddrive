@@ -147,7 +147,9 @@ class Response(Storage):
         """
 
         if isinstance(stream, (str, unicode)):
-            stream_file_or_304_or_206(stream, request=request,
+            stream_file_or_304_or_206(stream,
+                                      chunk_size=chunk_size,
+                                      request=request,
                                       headers=self.headers)
 
         # ## the following is for backward compatibility
