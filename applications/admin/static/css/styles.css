@@ -537,7 +537,7 @@ h3 {
   padding: 0.3em;
   -moz-border-radius: 0.5em;
   border-radius: 0.5em;
-  font-size: 0.8em;
+  font-size: 13px;
   text-transform: none;
 }
 
@@ -801,8 +801,11 @@ h3.currentapp {
   display: block;
   padding: 4px 0 4px 40px;
   background: url(../images/folder_sm.png) no-repeat;
-  font-weight: bold;
   margin: 0.5em 0;
+}
+
+.folder .file {
+  font-weight: bold;
 }
 
 .sublist {
