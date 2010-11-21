@@ -413,7 +413,8 @@ def make_page(page,contents):
             s+="    return dict(form=form)\n\n"
         elif items[1]=='select':
             s+="    f,v=request.args(0),request.args(1)\n"
-            s+="    query=f and db.t_%s[f]==v or db.t_%s\n" % (t,t)
+            s+="    try: query=f and db.t_%s[f]==v or db.t_%s\n" % (t,t)
+            s+="    except: redirect(URL('error'))\n"
             s+="    rows=db(query)(db.t_%s.active==True).select()\n" % t
             s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
