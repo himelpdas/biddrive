@@ -1,9 +1,8 @@
 <!-- Grab Google CDN's jQuery. fall back to local if necessary -->
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.js"></script>
-<script>!window.jQuery && document.write(unescape('%3Cscript src="{{=URL('static','js/jquery.js')}}"%3E%3C/script%3E'))</script>
 {{
-response.files.append(URL('static','css/calendar.css'))
-response.files.append(URL('static','js/calendar.js'))
+response.files.insert(0,URL('static','js/jquery.js'))
+response.files.insert(1,URL('static','css/calendar.css'))
+response.files.insert(2,URL('static','js/calendar.js'))
 for _item in response.meta or []:}}
      <meta name="{{=_item}}" content="{{=response.meta[_item]}}" />{{
 pass
@@ -58,9 +57,7 @@ function web2py_ajax_init() {
   try { jQuery("input.datetime").focus( function() {Calendar.setup({
      inputField:this.id, ifFormat:"{{=T('%Y-%m-%d %H:%M:%S')}}", showsTime: true,timeFormat: "24"
   }); }); } catch(e) {};
-  try { jQuery("input.time").clockpick({
-      starthour:0, endhour:23, showminutes:true, military:true
-  }); } catch(e) {};
+  try { jQuery("input.time").timeEntry(); } catch(e) {};
 };
 
 jQuery(document).ready(function() {   
