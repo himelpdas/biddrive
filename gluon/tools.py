@@ -2637,7 +2637,7 @@ class Crud(object):
         elif args[0] == 'create':
             return self.create(args(1))
         elif args[0] == 'select':
-            return self.select(args(1))
+            return self.select(args(1),linkto=self.url('read'))
         elif args[0] == 'read':
             return self.read(args(1), args(2))
         elif args[0] == 'update':
@@ -2963,8 +2963,6 @@ class Crud(object):
                                                      limitby=limitby))
         if not rows:
             return None # Nicer than an empty table.
-        if not 'linkto' in attr:
-            attr['linkto'] = self.url(args='read')
         if not 'upload' in attr:
             attr['upload'] = self.url('download')
         if not request.extension in ('html','load'):
