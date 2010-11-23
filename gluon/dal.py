@@ -2578,7 +2578,7 @@ class Table(dict):
 
         # backend-specific extensions to fields
         if self._db._dbname == 'mysql':
-            if not self._primarykey:
+            if not hasattr(self, "_primarykey"):
                 fields.append('PRIMARY KEY(%s)' % self.fields[0])
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
 
