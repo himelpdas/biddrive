@@ -25,13 +25,29 @@ class CasAuth( object ):
 
     where urlbase is the actual CAS server url without the login,logout...
     Enjoy.
+
+    ###UPDATE###
+    if you want to connect to a CAS version 2 JASIG Server use this:
+        auth.settings.login_form=CasAuth(
+            globals(),
+            urlbase = "https://[Your CAS server]/cas",
+            actions = ['login','serviceValidate','logout'],
+            casversion = 2,
+            casusername = "cas:user")
+    
+    where casusername is the xml node returned by CAS server which contains
+    user's username.
+
     """
     def __init__(self, g, 
                  urlbase = "https://web2py.com/cas/cas",
                  actions=['login','check','logout'],
                  maps=dict(username=lambda v:v[2],
                            email=lambda v:v[1],
-                           user_id=lambda v:v[0])):
+                           user_id=lambda v:v[0]),
+                           casversion = 1,
+                           casusername = 'cas:user'
+			  ):
         self.urlbase=urlbase
         self.cas_login_url="%s/%s"%(self.urlbase,actions[0])
         self.cas_check_url="%s/%s"%(self.urlbase,actions[1])
@@ -40,6 +56,8 @@ class CasAuth( object ):
         self.request=self.globals['request']
         self.session=self.globals['session']
         self.maps=maps
+        self.casversion = casversion
+        self.casusername = casusername
         http_host=self.request.env.http_x_forwarded_for
         if not http_host: http_host=self.request.env.http_host
         self.cas_my_url='http://%s%s'%( http_host, self.request.env.path_info )
@@ -67,15 +85,23 @@ class CasAuth( object ):
         import urllib
         self.ticket=self.request.vars.ticket
         if not self.request.vars.ticket:
-            self.globals['redirect']( "%s?service=%s"%( self.cas_login_url,
-                                          self.cas_my_url ) )
+            self.globals['redirect']( "%s?service=%s"% (self.cas_login_url,
+                                                        self.cas_my_url))
         else:
-            url="%s?service=%s&ticket=%s"%\
-                                                           ( self.cas_check_url,
-                                                            self.cas_my_url,
-                                                            self.ticket )
-            data=urllib.urlopen( url ).read().split( '\n' )
-            if data[0]=='yes': return data[1].split( ':' )
+            url="%s?service=%s&ticket=%s" % (self.cas_check_url,
+                                             self.cas_my_url,
+                                             self.ticket )
+            data=urllib.urlopen( url ).read()
+            if self.casversion == 2:
+                import xml.dom.minidom as dom
+                dxml=dom.parseString(data)
+                if len(dxml.getElementsByTagName("cas:authenticationSuccess"))>0:
+                    if len(dxml.getElementsByTagName(self.casusername))>0:
+                        return ['','',dxml.getElementsByTagName(self.casusername)[0].childNodes[0].nodeValue]
+            else:
+                data = data.split('\n')
+                if data[0]=='yes':
+                    return data[1].split( ':' )
         return None
 
     def _CAS_logout( self ):
