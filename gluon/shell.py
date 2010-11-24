@@ -163,7 +163,7 @@ def run(
             for subfolder in ['models','views','controllers', 'databases',
                               'modules','cron','errors','sessions',
                               'languages','static','private','uploads']:
-                subpath =  os.path.join(aidr,subfolder)
+                subpath =  os.path.join(adir,subfolder)
                 if not os.path.exists(subpath):
                     os.mkdir(subpath)
             db = os.path.join(adir,'models/db.py')

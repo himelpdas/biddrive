@@ -197,7 +197,14 @@ def URL(
     if anchor:
         other += '#' + urllib.quote(str(anchor))
     if vars:
-        other += '?%s' % urllib.urlencode(vars)
+        t = []
+        for k,v in vars.items():
+            if isinstance(v, (list,tuple)):
+                for x in v:
+                    t.append((k,x))
+            else:
+                t.append((k,v))  
+        other += '?%s' % urllib.urlencode(t)
 
     url = '/%s/%s/%s%s' % (application, controller, function, other)
 
