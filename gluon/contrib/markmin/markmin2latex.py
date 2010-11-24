@@ -4,6 +4,8 @@
 import re
 import cgi    
 import sys
+import doctest
+from optparse import OptionParser
 
 __all__ = ['render','markmin2latex']
 
@@ -19,7 +21,7 @@ regex_maps = [
     (re.compile("''(?P<t>[^\s']+( +[^\s']+)*)''"),'{\\it \g<t>}'),
     (re.compile('^#{6} (?P<t>[^\n]+)',re.M),'\n\n{\\\\bf \g<t>}\n'),
     (re.compile('^#{5} (?P<t>[^\n]+)',re.M),'\n\n{\\\\bf \g<t>}\n'),
-    (re.compile('^#{4} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\subsubsection*{\g<t>}\n'),
+    (re.compile('^#{4} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\subsubsection{\g<t>}\n'),
     (re.compile('^#{3} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\subsection{\g<t>}\n'),
     (re.compile('^#{2} (?P<t>[^\n]+)',re.M),'\n\n\\\\goodbreak\\section{\g<t>}\n'),
     (re.compile('^#{1} (?P<t>[^\n]+)',re.M),''),
@@ -197,7 +199,7 @@ def render(text,extra={},allowed={},sep='p',image_mapper=lambda x:x):
     text =  text.replace(' ~\\cite','~\\cite')
     return text, title, authors
 
-HEADER = """
+WRAPPER = """
 \\documentclass[12pt]{article}
 \\usepackage{hyperref}
 \\usepackage{listings}
@@ -218,31 +220,53 @@ HEADER = """
    backgroundcolor=\\color{lg}, tabsize=4, showspaces=false,
    showstringspaces=false
 }
-\\title{%s}
-\\author{%s}
+\\title{%(title)s}
+\\author{%(author)s}
 \\begin{document}
 \\maketitle
 \\tableofcontents
 \\newpage
-"""
-FOOTER = """
+%(body)s
 \\end{document}
 """
 
-def markmin2latex(data, image_mapper=lambda x:x, extra={}):
-    latex, title, authors = render(data, extra=extra, image_mapper=image_mapper)
+def markmin2latex(data, image_mapper=lambda x:x, extra={}, 
+                  wrapper='%(body)s'):
+    body, title, authors = render(data, extra=extra, image_mapper=image_mapper)
     author = '\n\\and\n'.join(a.replace('\n','\\\\\n\\footnotesize ') for a in authors)
-    return HEADER % (title, author) + latex + FOOTER    
-
+    return wrapper % dict(title=title, author=author, body=body)
 
 if __name__ == '__main__':
-    import sys
-    import doctest
-    import markmin2html
-    if sys.argv[1:2]==['-h']:
-        print markmin2latex(markmin2html.__doc__)
-    elif len(sys.argv)>1:
-        print markmin2latex(open(sys.argv[1],'r').read())
-    else:
+    parser = OptionParser()
+    parser.add_option("-i", "--info", dest="info",
+                      help="markmin help")
+    parser.add_option("-t", "--test", dest="test", action="store_true",
+                      default=False)
+    parser.add_option("-n", "--no_wrapper", dest="no_wrapper",
+                      action="store_true",default=False)
+    parser.add_option("-1", "--one", dest="one",action="store_true",
+                      default=False,help="switch section for chapter")
+    parser.add_option("-w", "--wrapper", dest="wrapper", default=False,
+                      help="latex file containing header and footer")
+
+    (options, args) = parser.parse_args()
+    if options.info:
+        import markmin2html
+        markmin2latex(markmin2html.__doc__)
+    elif options.test:
         doctest.testmod()
+    else:
+        if options.wrapper:
+            wrapper = open(options.wrapper,'rb').read()            
+        elif options.no_wrapper:
+            wrapper  = '%(body)s'
+        else:
+            wrapper = WRAPPER
+        content='\n'.join(open(f,'r').read() for f in args)        
+        output= markmin2latex(content,wrapper=wrapper)
+        if options.one:
+            output=output.replace(r'\section*{',r'\chapter*{')
+            output=output.replace(r'\section{',r'\chapter{')
+            output=output.replace(r'subsection{',r'section{')
+        print output
 
