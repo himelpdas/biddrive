@@ -34,7 +34,7 @@ import re
 import Cookie
 import os
 
-regex_session_id = re.compile('^[\w\-/\.]+$')
+regex_session_id = re.compile('^([\w\-]+/)?[\w\-\.]+$')
 
 __all__ = ['Request', 'Response', 'Session']
 
