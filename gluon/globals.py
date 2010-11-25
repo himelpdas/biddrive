@@ -245,12 +245,12 @@ class Session(Storage):
         separate = None,
         ):
         """
-        seperate can be separate=lambda(client,uuid): uuid[-2:]
+        seperate can be separate=lambda(session_name): session_name[-2:]
         and it is used to determine a session prefix.
-        separate can be True and it is set to uuid[-2:]
+        separate can be True and it is set to sesion_name[-2:]
         """
         if separate == True:
-            separate = lambda client, uuid: uuid[-2:]
+            separate = lambda session_name: session_name[-2:]
         self._unlock(response)
         if not masterapp:
             masterapp = request.application
@@ -286,11 +286,10 @@ class Session(Storage):
                     response.session_id = None
             if not response.session_id:                
                 uuid = web2py_uuid()
+                response.session_id = '%s-%s' % (client, uuid)
                 if separate:
-                    prefix = separate(request.client, uuid)
-                    response.session_id = '%s/%s-%s' % (prefix, client, uuid)
-                else:
-                    response.session_id = '%s-%s' % (client, uuid)
+                    prefix = separate(response.session_id)
+                    response.session_id = '%s/%s' % (prefix,response.session_id)
                 response.session_filename = \
                     os.path.join(up(request.folder), masterapp,
                                  'sessions', response.session_id)
