@@ -19,7 +19,9 @@ from settings import global_settings
 
 __all__ = [
     'up',
+    'abspath',
     'listdir',
+    'recursive_unlink',
     'cleanpath',
     'tar',
     'untar',
@@ -73,6 +75,15 @@ def listdir(
             if regex.match(file) and not file.startswith('.'):
                 items.append(os.path.join(root, file)[n:])
     return sorted(items)
+
+
+def recursive_unlink(f):
+    if os.path.isdir(f):
+        for s in os.listdir(f):
+            recursive_unlink(os.path.join(f,s))
+        os.rmdir(f)
+    elif os.path.isfile(f):
+        os.unlink(f)
 
 
 def cleanpath(path):
@@ -302,6 +313,7 @@ def fix_newlines(path):
             fp = open(filename, 'wb')
             fp.write(wdata)
             fp.close()
+
 
 def copystream(
     src,

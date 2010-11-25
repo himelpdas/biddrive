@@ -14,7 +14,7 @@ import urllib
 from utils import web2py_uuid
 from shutil import rmtree
 from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
-from fileutils import up, listdir, fix_newlines, abspath
+from fileutils import up, listdir, fix_newlines, abspath, recursive_unlink
 from restricted import RestrictedError
 
 def apath(path='', r=None):
@@ -84,14 +84,6 @@ def app_pack_compiled(app, request):
         return filename
     except Exception:
         return None
-
-def recursive_unlink(f):
-    if os.path.isdir(f):
-        for s in os.listdir(f):
-            recursive_unlink(os.path.join(f,s))        
-        os.rmdir(f)
-    elif os.path.isfile(f):
-        os.unlink(f)
 
 def app_cleanup(app, request):
     """
