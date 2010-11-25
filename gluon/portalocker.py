@@ -9,10 +9,10 @@ Cross-platform (posix/nt) API for flock-style file locking.
 Synopsis:
 
    import portalocker
-   file = open(\"somefile\", \"r+\")
+   file = open('somefile', 'r+')
    portalocker.lock(file, portalocker.LOCK_EX)
    file.seek(12)
-   file.write(\"foo\")
+   file.write('foo')
    file.close()
 
 If you know what you're doing, you may choose to
@@ -26,18 +26,16 @@ Methods:
    lock( file, flags )
    unlock( file )
 
-Constants:
+flags can be:
 
    LOCK_EX
    LOCK_SH
    LOCK_NB
 
-I learned the win32 technique for locking files from sample code
-provided by John Nielsen <nielsenjf@my-deja.com> in the documentation
-that accompanies the win32 modules.
+Derived from code by Jonathan Feinberg <jdf@pobox.com>
 
-Author: Jonathan Feinberg <jdf@pobox.com>
-Version: $Id: portalocker.py,v 1.3 2001/05/29 18:47:55 Administrator Exp $
+Modified by Massimo Di Pierro to use msvcrt so that no longer requires
+Mark Hammond win32 extensions.
 """
 
 import os
@@ -58,18 +56,7 @@ except:
     pass
 
 
-if os_locking == 'posix':
-    LOCK_EX = fcntl.LOCK_EX
-    LOCK_SH = fcntl.LOCK_SH
-    LOCK_NB = fcntl.LOCK_NB
-
-    def lock(file, flags):
-        fcntl.flock(file.fileno(), flags)
-
-    def unlock(file):
-        fcntl.flock(file.fileno(), fcntl.LOCK_UN)
-
-elif os_locking == 'windows':
+if os_locking == 'windows':
     LOCK_EX = 2
     LOCK_SH = 1
     LOCK_NB = 0
@@ -90,11 +77,20 @@ elif os_locking == 'windows':
         mode = LK_UNLCK
         msvcrt.locking(file.fileno(), mode, os.path.getsize(file.filename))
 
+elif os_locking == 'posix':
+    LOCK_EX = fcntl.LOCK_EX
+    LOCK_SH = fcntl.LOCK_SH
+    LOCK_NB = fcntl.LOCK_NB
+
+    def lock(file, flags):
+        fcntl.flock(file.fileno(), flags)
+
+    def unlock(file):
+        fcntl.flock(file.fileno(), fcntl.LOCK_UN)
+
+
 else:
-    if platform.system() == 'Windows':
-        logger.error('no file locking, you must install the win32 extensions from: http://sourceforge.net/projects/pywin32/files/')
-    else:
-        logger.debug('no file locking, this will cause problems')
+    logger.debug('no file locking, this will cause problems')
 
     LOCK_EX = None
     LOCK_SH = None
