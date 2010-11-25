@@ -52,32 +52,13 @@ try:
 except:
     pass
 try:
-    import win32con
-    import win32file
-    import pywintypes
+    import msvcrt
     os_locking = 'windows'
 except:
     pass
 
-if os_locking == 'windows':
-    LOCK_EX = win32con.LOCKFILE_EXCLUSIVE_LOCK
-    LOCK_SH = 0  # the default
-    LOCK_NB = win32con.LOCKFILE_FAIL_IMMEDIATELY
 
-    # is there any reason not to reuse the following structure?
-
-    __overlapped = pywintypes.OVERLAPPED()
-
-    def lock(file, flags):
-        hfile = win32file._get_osfhandle(file.fileno())
-        win32file.LockFileEx(hfile, flags, 0, 0x7fff0000, __overlapped)
-
-    def unlock(file):
-        hfile = win32file._get_osfhandle(file.fileno())
-        win32file.UnlockFileEx(hfile, 0, 0x7fff0000, __overlapped)
-
-
-elif os_locking == 'posix':
+if os_locking == 'posix':
     LOCK_EX = fcntl.LOCK_EX
     LOCK_SH = fcntl.LOCK_SH
     LOCK_NB = fcntl.LOCK_NB
@@ -88,6 +69,26 @@ elif os_locking == 'posix':
     def unlock(file):
         fcntl.flock(file.fileno(), fcntl.LOCK_UN)
 
+elif os_locking == 'windows':
+    LOCK_EX = 2
+    LOCK_SH = 1
+    LOCK_NB = 0
+
+    LK_UNLCK = 0 # unlock the file region
+    LK_LOCK = 1 # lock the file region
+    LK_NBLCK = 2 # non-blocking lock
+    LK_RLCK = 3 # lock for writing
+    LK_NBRLCK = 4 # non-blocking lock for writing
+
+    def lock(file, flags):
+        file.fseek(0)
+        mode = {LOCK_NB:LK_NBLCK, LOCK_SH:LK_NBLCK, LOCK_EX:LK_LOCK}[flags]
+        msvcrt.locking(file.fileno(), mode, os.path.getsize(file.filename))
+
+    def unlock(file):
+        file.fseek(0)
+        mode = LK_UNLCK
+        msvcrt.locking(file.fileno(), mode, os.path.getsize(file.filename))
 
 else:
     if platform.system() == 'Windows':

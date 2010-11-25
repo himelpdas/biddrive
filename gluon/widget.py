@@ -15,7 +15,6 @@ import time
 import thread
 import re
 import os
-import stat
 import socket
 import signal
 import math
@@ -405,7 +404,7 @@ class web2pyDialog(object):
         """ Update canvas """
 
         try:
-            t1 = os.stat('httpserver.log')[stat.ST_SIZE]
+            t1 = os.path.size('httpserver.log')
         except:
             self.canvas.after(1000, self.update_canvas)
             return

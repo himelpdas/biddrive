@@ -29,7 +29,6 @@ from utils import web2py_uuid
 import portalocker
 import cPickle
 import cStringIO
-import stat
 import datetime
 import re
 import Cookie
@@ -164,7 +163,7 @@ class Response(Storage):
         if filename and not 'content-length' in keys:
             try:
                 self.headers['Content-Length'] = \
-                    os.stat(filename)[stat.ST_SIZE]
+                    os.path.getsize(filename)
             except OSError:
                 pass
         if request and request.env.web2py_use_wsgi_file_wrapper:
