@@ -266,12 +266,9 @@ def get_session(request, other_application='admin'):
     if request.application == other_application:
         raise KeyError
     try:
-        session_id = request.cookies['session_id_'
-                 + other_application].value
-        osession = \
-            storage.load_storage(os.path.join(up(request.folder),
-                                 other_application, 'sessions',
-                                 session_id))
+        session_id = request.cookies['session_id_' + other_application].value
+        osession = storage.load_storage(os.path.join(
+                up(request.folder), other_application, 'sessions', session_id))
     except:
         osession = storage.Storage()
     return osession

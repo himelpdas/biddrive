@@ -85,6 +85,13 @@ def app_pack_compiled(app, request):
     except Exception:
         return None
 
+def recursive_unlink(f):
+    if os.path.isdir(f):
+        for s in os.listdir(f):
+            recursive_unlink(os.path.join(f,s))        
+        os.rmdir(f)
+    elif os.path.isfile(f):
+        os.unlink(f)
 
 def app_cleanup(app, request):
     """
@@ -100,27 +107,27 @@ def app_cleanup(app, request):
     r = True
 
     # Remove error files
-    files = listdir(apath('%s/errors/' % app, request), '^\d.*$', 0)
-    for f in files:
+    path = apath('%s/errors/' % app, request)
+    for f in os.listdir(path):
         try:
-            os.unlink(f)
-        except:
+            os.unlink(os.path.join(path,f))
+        except IOError:
             r = False
 
     # Remove session files
-    files = listdir(apath('%s/sessions/' % app, request), '^\d.*$', 0)
-    for f in files:
+    path = apath('%s/sessions/' % app, request)
+    for f in os.listdir(path):
         try:
-            os.unlink(f)
-        except:
+            recursive_unlink(os.path.join(path,f))
+        except IOError:
             r = False
 
     # Remove cache files
-    files = listdir(apath('%s/cache/' % app, request), '^cache.*$', 0)
-    for file in files:
+    path = apath('%s/sessions/' % app, request)
+    for f in os.listdir(path):
         try:
-            os.unlink(file)
-        except:
+            os.unlink(os.path.join(path,f))
+        except IOError:
             r = False
 
     return r
