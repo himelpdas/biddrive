@@ -68,12 +68,12 @@ if os_locking == 'windows':
     LK_NBRLCK = 4 # non-blocking lock for writing
 
     def lock(file, flags):
-        file.fseek(0)
+        file.seek(0)
         mode = {LOCK_NB:LK_NBLCK, LOCK_SH:LK_NBLCK, LOCK_EX:LK_LOCK}[flags]
         msvcrt.locking(file.fileno(), mode, os.path.getsize(file.filename))
 
     def unlock(file):
-        file.fseek(0)
+        file.seek(0)
         mode = LK_UNLCK
         msvcrt.locking(file.fileno(), mode, os.path.getsize(file.filename))
 
