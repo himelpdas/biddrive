@@ -478,15 +478,15 @@ GQLDB.Table = Table  # ## needed in gluon/globals.py session.connect
 def obj_represent(obj, fieldtype, db):
     if type(obj) in (types.LambdaType, types.FunctionType):
         obj = obj()
-    if fieldtype.startswith('list:'):
-        if not obj:
-            obj=[]
-        if not isinstance(obj,(list,tuple)):
-            obj=[obj]
+    if isinstance(fieldtype, SQLCustomType):
+        return fieldtype.encoder(obj)
     if isinstance(obj, (Expression, Field)):
         raise SyntaxError, "non supported on GAE"
-    if isinstance(fieldtype, gluon.sql.SQLCustomType):
-        return fieldtype.encoder(obj)
+    if fieldtype.startswith('list:'):
+        if not obj:
+            obj = []
+        if not isinstance(obj, (list, tuple)):
+            obj = [obj]
     if isinstance(fieldtype, gae.Property):
         return obj
     if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:

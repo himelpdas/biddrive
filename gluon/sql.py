@@ -550,6 +550,10 @@ def bar_decode_string(value):
 def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
     if type(obj) in (types.LambdaType, types.FunctionType):
         obj = obj()
+    if isinstance(fieldtype, SQLCustomType):
+        return fieldtype.encoder(obj)
+    if isinstance(obj, (Expression, Field)):
+        return str(obj)
     if fieldtype.startswith('list:'):
         if not obj:
             obj = []
@@ -557,10 +561,6 @@ def sql_represent(obj, fieldtype, dbname, db_codec='UTF-8'):
             obj = [obj]
     if isinstance(obj, (list, tuple)):
         obj = bar_encode(obj)
-    if isinstance(obj, (Expression, Field)):
-        return str(obj)
-    if isinstance(fieldtype, SQLCustomType):
-        return fieldtype.encoder(obj)
     if obj is None:
         return 'NULL'
     if obj == '' and not fieldtype[:2] in ['st', 'te', 'pa', 'up']:
