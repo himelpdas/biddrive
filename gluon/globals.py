@@ -243,6 +243,7 @@ class Session(Storage):
         masterapp=None,
         migrate=True,
         separate = None,
+        check_client=False,
         ):
         """
         seperate can be separate=lambda(session_name): session_name[-2:]
@@ -276,7 +277,8 @@ class Session(Storage):
                     self.update(cPickle.load(response.session_file))
                     response.session_file.seek(0)
                     oc = response.session_filename.split('/')[-1].split('-')[0]
-                    if client!=oc: raise Exception, "cookie attack"
+                    if check_client and client!=oc:
+                        raise Exception, "cookie attack"
                 except:
                     self._unlock(response)
                     if response.session_file:
