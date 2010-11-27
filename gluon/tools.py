@@ -1052,6 +1052,8 @@ class Auth(object):
     def navbar(self,prefix='Welcome',action=None):
         request = self.environment.request
         T = self.environment.T
+        if isinstance(prefix,str):
+            prefix = T(prefix)
         if not action:
             action=URL(request.application,request.controller,'user')
         if prefix:
