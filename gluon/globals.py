@@ -246,7 +246,7 @@ class Session(Storage):
         check_client=False,
         ):
         """
-        seperate can be separate=lambda(session_name): session_name[-2:]
+        separate can be separate=lambda(session_name): session_name[-2:]
         and it is used to determine a session prefix.
         separate can be True and it is set to session_name[-2:]
         """
