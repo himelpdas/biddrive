@@ -16,7 +16,6 @@ default_function = 'index'      # ordinarily set in app-specific routes.py
 #
 # Example: support welcome, admin, app and myapp, with myapp the default:
 
-routes_logging = False # set to False, 'debug', 'info', 'warning', 'error' or 'critical'
 
 routes_app = ((r'/(?P<app>welcome|admin|app)\b.*', r'\g<app>'),
               (r'(.*)', r'myapp'),
