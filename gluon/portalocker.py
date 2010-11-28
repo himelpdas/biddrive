@@ -71,11 +71,15 @@ if os_locking == 'windows':
         file.seek(0)
         mode = {LOCK_NB:LK_NBLCK, LOCK_SH:LK_NBLCK, LOCK_EX:LK_LOCK}[flags]
         msvcrt.locking(file.fileno(), mode, os.path.getsize(file.name))
+        
 
     def unlock(file):
         file.seek(0)
         mode = LK_UNLCK
-        msvcrt.locking(file.fileno(), mode, os.path.getsize(file.name))
+        try:
+            msvcrt.locking(file.fileno(), mode, os.path.getsize(file.name))
+        except IOError:
+            logger.warn('Unlocking error')             
 
 elif os_locking == 'posix':
     LOCK_EX = fcntl.LOCK_EX
