@@ -79,8 +79,8 @@ if os_locking == 'windows':
         try:
             msvcrt.locking(file.fileno(), mode, os.path.getsize(file.name))
         except IOError:
-            logger.warn('Unlocking error')             
-
+            pass
+            
 elif os_locking == 'posix':
     LOCK_EX = fcntl.LOCK_EX
     LOCK_SH = fcntl.LOCK_SH
