@@ -9,10 +9,10 @@ Cross-platform (posix/nt) API for flock-style file locking.
 Synopsis:
 
    import portalocker
-   file = open('somefile', 'r+')
+   file = open(\"somefile\", \"r+\")
    portalocker.lock(file, portalocker.LOCK_EX)
    file.seek(12)
-   file.write('foo')
+   file.write(\"foo\")
    file.close()
 
 If you know what you're doing, you may choose to
@@ -26,16 +26,18 @@ Methods:
    lock( file, flags )
    unlock( file )
 
-flags can be:
+Constants:
 
    LOCK_EX
    LOCK_SH
    LOCK_NB
 
-Derived from code by Jonathan Feinberg <jdf@pobox.com>
+I learned the win32 technique for locking files from sample code
+provided by John Nielsen <nielsenjf@my-deja.com> in the documentation
+that accompanies the win32 modules.
 
-Modified by Massimo Di Pierro to use msvcrt so that no longer requires
-Mark Hammond win32 extensions.
+Author: Jonathan Feinberg <jdf@pobox.com>
+Version: $Id: portalocker.py,v 1.3 2001/05/29 18:47:55 Administrator Exp $
 """
 
 import os
@@ -50,37 +52,31 @@ try:
 except:
     pass
 try:
-    import msvcrt
+    import win32con
+    import win32file
+    import pywintypes
     os_locking = 'windows'
 except:
     pass
 
-
 if os_locking == 'windows':
-    LOCK_EX = 2
-    LOCK_SH = 1
-    LOCK_NB = 0
+    LOCK_EX = win32con.LOCKFILE_EXCLUSIVE_LOCK
+    LOCK_SH = 0  # the default
+    LOCK_NB = win32con.LOCKFILE_FAIL_IMMEDIATELY
 
-    LK_UNLCK = 0 # unlock the file region
-    LK_LOCK = 1 # lock the file region
-    LK_NBLCK = 2 # non-blocking lock
-    LK_RLCK = 3 # lock for writing
-    LK_NBRLCK = 4 # non-blocking lock for writing
+    # is there any reason not to reuse the following structure?
+
+    __overlapped = pywintypes.OVERLAPPED()
 
     def lock(file, flags):
-        file.seek(0)
-        mode = {LOCK_NB:LK_NBLCK, LOCK_SH:LK_NBLCK, LOCK_EX:LK_LOCK}[flags]
-        msvcrt.locking(file.fileno(), mode, os.path.getsize(file.name))
-        
+        hfile = win32file._get_osfhandle(file.fileno())
+        win32file.LockFileEx(hfile, flags, 0, 0x7fff0000, __overlapped)
 
     def unlock(file):
-        file.seek(0)
-        mode = LK_UNLCK
-        try:
-            msvcrt.locking(file.fileno(), mode, os.path.getsize(file.name))
-        except IOError:
-            pass
-            
+        hfile = win32file._get_osfhandle(file.fileno())
+        win32file.UnlockFileEx(hfile, 0, 0x7fff0000, __overlapped)
+
+
 elif os_locking == 'posix':
     LOCK_EX = fcntl.LOCK_EX
     LOCK_SH = fcntl.LOCK_SH
@@ -94,7 +90,10 @@ elif os_locking == 'posix':
 
 
 else:
-    logger.debug('no file locking, this will cause problems')
+    if platform.system() == 'Windows':
+        logger.error('no file locking, you must install the win32 extensions from: http://sourceforge.net/projects/pywin32/files/')
+    else:
+        logger.debug('no file locking, this will cause problems')
 
     LOCK_EX = None
     LOCK_SH = None
