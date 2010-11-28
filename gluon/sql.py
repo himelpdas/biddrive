@@ -1205,9 +1205,9 @@ class SQLDB(dict):
         elif is_jdbc and self._uri.startswith('sqlite://'):
             self._dbname='sqlite'
             if uri[9] != '/':
-                dbpath = os.path.join(self._folder, uri[14:])
+                dbpath = os.path.join(self._folder, uri[9:])
             else:
-                dbpath = uri[14:]
+                dbpath = uri[9:]
             self._pool_connection(lambda dbpath=dbpath: zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath)))
             self._cursor = self._connection.cursor()
             self._execute = lambda a: self._cursor.execute(a[:-1])
