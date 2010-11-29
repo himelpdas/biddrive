@@ -13,8 +13,8 @@ def auto_in(apps):
         app = b.split('/')[1]
         routes+=[
             ('.*:https?://(.*\.)?%s:$method /' % a,'%s' % b),
-            ('.*:https?://(.*\.)?%s:$method /static/$anything' % a,'%s/static/$anything' % app),
-            ('.*:https?://(.*\.)?%s:$method /appadmin/$anything' % a,'%s/appadmin/$anything' % app),
+            ('.*:https?://(.*\.)?%s:$method /static/$anything' % a,'/%s/static/$anything' % app),
+            ('.*:https?://(.*\.)?%s:$method /appadmin/$anything' % a,'/%s/appadmin/$anything' % app),
             ('.*:https?://(.*\.)?%s:$method /$anything' % a,'%s/$anything' % b), 
             ]
     return routes
