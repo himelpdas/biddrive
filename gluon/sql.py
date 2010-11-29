@@ -2593,7 +2593,10 @@ class Expression(object):
         return Expression(str(self) + ', ' + str(other), None, None)
 
     def __invert__(self):
-        return Expression(str(self) + ' DESC', None, None)
+        if str(self)[-5:] == ' DESC':
+            return Expression(str(self)[:-5], None, None)
+        else:
+            return Expression(str(self) + ' DESC', None, None) 
 
     # for use in Query
 
