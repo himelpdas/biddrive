@@ -1562,11 +1562,17 @@ class FORM(DIV):
                 status = False
                 self.record_changed = True
         status = self._traverse(status,hideerror)
-        if status and onvalidation:
-            if isinstance(onvalidation, (list, tuple)):
-                [f(self) for f in onvalidation]
-            else:
-                onvalidation(self)
+        if onvalidation:
+            if isinstance(onvalidation, dict):
+                before = onvalidation.get('before', None)
+                after = onvalidation.get('after', None)
+                if before and vars: before(self)
+                if after and status: after(self)
+            elif status:
+                if isinstance(onvalidation, (list, tuple)):
+                    [f(self) for f in onvalidation]
+                else:
+                    onvalidation(self)
         if self.errors:
             status = False
         if session != None:

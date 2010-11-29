@@ -2818,7 +2818,7 @@ class Crud(object):
         if request.vars.delete_this_record:
             keepvalues = False
         if isinstance(onvalidation,dict):
-            onvalidation=onvalidation.get(table._tablename,[])
+            onvalidation=onvalidation.get(table._tablename, [])
         if form.accepts(request, _session, formname=_formname,
                         onvalidation=onvalidation, keepvalues=keepvalues,
                         hideerror=self.settings.hideerror,
