@@ -26,8 +26,8 @@ def auto_out(apps):
         if b.endswith('/'): b=b[:-1]
         app = b.split('/')[1]
         routes+=[
-            ('%s/static/$anything' % app,'/static/$anything'),
-            ('%s/appadmin/$anything' % app, '/appadmin/$anything'),
+            ('/%s/static/$anything' % app,'/static/$anything'),
+            ('/%s/appadmin/$anything' % app, '/appadmin/$anything'),
             ('%s/$anything' % b, '/$anything'),
             ]
     return routes
