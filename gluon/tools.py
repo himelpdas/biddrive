@@ -2776,8 +2776,6 @@ class Crud(object):
                 or self.settings.update_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.update_onvalidation
-            if isinstance(onvalidation,dict):
-                onvalidation=onvalidation.get(table._tablename, [])
         if onaccept == DEFAULT:
             onaccept = self.settings.update_onaccept
         if ondelete == DEFAULT:
@@ -2819,6 +2817,8 @@ class Crud(object):
         keepvalues = self.settings.keepvalues
         if request.vars.delete_this_record:
             keepvalues = False
+        if isinstance(onvalidation,StorageList):
+            onvalidation=onvalidation.get(table._tablename, [])
         if form.accepts(request, _session, formname=_formname,
                         onvalidation=onvalidation, keepvalues=keepvalues,
                         hideerror=self.settings.hideerror,
@@ -2865,8 +2865,6 @@ class Crud(object):
             next = self.settings.create_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.create_onvalidation
-            if isinstance(onvalidation,dict):
-                onvalidation=onvalidation.get(table._tablename, [])
         if onaccept == DEFAULT:
             onaccept = self.settings.create_onaccept
         if log == DEFAULT:
