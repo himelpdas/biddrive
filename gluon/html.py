@@ -1564,10 +1564,13 @@ class FORM(DIV):
         status = self._traverse(status,hideerror)
         if onvalidation:
             if isinstance(onvalidation, dict):
-                before = onvalidation.get('before', None)
-                after = onvalidation.get('after', None)
-                if before and vars: before(self)
-                if after and status: after(self)
+                onsuccess = onvalidation.get('onsuccess', None)
+                onfailure = onvalidation.get('onfailure', None)
+                if onsuccess and status: 
+                    onsuccess(self)
+                if onfailure and vars and not status: 
+                    onfailure(self)
+                    status = len(self.errors) == 0
             elif status:
                 if isinstance(onvalidation, (list, tuple)):
                     [f(self) for f in onvalidation]
