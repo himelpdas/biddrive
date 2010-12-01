@@ -76,11 +76,11 @@ def populate(table, n, default=True):
                 record[fieldname]=ell.generate(random.randint(10,100),prefix=None)
             elif field.type == 'boolean':
                 record[fieldname]=random.random()>0.5
-            elif field.type in ['date']:
+            elif field.type == 'date':
                 record[fieldname] = \
                     datetime.date(2009,1,1) - \
                     datetime.timedelta(days=random.randint(0,365))
-            elif field.type in ['datetime']:
+            elif field.type == 'datetime':
                 record[fieldname] = \
                     datetime.datetime(2009,1,1) - \
                     datetime.timedelta(days=random.randint(0,365))
