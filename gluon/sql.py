@@ -822,7 +822,7 @@ class SQLDB(dict):
         fileobj = open(filename,mode)
         if lock and mode in ('r','rb'):
             portalocker.lock(fileobj,portalocker.LOCK_SH)
-        elif lock and mode in ('w','wb'):
+        elif lock and mode in ('w','wb','a'):
             portalocker.lock(fileobj,portalocker.LOCK_EX)
         return fileobj
 
