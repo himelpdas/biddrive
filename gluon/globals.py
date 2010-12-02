@@ -385,6 +385,7 @@ class Session(Storage):
         response.cookies[response.session_id_name]['path'] = '/'
 
     def _try_store_on_disk(self, request, response):
+        if not hasattr(os,'mkdir'): return
         if response._dbtable_and_field \
                 or not response.session_id \
                 or self._forget:
