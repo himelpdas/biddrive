@@ -809,6 +809,32 @@ class SQLDB(dict):
     # ## this allows gluon to set a folder for this thread
     _connection_pools={}
 
+    def _exists(self, filename):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        return os.path.exists(filename)
+
+    def _open(self, filename, mode='rb', lock=True):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        fileobj = open(filename,mode)
+        if lock and mode in ('r','rb'):
+            portalocker.lock(fileobj,portalocker.LOCK_SH)
+        elif lock and mode in ('w','wb'):
+            portalocker.lock(fileobj,portalocker.LOCK_EX)
+        return fileobj
+
+    def _close(self, fileobj, unlock=True):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        if fileobj:
+            if unlock:
+                portalocker.unlock(fileobj)
+            fileobj.close()
+
     @staticmethod
     def set_folder(folder):
         thread.folder=folder
@@ -1814,10 +1840,10 @@ class Table(dict):
                      % (md5_hash(self._db._uri), self._tablename))
         if self._dbt:
             self._logfilename = os.path.join(dbpath, 'sql.log')
-            logfile = open(self._logfilename, 'a')
+            logfile = self._db._open(self._logfilename, 'a')
         else:
             logfile = None
-        if not self._dbt or not os.path.exists(self._dbt):
+        if not self._dbt or not self._db._exists(self._dbt):
             if self._dbt:
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
@@ -1850,30 +1876,27 @@ class Table(dict):
                     self._db._execute(modify_tbl_sql)
                 self._db.commit()
             if self._dbt:
-                tfile = open(self._dbt, 'w')
-                portalocker.lock(tfile, portalocker.LOCK_EX)
+                tfile = self._db._open(self._dbt, 'w')
                 cPickle.dump(sql_fields, tfile)
-                portalocker.unlock(tfile)
-                tfile.close()
+                self._db._close(tfile)
                 if fake_migrate:
                     logfile.write('faked!\n')
                 else:
                     logfile.write('success!\n')
         else:
-            tfile = open(self._dbt, 'r')
-            portalocker.lock(tfile, portalocker.LOCK_SH)
+            tfile = self._db._open(self._dbt, 'r')
             try:
                 sql_fields_old = cPickle.load(tfile)
             except EOFError:
-                portalocker.unlock(tfile)
-                tfile.close()
+                self._db._close(tfile)
+                self._db._close(logfile)
                 raise RuntimeError, 'File %s appears corrupted' % self._dbt
-            portalocker.unlock(tfile)
-            tfile.close()
+            self._db._close(tfile)
             if sql_fields != sql_fields_old:
                 self._migrate(sql_fields, sql_fields_old,
                               sql_fields_aux, logfile,
                               fake_migrate=fake_migrate)
+            self._db._close(logfile)
         return query
 
     def _migrate(
@@ -1950,24 +1973,20 @@ class Table(dict):
                         # caveat. mysql, oracle and firebird do not allow multiple alter table
                         # in one transaction so we must commit partial transactions and
                         # update self._dbt after alter table.
-                        if self._db._dbname in ['mysql', 'oracle', 'firebird']:                            
+                        if self._db._dbname in ['mysql', 'oracle', 'firebird']:
                             self._db.commit()
-                            tfile = open(self._dbt, 'w')
-                            portalocker.lock(tfile, portalocker.LOCK_EX)
+                            tfile = self._db._open(self._dbt, 'w')
                             cPickle.dump(sql_fields_current, tfile)
-                            portalocker.unlock(tfile)
-                            tfile.close()
+                            self._db._close(tfile)
                             logfile.write('success!\n')
                     else:
                         logfile.write('faked!\n')
 
         if fields_changed and not self._db._dbname in ['mysql', 'oracle', 'firebird']:
             self._db.commit()
-            tfile = open(self._dbt, 'w')
-            portalocker.lock(tfile, portalocker.LOCK_EX)
+            tfile = self._db._open(self._dbt, 'w')
             cPickle.dump(sql_fields_current, tfile)
-            portalocker.unlock(tfile)
-            tfile.close()
+            self._db._close(tfile)
 
     def create(self):
         """nothing to do; here for backward compatibility"""
@@ -1989,7 +2008,7 @@ class Table(dict):
 
     def drop(self, mode = None):
         if self._dbt:
-            logfile = open(self._logfilename, 'a')
+            logfile = self._db._open(self._logfilename, 'a')
         queries = self._drop(mode = mode)
         self._db['_lastsql'] = '\n'.join(queries)
         for query in queries:
@@ -2177,7 +2196,7 @@ class Table(dict):
 
     def truncate(self, mode = None):
         if self._dbt:
-            logfile = open(self._logfilename, 'a')
+            logfile = self._db._open(self._logfilename, 'a')
         queries = self._truncate(mode = mode)
         self._db['_lastsql'] = '\n'.join(queries)
         for query in queries:
@@ -2499,10 +2518,10 @@ class KeyedTable(Table):
                      % (md5_hash(self._db._uri), self._tablename))
         if self._dbt:
             self._logfilename = os.path.join(dbpath, 'sql.log')
-            logfile = open(self._logfilename, 'a')
+            logfile = self._db._open(self._logfilename, 'a')
         else:
             logfile = None
-        if not self._dbt or not os.path.exists(self._dbt):
+        if not self._dbt or not self._db._exists(self._dbt):
             if self._dbt:
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
@@ -2533,22 +2552,18 @@ class KeyedTable(Table):
                     self._db._execute(modify_tbl_sql)
                 self._db.commit()
             if self._dbt:
-                tfile = open(self._dbt, 'w')
-                portalocker.lock(tfile, portalocker.LOCK_EX)
+                tfile = self._db._open(self._dbt, 'w')
                 cPickle.dump(sql_fields, tfile)
-                portalocker.unlock(tfile)
-                tfile.close()
+                self._db._close(tfile)
             if self._dbt:
                 if fake_migrate:
                     logfile.write('faked!\n')
                 else:
                     logfile.write('success!\n')
         else:
-            tfile = open(self._dbt, 'r')
-            portalocker.lock(tfile, portalocker.LOCK_SH)
+            tfile = self._db._open(self._dbt, 'r')
             sql_fields_old = cPickle.load(tfile)
-            portalocker.unlock(tfile)
-            tfile.close()
+            self._db._close(tfile)
             if sql_fields != sql_fields_old:
                 self._migrate(sql_fields, sql_fields_old,
                               sql_fields_aux, logfile)
