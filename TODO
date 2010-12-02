@@ -1,3 +1,18 @@
+todo:
+
+- crm + appointments
+- fix gae_admin
+- fix estore
+- fix doc_net
+- fix crm
+- fix kpax
+- pick one log analyzer
+- jpolite (no), iframes (yes) -> events (events_old is broken)
+- social
+- unipy + d2l + cas (merge!)
+- webmail vs webmailer?
+- survey login
+
 Undocumented features:
 
 - app level logging

@@ -2159,8 +2159,8 @@ class Auth(object):
 
     def impersonate(self, user_id=DEFAULT):
         """
-        usage: http://..../impersonate/[user_id]
-        or:    http://..../impersonate/0 to restore impersonator
+        usage: POST TO http://..../impersonate request.post_vars.user_id=<id>
+        set request.post_vars.user_id to 0 to restore original user.
 
         requires impersonator is logged in and
         has_permission('impersonate', 'auth_user', user_id)
@@ -2168,10 +2168,10 @@ class Auth(object):
         request = self.environment.request
         session = self.environment.session
         auth = session.auth
-        if not self.is_logged_in():
+        if not self.is_logged_in() or not self.environment.request.post_vars:
             raise HTTP(401, "Not Authorized")
-        if user_id == DEFAULT and self.environment.request.args:
-            user_id = self.environment.request.args[1]
+        if user_id == DEFAULT:
+            user_id = self.environment.request.post_vars.user_id
         if user_id and user_id != self.user.id and user_id != '0':
             if not self.has_permission('impersonate',
                                        self.settings.table_user_name,
