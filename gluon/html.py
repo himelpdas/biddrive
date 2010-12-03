@@ -29,6 +29,9 @@ from validators import *
 from highlight import highlight
 from utils import web2py_uuid
 
+import hmac
+import hashlib
+
 regex_crlf = re.compile('\r|\n')
 
 __all__ = [
@@ -131,7 +134,8 @@ def URL(
     vars={},
     anchor='',
     extension=None,
-    env=None
+    env=None,
+    hmac_key=None
     ):
     """
     generate a relative URL
@@ -158,6 +162,7 @@ def URL(
     :param args: any arguments (optional)
     :param vars: any variables (optional)
     :param anchor: anchorname, without # (optional)
+    :param hmac_key: key to use when generating hmac signature(optional)
 
     :raises SyntaxError: when no application, controller or function is
         available
@@ -186,32 +191,78 @@ def URL(
 
     if not (application and controller and function):
         raise SyntaxError, 'not enough information to build the url'
-
-    other = ''
+    
     if args != [] and not isinstance(args, (list, tuple)):
         args = [args]
-    if args:
-        other = urllib.quote('/' + '/'.join([str(x) for x in args]))
+    
+    other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
+    m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
+                                   for key in sorted(vars.iterkeys())) or ''
+
+    if hmac_key:
+        # need to generate an hmac signature of the vars & args so can later
+        # verify the user hasn't messed with anything
+        # first join all the args & vars into one long string
+        m_args = '/%s/%s/%s%s' % (application, controller, function, other)        
+        # get rid of var _sig if present
+        if vars.has_key('_signature'): vars.pop('_signature')
+        # sort so we've got a way to ensure later we're 
+        # re-assembling the same way during hash authentication
+        message = m_args+'?'+m_vars
+        sig = hmac.new(hmac_key,message, hashlib.sha1).hexdigest()
+        m_vars = m_vars+(m_vars and '&' or '')+'_signature='+sig
+
     if extension:
         function += '.'+extension
     if anchor:
         other += '#' + urllib.quote(str(anchor))
     if vars:
-        t = []
-        for k,v in vars.items():
-            if isinstance(v, (list,tuple)):
-                for x in v:
-                    t.append((k,x))
-            else:
-                t.append((k,v))
-        other += '?%s' % urllib.urlencode(t)
+        other += '?%s' % m_vars
 
     url = '/%s/%s/%s%s' % (application, controller, function, other)
-
+    
     if regex_crlf.search(url):
         raise SyntaxError, 'CRLF Injection Detected'
     return XML(rewrite.filter_out(url, env))
+    
+def verifyURL(request, hmac_key):
+    """
+    Verifies that a request's args & vars have not been tampered with by the user
+    
+    :param request: web2py's request object
+    :param hmac_key: the key to authenticate with, must be the same one previously 
+                     used when calling URL()
 
+    do not call directly. Use instead:
+
+    URL.verify(hmac_key='...')
+
+    the key has to match the one used to generate the URL.
+    """
+    
+    if not request.get_vars.has_key('_signature'):
+        return False
+
+    # get our sig from request.get_vars
+    original_sig = request.get_vars._signature
+    # remove the sig var since it is not part of our generated hmac
+    request.get_vars.pop('_signature')
+        
+    # now generate a new hmac for the remaining args & vars
+    # first join all the args & vars into one long string
+    vars, args = request.get_vars, request.args
+    m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
+                                   for key in sorted(vars.iterkeys())) or ''
+    other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
+    m_args = '/%s/%s/%s%s' % (request.application, 
+                              request.controller, 
+                              request.function, other)
+    # sort so we've got a way to ensure later we're re-assembling 
+    # the same way during hash authentication
+    message = m_args+'?'+m_vars
+    sig = hmac.new(hmac_key, message, hashlib.sha1).hexdigest()    
+    return original_sig == sig
+    
 def _gURL(request):
     """
     A proxy function for URL which contains knowledge
@@ -234,6 +285,7 @@ def _gURL(request):
                 args = []
         return URL(*args, **kwargs)
     _URL.__doc__ = URL.__doc__
+    _URL.verify = lambda hmac_key, request=request: verifyURL(request,hmac_key)
     return _URL
 
 
