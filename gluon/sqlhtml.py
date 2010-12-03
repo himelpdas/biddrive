@@ -1268,9 +1268,12 @@ class SQLTABLE(TABLE):
                 _class = 'odd'
             for colname in columns:
                 if not table_field.match(colname):
-                    r = record._extra[colname]
-                    row.append(TD(r))
-                    continue
+                    if "_extra" in record and colname in record._extra:
+                        r = record._extra[colname]
+                        row.append(TD(r))
+                        continue
+                    else:
+                        raise KeyError("Column %s not found (SQLTABLE)" % colname)
                 (tablename, fieldname) = colname.split('.')
                 try:
                     field = sqlrows.db[tablename][fieldname]
