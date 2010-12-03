@@ -871,6 +871,7 @@ class Auth(object):
         self.settings.profile_next = self.url('index')
         self.settings.profile_onvalidation = []
         self.settings.profile_onaccept = []
+        self.settings.profile_fields = None
         self.settings.retrieve_username_next = self.url('index')
         self.settings.retrieve_password_next = self.url('index')
         self.settings.request_reset_password_next = self.url('user', args='login')
@@ -2129,7 +2130,7 @@ class Auth(object):
         form = SQLFORM(
             table_user,
             self.user.id,
-            fields = self.settings.register_fields,
+            fields = self.settings.profile_fields,
             hidden = dict(_next=next),
             showid = self.settings.showid,
             submit_button = self.messages.submit_button,
