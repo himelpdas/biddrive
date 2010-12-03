@@ -7,8 +7,8 @@ import codecs
 def write_changelog_bzr(repo_path, output_dir, 
                                         output_file='bzr_revision_log.txt', 
                                         target_encoding='utf-8'):
-	"""Write the bzr changelog to a file which can then be included in the documentation
-	"""
+    """Write the bzr changelog to a file which can then be included in the documentation
+    """
 
     bzr_logfile_path = os.path.join(output_dir, output_file)
     bzr_logfile = codecs.open(bzr_logfile_path, 'w', encoding=target_encoding)

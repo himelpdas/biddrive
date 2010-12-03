@@ -203,7 +203,7 @@ def URL(
                 for x in v:
                     t.append((k,x))
             else:
-                t.append((k,v))  
+                t.append((k,v))
         other += '?%s' % urllib.urlencode(t)
 
     url = '/%s/%s/%s%s' % (application, controller, function, other)
@@ -215,13 +215,13 @@ def URL(
 def _gURL(request):
     """
     A proxy function for URL which contains knowledge
-    of a given request object. 
-    
+    of a given request object.
+
     Usage is exactly like URL except you do not have
     to specify r=request!
     """
     def _URL(*args, **kwargs):
-        # If they use URL as just passing along 
+        # If they use URL as just passing along
         # args, we don't want to overwrite it and
         # cause issues.
         if not kwargs.has_key('r') and len(args) < 3:
@@ -355,7 +355,7 @@ class XML(XmlComponent):
         """
         return []
 
-### important to allow safe session.flash=T(....)                                                             
+### important to allow safe session.flash=T(....)
 def XML_unpickle(data):
     return marshal.loads(data)
 def XML_pickle(data):
@@ -423,7 +423,7 @@ class DIV(XmlComponent):
     def append(self, value):
         """
         list style appending of components
-        
+
         >>> a=DIV()
         >>> a.append(SPAN('x'))
         >>> print a
@@ -515,7 +515,7 @@ class DIV(XmlComponent):
         eg for wrapping some components in another component or blocking them.
         """
         return
-    
+
     def _wrap_components(self, allowed_parents,
                          wrap_parent = None,
                          wrap_lambda = None):
@@ -686,9 +686,9 @@ class DIV(XmlComponent):
         """
         find all component that match the supplied attribute dictionary,
         or None if nothing could be found
-        
+
         All components of the components are searched.
-        
+
         >>> a = DIV(DIV(SPAN('x'),3,DIV(SPAN('y'))))
         >>> for c in a.elements('span',first_only=True): c[0]='z'
         >>> print a
@@ -720,7 +720,7 @@ class DIV(XmlComponent):
             return reduce(lambda a,b:a+b,subset,[])
         elif len(args)==1:
             items = args[0].split()
-            if len(items)>1:  
+            if len(items)>1:
                 subset=[a.elements(' '.join(items[1:]),**kargs) for a in self.elements(items[0])]
                 return reduce(lambda a,b:a+b,subset,[])
             else:
@@ -735,9 +735,9 @@ class DIV(XmlComponent):
                     if match_id: kargs['_id'] = match_id.group(1)
                     if match_class: kargs['_class'] = re.compile('(?<!\w)%s(?!\w)' % \
                        match_class.group(1).replace('-','\\-').replace(':','\\:'))
-                    for item in match_attr:                        
+                    for item in match_attr:
                         kargs['_'+item.group(1)]=item.group(2)
-                    return self.elements(*args,**kargs)                        
+                    return self.elements(*args,**kargs)
         # make a copy of the components
         matches = []
         first_only = False
@@ -776,7 +776,7 @@ class DIV(XmlComponent):
         # loop the copy
         for c in self.components:
             if isinstance(c, XmlComponent):
-                kargs['first_only'] = first_only		
+                kargs['first_only'] = first_only
                 child_matches = c.elements( *args,  **kargs )
                 if first_only  and len(child_matches) != 0:
                     return child_matches
@@ -1099,7 +1099,7 @@ class HR(DIV):
     tag = 'hr/'
 
 
-class A(DIV):    
+class A(DIV):
     tag = 'a'
     def xml(self):
         if self['cid']:
@@ -1350,7 +1350,7 @@ class INPUT(DIV):
             return True
         return False
 
-    def _postprocessing(self):        
+    def _postprocessing(self):
         t = self['_type']
         if not t:
             t = self['_type'] = 'text'
@@ -1550,7 +1550,7 @@ class FORM(DIV):
 
         status = True
         if self.session:
-            formkey = self.session.get('_formkey[%s]' % self.formname, None)            
+            formkey = self.session.get('_formkey[%s]' % self.formname, None)
             # check if user tampering with form and void CSRF
             if formkey != self.request_vars._formkey:
                 status = False
@@ -1566,9 +1566,9 @@ class FORM(DIV):
             if isinstance(onvalidation, dict):
                 onsuccess = onvalidation.get('onsuccess', None)
                 onfailure = onvalidation.get('onfailure', None)
-                if onsuccess and status: 
+                if onsuccess and status:
                     onsuccess(self)
-                if onfailure and vars and not status: 
+                if onfailure and vars and not status:
                     onfailure(self)
                     status = len(self.errors) == 0
             elif status:
@@ -1597,12 +1597,12 @@ class FORM(DIV):
             self['_enctype'] = 'multipart/form-data'
 
     def hidden_fields(self):
-        c = []        
+        c = []
         if 'hidden' in self.attributes:
             for (key, value) in self.attributes.get('hidden',
                     {}).items():
                 c.append(INPUT(_type='hidden', _name=key, _value=value))
-            
+
         if hasattr(self, 'formkey') and self.formkey:
             c.append(INPUT(_type='hidden', _name='_formkey',
                      _value=self.formkey))
@@ -1732,7 +1732,7 @@ class MENU(DIV):
             if isinstance(link,DIV):
                 li = LI(link)
             elif 'no_link_url' in self.attributes and self['no_link_url']==link:
-                li = LI(DIV(name))            
+                li = LI(DIV(name))
             elif link:
                 li = LI(A(name, _href=link))
             else:
@@ -1847,7 +1847,7 @@ class web2pyHTMLParser(HTMLParser):
         for key,value in attrs: tag['_'+key]=value
         tag.parent = self.parent
         self.parent.append(tag)
-        if not tag.tag.endswith('/'):            
+        if not tag.tag.endswith('/'):
             self.parent=tag
         else:
             self.last = tag.tag[:-1]
@@ -1867,10 +1867,10 @@ class web2pyHTMLParser(HTMLParser):
         # this deals with unbalanced tags
         if tagname==self.last:
             return
-        while True:            
+        while True:
             try:
                 parent_tagname=self.parent.tag
-                self.parent = self.parent.parent            
+                self.parent = self.parent.parent
             except:
                 raise RuntimeError, "unable to balance tag %s" % tagname
             if parent_tagname[:len(tagname)]==tagname: break

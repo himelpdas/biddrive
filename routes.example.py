@@ -81,16 +81,16 @@ routes_out = ((r'.*http://otherdomain.com.* /app/ctr(?P<any>.*)', r'\g<any>'),
 def __routes_doctest():
     '''
     Dummy function for doctesting routes.py.
-    
+
     Use filter_url() to test incoming or outgoing routes;
     filter_err() for error redirection.
-    
+
     filter_url() accepts overrides for method and remote host:
         filter_url(url, method='get', remote='0.0.0.0', out=False)
 
     filter_err() accepts overrides for application and ticket:
         filter_err(status, application='app', ticket='tkt')
-    
+
     >>> filter_url('http://domain.com/favicon.ico')
     'http://domain.com/examples/static/favicon.ico'
     >>> filter_url('https://domain.com/robots.txt')

@@ -44,7 +44,7 @@ def abspath(*relpath, **base):
         return path
     if gluon:
         return os.path.join(global_settings.gluon_parent, path)
-    return os.path.join(global_settings.applications_parent, path)    
+    return os.path.join(global_settings.applications_parent, path)
 
 def listdir(
     path,
@@ -194,7 +194,7 @@ def w2p_pack(filename, path, compiled=False):
     w2pfp.close()
     tarfp.close()
     os.unlink(tarname)
-    
+
 def w2p_unpack(filename, path, delete_tar=True):
     filename = abspath(filename)
     path = abspath(path)

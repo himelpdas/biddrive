@@ -267,7 +267,7 @@ class Session(Storage):
                         os.path.join(up(request.folder), masterapp,
                             'sessions', response.session_id)
                 else:
-                    response.session_id = None            
+                    response.session_id = None
             if response.session_id:
                 try:
                     response.session_file = \
@@ -286,7 +286,7 @@ class Session(Storage):
                         response.session_file.close()
                         del response.session_file
                     response.session_id = None
-            if not response.session_id:                
+            if not response.session_id:
                 uuid = web2py_uuid()
                 response.session_id = '%s-%s' % (client, uuid)
                 if separate:

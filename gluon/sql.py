@@ -478,7 +478,7 @@ def sqlhtml_validators(field):
             return r._format(row)
         else:
             return id
-    
+
     if field_type == 'string':
         requires.append(validators.IS_LENGTH(field_length))
     elif field_type == 'text':
@@ -517,7 +517,7 @@ def sqlhtml_validators(field):
         def list_ref_repr(ids, r=referenced, f=ff):
             refs = r._db(r.id.belongs(ids)).select(r.id)
             return (ids and ', '.join(f(r,ref.id) for ref in refs) or '')
-        field.represent = list_ref_repr     
+        field.represent = list_ref_repr
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
                                            referenced._format,multiple=True)
@@ -855,7 +855,7 @@ class SQLDB(dict):
                 sql_locker.acquire()
                 pool = SQLDB._connection_pools[instance._uri]
                 if len(pool) < instance._pool_size:
-                    pool.append(instance._connection)                    
+                    pool.append(instance._connection)
                     really = False
                 sql_locker.release()
             if really:
@@ -1707,7 +1707,7 @@ class Table(dict):
             return record
         elif kwargs:
             query = reduce(lambda a, b:a & b, [self[k] == v for k, v in kwargs.items()])
-            return self._db(query).select(limitby=(0, 1)).first()            
+            return self._db(query).select(limitby=(0, 1)).first()
         else:
             return None
 
@@ -1790,7 +1790,7 @@ class Table(dict):
             if not isinstance(field.type, SQLCustomType) and \
                     not field.type.startswith('id') and \
                     not field.type.startswith('reference'):
-                if field.notnull:                    
+                if field.notnull:
                     ftype += ' NOT NULL'
                 if field.unique:
                     ftype += ' UNIQUE'
@@ -1809,7 +1809,7 @@ class Table(dict):
                                       % dict(default=sql_represent(field.default,
                                        field.type, self._db._dbname, self._db._db_codec)))
 
-            sql_fields_aux[field.name] = ftype            
+            sql_fields_aux[field.name] = ftype
             fields.append('%s %s' % (field.name, ftype))
         other = ';'
 
@@ -2456,7 +2456,7 @@ class KeyedTable(Table):
             else:
                 ftype = self._db._translator[field.type]\
                      % dict(length=field.length)
-            if not field.type.startswith('id') and not field.type.startswith('reference'): 
+            if not field.type.startswith('id') and not field.type.startswith('reference'):
                 if field.notnull:
                     ftype += ' NOT NULL'
                 if field.unique:
@@ -2611,7 +2611,7 @@ class Expression(object):
         if str(self)[-5:] == ' DESC':
             return Expression(str(self)[:-5], None, None)
         else:
-            return Expression(str(self) + ' DESC', None, None) 
+            return Expression(str(self) + ' DESC', None, None)
 
     # for use in Query
 
@@ -2826,7 +2826,7 @@ class Field(Expression):
         self.type = type  # 'string', 'integer'
         self.length = length # the length of the string
         if default==DEFAULT:
-            self.default = update or None 
+            self.default = update or None
         else:
             self.default = default
         self.required = required  # is this field required
@@ -2871,7 +2871,7 @@ class Field(Expression):
         newfilename = '%s.%s.%s.%s' % \
             (self._tablename, self.name, uuid_key, encoded_filename)
         newfilename = newfilename[:200] + '.' + extension
-        if isinstance(self.uploadfield,Field):            
+        if isinstance(self.uploadfield,Field):
             blob_uploadfield_name = self.uploadfield.uploadfield
             keys={self.uploadfield.name: newfilename,
                   blob_uploadfield_name: file.read()}
@@ -3231,7 +3231,7 @@ important_tablenames ]
             sql_t = ', '.join([ t for t in
 excluded + tables_to_merge.keys()])
             if joint:
-                sql_t += ' %s %s' % (command, ','.join([t for t in joint]))             
+                sql_t += ' %s %s' % (command, ','.join([t for t in joint]))
             #/patch join+left patch
             for t in joinon:
                 sql_t += ' %s %s' % (command, str(t))
@@ -3445,7 +3445,7 @@ excluded + tables_to_merge.keys()])
             for item in virtualfields:
                 try:
                     rowsobj = rowsobj.setvirtualfields(**{table:item})
-                except KeyError: 
+                except KeyError:
                     # to avoid breaking virtualfields when partial select
                     pass
         return rowsobj
@@ -3472,7 +3472,7 @@ excluded + tables_to_merge.keys()])
         self.delete_uploaded_files()
         ### special code to handle CASCADE in SQLite
         db=self._db
-        t = self._tables[0]            
+        t = self._tables[0]
         if db._dbname=='sqlite' and db[t]._referenced_by:
             table = db[t]
             deleted = [x[table._id.name] for x in self.select(table._id)]
@@ -3506,7 +3506,7 @@ excluded + tables_to_merge.keys()])
                                        for fieldname in table.fields \
                                        if not fieldname in update_fields \
                                        and table[fieldname].compute != None]))
-        sql_v = 'SET ' + ', '.join(['%s=%s' % (field, 
+        sql_v = 'SET ' + ', '.join(['%s=%s' % (field,
                                    sql_represent(value,
                                    table[field].type, dbname, self._db._db_codec))
                                    for (field, value) in
@@ -3551,7 +3551,7 @@ excluded + tables_to_merge.keys()])
                     continue
                 uploadfolder = field.uploadfolder
                 if not uploadfolder:
-                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')                
+                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')
                 if field.uploadseparate:
                     items = oldname.split('.')
                     uploadfolder = os.path.join(uploadfolder,
@@ -3659,7 +3659,7 @@ class Rows(object):
 
     def exclude(self, f):
         """
-        removes elements from the calling Rows object, filtered by the function f, 
+        removes elements from the calling Rows object, filtered by the function f,
         and returns a new Rows object containing the removed elements
         """
         if not self.records:
@@ -3784,7 +3784,7 @@ class Rows(object):
             for col in self.colnames:
                 if not table_field.match(col):
                     row.append(record._extra[col])
-                else:                    
+                else:
                     (t, f) = col.split('.')
                     field = self.db[t][f]
                     if isinstance(record.get(t, None), (Row,dict)):
@@ -4086,7 +4086,7 @@ def DAL(uri='sqlite:memory:',
                 except SyntaxError, exception:
                     raise SyntaxError, exception
                 except Exception, exception:
-                    if uri==uris[-1]: 
+                    if uri==uris[-1]:
                         time.sleep(1)
         raise RuntimeError, "%s (tried 5 times)" % exception
 

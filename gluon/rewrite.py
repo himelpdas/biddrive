@@ -48,11 +48,11 @@ thread.routes = params # default to base rewrite parameters
 def compile_re(k, v):
     """
     Preprocess and compile the regular expressions in routes_app/in/out
-    
+
     The resulting regex will match a pattern of the form:
-    
+
         [remote address]:[protocol]://[host]:[method] [path]
-    
+
     We allow abbreviated regexes on input; here we try to complete them.
     """
     k0 = k  # original k for error reporting
@@ -86,7 +86,7 @@ def load(routes='routes.py', app=None):
     """
     load: read and parse routes.py
     (called from main.py at web2py initialization time)
-    store results in params 
+    store results in params
     """
     if app is None:
         path = abspath(routes)

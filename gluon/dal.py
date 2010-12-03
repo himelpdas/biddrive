@@ -2042,7 +2042,7 @@ class DAL(dict):
                     connected = True
                     break
                 except SyntaxError:
-                    raise 
+                    raise
                 except:
                     time.sleep(1)
             if not connected:

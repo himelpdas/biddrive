@@ -92,10 +92,10 @@ def populate(table, n, default=True):
                 record[fieldname] = ''
             elif field.type == 'upload':
                 record[fieldname] = None
-            elif field.type=='integer' and hasattr(field.requires,'options'):                
+            elif field.type=='integer' and hasattr(field.requires,'options'):
                 options=field.requires.options()
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
-            elif field.type=='list:integer' and hasattr(field.requires,'options'):                
+            elif field.type=='list:integer' and hasattr(field.requires,'options'):
                 options=field.requires.options()
                 if len(options) > 0:
                     vals = []
@@ -134,14 +134,14 @@ def populate(table, n, default=True):
                     record[fieldname] = vals
                 else:
                     record[fieldname] = 0
-            elif field.type=='list:string' and hasattr(field.requires,'options'):                
+            elif field.type=='list:string' and hasattr(field.requires,'options'):
                 options=field.requires.options()
                 if len(options) > 0:
                     vals = []
                     for i in range(0, random.randint(0,len(options)-1)/2):
                         vals.append(options[random.randint(0,len(options)-1)][0])
                     record[fieldname] = vals
-            elif field.type=='string' and hasattr(field.requires,'options'):                
+            elif field.type=='string' and hasattr(field.requires,'options'):
                 options=field.requires.options()
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
             elif field.type=='string' and fieldname.find('url')>=0:

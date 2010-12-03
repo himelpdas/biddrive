@@ -216,7 +216,7 @@ class Table(gluon.sql.Table):
         self.ALL = SQLALL(self)
 
     def _create(self,polymodel=None):
-        fields = []        
+        fields = []
         myfields = {}
         for k in self.fields:
             if isinstance(polymodel,Table) and k in polymodel.fields():
@@ -252,7 +252,7 @@ class Table(gluon.sql.Table):
         elif polymodel==True:
             self._tableobj = classobj(self._tablename, (PolyModel, ), myfields)
         elif isinstance(polymodel,Table):
-            self._tableobj = classobj(self._tablename, (polymodel._tableobj, ), myfields)            
+            self._tableobj = classobj(self._tablename, (polymodel._tableobj, ), myfields)
         else:
             raise RuntimeError, "polymodel must be None, True, a table or a tablename"
         return None
@@ -357,7 +357,7 @@ class Expression(object):
         return Query(self, 'IN', value)
 
     def contains(self, *values):
-        if self.type.startswith('list:'):            
+        if self.type.startswith('list:'):
             return Query(self, 'IN', values)
         else:
             raise RuntimeError, "Not supported"
@@ -696,7 +696,7 @@ class Set(gluon.sql.Set):
             raise SyntaxError, 'invalid select attribute: %s' % key
         if fields and isinstance(fields[0], SQLALL):
             self._tables.insert(0, fields[0].table._tablename)
-        (tablename, tableobj) = self._get_table_or_raise()        
+        (tablename, tableobj) = self._get_table_or_raise()
         items = tableobj.all() # was: items = gae.Query(tableobj)
         if not self.where:
             self.where = Query(fields[0].table.id,'>',0)
@@ -758,7 +758,7 @@ class Set(gluon.sql.Set):
 
         (items, tablename, fields) = self._select(*fields, **attributes)
         self._db['_lastsql'] = 'SELECT WHERE %s' % self.where
-        rows = []        
+        rows = []
         for item in items:
             new_item = []
             for t in fields:
@@ -800,7 +800,7 @@ class Set(gluon.sql.Set):
                leftitems = items.fetch(1000)
         else:
            gae.delete(items)
-        return counter 
+        return counter
 
     def update(self, **update_fields):
         self._db['_lastsql'] = 'UPDATE WHERE %s' % self.where

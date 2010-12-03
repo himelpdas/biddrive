@@ -13,9 +13,9 @@ class CasAuth( object ):
     """
     Login will be done via Web2py's CAS application, instead of web2py's
     login form.
-    
+
     Include in your model (eg db.py)::
-        
+
         from gluon.contrib.login_methods.cas_auth import CasAuth
         auth.define_tables(username=True)
         auth.settings.login_form=CasAuth(
@@ -34,12 +34,12 @@ class CasAuth( object ):
             actions = ['login','serviceValidate','logout'],
             casversion = 2,
             casusername = "cas:user")
-    
+
     where casusername is the xml node returned by CAS server which contains
     user's username.
 
     """
-    def __init__(self, g, 
+    def __init__(self, g,
                  urlbase = "https://web2py.com/cas/cas",
                  actions=['login','check','logout'],
                  maps=dict(username=lambda v:v[2],
@@ -47,7 +47,7 @@ class CasAuth( object ):
                            user_id=lambda v:v[0]),
                            casversion = 1,
                            casusername = 'cas:user'
-			  ):
+              ):
         self.urlbase=urlbase
         self.cas_login_url="%s/%s"%(self.urlbase,actions[0])
         self.cas_check_url="%s/%s"%(self.urlbase,actions[1])
@@ -110,6 +110,6 @@ class CasAuth( object ):
         redirects to the CAS logout page
         """
         import urllib
-        self.globals['redirect']( "%s?service=%s"%( 
+        self.globals['redirect']( "%s?service=%s"%(
                                                   self.cas_logout_url,
                                                   self.cas_my_url ) )

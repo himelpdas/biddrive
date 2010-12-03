@@ -322,12 +322,12 @@ class IS_IN_SET(Validator):
                 values = []
         else:
             values = [value]
-        failures = [x for x in values if not x in self.theset]        
+        failures = [x for x in values if not x in self.theset]
         if failures and self.theset:
             if self.multiple and (value == None or value == ''):
                 return ([], None)
             return (value, self.error_message)
-        if self.multiple:            
+        if self.multiple:
             if isinstance(self.multiple,(tuple,list)) and \
                     not self.multiple[0]<=len(values)<self.multiple[1]:
                 return (values, self.error_message)
@@ -433,7 +433,7 @@ class IS_IN_DB(Validator):
         if self.multiple:
             if isinstance(value,list):
                 values=value
-            elif value:            
+            elif value:
                 values = [value]
             else:
                 values = []
@@ -492,7 +492,7 @@ class IS_NOT_IN_DB(Validator):
         if not value.strip():
             return (value, self.error_message)
         if value in self.allowed_override:
-            return (value, None)        
+            return (value, None)
         (tablename, fieldname) = str(self.field).split('.')
         field = self.dbset._db[tablename][fieldname]
         rows = self.dbset(field == value).select(limitby=(0, 1))
@@ -2135,8 +2135,8 @@ class IS_DATETIME(Validator):
 
 class IS_DATE_IN_RANGE(IS_DATE):
     """
-    example::                                         
-    
+    example::
+
         >>> v = IS_DATE_IN_RANGE(minimum=datetime.date(2008,1,1), \
                                  maximum=datetime.date(2009,12,31), \
                                  format="%m/%d/%Y",error_message="oops")
@@ -2146,7 +2146,7 @@ class IS_DATE_IN_RANGE(IS_DATE):
 
         >>> v('03/03/2010')
         (datetime.date(2010, 3, 3), 'oops')
-                             
+
     """
     def __init__(self,
                  minimum = None,
@@ -2181,7 +2181,7 @@ class IS_DATE_IN_RANGE(IS_DATE):
 class IS_DATETIME_IN_RANGE(IS_DATETIME):
     """
     example::
-    
+
         >>> v = IS_DATETIME_IN_RANGE(\
                 minimum=datetime.datetime(2008,1,1,12,20), \
                 maximum=datetime.datetime(2009,12,31,12,20), \

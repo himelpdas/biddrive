@@ -821,7 +821,7 @@ class Auth(object):
         self.settings.allow_basic_login_only = False
         self.settings.on_failed_authorization = \
             self.url('user',args='not_authorized')
-        
+
         self.settings.on_failed_authentication = lambda x: redirect(x)
 
         self.settings.formstyle = 'table3cols'
@@ -2240,7 +2240,7 @@ class Auth(object):
                         return call_or_redirect(self.settings.on_failed_authentication,
                                                 self.settings.login_url + \
                                                     '?_next='+urllib.quote(next))
-                    else:                                                
+                    else:
                         self.environment.session.flash = \
                             self.messages.access_denied
                         return call_or_redirect(self.settings.on_failed_authorization)

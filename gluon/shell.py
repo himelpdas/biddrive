@@ -159,7 +159,7 @@ def run(
         if raw_input('application %s does not exist, create (y/n)?'
                       % a).lower() in ['y', 'yes']:
             os.mkdir(adir)
-            w2p_unpack('welcome.w2p', adir)            
+            w2p_unpack('welcome.w2p', adir)
             for subfolder in ['models','views','controllers', 'databases',
                               'modules','cron','errors','sessions',
                               'languages','static','private','uploads']:
