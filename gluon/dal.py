@@ -33,7 +33,7 @@ import os
 import types
 import cPickle
 import datetime
-import thread
+import threading
 import time
 import cStringIO
 import csv
@@ -47,6 +47,7 @@ import shutil
 import marshal
 import decimal
 import struct
+import urllib
 
 from utils import md5_hash, web2py_uuid
 from serializers import json
@@ -54,8 +55,10 @@ import portalocker
 import validators
 
 logger = logging.getLogger("web2py.dal")
+DEFAULT = lambda:0
 
-sql_locker = thread.allocate_lock()
+sql_locker = threading.RLock()
+thread = threading.local()
 
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
@@ -63,6 +66,7 @@ sql_locker = thread.allocate_lock()
 table_field = re.compile('[\w_]+\.[\w_]+')
 regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
+string_unpack=re.compile('(?<!\|)\|(?!\|)')
 
 # list of drivers will be built on the fly
 # and lists only what is available
@@ -132,112 +136,70 @@ except:
     logger.debug('no Ingres driver')
     # NOTE could try JDBC.......
 
-
-class Logger(object):
-
-    def __init__(self,folder,name='sql.log'):
-        if isinstance(folder,(str,unicode)):
-            self.file = open(os.path.join(folder,name),'a')
-        else:
-            self.file = None
-        self.active = False
-
-    def write(self,data):
-        if not self.active or not self.file:
-            return
-        portalocker.lock(self.file,portalocker.LOCK_EX)
-        ret = self.file.write(data)
-        portalocker.unlock(self.file)
-        return ret
-
-    def __zero__(self):
-        return not self.active
-
-
 class ConnectionPool(object):
-    _folders = {}
-    _connection_pools = {}
-    _instances = {}
+    _pools = {}
 
     @staticmethod
     def set_folder(folder):
-        sql_locker.acquire()
-        ConnectionPool._folders[thread.get_ident()] = folder
-        sql_locker.release()
+        thread.folder = folder
 
     # ## this allows gluon to commit/rollback all dbs in this thread
 
     @staticmethod
     def close_all_instances(action):
         """ to close cleanly databases in a multithreaded environment """
-        sql_locker.acquire()
-        pid = thread.get_ident()
-        if pid in ConnectionPool._folders:
-            del ConnectionPool._folders[pid]
-        if pid in ConnectionPool._instances:
-            instances = ConnectionPool._instances[pid]
-            while instances:
-                instance = instances.pop()
-                sql_locker.release()
-                action(instance)
+        if not hasattr(thread,'instances'):
+            return
+        while thread.instances:
+            instance = thread.instances.pop()
+            action(instance)
+            # ## if you want pools, recycle this connection
+            really = True
+            if instance._pool_size:
                 sql_locker.acquire()
-
-                # ## if you want pools, recycle this connection
-                really = True
-                if instance.pool_size:
-                    pool = ConnectionPool._connection_pools[instance.uri]
-                    if len(pool) < instance.pool_size:
-                        pool.append(instance.connection)
-                        really = False
-                if really:
-                    sql_locker.release()
-                    instance.connection.close()
-                    sql_locker.acquire()
-            del ConnectionPool._instances[pid]
-        sql_locker.release()
+                pool = ConnectionPool._pools[instance._uri]
+                if len(pool) < instance._pool_size:
+                    pool.append(instance._connection)
+                    really = False
+                sql_locker.release()
+            if really:
+                instance._connection.close()
         return
 
     def find_or_make_work_folder(self):
         """ this actually does not make the folder. it has to be there """
-        pid = thread.get_ident()
-        if not self.folder:
-            sql_locker.acquire()
-            if pid in self._folders:
-                self.folder = self._folders[pid]
-            else:
-                self.folder = self._folders[pid] = ''
-            sql_locker.release()
+        if hasattr(thread,'folder'):
+            self.folder = thread.folder
+        else:
+            self.folder = thread.folder = ''
 
         # Creating the folder if it does not exist
         if False and self.folder and not os.path.exists(self.folder):
             os.mkdir(self._folder)
 
     def pool_connection(self, f):
-        pid = thread.get_ident()
         if not self.pool_size:
             self.connection = f()
         else:
             uri = self.uri
             sql_locker.acquire()
-            if not uri in ConnectionPool._connection_pools:
-                ConnectionPool._connection_pools[uri] = []
-            if ConnectionPool._connection_pools[uri]:
-                self.connection = ConnectionPool._connection_pools[uri].pop()
+            if not uri in COnnectionPool._pools:
+                ConnectionPool._pools[uri] = []
+            if ConnectionPool._pools[uri]:
+                self._connection = ConnectionPool._pools[uri].pop()
                 sql_locker.release()
             else:
                 sql_locker.release()
                 self.connection = f()
-
-        sql_locker.acquire()
-        if not pid in self._instances:
-            self._instances[pid] = []
-        self._instances[pid].append(self)
-        sql_locker.release()
+        if not hasattr(thread,'instances'):
+            thread.instances = []
+        thread.instances.append(self)
         self.cursor = self.connection.cursor()
 
 
 class BaseAdapter(ConnectionPool):
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -487,7 +449,7 @@ class BaseAdapter(ConnectionPool):
                 sql_o += ' ORDER BY %s' % self.db._adapter.expand(orderby)
         if limitby:
             if not orderby and tablenames:
-                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in (self.db[t]._primarykey or ['id'])])
+                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or [self._db[t]._id.name])])
             # oracle does not support limitby
         return self.SELECT_LIMITBY(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
 
@@ -536,20 +498,10 @@ class BaseAdapter(ConnectionPool):
         return tables
 
     def commit(self):
-        self.db._logger.write('commit\n');
-        try:
-            ret = self.connection.commit()
-        finally :
-            self.db._logger.write(traceback.format_exc());
-        return ret
+        return self.connection.commit()
 
     def rollback(self):
-        self.db._logger.write('rollback\n');
-        try:
-            ret = self.connection.rollback()
-        finally:
-            self.db._logger.write(traceback.format_exc());
-        return ret
+        return self.connection.rollback()
 
     def support_distributed_transaction(self):
         return False
@@ -580,12 +532,7 @@ class BaseAdapter(ConnectionPool):
 
     def log_execute(self,*a,**b):
         self.db._lastsql = a[0]
-        self.db._logger.write(datetime.datetime.now().isoformat()+'\n'+a[0]+'\n')
-        try:
-            ret = self.cursor.execute(*a,**b)
-        finally:
-            self.db._logger.write(traceback.format_exc())
-        return ret
+        return self.cursor.execute(*a,**b)
 
     def execute(self,*a,**b):
         return self.log_execute(*a, **b)
@@ -595,9 +542,18 @@ class BaseAdapter(ConnectionPool):
             obj = obj()
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
+        if isinstance(obj, (Expression, Field)):
+            return str(obj)
+        if fieldtype.startswith('list:'):
+            if not obj:
+                obj = []
+            if not isinstance(obj, (list, tuple)):
+                obj = [obj]
+        if isinstance(obj, (list, tuple)):
+            obj = bar_encode(obj)
         if obj is None:
             return 'NULL'
-        if obj == '' and not fieldtype[:2] in ['st','te','pa','up']:
+        if obj == '' and not fieldtype[:2] in ['st', 'te', 'pa', 'up']:
             return 'NULL'
         r = BaseAdapter.represent_exceptions(self,obj,fieldtype)
         if r != None:
@@ -609,9 +565,9 @@ class BaseAdapter(ConnectionPool):
                 return "'F'"
         if fieldtype == 'id' or fieldtype == 'integer':
             return str(int(obj))
-        if fieldtype[:7] == 'decimal':
+        if fieldtype.startswith('decimal'):
             return str(obj)
-        elif fieldtype[0] == 'r': # reference
+        elif fieldtype.startswith('reference'): # reference
             if fieldtype.find('.')>0:
                 return repr(obj)
             elif isinstance(obj, (Row, Reference)):
@@ -661,6 +617,7 @@ class BaseAdapter(ConnectionPool):
         """ by default this function does nothing, oreload when db does no do slicing """
         return rows
 
+    ####### sync with sql.py !!!!!!!!!!!!!!!!!!!!!!!!
     def parse(self,rows,colnames,blob_decode=True):
         virtualtables = []
         new_rows = []
@@ -690,7 +647,7 @@ class BaseAdapter(ConnectionPool):
                 else:
                     colset = new_row[tablename] = Row()
                     virtualtables.append((tablename, self.db[tablename].virtualfields))
-                if field.type[:10] == 'reference ':
+                if field.type.startswith('reference'):
                     referee = field.type[10:].strip()
                     if not value:
                         colset[fieldname] = value
@@ -783,6 +740,9 @@ class SQLiteAdapter(BaseAdapter):
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'TEXT',
+        'list:string': 'TEXT',
+        'list:reference': 'TEXT',
         }
 
     def EXTRACT(self,field,what):
@@ -804,7 +764,8 @@ class SQLiteAdapter(BaseAdapter):
         except:
             return None
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -832,7 +793,8 @@ class SQLiteAdapter(BaseAdapter):
 
 class JDBCSQLiteAdapter(SQLiteAdapter):
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -869,6 +831,9 @@ class MySQLAdapter(BaseAdapter):
         'datetime': 'DATETIME',
         'id': 'INT AUTO_INCREMENT NOT NULL',
         'reference': 'INT, INDEX %(field_name)s__idx (%(field_name)s), FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'LONGTEXT',
+        'list:string': 'LONGTEXT',
+        'list:reference': 'LONGTEXT',
         }
 
     def RANDOM(self):
@@ -900,7 +865,8 @@ class MySQLAdapter(BaseAdapter):
     def concat_add(self,table):
         return '; ALTER TABLE %s ADD ' % table
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -927,8 +893,8 @@ class MySQLAdapter(BaseAdapter):
         port = int(m.group('port') or '3306')
         charset = m.group('charset') or 'utf8'
         self.pool_connection(lambda db=db,
-                             user=user,
-                             password=password,
+                             user=credential_decoder(user),
+                             password=credential_decoder(password),
                              host=host,
                              port=port,
                              charset=charset: MySQLdb.Connection(db=db,
@@ -965,6 +931,9 @@ class PostgreSQLAdapter(BaseAdapter):
         'datetime': 'TIMESTAMP',
         'id': 'SERIAL PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'TEXT',
+        'list:string': 'TEXT',
+        'list:reference': 'TEXT',
         }
 
     def sequence_name(self,table):
@@ -988,7 +957,8 @@ class PostgreSQLAdapter(BaseAdapter):
     def rollback_prepared(self,key):
         self.execute("ROLLBACK PREPARED '%s';" % key)
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -996,7 +966,7 @@ class PostgreSQLAdapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         uri = uri.split('://')[1]
-        m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
         if not m:
             raise SyntaxError, "Invalid URI string in DAL"
         user = m.group('user')
@@ -1012,8 +982,16 @@ class PostgreSQLAdapter(BaseAdapter):
         if not db:
             raise SyntaxError, 'Database name required'
         port = m.group('port') or '5432'
-        msg = "dbname='%s' user='%s' host='%s' port=%s password='%s'"\
-            % (db, user, host, port, password)
+        sslmode = m.group('sslmode')
+        if sslmode:
+            msg = ("dbname='%s' user='%s' host='%s'"
+                   "port=%s password='%s' sslmode='%s'") \
+                   % (db, user, host, port, password, sslmode)
+        else:
+            msg = ("dbname='%s' user='%s' host='%s'"
+                   "port=%s password='%s'") \
+                   % (db, user, host, port, password)
+
         self.pool_connection(lambda msg=msg: psycopg2.connect(msg))
         self.connection.set_client_encoding('UTF8')
         self.execute('BEGIN;')
@@ -1027,7 +1005,8 @@ class PostgreSQLAdapter(BaseAdapter):
 
 class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1074,6 +1053,9 @@ class OracleAdapter(BaseAdapter):
         'datetime': 'DATE',
         'id': 'NUMBER PRIMARY KEY',
         'reference': 'NUMBER, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'CLOB',
+        'list:string': 'CLOB',
+        'list:reference': 'CLOB',
         }
 
     def sequence_name(self,table):
@@ -1131,7 +1113,8 @@ class OracleAdapter(BaseAdapter):
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
         return None
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1191,6 +1174,9 @@ class MSSQLAdapter(BaseAdapter):
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
+        'list:integer': 'TEXT',
+        'list:string': 'TEXT',
+        'list:reference': 'TEXT',
         }
 
     def EXTRACT(self,field,what):
@@ -1222,7 +1208,8 @@ class MSSQLAdapter(BaseAdapter):
                 return '0'
         return None
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1307,6 +1294,9 @@ class MSSQLAdapter2(MSSQLAdapter):
         'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
+        'list:integer': 'NTEXT',
+        'list:string': 'NTEXT',
+        'list:reference': 'NTEXT',
         }
 
     def represent(self, obj, fieldtype):
@@ -1335,6 +1325,9 @@ class FireBirdAdapter(BaseAdapter):
         'datetime': 'TIMESTAMP',
         'id': 'INTEGER PRIMARY KEY',
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'BLOB SUB_TYPE 1',
+        'list:string': 'BLOB SUB_TYPE 1',
+        'list:reference': 'BLOB SUB_TYPE 1',
         }
 
     def sequence_name(self,table):
@@ -1370,7 +1363,8 @@ class FireBirdAdapter(BaseAdapter):
     def support_distributed_transaction(self):
         return True
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1395,8 +1389,8 @@ class FireBirdAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         charset = m.group('charset') or 'UTF8'
         self.pool_connection(lambda dsn='%s/%s:%s' % (host,port,db),
-                             user=user,
-                             password=password,
+                             user=credential_decoder(user),
+                             password=credential_decoder(password),
                              charset=charset: \
                                  kinterbasdb.connect(dsn=dsn,
                                                      user=user,
@@ -1422,7 +1416,8 @@ class FireBirdAdapter(BaseAdapter):
 
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1449,8 +1444,8 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         host = ''
         self.pool_connection(lambda host=host,
                              database=dbpath,
-                             user=user,
-                             password=password,
+                             user=credential_decoder(user),
+                             password=credential_decoder(password),
                              charset=charset: \
                                  kinterbasdb.connect(host=host,
                                                      database=database,
@@ -1477,6 +1472,9 @@ class InformixAdapter(BaseAdapter):
         'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': 'REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s CONSTRAINT FK_%(table_name)s_%(field_name)s',
         'reference TFK': 'FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s CONSTRAINT TFK_%(table_name)s_%(field_name)s',
+        'list:integer': 'BLOB SUB_TYPE 1',
+        'list:string': 'BLOB SUB_TYPE 1',
+        'list:reference': 'BLOB SUB_TYPE 1',
         }
 
     def RANDOM(self):
@@ -1515,7 +1513,8 @@ class InformixAdapter(BaseAdapter):
             return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
         return None
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1539,8 +1538,13 @@ class InformixAdapter(BaseAdapter):
         db = m.group('db')
         if not db:
             raise SyntaxError, 'Database name required'
-        self.pool_connection(lambda dsn='%s@%s' % (db,user), user=user,password=password:
-                                 informixdb.connect(dsn, user=user, password=password, autocommit=True))
+        user = credential_decoder(user)
+        password = credential_decoder(password)
+        self.pool_connection(lambda dsn='%s@%s' % (db,user), 
+                             user=user,password=password:
+                                 informixdb.connect(dsn, user=user, 
+                                                    password=password, 
+                                                    autocommit=True))
 
     def execute(self,command):
         if command[-1:]==';':
@@ -1572,6 +1576,9 @@ class DB2Adapter(BaseAdapter):
         'reference': 'INT, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
+        'list:integer': 'CLOB',
+        'list:string': 'CLOB',
+        'list:reference': 'CLOB',
         }
 
     def LEFT_JOIN(self):
@@ -1598,7 +1605,8 @@ class DB2Adapter(BaseAdapter):
             return "'%s'" % obj
         return None
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1645,6 +1653,9 @@ class IngresAdapter(BaseAdapter):
         'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
+        'list:integer': 'CLOB',
+        'list:string': 'CLOB',
+        'list:reference': 'CLOB',
         }
 
     def LEFT_JOIN(self):
@@ -1664,7 +1675,8 @@ class IngresAdapter(BaseAdapter):
                 sql_o += ' OFFSET %d' % (lmin, )
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8'):
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
         self.pool_size = pool_size
@@ -1673,13 +1685,13 @@ class IngresAdapter(BaseAdapter):
         self.find_or_make_work_folder()
         connstr = self._uri.split(':', 1)[1]
         # Simple URI processing
-        connstr=connstr.lstrip()
+        connstr = connstr.lstrip()
         while connstr.startswith('/'):
             connstr = connstr[1:]
         database_name=connstr # Assume only (local) dbname is passed in
-        vnode='(local)'
-        servertype='ingres'
-        trace=(0, None) # No tracing
+        vnode = '(local)'
+        servertype = 'ingres'
+        trace = (0, None) # No tracing
         self.pool_connection(lambda database=database_name,
                              vnode=vnode,
                              servertype=serverttype,
@@ -1733,6 +1745,9 @@ class IngresUnicodeAdapter(IngresAdapter):
         'reference': 'integer4, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s', ## FIXME TODO
+        'list:integer': 'NCLOB',
+        'list:string': 'NCLOB',
+        'list:reference': 'NCLOB',
         }
 
 ADAPTERS = {
@@ -1753,6 +1768,7 @@ ADAPTERS = {
 }
 
 
+############# sync with sql.py !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def sqlhtml_validators(field):
     """
     Field type validation, using web2py's validators mechanism.
@@ -1762,11 +1778,22 @@ def sqlhtml_validators(field):
     """
     field_type, field_length = field.type, field.length
     if isinstance(field_type, SQLCustomType):
-        if hasattr(field_type,'validator'):
+        if hasattr(field_type, 'validator'):
             return field_type.validator
         else:
             field_type = field_type.type
     requires=[]
+    def ff(r,id):
+        row=r[id]
+        if not row:
+            return id
+        elif hasattr(r, '_format') and isinstance(r._format,str):
+            return r._format % row
+        elif hasattr(r, '_format') and callable(r._format):
+            return r._format(row)
+        else:
+            return id
+
     if field_type == 'string':
         requires.append(validators.IS_LENGTH(field_length))
     elif field_type == 'text':
@@ -1777,7 +1804,7 @@ def sqlhtml_validators(field):
         requires.append(validators.IS_FLOAT_IN_RANGE(-1e100, 1e100))
     elif field_type == 'integer':
         requires.append(validators.IS_INT_IN_RANGE(-1e100, 1e100))
-    elif field_type[:7] == 'decimal':
+    elif field_type.startswith('decimal'):
         requires.append(validators.IS_DECIMAL_IN_RANGE(-10**10, 10**10))
     elif field_type == 'date':
         requires.append(validators.IS_DATE())
@@ -1785,36 +1812,56 @@ def sqlhtml_validators(field):
         requires.append(validators.IS_TIME())
     elif field_type == 'datetime':
         requires.append(validators.IS_DATETIME())
-    elif field._db and field_type[:9] == 'reference' and \
-            field_type.find('.')<0 and \
+    elif field._db and field_type.startswith('reference') and \
+            field_type.find('.') < 0 and \
             field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
-
-        if hasattr(referenced,'_format') and referenced._format:
-            def f(r,id):
-                row=r[id]
-                if not row:
-                    return id
-                elif isinstance(r._format,str):
-                    return r._format % row
-                else:
-                    return r._format(row)
-            field.represent = lambda id, r=referenced, f=f: f(r,id)
+        field.represent = lambda id, r=referenced, f=ff: f(r, id)
+        requires = validators.IS_IN_DB(field._db,referenced.id,
+                                       referenced._format)
+        if field.unique:
+            requires._and = validators.IS_NOT_IN_DB(field._db,field)
+        if field._tablename == field_type[10:]:
+            return validators.IS_EMPTY_OR(requires)
+        return requires
+    elif field._db and field_type.startswith('list:reference') and \
+            field_type.find('.') < 0 and \
+            field_type[15:] in field._db.tables:
+        referenced = field._db[field_type[15:]]
+        def list_ref_repr(ids, r=referenced, f=ff):
+            refs = r._db(r.id.belongs(ids)).select(r.id)
+            return (ids and ', '.join(f(r,ref.id) for ref in refs) or '')
+        field.represent = list_ref_repr
+        if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field._db,referenced.id,
-                                           referenced._format)
+                                           referenced._format,multiple=True)
             if field.unique:
                 requires._and = validators.IS_NOT_IN_DB(field._db,field)
             return requires
 
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
-    sff=['in','do','da','ti','de']
+    sff = ['in', 'do', 'da', 'ti', 'de', 'bo']
     if field.notnull and not field_type[:2] in sff:
-        requires.insert(0,validators.IS_NOT_EMPTY())
+        requires.insert(0, validators.IS_NOT_EMPTY())
     elif not field.notnull and field_type[:2] in sff:
-        requires[-1]=validators.IS_EMPTY_OR(requires[-1])
+        #### requires[-1] = validators.IS_EMPTY_OR(requires[-1]) ### << FIX THIS
+        pass
     return requires
 
+def bar_escape(item):
+    return str(item).replace('|', '||')
+
+def bar_encode(items):
+    return '|%s|' % '|'.join(bar_escape(item) for item in items \
+                                 if str(item).strip())
+
+def bar_decode_integer(value):
+    return [int(x) for x in value.split('|') if x.strip()]
+
+def bar_decode_string(value):
+    return [x.replace('||', '|') for x in string_unpack.split(value[1:-1]) \
+                if x.strip()]
 
 def cleanup(text):
     """
@@ -1913,17 +1960,22 @@ class Row(dict):
         return not (self == other)
 
     def as_dict(self,datetime_to_str=False):
+        SERIALIZABLE_TYPES = (str,unicode,int,long,float,bool,list)
         d = dict(self)
         for k in copy.copy(d.keys()):
             v=d[k]
-            if isinstance(v,Row):
+            if d[k]==None:
+                continue
+            elif isinstance(v,Row):
                 d[k]=v.as_dict()
             elif isinstance(v,Reference):
                 d[k]=int(v)
+            elif isinstance(v,decimal.Decimal):
+                d[k]=float(v)
             elif isinstance(v, (datetime.date, datetime.datetime, datetime.time)):
                 if datetime_to_str:
                     d[k] = v.isoformat().replace('T',' ')[:19]
-            elif not isinstance(v,(str,unicode,int,long,float,bool)):
+            elif not isinstance(v,SERIALIZABLE_TYPES):
                 del d[k]
         return d
 
@@ -1955,6 +2007,32 @@ class DAL(dict):
                                     Field('fieldname2'))
     """
 
+    def _exists(self, filename):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        return os.path.exists(filename)
+
+    def _open(self, filename, mode='rb', lock=True):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        fileobj = open(filename,mode)
+        if lock and mode in ('r','rb'):
+            portalocker.lock(fileobj,portalocker.LOCK_SH)
+        elif lock and mode in ('w','wb','a'):
+            portalocker.lock(fileobj,portalocker.LOCK_EX)
+        return fileobj
+
+    def _close(self, fileobj, unlock=True):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        if fileobj:
+            if unlock:
+                portalocker.unlock(fileobj)
+            fileobj.close()
+
     @staticmethod
     def set_folder(folder):
         """
@@ -1967,7 +2045,7 @@ class DAL(dict):
     def distributed_transaction_begin(*instances):
         if not instances:
             return
-        thread_key = '%s.%i' % (socket.gethostname(), thread.get_ident())
+        thread_key = '%s.%s' % (socket.gethostname(), threading.currentThread())
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         instances = enumerate(instances)
         for (i, db) in instances:
@@ -1982,7 +2060,7 @@ class DAL(dict):
         if not instances:
             return
         instances = enumerate(instances)
-        thread_key = '%s.%i' % (socket.gethostname(), thread.get_ident())
+        thread_key = '%s.%s' % (socket.gethostname(), threading.currentThread())
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         for (i, db) in instances:
             if not db._adapter.support_distributed_transaction():
@@ -1994,7 +2072,7 @@ class DAL(dict):
         except:
             for (i, db) in instances:
                 db._adapter.rollback_prepared(keys[i])
-            raise Exception, 'failure to commit distributed transaction'
+            raise RuntimeError, 'failure to commit distributed transaction'
         else:
             for (i, db) in instances:
                 db._adapter.commit_prepared(keys[i])
@@ -2002,7 +2080,8 @@ class DAL(dict):
 
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
                  db_codec='UTF-8', check_reserved=None,
-                 migrate=True, fake_migrate=False):
+                 migrate=True, fake_migrate=False,
+                 decode_credentials=False):
         """
         Creates a new Database Abstraction Layer instance.
 
@@ -2024,11 +2103,15 @@ class DAL(dict):
         * '<adaptername>_nonreserved' Checks against the specific adapters
                 list of nonreserved keywords. (if available)
         """
+
+        if not decode_credentials:
+            credential_decoder = lambda cred: cred
+        else:
+            credential_decoder = lambda cred: urllib.unquote(cred)                 
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
         self._db_codec = db_codec
         self._lastsql = ''
-        self._logger = Logger(folder)
         if is_jdbc:
             prefix = 'jdbc:'
         else:
@@ -2036,9 +2119,10 @@ class DAL(dict):
         if uri and uri.find(':')>=0:
             self._dbname = uri.split(':')[0]
             connected = False
+            args = (self,uri,pool_size,folder,db_codec,credential_decoder)
             for k in range(5):
                 try:
-                    self._adapter = ADAPTERS[prefix+self._dbname](self,uri,pool_size,folder,db_codec)
+                    self._adapter = ADAPTERS[prefix+self._dbname](*args)
                     connected = True
                     break
                 except SyntaxError:
@@ -2094,10 +2178,10 @@ class DAL(dict):
         sequence_name = args.get('sequence_name', None)
         tablename = cleanup(tablename)
 
-        if hasattr(self,tablename) or tablename[0] == '_':
-            raise SyntaxError, 'invalid table name: %s' % tablename
-        if tablename in self.tables:
+        if tablename in self.tables or hasattr(self,tablename):
             raise SyntaxError, 'table already defined: %s' % tablename
+        if tablename.startswith('_'):
+            raise SyntaxError, 'invalid table name: %s' % tablename
         if self.check_reserved:
             self.check_reserved_keyword(tablename)
 
@@ -2112,8 +2196,8 @@ class DAL(dict):
         t._create_references()
 
         if migrate:
-            sql_locker.acquire()
             try:
+                sql_locker.acquire()
                 t._create(migrate=migrate, fake_migrate=fake_migrate)
             finally:
                 sql_locker.release()
@@ -2146,6 +2230,10 @@ class DAL(dict):
         return '<DAL ' + dict.__repr__(self) + '>'
 
     def __call__(self, query=None):
+        if isinstance(query,Table):
+            query = query._id>0
+        elif isinstance(query,Field):
+            query = query!=None        
         return Set(self, query)
 
     def commit(self):
@@ -2207,7 +2295,7 @@ class DAL(dict):
     def export_to_csv_file(self, ofile, *args, **kwargs):
         for table in self.tables:
             ofile.write('TABLE %s\r\n' % table)
-            self(self[table]['id'] > 0).select().export_to_csv_file(ofile, *args, **kwargs)
+            self(self[table]._id > 0).select().export_to_csv_file(ofile, *args, **kwargs)
             ofile.write('\r\n\r\n')
         ofile.write('END')
 
@@ -2218,7 +2306,7 @@ class DAL(dict):
                 continue
             elif line == 'END':
                 return
-            elif not line[:6] == 'TABLE ' or not line[6:] in self.tables:
+            elif not line.startswith('TABLE ') or not line[6:] in self.tables:
                 raise SyntaxError, 'invalid file format'
             else:
                 tablename = line[6:]
@@ -2246,22 +2334,22 @@ class Reference(int):
         if not self._record:
             self._record = self._table[int(self)]
         if not self._record:
-            raise Exception, "undefined record"
+            raise RuntimeError, "Using a recursive select but encountered a broken reference"
 
-    def __getattr__(self,key):
+    def __getattr__(self, key):
         if key == 'id':
             return int(self)
         self.__allocate()
-        return self._record.get(key,None)
+        return self._record.get(key, None)
 
-    def __setattr__(self,key,value):
-        if key[:1]=='_':
-            int.__setattr__(self,key,value)
+    def __setattr__(self, key, value):
+        if key.startswith('_'):
+            int.__setattr__(self, key, value)
             return
         self.__allocate()
         self._record[key] =  value
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         if key == 'id':
             return int(self)
         self.__allocate()
@@ -2269,7 +2357,7 @@ class Reference(int):
 
     def __setitem__(self,key,value):
         self.__allocate()
-        self._record[key] =  value
+        self._record[key] = value
 
 def Reference_unpickler(data):
     return marshal.loads(data)
@@ -2278,7 +2366,7 @@ def Reference_pickler(data):
     try:
         marshal_dump = marshal.dumps(int(data))
     except AttributeError:
-        marshal_dump = 'i%s' % struct.pack('<i',int(data))
+        marshal_dump = 'i%s' % struct.pack('<i', int(data))
     return (Reference_unpickler, (marshal_dump,))
 
 copy_reg.pickle(Reference, Reference_pickler, Reference_unpickler)
@@ -2326,7 +2414,7 @@ class Table(dict):
         else:
             new_fields = [ Field('id', 'id') ]
         for field in fields:
-            if hasattr(field,'_db'):
+            if hasattr(field, '_db'):
                 field = copy.copy(field)
             if isinstance(field, Field):
                 if field.type == 'id':
@@ -2342,6 +2430,7 @@ class Table(dict):
                     'define_table argument is not a Field: %s' % field
         fields = new_fields
         self._db = db
+        self._id = fields[0]
         self._tablename = tablename
         self.fields = SQLCallableList()
         self.virtualfields = []
@@ -2358,7 +2447,7 @@ class Table(dict):
             field._tablename = self._tablename
             field._table = self
             field._db = self._db
-            if field.requires == '<default>':
+            if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
 
@@ -2433,11 +2522,11 @@ class Table(dict):
             return dict.__getitem__(self, str(key))
 
     def __call__(self, key=None, **kwargs):
-        if key:
-            if not str(key).isdigit():
-                record = None
-            elif isinstance(key, Query):
+        if key!=DEFAULT:
+            if isinstance(key, Query):
                 record = self._db(key).select(limitby=(0,1)).first()
+            elif not str(key).isdigit():
+                record = None
             else:
                 record = self._db(self.id == key).select(limitby=(0,1)).first()
             if record:
@@ -2548,7 +2637,9 @@ class Table(dict):
                                constraint_name=constraint_name,
                                foreign_key=referenced + ('(%s)' % self._db[referenced].fields[0]),
                                on_delete_action=field.ondelete)
-            elif field.type[:7] == 'decimal':
+            elif field.type.startswith('list:reference'):
+                ftype = self._db._adapter.types[field.type[:14]]
+            elif field.type.startswith('decimal'):
                 precision, scale = [int(x) for x in field.type[8:-1].split(',')]
                 ftype = self._db._adapter.types[field.type[:7]] % \
                     dict(precision=precision,scale=scale)
@@ -2558,7 +2649,7 @@ class Table(dict):
             else:
                 ftype = self._db._adapter.types[field.type]\
                      % dict(length=field.length)
-            if not field.type[:10] in ['id', 'reference ']:
+            if not field.type.startswith('id') and not field.type.startswith('reference'):
                 if field.notnull:
                     ftype += ' NOT NULL'
                 if field.unique:
@@ -2567,11 +2658,15 @@ class Table(dict):
             # add to list of fields
             sql_fields[field.name] = ftype
 
-            if field.default:
+            if field.default!=None:
+                # caveat: sql_fields and sql_fields_aux differ for default values
+                # sql_fields is used to trigger migrations and sql_fields_aux
+                # are used for create table
+                # the reason is that we do not want to trigger a migration simply
+                # because a default value changes
                 not_null = self._db._adapter.NOT_NULL(field.default,field.type)
-                sql_fields_aux[field.name] = ftype.replace('NOT NULL',not_null)
-            else:
-                sql_fields_aux[field.name] = ftype
+                ftype = ftype.replace('NOT NULL',not_null)
+            sql_fields_aux[field.name] = ftype
 
             fields.append('%s %s' % (field.name, ftype))
         other = ';'
@@ -2611,7 +2706,7 @@ class Table(dict):
             dbpath = self._db._adapter.folder
         if not migrate:
             return query
-        elif self._db._uri[:14] == 'sqlite:memory:':
+        elif self._db._uri.startswith('sqlite:memory:'):
             self._dbt = None
         elif isinstance(migrate, str):
             self._dbt = os.path.join(dbpath, migrate)
@@ -2620,10 +2715,10 @@ class Table(dict):
                      % (md5_hash(self._db._uri), self._tablename))
         if self._dbt:
             self._loggername = os.path.join(dbpath, 'sql.log')
-            logfile = open(self._loggername, 'a')
+            logfile = self._db._open(self._loggername, 'a')
         else:
             logfile = None
-        if not self._dbt or not os.path.exists(self._dbt):
+        if not self._dbt or not self._db._exists(self._dbt):
             if self._dbt:
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
@@ -2632,29 +2727,32 @@ class Table(dict):
                 self._db._adapter.create_sequence_and_triggers(query,self)
                 self._db.commit()
             if self._dbt:
-                tfile = open(self._dbt, 'w')
-                portalocker.lock(tfile, portalocker.LOCK_EX)
+                tfile = self._db._open(self._dbt, 'w')
                 cPickle.dump(sql_fields, tfile)
-                portalocker.unlock(tfile)
-                tfile.close()
-            if self._dbt:
+                self._db._close(tfile)
                 if fake_migrate:
                     logfile.write('faked!\n')
                 else:
                     logfile.write('success!\n')
         else:
-            tfile = open(self._dbt, 'r')
-            portalocker.lock(tfile, portalocker.LOCK_SH)
-            sql_fields_old = cPickle.load(tfile)
-            portalocker.unlock(tfile)
-            tfile.close()
+            tfile = self._db._open(self._dbt, 'r')
+            try:
+                sql_fields_old = cPickle.load(tfile)
+            except EOFError:
+                self._db._close(tfile)
+                self._db._close(logfile)
+                raise RuntimeError, 'File %s appears corrupted' % self._dbt
+            self._db._close(tfile)
             if sql_fields != sql_fields_old:
                 self._migrate(sql_fields, sql_fields_old,
                               sql_fields_aux, logfile,
                               fake_migrate=fake_migrate)
-
+            self._db._close(logfile)
         return query
 
+    #######################
+    ########## REPLACE FROM sql.py !!!!!!!!!!!!!!!!!!!
+    #######################
     def _migrate(
         self,
         sql_fields,
@@ -2685,9 +2783,9 @@ class Table(dict):
                 else:
                     query = ['ALTER TABLE %s DROP %s;' % (self._tablename, key)]
             elif sql_fields[key] != sql_fields_old[key] and \
-                 not (self[key].type[:10]=='reference ' and \
-                      sql_fields[key][:4]=='INT,' and \
-                      sql_fields_old[key][:13]=='INT NOT NULL,'):
+                 not (self[key].type.startswith('reference') and \
+                      sql_fields[key].startswith('INT,') and \
+                      sql_fields_old[key].startswith('INT NOT NULL,')):
 
                 # ## FIX THIS WHEN DIFFERENCES IS ONLY IN DEFAULT
                 # 2
@@ -2727,18 +2825,16 @@ class Table(dict):
                     sql_fields_old[key] = sql_fields[key]
                 else:
                     del sql_fields_old[key]
-        tfile = open(self._dbt, 'w')
-        portalocker.lock(tfile, portalocker.LOCK_EX)
+        tfile = self._db._open(self._dbt, 'w')
         cPickle.dump(sql_fields_old, tfile)
-        portalocker.unlock(tfile)
-        tfile.close()
+        self._db._close(tfile)
 
     def _drop(self, mode = ''):
         return self._db._adapter.DROP(self, mode)
 
     def drop(self, mode = ''):
         if self._dbt:
-            logfile = open(self._loggername, 'a')
+            logfile = self._db._open(self._loggername, 'a')
         queries = self._db._adapter.DROP(self, mode)
         for query in queries:
             if self._dbt:
@@ -2817,36 +2913,49 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
-            elif id_map and field.type[:10] == 'reference ':
+            elif field.type.startswith('list:string'):
+                value = bar_decode_string(value)
+            elif field.type.startswith('list:'):
+                value = bar_decode_integer(value)
+            elif id_map and field.type.startswith('reference'):
                 try:
                     value = id_map[field.type[9:].strip()][value]
                 except KeyError:
                     pass
             return (field.name, value)
 
+        def is_id(colname):
+            if colname in self:
+                return self[colname].type == 'id'
+            else:
+                return False
+
         for line in reader:
             if not line:
                 break
             if not colnames:
-                colnames = [x[x.find('.') + 1:] for x in line]
-                c = [i for i in xrange(len(line)) if colnames[i] != 'id']
-                cid = [i for i in xrange(len(line)) if colnames[i] == 'id']
-                if cid:
-                    cid = cid[0]
+                colnames = [x.split('.',1)[-1] for x in line][:len(line)]
+                cols, cid = [], []
+                for i,colname in enumerate(colnames):
+                    if is_id(colname):
+                        cid = i
+                    else:
+                        cols.append(i)
+                    if colname == unique:
+                        unique_idx = i
             else:
-                items = [fix(self[colnames[i]], line[i], id_map) for i in c]
+                items = [fix(self[colnames[i]], line[i], id_map) for i in cols]
+                # Validation. Check for duplicate of 'unique' &,
+                # if present, update instead of insert.
                 if not unique or unique not in colnames:
                     new_id = self.insert(**dict(items))
                 else:
-                    # Validation. Check for duplicate of 'unique' &,
-                    # if present, update instead of insert.
-                    for i in c:
-                        if colnames[i] == unique:
-                            _unique = line[i]
-                    query = self._db[self][unique]==_unique
-                    if self._db(query).count():
-                        self._db(query).update(**dict(items))
-                        new_id = self._db(query).select()[0].id
+                    unique_value = line[unique_idx]
+                    query = self._db[self][unique] == unique_value
+                    record = self._db(query).select().first()
+                    if record:
+                        record.update_record(**dict(items))
+                        new_id = record[self._id.name]
                     else:
                         new_id = self.insert(**dict(items))
                 if id_map and cid != []:
@@ -2860,7 +2969,7 @@ class Table(dict):
 
     def truncate(self, mode = None):
         if self._dbt:
-            logfile = open(self._loggername, 'a')
+            logfile = self._db._open(self._loggername, 'a')
         queries = self._db_adapter.TRUNCATE(self, mode)
         for query in queries:
             if self._dbt:
@@ -2886,6 +2995,7 @@ class Expression(object):
         self._op = op
         self._first = first
         self._second = second
+        self._tablename =  first._tablename ## CHECK
         if not type and first and hasattr(first,'type'):
             self.type = first.type
         else:
@@ -2898,6 +3008,8 @@ class Expression(object):
         return Expression(self._db,self._db._adapter.COMMA,self,other,self.type)
 
     def __invert__(self):
+        if hasattr(self,'_op') and self._op == self._db._adapter.DESC:
+            return self._first
         return Expression(self._db,self._db._adapter.DESC,self,type=self.type)
 
     def __add__(self, other):
@@ -2942,6 +3054,27 @@ class Expression(object):
 
     def belongs(self, value):
         return Query(self._db, self._db._adapter.BELONGS, self, value)
+
+    def startswith(self, value):
+        if self.type in ('string', 'text'):
+            return self.like('%s%%' % value)
+        else:
+            raise RuntimeError, "startswith used with incompatible field type"
+
+    def endswith(self, value):
+       if self.type in ('string', 'text'):
+           return self.like('%%%s' % value)
+       else:
+           raise RuntimeError, "endswith used with incompatible field type"
+
+    def contains(self, value):
+        if self.type in ('string', 'text'):
+            return self.like('%%%s%%' % value)
+        elif self.type.startswith('list:'): ##### <<<<< FIX THIS DOES NOT BELONG HERE
+            return self.like(
+                Expression("'%%|%s|%%'" % bar_escape(value).replace("'","''")))
+        else:
+            raise RuntimeError, "contains user with incopatible field type"
 
     def with_alias(self,alias):
         return Expression(self._db,self._db._adapter.AS,self,alias,self.type)
@@ -2991,6 +3124,9 @@ class SQLCustomType:
         self.decoder = decoder or (lambda x: x)
         self.validator = validator
         self._class = _class or type
+
+    def startswith(self, dummy=None):
+        return False
 
     def __getslice__(self, a=0, b=100):
         return None
@@ -3042,9 +3178,9 @@ class Field(Expression):
         fieldname,
         type='string',
         length=None,
-        default=None,
+        default=DEFAULT,
         required=False,
-        requires='<default>',
+        requires=DEFAULT,
         ondelete='CASCADE',
         notnull=False,
         unique=False,
@@ -3075,7 +3211,10 @@ class Field(Expression):
             length = 512
         self.type = type  # 'string', 'integer'
         self.length = length  # the length of the string
-        self.default = default==None and update or default
+        if default==DEFAULT:
+            self.default = update or None
+        else:
+            self.default = default
         self.required = required  # is this field required
         self.ondelete = ondelete.upper()  # this is for reference fields only
         self.notnull = notnull
@@ -3091,6 +3230,8 @@ class Field(Expression):
         self.update = update
         self.authorize = authorize
         self.autodelete = autodelete
+        if not represent and type in ('list:integer','list:string'):
+            represent=lambda x: ', '.join(str(y) for y in x or [])
         self.represent = represent
         self.compute = compute
         self.isattachment = True
@@ -3114,7 +3255,12 @@ class Field(Expression):
         newfilename = '%s.%s.%s.%s' % \
             (self._tablename, self.name, uuid_key, encoded_filename)
         newfilename = newfilename[:200] + '.' + extension
-        if self.uploadfield == True:
+        if isinstance(self.uploadfield,Field):
+            blob_uploadfield_name = self.uploadfield.uploadfield
+            keys={self.uploadfield.name: newfilename,
+                  blob_uploadfield_name: file.read()}
+            self.uploadfield._table.insert(**keys)
+        elif self.uploadfield == True:
             if path:
                 pass
             elif self.uploadfolder:
@@ -3149,6 +3295,11 @@ class Field(Expression):
             filename = name
         if isinstance(self.uploadfield, str):  # ## if file is in DB
             return (filename, cStringIO.StringIO(row[self.uploadfield]))
+        elif isinstance(self.uploadfield,Field):
+            blob_uploadfield_name = self.uploadfield.uploadfield
+            query = self.uploadfield == name
+            data = self.uploadfield._table(query)[blob_uploadfield_name]
+            return (filename, cStringIO.StringIO(data))
         else:
             # ## if file is on filesystem
             if path:
@@ -3313,7 +3464,7 @@ class Set(object):
 
     """
     a Set represents a set of records in the database,
-    the records are identified by the where=Query(...) object.
+    the records are identified by the query=Query(...) object.
     normally the Set is generated by DAL.__call__(Query(...))
 
     given a set, for example
@@ -3331,6 +3482,10 @@ class Set(object):
         self._query = query
 
     def __call__(self, query):
+        if isinstance(query,Table):
+            query = query._id>0
+        elif isinstance(query,Field):
+            query = query!=None
         if self._query:
             return Set(self._db, self._query & query)
         else:
@@ -3364,7 +3519,8 @@ class Set(object):
         db=self._db
         t = self._tables[0]
         if db._dbname=='sqlite' and db[t]._referenced_by:
-            deleted = [x.id for x in self.select(db[t].id)]
+            table = db[t]
+            deleted = [x[table._id.name] for x in self.select(table._id)]
         ### end special code to handle CASCADE in SQLite
         self._db._adapter.execute(query)
         try:
@@ -3419,15 +3575,16 @@ class Set(object):
             return
         for record in self.select(*[table[f] for f in fields]):
             for fieldname in fields:
+                field = table[fieldname]
                 oldname = record.get(fieldname, None)
                 if not oldname:
                     continue
                 if upload_fields and oldname == upload_fields[fieldname]:
                     continue
-                uploadfolder = table[fieldname].uploadfolder
+                uploadfolder = field.uploadfolder
                 if not uploadfolder:
-                    uploadfolder = os.path.join(self._db._adapter.folder, '..', 'uploads')
-                if self.uploadseparate:
+                    uploadfolder = os.path.join(self._db._folder, '..', 'uploads')
+                if field.uploadseparate:
                     items = oldname.split('.')
                     uploadfolder = os.path.join(uploadfolder,
                                                 "%s.%s" % (items[0], items[1]),
@@ -3441,7 +3598,7 @@ def update_record(pack, a={}):
     b = a or dict(colset)
     c = dict([(k,v) for (k,v) in b.items() \
                   if k in table.fields and not k=='id'])
-    table._db(table.id==id).update(**c)
+    table._db(table._id==id).update(**c)
     for (k, v) in c.items():
         colset[k] = v
 
@@ -3488,12 +3645,12 @@ class Rows(object):
         return self
 
     def __and__(self,other):
-        if self.colnames!=other.colnames: raise Exception, 'Rows: different colnames'
+        if self.colnames!=other.colnames: raise Exception, 'Cannot & incompatible Rows objects'
         records = self.records+other.records
         return Rows(self.db,records,self.colnames)
 
     def __or__(self,other):
-        if self.colnames!=other.colnames: raise Exception, 'Rows: different colnames'
+        if self.colnames!=other.colnames: raise Exception, 'Cannot | incompatible Rows objects'
         records = self.records
         records += [record for record in other.records \
                         if not record in records]
@@ -3522,7 +3679,8 @@ class Rows(object):
 
     def find(self,f):
         """
-        returns a set of rows of sorted elements (not filtered in place)
+        returns a new Rows object, a subset of the original object,
+        filtered by the function f
         """
         if not self.records:
             return Rows(self.db, [], self.colnames)
@@ -3531,11 +3689,12 @@ class Rows(object):
             row = self[i]
             if f(row):
                 records.append(self.records[i])
-        return Rows(self.db,records,self.colnames)
+        return Rows(self.db, records, self.colnames)
 
-    def exclude(self,f):
+    def exclude(self, f):
         """
-        returns a set of rows of sorted elements (not filtered in place)
+        removes elements from the calling Rows object, filtered by the function f,
+        and returns a new Rows object containing the removed elements
         """
         if not self.records:
             return Rows(self.db, [], self.colnames)
@@ -3548,9 +3707,9 @@ class Rows(object):
                 del self.records[i]
             else:
                 i += 1
-        return Rows(self.db,removed,self.colnames)
+        return Rows(self.db, removed, self.colnames)
 
-    def sort(self,f,reverse=False):
+    def sort(self, f, reverse=False):
         """
         returns a list of sorted elements (not sorted in place)
         """
@@ -3649,6 +3808,8 @@ class Rows(object):
                 return int(value)
             elif hasattr(value, 'isoformat'):
                 return value.isoformat()[:19].replace('T', ' ')
+            elif isinstance(value, (list,tuple)): # for type='list:..'
+                return bar_encode(value)
             return value
 
         for record in self:
@@ -3658,16 +3819,14 @@ class Rows(object):
                     row.append(record._extra[col])
                 else:
                     (t, f) = col.split('.')
+                    field = self.db[t][f]
                     if isinstance(record.get(t, None), (Row,dict)):
-                        row.append(none_exception(record[t][f]))
+                        value = record[t][f]
                     else:
-                        if represent:
-                            if self.db[t][f].represent:
-                                row.append(none_exception(self.db[t][f].represent(record[f])))
-                            else:
-                                row.append(none_exception(record[f]))
-                        else:
-                            row.append(none_exception(record[f]))
+                        value = record[f]
+                    if represent and field.represent:
+                            value = field.represent(value)
+                    row.append(none_exception(value))
             writer.writerow(row)
 
     def __str__(self):
