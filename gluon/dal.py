@@ -136,7 +136,9 @@ except:
     logger.debug('no Ingres driver')
     # NOTE could try JDBC.......
 
+
 class ConnectionPool(object):
+
     _pools = {}
 
     @staticmethod
@@ -198,6 +200,33 @@ class ConnectionPool(object):
 
 
 class BaseAdapter(ConnectionPool):
+
+    def file_exists(self, filename):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        return os.path.exists(filename)
+
+    def file_open(self, filename, mode='rb', lock=True):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        fileobj = open(filename,mode)
+        if lock and mode in ('r','rb'):
+            portalocker.lock(fileobj,portalocker.LOCK_SH)
+        elif lock and mode in ('w','wb','a'):
+            portalocker.lock(fileobj,portalocker.LOCK_EX)
+        return fileobj
+
+    def file_close(self, fileobj, unlock=True):
+        """
+        to be used ONLY for files that on GAE may not be on filesystem
+        """
+        if fileobj:
+            if unlock:
+                portalocker.unlock(fileobj)
+            fileobj.close()
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
@@ -726,6 +755,8 @@ class BaseAdapter(ConnectionPool):
                     id = colset[field.name]
                     colset.update_record = lambda _ = (colset, table, id), **a: update_record(_, a)
                     colset.delete_record = lambda t = table, i = id: t._db(t._id==i).delete()
+                    colset.update = colset.update_record
+                    colset.delete = colset.delete_record
                     for (referee_table, referee_name) in \
                             table._referenced_by:
                         s = db[referee_table][referee_name]
@@ -741,8 +772,6 @@ class BaseAdapter(ConnectionPool):
                     # to avoid breaking virtualfields when partial select
                     pass
         return rowsobj
-
-
 
 
 class SQLiteAdapter(BaseAdapter):
@@ -1435,6 +1464,7 @@ class FireBirdAdapter(BaseAdapter):
     def commit_on_alter_table(self):
         return True
 
+
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
@@ -1651,12 +1681,13 @@ class DB2Adapter(BaseAdapter):
             return rows[minimum:]
         return rows[minimum:maximum]
 
+
 INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name
                                        # (ANSI-SQL wants this form of name
                                        # to be a delimited identifier)
 
-
 class IngresAdapter(BaseAdapter):
+
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -2028,32 +2059,6 @@ class DAL(dict):
        db.define_table('tablename', Field('fieldname1'),
                                     Field('fieldname2'))
     """
-
-    def _exists(self, filename):
-        """
-        to be used ONLY for files that on GAE may not be on filesystem
-        """
-        return os.path.exists(filename)
-
-    def _open(self, filename, mode='rb', lock=True):
-        """
-        to be used ONLY for files that on GAE may not be on filesystem
-        """
-        fileobj = open(filename,mode)
-        if lock and mode in ('r','rb'):
-            portalocker.lock(fileobj,portalocker.LOCK_SH)
-        elif lock and mode in ('w','wb','a'):
-            portalocker.lock(fileobj,portalocker.LOCK_EX)
-        return fileobj
-
-    def _close(self, fileobj, unlock=True):
-        """
-        to be used ONLY for files that on GAE may not be on filesystem
-        """
-        if fileobj:
-            if unlock:
-                portalocker.unlock(fileobj)
-            fileobj.close()
 
     @staticmethod
     def set_folder(folder):
@@ -2737,10 +2742,10 @@ class Table(dict):
                      % (md5_hash(self._db._uri), self._tablename))
         if self._dbt:
             self._loggername = os.path.join(dbpath, 'sql.log')
-            logfile = self._db._open(self._loggername, 'a')
+            logfile = self._db._adapter.file_open(self._loggername, 'a')
         else:
             logfile = None
-        if not self._dbt or not self._db._exists(self._dbt):
+        if not self._dbt or not self._db._adapter.file_exists(self._dbt):
             if self._dbt:
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
@@ -2749,27 +2754,27 @@ class Table(dict):
                 self._db._adapter.create_sequence_and_triggers(query,self)
                 self._db.commit()
             if self._dbt:
-                tfile = self._db._open(self._dbt, 'w')
+                tfile = self._db._adapter.file_open(self._dbt, 'w')
                 cPickle.dump(sql_fields, tfile)
-                self._db._close(tfile)
+                self._db._adapter.file_close(tfile)
                 if fake_migrate:
                     logfile.write('faked!\n')
                 else:
                     logfile.write('success!\n')
         else:
-            tfile = self._db._open(self._dbt, 'r')
+            tfile = self._db._adapter.file_open(self._dbt, 'r')
             try:
                 sql_fields_old = cPickle.load(tfile)
             except EOFError:
-                self._db._close(tfile)
-                self._db._close(logfile)
+                self._db._adapter.file_close(tfile)
+                self._db._adapter.file_close(logfile)
                 raise RuntimeError, 'File %s appears corrupted' % self._dbt
-            self._db._close(tfile)
+            self._db._adapter.file_close(tfile)
             if sql_fields != sql_fields_old:
                 self._migrate(sql_fields, sql_fields_old,
                               sql_fields_aux, logfile,
                               fake_migrate=fake_migrate)
-            self._db._close(logfile)
+            self._db._adapter.file_close(logfile)
         return query
 
     def _migrate(
@@ -2848,18 +2853,18 @@ class Table(dict):
                         # update self._dbt after alter table.
                         if self._db._dbname in ['mysql', 'oracle', 'firebird']:
                             self._db.commit()
-                            tfile = self._db._open(self._dbt, 'w')
+                            tfile = self._db._adapter.file_open(self._dbt, 'w')
                             cPickle.dump(sql_fields_current, tfile)
-                            self._db._close(tfile)
+                            self._db._adapter.file_close(tfile)
                             logfile.write('success!\n')
                     else:
                         logfile.write('faked!\n')
 
         if fields_changed and not self._db._dbname in ['mysql', 'oracle', 'firebird']:
             self._db.commit()
-            tfile = self._db._open(self._dbt, 'w')
+            tfile = self._db._adapter.file_open(self._dbt, 'w')
             cPickle.dump(sql_fields_current, tfile)
-            self._db._close(tfile)
+            self._db._adapter.file_close(tfile)
 
 
     def _drop(self, mode = ''):
@@ -2867,7 +2872,7 @@ class Table(dict):
 
     def drop(self, mode = ''):
         if self._dbt:
-            logfile = self._db._open(self._loggername, 'a')
+            logfile = self._db._adapter.file_open(self._loggername, 'a')
         queries = self._db._adapter.DROP(self, mode)
         for query in queries:
             if self._dbt:
@@ -3002,7 +3007,7 @@ class Table(dict):
 
     def truncate(self, mode = None):
         if self._dbt:
-            logfile = self._db._open(self._loggername, 'a')
+            logfile = self._db._adapter.file_open(self._loggername, 'a')
         queries = self._db_adapter.TRUNCATE(self, mode)
         for query in queries:
             if self._dbt:
@@ -3980,7 +3985,7 @@ def test_all():
     'Massimo'
     >>> db(db.person.name=='Massimo').update(name='massimo') # test update
     1
-    >>> db(db.person.name=='Marco').delete() # test delete
+    >>> db(db.person.name=='Marco').select().first().delete() # test delete
     1
 
     Update a single record
