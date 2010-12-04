@@ -21,7 +21,8 @@ Completely refactored by MDP on Dec 12, 2009
 
 TODO:
 - create more functions in adapters to abstract more
-- check logger and folder interaction not sure it works
+- fix insert, create, migrate
+- move startswith, endswith, contains into adapters
 """
 
 __all__ = ['DAL', 'Field']
@@ -240,6 +241,253 @@ class BaseAdapter(ConnectionPool):
 
     def trigger_name(self,table):
         return '%s_sequence' % table
+
+
+    def create_table(self, table, migrate=True, fake_migrate=False):
+        fields = []
+        sql_fields = {}
+        sql_fields_aux = {}
+        TFK = {}
+        tablename = table._tablename
+        for field in table:
+            k = field.name
+            if isinstance(field.type,SQLCustomType):
+                ftype = field.type.native or field.type.type
+            elif field.type[:10] == 'reference ':
+                referenced = field.type[10:].strip()
+                constraint_name = self.constraint_name(tablename, field.name)
+                if hasattr(table,'_primarykey'):
+                    rtablename,rfieldname = ref.split('.')
+                    rtable = table._db[rtablename]
+                    rfield = rtable[rfieldname]
+                    # must be PK reference or unique
+                    if rfieldname in rtable._primarykey or rfield.unique:
+                        ftype = self.types[rfield.type[:9]] %dict(length=rfield.length)
+                        # multicolumn primary key reference?
+                        if not rfield.unique and len(rtable._primarykey)>1 :
+                            # then it has to be a table level FK
+                            if rtablename not in TFK:
+                                TFK[rtablename] = {}
+                            TFK[rtablename][rfieldname] = field.name
+                        else:
+                            ftype = ftype + \
+                                self.types['reference FK'] %dict(\
+                                constraint_name=constraint_name,
+                                table_name=tablename,
+                                field_name=field.name,
+                                foreign_key='%s (%s)'%(rtablename, rfieldname),
+                                on_delete_action=field.ondelete)
+                else:
+                    ftype = self.types[field.type[:9]]\
+                        % dict(table_name=tablename,
+                               field_name=field.name,
+                               constraint_name=constraint_name,
+                               foreign_key=referenced + ('(%s)' % table._db[referenced].fields[0]),
+                               on_delete_action=field.ondelete)
+            elif field.type.startswith('list:reference'):
+                ftype = self.types[field.type[:14]]
+            elif field.type.startswith('decimal'):
+                precision, scale = [int(x) for x in field.type[8:-1].split(',')]
+                ftype = self.types[field.type[:7]] % \
+                    dict(precision=precision,scale=scale)
+            elif not field.type in self.types:
+                raise SyntaxError, 'Field: unknown field type: %s for %s' % \
+                    (field.type, field.name)
+            else:
+                ftype = self.types[field.type]\
+                     % dict(length=field.length)
+            if not field.type.startswith('id') and not field.type.startswith('reference'):
+                if field.notnull:
+                    ftype += ' NOT NULL'
+                if field.unique:
+                    ftype += ' UNIQUE'
+
+            # add to list of fields
+            sql_fields[field.name] = ftype
+
+            if field.default!=None:
+                # caveat: sql_fields and sql_fields_aux differ for default values
+                # sql_fields is used to trigger migrations and sql_fields_aux
+                # are used for create table
+                # the reason is that we do not want to trigger a migration simply
+                # because a default value changes
+                not_null = self.NOT_NULL(field.default,field.type)
+                ftype = ftype.replace('NOT NULL',not_null)
+            sql_fields_aux[field.name] = ftype
+
+            fields.append('%s %s' % (field.name, ftype))
+        other = ';'
+
+        # backend-specific extensions to fields
+        if table._db._dbname == 'mysql':
+            if not hasattr(table, "_primarykey"):
+                fields.append('PRIMARY KEY(%s)' % table.fields[0])
+            other = ' ENGINE=InnoDB CHARACTER SET utf8;'
+
+        fields = ',\n    '.join(fields)
+        for rtablename in TFK:
+            rfields = TFK[rtablename]
+            pkeys = table._db[rtablename]._primarykey
+            fkeys = [ rfields[k] for k in pkeys ]
+            fields = fields + ',\n    ' + \
+                     self.types['reference TFK'] %\
+                     dict(table_name=tablename,
+                     field_name=', '.join(fkeys),
+                     foreign_table=rtablename,
+                     foreign_key=', '.join(pkeys),
+                     on_delete_action=field.ondelete)
+
+        if hasattr(table,'_primarykey'):
+            query = '''CREATE TABLE %s(\n    %s,\n    %s) %s''' % \
+               (tablename, fields, self.PRIMARY_KEY(', '.join(table._primarykey),other))
+        else:
+            query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
+                (tablename, fields, other)
+
+        if table._db._uri[:10] == 'sqlite:///':
+            path_encoding = sys.getfilesystemencoding() or \
+                locale.getdefaultlocale()[1]
+            dbpath = table._db._uri[9:table._db._uri.rfind('/')]\
+                .decode('utf8').encode(path_encoding)
+        else:
+            dbpath = self.folder
+        if not migrate:
+            return query
+        elif table._db._uri.startswith('sqlite:memory:'):
+            table._dbt = None
+        elif isinstance(migrate, str):
+            table._dbt = os.path.join(dbpath, migrate)
+        else:
+            table._dbt = os.path.join(dbpath, '%s_%s.table' \
+                     % (md5_hash(table._db._uri), tablename))
+        if table._dbt:
+            table._loggername = os.path.join(dbpath, 'sql.log')
+            logfile = self.file_open(table._loggername, 'a')
+        else:
+            logfile = None
+        if not table._dbt or not self.file_exists(table._dbt):
+            if table._dbt:
+                logfile.write('timestamp: %s\n'
+                               % datetime.datetime.today().isoformat())
+                logfile.write(query + '\n')
+            if not fake_migrate:
+                self.create_sequence_and_triggers(query,table)
+                table._db.commit()
+            if table._dbt:
+                tfile = self.file_open(table._dbt, 'w')
+                cPickle.dump(sql_fields, tfile)
+                self.file_close(tfile)
+                if fake_migrate:
+                    logfile.write('faked!\n')
+                else:
+                    logfile.write('success!\n')
+        else:
+            tfile = self.file_open(table._dbt, 'r')
+            try:
+                sql_fields_old = cPickle.load(tfile)
+            except EOFError:
+                self.file_close(tfile)
+                self.file_close(logfile)
+                raise RuntimeError, 'File %s appears corrupted' % table._dbt
+            self.file_close(tfile)
+            if sql_fields != sql_fields_old:
+                self.migrate_table(table,
+                                   sql_fields, sql_fields_old,
+                                   sql_fields_aux, logfile,
+                                   fake_migrate=fake_migrate)
+            self.file_close(logfile)
+        return query
+
+    def migrate_table(
+        self,
+        table,
+        sql_fields,
+        sql_fields_old,
+        sql_fields_aux,
+        logfile,
+        fake_migrate=False,
+        ):
+        tablename = table._tablename
+        ### make sure all field names are lower case to avoid conflicts
+        sql_fields = dict((k.lower(), v) for k, v in sql_fields.items())
+        sql_fields_old = dict((k.lower(), v) for k, v in sql_fields_old.items())
+        sql_fields_aux = dict((k.lower(), v) for k, v in sql_fields_aux.items())
+
+        keys = sql_fields.keys()
+        for key in sql_fields_old:
+            if not key in keys:
+                keys.append(key)
+        if table._db._dbname == 'mssql':
+            new_add = '; ALTER TABLE %s ADD ' % tablename
+        else:
+            new_add = ', ADD '
+
+        fields_changed = False
+        sql_fields_current = copy.copy(sql_fields_old)
+        for key in keys:
+            if not key in sql_fields_old:
+                sql_fields_current[key] = sql_fields[key]
+                query = ['ALTER TABLE %s ADD %s %s;' % \
+                         (tablename, key, sql_fields_aux[key].replace(', ', new_add))]
+            elif table._db._dbname == 'sqlite':
+                query = None
+            elif not key in sql_fields:
+                del sql_fields_current[key]
+                if not table._db._dbname in ('firebird',):
+                    query = ['ALTER TABLE %s DROP COLUMN %s;' % (tablename, key)]
+                else:
+                    query = ['ALTER TABLE %s DROP %s;' % (tablename, key)]
+            elif sql_fields[key] != sql_fields_old[key] \
+                  and not isinstance(table[key].type, SQLCustomType) \
+                  and not (table[key].type.startswith('reference') and \
+                      sql_fields[key].startswith('INT,') and \
+                      sql_fields_old[key].startswith('INT NOT NULL,')):
+                sql_fields_current[key] = sql_fields[key]
+                t = tablename
+                tt = sql_fields_aux[key].replace(', ', new_add)
+                if not table._db._dbname in ('firebird',):
+                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
+                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
+                             'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
+                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
+                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
+                             'ALTER TABLE %s DROP COLUMN %s__tmp;' % (t, key)]
+                else:
+                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
+                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
+                             'ALTER TABLE %s DROP %s;' % (t, key),
+                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
+                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
+                             'ALTER TABLE %s DROP %s__tmp;' % (t, key)]
+            else:
+                query = None
+
+            if query:
+                fields_changed = True
+                logfile.write('timestamp: %s\n'
+                               % datetime.datetime.today().isoformat())
+                table._db['_lastsql'] = '\n'.join(query)
+                for sub_query in query:
+                    logfile.write(sub_query + '\n')
+                    if not fake_migrate:
+                        self.execute(sub_query)
+                        # caveat. mysql, oracle and firebird do not allow multiple alter table
+                        # in one transaction so we must commit partial transactions and
+                        # update table._dbt after alter table.
+                        if table._db._dbname in ['mysql', 'oracle', 'firebird']:
+                            table._db.commit()
+                            tfile = self.file_open(table._dbt, 'w')
+                            cPickle.dump(sql_fields_current, tfile)
+                            self.file_close(tfile)
+                            logfile.write('success!\n')
+                    else:
+                        logfile.write('faked!\n')
+
+        if fields_changed and not table._db._dbname in ['mysql', 'oracle', 'firebird']:
+            table._db.commit()
+            tfile = self.file_open(table._dbt, 'w')
+            cPickle.dump(sql_fields_current, tfile)
+            self.file_close(tfile)
 
     def LOWER(self,first):
         return 'LOWER(%s)' % self.expand(first)
@@ -478,7 +726,7 @@ class BaseAdapter(ConnectionPool):
                 sql_o += ' ORDER BY %s' % self.db._adapter.expand(orderby)
         if limitby:
             if not orderby and tablenames:
-                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in ((hasattr(self._db[t],'_primarykey') and self._db[t]._primarykey) or [self._db[t]._id.name])])
+                sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in ((hasattr(self.db[t],'_primarykey') and self.db[t]._primarykey) or [self.db[t]._id.name])])
             # oracle does not support limitby
         return self.SELECT_LIMITBY(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
 
@@ -2225,7 +2473,8 @@ class DAL(dict):
         if migrate:
             try:
                 sql_locker.acquire()
-                t._create(migrate=migrate, fake_migrate=fake_migrate)
+                self._adapter.create_table(t,migrate=migrate,
+                                           fake_migrate=fake_migrate)
             finally:
                 sql_locker.release()
         else:
@@ -2429,12 +2678,14 @@ class Table(dict):
 
         :raises SyntaxError: when a supplied field is of incorrect type.
         """
+        self._tablename = tablename
         self._trigger_name = args.get('trigger_name', None)
         self._sequence_name = args.get('sequence_name', None)
 
         primarykey = args.get('primarykey', None)
         if primarykey and not isinstance(primarykey,list):
-            raise SyntaxError, "primarykey must be a list of fields from table '%s'" % tablename
+            raise SyntaxError, "primarykey must be a list of fields from table '%s'" \
+                % tablename
         elif primarykey:
             self._primarykey = primarykey
             new_fields = []
@@ -2458,7 +2709,7 @@ class Table(dict):
         fields = new_fields
         self._db = db
         self._id = fields[0]
-        self._tablename = tablename
+        tablename = tablename
         self.fields = SQLCallableList()
         self.virtualfields = []
         fields = list(fields)
@@ -2471,7 +2722,7 @@ class Table(dict):
             self[field.name] = field
             if field.type == 'id':
                 self['id'] = field
-            field._tablename = self._tablename
+            field._tablename = tablename
             field._table = self
             field._db = self._db
             if field.requires == DEFAULT:
@@ -2623,249 +2874,6 @@ class Table(dict):
 
     def with_alias(self, alias):
         return self._db._adapter.alias(self,alias)
-
-    def _create(self, migrate=True, fake_migrate=False):
-        fields = []
-        sql_fields = {}
-        sql_fields_aux = {}
-        TFK = {}
-        for k in self.fields:
-            field = self[k]
-            if isinstance(field.type,SQLCustomType):
-                ftype = field.type.native or field.type.type
-            elif field.type[:10] == 'reference ':
-                referenced = field.type[10:].strip()
-                constraint_name = self._db._adapter.constraint_name(self._tablename, field.name)
-                if hasattr(self,'_primarykey'):
-                    rtablename,rfieldname = ref.split('.')
-                    rtable = self._db[rtablename]
-                    rfield = rtable[rfieldname]
-                    # must be PK reference or unique
-                    if rfieldname in rtable._primarykey or rfield.unique:
-                        ftype = self._db._adapter.types[rfield.type[:9]] %dict(length=rfield.length)
-                        # multicolumn primary key reference?
-                        if not rfield.unique and len(rtable._primarykey)>1 :
-                            # then it has to be a table level FK
-                            if rtablename not in TFK:
-                                TFK[rtablename] = {}
-                            TFK[rtablename][rfieldname] = field.name
-                        else:
-                            ftype = ftype + \
-                                self._db._adapter.types['reference FK'] %dict(\
-                                constraint_name=constraint_name,
-                                table_name=self._tablename,
-                                field_name=field.name,
-                                foreign_key='%s (%s)'%(rtablename, rfieldname),
-                                on_delete_action=field.ondelete)
-                else:
-                    ftype = self._db._adapter.types[field.type[:9]]\
-                        % dict(table_name=self._tablename,
-                               field_name=field.name,
-                               constraint_name=constraint_name,
-                               foreign_key=referenced + ('(%s)' % self._db[referenced].fields[0]),
-                               on_delete_action=field.ondelete)
-            elif field.type.startswith('list:reference'):
-                ftype = self._db._adapter.types[field.type[:14]]
-            elif field.type.startswith('decimal'):
-                precision, scale = [int(x) for x in field.type[8:-1].split(',')]
-                ftype = self._db._adapter.types[field.type[:7]] % \
-                    dict(precision=precision,scale=scale)
-            elif not field.type in self._db._adapter.types:
-                raise SyntaxError, 'Field: unknown field type: %s for %s' % \
-                    (field.type, field.name)
-            else:
-                ftype = self._db._adapter.types[field.type]\
-                     % dict(length=field.length)
-            if not field.type.startswith('id') and not field.type.startswith('reference'):
-                if field.notnull:
-                    ftype += ' NOT NULL'
-                if field.unique:
-                    ftype += ' UNIQUE'
-
-            # add to list of fields
-            sql_fields[field.name] = ftype
-
-            if field.default!=None:
-                # caveat: sql_fields and sql_fields_aux differ for default values
-                # sql_fields is used to trigger migrations and sql_fields_aux
-                # are used for create table
-                # the reason is that we do not want to trigger a migration simply
-                # because a default value changes
-                not_null = self._db._adapter.NOT_NULL(field.default,field.type)
-                ftype = ftype.replace('NOT NULL',not_null)
-            sql_fields_aux[field.name] = ftype
-
-            fields.append('%s %s' % (field.name, ftype))
-        other = ';'
-
-        # backend-specific extensions to fields
-        if self._db._dbname == 'mysql':
-            if not hasattr(self, "_primarykey"):
-                fields.append('PRIMARY KEY(%s)' % self.fields[0])
-            other = ' ENGINE=InnoDB CHARACTER SET utf8;'
-
-        fields = ',\n    '.join(fields)
-        for rtablename in TFK:
-            rfields = TFK[rtablename]
-            pkeys = self._db[rtablename]._primarykey
-            fkeys = [ rfields[k] for k in pkeys ]
-            fields = fields + ',\n    ' + \
-                     self._db._adapter.types['reference TFK'] %\
-                     dict(table_name=self._tablename,
-                     field_name=', '.join(fkeys),
-                     foreign_table=rtablename,
-                     foreign_key=', '.join(pkeys),
-                     on_delete_action=field.ondelete)
-
-        if hasattr(self,'_primarykey'):
-            query = '''CREATE TABLE %s(\n    %s,\n    %s) %s''' % \
-               (self._tablename, fields, self._db._adapter.PRIMARY_KEY(', '.join(self._primarykey),other))
-        else:
-            query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
-                (self._tablename, fields, other)
-
-        if self._db._uri[:10] == 'sqlite:///':
-            path_encoding = sys.getfilesystemencoding() or \
-                locale.getdefaultlocale()[1]
-            dbpath = self._db._uri[9:self._db._uri.rfind('/')]\
-                .decode('utf8').encode(path_encoding)
-        else:
-            dbpath = self._db._adapter.folder
-        if not migrate:
-            return query
-        elif self._db._uri.startswith('sqlite:memory:'):
-            self._dbt = None
-        elif isinstance(migrate, str):
-            self._dbt = os.path.join(dbpath, migrate)
-        else:
-            self._dbt = os.path.join(dbpath, '%s_%s.table' \
-                     % (md5_hash(self._db._uri), self._tablename))
-        if self._dbt:
-            self._loggername = os.path.join(dbpath, 'sql.log')
-            logfile = self._db._adapter.file_open(self._loggername, 'a')
-        else:
-            logfile = None
-        if not self._dbt or not self._db._adapter.file_exists(self._dbt):
-            if self._dbt:
-                logfile.write('timestamp: %s\n'
-                               % datetime.datetime.today().isoformat())
-                logfile.write(query + '\n')
-            if not fake_migrate:
-                self._db._adapter.create_sequence_and_triggers(query,self)
-                self._db.commit()
-            if self._dbt:
-                tfile = self._db._adapter.file_open(self._dbt, 'w')
-                cPickle.dump(sql_fields, tfile)
-                self._db._adapter.file_close(tfile)
-                if fake_migrate:
-                    logfile.write('faked!\n')
-                else:
-                    logfile.write('success!\n')
-        else:
-            tfile = self._db._adapter.file_open(self._dbt, 'r')
-            try:
-                sql_fields_old = cPickle.load(tfile)
-            except EOFError:
-                self._db._adapter.file_close(tfile)
-                self._db._adapter.file_close(logfile)
-                raise RuntimeError, 'File %s appears corrupted' % self._dbt
-            self._db._adapter.file_close(tfile)
-            if sql_fields != sql_fields_old:
-                self._migrate(sql_fields, sql_fields_old,
-                              sql_fields_aux, logfile,
-                              fake_migrate=fake_migrate)
-            self._db._adapter.file_close(logfile)
-        return query
-
-    def _migrate(
-        self,
-        sql_fields,
-        sql_fields_old,
-        sql_fields_aux,
-        logfile,
-        fake_migrate=False,
-        ):
-        ### make sure all field names are lower case to avoid conflicts
-        sql_fields = dict((k.lower(), v) for k, v in sql_fields.items())
-        sql_fields_old = dict((k.lower(), v) for k, v in sql_fields_old.items())
-        sql_fields_aux = dict((k.lower(), v) for k, v in sql_fields_aux.items())
-
-        keys = sql_fields.keys()
-        for key in sql_fields_old:
-            if not key in keys:
-                keys.append(key)
-        if self._db._dbname == 'mssql':
-            new_add = '; ALTER TABLE %s ADD ' % self._tablename
-        else:
-            new_add = ', ADD '
-
-        fields_changed = False
-        sql_fields_current = copy.copy(sql_fields_old)
-        for key in keys:
-            if not key in sql_fields_old:
-                sql_fields_current[key] = sql_fields[key]
-                query = ['ALTER TABLE %s ADD %s %s;' % \
-                         (self._tablename, key, sql_fields_aux[key].replace(', ', new_add))]
-            elif self._db._dbname == 'sqlite':
-                query = None
-            elif not key in sql_fields:
-                del sql_fields_current[key]
-                if not self._db._dbname in ('firebird',):
-                    query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
-                else:
-                    query = ['ALTER TABLE %s DROP %s;' % (self._tablename, key)]
-            elif sql_fields[key] != sql_fields_old[key] \
-                  and not isinstance(self[key].type, SQLCustomType) \
-                  and not (self[key].type.startswith('reference') and \
-                      sql_fields[key].startswith('INT,') and \
-                      sql_fields_old[key].startswith('INT NOT NULL,')):
-                sql_fields_current[key] = sql_fields[key]
-                t = self._tablename
-                tt = sql_fields_aux[key].replace(', ', new_add)
-                if not self._db._dbname in ('firebird',):
-                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
-                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
-                             'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
-                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
-                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
-                             'ALTER TABLE %s DROP COLUMN %s__tmp;' % (t, key)]
-                else:
-                    query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
-                             'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
-                             'ALTER TABLE %s DROP %s;' % (t, key),
-                             'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
-                             'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
-                             'ALTER TABLE %s DROP %s__tmp;' % (t, key)]
-            else:
-                query = None
-
-            if query:
-                fields_changed = True
-                logfile.write('timestamp: %s\n'
-                               % datetime.datetime.today().isoformat())
-                self._db['_lastsql'] = '\n'.join(query)
-                for sub_query in query:
-                    logfile.write(sub_query + '\n')
-                    if not fake_migrate:
-                        self._db._execute(sub_query)
-                        # caveat. mysql, oracle and firebird do not allow multiple alter table
-                        # in one transaction so we must commit partial transactions and
-                        # update self._dbt after alter table.
-                        if self._db._dbname in ['mysql', 'oracle', 'firebird']:
-                            self._db.commit()
-                            tfile = self._db._adapter.file_open(self._dbt, 'w')
-                            cPickle.dump(sql_fields_current, tfile)
-                            self._db._adapter.file_close(tfile)
-                            logfile.write('success!\n')
-                    else:
-                        logfile.write('faked!\n')
-
-        if fields_changed and not self._db._dbname in ['mysql', 'oracle', 'firebird']:
-            self._db.commit()
-            tfile = self._db._adapter.file_open(self._dbt, 'w')
-            cPickle.dump(sql_fields_current, tfile)
-            self._db._adapter.file_close(tfile)
-
 
     def _drop(self, mode = ''):
         return self._db._adapter.DROP(self, mode)
