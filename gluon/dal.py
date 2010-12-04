@@ -158,10 +158,10 @@ class ConnectionPool(object):
             action(instance)
             # ## if you want pools, recycle this connection
             really = True
-            if instance._pool_size:
+            if instance.pool_size:
                 sql_locker.acquire()
                 pool = ConnectionPool._pools[instance._uri]
-                if len(pool) < instance._pool_size:
+                if len(pool) < instance.pool_size:
                     pool.append(instance._connection)
                     really = False
                 sql_locker.release()
@@ -597,12 +597,12 @@ class BaseAdapter(ConnectionPool):
         if isinstance(expression,Field):
             return str(expression)
         elif isinstance(expression, (Expression, Query)):
-            if not expression._second is None:
-                return expression._op(expression._first, expression._second)
-            elif not expression._first is None:
-                return expression._op(expression._first)
+            if not expression.second is None:
+                return expression.op(expression.first, expression.second)
+            elif not expression.first is None:
+                return expression.op(expression.first)
             else:
-                return expression._op()
+                return expression.op()
         elif isinstance(expression,(list,tuple)):
             return ','.join([self.represent(item,field_type) for item in expression])
         elif field_type:
@@ -658,7 +658,8 @@ class BaseAdapter(ConnectionPool):
 
     def SELECT(self, query, *fields, **attributes):
         for key in set(attributes.keys())-set(('orderby','groupby','limitby',
-                                               'required','cache','left','distinct','having')):
+                                               'required','cache','left',
+                                               'distinct','having')):
             raise SyntaxError, 'invalid select attribute: %s' % key
         # ## if not fields specified take them all from the requested tables
         new_fields = []
@@ -668,15 +669,16 @@ class BaseAdapter(ConnectionPool):
             else:
                 new_fields.append(item)
         fields = new_fields
-        tablenames = self.tables(query)
+        tablenames = self.tables(query)        
         if not fields:
             for table in tablenames:
                 for field in self.db[table]:
                     fields.append(field)
         else:
-            for f in fields:
-                if not f._tablename in tablenames:
-                    tablenames.append(f._tablename)
+            for field in fields:
+                for tablename in self.tables(field):
+                    if not tablename in tablenames:
+                        tablenames.append(tablename)
         if len(tablenames) < 1:
             raise SyntaxError, 'Set: no tables selected'
         sql_f = ', '.join([self.expand(f) for f in fields])
@@ -704,7 +706,7 @@ class BaseAdapter(ConnectionPool):
                 join = [join]
             joint = [t._tablename for t in join if not isinstance(t,Expression)]
             joinon = [t for t in join if isinstance(t, Expression)]
-            joinont = [t._first._tablename for t in joinon]
+            joinont = [t.first._tablename for t in joinon]
             excluded = [t for t in tablenames if not t in joint + joinont]
             sql_t = ', '.join(excluded)
             if joint:
@@ -759,20 +761,15 @@ class BaseAdapter(ConnectionPool):
         return self.parse(rows,self._colnames)
 
     def tables(self,query):
-        tables = []
-        if isinstance(query, (Query, Expression, Field)):
-            if query._first:
-                if hasattr(query._first, '_tablename'):
-                    tables = [query._first._tablename]
-                else:
-                    tables = self.tables(query._first)
-            if query._second:
-                if hasattr(query._second, '_tablename'):
-                    if not query._second._tablename in tables:
-                        tables.append(query._second._tablename)
-                else:
-                    tables = tables + [t for t in self.tables(query._second) if not t in tables]
-        return tables
+        tables = set()
+        if isinstance(query, Field):
+            tables.add(query._tablename)
+        elif isinstance(query, (Expression, Query)):
+            if query.first!=None:
+                tables = tables.union(self.tables(query.first))
+            if query.second!=None:
+                tables = tables.union(self.tables(query.second))
+        return list(tables)
 
     def commit(self):
         return self.connection.commit()
@@ -3038,10 +3035,10 @@ class Expression(object):
         ):
 
         self._db = db
-        self._op = op
-        self._first = first
-        self._second = second
-        self._tablename =  first._tablename ## CHECK
+        self.op = op
+        self.first = first
+        self.second = second
+        ### self._tablename =  first._tablename ## CHECK
         if not type and first and hasattr(first,'type'):
             self.type = first.type
         else:
@@ -3054,8 +3051,8 @@ class Expression(object):
         return Expression(self._db,self._db._adapter.COMMA,self,other,self.type)
 
     def __invert__(self):
-        if hasattr(self,'_op') and self._op == self._db._adapter.DESC:
-            return self._first
+        if hasattr(self,'_op') and self.op == self._db._adapter.DESC:
+            return self.first
         return Expression(self._db,self._db._adapter.DESC,self,type=self.type)
 
     def __add__(self, other):
@@ -3245,9 +3242,9 @@ class Field(Expression):
         compute=None,
         ):
         self._db=None
-        self._op=None
-        self._first=None
-        self._second=None
+        self.op=None
+        self.first=None
+        self.second=None
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
@@ -3326,7 +3323,7 @@ class Field(Expression):
     def retrieve(self, name, path=None):
         import http
         if self.authorize or isinstance(self.uploadfield, str):
-            row = self._db(self == name).select()._first()
+            row = self._db(self == name).select().first()
             if not row:
                 raise http.HTTP(404)
         if self.authorize and not self.authorize(row):
@@ -3477,9 +3474,9 @@ class Query(object):
         second=None,
         ):
         self._db = db
-        self._op = op
-        self._first = first
-        self._second = second
+        self.op = op
+        self.first = first
+        self.second = second
 
     def __str__(self):
         return self._db._adapter.expand(self)
