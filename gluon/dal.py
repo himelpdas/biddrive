@@ -617,13 +617,13 @@ class BaseAdapter(ConnectionPool):
         """ by default this function does nothing, oreload when db does no do slicing """
         return rows
 
-    ####### sync with sql.py !!!!!!!!!!!!!!!!!!!!!!!!
-    def parse(self,rows,colnames,blob_decode=True):
+    def parse(self, rows, colnames, blob_decode=True):
+        db = self.db
         virtualtables = []
         new_rows = []
         for (i,row) in enumerate(rows):
             new_row = Row()
-            for j in xrange(len(colnames)):
+            for j,colname in enumerate(colnames):
                 value = row[j]
                 if not table_field.match(colnames[j]):
                     if not '_extra' in new_row:
@@ -635,92 +635,113 @@ class BaseAdapter(ConnectionPool):
                         column_name = new_column_name.groups(0)
                         setattr(new_row,column_name[0],value)
                     continue
-                (tablename, fieldname) = colnames[j].split('.')
-                table = self.db[tablename]
+                (tablename, fieldname) = colname.split('.')
+                table = db[tablename]
                 field = table[fieldname]
+                field_type = field.type
                 if field.type != 'blob' and isinstance(value, str):
-                    value = value.decode(self.db_codec)
+                    try:
+                        value = value.decode(db._db_codec)
+                    except Exception:
+                        pass
                 if isinstance(value, unicode):
                     value = value.encode('utf-8')
-                if tablename in new_row:
-                    colset = new_row[tablename]
-                else:
+                if not tablename in new_row:
                     colset = new_row[tablename] = Row()
-                    virtualtables.append((tablename, self.db[tablename].virtualfields))
-                if field.type.startswith('reference'):
-                    referee = field.type[10:].strip()
-                    if not value:
-                        colset[fieldname] = value
-                    elif not '.' in referee:
+                    virtualtables.append((tablename,db[tablename].virtualfields))
+                else:
+                    colset = new_row[tablename]
+
+                if isinstance(field_type, SQLCustomType):
+                    colset[fieldname] = field_type.decoder(value)
+                    # field_type = field_type.type
+                elif not isinstance(field_type, str) or value==None:
+                    colset[fieldname] = value
+                elif isinstance(field_type, str) and \
+                        field_type.startswith('reference'):
+                    referee = field_type[10:].strip()
+                    if not '.' in referee:
                         colset[fieldname] = rid = Reference(value)
-                        (rid._table, rid._record) = (self.db[referee], None)
+                        (rid._table, rid._record) = (db[referee], None)
                     else: ### reference not by id
                         colset[fieldname] = value
-                elif field.type == 'blob' and value != None and blob_decode:
-                    colset[fieldname] = base64.b64decode(str(value))
-                elif field.type == 'boolean' and value != None:
+                elif field_type == 'boolean':
                     if value == True or value == 'T' or value == 't':
                         colset[fieldname] = True
                     else:
                         colset[fieldname] = False
-                elif field.type == 'date' and value != None\
+                elif field_type == 'date' \
                         and (not isinstance(value, datetime.date)\
                                  or isinstance(value, datetime.datetime)):
-                    if not value: colset[fieldname] = None
-                    else:
-                        (y, m, d) = [int(x) for x in
-                                     str(value)[:10].strip().split('-')]
-                        colset[fieldname] = datetime.date(y, m, d)
-                elif field.type == 'time' and value != None\
+                    (y, m, d) = [int(x) for x in
+                                 str(value)[:10].strip().split('-')]
+                    colset[fieldname] = datetime.date(y, m, d)
+                elif field_type == 'time' \
                         and not isinstance(value, datetime.time):
-                    if not value: colset[fieldname] = None
+                    time_items = [int(x) for x in
+                                  str(value)[:8].strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
                     else:
-                        time_items = [int(x) for x in
-                                      str(value)[:8].strip().split(':')[:3]]
-                        if len(time_items) == 3:
-                            (h, mi, s) = time_items
-                        else:
-                            (h, mi, s) = time_items + [0]
-                        colset[fieldname] = datetime.time(h, mi, s)
-                elif field.type == 'datetime' and value != None\
+                        (h, mi, s) = time_items + [0]
+                    colset[fieldname] = datetime.time(h, mi, s)
+                elif field_type == 'datetime'\
                         and not isinstance(value, datetime.datetime):
-                    if not value: colset[fieldname] = None
+                    (y, m, d) = [int(x) for x in
+                                 str(value)[:10].strip().split('-')]
+                    time_items = [int(x) for x in
+                                  str(value)[11:19].strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
                     else:
-                        (y, m, d) = [int(x) for x in
-                                     str(value)[:10].strip().split('-')]
-                        time_items = [int(x) for x in
-                                      str(value)[11:19].strip().split(':')[:3]]
-                        if len(time_items) == 3:
-                            (h, mi, s) = time_items
-                        else:
-                            (h, mi, s) = time_items + [0]
-                        colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
-                elif field.type[:7] == 'decimal' and value != None:
-                    decimals = [int(x) for x in field.type[8:-1].split(',')][-1]
+                        (h, mi, s) = time_items + [0]
+                    colset[fieldname] = datetime.datetime(y, m, d, h, mi, s)
+                elif field_type == 'blob' and blob_decode:
+                    colset[fieldname] = base64.b64decode(str(value))
+                elif field_type.startswith('decimal'):
+                    decimals = [int(x) for x in field_type[8:-1].split(',')][-1]
                     if field._db._dbname == 'sqlite':
-                        value = ('%.'+str(decimals)+'f') % value
-                    if not isinstance(value,decimal.Decimal):
+                        value = ('%.' + str(decimals) + 'f') % value
+                    if not isinstance(value, decimal.Decimal):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
-                elif isinstance(field.type,SQLCustomType) and value != None:
-                    colset[fieldname] = field.type.decoder(value)
+                elif field_type.startswith('list:integer'):
+                    if db._uri != 'gae':
+                        colset[fieldname] = bar_decode_integer(value)
+                    else:
+                        colset[fieldname] = value
+                elif field_type.startswith('list:reference'):
+                    if db._uri != 'gae':
+                        colset[fieldname] = bar_decode_integer(value)
+                    else:
+                        colset[fieldname] = value
+                elif field_type.startswith('list:string'):
+                    if db._uri != 'gae':
+                        colset[fieldname] = bar_decode_string(value)
+                    else:
+                        colset[fieldname] = value
                 else:
                     colset[fieldname] = value
-                if field.type == 'id':
+                if field_type == 'id':
                     id = colset[field.name]
-                    colset.update_record = lambda _=(colset, table, id), **a: update_record(_, a)
-                    colset.delete_record = lambda t = table, i = id: t._db(t.id==i).delete()
+                    colset.update_record = lambda _ = (colset, table, id), **a: update_record(_, a)
+                    colset.delete_record = lambda t = table, i = id: t._db(t._id==i).delete()
                     for (referee_table, referee_name) in \
                             table._referenced_by:
-                        s = self.db[referee_table][referee_name]
-                        colset[referee_table] = Set(self.db, s == id)
+                        s = db[referee_table][referee_name]
+                        colset[referee_table] = Set(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
-        rowsobj = Rows(self.db, new_rows, colnames, rawrows=rows)
+        rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
         for table, virtualfields in virtualtables:
             for item in virtualfields:
-                rowsobj = rowsobj.setvirtualfields(**{table:item})
+                try:
+                    rowsobj = rowsobj.setvirtualfields(**{table:item})
+                except KeyError:
+                    # to avoid breaking virtualfields when partial select
+                    pass
         return rowsobj
+
 
 
 
@@ -1768,7 +1789,6 @@ ADAPTERS = {
 }
 
 
-############# sync with sql.py !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def sqlhtml_validators(field):
     """
     Field type validation, using web2py's validators mechanism.
@@ -1782,6 +1802,8 @@ def sqlhtml_validators(field):
             return field_type.validator
         else:
             field_type = field_type.type
+    elif not isinstance(field_type,str):
+        return []
     requires=[]
     def ff(r,id):
         row=r[id]
@@ -1817,13 +1839,14 @@ def sqlhtml_validators(field):
             field_type[10:] in field._db.tables:
         referenced = field._db[field_type[10:]]
         field.represent = lambda id, r=referenced, f=ff: f(r, id)
-        requires = validators.IS_IN_DB(field._db,referenced.id,
-                                       referenced._format)
-        if field.unique:
-            requires._and = validators.IS_NOT_IN_DB(field._db,field)
-        if field._tablename == field_type[10:]:
-            return validators.IS_EMPTY_OR(requires)
-        return requires
+        if hasattr(referenced, '_format') and referenced._format:
+            requires = validators.IS_IN_DB(field._db,referenced.id,
+                                           referenced._format)
+            if field.unique:
+                requires._and = validators.IS_NOT_IN_DB(field._db,field)
+            if field._tablename == field_type[10:]:
+                return validators.IS_EMPTY_OR(requires)
+            return requires
     elif field._db and field_type.startswith('list:reference') and \
             field_type.find('.') < 0 and \
             field_type[15:] in field._db.tables:
@@ -1838,16 +1861,15 @@ def sqlhtml_validators(field):
             if field.unique:
                 requires._and = validators.IS_NOT_IN_DB(field._db,field)
             return requires
-
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field._db,field))
     sff = ['in', 'do', 'da', 'ti', 'de', 'bo']
     if field.notnull and not field_type[:2] in sff:
         requires.insert(0, validators.IS_NOT_EMPTY())
-    elif not field.notnull and field_type[:2] in sff:
-        #### requires[-1] = validators.IS_EMPTY_OR(requires[-1]) ### << FIX THIS
-        pass
+    elif not field.notnull and field_type[:2] in sff and requires:
+        requires[-1] = validators.IS_EMPTY_OR(requires[-1])
     return requires
+
 
 def bar_escape(item):
     return str(item).replace('|', '||')
@@ -2750,9 +2772,6 @@ class Table(dict):
             self._db._close(logfile)
         return query
 
-    #######################
-    ########## REPLACE FROM sql.py !!!!!!!!!!!!!!!!!!!
-    #######################
     def _migrate(
         self,
         sql_fields,
@@ -2762,34 +2781,40 @@ class Table(dict):
         fake_migrate=False,
         ):
         ### make sure all field names are lower case to avoid conflicts
-        sql_fields = dict((k.lower(),v) for k,v in sql_fields.items())
-        sql_fields_old = dict((k.lower(),v) for k,v in sql_fields_old.items())
-        sql_fields_aux = dict((k.lower(),v) for k,v in sql_fields_aux.items())
+        sql_fields = dict((k.lower(), v) for k, v in sql_fields.items())
+        sql_fields_old = dict((k.lower(), v) for k, v in sql_fields_old.items())
+        sql_fields_aux = dict((k.lower(), v) for k, v in sql_fields_aux.items())
 
         keys = sql_fields.keys()
         for key in sql_fields_old:
             if not key in keys:
                 keys.append(key)
-        new_add = self._db._adapter.concat_add(self)
+        if self._db._dbname == 'mssql':
+            new_add = '; ALTER TABLE %s ADD ' % self._tablename
+        else:
+            new_add = ', ADD '
+
+        fields_changed = False
+        sql_fields_current = copy.copy(sql_fields_old)
         for key in keys:
             if not key in sql_fields_old:
+                sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
                          (self._tablename, key, sql_fields_aux[key].replace(', ', new_add))]
             elif self._db._dbname == 'sqlite':
                 query = None
             elif not key in sql_fields:
+                del sql_fields_current[key]
                 if not self._db._dbname in ('firebird',):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (self._tablename, key)]
                 else:
                     query = ['ALTER TABLE %s DROP %s;' % (self._tablename, key)]
-            elif sql_fields[key] != sql_fields_old[key] and \
-                 not (self[key].type.startswith('reference') and \
+            elif sql_fields[key] != sql_fields_old[key] \
+                  and not isinstance(self[key].type, SQLCustomType) \
+                  and not (self[key].type.startswith('reference') and \
                       sql_fields[key].startswith('INT,') and \
                       sql_fields_old[key].startswith('INT NOT NULL,')):
-
-                # ## FIX THIS WHEN DIFFERENCES IS ONLY IN DEFAULT
-                # 2
-
+                sql_fields_current[key] = sql_fields[key]
                 t = self._tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
                 if not self._db._dbname in ('firebird',):
@@ -2810,24 +2835,32 @@ class Table(dict):
                 query = None
 
             if query:
+                fields_changed = True
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
+                self._db['_lastsql'] = '\n'.join(query)
                 for sub_query in query:
                     logfile.write(sub_query + '\n')
                     if not fake_migrate:
-                        self._db._adapter.execute(sub_query)
-                        if self._db._adapter.commit_on_alter_table():
+                        self._db._execute(sub_query)
+                        # caveat. mysql, oracle and firebird do not allow multiple alter table
+                        # in one transaction so we must commit partial transactions and
+                        # update self._dbt after alter table.
+                        if self._db._dbname in ['mysql', 'oracle', 'firebird']:
                             self._db.commit()
+                            tfile = self._db._open(self._dbt, 'w')
+                            cPickle.dump(sql_fields_current, tfile)
+                            self._db._close(tfile)
                             logfile.write('success!\n')
                     else:
                         logfile.write('faked!\n')
-                if key in sql_fields:
-                    sql_fields_old[key] = sql_fields[key]
-                else:
-                    del sql_fields_old[key]
-        tfile = self._db._open(self._dbt, 'w')
-        cPickle.dump(sql_fields_old, tfile)
-        self._db._close(tfile)
+
+        if fields_changed and not self._db._dbname in ['mysql', 'oracle', 'firebird']:
+            self._db.commit()
+            tfile = self._db._open(self._dbt, 'w')
+            cPickle.dump(sql_fields_current, tfile)
+            self._db._close(tfile)
+
 
     def _drop(self, mode = ''):
         return self._db._adapter.DROP(self, mode)
@@ -3908,14 +3941,14 @@ def test_all():
               Field('stringf', 'string', length=32, required=True),\
               Field('booleanf', 'boolean', default=False),\
               Field('passwordf', 'password', notnull=True),\
-              Field('blobf', 'blob'),\
               Field('uploadf', 'upload'),\
+              Field('blobf', 'blob'),\
               Field('integerf', 'integer', unique=True),\
               Field('doublef', 'double', unique=True,notnull=True),\
               Field('datef', 'date', default=datetime.date.today()),\
               Field('timef', 'time'),\
               Field('datetimef', 'datetime'),\
-              migrate='test_user.table')
+              migrate='test_user.table')              
 
    Insert a field
 
