@@ -49,11 +49,34 @@ import marshal
 import decimal
 import struct
 import urllib
+import hashlib
 
-from utils import md5_hash, web2py_uuid
-from serializers import json
-import portalocker
-import validators
+###################################################################################
+# following checks allows running of dal wintout web2py as a stand alone module
+###################################################################################
+try:
+    from utils import web2py_uuid
+except ImportError:
+    import uuid
+    def web2py_uuid(): return str(uuid.uuid4())
+
+try:
+    import portalocker
+    have_portalocker = True
+except:
+    have_portalocker = False
+
+try:
+    import serlializers
+    have_serializers = True
+except:
+    have_serializers = False
+
+try:
+    import validators
+    have_validators = True
+except:
+    have_validators = False
 
 logger = logging.getLogger("web2py.dal")
 DEFAULT = lambda:0
@@ -213,10 +236,13 @@ class BaseAdapter(ConnectionPool):
         to be used ONLY for files that on GAE may not be on filesystem
         """
         fileobj = open(filename,mode)
-        if lock and mode in ('r','rb'):
-            portalocker.lock(fileobj,portalocker.LOCK_SH)
-        elif lock and mode in ('w','wb','a'):
-            portalocker.lock(fileobj,portalocker.LOCK_EX)
+        if have_portalocker and lock:
+            if mode in ('r','rb'):
+                portalocker.lock(fileobj,portalocker.LOCK_SH)
+            elif mode in ('w','wb','a'):
+                portalocker.lock(fileobj,portalocker.LOCK_EX)
+            else:
+                raise RuntimeError, "Unsupported file_open mode"
         return fileobj
 
     def file_close(self, fileobj, unlock=True):
@@ -224,7 +250,7 @@ class BaseAdapter(ConnectionPool):
         to be used ONLY for files that on GAE may not be on filesystem
         """
         if fileobj:
-            if unlock:
+            if have_portalocker and unlock:
                 portalocker.unlock(fileobj)
             fileobj.close()
 
@@ -362,7 +388,7 @@ class BaseAdapter(ConnectionPool):
             table._dbt = os.path.join(dbpath, migrate)
         else:
             table._dbt = os.path.join(dbpath, '%s_%s.table' \
-                     % (md5_hash(table._db._uri), tablename))
+                     % (hashlib.md5(table._db._uri).hexdigest(), tablename))
         if table._dbt:
             table._loggername = os.path.join(dbpath, 'sql.log')
             logfile = self.file_open(table._loggername, 'a')
@@ -2074,6 +2100,8 @@ def sqlhtml_validators(field):
     makes sure the content of a field is in line with the declared
     fieldtype
     """
+    if not have_validators:
+        return []
     field_type, field_length = field.type, field.length
     if isinstance(field_type, SQLCustomType):
         if hasattr(field_type, 'validator'):
@@ -2093,7 +2121,6 @@ def sqlhtml_validators(field):
             return r._format(row)
         else:
             return id
-
     if field_type == 'string':
         requires.append(validators.IS_LENGTH(field_length))
     elif field_type == 'text':
@@ -3894,7 +3921,6 @@ class Rows(object):
         """
         serializes the table to a JSON list of objects
         """
-
         mode = mode.lower()
         if not mode in ['object', 'array']:
             raise SyntaxError, 'Invalid JSON serialization mode: %s' % mode
@@ -3920,8 +3946,11 @@ class Rows(object):
         else:
             items = [[inner_loop(record, col) for col in self.colnames]
                      for record in self]
-        return json(items)
-
+        if have_serializers:        
+            return serializers.json(items)
+        else:
+            import simplejson
+            return simplejson.dumps(items)
 
 def Rows_unpickler(data):
     return marshal.loads(data)
