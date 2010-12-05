@@ -162,11 +162,11 @@ class ConnectionPool(object):
                 sql_locker.acquire()
                 pool = ConnectionPool.pools[self.uri]
                 if len(pool) < instance.pool_size:
-                    pool.append(instance._connection)
+                    pool.append(self.connection)
                     really = False
                 sql_locker.release()
             if really:
-                instance._connection.close()
+                self.connection.close()
         return
 
     def find_or_make_work_folder(self):
@@ -189,7 +189,7 @@ class ConnectionPool(object):
             if not uri in ConnectionPool.pools:
                 ConnectionPool.pools[uri] = []
             if ConnectionPool.pools[uri]:
-                self._connection = ConnectionPool.pools[uri].pop()
+                self.connection = ConnectionPool.pools[uri].pop()
                 sql_locker.release()
             else:
                 sql_locker.release()
