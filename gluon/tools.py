@@ -1100,7 +1100,7 @@ class Auth(object):
         else:
             return True
 
-    def define_tables(self, username=False, migrate=True):
+    def define_tables(self, username=False, migrate=True, fake_migrate=False):
         """
         to be called unless tables are defined manually
 
@@ -1142,6 +1142,7 @@ class Auth(object):
                           label=self.messages.label_registration_id),
                     migrate=\
                         self.__get_migrate(self.settings.table_user_name, migrate),
+                    fake_migrate=fake_migrate,
                     format='%(username)s')
                 table.username.requires = IS_NOT_IN_DB(db, table.username)
             else:
@@ -1163,6 +1164,7 @@ class Auth(object):
                           label=self.messages.label_reset_password_key),
                     migrate=\
                         self.__get_migrate(self.settings.table_user_name, migrate),
+                    fake_migrate=fake_migrate,
                     format='%(first_name)s %(last_name)s (%(id)s)')
             table.first_name.requires = \
                 IS_NOT_EMPTY(error_message=self.messages.is_empty)
@@ -1183,6 +1185,7 @@ class Auth(object):
                         label=self.messages.label_description),
                 migrate=self.__get_migrate(
                     self.settings.table_group_name, migrate),
+                fake_migrate=fake_migrate,
                 format = '%(role)s (%(id)s)')
             table.role.requires = IS_NOT_IN_DB(db, '%s.role'
                  % self.settings.table_group_name)
@@ -1195,7 +1198,8 @@ class Auth(object):
                 Field('group_id', self.settings.table_group,
                         label=self.messages.label_group_id),
                 migrate=self.__get_migrate(
-                    self.settings.table_membership_name, migrate))
+                    self.settings.table_membership_name, migrate),
+                fake_migrate=fake_migrate)
             table.user_id.requires = IS_IN_DB(db, '%s.id' %
                     self.settings.table_user_name,
                     '%(first_name)s %(last_name)s (%(id)s)')
@@ -1215,7 +1219,8 @@ class Auth(object):
                 Field('record_id', 'integer',
                         label=self.messages.label_record_id),
                 migrate=self.__get_migrate(
-                    self.settings.table_permission_name, migrate))
+                    self.settings.table_permission_name, migrate),
+                fake_migrate=fake_migrate)
             table.group_id.requires = IS_IN_DB(db, '%s.id' %
                     self.settings.table_group_name,
                     '%(role)s (%(id)s)')
@@ -1239,7 +1244,8 @@ class Auth(object):
                 Field('description', 'text', default='',
                         label=self.messages.label_description),
                 migrate=self.__get_migrate(
-                    self.settings.table_event_name, migrate))
+                    self.settings.table_event_name, migrate),
+                fake_migrate=fake_migrate)
             table.user_id.requires = IS_IN_DB(db, '%s.id' %
                     self.settings.table_user_name,
                     '%(first_name)s %(last_name)s (%(id)s)')
