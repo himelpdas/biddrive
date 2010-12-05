@@ -140,7 +140,7 @@ except:
 
 class ConnectionPool(object):
 
-    _pools = {}
+    pools = {}
 
     @staticmethod
     def set_folder(folder):
@@ -160,7 +160,7 @@ class ConnectionPool(object):
             really = True
             if instance.pool_size:
                 sql_locker.acquire()
-                pool = ConnectionPool._pools[instance._uri]
+                pool = ConnectionPool.pools[self.uri]
                 if len(pool) < instance.pool_size:
                     pool.append(instance._connection)
                     really = False
@@ -186,10 +186,10 @@ class ConnectionPool(object):
         else:
             uri = self.uri
             sql_locker.acquire()
-            if not uri in COnnectionPool._pools:
-                ConnectionPool._pools[uri] = []
-            if ConnectionPool._pools[uri]:
-                self._connection = ConnectionPool._pools[uri].pop()
+            if not uri in ConnectionPool.pools:
+                ConnectionPool.pools[uri] = []
+            if ConnectionPool.pools[uri]:
+                self._connection = ConnectionPool.pools[uri].pop()
                 sql_locker.release()
             else:
                 sql_locker.release()
@@ -743,7 +743,6 @@ class BaseAdapter(ConnectionPool):
         Always returns a Rows object, even if it may be empty
         """
         db=self.db
-
         def response(query):
             self.execute(query)
             return self.cursor.fetchall()
@@ -1571,7 +1570,7 @@ class MSSQLAdapter(BaseAdapter):
         return rows[minimum:maximum]
 
 
-class MSSQLAdapter2(MSSQLAdapter):
+class MSSQL2Adapter(MSSQLAdapter):
     types = {
         'boolean': 'CHAR(1)',
         'string': 'NVARCHAR(%(length)s)',
@@ -1684,9 +1683,9 @@ class FireBirdAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         charset = m.group('charset') or 'UTF8'
         self.pool_connection(lambda dsn='%s/%s:%s' % (host,port,db),
-                             user=credential_decoder(user),
-                             password=credential_decoder(password),
-                             charset=charset: \
+                             user = credential_decoder(user),
+                             password = credential_decoder(password),
+                             charset = charset: \
                                  kinterbasdb.connect(dsn=dsn,
                                                      user=user,
                                                      password=password,
@@ -2053,7 +2052,7 @@ ADAPTERS = {
     'postgres': PostgreSQLAdapter,
     'oracle': OracleAdapter,
     'mssql': MSSQLAdapter,
-    'mssql2': MSSQLAdapter2,
+    'mssql2': MSSQL2Adapter,
     'db2': DB2Adapter,
     'informix': InformixAdapter,
     'firebird': FireBirdAdapter,
@@ -2151,15 +2150,13 @@ def bar_escape(item):
     return str(item).replace('|', '||')
 
 def bar_encode(items):
-    return '|%s|' % '|'.join(bar_escape(item) for item in items \
-                                 if str(item).strip())
+    return '|%s|' % '|'.join(bar_escape(item) for item in items if str(item).strip())
 
 def bar_decode_integer(value):
     return [int(x) for x in value.split('|') if x.strip()]
 
 def bar_decode_string(value):
-    return [x.replace('||', '|') for x in string_unpack.split(value[1:-1]) \
-                if x.strip()]
+    return [x.replace('||', '|') for x in string_unpack.split(value[1:-1]) if x.strip()]
 
 def cleanup(text):
     """
@@ -2631,6 +2628,7 @@ class Reference(int):
     def __setitem__(self,key,value):
         self.__allocate()
         self._record[key] = value
+
 
 def Reference_unpickler(data):
     return marshal.loads(data)
