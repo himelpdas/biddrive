@@ -835,6 +835,9 @@ class SQLDB(dict):
                 portalocker.unlock(fileobj)
             fileobj.close()
 
+    def _delete(self, filename):
+        os.unlink(filename)
+
     @staticmethod
     def set_folder(folder):
         thread.folder=folder
@@ -2020,7 +2023,7 @@ class Table(dict):
         del self._db.tables[self._db.tables.index(self._tablename)]
         self._db._update_referenced_by(self._tablename)
         if self._dbt:
-            os.unlink(self._dbt)
+            self._db._delete(self._dbt)
             logfile.write('success!\n')
 
     def _insert(self, **fields):

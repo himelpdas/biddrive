@@ -228,6 +228,9 @@ class BaseAdapter(ConnectionPool):
                 portalocker.unlock(fileobj)
             fileobj.close()
 
+    def file_delete(self, filename):
+        os.unlink(filename)
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
@@ -2886,7 +2889,7 @@ class Table(dict):
         del self._db.tables[self._db.tables.index(self._tablename)]
         self._db._update_referenced_by(self._tablename)
         if self._dbt:
-            os.unlink(self._dbt)
+            self._db._adapter.file_delete(self._dbt)
             logfile.write('success!\n')
 
     def _insert(self, **fields):
