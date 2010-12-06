@@ -121,7 +121,6 @@ import csv
 import copy
 import socket
 import logging
-import traceback
 import copy_reg
 import base64
 import shutil
@@ -147,7 +146,7 @@ except ImportError:
     have_portalocker = False
 
 try:
-    import serlializers
+    import serializers
     have_serializers = True
 except ImportError:
     have_serializers = False
@@ -267,7 +266,7 @@ class ConnectionPool(object):
             really = True
             if instance.pool_size:
                 sql_locker.acquire()
-                pool = ConnectionPool.pools[self.uri]
+                pool = ConnectionPool.pools[instance.uri]
                 if len(pool) < instance.pool_size:
                     pool.append(instance.connection)
                     really = False
@@ -378,7 +377,7 @@ class BaseAdapter(ConnectionPool):
                 referenced = field.type[10:].strip()
                 constraint_name = self.constraint_name(tablename, field.name)
                 if hasattr(table,'_primarykey'):
-                    rtablename,rfieldname = ref.split('.')
+                    rtablename,rfieldname = referenced.split('.')
                     rtable = table._db[rtablename]
                     rfield = rtable[rfieldname]
                     # must be PK reference or unique
@@ -632,7 +631,7 @@ class BaseAdapter(ConnectionPool):
         return 'NOT NULL DEFAULT %s' % self.represent(default,field_type)
 
     def SUBSTRING(self,field,parameters):
-        return 'SUBSTR(%s,%s,%s)' % (self.expand(field), paramters[0], parameters[1])
+        return 'SUBSTR(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
 
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY(%s)' % key
@@ -942,7 +941,6 @@ class BaseAdapter(ConnectionPool):
         """
         Always returns a Rows object, even if it may be empty
         """
-        db=self.db
         def response(query):
             self.execute(query)
             return self.cursor.fetchall()
@@ -1347,7 +1345,7 @@ class MySQLAdapter(BaseAdapter):
         return 'RAND()'
 
     def SUBSTRING(self,field,parameters):
-        return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), paramters[0], parameters[1])
+        return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
 
     def DROP(self,table,mode):
         # breaks db integrity but without this mysql does not drop table
@@ -1882,6 +1880,7 @@ class FireBirdAdapter(BaseAdapter):
         host = m.group('host')
         if not host:
             raise SyntaxError, 'Host name required'
+        port = int(m.group('port') or 3050)
         db = m.group('db')
         if not db:
             raise SyntaxError, 'Database name required'
@@ -1939,12 +1938,12 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
             charset = 'UTF8'
         host = ''
         self.pool_connection(lambda host=host,
-                             database=dbpath,
+                             database=pathdb,
                              user=credential_decoder(user),
                              password=credential_decoder(password),
                              charset=charset: \
                                  kinterbasdb.connect(host=host,
-                                                     database=database,
+                                                     database=pathdb,
                                                      user=user,
                                                      password=password,
                                                      charset=charset))
@@ -2191,7 +2190,7 @@ class IngresAdapter(BaseAdapter):
         trace = (0, None) # No tracing
         self.pool_connection(lambda database=database_name,
                              vnode=vnode,
-                             servertype=serverttype,
+                             servertype=servertype,
                              trace=trace: \
                                  ingresdbi.connect(database=database,
                                                    vnode=vnode,
@@ -2251,7 +2250,7 @@ class IngresUnicodeAdapter(IngresAdapter):
 try:
     from new import classobj
     from google.appengine.ext import db as gae
-    from google.appengine.api.datastore_types import Key
+    # from google.appengine.api.datastore_types import Key  ### why was this needed????
     from google.appengine.ext.db.polymodel import PolyModel    
     drivers.append('gae')
 except ImportError:
@@ -2302,7 +2301,6 @@ class GAENoSQLAdapter(BaseAdapter):
         self.db_codec = 'UTF-8'
 
     def create_table(self,table,migrate=True,fake_migrate=False, polymodel=None):
-        fields = []
         myfields = {}
         for k in table.fields:
             if isinstance(polymodel,Table) and k in polymodel.fields():
@@ -2383,7 +2381,7 @@ class GAENoSQLAdapter(BaseAdapter):
     def expand(self,expression,field_type=None):
         if isinstance(expression,Field):
             if expression.type in ('text','blob'):
-                raise SyntaxError, 'AppEngine does not index by: %s' % field.type
+                raise SyntaxError, 'AppEngine does not index by: %s' % expression.type
             return expression.name
         elif isinstance(expression, (Expression, Query)):
             if not expression.second is None:
@@ -2445,7 +2443,6 @@ class GAENoSQLAdapter(BaseAdapter):
                  self.GE: self.LT}
         if not isinstance(first,Query):
             raise SyntaxError, "Not suported"
-        op = first.op
         nop = nops.get(first.op,None)
         if not nop:
             raise SyntaxError, "Not suported %s" % first.op.__name__
@@ -2462,7 +2459,6 @@ class GAENoSQLAdapter(BaseAdapter):
         return 'update %s (%s) where %s' % (repr(tablename),repr(fields),repr(query))
 
     def represent(self, obj, fieldtype):
-        db = self.db
         if type(obj) in (types.LambdaType, types.FunctionType):
             obj = obj()
         if isinstance(fieldtype, SQLCustomType):
@@ -2513,7 +2509,7 @@ class GAENoSQLAdapter(BaseAdapter):
                     (y, m, d) = [int(x) for x in str(obj)[:10].strip().split('-')]
                     time_items = [int(x) for x in str(obj)[11:].strip().split(':')[:3]]
                     while len(time_items)<3:
-                        item_items.append(0)
+                        time_items.append(0)
                     (h, mi, s) = time_items
                     obj = datetime.datetime(y, m, d, h, mi, s)
             elif fieldtype == 'blob':
@@ -2601,8 +2597,7 @@ class GAENoSQLAdapter(BaseAdapter):
         GAE no longer support deleting more than 1000 records.
         """
         # self.db['_lastsql'] = self._delete(tablename,query)
-        (items, tablename, fields) = self.select_raw(query)
-        tableobj = self.db[tablename]._tableobj
+        (items, tablename, fields) = self.select_raw(query)        
         # items can be one item or a query
         if not isinstance(items,list):
             counter = items.count(limit=None)
@@ -2619,7 +2614,6 @@ class GAENoSQLAdapter(BaseAdapter):
         # self.db['_lastsql'] = self._update(tablename,query,update_fields)
         (items, tablename, fields) = self.select_raw(query)
         table = self.db[tablename]
-        tableobj = table._tableobj
         counter = 0
         for item in items:
             for (field, value) in update_fields:
