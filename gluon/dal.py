@@ -39,13 +39,13 @@ Example of usage:
 ### insert a record
 >>> id = person.insert(name='James')
 
-### retirve it by id
+### retrieve it by id
 >>> james = person(id)
 
 ### retrieve it by name
 >>> james = person(name='James')
 
-### retrieve it by abritraty query
+### retrieve it by arbitrary query
 >>> query = (person.name=='James')&(person.name.startswith('J'))
 >>> james = db(query).select(person.ALL)[0]
 
@@ -76,7 +76,7 @@ Example of usage:
 >>> person.drop()
 
 Supported field types:
-id string text boolean interger double decimal password upload blob time date datetime,
+id string text boolean integer double decimal password upload blob time date datetime,
 
 Supported DAL URI strings:
 'sqlite://test.db'
@@ -102,7 +102,7 @@ help(Field)
 """
 
 ###################################################################################
-# this file oly exposes DAL and Field
+# this file orly exposes DAL and Field
 ###################################################################################
 
 __all__ = ['DAL', 'Field']
@@ -131,7 +131,7 @@ import urllib
 import hashlib
 
 ###################################################################################
-# following checks allows running of dal wintout web2py as a stand alone module
+# following checks allows running of dal without web2py as a standalone module
 ###################################################################################
 try:
     from utils import web2py_uuid
@@ -225,7 +225,7 @@ except ImportError:
 try:
     from com.ziclix.python.sql import zxJDBC
     import java.sql
-    from org.sqlite import JDBC
+    from org.sqlite import JDBC # required later by java.sql; ensure we have it
     drivers.append('zxJDBC')
     logger.warning('zxJDBC support is experimental')
     is_jdbc = True
@@ -307,7 +307,7 @@ class ConnectionPool(object):
 
 
 ###################################################################################
-# this is a generid adapter that does nothing, all others derived form this one
+# this is a generic adapter that does nothing; all others are derived form this one
 ###################################################################################
 
 class BaseAdapter(ConnectionPool):
@@ -1093,7 +1093,7 @@ class BaseAdapter(ConnectionPool):
         return type(None)
 
     def rowslice(self,rows,minimum=0,maximum=None):
-        """ by default this function does nothing, oreload when db does no do slicing """
+        """ by default this function does nothing, overload when db does not do slicing """
         return rows
 
     def parse(self, rows, colnames, blob_decode=True):
@@ -3803,7 +3803,7 @@ class Field(Expression):
             autodelete=False, represent=None, uploadfolder=None,
             uploadseparate=False # upload to separate directories by uuid_keys
                                  # first 2 character and tablename.fieldname
-                                 # False - old behaviour
+                                 # False - old behavior
                                  # True - put uploaded file in
                                  #   <uploaddir>/<tablename>.<fieldname>/uuid_key[:2]
                                  #        directory)
@@ -4707,7 +4707,7 @@ def test_all():
     >>> db.paper.drop()
     """
 ################################################################################
-# deprecated since the new DAL, here only for backwrad compatibilty
+# deprecated since the new DAL; here only for backward compatibility
 ################################################################################
 
 SQLField = Field
