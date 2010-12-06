@@ -627,7 +627,7 @@ class Query(object):
         filter = self.filters[0]
         if filter.op == 'IN':
             raise RuntimeError, 'NOT (... IN ...) is not supported on GAE'
-        new_op = {'<':'>','>':'<','=':'!=','!=':'=','<=':'>=','>=':'<='}[filter.op]
+        new_op = {'<':'>=','>':'<=','=':'!=','!=':'=','<=':'>','>=':'<'}[filter.op]
         return Query(filter.left, new_op, filter.right)
 
     def __str__(self):

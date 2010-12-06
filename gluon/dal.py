@@ -24,6 +24,7 @@ TODO:
 - create more functions in adapters to abstract more
 - fix insert, create, migrate
 - move startswith, endswith, contains into adapters
+- handle _lastsql (where?)
 
 Example of usage:
 
@@ -2422,14 +2423,11 @@ except ImportError:
     pass
 
 class GAEFilter:
-    def __init__(self,left,op,right):
-        (self.left, self.op, self.right) = (left, op, right)
-    def one(self):
-        return self.left.type == 'id' and self.op == '='
-    def all(self):
-        return self.left.type == 'id' and self.op == '>' and self.right == 0
-    def __str__(self):
-        return '%s %s %s' % (self.left.name, self.op, self.right)
+    def __init__(self,name,op,value,apply):
+        self.name=name=='id' and '__key__' or name
+        self.op=op
+        self.value=value
+        self.apply=apply
 
 class GAENoSQLAdapter(BaseAdapter):
     uploads_in_blob = True
@@ -2505,23 +2503,23 @@ class GAENoSQLAdapter(BaseAdapter):
         elif isinstance(polymodel,Table):
             table._tableobj = classobj(table._tablename, (polymodel._tableobj, ), myfields)
         else:
-            raise RuntimeError, "polymodel must be None, True, a table or a tablename"
+            raise SyntaxError, "polymodel must be None, True, a table or a tablename"
         return None
     def sequence_name(self,table): pass
     def trigger_name(self,table): pass
-    def migrate_table(self,*a,**b): raise RuntimeError, "Not supported"
-    def LOWER(self,first): raise RuntimeError, "Not supported"
-    def UPPER(self,first): raise RuntimeError, "Not supported"
-    def EXTRACT(self,first,what): raise RuntimeError, "Not supported"
-    def AGGREGATE(self,first,what): raise RuntimeError, "Not supported"
-    def LEFT_JOIN(self): raise RuntimeError, "Not supported"
-    def RANDOM(self): raise RuntimeError, "Not supported"
+    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
+    def LOWER(self,first): raise SyntaxError, "Not supported"
+    def UPPER(self,first): raise SyntaxError, "Not supported"
+    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
+    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
+    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
+    def RANDOM(self): raise SyntaxError, "Not supported"
 
     def NOT_NULL(self,default,field_type): todo()
-    def SUBSTRING(self,field,parameters):  raise RuntimeError, "Not supported"
-    def PRIMARY_KEY(self,key):  raise RuntimeError, "Not supported"
+    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
+    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
 
-    def drop(self,table,mode):  raise RuntimeError, "Not supported"
+    def drop(self,table,mode):  raise SyntaxError, "Not supported"
     def truncate(self,table,mode):
         self.db(table.id > 0).delete()
     def _insert(self,table,fields):
@@ -2534,8 +2532,7 @@ class GAENoSQLAdapter(BaseAdapter):
             elif not field in fields and table[field].compute != None:
                 fields[field] = table[field].compute(fields)
             if field in fields:
-                fields[field] = obj_represent(fields[field],
-                        table[field].type, table.db)
+                fields[field] = self.represent(fields[field],table[field].type)
         tmp = table._tableobj(**fields)
         tmp.put()
         table['_last_reference'] = tmp
@@ -2552,43 +2549,97 @@ class GAENoSQLAdapter(BaseAdapter):
                 elif not field in item and table[field].compute != None:
                     fields[field] = table[field].compute(item)
                 if field in item:
-                    fields[field] = obj_represent(item[field],
-                                                  table[field].type, table._db)
+                    fields[field] = self.represent(item[field],table[field].type)
             #parsed_items.append(fields)
             parsed_items.append(table._tableobj(**fields))
         gae.put(parsed_items)
         return True
 
+    def expand(self,expression,field_type=None):
+        if isinstance(expression,Field):
+            if field.type in ('text','blob'):
+                raise SyntaxError, 'AppEngine does not index by: %s' % field.type
+            return expression.name
+        elif isinstance(expression, (Expression, Query)):
+            if not expression.second is None:
+                return expression.op(expression.first, expression.second)
+            elif not expression.first is None:
+                return expression.op(expression.first)
+            else:
+                return expression.op()
+        elif isinstance(expression,(list,tuple)):
+            return ','.join([self.represent(item,field_type) for item in expression])
+        elif field_type:
+                return self.represent(expression,field_type)
+        else:
+            return str(expression)
+
+
     ### TODO from gql.py Expression
-    def NOT(self,first): pass
-    def AND(self,first,second): pass
-    def OR(self,first,second): pass
-    def BELONGS(self,first,second): pass
-    def LIKE(self,first,second): pass
-    def EQ(self,first,second=None): pass
-    def NE(self,first,second=None): pass
-    def LT(self,first,second=None): pass
-    def LE(self,first,second=None): pass
-    def GT(self,first,second=None): pass
-    def GE(self,first,second=None): pass
+    def AND(self,first,second):
+        a = self.expand(first)
+        b = self.expand(second)
+        if b[0].name=='__key__' and a[0].name!='__key__':
+            return b+a
+        return a+b
+ 
+    def OR(self,first,second): raise SyntaxError, "Not supported"
+    def BELONGS(self,first,second): raise SyntaxError, "Not supported"
+    def LIKE(self,first,second): raise SyntaxError, "Not supported"
+
+    def EQ(self,first,second=None):
+        if second is None: raise SyntaxError, "Not supported"
+        return [(first.name,'=',self.expand(second,first.type),lambda a,b:a==b)]
+
+    def NE(self,first,second=None):
+        if second==None: raise SyntaxError, "Not supported"
+        return [GAEFilter(first.name,'!=',self.expand(second,first.type),lambda a,b:a!=b)]
+
+    def LT(self,first,second=None):
+        return [GAEFilter(first.name,'<',self.expand(second,first.type),lambda a,b:a<b)]
+
+    def LE(self,first,second=None):
+        return [GAEFilter(first.name,'<=',self.expand(second,first.type),lambda a,b:a<=b)]
+
+    def GT(self,first,second=None):
+        return [GAEFilter(first.name,'>',self.expand(second,first.type),lambda a,b:a>b)]
+
+    def GE(self,first,second=None):
+        return [GAEFilter(first.name,'>=',self.expand(second,first.type),lambda a,b:a>=b)]
+
     def BELONGS(self,first,second=None): pass
     def CONTAINS(self,first,second=None): pass
-    def STARTSWITH(self,first,second=None): raise RuntimeError, "Not supported"
-    def ENDSWITH(self,first,second=None): raise RuntimeError, "Not supported"
+    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
+    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
     def ADD(self,first,second): pass
     def SUB(self,first,second): pass
     def MUL(self,first,second): pass
     def DIV(self,first,second): pass
     
+    def NOT(self,first):
+        nops = { GAENoSQLAdapter.EQ: GAENoSQLAdapter.NE,
+                 GAENoSQLAdapter.NE: GAENoSQLAdapter.EQ,
+                 GAENoSQLAdapter.LT: GAENoSQLAdapter.GE,
+                 GAENoSQLAdapter.GT: GAENoSQLAdapter.LE,
+                 GAENoSQLAdapter.LE: GAENoSQLAdapter.GT,
+                 GAENoSQLAdapter.GE: GAENoSQLAdapter.LT}
+        if not isinstance(first,Query):
+            raise SyntaxError, "Not suported"
+        op = first.op
+        nop = nops.get(first.op,None)
+        if not nop:
+            raise SyntaxError, "Not suported"
+        return self.expand(first)
 
-    def INVERT(self,first): todo()
+    def INVERT(self,first):
+        todo()
+
     def COMMA(self,first,second): todo()
     # def expand(self,expression,field_type=None): todo()
 
-
-    def AS(self,first,second): raise RuntimeError, "Not supported"
-    def ON(self,first,second): raise RuntimeError, "Not supported"
-    def alias(self,table,alias): raise RuntimeError, "Not supported"
+    def AS(self,first,second): raise SyntaxError, "Not supported"
+    def ON(self,first,second): raise SyntaxError, "Not supported"
+    def alias(self,table,alias): raise SyntaxError, "Not supported"
 
     def _count(self,query):
         return 'count %s' % query
@@ -2596,28 +2647,128 @@ class GAENoSQLAdapter(BaseAdapter):
         return 'select %s where %s' % (fields, query)
     def _delete(self,tablename, query):
         return 'delete %s where %s' % (tablename,query)
-    def _update(self,tablename,query):
-        return 'update %s where %s' % (tablename,query)
+    def _update(self,tablename,query,fields):
+        return 'update %s (%s) where %s' % (tablename,fields,query)
 
-    def count(self,query): todo()
-    def select(self,query,*fields,**attributes): todo()
-    def delete(self,tablename, query): todo()
-    def update(self,tablename,query): todo()
+    def select_raw(self,query,fields=[],attributes={}):
+        tablename = self.get_table(query)
+        tableobj = self.db[tablename]._tableobj
+        items = tableobj.all()
+        filters = self.expand(query)
+        for filter in filters:
+            if filter.name=='__key__' and filter.op=='>' and filter.value==0:
+                continue
+            elif filter.name=='__key__' and filter.op=='=':
+                if filter.value==0:
+                    items = []
+                else:
+                    item = tableobj.get_by_id(filter.value)
+                    items = (item and [item]) or []
+            elif isinstance(items,list): # i.e. there is a single record!
+                items = [i for i in items if filter.apply(gettattr(item,filter.name),
+                                                          filter.value)]
+            else:
+                if filter[0]=='__key__': items.order('__key__')
+                items = items.filter('%s %s' % (filter.name,filter.op),filter.value)
+        if not isinstance(items,list):
+            if attributes.get('left', None):
+                raise SyntaxError, 'Set: no left join in appengine'
+            if attributes.get('groupby', None):
+                raise SyntaxError, 'Set: no groupby in appengine'
+            orderby = attributes.get('orderby', False)
+            if orderby:
+                if isinstance(orderby, (list, tuple)):
+                    orderby = xorify(orderby)
+                assert_filter_fields(orderby)
+                if orderby.type == 'id':
+                    orders = ['__key__']
+                else:
+                    orders = orderby.name.split('|')
+                for order in orders:
+                    items = items.order(order)
+            if attributes.get('limitby', None):
+                (lmin, lmax) = attributes['limitby']
+                (limit, offset) = (lmax - lmin, lmin)
+                items = items.fetch(limit, offset=offset)
+        fields = self.db[tablename].fields
+        return (items, tablename, fields)  
 
-    def tables(self,query): todo()
+    def select(self,query,fields,attributes):              
+        (items, tablename, fields) = self.select_raw(query,fields,attributes)
+        self.db['_lastsql'] = self._select(query,fields,attributes)
+        rows = [
+            [t=='id' and int(item.key().id()) or getattr(item, t) for t in fields]
+            for item in items]
+        colnames = ['%s.%s' % (tablename, t) for t in fields]
+        return self.parse(self._db, rows, colnames, False, SetClass=Set)
+
+        
+    def count(self,query):
+        (items, tablename, fields) = self.select_raw(query)
+        self.db['_lastsql'] = self._delete(query)
+        try:
+            return len(items)
+        except TypeError:
+            return items.count(limit=None)
+        
+    def delete(self,tablename, query):
+        """
+        This function was changed on 2010-05-04 because according to
+        http://code.google.com/p/googleappengine/issues/detail?id=3119
+        GAE no longer support deleting more than 1000 records.
+        """
+        self.db['_lastsql'] = self._delete(tablename,query)
+        (items, tablename, fields) = self.select_raw(query)
+        tableobj = self.db[tablename]._tableobj
+        try:
+            return len(items)
+        except TypeError:
+            return items.count(limit=None)
+        # items can be one item or a query
+        if not isinstance(items,list):
+           leftitems = items.fetch(1000)
+           while len(leftitems):
+               gae.delete(leftitems)
+               leftitems = items.fetch(1000)
+        else:
+           gae.delete(items)
+        return counter
+
+    def update(self,tablename,query,fields):
+        self.db['_lastsql'] = self._update(tablename,query)
+        (items, tablename, fields) = self.select_raw(query)
+        table = self.db[tablename]
+        tableobj = table._tableobj
+        fields.update(dict([(fieldname, table[fieldname].update) \
+                                for fieldname in table.fields \
+                                if not fieldname in update_fields \
+                                and table[fieldname].update != None]))
+        fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
+                                for fieldname in table.fields \
+                                if not fieldname in update_fields \
+                                and table[fieldname].compute != None]))
+        counter = 0
+        for item in items:
+            for (field, value) in fields.items():
+                value = self.represent(fields[field],table[field].type)
+                setattr(item, field, value)
+            item.put()
+            counter += 1
+        return counter
+
     def commit(self): pass
-    def rollback(self): raise RuntimeError, "Not supported"
+    def rollback(self): raise SyntaxError, "Not supported"
     def support_distributed_transaction(self): return False
-    def distributed_transaction_begin(self,key): raise RuntimeError, "Not supported"
-    def prepare(self,key): raise RuntimeError, "Not supported"
-    def commit_prepared(self,key): raise RuntimeError, "Not supported"
-    def rollback_prepared(self,key): raise RuntimeError, "Not supported"
+    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
+    def prepare(self,key): raise SyntaxError, "Not supported"
+    def commit_prepared(self,key): raise SyntaxError, "Not supported"
+    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
     def concat_add(self,table): todo()
     def constraint_name(self, table, fieldname): todo()
     def create_sequence_and_triggers(self, query, table, **args): pass
     def commit_on_alter_table(self): return False
-    def log_execute(self,*a,**b): raise RuntimeError, "Not supported"
-    def execute(self,*a,**b): raise RuntimeError, "Not supported"
+    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
+    def execute(self,*a,**b): raise SyntaxError, "Not supported"
     def represent(self, obj, fieldtype):
         db = self.db
         if type(obj) in (types.LambdaType, types.FunctionType):
@@ -2685,14 +2836,12 @@ class GAENoSQLAdapter(BaseAdapter):
                 obj = unicode(obj)
         return obj
 
-
     def represent_exceptions(self, obj, fieldtype): todo()
-    def lastrowid(self,table): raise RuntimeError, "Not supported"
-    def integrity_error_class(self): raise RuntimeError, "Not supported"
+    def lastrowid(self,table): raise SyntaxError, "Not supported"
+    def integrity_error_class(self): raise SyntaxError, "Not supported"
     def rowslice(self,rows,minimum=0,maximum=None): todo()
     def parse(self, rows, colnames, blob_decode=True): todo()
 
-    
 
 class Row(dict):
 
@@ -3949,6 +4098,8 @@ class Query(object):
         return Query(self.db,self.db._adapter.OR,self,other)
 
     def __invert__(self):
+        if self.op==self.db._adapter.NOT:
+            return self.first
         return Query(self.db,self.db._adapter.NOT,self)
 
 
