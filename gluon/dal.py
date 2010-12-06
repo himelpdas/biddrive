@@ -313,6 +313,7 @@ class ConnectionPool(object):
 
 class BaseAdapter(ConnectionPool):
 
+    commit_on_alter_table = False
     support_distributed_transaction = False
     uploads_in_blob = False
 
@@ -594,7 +595,7 @@ class BaseAdapter(ConnectionPool):
                         # caveat. mysql, oracle and firebird do not allow multiple alter table
                         # in one transaction so we must commit partial transactions and
                         # update table._dbt after alter table.
-                        if table._db._dbname in ['mysql', 'oracle', 'firebird']:
+                        if table._db._adapter.commit_on_alter_table:
                             table._db.commit()
                             tfile = self.file_open(table._dbt, 'w')
                             cPickle.dump(sql_fields_current, tfile)
@@ -693,6 +694,19 @@ class BaseAdapter(ConnectionPool):
 
     def LIKE(self,first,second):
         return '(%s LIKE %s)' % (self.expand(first),self.expand(second,'string'))
+
+    def STARTSWITH(self,first,second):
+        return '(%s LIKE %s)' % (self.expand(first),self.expand(second+'%','string'))
+
+    def ENDSWITH(self,first,second):
+        return '(%s LIKE %s)' % (self.expand(first),self.expand('%'+second,'string'))
+
+    def CONTAINS(self,first,second):
+        if first.type in ('string','text'):
+            key = '%'+str(second).replace('%','%%')+'%'
+        elif first.type.startswith('list:'):
+            key = '%|'+str(second).replace('|','||').replace('%','%%')+'|%'
+        return '(%s LIKE %s)' % (self.expand(first),self.expand(key,'string'))
 
     def EQ(self,first,second=None):
         if second is None:
@@ -842,19 +856,6 @@ class BaseAdapter(ConnectionPool):
         else:
             raise RuntimeError, "Too many tables selected"
 
-    def _count(self,tablename,query):
-        tablenames = self.tables(self.query)
-        if query:
-            sql_w = ' WHERE ' + self.expand(query)
-        else:
-            sql_w = ''
-        sql_t = ','.join(tablenames)
-        return 'SELECT count(*) FROM %s%s' % (sql_t, sql_w)
-
-    def count(self,query):
-        self.execute(self._count(query))
-        return self.cursor.fetchone()[0]
-
     def _select(self, query, fields, attributes):
         for key in set(attributes.keys())-set(('orderby','groupby','limitby',
                                                'required','cache','left',
@@ -958,6 +959,20 @@ class BaseAdapter(ConnectionPool):
         rows = self.rowslice(rows,attributes.get('limitby',(0,))[0],None)
         return self.parse(rows,self._colnames)
 
+    def _count(self,query):
+        tablenames = self.tables(query)
+        if query:
+            sql_w = ' WHERE ' + self.expand(query)
+        else:
+            sql_w = ''
+        sql_t = ','.join(tablenames)
+        return 'SELECT count(*) FROM %s%s' % (sql_t, sql_w)
+
+    def count(self,query):
+        self.execute(self._count(query))
+        return self.cursor.fetchone()[0]
+
+
     def tables(self,query):
         tables = set()
         if isinstance(query, Field):
@@ -995,9 +1010,6 @@ class BaseAdapter(ConnectionPool):
 
     def create_sequence_and_triggers(self, query, table, **args):
         self.execute(query)
-
-    def commit_on_alter_table(self):
-        return False
 
     def log_execute(self,*a,**b):
         self.db._lastsql = a[0]
@@ -1309,6 +1321,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
 
 class MySQLAdapter(BaseAdapter):
 
+    commit_on_alter_table = True
     support_distributed_transaction = True        
     types = {
         'boolean': 'CHAR(1)',
@@ -1397,9 +1410,6 @@ class MySQLAdapter(BaseAdapter):
                                                                  ))
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
-
-    def commit_on_alter_table(self):
-        return True
 
     def lastrowid(self,table):
         self.execute('select last_insert_id();')
@@ -1528,6 +1538,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
 
 class OracleAdapter(BaseAdapter):
+    commit_on_alter_table = False
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR2(%(length)s)',
@@ -1636,9 +1647,6 @@ class OracleAdapter(BaseAdapter):
         self.execute(query)
         self.execute('CREATE SEQUENCE %s START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % sequence_name)
         self.execute('CREATE OR REPLACE TRIGGER %s BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s.nextval INTO :NEW.id FROM DUAL; END;\n' % (trigger_name, tablename, sequence_name))
-
-    def commit_on_alter_table(self):
-        return True
 
     def lastrowid(self,table):
         sequence_name = self.sequence_name(table)
@@ -1801,6 +1809,7 @@ class MSSQL2Adapter(MSSQLAdapter):
 
 class FireBirdAdapter(BaseAdapter):
 
+    commit_on_alter_table = False
     support_distributed_transaction = True
     types = {
         'boolean': 'CHAR(1)',
@@ -1899,9 +1908,6 @@ class FireBirdAdapter(BaseAdapter):
         sequence_name = self.sequence_name(table)
         self.execute('SELECT gen_id(%s, 0) FROM rdb$database' % sequence_name)
         return int(self.db._adapter.cursor.fetchone()[0])
-
-    def commit_on_alter_table(self):
-        return True
 
 
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
@@ -2258,7 +2264,7 @@ class GAEFilter:
         self.value=value
         self.apply=apply
     def __repr__(self):
-        return '(%s %s %s)' % (self.name, self.op, repr(self.value))
+        return '(%s %s %s:%s)' % (self.name, self.op, repr(self.value), type(self.value))
 
 class GAENoSQLAdapter(BaseAdapter):
     uploads_in_blob = True
@@ -2336,27 +2342,15 @@ class GAENoSQLAdapter(BaseAdapter):
         else:
             raise SyntaxError, "polymodel must be None, True, a table or a tablename"
         return None
-    def sequence_name(self,table): pass
-    def trigger_name(self,table): pass
-    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
-    def LOWER(self,first): raise SyntaxError, "Not supported"
-    def UPPER(self,first): raise SyntaxError, "Not supported"
-    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
-    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
-    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
-    def RANDOM(self): raise SyntaxError, "Not supported"
 
-    def NOT_NULL(self,default,field_type): todo()
-    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
-    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
-
-    def drop(self,table,mode):  raise SyntaxError, "Not supported"
+    def INVERT(self,first):
+        return '-%s' % first.name
     def truncate(self,table,mode):
         self.db(table.id > 0).delete()
     def _insert(self,table,fields):
-        return 'INSERT %s in %s' % (fields, table)
+        return 'insert %s in %s' % (fields, table)
     def insert(self,table,fields):
-        table._db['_lastsql'] = 'insert %s into %s' % (fields, table)
+        # table._db['_lastsql'] = self._insert(table,fields)
         for field in table.fields:
             if not field in fields and table[field].default != None:
                 fields[field] = table[field].default
@@ -2388,7 +2382,7 @@ class GAENoSQLAdapter(BaseAdapter):
 
     def expand(self,expression,field_type=None):
         if isinstance(expression,Field):
-            if field.type in ('text','blob'):
+            if expression.type in ('text','blob'):
                 raise SyntaxError, 'AppEngine does not index by: %s' % field.type
             return expression.name
         elif isinstance(expression, (Expression, Query)):
@@ -2413,25 +2407,11 @@ class GAENoSQLAdapter(BaseAdapter):
         if b[0].name=='__key__' and a[0].name!='__key__':
             return b+a
         return a+b
- 
-    def OR(self,first,second): raise SyntaxError, "Not supported"
-    def BELONGS(self,first,second):
-        if second is None: raise SyntaxError, "Not supported"
-        return [(first.name,'in',self.expand(second,first.type),lambda a,b:a in b)]
-
-    def CONTAINS(self,first,second):
-        if not first.type.startswith('list:') or not isinstance(second,(list, tuple)):
-            raise SyntaxError, "Not supported"
-        return [(first.name,'in',self.expand(second,first.type),lambda a,b:a in b)]
-
-    def LIKE(self,first,second): raise SyntaxError, "Not supported"
 
     def EQ(self,first,second=None):
-        if second is None: raise SyntaxError, "Not supported"
         return [GAEFilter(first.name,'=',self.represent(second,first.type),lambda a,b:a==b)]
 
     def NE(self,first,second=None):
-        if second==None: raise SyntaxError, "Not supported"
         return [GAEFilter(first.name,'!=',self.represent(second,first.type),lambda a,b:a!=b)]
 
     def LT(self,first,second=None):
@@ -2446,33 +2426,31 @@ class GAENoSQLAdapter(BaseAdapter):
     def GE(self,first,second=None):
         return [GAEFilter(first.name,'>=',self.represent(second,first.type),lambda a,b:a>=b)]
 
-    def BELONGS(self,first,second=None): pass
-    def CONTAINS(self,first,second=None): pass
-    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ADD(self,first,second): pass
-    def SUB(self,first,second): pass
-    def MUL(self,first,second): pass
-    def DIV(self,first,second): pass
-    
+    def BELONGS(self,first,second=None):
+        if not isinstance(second,(list, tuple)):
+            raise SyntaxError, "Not supported"
+        return [GAEFilter(first.name,'in',self.represent(second,first.type),lambda a,b:a in b)]
+
+    def CONTAINS(self,first,second):
+        if not first.type.startswith('list:'):
+            raise SyntaxError, "Not supported"
+        return [GAEFilter(first.name,'=',self.expand(second,first.type[5:]),lambda a,b:a in b)]
+ 
     def NOT(self,first):
-        nops = { GAENoSQLAdapter.EQ: GAENoSQLAdapter.NE,
-                 GAENoSQLAdapter.NE: GAENoSQLAdapter.EQ,
-                 GAENoSQLAdapter.LT: GAENoSQLAdapter.GE,
-                 GAENoSQLAdapter.GT: GAENoSQLAdapter.LE,
-                 GAENoSQLAdapter.LE: GAENoSQLAdapter.GT,
-                 GAENoSQLAdapter.GE: GAENoSQLAdapter.LT}
+        nops = { self.EQ: self.NE,
+                 self.NE: self.EQ,
+                 self.LT: self.GE,
+                 self.GT: self.LE,
+                 self.LE: self.GT,
+                 self.GE: self.LT}
         if not isinstance(first,Query):
             raise SyntaxError, "Not suported"
         op = first.op
         nop = nops.get(first.op,None)
         if not nop:
-            raise SyntaxError, "Not suported"
+            raise SyntaxError, "Not suported %s" % first.op.__name__
+        first.op = nop
         return self.expand(first)
-
-    def AS(self,first,second): raise SyntaxError, "Not supported"
-    def ON(self,first,second): raise SyntaxError, "Not supported"
-    def alias(self,table,alias): raise SyntaxError, "Not supported"
 
     def _count(self,query):
         return 'count %s' % repr(query)
@@ -2483,117 +2461,6 @@ class GAENoSQLAdapter(BaseAdapter):
     def _update(self,tablename,query,fields):
         return 'update %s (%s) where %s' % (repr(tablename),repr(fields),repr(query))
 
-    def select_raw(self,query,fields=[],attributes={}):
-        tablename = self.get_table(query)
-        tableobj = self.db[tablename]._tableobj
-        items = tableobj.all()
-        filters = self.expand(query)        
-        logger.info('filters = %s' % repr(filters))
-        for filter in filters:
-            if filter.name=='__key__' and filter.op=='>' and filter.value==0:
-                continue
-            elif filter.name=='__key__' and filter.op=='=':
-                if filter.value==0:
-                    items = []
-                else:
-                    item = tableobj.get_by_id(filter.value)
-                    items = (item and [item]) or []
-            elif isinstance(items,list): # i.e. there is a single record!
-                items = [i for i in items if filter.apply(getattr(item,filter.name),
-                                                          filter.value)]
-            else:
-                if filter.name=='__key__': items.order('__key__')
-                items = items.filter('%s %s' % (filter.name,filter.op),filter.value)
-        if not isinstance(items,list):
-            if attributes.get('left', None):
-                raise SyntaxError, 'Set: no left join in appengine'
-            if attributes.get('groupby', None):
-                raise SyntaxError, 'Set: no groupby in appengine'
-            orderby = attributes.get('orderby', False)
-            if orderby:
-                ### THIS REALLY NEEDS IMPROVEMENT !!!
-                if isinstance(orderby, (list, tuple)):
-                    orderby = xorify(orderby)
-                if orderby.type == 'id':
-                    orders = ['__key__']
-                else:
-                    orders = orderby.name.split(', ')
-                for order in orders:
-                    if order.endswith(' DESC'):
-                        order = '-%s' % order[:-5]                     
-                    items = items.order(order)
-            if attributes.get('limitby', None):
-                (lmin, lmax) = attributes['limitby']
-                (limit, offset) = (lmax - lmin, lmin)
-                items = items.fetch(limit, offset=offset)
-        fields = self.db[tablename].fields
-        return (items, tablename, fields)  
-
-    def select(self,query,fields,attributes):              
-        (items, tablename, fields) = self.select_raw(query,fields,attributes)
-        self.db['_lastsql'] = self._select(query,fields,attributes)
-        rows = [
-            [t=='id' and int(item.key().id()) or getattr(item, t) for t in fields]
-            for item in items]
-        colnames = ['%s.%s' % (tablename, t) for t in fields]
-        return self.parse(rows, colnames, False)
-
-        
-    def count(self,query):
-        (items, tablename, fields) = self.select_raw(query)
-        self.db['_lastsql'] = self._delete(query)
-        try:
-            return len(items)
-        except TypeError:
-            return items.count(limit=None)
-        
-    def delete(self,tablename, query):
-        """
-        This function was changed on 2010-05-04 because according to
-        http://code.google.com/p/googleappengine/issues/detail?id=3119
-        GAE no longer support deleting more than 1000 records.
-        """
-        self.db['_lastsql'] = self._delete(tablename,query)
-        (items, tablename, fields) = self.select_raw(query)
-        tableobj = self.db[tablename]._tableobj
-        # items can be one item or a query
-        if not isinstance(items,list):
-            counter = items.count(limit=None)
-            leftitems = items.fetch(1000)
-            while len(leftitems):
-                gae.delete(leftitems)
-                leftitems = items.fetch(1000)
-        else:
-            counter = len(items)
-            gae.delete(items)
-        return counter
-
-    def update(self,tablename,query,update_fields):
-        self.db['_lastsql'] = self._update(tablename,query,update_fields)
-        (items, tablename, fields) = self.select_raw(query)
-        table = self.db[tablename]
-        tableobj = table._tableobj
-        counter = 0
-        for item in items:
-            for (field, value) in update_fields:
-                value = self.represent(value,field.type)
-                setattr(item, field.name, value)
-            item.put()
-            counter += 1
-        return counter
-
-    def commit(self): pass
-    def rollback(self): raise SyntaxError, "Not supported"
-    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
-    def prepare(self,key): raise SyntaxError, "Not supported"
-    def commit_prepared(self,key): raise SyntaxError, "Not supported"
-    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
-    def concat_add(self,table): todo()
-    def constraint_name(self, table, fieldname): todo()
-    def create_sequence_and_triggers(self, query, table, **args): pass
-    def commit_on_alter_table(self): return False
-    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
-    def execute(self,*a,**b): raise SyntaxError, "Not supported"
     def represent(self, obj, fieldtype):
         db = self.db
         if type(obj) in (types.LambdaType, types.FunctionType):
@@ -2612,6 +2479,7 @@ class GAENoSQLAdapter(BaseAdapter):
         if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
             return None
         if obj != None:
+            logger.info('%s is %s' % (obj, fieldtype))
             if fieldtype in ('integer','id'):
                 obj = long(obj)
             elif fieldtype == 'double':
@@ -2628,6 +2496,9 @@ class GAENoSQLAdapter(BaseAdapter):
             elif fieldtype == 'date':
                 if not isinstance(obj, datetime.date):
                     (y, m, d) = [int(x) for x in str(obj).strip().split('-')]
+                    obj = datetime.date(y, m, d)
+                elif isinstance(obj,datetime.datetime):                    
+                    (y, m, d) = (obj.year, obj.month, obj.day)
                     obj = datetime.date(y, m, d)
             elif fieldtype == 'time':
                 if not isinstance(obj, datetime.time):
@@ -2661,11 +2532,147 @@ class GAENoSQLAdapter(BaseAdapter):
                 obj = unicode(obj)
         return obj
 
-    def represent_exceptions(self, obj, fieldtype): todo()
+    def select_raw(self,query,fields=[],attributes={}):
+        tablename = self.get_table(query)
+        tableobj = self.db[tablename]._tableobj
+        items = tableobj.all()
+        filters = self.expand(query)        
+        logger.info('filters = %s' % repr(filters))
+        for filter in filters:
+            if filter.name=='__key__' and filter.op=='>' and filter.value==0:
+                continue
+            elif filter.name=='__key__' and filter.op=='=':
+                if filter.value==0:
+                    items = []
+                else:
+                    item = tableobj.get_by_id(filter.value)
+                    items = (item and [item]) or []
+            elif isinstance(items,list): # i.e. there is a single record!
+                items = [i for i in items if filter.apply(getattr(item,filter.name),
+                                                          filter.value)]
+            else:
+                if filter.name=='__key__': items.order('__key__')
+                items = items.filter('%s %s' % (filter.name,filter.op),filter.value)
+        if not isinstance(items,list):
+            if attributes.get('left', None):
+                raise SyntaxError, 'Set: no left join in appengine'
+            if attributes.get('groupby', None):
+                raise SyntaxError, 'Set: no groupby in appengine'
+            orderby = attributes.get('orderby', False)
+            if orderby:
+                ### THIS REALLY NEEDS IMPROVEMENT !!!
+                if isinstance(orderby, (list, tuple)):
+                    orderby = xorify(orderby)
+                if isinstance(orderby,Expression):
+                    orderby = self.expand(orderby)
+                orders = orderby.split(', ')
+                for order in orders:
+                    order={'-id':'-__key__','id':'__key__'}.get(order,order)
+                    items = items.order(order)
+            if attributes.get('limitby', None):
+                (lmin, lmax) = attributes['limitby']
+                (limit, offset) = (lmax - lmin, lmin)
+                items = items.fetch(limit, offset=offset)
+        fields = self.db[tablename].fields
+        return (items, tablename, fields)  
+
+    def select(self,query,fields,attributes):              
+        (items, tablename, fields) = self.select_raw(query,fields,attributes)
+        # self.db['_lastsql'] = self._select(query,fields,attributes)
+        rows = [
+            [t=='id' and int(item.key().id()) or getattr(item, t) for t in fields]
+            for item in items]
+        colnames = ['%s.%s' % (tablename, t) for t in fields]
+        return self.parse(rows, colnames, False)
+
+        
+    def count(self,query):
+        (items, tablename, fields) = self.select_raw(query)
+        # self.db['_lastsql'] = self._count(query)
+        try:
+            return len(items)
+        except TypeError:
+            return items.count(limit=None)
+        
+    def delete(self,tablename, query):
+        """
+        This function was changed on 2010-05-04 because according to
+        http://code.google.com/p/googleappengine/issues/detail?id=3119
+        GAE no longer support deleting more than 1000 records.
+        """
+        # self.db['_lastsql'] = self._delete(tablename,query)
+        (items, tablename, fields) = self.select_raw(query)
+        tableobj = self.db[tablename]._tableobj
+        # items can be one item or a query
+        if not isinstance(items,list):
+            counter = items.count(limit=None)
+            leftitems = items.fetch(1000)
+            while len(leftitems):
+                gae.delete(leftitems)
+                leftitems = items.fetch(1000)
+        else:
+            counter = len(items)
+            gae.delete(items)
+        return counter
+
+    def update(self,tablename,query,update_fields):
+        # self.db['_lastsql'] = self._update(tablename,query,update_fields)
+        (items, tablename, fields) = self.select_raw(query)
+        table = self.db[tablename]
+        tableobj = table._tableobj
+        counter = 0
+        for item in items:
+            for (field, value) in update_fields:
+                value = self.represent(value,field.type)
+                setattr(item, field.name, value)
+            item.put()
+            counter += 1
+        return counter
+
+    def commit(self):
+        """
+        remember: no transactions on GAE
+        """
+        pass 
+
+    # these functions should never be called!
+    def AS(self,first,second): raise SyntaxError, "Not supported"
+    def ON(self,first,second): raise SyntaxError, "Not supported"
+    def alias(self,table,alias): raise SyntaxError, "Not supported"
+    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
+    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
+    def ADD(self,first,second): raise SyntaxError, "Not supported"
+    def SUB(self,first,second): raise SyntaxError, "Not supported"
+    def MUL(self,first,second): raise SyntaxError, "Not supported"
+    def DIV(self,first,second): raise SyntaxError, "Not supported"
+    def sequence_name(self,table): raise SyntaxError, "Not supported"
+    def trigger_name(self,table): raise SyntaxError, "Not supported"
+    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
+    def LOWER(self,first): raise SyntaxError, "Not supported"
+    def UPPER(self,first): raise SyntaxError, "Not supported"
+    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
+    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
+    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
+    def RANDOM(self): raise SyntaxError, "Not supported"
+    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
+    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
+    def drop(self,table,mode):  raise SyntaxError, "Not supported"
+    def OR(self,first,second): raise SyntaxError, "Not supported"
+    def LIKE(self,first,second): raise SyntaxError, "Not supported"
+    def rollback(self): raise SyntaxError, "Not supported"
+    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
+    def prepare(self,key): raise SyntaxError, "Not supported"
+    def commit_prepared(self,key): raise SyntaxError, "Not supported"
+    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
+    def concat_add(self,table): raise SyntaxError, "Not supported"
+    def constraint_name(self, table, fieldname): raise SyntaxError, "Not supported"
+    def create_sequence_and_triggers(self, query, table, **args): pass    
+    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
+    def execute(self,*a,**b): raise SyntaxError, "Not supported"
+    def represent_exceptions(self, obj, fieldtype): raise SyntaxError, "Not supported"
     def lastrowid(self,table): raise SyntaxError, "Not supported"
     def integrity_error_class(self): raise SyntaxError, "Not supported"
-    def rowslice(self,rows,minimum=0,maximum=None): todo()
-    # def parse(self, rows, colnames, blob_decode=True): todo() ###required?
+    def rowslice(self,rows,minimum=0,maximum=None): raise SyntaxError, "Not supported"
 
 
 ADAPTERS = {
@@ -3341,7 +3348,7 @@ class Table(dict):
         self.virtualfields = []
         fields = list(fields)
 
-        if self._db._adapter.uploads_in_blob==True:
+        if db and self._db._adapter.uploads_in_blob==True:
             for field in fields:
                 if isinstance(field, Field) and field.type == 'upload'\
                         and field.uploadfield is True:
@@ -3699,25 +3706,19 @@ class Expression(object):
         return Query(self.db, self.db._adapter.BELONGS, self, value)
 
     def startswith(self, value):
-        if self.type in ('string', 'text'):
-            return self.like('%s%%' % value)
-        else:
-            raise RuntimeError, "startswith used with incompatible field type"
+        if not self.type in ('string', 'text'):
+            raise SyntaxError, "startswith used with incompatible field type"
+        return Query(self.db, self.db._adapter.STARTSWITH, self, value)
 
     def endswith(self, value):
-       if self.type in ('string', 'text'):
-           return self.like('%%%s' % value)
-       else:
-           raise RuntimeError, "endswith used with incompatible field type"
+        if not self.type in ('string', 'text'):
+            raise SyntaxError, "endswith used with incompatible field type"
+        return Query(self.db, self.db._adapter.ENDSWITH, self, value)
 
     def contains(self, value):
-        if self.type in ('string', 'text'):
-            return self.like('%%%s%%' % value)
-        elif self.type.startswith('list:'): ##### <<<<< FIX THIS DOES NOT BELONG HERE
-            return self.like(
-                Expression("'%%|%s|%%'" % bar_escape(value).replace("'","''")))
-        else:
-            raise RuntimeError, "contains user with incopatible field type"
+        if not self.type in ('string', 'text') and not self.type.startswith('list:'):
+            raise SyntaxError, "contains used with incompatible field type"
+        return Query(self.db, self.db._adapter.CONTAINS, self, value)
 
     def with_alias(self,alias):
         return Expression(self.db,self.db._adapter.AS,self,alias,self.type)
