@@ -676,7 +676,7 @@ class BaseAdapter(ConnectionPool):
         rid = Reference(id)
         (rid._table, rid._record) = (table, None)
         return rid
-    
+
     def NOT(self,first):
         return '(NOT %s)' % self.expand(first)
 
@@ -868,7 +868,7 @@ class BaseAdapter(ConnectionPool):
             else:
                 new_fields.append(item)
         fields = new_fields
-        tablenames = self.tables(query)        
+        tablenames = self.tables(query)
         if not fields:
             for table in tablenames:
                 for field in self.db[table]:
@@ -1320,7 +1320,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
 class MySQLAdapter(BaseAdapter):
 
     commit_on_alter_table = True
-    support_distributed_transaction = True        
+    support_distributed_transaction = True
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -2035,10 +2035,10 @@ class InformixAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         user = credential_decoder(user)
         password = credential_decoder(password)
-        self.pool_connection(lambda dsn='%s@%s' % (db,user), 
+        self.pool_connection(lambda dsn='%s@%s' % (db,user),
                              user=user,password=password:
-                                 informixdb.connect(dsn, user=user, 
-                                                    password=password, 
+                                 informixdb.connect(dsn, user=user,
+                                                    password=password,
                                                     autocommit=True))
 
     def execute(self,command):
@@ -2251,7 +2251,7 @@ try:
     from new import classobj
     from google.appengine.ext import db as gae
     # from google.appengine.api.datastore_types import Key  ### why was this needed????
-    from google.appengine.ext.db.polymodel import PolyModel    
+    from google.appengine.ext.db.polymodel import PolyModel
     drivers.append('gae')
 except ImportError:
     pass
@@ -2401,7 +2401,7 @@ class GAENoSQLAdapter(BaseAdapter):
         if not first.type.startswith('list:'):
             raise SyntaxError, "Not supported"
         return [GAEF(first.name,'=',self.expand(second,first.type[5:]),lambda a,b:a in b)]
- 
+
     def NOT(self,first):
         nops = { self.EQ: self.NE,
                  self.NE: self.EQ,
@@ -2470,7 +2470,7 @@ class GAENoSQLAdapter(BaseAdapter):
                 if not isinstance(obj, datetime.date):
                     (y, m, d) = [int(x) for x in str(obj).strip().split('-')]
                     obj = datetime.date(y, m, d)
-                elif isinstance(obj,datetime.datetime):                    
+                elif isinstance(obj,datetime.datetime):
                     (y, m, d) = (obj.year, obj.month, obj.day)
                     obj = datetime.date(y, m, d)
             elif fieldtype == 'time':
@@ -2509,7 +2509,7 @@ class GAENoSQLAdapter(BaseAdapter):
         tablename = self.get_table(query)
         tableobj = self.db[tablename]._tableobj
         items = tableobj.all()
-        filters = self.expand(query)        
+        filters = self.expand(query)
         logger.info('filters = %s' % repr(filters))
         for filter in filters:
             if filter.name=='__key__' and filter.op=='>' and filter.value==0:
@@ -2547,9 +2547,9 @@ class GAENoSQLAdapter(BaseAdapter):
                 (limit, offset) = (lmax - lmin, lmin)
                 items = items.fetch(limit, offset=offset)
         fields = self.db[tablename].fields
-        return (items, tablename, fields)  
+        return (items, tablename, fields)
 
-    def select(self,query,fields,attributes):              
+    def select(self,query,fields,attributes):
         (items, tablename, fields) = self.select_raw(query,fields,attributes)
         # self.db['_lastsql'] = self._select(query,fields,attributes)
         rows = [
@@ -2558,7 +2558,7 @@ class GAENoSQLAdapter(BaseAdapter):
         colnames = ['%s.%s' % (tablename, t) for t in fields]
         return self.parse(rows, colnames, False)
 
-        
+
     def count(self,query):
         (items, tablename, fields) = self.select_raw(query)
         # self.db['_lastsql'] = self._count(query)
@@ -2566,7 +2566,7 @@ class GAENoSQLAdapter(BaseAdapter):
             return len(items)
         except TypeError:
             return items.count(limit=None)
-        
+
     def delete(self,tablename, query):
         """
         This function was changed on 2010-05-04 because according to
@@ -2574,7 +2574,7 @@ class GAENoSQLAdapter(BaseAdapter):
         GAE no longer support deleting more than 1000 records.
         """
         # self.db['_lastsql'] = self._delete(tablename,query)
-        (items, tablename, fields) = self.select_raw(query)        
+        (items, tablename, fields) = self.select_raw(query)
         # items can be one item or a query
         if not isinstance(items,list):
             counter = items.count(limit=None)
@@ -2590,7 +2590,6 @@ class GAENoSQLAdapter(BaseAdapter):
     def update(self,tablename,query,update_fields):
         # self.db['_lastsql'] = self._update(tablename,query,update_fields)
         (items, tablename, fields) = self.select_raw(query)
-        table = self.db[tablename]
         counter = 0
         for item in items:
             for (field, value) in update_fields:
@@ -2614,7 +2613,7 @@ class GAENoSQLAdapter(BaseAdapter):
         table['_last_reference'] = tmp
         rid = Reference(tmp.key().id())
         (rid._table, rid._record) = (table, None)
-        return rid        
+        return rid
 
     def bulk_insert(self,table,items):
         parsed_items = []
@@ -2636,11 +2635,11 @@ class GAENoSQLAdapter(BaseAdapter):
         """
         remember: no transactions on GAE
         """
-        pass 
+        pass
 
     # these functions should never be called!
     def AS(self,first,second): raise SyntaxError, "Not supported"
-    def ON(self,first,second): raise SyntaxError, "Not supported"   
+    def ON(self,first,second): raise SyntaxError, "Not supported"
     def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
     def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
     def ADD(self,first,second): raise SyntaxError, "Not supported"
@@ -2669,7 +2668,7 @@ class GAENoSQLAdapter(BaseAdapter):
     def rollback_prepared(self,key): raise SyntaxError, "Not supported"
     def concat_add(self,table): raise SyntaxError, "Not supported"
     def constraint_name(self, table, fieldname): raise SyntaxError, "Not supported"
-    def create_sequence_and_triggers(self, query, table, **args): pass    
+    def create_sequence_and_triggers(self, query, table, **args): pass
     def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
     def execute(self,*a,**b): raise SyntaxError, "Not supported"
     def represent_exceptions(self, obj, fieldtype): raise SyntaxError, "Not supported"
@@ -2918,7 +2917,7 @@ def Row_pickler(data):
 copy_reg.pickle(Row, Row_pickler, Row_unpickler)
 
 ################################################################################
-# Everything below should be independent on the specifics of the 
+# Everything below should be independent on the specifics of the
 # database and should for RDBMs and some NoSQL databases
 ################################################################################
 
@@ -3014,7 +3013,7 @@ class DAL(dict):
         if not decode_credentials:
             credential_decoder = lambda cred: cred
         else:
-            credential_decoder = lambda cred: urllib.unquote(cred)                 
+            credential_decoder = lambda cred: urllib.unquote(cred)
         self._uri = str(uri) # NOTE: assuming it is in utf8!!!
         self._pool_size = pool_size
         self._db_codec = db_codec
@@ -3143,7 +3142,7 @@ class DAL(dict):
         if isinstance(query,Table):
             query = query._id>0
         elif isinstance(query,Field):
-            query = query!=None        
+            query = query!=None
         return Set(self, query)
 
     def commit(self):
@@ -3209,7 +3208,7 @@ class DAL(dict):
             ofile.write('\r\n\r\n')
         ofile.write('END')
 
-    def import_from_csv_file(self, ifile, id_map={}, null='<NULL>', 
+    def import_from_csv_file(self, ifile, id_map={}, null='<NULL>',
                              unique='uuid', *args, **kwargs):
         for line in ifile:
             line = line.strip()
@@ -3221,7 +3220,7 @@ class DAL(dict):
                 raise SyntaxError, 'invalid file format'
             else:
                 tablename = line[6:]
-                self[tablename].import_from_csv_file(ifile, id_map, null, 
+                self[tablename].import_from_csv_file(ifile, id_map, null,
                                                      unique, *args, **kwargs)
 
 
@@ -4500,7 +4499,7 @@ class Rows(object):
         else:
             items = [[inner_loop(record, col) for col in self.colnames]
                      for record in self]
-        if have_serializers:        
+        if have_serializers:
             return serializers.json(items)
         else:
             import simplejson
@@ -4534,7 +4533,7 @@ def test_all():
               Field('datef', 'date', default=datetime.date.today()),\
               Field('timef', 'time'),\
               Field('datetimef', 'datetime'),\
-              migrate='test_user.table')              
+              migrate='test_user.table')
 
    Insert a field
 
