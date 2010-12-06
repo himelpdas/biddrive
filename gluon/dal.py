@@ -93,14 +93,14 @@ Supported DAL URI strings:
 'firebird_embedded://username:password@c://path'
 'informix://user:password@server:3050/database'
 'informixu://user:password@server:3050/database' # unicode informix
-'gae' # for google app engine
+'gae' # for google app engine (work in progress)
 
 For more info:
 help(DAL)
 help(Field)
 """
 
-#####################################################################################
+###################################################################################
 # this file oly exposes DAL and Field
 ###################################################################################
 
@@ -142,19 +142,19 @@ except ImportError:
 try:
     import portalocker
     have_portalocker = True
-except:
+except ImportError:
     have_portalocker = False
 
 try:
     import serlializers
     have_serializers = True
-except:
+except ImportError:
     have_serializers = False
 
 try:
     import validators
     have_validators = True
-except:
+except ImportError:
     have_validators = False
 
 logger = logging.getLogger("web2py.dal")
@@ -178,48 +178,48 @@ drivers = []
 try:
     from pysqlite2 import dbapi2 as sqlite3
     drivers.append('pysqlite2')
-except:
+except ImportError:
     try:
         from sqlite3 import dbapi2 as sqlite3
         drivers.append('SQLite3')
-    except:
+    except ImportError:
         logger.debug('no sqlite3 or pysqlite2.dbapi2 driver')
 
 try:
     import MySQLdb
     drivers.append('MySQL')
-except:
+except ImportError:
     logger.debug('no MySQLdb driver')
 
 try:
     import psycopg2
     drivers.append('PostgreSQL')
-except:
+except ImportError:
     logger.debug('no psycopg2 driver')
 
 try:
     import cx_Oracle
     drivers.append('Oracle')
-except:
+except ImportError:
     logger.debug('no cx_Oracle driver')
 
 try:
     import pyodbc
     drivers.append('MSSQL/DB2')
-except:
+except ImportError:
     logger.debug('no MSSQL/DB2 driver')
 
 try:
     import kinterbasdb
     drivers.append('Interbase')
-except:
+except ImportError:
     logger.debug('no kinterbasdb driver')
 
 try:
     import informixdb
     drivers.append('Informix')
     logger.warning('Informix support is experimental')
-except:
+except ImportError:
     logger.debug('no informixdb driver')
 
 try:
@@ -229,17 +229,20 @@ try:
     drivers.append('zxJDBC')
     logger.warning('zxJDBC support is experimental')
     is_jdbc = True
-except:
+except ImportError:
     logger.debug('no zxJDBC driver')
     is_jdbc = False
 
 try:
     import ingresdbi
     drivers.append('Ingres')
-except:
+except ImportError:
     logger.debug('no Ingres driver')
     # NOTE could try JDBC.......
 
+###################################################################################
+# class that handles connection pooling (all adapters derived form this one)
+###################################################################################
 
 class ConnectionPool(object):
 
@@ -302,6 +305,10 @@ class ConnectionPool(object):
         thread.instances.append(self)
         self.cursor = self.connection.cursor()
 
+
+###################################################################################
+# this is a generid adapter that does nothing, all others derived form this one
+###################################################################################
 
 class BaseAdapter(ConnectionPool):
 
@@ -1205,6 +1212,10 @@ class BaseAdapter(ConnectionPool):
                     pass
         return rowsobj
 
+
+###################################################################################
+# List of all the available adapters, they all extend BaseAdapter
+###################################################################################
 
 class SQLiteAdapter(BaseAdapter):
     types = {
@@ -2755,6 +2766,10 @@ def Row_pickler(data):
 
 copy_reg.pickle(Row, Row_pickler, Row_unpickler)
 
+################################################################################
+# Everything below should be independent on the specifics of the 
+# database and should for RDBMs and some NoSQL databases
+################################################################################
 
 class SQLCallableList(list):
 
@@ -2861,6 +2876,7 @@ class DAL(dict):
             self._dbname = uri.split(':')[0]
             connected = False
             args = (self,uri,pool_size,folder,db_codec,credential_decoder)
+            error = ''
             for k in range(5):
                 try:
                     self._adapter = ADAPTERS[prefix+self._dbname](*args)
@@ -2868,10 +2884,10 @@ class DAL(dict):
                     break
                 except SyntaxError:
                     raise
-                except:
+                except Exception, error:
                     time.sleep(1)
             if not connected:
-                raise RuntimeError, "Failure to connect, tried 5 times"
+                raise RuntimeError, "Failure to connect, tried 5 times:\n%s" % error
         else:
             self._adapter = BaseAdapter(self,uri)
         self.tables = SQLCallableList()
@@ -3044,7 +3060,8 @@ class DAL(dict):
             ofile.write('\r\n\r\n')
         ofile.write('END')
 
-    def import_from_csv_file(self, ifile, id_map={}, null='<NULL>', unique='uuid', *args, **kwargs):
+    def import_from_csv_file(self, ifile, id_map={}, null='<NULL>', 
+                             unique='uuid', *args, **kwargs):
         for line in ifile:
             line = line.strip()
             if not line:
@@ -3055,7 +3072,8 @@ class DAL(dict):
                 raise SyntaxError, 'invalid file format'
             else:
                 tablename = line[6:]
-                self[tablename].import_from_csv_file(ifile, id_map, null, unique, *args, **kwargs)
+                self[tablename].import_from_csv_file(ifile, id_map, null, 
+                                                     unique, *args, **kwargs)
 
 
 class SQLALL(object):
@@ -4350,6 +4368,10 @@ def Rows_pickler(data):
 copy_reg.pickle(Rows, Rows_pickler, Rows_unpickler)
 
 
+################################################################################
+# dummy function used to define some doctests
+################################################################################
+
 def test_all():
     """
 
@@ -4539,8 +4561,10 @@ def test_all():
     >>> db.author.drop()
     >>> db.paper.drop()
     """
+################################################################################
+# deprecated since the new DAL, here only for backwrad compatibilty
+################################################################################
 
-# deprecated since the new DAL
 SQLField = Field
 SQLTable = Table
 SQLXorable = Expression
@@ -4550,8 +4574,12 @@ SQLRows = Rows
 SQLStorage = Row
 SQLDB = DAL
 GQLDB = DAL
-DAL.Field = Field  # necessary in gluon/globals.py session.connect
-DAL.Table = Table  # necessary in gluon/globals.py session.connect
+DAL.Field = Field  # was necessary in gluon/globals.py session.connect
+DAL.Table = Table  # was necessary in gluon/globals.py session.connect
+
+################################################################################
+# run tests
+################################################################################
 
 if __name__ == '__main__':
     import doctest
