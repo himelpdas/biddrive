@@ -1,4 +1,4 @@
-#!/env python
+#!/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -269,11 +269,11 @@ class ConnectionPool(object):
                 sql_locker.acquire()
                 pool = ConnectionPool.pools[self.uri]
                 if len(pool) < instance.pool_size:
-                    pool.append(self.connection)
+                    pool.append(instance.connection)
                     really = False
                 sql_locker.release()
             if really:
-                self.connection.close()
+                instance.connection.close()
         return
 
     def find_or_make_work_folder(self):
@@ -313,6 +313,7 @@ class ConnectionPool(object):
 
 class BaseAdapter(ConnectionPool):
 
+    support_distributed_transaction = False
     uploads_in_blob = False
 
     def file_exists(self, filename):
@@ -974,9 +975,6 @@ class BaseAdapter(ConnectionPool):
     def rollback(self):
         return self.connection.rollback()
 
-    def support_distributed_transaction(self):
-        return False
-
     def distributed_transaction_begin(self,key):
         return
 
@@ -1310,6 +1308,8 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
 
 
 class MySQLAdapter(BaseAdapter):
+
+    support_distributed_transaction = True        
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -1339,9 +1339,6 @@ class MySQLAdapter(BaseAdapter):
     def DROP(self,table,mode):
         # breaks db integrity but without this mysql does not drop table
         return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % table,'SET FOREIGN_KEY_CHECKS=1;']
-
-    def support_distributed_transaction(self):
-        return True
 
     def distributed_transaction_begin(self,key):
         self.execute('XA START;')
@@ -1410,6 +1407,8 @@ class MySQLAdapter(BaseAdapter):
 
 
 class PostgreSQLAdapter(BaseAdapter):
+
+    support_distributed_transaction = True
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -1435,9 +1434,6 @@ class PostgreSQLAdapter(BaseAdapter):
 
     def RANDOM(self):
         return 'RANDOM()'
-
-    def support_distributed_transaction(self):
-        return True
 
     def distributed_transaction_begin(self,key):
         return
@@ -1804,6 +1800,8 @@ class MSSQL2Adapter(MSSQLAdapter):
 
 
 class FireBirdAdapter(BaseAdapter):
+
+    support_distributed_transaction = True
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -1853,9 +1851,6 @@ class FireBirdAdapter(BaseAdapter):
         tablename = table._tablename
         return ['DELETE FROM %s;' % tablename,
                 'SET GENERATOR %s TO 0;' % table._sequence_name]
-
-    def support_distributed_transaction(self):
-        return True
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
@@ -2246,6 +2241,433 @@ class IngresUnicodeAdapter(IngresAdapter):
         'list:reference': 'NCLOB',
         }
 
+
+try:
+    from new import classobj
+    from google.appengine.ext import db as gae
+    from google.appengine.api.datastore_types import Key
+    from google.appengine.ext.db.polymodel import PolyModel    
+    drivers.append('gae')
+except ImportError:
+    pass
+
+class GAEFilter:
+    def __init__(self,name,op,value,apply):
+        self.name=name=='id' and '__key__' or name
+        self.op=op
+        self.value=value
+        self.apply=apply
+    def __repr__(self):
+        return '(%s %s %s)' % (self.name, self.op, repr(self.value))
+
+class GAENoSQLAdapter(BaseAdapter):
+    uploads_in_blob = True
+    types = {}
+
+    def file_exists(self, filename): pass
+    def file_open(self, filename, mode='rb', lock=True): pass
+    def file_close(self, fileobj, unlock=True): pass
+
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
+        self.types.update({
+                'boolean': gae.BooleanProperty,
+                'string': gae.StringProperty,
+                'text': gae.TextProperty,
+                'password': gae.StringProperty,
+                'blob': gae.BlobProperty,
+                'upload': gae.StringProperty,
+                'integer': gae.IntegerProperty,
+                'double': gae.FloatProperty,
+                'date': gae.DateProperty,
+                'time': gae.TimeProperty,
+                'datetime': gae.DateTimeProperty,
+                'id': None,
+                'reference': gae.IntegerProperty,
+                'list:string': (lambda: gae.StringListProperty(default=None)),
+                'list:integer': (lambda: gae.ListProperty(int,default=None)),
+                'list:reference': (lambda: gae.ListProperty(int,default=None)),
+        })
+        self.db=db
+        self.uri = 'gae'
+        self.dbname = 'gql'
+        self.folder = folder
+        db['_lastsql'] = ''
+        self.db_codec = 'UTF-8'
+
+    def create_table(self,table,migrate=True,fake_migrate=False, polymodel=None):
+        fields = []
+        myfields = {}
+        for k in table.fields:
+            if isinstance(polymodel,Table) and k in polymodel.fields():
+                continue
+            field = table[k]
+            attr = {}
+            if isinstance(field.type, SQLCustomType):
+                ftype = self.types[field.type.native or field.type.type](**attr)
+            elif isinstance(field.type, gae.Property):
+                ftype = field.type
+            elif field.type.startswith('id'):
+                continue
+            elif field.type.startswith('reference'):
+                if field.notnull:
+                    attr = dict(required=True)
+                referenced = field.type[10:].strip()
+                ftype = self.types[field.type[:9]](table._db[referenced])
+            elif field.type.startswith('list:reference'):
+                if field.notnull:
+                    attr = dict(required=True)
+                referenced = field.type[15:].strip()
+                ftype = self.types[field.type[:14]](**attr)
+            elif field.type.startswith('list:'):
+                ftype = self.types[field.type](**attr)
+            elif not field.type in self.types\
+                 or not self.types[field.type]:
+                raise SyntaxError, 'Field: unknown field type: %s' % field.type
+            else:
+                ftype = self.types[field.type](**attr)
+            myfields[field.name] = ftype
+        if not polymodel:
+            table._tableobj = classobj(table._tablename, (gae.Model, ), myfields)
+        elif polymodel==True:
+            table._tableobj = classobj(table._tablename, (PolyModel, ), myfields)
+        elif isinstance(polymodel,Table):
+            table._tableobj = classobj(table._tablename, (polymodel._tableobj, ), myfields)
+        else:
+            raise SyntaxError, "polymodel must be None, True, a table or a tablename"
+        return None
+    def sequence_name(self,table): pass
+    def trigger_name(self,table): pass
+    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
+    def LOWER(self,first): raise SyntaxError, "Not supported"
+    def UPPER(self,first): raise SyntaxError, "Not supported"
+    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
+    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
+    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
+    def RANDOM(self): raise SyntaxError, "Not supported"
+
+    def NOT_NULL(self,default,field_type): todo()
+    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
+    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
+
+    def drop(self,table,mode):  raise SyntaxError, "Not supported"
+    def truncate(self,table,mode):
+        self.db(table.id > 0).delete()
+    def _insert(self,table,fields):
+        return 'INSERT %s in %s' % (fields, table)
+    def insert(self,table,fields):
+        table._db['_lastsql'] = 'insert %s into %s' % (fields, table)
+        for field in table.fields:
+            if not field in fields and table[field].default != None:
+                fields[field] = table[field].default
+            elif not field in fields and table[field].compute != None:
+                fields[field] = table[field].compute(fields)
+            if field in fields:
+                fields[field] = self.represent(fields[field],table[field].type)
+        tmp = table._tableobj(**fields)
+        tmp.put()
+        table['_last_reference'] = tmp
+        rid = Reference(tmp.key().id())
+        (rid._table, rid._record) = (table, None)
+        return rid        
+    def bulk_insert(self,table,items):
+        parsed_items = []
+        for item in items:
+            fields = {}
+            for field in table.fields:
+                if not field in item and table[field].default != None:
+                    fields[field] = table[field].default
+                elif not field in item and table[field].compute != None:
+                    fields[field] = table[field].compute(item)
+                if field in item:
+                    fields[field] = self.represent(item[field],table[field].type)
+            #parsed_items.append(fields)
+            parsed_items.append(table._tableobj(**fields))
+        gae.put(parsed_items)
+        return True
+
+    def expand(self,expression,field_type=None):
+        if isinstance(expression,Field):
+            if field.type in ('text','blob'):
+                raise SyntaxError, 'AppEngine does not index by: %s' % field.type
+            return expression.name
+        elif isinstance(expression, (Expression, Query)):
+            if not expression.second is None:
+                return expression.op(expression.first, expression.second)
+            elif not expression.first is None:
+                return expression.op(expression.first)
+            else:
+                return expression.op()
+        elif isinstance(expression,(list,tuple)):
+            return ','.join([self.represent(item,field_type) for item in expression])
+        elif field_type:
+                return self.represent(expression,field_type)
+        else:
+            return str(expression)
+
+
+    ### TODO from gql.py Expression
+    def AND(self,first,second):
+        a = self.expand(first)
+        b = self.expand(second)
+        if b[0].name=='__key__' and a[0].name!='__key__':
+            return b+a
+        return a+b
+ 
+    def OR(self,first,second): raise SyntaxError, "Not supported"
+    def BELONGS(self,first,second):
+        if second is None: raise SyntaxError, "Not supported"
+        return [(first.name,'in',self.expand(second,first.type),lambda a,b:a in b)]
+
+    def CONTAINS(self,first,second):
+        if not first.type.startswith('list:') or not isinstance(second,(list, tuple)):
+            raise SyntaxError, "Not supported"
+        return [(first.name,'in',self.expand(second,first.type),lambda a,b:a in b)]
+
+    def LIKE(self,first,second): raise SyntaxError, "Not supported"
+
+    def EQ(self,first,second=None):
+        if second is None: raise SyntaxError, "Not supported"
+        return [GAEFilter(first.name,'=',self.represent(second,first.type),lambda a,b:a==b)]
+
+    def NE(self,first,second=None):
+        if second==None: raise SyntaxError, "Not supported"
+        return [GAEFilter(first.name,'!=',self.represent(second,first.type),lambda a,b:a!=b)]
+
+    def LT(self,first,second=None):
+        return [GAEFilter(first.name,'<',self.represent(second,first.type),lambda a,b:a<b)]
+
+    def LE(self,first,second=None):
+        return [GAEFilter(first.name,'<=',self.represent(second,first.type),lambda a,b:a<=b)]
+
+    def GT(self,first,second=None):
+        return [GAEFilter(first.name,'>',self.represent(second,first.type),lambda a,b:a>b)]
+
+    def GE(self,first,second=None):
+        return [GAEFilter(first.name,'>=',self.represent(second,first.type),lambda a,b:a>=b)]
+
+    def BELONGS(self,first,second=None): pass
+    def CONTAINS(self,first,second=None): pass
+    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
+    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
+    def ADD(self,first,second): pass
+    def SUB(self,first,second): pass
+    def MUL(self,first,second): pass
+    def DIV(self,first,second): pass
+    
+    def NOT(self,first):
+        nops = { GAENoSQLAdapter.EQ: GAENoSQLAdapter.NE,
+                 GAENoSQLAdapter.NE: GAENoSQLAdapter.EQ,
+                 GAENoSQLAdapter.LT: GAENoSQLAdapter.GE,
+                 GAENoSQLAdapter.GT: GAENoSQLAdapter.LE,
+                 GAENoSQLAdapter.LE: GAENoSQLAdapter.GT,
+                 GAENoSQLAdapter.GE: GAENoSQLAdapter.LT}
+        if not isinstance(first,Query):
+            raise SyntaxError, "Not suported"
+        op = first.op
+        nop = nops.get(first.op,None)
+        if not nop:
+            raise SyntaxError, "Not suported"
+        return self.expand(first)
+
+    def AS(self,first,second): raise SyntaxError, "Not supported"
+    def ON(self,first,second): raise SyntaxError, "Not supported"
+    def alias(self,table,alias): raise SyntaxError, "Not supported"
+
+    def _count(self,query):
+        return 'count %s' % repr(query)
+    def _select(self,query,fields,attributes):
+        return 'select %s where %s' % (repr(fields), repr(query))
+    def _delete(self,tablename, query):
+        return 'delete %s where %s' % (repr(tablename),repr(query))
+    def _update(self,tablename,query,fields):
+        return 'update %s (%s) where %s' % (repr(tablename),repr(fields),repr(query))
+
+    def select_raw(self,query,fields=[],attributes={}):
+        tablename = self.get_table(query)
+        tableobj = self.db[tablename]._tableobj
+        items = tableobj.all()
+        filters = self.expand(query)        
+        logger.info('filters = %s' % repr(filters))
+        for filter in filters:
+            if filter.name=='__key__' and filter.op=='>' and filter.value==0:
+                continue
+            elif filter.name=='__key__' and filter.op=='=':
+                if filter.value==0:
+                    items = []
+                else:
+                    item = tableobj.get_by_id(filter.value)
+                    items = (item and [item]) or []
+            elif isinstance(items,list): # i.e. there is a single record!
+                items = [i for i in items if filter.apply(getattr(item,filter.name),
+                                                          filter.value)]
+            else:
+                if filter.name=='__key__': items.order('__key__')
+                items = items.filter('%s %s' % (filter.name,filter.op),filter.value)
+        if not isinstance(items,list):
+            if attributes.get('left', None):
+                raise SyntaxError, 'Set: no left join in appengine'
+            if attributes.get('groupby', None):
+                raise SyntaxError, 'Set: no groupby in appengine'
+            orderby = attributes.get('orderby', False)
+            if orderby:
+                ### THIS REALLY NEEDS IMPROVEMENT !!!
+                if isinstance(orderby, (list, tuple)):
+                    orderby = xorify(orderby)
+                if orderby.type == 'id':
+                    orders = ['__key__']
+                else:
+                    orders = orderby.name.split(', ')
+                for order in orders:
+                    if order.endswith(' DESC'):
+                        order = '-%s' % order[:-5]                     
+                    items = items.order(order)
+            if attributes.get('limitby', None):
+                (lmin, lmax) = attributes['limitby']
+                (limit, offset) = (lmax - lmin, lmin)
+                items = items.fetch(limit, offset=offset)
+        fields = self.db[tablename].fields
+        return (items, tablename, fields)  
+
+    def select(self,query,fields,attributes):              
+        (items, tablename, fields) = self.select_raw(query,fields,attributes)
+        self.db['_lastsql'] = self._select(query,fields,attributes)
+        rows = [
+            [t=='id' and int(item.key().id()) or getattr(item, t) for t in fields]
+            for item in items]
+        colnames = ['%s.%s' % (tablename, t) for t in fields]
+        return self.parse(rows, colnames, False)
+
+        
+    def count(self,query):
+        (items, tablename, fields) = self.select_raw(query)
+        self.db['_lastsql'] = self._delete(query)
+        try:
+            return len(items)
+        except TypeError:
+            return items.count(limit=None)
+        
+    def delete(self,tablename, query):
+        """
+        This function was changed on 2010-05-04 because according to
+        http://code.google.com/p/googleappengine/issues/detail?id=3119
+        GAE no longer support deleting more than 1000 records.
+        """
+        self.db['_lastsql'] = self._delete(tablename,query)
+        (items, tablename, fields) = self.select_raw(query)
+        tableobj = self.db[tablename]._tableobj
+        # items can be one item or a query
+        if not isinstance(items,list):
+            counter = items.count(limit=None)
+            leftitems = items.fetch(1000)
+            while len(leftitems):
+                gae.delete(leftitems)
+                leftitems = items.fetch(1000)
+        else:
+            counter = len(items)
+            gae.delete(items)
+        return counter
+
+    def update(self,tablename,query,update_fields):
+        self.db['_lastsql'] = self._update(tablename,query,update_fields)
+        (items, tablename, fields) = self.select_raw(query)
+        table = self.db[tablename]
+        tableobj = table._tableobj
+        counter = 0
+        for item in items:
+            for (field, value) in update_fields:
+                value = self.represent(value,field.type)
+                setattr(item, field.name, value)
+            item.put()
+            counter += 1
+        return counter
+
+    def commit(self): pass
+    def rollback(self): raise SyntaxError, "Not supported"
+    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
+    def prepare(self,key): raise SyntaxError, "Not supported"
+    def commit_prepared(self,key): raise SyntaxError, "Not supported"
+    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
+    def concat_add(self,table): todo()
+    def constraint_name(self, table, fieldname): todo()
+    def create_sequence_and_triggers(self, query, table, **args): pass
+    def commit_on_alter_table(self): return False
+    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
+    def execute(self,*a,**b): raise SyntaxError, "Not supported"
+    def represent(self, obj, fieldtype):
+        db = self.db
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if isinstance(obj, (Expression, Field)):
+            raise SyntaxError, "non supported on GAE"
+        if fieldtype.startswith('list:'):
+            if not obj:
+                obj = []
+            if not isinstance(obj, (list, tuple)):
+                obj = [obj]
+        if isinstance(fieldtype, gae.Property):
+            return obj
+        if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
+            return None
+        if obj != None:
+            if fieldtype in ('integer','id'):
+                obj = long(obj)
+            elif fieldtype == 'double':
+                obj = float(obj)
+            elif fieldtype.startswith('reference'):
+                if isinstance(obj, (Row, Reference)):
+                    obj = obj['id']
+                obj = long(obj)
+            elif fieldtype == 'boolean':
+                if obj and not str(obj)[0].upper() == 'F':
+                    obj = True
+                else:
+                    obj = False
+            elif fieldtype == 'date':
+                if not isinstance(obj, datetime.date):
+                    (y, m, d) = [int(x) for x in str(obj).strip().split('-')]
+                    obj = datetime.date(y, m, d)
+            elif fieldtype == 'time':
+                if not isinstance(obj, datetime.time):
+                    time_items = [int(x) for x in str(obj).strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
+                    else:
+                        (h, mi, s) = time_items + [0]
+                    obj = datetime.time(h, mi, s)
+            elif fieldtype == 'datetime':
+                if not isinstance(obj, datetime.datetime):
+                    (y, m, d) = [int(x) for x in str(obj)[:10].strip().split('-')]
+                    time_items = [int(x) for x in str(obj)[11:].strip().split(':')[:3]]
+                    while len(time_items)<3:
+                        item_items.append(0)
+                    (h, mi, s) = time_items
+                    obj = datetime.datetime(y, m, d, h, mi, s)
+            elif fieldtype == 'blob':
+                pass
+            elif fieldtype.startswith('list:string'):
+                if obj!=None and not isinstance(obj,(list,tuple)):
+                    obj=[obj]
+                return [str(x) for x in obj]
+            elif fieldtype.startswith('list:'):
+                if obj!=None and not isinstance(obj,(list,tuple)):
+                    obj=[obj]
+                return [int(x) for x in obj]
+            elif isinstance(obj, str):
+                obj = obj.decode('utf8')
+            elif not isinstance(obj, unicode):
+                obj = unicode(obj)
+        return obj
+
+    def represent_exceptions(self, obj, fieldtype): todo()
+    def lastrowid(self,table): raise SyntaxError, "Not supported"
+    def integrity_error_class(self): raise SyntaxError, "Not supported"
+    def rowslice(self,rows,minimum=0,maximum=None): todo()
+    # def parse(self, rows, colnames, blob_decode=True): todo() ###required?
+
+
 ADAPTERS = {
     'sqlite': SQLiteAdapter,
     'mysql': MySQLAdapter,
@@ -2261,6 +2683,7 @@ ADAPTERS = {
     'ingresu': IngresUnicodeAdapter,
     'jdbc:sqlite': JDBCSQLiteAdapter,
     'jdbc:postgres': JDBCPostgreSQLAdapter,
+    'gae': GAENoSQLAdapter,
 }
 
 
@@ -2410,437 +2833,6 @@ def autofields(db, text):
         newfields.append(db.Field(name, t, label=label, requires=requires,
                                   notnull=notnull, unique=unique))
     return tablename, newfields
-
-
-try:
-    from new import classobj
-    from google.appengine.ext import db as gae
-    from google.appengine.api.datastore_types import Key
-    from google.appengine.ext.db.polymodel import PolyModel
-    MAX_ITEMS = 1000 # GAE main limitation
-    drivers.append('gae')
-except ImportError:
-    pass
-
-class GAEFilter:
-    def __init__(self,name,op,value,apply):
-        self.name=name=='id' and '__key__' or name
-        self.op=op
-        self.value=value
-        self.apply=apply
-
-class GAENoSQLAdapter(BaseAdapter):
-    uploads_in_blob = True
-    types = {}
-
-    def file_exists(self, filename): pass
-    def file_open(self, filename, mode='rb', lock=True): pass
-    def file_close(self, fileobj, unlock=True): pass
-
-    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
-        self.types.update({
-                'boolean': gae.BooleanProperty,
-                'string': gae.StringProperty,
-                'text': gae.TextProperty,
-                'password': gae.StringProperty,
-                'blob': gae.BlobProperty,
-                'upload': gae.StringProperty,
-                'integer': gae.IntegerProperty,
-                'double': gae.FloatProperty,
-                'date': gae.DateProperty,
-                'time': gae.TimeProperty,
-                'datetime': gae.DateTimeProperty,
-                'id': None,
-                'reference': gae.IntegerProperty,
-                'list:string': (lambda: gae.StringListProperty(default=None)),
-                'list:integer': (lambda: gae.ListProperty(int,default=None)),
-                'list:reference': (lambda: gae.ListProperty(int,default=None)),
-        })
-        self.db=db
-        self.uri = 'gae'
-        self.dbname = 'gql'
-        self.folder = folder
-        db['_lastsql'] = ''
-        self.tables = SQLCallableList()
-        self.db_codec = 'UTF-8'
-    def create_table(self,table,migrate=True,fake_migrate=False, polymodel=None):
-        fields = []
-        myfields = {}
-        for k in table.fields:
-            if isinstance(polymodel,Table) and k in polymodel.fields():
-                continue
-            field = table[k]
-            attr = {}
-            if isinstance(field.type, SQLCustomType):
-                ftype = self.types[field.type.native or field.type.type](**attr)
-            elif isinstance(field.type, gae.Property):
-                ftype = field.type
-            elif field.type.startswith('id'):
-                continue
-            elif field.type.startswith('reference'):
-                if field.notnull:
-                    attr = dict(required=True)
-                referenced = field.type[10:].strip()
-                ftype = self.types[field.type[:9]](table._db[referenced])
-            elif field.type.startswith('list:reference'):
-                if field.notnull:
-                    attr = dict(required=True)
-                referenced = field.type[15:].strip()
-                ftype = self.types[field.type[:14]](**attr)
-            elif field.type.startswith('list:'):
-                ftype = self.types[field.type](**attr)
-            elif not field.type in self.types\
-                 or not self.types[field.type]:
-                raise SyntaxError, 'Field: unknown field type: %s' % field.type
-            else:
-                ftype = self.types[field.type](**attr)
-            myfields[field.name] = ftype
-        if not polymodel:
-            table._tableobj = classobj(table._tablename, (gae.Model, ), myfields)
-        elif polymodel==True:
-            table._tableobj = classobj(table._tablename, (PolyModel, ), myfields)
-        elif isinstance(polymodel,Table):
-            table._tableobj = classobj(table._tablename, (polymodel._tableobj, ), myfields)
-        else:
-            raise SyntaxError, "polymodel must be None, True, a table or a tablename"
-        return None
-    def sequence_name(self,table): pass
-    def trigger_name(self,table): pass
-    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
-    def LOWER(self,first): raise SyntaxError, "Not supported"
-    def UPPER(self,first): raise SyntaxError, "Not supported"
-    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
-    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
-    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
-    def RANDOM(self): raise SyntaxError, "Not supported"
-
-    def NOT_NULL(self,default,field_type): todo()
-    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
-    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
-
-    def drop(self,table,mode):  raise SyntaxError, "Not supported"
-    def truncate(self,table,mode):
-        self.db(table.id > 0).delete()
-    def _insert(self,table,fields):
-        return 'INSERT %s in %s' % (fields, table)
-    def insert(self,table,fields):
-        table.db['_lastsql'] = 'insert'
-        for field in table.fields:
-            if not field in fields and table[field].default != None:
-                fields[field] = table[field].default
-            elif not field in fields and table[field].compute != None:
-                fields[field] = table[field].compute(fields)
-            if field in fields:
-                fields[field] = self.represent(fields[field],table[field].type)
-        tmp = table._tableobj(**fields)
-        tmp.put()
-        table['_last_reference'] = tmp
-        rid = Reference(tmp.key().id())
-        (rid._table, rid._record) = (table, None)
-        return rid        
-    def bulk_insert(self,table,items):
-        parsed_items = []
-        for item in items:
-            fields = {}
-            for field in table.fields:
-                if not field in item and table[field].default != None:
-                    fields[field] = table[field].default
-                elif not field in item and table[field].compute != None:
-                    fields[field] = table[field].compute(item)
-                if field in item:
-                    fields[field] = self.represent(item[field],table[field].type)
-            #parsed_items.append(fields)
-            parsed_items.append(table._tableobj(**fields))
-        gae.put(parsed_items)
-        return True
-
-    def expand(self,expression,field_type=None):
-        if isinstance(expression,Field):
-            if field.type in ('text','blob'):
-                raise SyntaxError, 'AppEngine does not index by: %s' % field.type
-            return expression.name
-        elif isinstance(expression, (Expression, Query)):
-            if not expression.second is None:
-                return expression.op(expression.first, expression.second)
-            elif not expression.first is None:
-                return expression.op(expression.first)
-            else:
-                return expression.op()
-        elif isinstance(expression,(list,tuple)):
-            return ','.join([self.represent(item,field_type) for item in expression])
-        elif field_type:
-                return self.represent(expression,field_type)
-        else:
-            return str(expression)
-
-
-    ### TODO from gql.py Expression
-    def AND(self,first,second):
-        a = self.expand(first)
-        b = self.expand(second)
-        if b[0].name=='__key__' and a[0].name!='__key__':
-            return b+a
-        return a+b
- 
-    def OR(self,first,second): raise SyntaxError, "Not supported"
-    def BELONGS(self,first,second): raise SyntaxError, "Not supported"
-    def LIKE(self,first,second): raise SyntaxError, "Not supported"
-
-    def EQ(self,first,second=None):
-        if second is None: raise SyntaxError, "Not supported"
-        return [(first.name,'=',self.expand(second,first.type),lambda a,b:a==b)]
-
-    def NE(self,first,second=None):
-        if second==None: raise SyntaxError, "Not supported"
-        return [GAEFilter(first.name,'!=',self.expand(second,first.type),lambda a,b:a!=b)]
-
-    def LT(self,first,second=None):
-        return [GAEFilter(first.name,'<',self.expand(second,first.type),lambda a,b:a<b)]
-
-    def LE(self,first,second=None):
-        return [GAEFilter(first.name,'<=',self.expand(second,first.type),lambda a,b:a<=b)]
-
-    def GT(self,first,second=None):
-        return [GAEFilter(first.name,'>',self.expand(second,first.type),lambda a,b:a>b)]
-
-    def GE(self,first,second=None):
-        return [GAEFilter(first.name,'>=',self.expand(second,first.type),lambda a,b:a>=b)]
-
-    def BELONGS(self,first,second=None): pass
-    def CONTAINS(self,first,second=None): pass
-    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ADD(self,first,second): pass
-    def SUB(self,first,second): pass
-    def MUL(self,first,second): pass
-    def DIV(self,first,second): pass
-    
-    def NOT(self,first):
-        nops = { GAENoSQLAdapter.EQ: GAENoSQLAdapter.NE,
-                 GAENoSQLAdapter.NE: GAENoSQLAdapter.EQ,
-                 GAENoSQLAdapter.LT: GAENoSQLAdapter.GE,
-                 GAENoSQLAdapter.GT: GAENoSQLAdapter.LE,
-                 GAENoSQLAdapter.LE: GAENoSQLAdapter.GT,
-                 GAENoSQLAdapter.GE: GAENoSQLAdapter.LT}
-        if not isinstance(first,Query):
-            raise SyntaxError, "Not suported"
-        op = first.op
-        nop = nops.get(first.op,None)
-        if not nop:
-            raise SyntaxError, "Not suported"
-        return self.expand(first)
-
-    def INVERT(self,first):
-        todo()
-
-    def COMMA(self,first,second): todo()
-    # def expand(self,expression,field_type=None): todo()
-
-    def AS(self,first,second): raise SyntaxError, "Not supported"
-    def ON(self,first,second): raise SyntaxError, "Not supported"
-    def alias(self,table,alias): raise SyntaxError, "Not supported"
-
-    def _count(self,query):
-        return 'count %s' % query
-    def _select(self,query,fields,attributes):
-        return 'select %s where %s' % (fields, query)
-    def _delete(self,tablename, query):
-        return 'delete %s where %s' % (tablename,query)
-    def _update(self,tablename,query,fields):
-        return 'update %s (%s) where %s' % (tablename,fields,query)
-
-    def select_raw(self,query,fields=[],attributes={}):
-        tablename = self.get_table(query)
-        tableobj = self.db[tablename]._tableobj
-        items = tableobj.all()
-        filters = self.expand(query)
-        for filter in filters:
-            if filter.name=='__key__' and filter.op=='>' and filter.value==0:
-                continue
-            elif filter.name=='__key__' and filter.op=='=':
-                if filter.value==0:
-                    items = []
-                else:
-                    item = tableobj.get_by_id(filter.value)
-                    items = (item and [item]) or []
-            elif isinstance(items,list): # i.e. there is a single record!
-                items = [i for i in items if filter.apply(gettattr(item,filter.name),
-                                                          filter.value)]
-            else:
-                if filter[0]=='__key__': items.order('__key__')
-                items = items.filter('%s %s' % (filter.name,filter.op),filter.value)
-        if not isinstance(items,list):
-            if attributes.get('left', None):
-                raise SyntaxError, 'Set: no left join in appengine'
-            if attributes.get('groupby', None):
-                raise SyntaxError, 'Set: no groupby in appengine'
-            orderby = attributes.get('orderby', False)
-            if orderby:
-                if isinstance(orderby, (list, tuple)):
-                    orderby = xorify(orderby)
-                assert_filter_fields(orderby)
-                if orderby.type == 'id':
-                    orders = ['__key__']
-                else:
-                    orders = orderby.name.split('|')
-                for order in orders:
-                    items = items.order(order)
-            if attributes.get('limitby', None):
-                (lmin, lmax) = attributes['limitby']
-                (limit, offset) = (lmax - lmin, lmin)
-                items = items.fetch(limit, offset=offset)
-        fields = self.db[tablename].fields
-        return (items, tablename, fields)  
-
-    def select(self,query,fields,attributes):              
-        (items, tablename, fields) = self.select_raw(query,fields,attributes)
-        self.db['_lastsql'] = self._select(query,fields,attributes)
-        rows = [
-            [t=='id' and int(item.key().id()) or getattr(item, t) for t in fields]
-            for item in items]
-        colnames = ['%s.%s' % (tablename, t) for t in fields]
-        return self.parse(self._db, rows, colnames, False, SetClass=Set)
-
-        
-    def count(self,query):
-        (items, tablename, fields) = self.select_raw(query)
-        self.db['_lastsql'] = self._delete(query)
-        try:
-            return len(items)
-        except TypeError:
-            return items.count(limit=None)
-        
-    def delete(self,tablename, query):
-        """
-        This function was changed on 2010-05-04 because according to
-        http://code.google.com/p/googleappengine/issues/detail?id=3119
-        GAE no longer support deleting more than 1000 records.
-        """
-        self.db['_lastsql'] = self._delete(tablename,query)
-        (items, tablename, fields) = self.select_raw(query)
-        tableobj = self.db[tablename]._tableobj
-        try:
-            return len(items)
-        except TypeError:
-            return items.count(limit=None)
-        # items can be one item or a query
-        if not isinstance(items,list):
-           leftitems = items.fetch(1000)
-           while len(leftitems):
-               gae.delete(leftitems)
-               leftitems = items.fetch(1000)
-        else:
-           gae.delete(items)
-        return counter
-
-    def update(self,tablename,query,fields):
-        self.db['_lastsql'] = self._update(tablename,query)
-        (items, tablename, fields) = self.select_raw(query)
-        table = self.db[tablename]
-        tableobj = table._tableobj
-        fields.update(dict([(fieldname, table[fieldname].update) \
-                                for fieldname in table.fields \
-                                if not fieldname in update_fields \
-                                and table[fieldname].update != None]))
-        fields.update(dict([(fieldname, table[fieldname].compute(update_fields)) \
-                                for fieldname in table.fields \
-                                if not fieldname in update_fields \
-                                and table[fieldname].compute != None]))
-        counter = 0
-        for item in items:
-            for (field, value) in fields.items():
-                value = self.represent(fields[field],table[field].type)
-                setattr(item, field, value)
-            item.put()
-            counter += 1
-        return counter
-
-    def commit(self): pass
-    def rollback(self): raise SyntaxError, "Not supported"
-    def support_distributed_transaction(self): return False
-    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
-    def prepare(self,key): raise SyntaxError, "Not supported"
-    def commit_prepared(self,key): raise SyntaxError, "Not supported"
-    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
-    def concat_add(self,table): todo()
-    def constraint_name(self, table, fieldname): todo()
-    def create_sequence_and_triggers(self, query, table, **args): pass
-    def commit_on_alter_table(self): return False
-    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
-    def execute(self,*a,**b): raise SyntaxError, "Not supported"
-    def represent(self, obj, fieldtype):
-        db = self.db
-        if type(obj) in (types.LambdaType, types.FunctionType):
-            obj = obj()
-        if isinstance(fieldtype, SQLCustomType):
-            return fieldtype.encoder(obj)
-        if isinstance(obj, (Expression, Field)):
-            raise SyntaxError, "non supported on GAE"
-        if fieldtype.startswith('list:'):
-            if not obj:
-                obj = []
-            if not isinstance(obj, (list, tuple)):
-                obj = [obj]
-        if isinstance(fieldtype, gae.Property):
-            return obj
-        if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
-            return None
-        if obj != None:
-            if fieldtype == 'date':
-                if not isinstance(obj, datetime.date):
-                    (y, m, d) = [int(x) for x in str(obj).strip().split('-')]
-                    obj = datetime.date(y, m, d)
-            elif fieldtype == 'time':
-                if not isinstance(obj, datetime.time):
-                    time_items = [int(x) for x in str(obj).strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
-                    else:
-                        (h, mi, s) = time_items + [0]
-                    obj = datetime.time(h, mi, s)
-            elif fieldtype == 'datetime':
-                if not isinstance(obj, datetime.datetime):
-                    (y, m, d) = [int(x) for x in str(obj)[:10].strip().split('-')]
-                    time_items = [int(x) for x in str(obj)[11:].strip().split(':')[:3]]
-                    while len(time_items)<3:
-                        item_items.append(0)
-                    (h, mi, s) = time_items
-                    obj = datetime.datetime(y, m, d, h, mi, s)
-            elif fieldtype == 'integer':
-                obj = long(obj)
-            elif fieldtype == 'double':
-                obj = float(obj)
-            elif fieldtype.startswith('reference'):
-                if isinstance(obj, (Row, Reference)):
-                    obj = obj['id']
-                obj = long(obj)
-            elif fieldtype == 'blob':
-                pass
-            elif fieldtype == 'boolean':
-                if obj and not str(obj)[0].upper() == 'F':
-                    obj = True
-                else:
-                    obj = False
-            elif fieldtype.startswith('list:string'):
-                if obj!=None and not isinstance(obj,(list,tuple)):
-                    obj=[obj]
-                return [str(x) for x in obj]
-            elif fieldtype.startswith('list:'):
-                if obj!=None and not isinstance(obj,(list,tuple)):
-                    obj=[obj]
-                return [int(x) for x in obj]
-            elif isinstance(obj, str):
-                obj = obj.decode('utf8')
-            elif not isinstance(obj, unicode):
-                obj = unicode(obj)
-        return obj
-
-    def represent_exceptions(self, obj, fieldtype): todo()
-    def lastrowid(self,table): raise SyntaxError, "Not supported"
-    def integrity_error_class(self): raise SyntaxError, "Not supported"
-    def rowslice(self,rows,minimum=0,maximum=None): todo()
-    def parse(self, rows, colnames, blob_decode=True): todo()
 
 
 class Row(dict):
@@ -3017,18 +3009,16 @@ class DAL(dict):
         self._pool_size = pool_size
         self._db_codec = db_codec
         self._lastsql = ''
-        if is_jdbc:
-            prefix = 'jdbc:'
-        else:
-            prefix = ''
-        if uri and uri.find(':')>=0:
+        if uri:
             self._dbname = uri.split(':')[0]
+            if is_jdbc and not self._uri.startswith('jdbc:'):
+                self._dbname = 'jdbc:'+self._dbname
             connected = False
             args = (self,uri,pool_size,folder,db_codec,credential_decoder)
             error = ''
             for k in range(5):
                 try:
-                    self._adapter = ADAPTERS[prefix+self._dbname](*args)
+                    self._adapter = ADAPTERS[self._dbname](*args)
                     connected = True
                     break
                 except SyntaxError:
@@ -3038,7 +3028,7 @@ class DAL(dict):
             if not connected:
                 raise RuntimeError, "Failure to connect, tried 5 times:\n%s" % error
         else:
-            self._adapter = BaseAdapter(self,uri)
+            raise RuntimeError, "Adapter not supported"
         self.tables = SQLCallableList()
         self.check_reserved = check_reserved
         if self.check_reserved:
@@ -3443,7 +3433,7 @@ class Table(dict):
         elif key:
             return dict.__getitem__(self, str(key))
 
-    def __call__(self, key=None, **kwargs):
+    def __call__(self, key=DEFAULT, **kwargs):
         if key!=DEFAULT:
             if isinstance(key, Query):
                 record = self._db(key).select(limitby=(0,1)).first()
