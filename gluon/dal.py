@@ -2256,7 +2256,7 @@ try:
 except ImportError:
     pass
 
-class GAEFilter:
+class GAEF:
     def __init__(self,name,op,value,apply):
         self.name=name=='id' and '__key__' or name
         self.op=op
@@ -2341,43 +2341,6 @@ class GAENoSQLAdapter(BaseAdapter):
             raise SyntaxError, "polymodel must be None, True, a table or a tablename"
         return None
 
-    def INVERT(self,first):
-        return '-%s' % first.name
-    def truncate(self,table,mode):
-        self.db(table.id > 0).delete()
-    def _insert(self,table,fields):
-        return 'insert %s in %s' % (fields, table)
-    def insert(self,table,fields):
-        # table._db['_lastsql'] = self._insert(table,fields)
-        for field in table.fields:
-            if not field in fields and table[field].default != None:
-                fields[field] = table[field].default
-            elif not field in fields and table[field].compute != None:
-                fields[field] = table[field].compute(fields)
-            if field in fields:
-                fields[field] = self.represent(fields[field],table[field].type)
-        tmp = table._tableobj(**fields)
-        tmp.put()
-        table['_last_reference'] = tmp
-        rid = Reference(tmp.key().id())
-        (rid._table, rid._record) = (table, None)
-        return rid        
-    def bulk_insert(self,table,items):
-        parsed_items = []
-        for item in items:
-            fields = {}
-            for field in table.fields:
-                if not field in item and table[field].default != None:
-                    fields[field] = table[field].default
-                elif not field in item and table[field].compute != None:
-                    fields[field] = table[field].compute(item)
-                if field in item:
-                    fields[field] = self.represent(item[field],table[field].type)
-            #parsed_items.append(fields)
-            parsed_items.append(table._tableobj(**fields))
-        gae.put(parsed_items)
-        return True
-
     def expand(self,expression,field_type=None):
         if isinstance(expression,Field):
             if expression.type in ('text','blob'):
@@ -2397,7 +2360,6 @@ class GAENoSQLAdapter(BaseAdapter):
         else:
             return str(expression)
 
-
     ### TODO from gql.py Expression
     def AND(self,first,second):
         a = self.expand(first)
@@ -2407,32 +2369,38 @@ class GAENoSQLAdapter(BaseAdapter):
         return a+b
 
     def EQ(self,first,second=None):
-        return [GAEFilter(first.name,'=',self.represent(second,first.type),lambda a,b:a==b)]
+        return [GAEF(first.name,'=',self.represent(second,first.type),lambda a,b:a==b)]
 
     def NE(self,first,second=None):
-        return [GAEFilter(first.name,'!=',self.represent(second,first.type),lambda a,b:a!=b)]
+        return [GAEF(first.name,'!=',self.represent(second,first.type),lambda a,b:a!=b)]
 
     def LT(self,first,second=None):
-        return [GAEFilter(first.name,'<',self.represent(second,first.type),lambda a,b:a<b)]
+        return [GAEF(first.name,'<',self.represent(second,first.type),lambda a,b:a<b)]
 
     def LE(self,first,second=None):
-        return [GAEFilter(first.name,'<=',self.represent(second,first.type),lambda a,b:a<=b)]
+        return [GAEF(first.name,'<=',self.represent(second,first.type),lambda a,b:a<=b)]
 
     def GT(self,first,second=None):
-        return [GAEFilter(first.name,'>',self.represent(second,first.type),lambda a,b:a>b)]
+        return [GAEF(first.name,'>',self.represent(second,first.type),lambda a,b:a>b)]
 
     def GE(self,first,second=None):
-        return [GAEFilter(first.name,'>=',self.represent(second,first.type),lambda a,b:a>=b)]
+        return [GAEF(first.name,'>=',self.represent(second,first.type),lambda a,b:a>=b)]
+
+    def INVERT(self,first):
+        return '-%s' % first.name
+
+    def COMMA(self,first,second):
+        return '%s, %s' % (self.expand(first),self.expand(second))
 
     def BELONGS(self,first,second=None):
         if not isinstance(second,(list, tuple)):
             raise SyntaxError, "Not supported"
-        return [GAEFilter(first.name,'in',self.represent(second,first.type),lambda a,b:a in b)]
+        return [GAEF(first.name,'in',self.represent(second,first.type),lambda a,b:a in b)]
 
     def CONTAINS(self,first,second):
         if not first.type.startswith('list:'):
             raise SyntaxError, "Not supported"
-        return [GAEFilter(first.name,'=',self.expand(second,first.type[5:]),lambda a,b:a in b)]
+        return [GAEF(first.name,'=',self.expand(second,first.type[5:]),lambda a,b:a in b)]
  
     def NOT(self,first):
         nops = { self.EQ: self.NE,
@@ -2451,12 +2419,21 @@ class GAENoSQLAdapter(BaseAdapter):
 
     def _count(self,query):
         return 'count %s' % repr(query)
+
     def _select(self,query,fields,attributes):
         return 'select %s where %s' % (repr(fields), repr(query))
+
     def _delete(self,tablename, query):
         return 'delete %s where %s' % (repr(tablename),repr(query))
+
     def _update(self,tablename,query,fields):
         return 'update %s (%s) where %s' % (repr(tablename),repr(fields),repr(query))
+
+    def truncate(self,table,mode):
+        self.db(table.id > 0).delete()
+
+    def _insert(self,table,fields):
+        return 'insert %s in %s' % (fields, table)
 
     def represent(self, obj, fieldtype):
         if type(obj) in (types.LambdaType, types.FunctionType):
@@ -2623,6 +2600,38 @@ class GAENoSQLAdapter(BaseAdapter):
             counter += 1
         return counter
 
+    def insert(self,table,fields):
+        # table._db['_lastsql'] = self._insert(table,fields)
+        for field in table.fields:
+            if not field in fields and table[field].default != None:
+                fields[field] = table[field].default
+            elif not field in fields and table[field].compute != None:
+                fields[field] = table[field].compute(fields)
+            if field in fields:
+                fields[field] = self.represent(fields[field],table[field].type)
+        tmp = table._tableobj(**fields)
+        tmp.put()
+        table['_last_reference'] = tmp
+        rid = Reference(tmp.key().id())
+        (rid._table, rid._record) = (table, None)
+        return rid        
+
+    def bulk_insert(self,table,items):
+        parsed_items = []
+        for item in items:
+            fields = {}
+            for field in table.fields:
+                if not field in item and table[field].default != None:
+                    fields[field] = table[field].default
+                elif not field in item and table[field].compute != None:
+                    fields[field] = table[field].compute(item)
+                if field in item:
+                    fields[field] = self.represent(item[field],table[field].type)
+            #parsed_items.append(fields)
+            parsed_items.append(table._tableobj(**fields))
+        gae.put(parsed_items)
+        return True
+
     def commit(self):
         """
         remember: no transactions on GAE
@@ -2631,17 +2640,13 @@ class GAENoSQLAdapter(BaseAdapter):
 
     # these functions should never be called!
     def AS(self,first,second): raise SyntaxError, "Not supported"
-    def ON(self,first,second): raise SyntaxError, "Not supported"
-    def alias(self,table,alias): raise SyntaxError, "Not supported"
+    def ON(self,first,second): raise SyntaxError, "Not supported"   
     def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
     def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
     def ADD(self,first,second): raise SyntaxError, "Not supported"
     def SUB(self,first,second): raise SyntaxError, "Not supported"
     def MUL(self,first,second): raise SyntaxError, "Not supported"
     def DIV(self,first,second): raise SyntaxError, "Not supported"
-    def sequence_name(self,table): raise SyntaxError, "Not supported"
-    def trigger_name(self,table): raise SyntaxError, "Not supported"
-    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
     def LOWER(self,first): raise SyntaxError, "Not supported"
     def UPPER(self,first): raise SyntaxError, "Not supported"
     def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
@@ -2650,9 +2655,13 @@ class GAENoSQLAdapter(BaseAdapter):
     def RANDOM(self): raise SyntaxError, "Not supported"
     def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
     def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
-    def drop(self,table,mode):  raise SyntaxError, "Not supported"
     def OR(self,first,second): raise SyntaxError, "Not supported"
     def LIKE(self,first,second): raise SyntaxError, "Not supported"
+    def drop(self,table,mode):  raise SyntaxError, "Not supported"
+    def alias(self,table,alias): raise SyntaxError, "Not supported"
+    def sequence_name(self,table): raise SyntaxError, "Not supported"
+    def trigger_name(self,table): raise SyntaxError, "Not supported"
+    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
     def rollback(self): raise SyntaxError, "Not supported"
     def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
     def prepare(self,key): raise SyntaxError, "Not supported"
@@ -3507,9 +3516,6 @@ class Table(dict):
             return '%s AS %s' % (self._ot, self._tablename)
         return self._tablename
 
-    def with_alias(self, alias):
-        return self._db._adapter.alias(self,alias)
-
     def _drop(self, mode = ''):
         return self._db._adapter.DROP(self, mode)
 
@@ -3535,6 +3541,12 @@ class Table(dict):
 
     def insert(self, **fields):
         return self._db._adapter.insert(self, fields)
+
+    def _truncate(self, mode = None):
+        return self._db._adapter.TRUNCATE(self, mode)
+
+    def truncate(self, mode = None):
+        return self._db._adapter.truncate(self, mode)
 
     def import_from_csv_file(
         self,
@@ -3614,14 +3626,12 @@ class Table(dict):
                 if id_map and cid != []:
                     id_map_self[line[cid]] = new_id
 
+    def with_alias(self, alias):
+        return self._db._adapter.alias(self,alias)
+
     def on(self, query):
         return Expression(self._db,self._db._adapter.ON,self,query)
 
-    def _truncate(self, mode = None):
-        return self._db._adapter.TRUNCATE(self, mode)
-
-    def truncate(self, mode = None):
-        return self._db._adapter.truncate(self, mode)
 
 
 class Expression(object):
@@ -4131,26 +4141,20 @@ class Set(object):
         else:
             return Set(self.db, query)
 
-    def _select(self, *fields, **attributes):
-        return self.db._adapter._select(self.query,fields,attributes)
-
-    def select(self, *fields, **attributes):
-        return self.db._adapter.select(self.query,fields,attributes)
-
     def _count(self):
         return self.db._adapter.COUNT(self.query)
 
-    def count(self):
-        return self.db._adapter.count(self.query)
+    def _select(self, *fields, **attributes):
+        return self.db._adapter._select(self.query,fields,attributes)
 
     def _delete(self):
         tablename=self.db._adapter.get_table(self.query)
         return self.db._adapter._delete(tablename,self.query)
 
-    def delete(self):
-        tablename=self.db._adapter.get_table(self.query)
-        self.delete_uploaded_files()
-        return self.db._adapter.delete(tablename,self.query)
+    def _update(self, **update_fields):
+        tablename = self.db._adapter.get_table(self.query)
+        fields = self._compute_fields(tablename,update_fields)
+        return self.db._adapter._update(tablename,self.query,fields)
 
     def _compute_fields(self,tablename,update_fields):
         table = self.db[tablename]
@@ -4163,10 +4167,16 @@ class Set(object):
                     fields.append((field, field.compute(Row(update_fields))))
         return fields
 
-    def _update(self, **update_fields):
-        tablename = self.db._adapter.get_table(self.query)
-        fields = self._compute_fields(tablename,update_fields)
-        return self.db._adapter._update(tablename,self.query,fields)
+    def count(self):
+        return self.db._adapter.count(self.query)
+
+    def select(self, *fields, **attributes):
+        return self.db._adapter.select(self.query,fields,attributes)
+
+    def delete(self):
+        tablename=self.db._adapter.get_table(self.query)
+        self.delete_uploaded_files()
+        return self.db._adapter.delete(tablename,self.query)
 
     def update(self, **update_fields):
         tablename = self.db._adapter.get_table(self.query)
@@ -4271,16 +4281,6 @@ class Rows(object):
                         if not record in records]
         return Rows(self.db,records,self.colnames)
 
-    def first(self):
-        if not self.records:
-            return None
-        return self[0]
-
-    def last(self):
-        if not self.records:
-            return None
-        return self[-1]
-
     def __nonzero__(self):
         if len(self.records):
             return 1
@@ -4291,6 +4291,40 @@ class Rows(object):
 
     def __getslice__(self, a, b):
         return Rows(self.db,self.records[a:b],self.colnames)
+
+    def __getitem__(self, i):
+        row = self.records[i]
+        keys = row.keys()
+        if self.compact and len(keys) == 1 and keys[0] != '_extra':
+            return row[row.keys()[0]]
+        return row
+
+    def __iter__(self):
+        """
+        iterator over records
+        """
+
+        for i in xrange(len(self)):
+            yield self[i]
+
+    def __str__(self):
+        """
+        serializes the table into a csv file
+        """
+
+        s = cStringIO.StringIO()
+        self.export_to_csv_file(s)
+        return s.getvalue()
+
+    def first(self):
+        if not self.records:
+            return None
+        return self[0]
+
+    def last(self):
+        if not self.records:
+            return None
+        return self[-1]
 
     def find(self,f):
         """
@@ -4329,13 +4363,6 @@ class Rows(object):
         returns a list of sorted elements (not sorted in place)
         """
         return Rows(self.db,sorted(self,key=f,reverse=reverse),self.colnames)
-
-    def __getitem__(self, i):
-        row = self.records[i]
-        keys = row.keys()
-        if self.compact and len(keys) == 1 and keys[0] != '_extra':
-            return row[row.keys()[0]]
-        return row
 
     def as_list(self,
                 compact=True,
@@ -4376,14 +4403,6 @@ class Rows(object):
             return dict([(r[key],r) for r in rows])
         else:
             return dict([(key(r),r) for r in rows])
-
-    def __iter__(self):
-        """
-        iterator over records
-        """
-
-        for i in xrange(len(self)):
-            yield self[i]
 
     def export_to_csv_file(self, ofile, null='<NULL>', *args, **kwargs):
         """
@@ -4443,15 +4462,6 @@ class Rows(object):
                             value = field.represent(value)
                     row.append(none_exception(value))
             writer.writerow(row)
-
-    def __str__(self):
-        """
-        serializes the table into a csv file
-        """
-
-        s = cStringIO.StringIO()
-        self.export_to_csv_file(s)
-        return s.getvalue()
 
     def xml(self):
         """
