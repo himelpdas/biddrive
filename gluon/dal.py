@@ -636,13 +636,13 @@ class BaseAdapter(ConnectionPool):
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY(%s)' % key
 
-    def DROP(self,table,mode):
+    def _drop(self,table,mode):
         return ['DROP TABLE %s;' % table]
 
     def drop(self, table, mode=''):
         if table._dbt:
             logfile = self.file_open(table._loggername, 'a')
-        queries = self.DROP(table, mode)
+        queries = self._drop(table, mode)
         for query in queries:
             if table._dbt:
                 logfile.write(query + '\n')
@@ -785,14 +785,14 @@ class BaseAdapter(ConnectionPool):
         table._db[alias] = table
         return other
 
-    def TRUNCATE(self,table,mode = ''):
+    def _truncate(self,table,mode = ''):
         tablename = table._tablename
         return ['TRUNCATE TABLE %s %s;' % (tablename, mode or '')]
 
     def truncate(self,table,mode= ' '):
         if table._dbt:
             logfile = self.file_open(table._loggername, 'a')
-        queries = table._db_adapter.TRUNCATE(table, mode)
+        queries = table._db_adapter._truncate(table, mode)
         for query in queries:
             if table._dbt:
                 logfile.write(query + '\n')
@@ -929,9 +929,9 @@ class BaseAdapter(ConnectionPool):
             if not orderby and tablenames:
                 sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in ((hasattr(self.db[t],'_primarykey') and self.db[t]._primarykey) or [self.db[t]._id.name])])
             # oracle does not support limitby
-        return self.SELECT_LIMITBY(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
+        return self.select_limitby(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
 
-    def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             sql_o += ' LIMIT %i OFFSET %i' % (lmax - lmin, lmin)
@@ -1284,7 +1284,7 @@ class SQLiteAdapter(BaseAdapter):
         self.pool_connection(lambda dbpath=dbpath: sqlite3.Connection(dbpath, check_same_thread=False))
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
-    def TRUNCATE(self,table,mode = ''):
+    def _truncate(self,table,mode = ''):
         tablename = table._tablename
         return ['DELETE FROM %s;' % tablename,
                 "DELETE FROM sqlite_sequence WHERE name='%s';" % tablename]
@@ -1347,7 +1347,7 @@ class MySQLAdapter(BaseAdapter):
     def SUBSTRING(self,field,parameters):
         return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
 
-    def DROP(self,table,mode):
+    def _drop(self,table,mode):
         # breaks db integrity but without this mysql does not drop table
         return ['SET FOREIGN_KEY_CHECKS=0;','DROP TABLE %s;' % table,'SET FOREIGN_KEY_CHECKS=1;']
 
@@ -1464,7 +1464,7 @@ class PostgreSQLAdapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         uri = uri.split('://')[1]
-        m = re.compile('^(?P<user>[^:@]+)(\:(?P<passwd>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
         if not m:
             raise SyntaxError, "Invalid URI string in DAL"
         user = m.group('user')
@@ -1572,11 +1572,11 @@ class OracleAdapter(BaseAdapter):
     def NOT_NULL(self,default,field_type):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
 
-    def DROP(self,table,mode):
+    def _drop(self,table,mode):
         sequence_name = self.sequence_name(table)
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s;' % sequence_name]
 
-    def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             if len(sql_w) > 1:
@@ -1690,7 +1690,7 @@ class MSSQLAdapter(BaseAdapter):
     def PRIMARY_KEY(self,key):
         return 'PRIMARY KEY CLUSTERED (%s)' % key
 
-    def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             sql_s += ' TOP %i' % lmax
@@ -1844,17 +1844,17 @@ class FireBirdAdapter(BaseAdapter):
     def SUBSTRING(self,field,parameters):
         return 'SUBSTRING(%s from %s for %s)' % (self.expand(field), parameters[0], parameters[1])
 
-    def DROP(self,table,mode):
+    def _drop(self,table,mode):
         sequence_name = self.sequence_name(table)
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR %s;' % sequence_name]
 
-    def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             sql_s += ' FIRST %i SKIP %i' % (lmax - lmin, lmin)
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
-    def TRUNCATE(self,table,mode = ''):
+    def _truncate(self,table,mode = ''):
         tablename = table._tablename
         return ['DELETE FROM %s;' % tablename,
                 'SET GENERATOR %s TO 0;' % table._sequence_name]
@@ -1978,7 +1978,7 @@ class InformixAdapter(BaseAdapter):
     def NOT_NULL(self,default,field_type):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
 
-    def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             fetch_amt = lmax - lmin
@@ -2082,7 +2082,7 @@ class DB2Adapter(BaseAdapter):
     def RANDOM(self):
         return 'RAND()'
 
-    def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             sql_o += ' FETCH FIRST %i ROWS ONLY' % lmax
@@ -2160,7 +2160,7 @@ class IngresAdapter(BaseAdapter):
     def RANDOM(self):
         return 'RANDOM()'
 
-    def SELECT_LIMITBY(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
             (lmin, lmax) = limitby
             fetch_amt = lmax - lmin
@@ -3517,7 +3517,7 @@ class Table(dict):
         return self._tablename
 
     def _drop(self, mode = ''):
-        return self._db._adapter.DROP(self, mode)
+        return self._db._adapter._drop(self, mode)
 
     def drop(self, mode = ''):
         return self._db._adapter.drop(self,mode)
@@ -3543,7 +3543,7 @@ class Table(dict):
         return self._db._adapter.insert(self, fields)
 
     def _truncate(self, mode = None):
-        return self._db._adapter.TRUNCATE(self, mode)
+        return self._db._adapter._truncate(self, mode)
 
     def truncate(self, mode = None):
         return self._db._adapter.truncate(self, mode)
