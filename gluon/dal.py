@@ -947,7 +947,7 @@ class BaseAdapter(ConnectionPool):
         if attributes.get('cache', None):
             (cache_model, time_expire) = attributes['cache']
             del attributes['cache']
-            key = self._uri + '/' + query
+            key = self.uri + '/' + query
             rows = cache_model(key, lambda: response(query), time_expire)
         else:
             rows = response(query)
