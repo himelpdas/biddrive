@@ -2256,6 +2256,78 @@ class IngresUnicodeAdapter(IngresAdapter):
         'list:reference': 'NCLOB',
         }
 
+class NoSQLAdapter(BaseAdapter):
+    def represent(self, obj, fieldtype):
+        if type(obj) in (types.LambdaType, types.FunctionType):
+            obj = obj()
+        if isinstance(fieldtype, SQLCustomType):
+            return fieldtype.encoder(obj)
+        if isinstance(obj, (Expression, Field)):
+            raise SyntaxError, "non supported on GAE"
+        if fieldtype.startswith('list:'):
+            if not obj:
+                obj = []
+            if not isinstance(obj, (list, tuple)):
+                obj = [obj]
+        if 'gae' in globals():
+            if isinstance(fieldtype, gae.Property):
+                return obj
+        if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
+            return None
+        if obj != None:
+            if fieldtype in ('integer','id'):
+                obj = long(obj)
+            elif fieldtype == 'double':
+                obj = float(obj)
+            elif fieldtype.startswith('reference'):
+                if isinstance(obj, (Row, Reference)):
+                    obj = obj['id']
+                obj = long(obj)
+            elif fieldtype == 'boolean':
+                if obj and not str(obj)[0].upper() == 'F':
+                    obj = True
+                else:
+                    obj = False
+            elif fieldtype == 'date':
+                if not isinstance(obj, datetime.date):
+                    (y, m, d) = [int(x) for x in str(obj).strip().split('-')]
+                    obj = datetime.date(y, m, d)
+                elif isinstance(obj,datetime.datetime):
+                    (y, m, d) = (obj.year, obj.month, obj.day)
+                    obj = datetime.date(y, m, d)
+            elif fieldtype == 'time':
+                if not isinstance(obj, datetime.time):
+                    time_items = [int(x) for x in str(obj).strip().split(':')[:3]]
+                    if len(time_items) == 3:
+                        (h, mi, s) = time_items
+                    else:
+                        (h, mi, s) = time_items + [0]
+                    obj = datetime.time(h, mi, s)
+            elif fieldtype == 'datetime':
+                if not isinstance(obj, datetime.datetime):
+                    (y, m, d) = [int(x) for x in str(obj)[:10].strip().split('-')]
+                    time_items = [int(x) for x in str(obj)[11:].strip().split(':')[:3]]
+                    while len(time_items)<3:
+                        time_items.append(0)
+                    (h, mi, s) = time_items
+                    obj = datetime.datetime(y, m, d, h, mi, s)
+            elif fieldtype == 'blob':
+                pass
+            elif fieldtype.startswith('list:string'):
+                if obj!=None and not isinstance(obj,(list,tuple)):
+                    obj=[obj]
+                return [str(x) for x in obj]
+            elif fieldtype.startswith('list:'):
+                if obj!=None and not isinstance(obj,(list,tuple)):
+                    obj=[obj]
+                return [int(x) for x in obj]
+            elif isinstance(obj, str):
+                obj = obj.decode('utf8')
+            elif not isinstance(obj, unicode):
+                obj = unicode(obj)
+        return obj
+
+
 
 try:
     from new import classobj
@@ -2275,7 +2347,7 @@ class GAEF:
     def __repr__(self):
         return '(%s %s %s:%s)' % (self.name, self.op, repr(self.value), type(self.value))
 
-class GAENoSQLAdapter(BaseAdapter):
+class GAENoSQLAdapter(NoSQLAdapter):
     uploads_in_blob = True
     types = {}
 
@@ -2446,75 +2518,6 @@ class GAENoSQLAdapter(BaseAdapter):
     def _insert(self,table,fields):
         return 'insert %s in %s' % (fields, table)
 
-    def represent(self, obj, fieldtype):
-        if type(obj) in (types.LambdaType, types.FunctionType):
-            obj = obj()
-        if isinstance(fieldtype, SQLCustomType):
-            return fieldtype.encoder(obj)
-        if isinstance(obj, (Expression, Field)):
-            raise SyntaxError, "non supported on GAE"
-        if fieldtype.startswith('list:'):
-            if not obj:
-                obj = []
-            if not isinstance(obj, (list, tuple)):
-                obj = [obj]
-        if isinstance(fieldtype, gae.Property):
-            return obj
-        if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
-            return None
-        if obj != None:
-            if fieldtype in ('integer','id'):
-                obj = long(obj)
-            elif fieldtype == 'double':
-                obj = float(obj)
-            elif fieldtype.startswith('reference'):
-                if isinstance(obj, (Row, Reference)):
-                    obj = obj['id']
-                obj = long(obj)
-            elif fieldtype == 'boolean':
-                if obj and not str(obj)[0].upper() == 'F':
-                    obj = True
-                else:
-                    obj = False
-            elif fieldtype == 'date':
-                if not isinstance(obj, datetime.date):
-                    (y, m, d) = [int(x) for x in str(obj).strip().split('-')]
-                    obj = datetime.date(y, m, d)
-                elif isinstance(obj,datetime.datetime):
-                    (y, m, d) = (obj.year, obj.month, obj.day)
-                    obj = datetime.date(y, m, d)
-            elif fieldtype == 'time':
-                if not isinstance(obj, datetime.time):
-                    time_items = [int(x) for x in str(obj).strip().split(':')[:3]]
-                    if len(time_items) == 3:
-                        (h, mi, s) = time_items
-                    else:
-                        (h, mi, s) = time_items + [0]
-                    obj = datetime.time(h, mi, s)
-            elif fieldtype == 'datetime':
-                if not isinstance(obj, datetime.datetime):
-                    (y, m, d) = [int(x) for x in str(obj)[:10].strip().split('-')]
-                    time_items = [int(x) for x in str(obj)[11:].strip().split(':')[:3]]
-                    while len(time_items)<3:
-                        time_items.append(0)
-                    (h, mi, s) = time_items
-                    obj = datetime.datetime(y, m, d, h, mi, s)
-            elif fieldtype == 'blob':
-                pass
-            elif fieldtype.startswith('list:string'):
-                if obj!=None and not isinstance(obj,(list,tuple)):
-                    obj=[obj]
-                return [str(x) for x in obj]
-            elif fieldtype.startswith('list:'):
-                if obj!=None and not isinstance(obj,(list,tuple)):
-                    obj=[obj]
-                return [int(x) for x in obj]
-            elif isinstance(obj, str):
-                obj = obj.decode('utf8')
-            elif not isinstance(obj, unicode):
-                obj = unicode(obj)
-        return obj
-
     def select_raw(self,query,fields=[],attributes={}):
         tablename = self.get_table(query)
         tableobj = self.db[tablename]._tableobj
@@ -2610,13 +2613,6 @@ class GAENoSQLAdapter(BaseAdapter):
 
     def insert(self,table,fields):
         # table._db['_lastsql'] = self._insert(table,fields)
-        for field in table.fields:
-            if not field in fields and table[field].default != None:
-                fields[field] = table[field].default
-            elif not field in fields and table[field].compute != None:
-                fields[field] = table[field].compute(fields)
-            if field in fields:
-                fields[field] = self.represent(fields[field],table[field].type)
         tmp = table._tableobj(**fields)
         tmp.put()
         table['_last_reference'] = tmp
@@ -2704,7 +2700,7 @@ def int2uuid(n):
          uuid = '0123456789abcdef'[i]+uuid
      return uuid
     
-class CouchDBAdapter(BaseAdapter):
+class CouchDBAdapter(NoSQLAdapter):
     uploads_in_blob = True
     types = {
                 'boolean': bool,
@@ -2752,11 +2748,7 @@ class CouchDBAdapter(BaseAdapter):
     def insert(self,table,fields):
         id = uuid2int(web2py_uuid())
         ctable = self.connection[table._tablename]
-        def purge(value,type): #### this should be fixed by overloading self.represent
-            v=self.represent(value,type)
-            if v[0]=="'": v=v[1:-1]
-            return v
-        values = dict((k,purge(fields[k],table[k].type)) for k in fields)
+        values = dict((k.name,self.represent(v,k.type)) for k,v in fields)
         values['_id'] = str(id)
         ctable.save(values)
         return id
@@ -2766,10 +2758,11 @@ class CouchDBAdapter(BaseAdapter):
         id = query.second
         tablename = query.first.tablename
         ctable = self.connection[tablename]
+        fieldnames = [f.name for f in (fields or self.db[tablename]) if not f.type=='id']
         try:
             cols = ctable[str(id)]
-            row = [int(cols['_id'])]+[v for k,v in cols.items() if not k.startswith('_')]
-            colnames = ['%s.id' % tablename]+['%s.%s' % (tablename,k) for k in cols.keys() if not k.startswith('_')]
+            row = [int(cols['_id'])]+[cols.get(k,None) for k in fieldnames]
+            colnames = ['%s.id' % tablename]+['%s.%s' % (tablename,k) for k in fieldnames]
             return self.parse([row], colnames, False)
         except couchdb.http.ResourceNotFound:
             return self.parse([],[],False)
@@ -2791,14 +2784,10 @@ class CouchDBAdapter(BaseAdapter):
         id = query.second
         tablename = query.first.tablename
         ctable = self.connection[tablename]
-        def purge(value,type): #### this should be fixed by overloading self.represent
-            v=self.represent(value,type)
-            if v[0]=="'": v=v[1:-1]
-            return v
         try:
             doc = ctable[str(id)]
-            for key,value in fields:
-                doc[key.name] = purge(value,self.db[tablename][key.name].type)
+            for key,value in fields:                
+                doc[key.name] = self.represent(value,self.db[tablename][key.name].type)
             ctable.save(doc)
             return 1
         except couchdb.http.ResourceNotFound:
@@ -3612,10 +3601,14 @@ class Table(dict):
         return self._db._adapter.drop(self,mode)
 
     def _insert(self, **fields):
-        new_fields = []
         for fieldname in fields:
             if not fieldname in self.fields:
                 raise SyntaxError, 'Field %s does not belong to the table' % fieldname
+        return self._db._adapter._insert(self,new_fields)
+
+
+    def insert(self, **fields):
+        new_fields = []
         for field in self:
             if field.name in fields:
                 new_fields.append((field,fields[field.name]))
@@ -3625,11 +3618,7 @@ class Table(dict):
                 new_fields.append((field,field.compute(Row(fields))))
             elif field.required:
                 raise SyntaxError,'Table: missing required field: %s'%field
-        return self._db._adapter._insert(self,new_fields)
-
-
-    def insert(self, **fields):
-        return self._db._adapter.insert(self, fields)
+        return self._db._adapter.insert(self, new_fields)
 
     def _truncate(self, mode = None):
         return self._db._adapter._truncate(self, mode)
