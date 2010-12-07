@@ -2452,7 +2452,6 @@ class GAENoSQLAdapter(BaseAdapter):
         if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
             return None
         if obj != None:
-            logger.info('%s is %s' % (obj, fieldtype))
             if fieldtype in ('integer','id'):
                 obj = long(obj)
             elif fieldtype == 'double':
@@ -2510,7 +2509,6 @@ class GAENoSQLAdapter(BaseAdapter):
         tableobj = self.db[tablename]._tableobj
         items = tableobj.all()
         filters = self.expand(query)
-        logger.info('filters = %s' % repr(filters))
         for filter in filters:
             if filter.name=='__key__' and filter.op=='>' and filter.value==0:
                 continue
