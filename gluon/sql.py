@@ -3363,7 +3363,7 @@ class Table(dict):
             self[field.name] = field
             if field.type == 'id':
                 self['id'] = field
-            field.tablename = tablename
+            field.tablename = field._tablename = tablename
             field.table = self
             field.db = self._db
             if field.requires == DEFAULT:

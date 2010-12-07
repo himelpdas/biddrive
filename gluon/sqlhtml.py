@@ -59,7 +59,7 @@ class FormWidget(object):
         :param attributes: any other supplied attributes
         """
         attr = dict(
-            _id = '%s_%s' % (field.tablename, field.name),
+            _id = '%s_%s' % (field._tablename, field.name),
             _class = widget_class.match(str(field.type)).group(),
             _name = field.name,
             requires = field.requires,
@@ -213,7 +213,7 @@ class OptionsWidget(FormWidget):
 class ListWidget(StringWidget):
     @staticmethod
     def widget(field,value,**attributes):
-        _id = '%s_%s' % (field.tablename, field.name)
+        _id = '%s_%s' % (field._tablename, field.name)
         _name = field.name
         if field.type=='list:integer': _class = 'integer'
         else: _class = 'string'
@@ -970,7 +970,7 @@ class SQLFORM(FORM):
             record_id = record_id[0]
 
         if formname:
-            formname = formname % dict(tablename = self.table.tablename,
+            formname = formname % dict(tablename = self.table._tablename,
                                        record_id = formname_id)
 
         # ## THIS IS FOR UNIQUE RECORDS, read IS_NOT_IN_DB
