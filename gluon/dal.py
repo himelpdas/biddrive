@@ -355,11 +355,11 @@ class BaseAdapter(ConnectionPool):
         self.folder = folder
         self.db_codec = db_codec
 
-    def sequence_name(self,table):
-        return '%s_sequence' % table
+    def sequence_name(self,tablename):
+        return '%s_sequence' % tablename
 
-    def trigger_name(self,table):
-        return '%s_sequence' % table
+    def trigger_name(self,tablename):
+        return '%s_sequence' % tablename
 
 
     def create_table(self, table, migrate=True, fake_migrate=False, polymodel=None):
@@ -1561,11 +1561,11 @@ class OracleAdapter(BaseAdapter):
         'list:reference': 'CLOB',
         }
 
-    def sequence_name(self,table):
-        return '%s_sequence' % table
+    def sequence_name(self,tablename):
+        return '%s_sequence' % tablename
 
-    def trigger_name(self,table):
-        return table._trigger_name or '%s_trigger' % table
+    def trigger_name(self,tablename):
+        return '%s_trigger' % tablename
 
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
@@ -1646,7 +1646,7 @@ class OracleAdapter(BaseAdapter):
     def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
         sequence_name = table._sequence_name
-        trigger_name = self.trigger_name(table)
+        trigger_name = table._trigger_name
         self.execute(query)
         self.execute('CREATE SEQUENCE %s START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % sequence_name)
         self.execute('CREATE OR REPLACE TRIGGER %s BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s.nextval INTO :NEW.id FROM DUAL; END;\n' % (trigger_name, tablename, sequence_name))
@@ -1835,11 +1835,11 @@ class FireBirdAdapter(BaseAdapter):
         'list:reference': 'BLOB SUB_TYPE 1',
         }
 
-    def sequence_name(self,table):
-        return 'genid_%s' % table
+    def sequence_name(self,tablename):
+        return 'genid_%s' % tablename
 
-    def trigger_name(self,table):
-        return table._trigger_name or 'trg_id_%s' % table
+    def trigger_name(self,tablename):
+        return 'trg_id_%s' % tablename
 
     def RANDOM(self):
         return 'RAND()'
@@ -1861,7 +1861,7 @@ class FireBirdAdapter(BaseAdapter):
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
     def _truncate(self,table,mode = ''):
-        return ['DELETE FROM %s;' % tablename,
+        return ['DELETE FROM %s;' % table._tablename,
                 'SET GENERATOR %s TO 0;' % table._sequence_name]
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
@@ -1902,15 +1902,15 @@ class FireBirdAdapter(BaseAdapter):
 
     def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
-        sequence_name = self.sequence_name(table)
-        trigger_name = self.trigger_name(table)
+        sequence_name = table._sequence_name
+        trigger_name = table._trigger_name
         self.execute(query)
         self.execute('create generator %s;' % sequence_name)
         self.execute('set generator %s to 0;' % sequence_name)
         self.execute('create trigger %s for %s active before insert position 0 as\nbegin\nif(new.id is null) then\nbegin\nnew.id = gen_id(%s, 1);\nend\nend;' % (trigger_name, tablename, sequence_name))
 
     def lastrowid(self,table):
-        sequence_name = self.sequence_name(table)
+        sequence_name = table._sequence_name
         self.execute('SELECT gen_id(%s, 0) FROM rdb$database' % sequence_name)
         return int(self.db._adapter.cursor.fetchone()[0])
 
@@ -2663,8 +2663,6 @@ class GAENoSQLAdapter(NoSQLAdapter):
     def LIKE(self,first,second): raise SyntaxError, "Not supported"
     def drop(self,table,mode):  raise SyntaxError, "Not supported"
     def alias(self,table,alias): raise SyntaxError, "Not supported"
-    def sequence_name(self,table): raise SyntaxError, "Not supported"
-    def trigger_name(self,table): raise SyntaxError, "Not supported"
     def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
     def rollback(self): raise SyntaxError, "Not supported"
     def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
@@ -3394,8 +3392,10 @@ class Table(dict):
         :raises SyntaxError: when a supplied field is of incorrect type.
         """
         self._tablename = tablename
-        self._trigger_name = args.get('trigger_name', None)
-        self._sequence_name = args.get('sequence_name', None)
+        self._sequence_name = args.get('sequence_name',None) or \
+            db._adapter.sequence_name(tablename)
+        self._trigger_name = args.get('trigger_name',None) or \
+            db._adapter.trigger_name(tablename)
 
         primarykey = args.get('primarykey', None)
         if primarykey and not isinstance(primarykey,list):
