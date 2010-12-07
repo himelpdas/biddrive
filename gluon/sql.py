@@ -3604,10 +3604,13 @@ class Table(dict):
         for fieldname in fields:
             if not fieldname in self.fields:
                 raise SyntaxError, 'Field %s does not belong to the table' % fieldname
+        new_fields = [(field,fields[field.name]) for field in self]
         return self._db._adapter._insert(self,new_fields)
 
-
     def insert(self, **fields):
+        for fieldname in fields:
+            if not fieldname in self.fields:
+                raise SyntaxError, 'Field %s does not belong to the table' % fieldname
         new_fields = []
         for field in self:
             if field.name in fields:
