@@ -28,7 +28,7 @@ TODO:
 
 Example of usage:
 
->>> from dal import DAL, Field
+>>> # from dal import DAL, Field
 
 ### create DAL connection (and create DB if not exists)
 >>> db=DAL('sqlite://storage.sqlite',folder=None)
@@ -660,7 +660,7 @@ class BaseAdapter(ConnectionPool):
         return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
 
     def insert(self,table,fields):
-        query = table._insert(**fields)
+        query = self._insert(table,fields)
         try:
             self.execute(query)
         except Exception, e:
