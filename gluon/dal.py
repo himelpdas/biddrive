@@ -2257,6 +2257,7 @@ class IngresUnicodeAdapter(IngresAdapter):
         }
 
 class NoSQLAdapter(BaseAdapter):
+
     def represent(self, obj, fieldtype):
         if type(obj) in (types.LambdaType, types.FunctionType):
             obj = obj()
@@ -2327,6 +2328,70 @@ class NoSQLAdapter(BaseAdapter):
                 obj = unicode(obj)
         return obj
 
+    def _insert(self,table,fields):
+        return 'insert %s in %s' % (fields, table)
+
+    def _count(self,query):
+        return 'count %s' % repr(query)
+
+    def _select(self,query,fields,attributes):
+        return 'select %s where %s' % (repr(fields), repr(query))
+
+    def _delete(self,tablename, query):
+        return 'delete %s where %s' % (repr(tablename),repr(query))
+
+    def _update(self,tablename,query,fields):
+        return 'update %s (%s) where %s' % (repr(tablename),
+                                            repr(fields),repr(query))
+
+    def commit(self):
+        """
+        remember: no transactions on many NoSQL
+        """
+        pass
+
+    def rollback(self):
+        """
+        remember: no transactions on many NoSQL
+        """
+        pass
+
+    # these functions should never be called!
+    def OR(self,first,second): raise SyntaxError, "Not supported"
+    def AND(self,first,second): raise SyntaxError, "Not supported"
+    def AS(self,first,second): raise SyntaxError, "Not supported"
+    def ON(self,first,second): raise SyntaxError, "Not supported"
+    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
+    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
+    def ADD(self,first,second): raise SyntaxError, "Not supported"
+    def SUB(self,first,second): raise SyntaxError, "Not supported"
+    def MUL(self,first,second): raise SyntaxError, "Not supported"
+    def DIV(self,first,second): raise SyntaxError, "Not supported"
+    def LOWER(self,first): raise SyntaxError, "Not supported"
+    def UPPER(self,first): raise SyntaxError, "Not supported"
+    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
+    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
+    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
+    def RANDOM(self): raise SyntaxError, "Not supported"
+    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
+    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
+    def LIKE(self,first,second): raise SyntaxError, "Not supported"
+    def drop(self,table,mode):  raise SyntaxError, "Not supported"
+    def alias(self,table,alias): raise SyntaxError, "Not supported"
+    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
+    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
+    def prepare(self,key): raise SyntaxError, "Not supported"
+    def commit_prepared(self,key): raise SyntaxError, "Not supported"
+    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
+    def concat_add(self,table): raise SyntaxError, "Not supported"
+    def constraint_name(self, table, fieldname): raise SyntaxError, "Not supported"
+    def create_sequence_and_triggers(self, query, table, **args): pass
+    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
+    def execute(self,*a,**b): raise SyntaxError, "Not supported"
+    def represent_exceptions(self, obj, fieldtype): raise SyntaxError, "Not supported"
+    def lastrowid(self,table): raise SyntaxError, "Not supported"
+    def integrity_error_class(self): raise SyntaxError, "Not supported"
+    def rowslice(self,rows,minimum=0,maximum=None): raise SyntaxError, "Not supported"
 
 
 try:
@@ -2500,23 +2565,8 @@ class GAENoSQLAdapter(NoSQLAdapter):
         first.op = nop
         return self.expand(first)
 
-    def _count(self,query):
-        return 'count %s' % repr(query)
-
-    def _select(self,query,fields,attributes):
-        return 'select %s where %s' % (repr(fields), repr(query))
-
-    def _delete(self,tablename, query):
-        return 'delete %s where %s' % (repr(tablename),repr(query))
-
-    def _update(self,tablename,query,fields):
-        return 'update %s (%s) where %s' % (repr(tablename),repr(fields),repr(query))
-
     def truncate(self,table,mode):
         self.db(table.id > 0).delete()
-
-    def _insert(self,table,fields):
-        return 'insert %s in %s' % (fields, table)
 
     def select_raw(self,query,fields=[],attributes={}):
         tablename = self.get_table(query)
@@ -2636,49 +2686,6 @@ class GAENoSQLAdapter(NoSQLAdapter):
         gae.put(parsed_items)
         return True
 
-    def commit(self):
-        """
-        remember: no transactions on GAE
-        """
-        pass
-
-    # these functions should never be called!
-    def AS(self,first,second): raise SyntaxError, "Not supported"
-    def ON(self,first,second): raise SyntaxError, "Not supported"
-    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ADD(self,first,second): raise SyntaxError, "Not supported"
-    def SUB(self,first,second): raise SyntaxError, "Not supported"
-    def MUL(self,first,second): raise SyntaxError, "Not supported"
-    def DIV(self,first,second): raise SyntaxError, "Not supported"
-    def LOWER(self,first): raise SyntaxError, "Not supported"
-    def UPPER(self,first): raise SyntaxError, "Not supported"
-    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
-    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
-    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
-    def RANDOM(self): raise SyntaxError, "Not supported"
-    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
-    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
-    def OR(self,first,second): raise SyntaxError, "Not supported"
-    def LIKE(self,first,second): raise SyntaxError, "Not supported"
-    def drop(self,table,mode):  raise SyntaxError, "Not supported"
-    def alias(self,table,alias): raise SyntaxError, "Not supported"
-    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
-    def rollback(self): raise SyntaxError, "Not supported"
-    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
-    def prepare(self,key): raise SyntaxError, "Not supported"
-    def commit_prepared(self,key): raise SyntaxError, "Not supported"
-    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
-    def concat_add(self,table): raise SyntaxError, "Not supported"
-    def constraint_name(self, table, fieldname): raise SyntaxError, "Not supported"
-    def create_sequence_and_triggers(self, query, table, **args): pass
-    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
-    def execute(self,*a,**b): raise SyntaxError, "Not supported"
-    def represent_exceptions(self, obj, fieldtype): raise SyntaxError, "Not supported"
-    def lastrowid(self,table): raise SyntaxError, "Not supported"
-    def integrity_error_class(self): raise SyntaxError, "Not supported"
-    def rowslice(self,rows,minimum=0,maximum=None): raise SyntaxError, "Not supported"
-
 
 try:
     import couchdb
@@ -2743,6 +2750,7 @@ class CouchDBAdapter(NoSQLAdapter):
                 self.connection.create(table._tablename)
             except:
                 pass
+
     def insert(self,table,fields):
         id = uuid2int(web2py_uuid())
         ctable = self.connection[table._tablename]
@@ -2750,6 +2758,7 @@ class CouchDBAdapter(NoSQLAdapter):
         values['_id'] = str(id)
         ctable.save(values)
         return id
+
     def select(self,query,fields,attributes):
         if not (isinstance(query,Query) and query.first.type=='id' and query.op==self.EQ):
             raise SyntaxError, "Not Supported"
@@ -2764,6 +2773,7 @@ class CouchDBAdapter(NoSQLAdapter):
             return self.parse([row], colnames, False)
         except couchdb.http.ResourceNotFound:
             return self.parse([],[],False)
+
     def delete(self,tablename,query):
         if not (isinstance(query,Query) and query.first.type=='id' and query.op==self.EQ):
             raise SyntaxError, "Not Supported"
@@ -2776,6 +2786,7 @@ class CouchDBAdapter(NoSQLAdapter):
             return 1
         except couchdb.http.ResourceNotFound:
             return 0
+
     def update(self,tablename,query,fields):
         if not (isinstance(query,Query) and query.first.type=='id' and query.op==self.EQ):
             raise SyntaxError, "Not Supported"
@@ -2794,6 +2805,92 @@ class CouchDBAdapter(NoSQLAdapter):
         raise SyntaxError, "Not Supported"
 
 
+def cleanup(text):
+    """
+    validates that the given text is clean: only contains [0-9a-zA-Z_]
+    """
+
+    if re.compile('[^0-9a-zA-Z_]').findall(text):
+        raise SyntaxError, \
+            'only [0-9a-zA-Z_] allowed in table and field names, received %s' \
+            % text
+    return text
+
+
+try:
+    import pymongo
+    drivers.append('mongoDB')
+except:
+    logger.debug('no mongoDB driver')
+
+class MongoDBAdapter(NoSQLAdapter):
+    uploads_in_blob = True
+    types = {
+                'boolean': bool,
+                'string': str,
+                'text': str,
+                'password': str,
+                'blob': str,
+                'upload': str,
+                'integer': long,
+                'double': float,
+                'date': datetime.date,
+                'time': datetime.time,
+                'datetime': datetime.datetime,
+                'id': long,
+                'reference': long,
+                'list:string': list,
+                'list:integer': list,
+                'list:reference': list,
+        }
+
+    def __init__(self,db,uri='mongodb://127.0.0.1:5984/db',
+                 pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
+        self.db=db
+        self.uri = uri
+        self.dbname = 'mongodb'
+        self.folder = folder
+        db['_lastsql'] = ''
+        self.db_codec = 'UTF-8'
+        self.pool_size = pool_size
+        
+        m = re.compile('^(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(self._uri[10:])
+        if not m:
+            raise SyntaxError, "Invalid URI string in DAL: %s" % self._uri
+        host = m.group('host')
+        if not host:
+            raise SyntaxError, 'mongodb: host name required'
+        dbname = m.group('db')
+        if not dbname:
+            raise SyntaxError, 'mongodb: db name required'
+        port = m.group('port') or 27017        
+        self.pool_connection(lambda host=host,port=port,dbname=dbname: pymongo.Connection(host=host,port=port)[dbname])
+
+    def insert(self,table,fields):
+        ctable = self.connection[table._tablename]
+        values = dict((k.name,self.represent(v,k.type)) for k,v in fields)
+        ctable.insert(values)
+        return uuid2int(id)
+
+
+    def count(self,query):
+        raise RuntimeError, "Not implemented"
+
+    def select(self,query,fields,attributes):
+        raise RuntimeError, "Not implemented"
+
+    def delete(self,tablename, query):
+        raise RuntimeError, "Not implemented"
+
+    def update(self,tablename,query,fields):
+        raise RuntimeError, "Not implemented"
+        
+
+########################################################################
+# end of adapters
+########################################################################
+
 ADAPTERS = {
     'sqlite': SQLiteAdapter,
     'mysql': MySQLAdapter,
@@ -2811,6 +2908,7 @@ ADAPTERS = {
     'jdbc:postgres': JDBCPostgreSQLAdapter,
     'gae': GAENoSQLAdapter,
     'couchdb': CouchDBAdapter,
+    'mongodb': CouchDBAdapter,
 }
 
 
@@ -2908,17 +3006,6 @@ def bar_decode_integer(value):
 
 def bar_decode_string(value):
     return [x.replace('||', '|') for x in string_unpack.split(value[1:-1]) if x.strip()]
-
-def cleanup(text):
-    """
-    validates that the given text is clean: only contains [0-9a-zA-Z_]
-    """
-
-    if re.compile('[^0-9a-zA-Z_]').findall(text):
-        raise SyntaxError, \
-            'only [0-9a-zA-Z_] allowed in table and field names, received %s' \
-            % text
-    return text
 
 
 class Row(dict):
