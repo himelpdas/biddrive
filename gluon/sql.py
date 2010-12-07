@@ -1497,7 +1497,7 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute("SET standard_conforming_strings=on;")
 
     def lastrowid(self,table):
-        self.execute("select currval('%s')" % table._sequence_name)
+        self.execute("select currval('%s')" % self.sequence_name(table))
         return int(self.cursor.fetchone()[0])
 
 
@@ -1857,7 +1857,7 @@ class FireBirdAdapter(BaseAdapter):
     def _truncate(self,table,mode = ''):
         tablename = table._tablename
         return ['DELETE FROM %s;' % tablename,
-                'SET GENERATOR %s TO 0;' % table._sequence_name]
+                'SET GENERATOR %s TO 0;' % self.sequence_name(table)]
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
