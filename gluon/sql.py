@@ -303,7 +303,6 @@ class ConnectionPool(object):
         if not hasattr(thread,'instances'):
             thread.instances = []
         thread.instances.append(self)
-        self.cursor = self.connection.cursor()
 
 
 ###################################################################################
@@ -1282,6 +1281,7 @@ class SQLiteAdapter(BaseAdapter):
             if dbpath[0] != '/':
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         self.pool_connection(lambda dbpath=dbpath: sqlite3.Connection(dbpath, check_same_thread=False))
+        self.cursor = self.connection.cursor()
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
     def _truncate(self,table,mode = ''):
@@ -1311,6 +1311,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
             if dbpath[0] != '/':
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         self.pool_connection(lambda dbpath=dbpath: zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath)))
+        self.cursor = self.connection.cursor()
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
     def execute(self,a):
@@ -1406,6 +1407,7 @@ class MySQLAdapter(BaseAdapter):
                                                                  port=port,
                                                                  charset=charset,
                                                                  ))
+        self.cursor = self.connection.cursor()
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
 
@@ -1438,7 +1440,7 @@ class PostgreSQLAdapter(BaseAdapter):
         }
 
     def sequence_name(self,table):
-        return table._sequence_name or '%s_id_Seq' % table
+        return '%s_id_Seq' % table
 
     def RANDOM(self):
         return 'RANDOM()'
@@ -1492,12 +1494,13 @@ class PostgreSQLAdapter(BaseAdapter):
 
         self.pool_connection(lambda msg=msg: psycopg2.connect(msg))
         self.connection.set_client_encoding('UTF8')
+        self.cursor = self.connection.cursor()
         self.execute('BEGIN;')
         self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
         self.execute("SET standard_conforming_strings=on;")
 
     def lastrowid(self,table):
-        self.execute("select currval('%s')" % self.sequence_name(table))
+        self.execute("select currval('%s')" % table._sequence_name)
         return int(self.cursor.fetchone()[0])
 
 
@@ -1531,6 +1534,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
         msg = ('jdbc:postgresql://%s:%s/%s' % (host, port, db), user, password)
         self.pool_connection(lambda msg=msg: zxJDBC.connect(*msg))
         self.connection.set_client_encoding('UTF8')
+        self.cursor = self.connection.cursor()
         self.execute('BEGIN;')
         self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
 
@@ -1558,7 +1562,7 @@ class OracleAdapter(BaseAdapter):
         }
 
     def sequence_name(self,table):
-        return table._sequence_name or '%s_sequence' % table
+        return '%s_sequence' % table
 
     def trigger_name(self,table):
         return table._trigger_name or '%s_trigger' % table
@@ -1573,7 +1577,7 @@ class OracleAdapter(BaseAdapter):
         return 'DEFAULT %s NOT NULL' % self.represent(default,field_type)
 
     def _drop(self,table,mode):
-        sequence_name = self.sequence_name(table)
+        sequence_name = table._sequence_name
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP SEQUENCE %s;' % sequence_name]
 
     def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
@@ -1622,6 +1626,7 @@ class OracleAdapter(BaseAdapter):
         self.find_or_make_work_folder()
         uri = uri.split('://')[1]
         self.pool_connection(lambda uri=uri: cx_Oracle.connect(uri,threaded=True))
+        self.cursor = self.connection.cursor()
         self.execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
         self.execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
     oracle_fix = re.compile("[^']*('[^']*'[^']*)*\:(?P<clob>CLOB\('([^']+|'')*'\))")
@@ -1640,14 +1645,14 @@ class OracleAdapter(BaseAdapter):
 
     def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
-        sequence_name = self.sequence_name(table)
+        sequence_name = table._sequence_name
         trigger_name = self.trigger_name(table)
         self.execute(query)
         self.execute('CREATE SEQUENCE %s START WITH 1 INCREMENT BY 1 NOMAXVALUE;' % sequence_name)
         self.execute('CREATE OR REPLACE TRIGGER %s BEFORE INSERT ON %s FOR EACH ROW BEGIN SELECT %s.nextval INTO :NEW.id FROM DUAL; END;\n' % (trigger_name, tablename, sequence_name))
 
     def lastrowid(self,table):
-        sequence_name = self.sequence_name(table)
+        sequence_name = table._sequence_name
         self.execute('SELECT %s.currval FROM dual;' % sequence_name)
         return int(self.cursor.fetchone()[0])
 
@@ -1757,6 +1762,7 @@ class MSSQLAdapter(BaseAdapter):
             cnxn = 'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
                 % (host, port, db, user, password, urlargs)
         self.pool_connection(lambda cnxn=cnxn : pyodbc.connect(cnxn))
+        self.cursor = self.connection.cursor()
 
     def lastrowid(self,table):
         #self.execute('SELECT @@IDENTITY;')
@@ -1830,7 +1836,7 @@ class FireBirdAdapter(BaseAdapter):
         }
 
     def sequence_name(self,table):
-        return table._sequence_name or 'genid_%s' % table
+        return 'genid_%s' % table
 
     def trigger_name(self,table):
         return table._trigger_name or 'trg_id_%s' % table
@@ -1845,7 +1851,7 @@ class FireBirdAdapter(BaseAdapter):
         return 'SUBSTRING(%s from %s for %s)' % (self.expand(field), parameters[0], parameters[1])
 
     def _drop(self,table,mode):
-        sequence_name = self.sequence_name(table)
+        sequence_name = table._sequence_name
         return ['DROP TABLE %s %s;' % (table, mode), 'DROP GENERATOR %s;' % sequence_name]
 
     def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
@@ -1855,9 +1861,8 @@ class FireBirdAdapter(BaseAdapter):
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
     def _truncate(self,table,mode = ''):
-        tablename = table._tablename
         return ['DELETE FROM %s;' % tablename,
-                'SET GENERATOR %s TO 0;' % self.sequence_name(table)]
+                'SET GENERATOR %s TO 0;' % table._sequence_name]
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
@@ -1893,6 +1898,7 @@ class FireBirdAdapter(BaseAdapter):
                                                      user=user,
                                                      password=password,
                                                      charset=charset))
+        self.cursor = self.connection.cursor()
 
     def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
@@ -1947,6 +1953,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
                                                      user=user,
                                                      password=password,
                                                      charset=charset))
+        self.cursor = self.connection.cursor()
 
 
 class InformixAdapter(BaseAdapter):
@@ -2040,6 +2047,7 @@ class InformixAdapter(BaseAdapter):
                                  informixdb.connect(dsn, user=user,
                                                     password=password,
                                                     autocommit=True))
+        self.cursor = self.connection.cursor()
 
     def execute(self,command):
         if command[-1:]==';':
@@ -2110,6 +2118,7 @@ class DB2Adapter(BaseAdapter):
         self.find_or_make_work_folder()
         cnxn = uri.split(':', 1)[1]
         self.pool_connection(lambda cnxn=cnxn: pyodbc.connect(cnxn))
+        self.cursor = self.connection.cursor()
 
     def execute(self,command):
         if command[-1:]==';':
@@ -2196,6 +2205,7 @@ class IngresAdapter(BaseAdapter):
                                                    vnode=vnode,
                                                    servertype=servertype,
                                                    trace=trace))
+        self.cursor = self.connection.cursor()
 
     def create_sequence_and_triggers(self, query, table, **args):
         # post create table auto inc code (if needed)
@@ -2299,6 +2309,7 @@ class GAENoSQLAdapter(BaseAdapter):
         self.folder = folder
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
+        self.pool_size = 0
 
     def create_table(self,table,migrate=True,fake_migrate=False, polymodel=None):
         myfields = {}
@@ -2675,6 +2686,127 @@ class GAENoSQLAdapter(BaseAdapter):
     def rowslice(self,rows,minimum=0,maximum=None): raise SyntaxError, "Not supported"
 
 
+try:
+    import couchdb
+    drivers.append('CouchDB')
+except ImportError:
+    logger.debug('no couchdb driver')
+
+def uuid2int(uuid):
+     n=0
+     for c in uuid: n=n*16+'0123456789abcdef'.find(c)
+     return n
+
+def int2uuid(n):
+     uuid=''
+     while(n):
+         n,i = divmod(n,16)
+         uuid = '0123456789abcdef'[i]+uuid
+     return uuid
+    
+class CouchDBAdapter(BaseAdapter):
+    uploads_in_blob = True
+    types = {
+                'boolean': bool,
+                'string': str,
+                'text': str,
+                'password': str,
+                'blob': str,
+                'upload': str,
+                'integer': long,
+                'double': float,
+                'date': datetime.date,
+                'time': datetime.time,
+                'datetime': datetime.datetime,
+                'id': long,
+                'reference': long,
+                'list:string': list,
+                'list:integer': list,
+                'list:reference': list,
+        }
+
+    def file_exists(self, filename): pass
+    def file_open(self, filename, mode='rb', lock=True): pass
+    def file_close(self, fileobj, unlock=True): pass
+
+    def __init__(self,db,uri='couchdb://127.0.0.1:5984',
+                 pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x):
+        self.db=db
+        self.uri = uri
+        self.dbname = 'couchdb'
+        self.folder = folder
+        db['_lastsql'] = ''
+        self.db_codec = 'UTF-8'
+        self.pool_size = pool_size
+
+        url='http://'+uri[10:]
+        self.pool_connection(lambda url=url: couchdb.Server(url))
+
+    def create_table(self, table, migrate=True, fake_migrate=False, polymodel=None):
+        if migrate:
+            try:
+                self.connection.create(table._tablename)
+            except:
+                pass
+    def insert(self,table,fields):
+        id = uuid2int(web2py_uuid())
+        ctable = self.connection[table._tablename]
+        def purge(value,type): #### this should be fixed by overloading self.represent
+            v=self.represent(value,type)
+            if v[0]=="'": v=v[1:-1]
+            return v
+        values = dict((k,purge(fields[k],table[k].type)) for k in fields)
+        values['_id'] = str(id)
+        ctable.save(values)
+        return id
+    def select(self,query,fields,attributes):
+        if not (isinstance(query,Query) and query.first.type=='id' and query.op==self.EQ):
+            raise SyntaxError, "Not Supported"
+        id = query.second
+        tablename = query.first.tablename
+        ctable = self.connection[tablename]
+        try:
+            cols = ctable[str(id)]
+            row = [int(cols['_id'])]+[v for k,v in cols.items() if not k.startswith('_')]
+            colnames = ['%s.id' % tablename]+['%s.%s' % (tablename,k) for k in cols.keys() if not k.startswith('_')]
+            return self.parse([row], colnames, False)
+        except couchdb.http.ResourceNotFound:
+            return self.parse([],[],False)
+    def delete(self,tablename,query):
+        if not (isinstance(query,Query) and query.first.type=='id' and query.op==self.EQ):
+            raise SyntaxError, "Not Supported"
+        id = query.second
+        tablename = query.first.tablename
+        assert(tablename == query.first.tablename)
+        ctable = self.connection[tablename]
+        try:
+            del ctable[str(id)]
+            return 1
+        except couchdb.http.ResourceNotFound:
+            return 0
+    def update(self,tablename,query,fields):
+        if not (isinstance(query,Query) and query.first.type=='id' and query.op==self.EQ):
+            raise SyntaxError, "Not Supported"
+        id = query.second
+        tablename = query.first.tablename
+        ctable = self.connection[tablename]
+        def purge(value,type): #### this should be fixed by overloading self.represent
+            v=self.represent(value,type)
+            if v[0]=="'": v=v[1:-1]
+            return v
+        try:
+            doc = ctable[str(id)]
+            for key,value in fields:
+                doc[key.name] = purge(value,self.db[tablename][key.name].type)
+            ctable.save(doc)
+            return 1
+        except couchdb.http.ResourceNotFound:
+            return 0
+    def count(self,query):
+        raise SyntaxError, "Not Supported"
+
+
 ADAPTERS = {
     'sqlite': SQLiteAdapter,
     'mysql': MySQLAdapter,
@@ -2691,6 +2823,7 @@ ADAPTERS = {
     'jdbc:sqlite': JDBCSQLiteAdapter,
     'jdbc:postgres': JDBCPostgreSQLAdapter,
     'gae': GAENoSQLAdapter,
+    'couchdb': CouchDBAdapter,
 }
 
 
@@ -2799,47 +2932,6 @@ def cleanup(text):
             'only [0-9a-zA-Z_] allowed in table and field names, received %s' \
             % text
     return text
-
-
-def autofields(db, text):
-    raise SyntaxError, "work in progress"
-    m = re.compile('(?P<i>\w+)')
-    (tablename, fields) = text.lower().split(':', 1)
-    tablename = tablename.replace(' ', '_')
-    newfields = []
-    for field in fields.split(','):
-        if field.find(' by ') >= 0:
-            (items, keys) = field.split(' by ')
-        else:
-            (items, keys) = (field, '%(id)s')
-        items = m.findall(items)
-        if not items:
-            break
-        keys = m.sub('%(\g<i>)s', keys)
-        (requires, notnull, unique) = (None, False, False)
-        if items[-1] in ['notnull']:
-            (notnull, items) = (True, items[:-1])
-        if items[-1] in ['unique']:
-            (unique, items) = (True, items[:-1])
-        if items[-1] in ['text', 'date', 'datetime', 'time', 'blob', 'upload', 'password',
-                         'integer', 'double', 'boolean', 'string']:
-            (items, t) = (items[:-1], items[-1])
-        elif items[-1] in db.tables:
-            t = 'reference %s' % items[-1]
-            requires = validators.IS_IN_DB(db, '%s.%s' % (items[-1], db.tables[items[-1]].id.name), keys)
-        else:
-            t = 'string'
-        name = '_'.join(items)
-        if unique:
-            if requires:
-                raise SyntaxError, "Sorry not supported"
-            requires = validators.IS_NOT_IN_DB(db, '%s.%s' % (tablename, name))
-        if requires and not notnull:
-            requires = validators.IS_EMPTY_OR(requires)
-        label = ' '.join([i.capitalize() for i in items])
-        newfields.append(db.Field(name, t, label=label, requires=requires,
-                                  notnull=notnull, unique=unique))
-    return tablename, newfields
 
 
 class Row(dict):
