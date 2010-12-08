@@ -4297,6 +4297,7 @@ class Set(object):
 
     def __init__(self, db, query):
         self.db = db
+        self._db = db # for backward compatibility
         self.query = query
 
     def __call__(self, query):
