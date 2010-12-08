@@ -2663,7 +2663,7 @@ class GAENoSQLAdapter(NoSQLAdapter):
 
     def insert(self,table,fields):
         # table._db['_lastsql'] = self._insert(table,fields)
-        tmp = table._tableobj(**fields)
+        tmp = table._tableobj(**dict(fields))
         tmp.put()
         table['_last_reference'] = tmp
         rid = Reference(tmp.key().id())
