@@ -186,10 +186,10 @@ except ImportError:
         logger.debug('no sqlite3 or pysqlite2.dbapi2 driver')
 
 try:
-    import MySQLdb
-    drivers.append('MySQL')
+    import contrib.pymysql as pymysql
+    drivers.append('pymysql')
 except ImportError:
-    logger.debug('no MySQLdb driver')
+    logger.debug('no pymysql driver')
 
 try:
     import psycopg2
@@ -1400,13 +1400,13 @@ class MySQLAdapter(BaseAdapter):
                              password=credential_decoder(password),
                              host=host,
                              port=port,
-                             charset=charset: MySQLdb.Connection(db=db,
-                                                                 user=user,
-                                                                 passwd=password,
-                                                                 host=host,
-                                                                 port=port,
-                                                                 charset=charset,
-                                                                 ))
+                             charset=charset: pymysqldb.connect(db=db,
+                                                                user=user,
+                                                                passwd=password,
+                                                                host=host,
+                                                                port=port,
+                                                                charset=charset,
+                                                                ))
         self.cursor = self.connection.cursor()
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
