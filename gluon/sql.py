@@ -31,7 +31,7 @@ Example of usage:
 >>> # from dal import DAL, Field
 
 ### create DAL connection (and create DB if not exists)
->>> db=DAL('sqlite://storage.sqlite',folder=None)
+>>> db=DAL(('mysql://a:b@locahost/x','sqlite://storage.sqlite'),folder=None)
 
 ### define a table 'person' (create/aster as necessary)
 >>> person = db.define_table('person',Field('name','string'))
@@ -463,22 +463,22 @@ class BaseAdapter(ConnectionPool):
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
                 (tablename, fields, other)
 
-        if table._db._uri[:10] == 'sqlite:///':
+        if self.uri[:10] == 'sqlite:///':
             path_encoding = sys.getfilesystemencoding() or \
                 locale.getdefaultlocale()[1]
-            dbpath = table._db._uri[9:table._db._uri.rfind('/')]\
+            dbpath = self.uri[9:self.uri.rfind('/')]\
                 .decode('utf8').encode(path_encoding)
         else:
             dbpath = self.folder
         if not migrate:
             return query
-        elif table._db._uri.startswith('sqlite:memory:'):
+        elif self.uri.startswith('sqlite:memory:'):
             table._dbt = None
         elif isinstance(migrate, str):
             table._dbt = os.path.join(dbpath, migrate)
         else:
             table._dbt = os.path.join(dbpath, '%s_%s.table' \
-                     % (hashlib.md5(table._db._uri).hexdigest(), tablename))
+                     % (hashlib.md5(self.uri).hexdigest(), tablename))
         if table._dbt:
             table._loggername = os.path.join(dbpath, 'sql.log')
             logfile = self.file_open(table._loggername, 'a')
@@ -1187,17 +1187,17 @@ class BaseAdapter(ConnectionPool):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
                 elif field_type.startswith('list:integer'):
-                    if db._uri != 'gae':
+                    if self.uri != 'gae':
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif field_type.startswith('list:reference'):
-                    if db._uri != 'gae':
+                    if self.uri != 'gae':
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif field_type.startswith('list:string'):
-                    if db._uri != 'gae':
+                    if self.uri != 'gae':
                         colset[fieldname] = bar_decode_string(value)
                     else:
                         colset[fieldname] = value
@@ -3172,30 +3172,39 @@ class DAL(dict):
             credential_decoder = lambda cred: cred
         else:
             credential_decoder = lambda cred: urllib.unquote(cred)
-        self._uri = str(uri) # NOTE: assuming it is in utf8!!!
+        self._uri = uri
         self._pool_size = pool_size
         self._db_codec = db_codec
         self._lastsql = ''
         if uri:
-            self._dbname = uri.split(':')[0]
-            if is_jdbc and not self._uri.startswith('jdbc:'):
-                self._dbname = 'jdbc:'+self._dbname
-            connected = False
-            args = (self,uri,pool_size,folder,db_codec,credential_decoder)
+            uris = isinstance(uri,(list,tuple)) and uri or [uri]
             error = ''
+            connected = False
             for k in range(5):
-                try:
-                    self._adapter = ADAPTERS[self._dbname](*args)
-                    connected = True
+                for uri in uris:
+                    args = (self,uri,pool_size,folder,
+                            db_codec,credential_decoder)
+                    try:
+                        self._dbname = uri.split(':')[0]
+                        if is_jdbc and not self._uri.startswith('jdbc:'):
+                            self._dbname = 'jdbc:'+self._dbname
+                        if not self._dbname in ADAPTERS:
+                            raise SyntaxError, "Error in URI '%s' or database not supported" % uri
+                        self._adapter = ADAPTERS[self._dbname](*args)
+                        connected = True
+                        break
+                    except SyntaxError:
+                        raise
+                    except Exception, error:
+                        pass
+                if connected:
                     break
-                except SyntaxError:
-                    raise
-                except Exception, error:
+                else:
                     time.sleep(1)
             if not connected:
                 raise RuntimeError, "Failure to connect, tried 5 times:\n%s" % error
         else:
-            raise RuntimeError, "Adapter not supported"
+            self._adapter = BaseAdapter(*args)
         self.tables = SQLCallableList()
         self.check_reserved = check_reserved
         if self.check_reserved:
