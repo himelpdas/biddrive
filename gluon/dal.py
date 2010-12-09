@@ -3220,8 +3220,9 @@ class DAL(dict):
             if not connected:
                 raise RuntimeError, "Failure to connect, tried 5 times:\n%s" % error
         else:
-            args = (self,uri,pool_size,folder,db_codec,credential_decoder)
+            args = (self,'None',0,folder,db_codec)
             self._adapter = BaseAdapter(*args)
+            migrate = fake_migrate = False
         self.tables = SQLCallableList()
         self.check_reserved = check_reserved
         if self.check_reserved:
