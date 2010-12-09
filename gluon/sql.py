@@ -80,7 +80,7 @@ id string text boolean integer double decimal password upload blob time date dat
 
 Supported DAL URI strings:
 'sqlite://test.db'
-'sqlite:memory:'
+'sqlite:memory'
 'jdbc:sqlite://test.db'
 'mysql://root:none@localhost/test'
 'postgres://mdipierro:none@localhost/test'
@@ -166,6 +166,7 @@ thread = threading.local()
 # internal representation of tables with field
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
+regex_dbname = re.compile('^(\w+)(\:\w+)*')
 table_field = re.compile('[\w_]+\.[\w_]+')
 regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
@@ -314,6 +315,25 @@ class BaseAdapter(ConnectionPool):
     commit_on_alter_table = False
     support_distributed_transaction = False
     uploads_in_blob = False
+    types = {
+        'boolean': 'CHAR(1)',
+        'string': 'CHAR(%(length)s)',
+        'text': 'TEXT',
+        'password': 'CHAR(%(length)s)',
+        'blob': 'BLOB',
+        'upload': 'CHAR(%(length)s)',
+        'integer': 'INTEGER',
+        'double': 'DOUBLE',
+        'decimal': 'DOUBLE',
+        'date': 'DATE',
+        'time': 'TIME',
+        'datetime': 'TIMESTAMP',
+        'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
+        'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'TEXT',
+        'list:string': 'TEXT',
+        'list:reference': 'TEXT',
+        }
 
     def file_exists(self, filename):
         """
@@ -350,6 +370,7 @@ class BaseAdapter(ConnectionPool):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "None"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -438,7 +459,7 @@ class BaseAdapter(ConnectionPool):
         other = ';'
 
         # backend-specific extensions to fields
-        if table._db._dbname == 'mysql':
+        if self.dbname == 'mysql':
             if not hasattr(table, "_primarykey"):
                 fields.append('PRIMARY KEY(%s)' % table.fields[0])
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
@@ -472,7 +493,7 @@ class BaseAdapter(ConnectionPool):
             dbpath = self.folder
         if not migrate:
             return query
-        elif self.uri.startswith('sqlite:memory:'):
+        elif self.uri.startswith('sqlite:memory'):
             table._dbt = None
         elif isinstance(migrate, str):
             table._dbt = os.path.join(dbpath, migrate)
@@ -536,7 +557,7 @@ class BaseAdapter(ConnectionPool):
         for key in sql_fields_old:
             if not key in keys:
                 keys.append(key)
-        if table._db._dbname == 'mssql':
+        if self.dbname == 'mssql':
             new_add = '; ALTER TABLE %s ADD ' % tablename
         else:
             new_add = ', ADD '
@@ -548,11 +569,11 @@ class BaseAdapter(ConnectionPool):
                 sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
                          (tablename, key, sql_fields_aux[key].replace(', ', new_add))]
-            elif table._db._dbname == 'sqlite':
+            elif self.dbname == 'sqlite':
                 query = None
             elif not key in sql_fields:
                 del sql_fields_current[key]
-                if not table._db._dbname in ('firebird',):
+                if not self.dbname in ('firebird',):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (tablename, key)]
                 else:
                     query = ['ALTER TABLE %s DROP %s;' % (tablename, key)]
@@ -564,7 +585,7 @@ class BaseAdapter(ConnectionPool):
                 sql_fields_current[key] = sql_fields[key]
                 t = tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
-                if not table._db._dbname in ('firebird',):
+                if not self.dbname in ('firebird',):
                     query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
                              'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
                              'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
@@ -602,7 +623,7 @@ class BaseAdapter(ConnectionPool):
                     else:
                         logfile.write('faked!\n')
 
-        if fields_changed and not table._db._dbname in ['mysql', 'oracle', 'firebird']:
+        if fields_changed and not self.dbname in ['mysql','oracle','firebird']:
             table._db.commit()
             tfile = self.file_open(table._dbt, 'w')
             cPickle.dump(sql_fields_current, tfile)
@@ -831,7 +852,7 @@ class BaseAdapter(ConnectionPool):
         ### special code to handle CASCADE in SQLite
         db = self.db
         table = db[tablename]
-        if db._dbname=='sqlite' and table._referenced_by:
+        if self.dbname=='sqlite' and table._referenced_by:
             deleted = [x[table._id.name] for x in db(query).select(table._id)]
         ### end special code to handle CASCADE in SQLite
         self.execute(sql)
@@ -840,7 +861,7 @@ class BaseAdapter(ConnectionPool):
         except:
             counter =  None
         ### special code to handle CASCADE in SQLite
-        if db._dbname=='sqlite' and counter:
+        if self.dbname=='sqlite' and counter:
             for tablename,fieldname in table._referenced_by:
                 f = db[tablename][fieldname]
                 if f.type=='reference '+table._tablename and f.ondelete=='CASCADE':
@@ -1181,7 +1202,7 @@ class BaseAdapter(ConnectionPool):
                     colset[fieldname] = base64.b64decode(str(value))
                 elif field_type.startswith('decimal'):
                     decimals = [int(x) for x in field_type[8:-1].split(',')][-1]
-                    if field.db._dbname == 'sqlite':
+                    if self.dbname == 'sqlite':
                         value = ('%.' + str(decimals) + 'f') % value
                     if not isinstance(value, decimal.Decimal):
                         value = decimal.Decimal(str(value))
@@ -1229,25 +1250,6 @@ class BaseAdapter(ConnectionPool):
 ###################################################################################
 
 class SQLiteAdapter(BaseAdapter):
-    types = {
-        'boolean': 'CHAR(1)',
-        'string': 'CHAR(%(length)s)',
-        'text': 'TEXT',
-        'password': 'CHAR(%(length)s)',
-        'blob': 'BLOB',
-        'upload': 'CHAR(%(length)s)',
-        'integer': 'INTEGER',
-        'double': 'DOUBLE',
-        'decimal': 'DOUBLE',
-        'date': 'DATE',
-        'time': 'TIME',
-        'datetime': 'TIMESTAMP',
-        'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
-        'reference': 'INTEGER REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
-        'list:integer': 'TEXT',
-        'list:string': 'TEXT',
-        'list:reference': 'TEXT',
-        }
 
     def EXTRACT(self,field,what):
         return "web2py_extract('%s',%s)" % (what,self.expand(field))
@@ -1271,13 +1273,14 @@ class SQLiteAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "sqlite"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         path_encoding = sys.getfilesystemencoding() or locale.getdefaultlocale()[1]
-        if uri=='sqlite:memory:':
+        if uri.startswith('sqlite:memory'):
             dbpath = ':memory:'
         else:
             dbpath = uri.split('://')[1]
@@ -1301,13 +1304,14 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "sqlite"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         path_encoding = sys.getfilesystemencoding() or locale.getdefaultlocale()[1]
-        if uri=='sqlite:memory:':
+        if uri.startswith('sqlite:memory'):
             dbpath = ':memory:'
         else:
             dbpath = uri.split('://')[1]
@@ -1374,6 +1378,7 @@ class MySQLAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "mysql"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1463,6 +1468,7 @@ class PostgreSQLAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "postgres"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1512,6 +1518,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "postgres"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1622,6 +1629,7 @@ class OracleAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "oracle"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1715,6 +1723,7 @@ class MSSQLAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "mssql"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1870,6 +1879,7 @@ class FireBirdAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "firebird"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1923,6 +1933,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "firebird"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2021,6 +2032,7 @@ class InformixAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "informix"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2114,6 +2126,7 @@ class DB2Adapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "db2" 
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2186,6 +2199,7 @@ class IngresAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
+        self.dbname = "ingres"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2443,7 +2457,7 @@ class GAENoSQLAdapter(NoSQLAdapter):
                 'list:integer': (lambda: gae.ListProperty(int,default=None)),
                 'list:reference': (lambda: gae.ListProperty(int,default=None)),
         })
-        self.db=db
+        self.db = db
         self.uri = 'gae'
         self.dbname = 'gql'
         self.folder = folder
@@ -2727,7 +2741,7 @@ class CouchDBAdapter(NoSQLAdapter):
     def __init__(self,db,uri='couchdb://127.0.0.1:5984',
                  pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
-        self.db=db
+        self.db = db
         self.uri = uri
         self.dbname = 'couchdb'
         self.folder = folder
@@ -2841,7 +2855,7 @@ class MongoDBAdapter(NoSQLAdapter):
     def __init__(self,db,uri='mongodb://127.0.0.1:5984/db',
                  pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
-        self.db=db
+        self.db = db
         self.uri = uri
         self.dbname = 'mongodb'
         self.folder = folder
@@ -2887,6 +2901,7 @@ class MongoDBAdapter(NoSQLAdapter):
 
 ADAPTERS = {
     'sqlite': SQLiteAdapter,
+    'sqlite:memory': SQLiteAdapter,
     'mysql': MySQLAdapter,
     'postgres': PostgreSQLAdapter,
     'oracle': OracleAdapter,
@@ -2899,6 +2914,7 @@ ADAPTERS = {
     'ingres': IngresAdapter,
     'ingresu': IngresUnicodeAdapter,
     'jdbc:sqlite': JDBCSQLiteAdapter,
+    'jdbc:sqlite:memory': JDBCSQLiteAdapter,
     'jdbc:postgres': JDBCPostgreSQLAdapter,
     'gae': GAENoSQLAdapter,
     'couchdb': CouchDBAdapter,
@@ -3182,14 +3198,14 @@ class DAL(dict):
             connected = False
             for k in range(5):
                 for uri in uris:
-                    args = (self,uri,pool_size,folder,
-                            db_codec,credential_decoder)
                     try:
-                        self._dbname = uri.split(':')[0]
-                        if is_jdbc and not self._uri.startswith('jdbc:'):
-                            self._dbname = 'jdbc:'+self._dbname
+                        if is_jdbc and not uri.startswith('jdbc:'):
+                            uri = 'jdbc:'+uri
+                        self._dbname = regex_dbname.match(uri).group()
                         if not self._dbname in ADAPTERS:
-                            raise SyntaxError, "Error in URI '%s' or database not supported" % uri
+                            raise SyntaxError, "Error in URI '%s' or database not supported" % self._dbname
+                        args = (self,uri,pool_size,folder,
+                                db_codec,credential_decoder)
                         self._adapter = ADAPTERS[self._dbname](*args)
                         connected = True
                         break
@@ -3204,6 +3220,7 @@ class DAL(dict):
             if not connected:
                 raise RuntimeError, "Failure to connect, tried 5 times:\n%s" % error
         else:
+            args = (self,uri,pool_size,folder,db_codec,credential_decoder)
             self._adapter = BaseAdapter(*args)
         self.tables = SQLCallableList()
         self.check_reserved = check_reserved
@@ -4027,10 +4044,10 @@ class Field(Expression):
         uploadseparate=False,
         compute=None,
         ):
-        self.db=None
-        self.op=None
-        self.first=None
-        self.second=None
+        self.db = None
+        self.op = None
+        self.first = None
+        self.second = None
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
