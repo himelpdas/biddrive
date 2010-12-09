@@ -1250,6 +1250,12 @@ class SQLTABLE(TABLE):
             headers = {}
             for c in columns:
                 headers[c] = ' '.join([w.capitalize() for w in c.split('.')[-1].split('_')])
+        elif headers=='labels':
+            headers = {}
+            for c in columns:
+                (t,f) = c.split('.')
+                field = sqlrows.db[t][f]
+                headers[c] = field.label
 
         for c in columns:
             if orderby:

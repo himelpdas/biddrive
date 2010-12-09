@@ -4043,7 +4043,7 @@ class Field(Expression):
         self.uploadfolder = uploadfolder
         self.uploadseparate = uploadseparate
         self.widget = widget
-        self.label = label
+        self.label = label or fieldname.replace('_',' ').capitalize()
         self.comment = comment
         self.writable = writable
         self.readable = readable
