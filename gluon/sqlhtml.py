@@ -1257,14 +1257,15 @@ class SQLTABLE(TABLE):
                 field = sqlrows.db[t][f]
                 headers[c] = field.label
 
-        for c in columns:
-            if orderby:
-                row.append(TH(A(headers.get(c, c),
-                                _href=th_link+'?orderby=' + c)))
-            else:
-                row.append(TH(headers.get(c, c)))
+        if headers!=None:
+            for c in columns:
+                if orderby:
+                    row.append(TH(A(headers.get(c, c),
+                                    _href=th_link+'?orderby=' + c)))
+                else:
+                    row.append(TH(headers.get(c, c)))
+            components.append(THEAD(TR(*row)))
 
-        components.append(THEAD(TR(*row)))
         tbody = []
         for (rc, record) in enumerate(sqlrows):
             row = []
