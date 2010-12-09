@@ -370,7 +370,7 @@ class BaseAdapter(ConnectionPool):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "None"
+        self.dbengine = "None"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -459,7 +459,7 @@ class BaseAdapter(ConnectionPool):
         other = ';'
 
         # backend-specific extensions to fields
-        if self.dbname == 'mysql':
+        if self.dbengine == 'mysql':
             if not hasattr(table, "_primarykey"):
                 fields.append('PRIMARY KEY(%s)' % table.fields[0])
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
@@ -557,7 +557,7 @@ class BaseAdapter(ConnectionPool):
         for key in sql_fields_old:
             if not key in keys:
                 keys.append(key)
-        if self.dbname == 'mssql':
+        if self.dbengine == 'mssql':
             new_add = '; ALTER TABLE %s ADD ' % tablename
         else:
             new_add = ', ADD '
@@ -569,11 +569,11 @@ class BaseAdapter(ConnectionPool):
                 sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
                          (tablename, key, sql_fields_aux[key].replace(', ', new_add))]
-            elif self.dbname == 'sqlite':
+            elif self.dbengine == 'sqlite':
                 query = None
             elif not key in sql_fields:
                 del sql_fields_current[key]
-                if not self.dbname in ('firebird',):
+                if not self.dbengine in ('firebird',):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (tablename, key)]
                 else:
                     query = ['ALTER TABLE %s DROP %s;' % (tablename, key)]
@@ -585,7 +585,7 @@ class BaseAdapter(ConnectionPool):
                 sql_fields_current[key] = sql_fields[key]
                 t = tablename
                 tt = sql_fields_aux[key].replace(', ', new_add)
-                if not self.dbname in ('firebird',):
+                if not self.dbengine in ('firebird',):
                     query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
                              'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
                              'ALTER TABLE %s DROP COLUMN %s;' % (t, key),
@@ -623,7 +623,7 @@ class BaseAdapter(ConnectionPool):
                     else:
                         logfile.write('faked!\n')
 
-        if fields_changed and not self.dbname in ['mysql','oracle','firebird']:
+        if fields_changed and not self.dbengine in ['mysql','oracle','firebird']:
             table._db.commit()
             tfile = self.file_open(table._dbt, 'w')
             cPickle.dump(sql_fields_current, tfile)
@@ -852,7 +852,7 @@ class BaseAdapter(ConnectionPool):
         ### special code to handle CASCADE in SQLite
         db = self.db
         table = db[tablename]
-        if self.dbname=='sqlite' and table._referenced_by:
+        if self.dbengine=='sqlite' and table._referenced_by:
             deleted = [x[table._id.name] for x in db(query).select(table._id)]
         ### end special code to handle CASCADE in SQLite
         self.execute(sql)
@@ -861,7 +861,7 @@ class BaseAdapter(ConnectionPool):
         except:
             counter =  None
         ### special code to handle CASCADE in SQLite
-        if self.dbname=='sqlite' and counter:
+        if self.dbengine=='sqlite' and counter:
             for tablename,fieldname in table._referenced_by:
                 f = db[tablename][fieldname]
                 if f.type=='reference '+table._tablename and f.ondelete=='CASCADE':
@@ -1202,7 +1202,7 @@ class BaseAdapter(ConnectionPool):
                     colset[fieldname] = base64.b64decode(str(value))
                 elif field_type.startswith('decimal'):
                     decimals = [int(x) for x in field_type[8:-1].split(',')][-1]
-                    if self.dbname == 'sqlite':
+                    if self.dbengine == 'sqlite':
                         value = ('%.' + str(decimals) + 'f') % value
                     if not isinstance(value, decimal.Decimal):
                         value = decimal.Decimal(str(value))
@@ -1273,7 +1273,7 @@ class SQLiteAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "sqlite"
+        self.dbengine = "sqlite"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1304,7 +1304,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "sqlite"
+        self.dbengine = "sqlite"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1378,7 +1378,7 @@ class MySQLAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "mysql"
+        self.dbengine = "mysql"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1468,7 +1468,7 @@ class PostgreSQLAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "postgres"
+        self.dbengine = "postgres"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1518,7 +1518,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "postgres"
+        self.dbengine = "postgres"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1629,7 +1629,7 @@ class OracleAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "oracle"
+        self.dbengine = "oracle"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1723,7 +1723,7 @@ class MSSQLAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "mssql"
+        self.dbengine = "mssql"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1879,7 +1879,7 @@ class FireBirdAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "firebird"
+        self.dbengine = "firebird"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -1933,7 +1933,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "firebird"
+        self.dbengine = "firebird"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2032,7 +2032,7 @@ class InformixAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "informix"
+        self.dbengine = "informix"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2126,7 +2126,7 @@ class DB2Adapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "db2" 
+        self.dbengine = "db2" 
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2199,7 +2199,7 @@ class IngresAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbname = "ingres"
+        self.dbengine = "ingres"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2459,7 +2459,7 @@ class GAENoSQLAdapter(NoSQLAdapter):
         })
         self.db = db
         self.uri = 'gae'
-        self.dbname = 'gql'
+        self.dbengine = 'gql'
         self.folder = folder
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
@@ -2743,7 +2743,7 @@ class CouchDBAdapter(NoSQLAdapter):
                  credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
-        self.dbname = 'couchdb'
+        self.dbengine = 'couchdb'
         self.folder = folder
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
@@ -2857,7 +2857,7 @@ class MongoDBAdapter(NoSQLAdapter):
                  credential_decoder=lambda x:x):
         self.db = db
         self.uri = uri
-        self.dbname = 'mongodb'
+        self.dbengine = 'mongodb'
         self.folder = folder
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
