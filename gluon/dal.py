@@ -375,6 +375,12 @@ class BaseAdapter(ConnectionPool):
         self.pool_size = pool_size
         self.folder = folder
         self.db_codec = db_codec
+        class Dummy:
+            lastrowid = 1
+            def __getattr__(self, value):
+                return lambda *a, **b: []
+        self.connection = Dummy()
+        self.cursor = Dummy()
 
     def sequence_name(self,tablename):
         return '%s_sequence' % tablename
