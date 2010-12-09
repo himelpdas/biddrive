@@ -3383,7 +3383,7 @@ class DAL(dict):
             return [dict(zip(fields,row)) for row in data]
         # see if any results returned from database
         try:
-            return self._cursor.fetchall()
+            return self._adapter.cursor.fetchall()
         except:
             return None
 
