@@ -1,5 +1,8 @@
 todo:
 
+adapter insert and update should table listm not dict
+update of birthday in gae_tests does not work
+
 - crm + appointments
 - fix gae_admin
 - fix estore

@@ -655,8 +655,8 @@ class BaseAdapter(ConnectionPool):
             logfile.write('success!\n')
 
     def _insert(self,table,fields):
-        keys = ','.join([field.name for (field,value) in fields])
-        values = ','.join([self.expand(value,field.type) for (field,value) in fields])
+        keys = ','.join(f.name for f,v in fields)
+        values = ','.join(self.expand(v,f.type) for f,v in fields)
         return 'INSERT INTO %s(%s) VALUES (%s);' % (table, keys, values)
 
     def insert(self,table,fields):
@@ -675,6 +675,9 @@ class BaseAdapter(ConnectionPool):
         rid = Reference(id)
         (rid._table, rid._record) = (table, None)
         return rid
+
+    def bulk_insert(self,table,items):        
+        return [self.insert(table,item) for item in items]
 
     def NOT(self,first):
         return '(NOT %s)' % self.expand(first)
@@ -2654,18 +2657,18 @@ class GAENoSQLAdapter(NoSQLAdapter):
         (items, tablename, fields) = self.select_raw(query)
         counter = 0
         for item in items:
-            for (field, value) in update_fields:
-                value = self.represent(value,field.type)
-                setattr(item, field.name, value)
+            for field, value in update_fields:
+                setattr(item, field.name, self.represent(value,field.type))
             item.put()
             counter += 1
+        logger.info(str(counter))
         return counter
 
     def insert(self,table,fields):
+        dfields=dict((f.name,self.represent(v,f.type)) for f,v in fields)
         # table._db['_lastsql'] = self._insert(table,fields)
-        tmp = table._tableobj(**dict(fields))
+        tmp = table._tableobj(**dfields)
         tmp.put()
-        table['_last_reference'] = tmp
         rid = Reference(tmp.key().id())
         (rid._table, rid._record) = (table, None)
         return rid
@@ -2673,19 +2676,10 @@ class GAENoSQLAdapter(NoSQLAdapter):
     def bulk_insert(self,table,items):
         parsed_items = []
         for item in items:
-            fields = {}
-            for field in table.fields:
-                if not field in item and table[field].default != None:
-                    fields[field] = table[field].default
-                elif not field in item and table[field].compute != None:
-                    fields[field] = table[field].compute(item)
-                if field in item:
-                    fields[field] = self.represent(item[field],table[field].type)
-            #parsed_items.append(fields)
-            parsed_items.append(table._tableobj(**fields))
+            dfields=dict((f.name,self.represent(v,f.type)) for f,v in item)
+            parsed_items.append(table._tableobj(**dfields))
         gae.put(parsed_items)
         return True
-
 
 try:
     import couchdb
@@ -2754,7 +2748,7 @@ class CouchDBAdapter(NoSQLAdapter):
     def insert(self,table,fields):
         id = uuid2int(web2py_uuid())
         ctable = self.connection[table._tablename]
-        values = dict((k.name,self.represent(v,k.type)) for k,v in fields)
+        values = dict((k,self.represent(v,table[k].type)) for k,v in fields)
         values['_id'] = str(id)
         ctable.save(values)
         return id
@@ -2869,7 +2863,7 @@ class MongoDBAdapter(NoSQLAdapter):
 
     def insert(self,table,fields):
         ctable = self.connection[table._tablename]
-        values = dict((k.name,self.represent(v,k.type)) for k,v in fields)
+        values = dict((k,self.represent(v,table[k].type)) for k,v in fields)
         ctable.insert(values)
         return uuid2int(id)
 
@@ -3532,7 +3526,7 @@ class Table(dict):
             if field.type == 'id':
                 self['id'] = field
             field.tablename = field._tablename = tablename
-            field.table = self
+            field.table = field._table = self
             field.db = self._db
             if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
@@ -3687,28 +3681,38 @@ class Table(dict):
     def drop(self, mode = ''):
         return self._db._adapter.drop(self,mode)
 
-    def _insert(self, **fields):
-        for fieldname in fields:
-            if not fieldname in self.fields:
-                raise SyntaxError, 'Field %s does not belong to the table' % fieldname
-        new_fields = [(field,fields[field.name]) for field in self]
-        return self._db._adapter._insert(self,new_fields)
-
-    def insert(self, **fields):
-        for fieldname in fields:
-            if not fieldname in self.fields:
-                raise SyntaxError, 'Field %s does not belong to the table' % fieldname
+    def _listify(self,fields,update=False):
+        fieldnames=self.fields
+        for fn in fields:
+            if not fn in fieldnames:
+                raise SyntaxError, 'Field %s does not belong to the table' % fn
         new_fields = []
-        for field in self:
-            if field.name in fields:
-                new_fields.append((field,fields[field.name]))
-            elif field.default:
-                new_fields.append((field,field.default))
-            elif field.compute:
-                new_fields.append((field,field.compute(Row(fields))))
-            elif field.required:
-                raise SyntaxError,'Table: missing required field: %s'%field
-        return self._db._adapter.insert(self, new_fields)
+        for ofield in self:
+            name = ofield.name
+            if name in fields:                                    
+                new_fields.append((ofield,fields[name]))
+            elif not update and ofield.default:
+                new_fields.append((ofield,ofield.default))
+            elif update and ofield.update:
+                new_fields.append((ofield,ofield.update))
+            elif ofield.compute:
+                new_fields.append((ofield,ofield.compute(Row(fields))))
+            elif not update and ofield.required:
+                raise SyntaxError,'Table: missing required field: %s' % name
+        return new_fields
+
+    def _insert(self, **fields):
+        return self._db._adapter._insert(self,self._listify(fields))
+    
+    def insert(self, **fields):
+        return self._db._adapter.insert(self,self._listify(fields))
+
+    def bulk_insert(self, items):
+        """
+        here items is a list of dictionaries
+        """
+        items = [self._listify(item) for item in items]
+        return self._db._adapter.bulk_insert(self,items)
 
     def _truncate(self, mode = None):
         return self._db._adapter._truncate(self, mode)
@@ -4322,19 +4326,8 @@ class Set(object):
 
     def _update(self, **update_fields):
         tablename = self.db._adapter.get_table(self.query)
-        fields = self._compute_fields(tablename,update_fields)
+        fields = self.db[tablename]._listify(update_fields,update=True)
         return self.db._adapter._update(tablename,self.query,fields)
-
-    def _compute_fields(self,tablename,update_fields):
-        table = self.db[tablename]
-        fields = [(table[fieldname],value) for (fieldname,value) in update_fields.items()]
-        for field in table:
-            if not field.name in update_fields:
-                if field.update:
-                    fields.append((field, field.update))
-                elif field.compute:
-                    fields.append((field, field.compute(Row(update_fields))))
-        return fields
 
     def count(self):
         return self.db._adapter.count(self.query)
@@ -4349,15 +4342,13 @@ class Set(object):
 
     def update(self, **update_fields):
         tablename = self.db._adapter.get_table(self.query)
-        fields = self._compute_fields(tablename,update_fields)
+        fields = self.db[tablename]._listify(update_fields,update=True)
         self.delete_uploaded_files(update_fields)
         return self.db._adapter.update(tablename,self.query,fields)
 
     def delete_uploaded_files(self, upload_fields=None):
         table = self.db[self.db._adapter.tables(self.query)[0]]
-
         # ## mind uploadfield==True means file is not in DB
-
         if upload_fields:
             fields = upload_fields.keys()
         else:
