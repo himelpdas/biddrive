@@ -256,13 +256,13 @@ def make_table(table,fields):
         ### determine field type
         ftype='string'
         for key in ['integer','double','boolean','float','boolean',
-                    'date','time','datetime','text','file']:
+                    'date','time','datetime','text','file','image','wiki','html']:
             if key in has:
-                ftype=key
-        if 'wiki' in has or 'html' in has:
-            ftype='text'
-        elif 'file' in has or 'upload' in has or 'image' in has:
-            ftype='upload'
+                ftype = {'integer':'integer','double':'double','boolean':'boolean',
+                         'float':'double','bool':'boolean',
+                         'date':'date','time':'time','datetime':'datetime',
+                         'text':'text','file':'upload','image':'upload',
+                         'wiki':'text', 'html':'text'}[key]
         if refs:
             key = refs[0]
             if not key=='auth_user': key='t_'+key
