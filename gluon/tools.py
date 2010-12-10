@@ -946,6 +946,7 @@ class Auth(object):
         self.messages.add_permission_log = None
         self.messages.del_permission_log = None
         self.messages.has_permission_log = None
+        self.messages.impersonate_log = 'User %(id)s is impersonating %(other_id)s'
 
         self.messages.label_first_name = 'First name'
         self.messages.label_last_name = 'Last name'
@@ -2177,6 +2178,8 @@ class Auth(object):
         auth = session.auth
         if not self.is_logged_in() or not self.environment.request.post_vars:
             raise HTTP(401, "Not Authorized")
+        current_id = auth.user.id
+        requested_id = user_id
         if user_id == DEFAULT:
             user_id = self.environment.request.post_vars.user_id
         if user_id and user_id != self.user.id and user_id != '0':
@@ -2186,7 +2189,7 @@ class Auth(object):
                 raise HTTP(403, "Forbidden")
             user = self.settings.table_user(user_id)
             if not user:
-                raise HTTP(401, "Not Authorized")
+                raise HTTP(401, "Not Authorized")            
             auth.impersonator = cPickle.dumps(session)
             auth.user.update(
                 self.settings.table_user._filter_fields(user, True))
@@ -2194,10 +2197,15 @@ class Auth(object):
             if self.settings.login_onaccept:
                 form = Storage(dict(vars=self.user))
                 self.settings.login_onaccept(form)
-        elif user_id in [None, 0, '0'] and self.is_impersonating():
+            log = self.messages.impersonate_log
+            if log:
+                self.log_event(log % dict(id=curren_id,other_id=auth.user.id))
+        elif user_id in (0, '0') and self.is_impersonating():
             session.clear()
             session.update(cPickle.loads(auth.impersonator))
             self.user = session.auth.user
+        if requested_id == DEFAULT and not rquest.post_vars:
+            return SQLFORM.factory(Field('user_id','integer'))
         return self.user
 
     def groups(self):
