@@ -3515,10 +3515,10 @@ class Table(dict):
         """
         self._tablename = tablename
         self._sequence_name = args.get('sequence_name',None) or \
-            db._adapter.sequence_name(tablename)
+            db and db._adapter.sequence_name(tablename)
         self._trigger_name = args.get('trigger_name',None) or \
-            db._adapter.trigger_name(tablename)
-
+            db and db._adapter.trigger_name(tablename)
+        
         primarykey = args.get('primarykey', None)
         if primarykey and not isinstance(primarykey,list):
             raise SyntaxError, "primarykey must be a list of fields from table '%s'" \
@@ -4084,7 +4084,7 @@ class Field(Expression):
         self.uploadfolder = uploadfolder
         self.uploadseparate = uploadseparate
         self.widget = widget
-        self.label = label or fieldname.replace('_',' ').capitalize()
+        self.label = label or ' '.join(item.capitalize() for item in fieldname.split('_'))
         self.comment = comment
         self.writable = writable
         self.readable = readable
