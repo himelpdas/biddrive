@@ -68,6 +68,11 @@ Example of usage:
 >>> print james.id, james.name
 1 James
 
+### check aggrgates
+>>> counter = person.id.count()
+>>> print db(person).select(counter).first()(counter)
+1
+
 ### delete one record
 >>> james.delete_record()
 1
@@ -167,7 +172,7 @@ thread = threading.local()
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
 regex_dbname = re.compile('^(\w+)(\:\w+)*')
-table_field = re.compile('[\w_]+\.[\w_]+')
+table_field = re.compile('^[\w_]+\.[\w_]+$')
 regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
 string_unpack=re.compile('(?<!\|)\|(?!\|)')
@@ -904,6 +909,9 @@ class BaseAdapter(ConnectionPool):
                     fields.append(field)
         else:
             for field in fields:
+                if isinstance(field,basestring) and table_field.match(field):
+                    tn,fn = field.split('.')
+                    field = self.db[tn][fn]
                 for tablename in self.tables(field):
                     if not tablename in tablenames:
                         tablenames.append(tablename)

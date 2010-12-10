@@ -377,10 +377,10 @@ class IS_IN_DB(Validator):
             ks = regex2.findall(label)
             if not kfield in ks:
                 ks += [kfield]
-            fields = ['%s.%s' % (ktable, k) for k in ks]
+            fields = [self.dbset.db[ktable][k] for k in ks]
         else:
             ks = [kfield]
-            fields =[str(f) for f in self.dbset._db[ktable]]
+            fields =[f for f in self.dbset.db[ktable]]
         self.fields = fields
         self.label = label
         self.ktable = ktable
@@ -401,19 +401,15 @@ class IS_IN_DB(Validator):
             self._and.record_id = id
 
     def build_set(self):
-        if self.dbset._db._dbname != 'gql':
-            orderby = self.orderby or ', '.join(self.fields)
+        if self.dbset.db._dbname != 'gae':
+            orderby = self.orderby or reduce(lambda a,b:a|b,self.fields)
             groupby = self.groupby
             dd = dict(orderby=orderby, groupby=groupby, cache=self.cache)
             records = self.dbset.select(*self.fields, **dd)
         else:
-            import contrib.gql
-            orderby = self.orderby\
-                 or contrib.gql.SQLXorable('|'.join([k for k in self.ks
-                    if k != 'id']))
+            orderby = self.orderby or reduce(lambda a,b:a|b,(f for f in self.fields if not f.name=='id'))
             dd = dict(orderby=orderby, cache=self.cache)
-            records = \
-                self.dbset.select(self.dbset._db[self.ktable].ALL, **dd)
+            records = self.dbset.select(self.dbset.db[self.ktable].ALL, **dd)
         self.theset = [str(r[self.kfield]) for r in records]
         if isinstance(self.label,str):
             self.labels = [self.label % dict(r) for r in records]
@@ -450,7 +446,7 @@ class IS_IN_DB(Validator):
                     return (value, None)
         else:
             (ktable, kfield) = str(self.field).split('.')
-            field = self.dbset._db[ktable][kfield]
+            field = self.dbset.db[ktable][kfield]
             if self.dbset(field == value).count():
                 if self._and:
                     return self._and(value)
@@ -494,7 +490,7 @@ class IS_NOT_IN_DB(Validator):
         if value in self.allowed_override:
             return (value, None)
         (tablename, fieldname) = str(self.field).split('.')
-        field = self.dbset._db[tablename][fieldname]
+        field = self.dbset.db[tablename][fieldname]
         rows = self.dbset(field == value).select(limitby=(0, 1))
         if len(rows) > 0:
             if isinstance(self.record_id, dict):
