@@ -1009,6 +1009,8 @@ class BaseAdapter(ConnectionPool):
                 tables = tables.union(self.tables(query.first))
             if query.second!=None:
                 tables = tables.union(self.tables(query.second))
+        elif isinstance(query, basestring):
+            tables.add(query.split(".")[0])
         return list(tables)
 
     def commit(self):
