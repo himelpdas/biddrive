@@ -970,17 +970,17 @@ class BaseAdapter(ConnectionPool):
         """
         Always returns a Rows object, even if it may be empty
         """
-        def response(query):
-            self.execute(query)
+        def response(sql):
+            self.execute(sql)
             return self.cursor.fetchall()
-        query = self._select(query,fields,attributes)
+        sql = self._select(query,fields,attributes)
         if attributes.get('cache', None):
             (cache_model, time_expire) = attributes['cache']
             del attributes['cache']
-            key = self.uri + '/' + query
-            rows = cache_model(key, lambda: response(query), time_expire)
+            key = self.uri + '/' + sql
+            rows = cache_model(key, lambda: response(sql), time_expire)
         else:
-            rows = response(query)
+            rows = response(sql)
         if isinstance(rows,tuple):
             rows = list(rows)
         rows = self.rowslice(rows,attributes.get('limitby',(0,))[0],None)
@@ -1009,8 +1009,6 @@ class BaseAdapter(ConnectionPool):
                 tables = tables.union(self.tables(query.first))
             if query.second!=None:
                 tables = tables.union(self.tables(query.second))
-        elif isinstance(query, basestring):
-            tables.add(query.split(".")[0])
         return list(tables)
 
     def commit(self):
