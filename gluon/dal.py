@@ -3368,16 +3368,16 @@ class DAL(dict):
         else:
             self._adapter.execute(query)
         if as_dict:
-            if not hasattr(self._cursor,'description'):
+            if not hasattr(self._adapter.cursor,'description'):
                 raise RuntimeError, "database does not support executesql(...,as_dict=True)"
             # Non-DAL legacy db query, converts cursor results to dict.
             # sequence of 7-item sequences. each sequence tells about a column.
             # first item is always the field name according to Python Database API specs
-            columns = self._cursor.description
+            columns = self._adapter.cursor.description
             # reduce the column info down to just the field names
             fields = [f[0] for f in columns]
             # will hold our finished resultset in a list
-            data = self._cursor.fetchall()
+            data = self._adapter.cursor.fetchall()
             # convert the list for each row into a dictionary so it's
             # easier to work with. row['field_name'] rather than row[0]
             return [dict(zip(fields,row)) for row in data]
