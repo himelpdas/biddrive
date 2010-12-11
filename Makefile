@@ -97,7 +97,7 @@ win:
 run:
 	python2.5 web2py.py -a hello
 push:
-	make clean
+	make src
 	echo '' > NEWINSTALL
 	hg push
 	bzr push bzr+ssh://mdipierro@bazaar.launchpad.net/~mdipierro/web2py/devel --use-existing-dir
