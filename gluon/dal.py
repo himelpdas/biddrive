@@ -4257,8 +4257,8 @@ class Field(Expression):
             length = self.len()
         else:
             length = '(%s - %s)' % (stop + 1, pos0)
-        return self.db._adapter.Expression(self.db,self.db._adapter.SUBSTRING,
-                                           self, (pos0, length), self.type)
+        return Expression(self.db,self.db._adapter.SUBSTRING,
+                          self, (pos0, length), self.type)
 
     def __getitem__(self, i):
         return self[i:i + 1]
