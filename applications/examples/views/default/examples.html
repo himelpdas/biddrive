@@ -69,7 +69,7 @@
     def hello5():
         return HTML(BODY(H1(T('Hello World'),_style="color: red;"))).xml() # .xml to serialize
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
-    <p>You can also generate HTML using helper objects HTML, BODY, H1, etc. Each of these tags is an class and the views know how to render the corresponding objects. The method .xml() serializes them and produce html/xml code for the page.
+    <p>You can also generate HTML using helper objects HTML, BODY, H1, etc. Each of these tags is a class and the views know how to render the corresponding objects. The method .xml() serializes them and produce html/xml code for the page.
     Each tag, DIV for example, takes three types of arguments:</p>
     <ul>
     <li>unnamed arguments, they correspond to nested tags</li>
