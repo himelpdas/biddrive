@@ -3568,7 +3568,7 @@ class Table(dict):
                 self['id'] = field
             field.tablename = field._tablename = tablename
             field.table = field._table = self
-            field.db = self._db
+            field.db = field._db = self._db
             if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
