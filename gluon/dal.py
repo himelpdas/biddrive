@@ -991,7 +991,8 @@ class BaseAdapter(ConnectionPool):
             rows = response(sql)
         if isinstance(rows,tuple):
             rows = list(rows)
-        rows = self.rowslice(rows,attributes.get('limitby',(0,))[0],None)
+        limitby = attributes.get('limitby',None) or (0,)
+        rows = self.rowslice(rows,limitby[0],None)
         return self.parse(rows,self._colnames)
 
     def _count(self,query):
