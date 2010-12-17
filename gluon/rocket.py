@@ -11,7 +11,7 @@ import logging
 import platform
 
 # Define Constants
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
@@ -89,6 +89,18 @@ except ImportError:
     has_ssl = False
 # package imports removed in monolithic build
 
+# Constants
+SOCKET_METHODS_USED = [
+    'sendall',
+    'settimeout',
+    'send',
+    'shutdown',
+    'makefile',
+    'fileno',
+    'gettimeout',
+    'setblocking'
+]
+
 class Connection:
     def __init__(self, sock_tuple, port, secure=False):
         self.client_addr, self.client_port = sock_tuple[1]
@@ -99,19 +111,15 @@ class Connection:
         self.secure = secure
 
         if IS_JYTHON:
-            # In Jython we must set TCP_NODELAY here.
+            # In Jython we must set TCP_NODELAY here since it does not
+            # inherit from the listening socket.
             # See: http://bugs.jython.org/issue1309
             self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-        if hasattr(self.socket, 'settimeout'):
-            self.socket.settimeout(SOCKET_TIMEOUT)
+        self.socket.settimeout(SOCKET_TIMEOUT)
 
-        for x in dir(self.socket):
-            if not hasattr(self, x):
-                try:
-                    self.__dict__[x] = self.socket.__getattribute__(x)
-                except:
-                    pass
+        for x in SOCKET_METHODS_USED:
+            self.__dict__[x] = self.socket.__getattribute__(x)
 
     def close(self):
         if hasattr(self.socket, '_sock'):
@@ -130,7 +138,6 @@ class Connection:
 
 # Import System Modules
 import os
-import sys
 import socket
 import logging
 import traceback
@@ -178,19 +185,16 @@ class Listener(Thread):
         if self.secure:
             if not has_ssl:
                 self.err_log.error("ssl module required to serve HTTPS.")
-                del listener
                 return
             elif not os.path.exists(interface[2]):
                 data = (interface[2], interface[0], interface[1])
                 self.err_log.error("Cannot find key file "
                           "'%s'.  Cannot bind to %s:%s" % data)
-                del listener
                 return
             elif not os.path.exists(interface[3]):
                 data = (interface[3], interface[0], interface[1])
                 self.err_log.error("Cannot find certificate file "
                           "'%s'.  Cannot bind to %s:%s" % data)
-                del listener
                 return
 
         # Set socket options
@@ -230,10 +234,10 @@ class Listener(Thread):
         sock, client = sock_pair
         try:
             sock = ssl.wrap_socket(sock,
-                                   keyfile=self.interface[2],
-                                   certfile=self.interface[3],
-                                   server_side=True,
-                                   ssl_version=ssl.PROTOCOL_SSLv23)
+                                   keyfile = self.interface[2],
+                                   certfile = self.interface[3],
+                                   server_side = True,
+                                   ssl_version = ssl.PROTOCOL_SSLv23)
         except SSLError:
             # Generally this happens when an HTTP request is received on a
             # secure socket. We don't do anything because it will be detected
@@ -247,7 +251,8 @@ class Listener(Thread):
             self.err_log.warning('Listener started when not ready.')
             return
 
-        self.err_log.debug('Entering main loop.')
+        if __debug__:
+            self.err_log.debug('Entering main loop.')
         while True:
             try:
                 sock = self.listener.accept()
@@ -261,27 +266,13 @@ class Listener(Thread):
                 # seconds.  When that happens, we check if it's time to die.
 
                 if not self.ready:
-                    self.err_log.info('Listener exiting.')
+                    if __debug__:
+                        self.err_log.debug('Listener exiting.')
                     return
                 else:
                     continue
             except:
                 self.err_log.error(str(traceback.format_exc()))
-
-    def run_app(self, conn):
-        # Must be overridden with a method reads the request from the socket
-        # and sends a response.
-        self.closeConnection = True
-        raise NotImplementedError('Overload this method!')
-
-    def kill(self):
-        if self.isAlive() and hasattr(self, 'conn'):
-            try:
-                self.conn.shutdown(socket.SHUT_RDWR)
-            except socket.error:
-                info = sys.exc_info()
-                if info[1].args[0] != socket.EBADF:
-                    self.err_log.debug('Error on shutdown: '+str(info))
 
 # Monolithic build...end of module: rocket\listener.py
 # Monolithic build...start of module: rocket\main.py
@@ -330,10 +321,10 @@ class Rocket:
         else:
             self.interfaces = interfaces
 
-        if None == min_threads:
+        if min_threads is None:
             min_threads = DEFAULTS['MIN_THREADS']
 
-        if None == max_threads:
+        if max_threads is None:
             max_threads = DEFAULTS['MAX_THREADS']
 
         if not queue_size:
@@ -417,7 +408,7 @@ class Rocket:
                 time.sleep(THREAD_STOP_CHECK_INTERVAL)
             except KeyboardInterrupt:
                 # Capture a keyboard interrupt when running from a console
-                break;
+                break
             except:
                 if not tp.stop_server:
                     log.error(str(traceback.format_exc()))
@@ -451,12 +442,12 @@ class Rocket:
 
 def CherryPyWSGIServer(bind_addr,
                        wsgi_app,
-                       numthreads=10,
-                       server_name=None,
-                       max=-1,
-                       request_queue_size=5,
-                       timeout=10,
-                       shutdown_timeout=5):
+                       numthreads = 10,
+                       server_name = None,
+                       max = -1,
+                       request_queue_size = 5,
+                       timeout = 10,
+                       shutdown_timeout = 5):
     """ A Cherrypy wsgiserver-compatible wrapper. """
     max_threads = max
     if max_threads < 0:
@@ -479,6 +470,14 @@ from threading import Thread
 # Import Package Modules
 # package imports removed in monolithic build
 
+# Setup Polling if supported (but it doesn't work well on Jython)
+if hasattr(select, 'poll') and not IS_JYTHON:
+    try:
+        poll = select.epoll()
+    except:
+        poll = select.poll()
+else:
+    poll = None
 
 class Monitor(Thread):
     # Monitor worker class.
@@ -506,42 +505,66 @@ class Monitor(Thread):
         self.log.addHandler(NullHandler())
 
         self.active = True
+        poll_dict = dict()
+        conn_list = list()
+        list_changed = False
 
-        self.log.debug('Entering monitor loop.')
+        if __debug__:
+            self.log.debug('Entering monitor loop.')
 
         # Enter thread main loop
         while self.active:
             # Move the queued connections to the selection pool
             while not self.monitor_queue.empty() or not len(self.connections):
-                self.log.debug('In "receive timed-out connections" loop.')
+                if __debug__:
+                    self.log.debug('In "receive timed-out connections" loop.')
 
                 c = self.monitor_queue.get()
 
-                if None == c:
+                if c is None:
                     # A non-client is a signal to die
-                    self.log.debug('Received a death threat.')
+                    if __debug__:
+                        self.log.debug('Received a death threat.')
                     return
 
                 self.log.debug('Received a timed out connection.')
 
-                assert(c not in self.connections)
+                if __debug__:
+                    assert(c not in self.connections)
 
                 if IS_JYTHON:
                     # Jython requires a socket to be in Non-blocking mode in
                     # order to select on it.
                     c.setblocking(False)
 
-                self.log.debug('Adding connection to monitor list.')
+                if __debug__:
+                    self.log.debug('Adding connection to monitor list.')
+
+                if poll:
+                    poll.register(c)
+                    poll_dict.update({c.fileno():c})
+
                 self.connections.add(c)
+                list_changed = True
 
             # Wait on those connections
             self.log.debug('Blocking on connections')
-            readable = select.select(list(self.connections),
-                                     [], [], THREAD_STOP_CHECK_INTERVAL)[0]
+            if poll:
+                readable = [poll_dict[x[0]] for x in poll.poll(THREAD_STOP_CHECK_INTERVAL)]
+            else:
+                if list_changed:
+                    conn_list = list(self.connections)
+                    list_changed = False
+
+                readable = select.select(conn_list,
+                                         [],
+                                         [],
+                                         THREAD_STOP_CHECK_INTERVAL)[0]
 
             # If we have any readable connections, put them back
             for r in readable:
-                self.log.debug('Restoring readable connection')
+                if __debug__:
+                    self.log.debug('Restoring readable connection')
 
                 if IS_JYTHON:
                     # Jython requires a socket to be in Non-blocking mode in
@@ -551,7 +574,13 @@ class Monitor(Thread):
 
                 r.start_time = time.time()
                 self.active_queue.put(r)
+
+                if poll:
+                    poll.unregister(r)
+                    del poll_dict[r.fileno()]
+
                 self.connections.remove(r)
+                list_changed = True
 
             # If we have any stale connections, kill them off.
             if self.timeout:
@@ -562,10 +591,17 @@ class Monitor(Thread):
                         stale.add(c)
 
                 for c in stale:
-                    # "EXPR and A or B" kept for Py2.4 compatibility
-                    data = (c.client_addr, c.server_port, c.ssl and '*' or '')
-                    self.log.debug('Flushing stale connection: %s:%i%s' % data)
+                    if __debug__:
+                        # "EXPR and A or B" kept for Py2.4 compatibility
+                        data = (c.client_addr, c.server_port, c.ssl and '*' or '')
+                        self.log.debug('Flushing stale connection: %s:%i%s' % data)
+                    if poll:
+                        poll.unregister(r)
+                        del poll_dict[r.fileno()]
+
                     self.connections.remove(c)
+                    list_changed = True
+
                     try:
                         c.close()
                     finally:
@@ -574,18 +610,22 @@ class Monitor(Thread):
     def stop(self):
         self.active = False
 
-        self.log.debug('Flushing waiting connections')
+        if __debug__:
+            self.log.debug('Flushing waiting connections')
+
         for c in self.connections:
             try:
                 c.close()
             finally:
                 del c
 
-        self.log.debug('Flushing queued connections')
+        if __debug__:
+            self.log.debug('Flushing queued connections')
+
         while not self.monitor_queue.empty():
             c = self.monitor_queue.get()
 
-            if None == c:
+            if c is None:
                 continue
 
             try:
@@ -621,7 +661,9 @@ class ThreadPool:
                  max_threads=DEFAULTS['MAX_THREADS'],
                  ):
 
-        log.debug("Initializing ThreadPool.")
+        if __debug__:
+            log.debug("Initializing ThreadPool.")
+
         self.check_for_dead_threads = 0
         self.active_queue = active_queue
 
@@ -638,6 +680,8 @@ class ThreadPool:
         app_info.update(max_threads=max_threads,
                         min_threads=min_threads)
 
+        self.app_info = app_info
+
         self.threads = set()
         for x in range(min_threads):
             worker = self.worker_class(app_info,
@@ -647,14 +691,18 @@ class ThreadPool:
 
     def start(self):
         self.stop_server = False
-        log.debug("Starting threads.")
+        if __debug__:
+            log.debug("Starting threads.")
+
         for thread in self.threads:
             thread.setDaemon(True)
             thread._pool = self
             thread.start()
 
     def stop(self):
-        log.debug("Stopping threads.")
+        if __debug__:
+            log.debug("Stopping threads.")
+
         self.stop_server = True
 
         # Prompt the threads to die
@@ -677,7 +725,8 @@ class ThreadPool:
 
         dead_threads = [t for t in self.threads if not t.isAlive()]
         for t in dead_threads:
-            log.debug("Removing dead thread: %s." % t.getName())
+            if __debug__:
+                log.debug("Removing dead thread: %s." % t.getName())
             try:
                 # Py2.4 complains here so we put it in a try block
                 self.threads.remove(t)
@@ -694,15 +743,20 @@ class ThreadPool:
 
         amount = min([amount, self.max_threads - len(self.threads)])
 
-        log.debug("Growing by %i." % amount)
+        if __debug__:
+            log.debug("Growing by %i." % amount)
 
         for x in range(amount):
-            new_worker = self.worker_class()
-            self.threads.add(new_worker)
-            new_worker.start()
+            worker = self.worker_class(self.app_info,
+                                       self.active_queue,
+                                       self.monitor_queue)
+
+            self.threads.add(worker)
+            worker.start()
 
     def shrink(self, amount=1):
-        log.debug("Shrinking by %i." % amount)
+        if __debug__:
+            log.debug("Shrinking by %i." % amount)
 
         self.check_for_dead_threads += amount
 
@@ -717,14 +771,14 @@ class ThreadPool:
             queueSize = self.active_queue.qsize()
             threadCount = len(self.threads)
 
-            log.debug("Examining ThreadPool. %i threads and %i Q'd conxions"
-                      % (threadCount, queueSize))
+            if __debug__:
+                log.debug("Examining ThreadPool. %i threads and %i Q'd conxions"
+                          % (threadCount, queueSize))
 
             if queueSize == 0 and threadCount > self.min_threads:
                 self.shrink()
 
-            elif queueSize > self.grow_threshold \
-                 and threadCount < self.max_threads:
+            elif queueSize > self.grow_threshold:
 
                 self.grow(queueSize)
 
@@ -912,6 +966,10 @@ class Worker(Thread):
         self.active_queue = active_queue
         self.monitor_queue = monitor_queue
 
+        self.size = 0
+        self.status = "200 OK"
+        self.closeConnection = True
+
         # Request Log
         self.req_log = logging.getLogger('Rocket.Requests')
         self.req_log.addHandler(NullHandler())
@@ -925,38 +983,43 @@ class Worker(Thread):
             if 'timed out' in val.args[0]:
                 typ = SocketTimeout
         if typ == SocketTimeout:
-            self.err_log.debug('Socket timed out')
+            if __debug__:
+                self.err_log.debug('Socket timed out')
             self.monitor_queue.put(self.conn)
             return True
         if typ == SocketClosed:
             self.closeConnection = True
-            self.err_log.debug('Client closed socket')
+            if __debug__:
+                self.err_log.debug('Client closed socket')
             return False
         if typ == BadRequest:
             self.closeConnection = True
-            self.err_log.debug('Client sent a bad request')
+            if __debug__:
+                self.err_log.debug('Client sent a bad request')
             return True
         if typ == socket.error:
             self.closeConnection = True
             if val.args[0] in IGNORE_ERRORS_ON_CLOSE:
-                self.closeConnection = True
-                self.err_log.debug('Ignorable socket Error received...'
-                                   'closing connection.')
+                if __debug__:
+                    self.err_log.debug('Ignorable socket Error received...'
+                                       'closing connection.')
                 return False
             else:
                 self.status = "999 Utter Server Failure"
-                tb = traceback.format_exception((typ, val, tb))
+                tb_fmt = traceback.format_exception(typ, val, tb)
                 self.err_log.error('Unhandled Error when serving '
-                                   'connection:\n' + tb)
+                                   'connection:\n' + '\n'.join(tb_fmt))
                 return False
 
         self.closeConnection = True
-        self.err_log.error(str(traceback.format_exc()))
+        tb_fmt = traceback.format_exception(typ, val, tb)
+        self.err_log.error('\n'.join(tb_fmt))
         self.send_response('500 Server Error')
         return False
 
     def run(self):
-        self.err_log.debug('Entering main loop.')
+        if __debug__:
+            self.err_log.debug('Entering main loop.')
 
         # Enter thread main loop
         while True:
@@ -964,8 +1027,9 @@ class Worker(Thread):
 
             if not conn:
                 # A non-client is a signal to die
-                self.err_log.debug('Received a death threat.')
-                return
+                if __debug__:
+                    self.err_log.debug('Received a death threat.')
+                return conn
 
             if isinstance(conn, tuple):
                 conn = Connection(*conn)
@@ -979,12 +1043,14 @@ class Worker(Thread):
                 conn.close()
                 continue
             else:
-                self.err_log.debug('Received a connection.')
+                if __debug__:
+                    self.err_log.debug('Received a connection.')
                 self.closeConnection = False
 
             # Enter connection serve loop
             while True:
-                self.err_log.debug('Serving a request')
+                if __debug__:
+                    self.err_log.debug('Serving a request')
                 try:
                     self.run_app(conn)
                     log_info = dict(client_ip = conn.client_addr,
@@ -1022,10 +1088,11 @@ class Worker(Thread):
         raise NotImplementedError('Overload this method!')
 
     def send_response(self, status):
+        stat_msg = status.split(' ', 1)[1]
         msg = RESPONSE % (status,
-                          len(status),
+                          len(stat_msg),
                           'text/plain',
-                          status.split(' ', 1)[1])
+                          stat_msg)
         try:
             self.conn.sendall(b(msg))
         except socket.error:
@@ -1052,7 +1119,9 @@ class Worker(Thread):
 
             if d == '\r\n':
                 # Allow an extra NEWLINE at the beginner per HTTP 1.1 spec
-                self.err_log.debug('Client sent newline')
+                if __debug__:
+                    self.err_log.debug('Client sent newline')
+
                 d = sock_file.readline()
                 if PY3K:
                     d = d.decode('ISO-8859-1')
@@ -1060,7 +1129,8 @@ class Worker(Thread):
             raise SocketTimeout("Socket timed out before request.")
 
         if d.strip() == '':
-            self.err_log.debug('Client did not send a recognizable request.')
+            if __debug__:
+                self.err_log.debug('Client did not send a recognizable request.')
             raise SocketClosed('Client closed socket.')
 
         try:
@@ -1082,6 +1152,7 @@ class Worker(Thread):
         elif '://' in uri:
             scheme, rest = uri.split('://')
             host, path = rest.split('/', 1)
+            path = '/' + path
         else:
             self.send_response('400 Bad Request')
             raise BadRequest
@@ -1116,11 +1187,12 @@ class Worker(Thread):
 
             if l[0] in ' \t' and lname:
                 # Some headers take more than one line
-                lval += ', ' + l.strip()
+                lval += ',' + l.strip()
             else:
                 # HTTP header values are latin-1 encoded
                 l = l.split(':', 1)
                 # HTTP header names are us-ascii encoded
+
                 lname = l[0].strip().replace('-', '_')
                 lval = l[-1].strip()
             headers[str(lname)] = str(lval)
@@ -1156,6 +1228,9 @@ class ChunkedReader:
             if self.buffer_size:
                 self.buffer = StringIO(self.stream.read(self.buffer_size))
 
+            self.stream.read(2) # flush out the remaining \r\n
+
+
     def read(self, size):
         data = b('')
         while size:
@@ -1170,7 +1245,7 @@ class ChunkedReader:
     def readline(self):
         data = b('')
         c = self.read(1)
-        while c != b('\n') or c == b(''):
+        while c and c != b('\n'):
             data += c
             c = self.read(1)
         data += c
@@ -1197,6 +1272,7 @@ import socket
 #from wsgiref.util import FileWrapper
 # Import Package Modules
 # package imports removed in monolithic build
+
 
 if PY3K:
     from email.utils import formatdate
@@ -1307,8 +1383,9 @@ class WSGIWorker(Worker):
                         # If they sent us more than one section, we blow chunks
                         h_set['Transfer-Encoding'] = 'Chunked'
                         self.chunked = True
-                        self.err_log.debug('Adding header...Transfer-Encoding: '
-                                           'Chunked')
+                        if __debug__:
+                            self.err_log.debug('Adding header...'
+                                               'Transfer-Encoding: Chunked')
 
         if 'connection' not in h_set:
             # If the application did not provide a connection header, fill it in
@@ -1330,7 +1407,8 @@ class WSGIWorker(Worker):
         header_data = HEADER_RESPONSE % (self.status, str(h_set))
 
         # Send the headers
-        self.err_log.debug('Sending Headers: %s' % repr(header_data))
+        if __debug__:
+            self.err_log.debug('Sending Headers: %s' % repr(header_data))
         self.conn.sendall(b(header_data))
         self.headers_sent = True
 
@@ -1352,11 +1430,9 @@ class WSGIWorker(Worker):
         if self.request_method != 'HEAD':
             try:
                 if self.chunked:
-                    self.conn.sendall(b('%x\r\n' % len(data)))
-                # Send another NEWLINE for good measure
-                self.conn.sendall(data)
-                if self.chunked:
-                    self.conn.sendall(b('\r\n'))
+                    self.conn.sendall(b('%x\r\n%s\r\n' % (len(data), data)))
+                else:
+                    self.conn.sendall(data)
             except socket.error:
                 # But some clients will close the connection before that
                 # resulting in a socket error.
@@ -1400,7 +1476,9 @@ class WSGIWorker(Worker):
         sections = None
         output = None
 
-        self.err_log.debug('Getting sock_file')
+        if __debug__:
+            self.err_log.debug('Getting sock_file')
+
         # Build our file-like object
         sock_file = conn.makefile('rb',BUF_SIZE)
 
@@ -1438,7 +1516,9 @@ class WSGIWorker(Worker):
         # Don't capture exceptions here.  The Worker class handles
         # them appropriately.
         finally:
-            self.err_log.debug('Finally closing output and sock_file')
+            if __debug__:
+                self.err_log.debug('Finally closing output and sock_file')
+
             if hasattr(output,'close'):
                 output.close()
 
@@ -1474,7 +1554,7 @@ def demo_app(environ, start_response):
         start_response('200 OK', [('Content-Type', 'text/html')])
         data = '<html><body><h1>Hello from Rocket Web Server</h1></body></html>'
     return [data]
-        
+
 def demo():
     from optparse import OptionParser
     parser = OptionParser()
@@ -1484,7 +1564,7 @@ def demo():
                       help="post where to run web server")
     parser.add_option("-s", "--static", dest="static",default=None,
                       help="folder containing static files")
-    (options, args) = parser.parse_args()    
+    (options, args) = parser.parse_args()
     global static_folder
     static_folder = options.static
     print 'Rocket running on %s:%s' % (options.ip, options.port)
