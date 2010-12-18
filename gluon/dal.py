@@ -3733,9 +3733,9 @@ class Table(dict):
             name = ofield.name
             if name in fields:                                    
                 new_fields.append((ofield,fields[name]))
-            elif not update and ofield.default:
+            elif not update and ofield.default!=None:
                 new_fields.append((ofield,ofield.default))
-            elif update and ofield.update:
+            elif update and ofield.update!=None:
                 new_fields.append((ofield,ofield.update))
             elif ofield.compute:
                 new_fields.append((ofield,ofield.compute(Row(fields))))
