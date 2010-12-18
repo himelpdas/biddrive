@@ -797,10 +797,10 @@ class BaseAdapter(ConnectionPool):
                 return expression.op(expression.first)
             else:
                 return expression.op()
-        elif isinstance(expression,(list,tuple)):
-            return ','.join([self.represent(item,field_type) for item in expression])
         elif field_type:
             return self.represent(expression,field_type)
+        elif isinstance(expression,(list,tuple)):
+            return ','.join([self.represent(item,field_type) for item in expression])
         else:
             return str(expression)
 
@@ -2533,10 +2533,10 @@ class GAENoSQLAdapter(NoSQLAdapter):
                 return expression.op(expression.first)
             else:
                 return expression.op()
-        elif isinstance(expression,(list,tuple)):
-            return ','.join([self.represent(item,field_type) for item in expression])
         elif field_type:
                 return self.represent(expression,field_type)
+        elif isinstance(expression,(list,tuple)):
+            return ','.join([self.represent(item,field_type) for item in expression])
         else:
             return str(expression)
 
