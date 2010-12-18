@@ -723,7 +723,8 @@ class BaseAdapter(ConnectionPool):
     def BELONGS(self,first,second):
         if isinstance(second,str):
             return '(%s IN (%s))' % (self.expand(first),second[:-1])
-        return '(%s IN (%s))' % (self.expand(first),self.expand(second,first.type))
+        return '(%s IN (%s))' % (self.expand(first),
+                                 ','.join(self.expand(item,first.type) for item in second))
 
     def LIKE(self,first,second):
         return '(%s LIKE %s)' % (self.expand(first),self.expand(second,'string'))
