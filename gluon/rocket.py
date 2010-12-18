@@ -101,7 +101,8 @@ SOCKET_METHODS_USED = [
     'setblocking'
 ]
 
-class Connection:
+class Connection(object):
+
     def __init__(self, sock_tuple, port, secure=False):
         self.client_addr, self.client_port = sock_tuple[1]
         self.server_port = port
@@ -300,7 +301,8 @@ except ImportError:
 log = logging.getLogger('Rocket')
 log.addHandler(NullHandler())
 
-class Rocket:
+class Rocket(object):
+
     """The Rocket class is responsible for handling threads and accepting and
     dispatching connections."""
 
@@ -648,7 +650,7 @@ import logging
 log = logging.getLogger('Rocket.Errors.ThreadPool')
 log.addHandler(NullHandler())
 
-class ThreadPool:
+class ThreadPool(object):
     """The ThreadPool class is a container class for all the worker threads. It
     manages the number of actively running threads."""
 
@@ -853,7 +855,7 @@ def _formatparam(param, value=None, quote=1):
     else:
         return param
 
-class Headers:
+class Headers(object):
     def __init__(self,headers):
         if type(headers) is not type([]):
             raise TypeError("Headers must be a list of name/value tuples")
@@ -924,7 +926,8 @@ class Headers:
                 parts.append(_formatparam(k.replace('_', '-'), v))
         self._headers.append((_name, "; ".join(parts)))
 
-class FileWrapper:
+class FileWrapper(object):
+
     """Wrapper to convert file-like objects to iterables"""
 
     def __init__(self, filelike, blksize=BUF_SIZE):
@@ -949,6 +952,7 @@ class FileWrapper:
         raise StopIteration
 
 class Worker(Thread):
+
     """The Worker class is a base class responsible for receiving connections
     and (a subclass) will run an application to process the the connection """
 
@@ -1212,7 +1216,8 @@ class SocketClosed(Exception):
     "Exception for when a socket is closed by the client."
     pass
 
-class ChunkedReader:
+class ChunkedReader(object):
+
     def __init__(self, sock_file):
         self.stream = sock_file
         self.buffer = None

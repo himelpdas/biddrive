@@ -380,7 +380,7 @@ class BaseAdapter(ConnectionPool):
         self.pool_size = pool_size
         self.folder = folder
         self.db_codec = db_codec
-        class Dummy:
+        class Dummy(object):
             lastrowid = 1
             def __getattr__(self, value):
                 return lambda *a, **b: []
@@ -2435,7 +2435,7 @@ try:
 except ImportError:
     pass
 
-class GAEF:
+class GAEF(object):
     def __init__(self,name,op,value,apply):
         self.name=name=='id' and '__key__' or name
         self.op=op
@@ -3944,7 +3944,7 @@ class Expression(object):
     # for use in both Query and sortby
 
 
-class SQLCustomType:
+class SQLCustomType(object):
     """
     allows defining of custom SQL types
 

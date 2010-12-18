@@ -469,7 +469,7 @@ class UploadWidget(FormWidget):
         return False
 
 
-class AutocompleteWidget:
+class AutocompleteWidget(object):
 
     def __init__(self, request, field, id_field=None, db=None,
                  orderby=None, limitby=(0,10),

@@ -18,14 +18,13 @@ def kill():
     os.kill(p.pid, signal.SIGKILL)
     cache.ram('gae_upload',lambda:None,-1)
 
-class EXISTS:
+class EXISTS(object):
     def __init__(self, error_message='file not found'):
         self.error_message = error_message
-    def __class__(self, value):
+    def __call__(self, value):
         if os.path.exists(value):
             return (value,None)
-        return (value,self.error_message)
-        
+        return (value,self.error_message)        
     
 def deploy():
     regex = re.compile('^\w+$')

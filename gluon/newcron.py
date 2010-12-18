@@ -74,7 +74,7 @@ class softcron(threading.Thread):
             logger.debug('soft cron invocation')
             crondance(self.path, 'soft', startup=False)
 
-class Token:
+class Token(object):
 
     def __init__(self,path):
         self.path = os.path.join(path, 'cron.master')

@@ -83,7 +83,7 @@ def _TEST():
 _TEST()
 """
 
-class LoadFactory:
+class LoadFactory(object):
     """
     Attention: this helper is new and experimental
     """

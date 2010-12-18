@@ -3165,7 +3165,7 @@ def universal_caller(f, *a, **b):
     raise HTTP(404, "Object does not exist")
 
 
-class Service:
+class Service(object):
 
     def __init__(self, environment):
         self.environment = environment
@@ -3474,7 +3474,7 @@ class Service:
             return response.json(s)
         self.error()
 
-    class JsonRpcException:
+    class JsonRpcException(object):
         def __init__(self,code,info):
             self.code,self.info = code,info
 
