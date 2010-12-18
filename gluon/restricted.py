@@ -93,7 +93,7 @@ class TicketStorage(Storage):
         return None
 
 
-class RestrictedError(object):
+class RestrictedError(Exception):
     """
     class used to wrap an exception that occurs in the restricted environment
     below. the traceback is used to log the exception and generate a ticket.
