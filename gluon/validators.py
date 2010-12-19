@@ -402,9 +402,9 @@ class IS_IN_DB(Validator):
 
     def build_set(self):
         if self.fields == 'all':
-            fields = [f for f in self.dbset.db[ktable]]
+            fields = [f for f in self.dbset.db[self.ktable]]
         else:
-            fields = [self.dbset.db[ktable][k] for k in self.fields]
+            fields = [self.dbset.db[self.ktable][k] for k in self.fields]
         if self.dbset.db._dbname != 'gae':
             orderby = self.orderby or reduce(lambda a,b:a|b,fields)
             groupby = self.groupby
