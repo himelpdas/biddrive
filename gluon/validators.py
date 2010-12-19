@@ -377,10 +377,10 @@ class IS_IN_DB(Validator):
             ks = regex2.findall(label)
             if not kfield in ks:
                 ks += [kfield]
-            fields = [self.dbset.db[ktable][k] for k in ks]
+            fields = ks
         else:
             ks = [kfield]
-            fields =[f for f in self.dbset.db[ktable]]
+            fields = 'all'
         self.fields = fields
         self.label = label
         self.ktable = ktable
@@ -401,13 +401,17 @@ class IS_IN_DB(Validator):
             self._and.record_id = id
 
     def build_set(self):
+        if self.fields == 'all':
+            fields = [f for f in self.dbset.db[ktable]]
+        else:
+            fields = [self.dbset.db[ktable][k] for k in self.fields]
         if self.dbset.db._dbname != 'gae':
-            orderby = self.orderby or reduce(lambda a,b:a|b,self.fields)
+            orderby = self.orderby or reduce(lambda a,b:a|b,fields)
             groupby = self.groupby
             dd = dict(orderby=orderby, groupby=groupby, cache=self.cache)
-            records = self.dbset.select(*self.fields, **dd)
+            records = self.dbset.select(*fields, **dd)
         else:
-            orderby = self.orderby or reduce(lambda a,b:a|b,(f for f in self.fields if not f.name=='id'))
+            orderby = self.orderby or reduce(lambda a,b:a|b,(f for f in fields if not f.name=='id'))
             dd = dict(orderby=orderby, cache=self.cache)
             records = self.dbset.select(self.dbset.db[self.ktable].ALL, **dd)
         self.theset = [str(r[self.kfield]) for r in records]

@@ -827,7 +827,7 @@ class BaseAdapter(ConnectionPool):
     def truncate(self,table,mode= ' '):
         if table._dbt:
             logfile = self.file_open(table._loggername, 'a')
-        queries = table._db_adapter._truncate(table, mode)
+        queries = table._db._adapter._truncate(table, mode)
         for query in queries:
             if table._dbt:
                 logfile.write(query + '\n')
