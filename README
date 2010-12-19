@@ -940,3 +940,4 @@ recalled
 
 1.90.2
 - pymysql no longer requires ssl (if not used)
+- fixed bug with virtualfields
