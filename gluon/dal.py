@@ -490,7 +490,7 @@ class BaseAdapter(ConnectionPool):
 
         if hasattr(table,'_primarykey'):
             query = '''CREATE TABLE %s(\n    %s,\n    %s) %s''' % \
-               (tablename, fields, self.PRIMARY_KEY(', '.join(table._primarykey),other))
+               (tablename, fields, self.PRIMARY_KEY(', '.join(table._primarykey)),other)
         else:
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
                 (tablename, fields, other)
