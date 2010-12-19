@@ -938,11 +938,9 @@ recalled
 - optional: digitally signed URLs, thanks Brian Meredyk
 - minor bug fixes
 
-1.90.2
+1.90.2-4
 - pymysql no longer requires ssl (if not used)
 - fixed bug with virtualfields
-
-1.90.3
 - fixed bug in truncate (new dal)
 - fixed bug in select with alternate primary key (new dal)
 - fixed bug with IS_IN_DB and self refences (also new dal)
