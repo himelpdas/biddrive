@@ -10,8 +10,13 @@ except ImportError:
     import sha
     sha_new = sha.new
 
+try:
+    import ssl
+    have_ssl = True
+except ImportError:
+    have_ssl = False
+
 import socket
-import ssl
 import struct
 import sys
 import os
@@ -437,6 +442,9 @@ class Connection(object):
 
         if ssl and (ssl.has_key('capath') or ssl.has_key('cipher')):
             raise NotImplementedError, 'ssl options capath and cipher are not supported'
+
+        if ssl and not have_ssl:
+            raise RuntimeError, "missing ssl module"
 
         self.ssl = False
         if ssl:

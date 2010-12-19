@@ -925,7 +925,7 @@ recalled
 1.90.1
 - new DAL (complete rewrite of the web2py DAL is more modular)
 - rewrite has fail safe reload, thanks Jonathan
-- beter CAS with v2 support, thanks Olivier ROCH VILATO
+- better CAS with v2 support, thanks Olivier ROCH VILATO
 - better markmin2latex
 - session.connect(separate=True) to handle many session files, thanks huaiyu wang
 - changed bahvior of impersonate (more secure, can generate form or used as API)
@@ -935,4 +935,8 @@ recalled
 - experimental couchdb support in new dal (only insert, select, update by id)
 - mysql support out of the box via pymysql
 - SQLITABLE(...,headers='labels') thanks Bruno
+- optional: digitally signed URLs, thanks Brian Meredyk
 - minor bug fixes
+
+1.90.2
+- pymysql no longer requires ssl (if not used)
