@@ -12,4 +12,6 @@ if path in sys.path:
     sys.path.remove(path)
 sys.path.insert(0, path)
 
+import gluon.main
+
 wsgiref.handlers.CGIHandler().run(gluon.main.wsgibase)
