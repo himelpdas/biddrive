@@ -3080,6 +3080,9 @@ class Row(dict):
     def __ne__(self,other):
         return not (self == other)
 
+    def __copy__(self):
+        return Row(dict(self))
+
     def as_dict(self,datetime_to_str=False):
         SERIALIZABLE_TYPES = (str,unicode,int,long,float,bool,list)
         d = dict(self)
@@ -3102,12 +3105,13 @@ class Row(dict):
 
 
 def Row_unpickler(data):
-    return Row(marshal.loads(data))
+    return Row(cPickle.loads(data))
 
 def Row_pickler(data):
-    return Row_unpickler, (marshal.dumps(data.as_dict()),)
+    return Row_unpickler, (cPickle.dumps(data.as_dict(datetime_to_str=False)),)
 
 copy_reg.pickle(Row, Row_pickler, Row_unpickler)
+
 
 ################################################################################
 # Everything below should be independent on the specifics of the
@@ -4712,10 +4716,13 @@ class Rows(object):
             return simplejson.dumps(items)
 
 def Rows_unpickler(data):
-    return marshal.loads(data)
+    return cPickle.loads(data)
 
 def Rows_pickler(data):
-    return Rows_unpickler, (marshal.dumps(data.as_list(storage_to_dict=True)),)
+    return Rows_unpickler, \
+        (cPickle.dumps(data.as_list(storage_to_dict=True,
+                                    datetime_to_str=False)),)
+
 copy_reg.pickle(Rows, Rows_pickler, Rows_unpickler)
 
 
