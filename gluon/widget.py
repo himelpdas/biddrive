@@ -719,12 +719,6 @@ def console():
     if options.numthreads is not None and options.minthreads is None:
         options.minthreads = options.numthreads  # legacy
 
-    for path in ('applications', 'deposit', 'site-packages', 'logs'):
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-    sys.path.append(os.path.join(options.folder,'site-packages'))
-
     if not options.cronjob:
         # If we have the applications package or if we should upgrade
         if not os.path.exists('applications/__init__.py'):

@@ -947,3 +947,7 @@ recalled
 
 1.90.5
 - set poll = False in rocket because of poll python thread bug often unfixed, thanks Jonathan
+- fixes issue with crud and reCaptcha
+
+1.90.6
+- fix issue with pickling new dal Row and Rows.

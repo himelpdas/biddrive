@@ -362,21 +362,23 @@ def run_controller_in(controller, function, environment):
 
     folder = environment['request'].folder
     path = os.path.join(folder, 'compiled')
+    badc = 'invalid controller (%s/%s)' % (controller, function)
+    badf = 'invalid function (%s/%s)' % (controller, function)
     if os.path.exists(path):
         filename = os.path.join(path, 'controllers_%s_%s.pyc'
                                  % (controller, function))
         if not os.path.exists(filename):
             raise HTTP(400,
-                       rewrite.thread.routes.error_message % 'invalid function',
-                       web2py_error='invalid function')
+                       rewrite.thread.routes.error_message % badf,
+                       web2py_error=badf)
         restricted(read_pyc(filename), environment, layer=filename)
     elif function == '_TEST':
         filename = os.path.join(folder, 'controllers/%s.py'
                                  % controller)
         if not os.path.exists(filename):
             raise HTTP(400,
-                       rewrite.thread.routes.error_message % 'invalid controller',
-                       web2py_error='invalid controller')
+                       rewrite.thread.routes.error_message % badc,
+                       web2py_error=badc)
         environment['__symbols__'] = environment.keys()
         fp = open(filename, 'r')
         code = fp.read()
@@ -388,16 +390,16 @@ def run_controller_in(controller, function, environment):
                                  % controller)
         if not os.path.exists(filename):
             raise HTTP(400,
-                       rewrite.thread.routes.error_message % 'invalid controller',
-                       web2py_error='invalid controller')
+                       rewrite.thread.routes.error_message % badc,
+                       web2py_error=badc)
         fp = open(filename, 'r')
         code = fp.read()
         fp.close()
         exposed = regex_expose.findall(code)
         if not function in exposed:
             raise HTTP(400,
-                       rewrite.thread.routes.error_message % 'invalid function',
-                       web2py_error='invalid function')
+                       rewrite.thread.routes.error_message % badf,
+                       web2py_error=badf)
         code = "%s\nresponse._vars=response._caller(%s)\n" % (code, function)
         if is_gae:
             layer = filename + ':' + function
@@ -426,6 +428,7 @@ def run_view_in(environment):
     response = environment['response']
     folder = request.folder
     path = os.path.join(folder, 'compiled')
+    badv = 'invalid view (%s)' % response.view
     if not isinstance(response.view, str):
         ccode = parse_template(response.view, os.path.join(folder, 'views'),
                                context=environment)
@@ -448,8 +451,8 @@ def run_view_in(environment):
                 restricted(code, environment, layer=filename)
                 return
         raise HTTP(400,
-                   rewrite.thread.routes.error_message % 'invalid view',
-                   web2py_error='invalid view')
+                   rewrite.thread.routes.error_message % badv,
+                   web2py_error=badv)
     else:
         filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
@@ -457,8 +460,8 @@ def run_view_in(environment):
         filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
             raise HTTP(400,
-                       rewrite.thread.routes.error_message % 'invalid view',
-                       web2py_error='invalid view')
+                       rewrite.thread.routes.error_message % badv,
+                       web2py_error=badv)
         layer = filename
         if is_gae:
             ccode = getcfs(layer, filename,

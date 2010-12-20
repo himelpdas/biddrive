@@ -9,9 +9,8 @@ if '__file__' in globals():
     os.chdir(path)
 else:
     path = os.getcwd() # Seems necessary for py2exe
-if path in sys.path:
-    sys.path.remove(path)
-sys.path.insert(0, path)
+
+sys.path = [path]+[p for p in sys.path if not p==path]
 
 # import gluon.import_all ##### This should be uncommented for py2exe.py
 import gluon.widget

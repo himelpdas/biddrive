@@ -16,6 +16,7 @@ from shutil import rmtree
 from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
 from fileutils import up, listdir, fix_newlines, abspath, recursive_unlink
 from restricted import RestrictedError
+from settings import global_settings
 
 def apath(path='', r=None):
     """
@@ -438,4 +439,24 @@ def upgrade(request, url='http://web2py.com'):
     except Exception,e:
         return False, e
 
+def add_path_first(path):
+    sys.path = [path]+[p for p in sys.path if not p==path]
 
+def create_missing_folders():
+    for path in ('applications', 'deposit', 'site-packages', 'logs'):
+        path = abspath(path, gluon=True)
+        if not os.path.exists(path):
+            os.mkdir(path)
+    paths = (global_settings.gluon_parent, abspath('site-packages', gluon=True), "")
+    [add_path_first(path) for path in paths]
+
+def create_missing_app_folders(request):
+    if not request.env.web2py_runtime_gae:
+        if request.folder not in global_settings.app_folders:
+            for subfolder in ('models', 'views', 'controllers', 'databases',
+                              'modules', 'cron', 'errors', 'sessions',
+                              'languages', 'static', 'private', 'uploads'):
+                path =  os.path.join(request.folder, subfolder)
+                if not os.path.exists(path):
+                    os.mkdir(path)
+            global_settings.app_folders.add(request.folder)

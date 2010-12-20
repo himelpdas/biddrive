@@ -21,10 +21,7 @@ import os
 
 path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(path)
-
-if path in sys.path:
-    sys.path.remove(path)
-sys.path.insert(0, path)
+sys.path = [path]+[p for p in sys.path if not p==path]
 
 import gluon.main
 

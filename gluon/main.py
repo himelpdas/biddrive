@@ -29,6 +29,7 @@ import random
 import string
 from fileutils import abspath
 from settings import global_settings
+from admin import add_path_first, create_missing_folders, create_missing_app_folders
 
 #  calling script has inserted path to script directory into sys.path
 #  applications_parent (path to applications/, site-packages/ etc) defaults to that directory
@@ -46,13 +47,9 @@ from settings import global_settings
 global_settings.gluon_parent = os.environ.get('web2py_path', os.getcwd())
 global_settings.applications_parent = global_settings.gluon_parent
 web2py_path = global_settings.applications_parent # backward compatibility
+global_settings.app_folders = set()
 
-for path in (global_settings.gluon_parent, abspath('site-packages', gluon=True), ""):
-    try:
-        sys.path.remove(path)
-    except ValueError:
-        pass
-    sys.path.insert(0, path)
+create_missing_folders()
 
 # set up logging for subsequent imports
 import logging
@@ -367,13 +364,7 @@ def wsgibase(environ, responder):
                 # build missing folder
                 # ##################################################
 
-                if not request.env.web2py_runtime_gae:
-                    for subfolder in ['models','views','controllers', 'databases',
-                                      'modules','cron','errors','sessions',
-                                      'languages','static','private','uploads']:
-                        path =  os.path.join(request.folder,subfolder)
-                        if not os.path.exists(path):
-                            os.mkdir(path)
+                create_missing_app_folders(request)
 
                 # ##################################################
                 # get the GET and POST data
@@ -682,22 +673,7 @@ class HttpServer(object):
             web2py_path = path
             global_settings.applications_parent = path
             os.chdir(path)
-
-            try:
-                sys.path.remove(path)
-            except ValueError:
-                pass
-            sys.path.insert(0, path)
-            try:
-                sys.path.remove(abspath('site-packages'))
-            except ValueError:
-                pass
-            sys.path.insert(0, abspath('site-packages'))
-            try:
-                sys.path.remove("")
-            except ValueError:
-                pass
-            sys.path.insert(0, "")
+            [add_path_first(p) for p in (path, abspath('site-packages'), "")]
 
         save_password(password, port)
         self.pid_filename = pid_filename
