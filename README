@@ -944,3 +944,6 @@ recalled
 - fixed bug in truncate (new dal)
 - fixed bug in select with alternate primary key (new dal)
 - fixed bug with IS_IN_DB and self refences (also new dal)
+
+1.90.5
+- set poll = False in rocket because of poll python thread bug often unfixed, thanks Jonathan

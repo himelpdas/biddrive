@@ -480,6 +480,7 @@ if hasattr(select, 'poll') and not IS_JYTHON:
         poll = select.poll()
 else:
     poll = None
+poll = False
 
 class Monitor(Thread):
     # Monitor worker class.
