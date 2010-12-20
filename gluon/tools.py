@@ -59,7 +59,7 @@ def validators(*a):
     return b
 
 def call_or_redirect(f,*args):
-    if callable(f):
+    if callable(f):        
         redirect(f(*args))
     else:
         redirect(f)
@@ -2252,6 +2252,7 @@ class Auth(object):
                         request = self.environment.request
                         next = URL(r=request,args=request.args,
                                    vars=request.get_vars)
+                        self.environment.session.flash = self.environment.response.flash
                         return call_or_redirect(self.settings.on_failed_authentication,
                                                 self.settings.login_url + \
                                                     '?_next='+urllib.quote(next))
@@ -2282,6 +2283,7 @@ class Auth(object):
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
+                    self.environment.session.flash = self.environment.response.flash
                     return call_or_redirect(self.settings.on_failed_authentication,
                                             self.settings.login_url + \
                                                 '?_next='+urllib.quote(next)
@@ -2312,6 +2314,7 @@ class Auth(object):
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
+                    self.environment.session.flash = self.environment.response.flash
                     return call_or_redirect(self.settings.on_failed_authentication,
                                             self.settings.login_url + \
                                                 '?_next='+urllib.quote(next)
@@ -2350,6 +2353,7 @@ class Auth(object):
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
+                    self.environment.session.flash = self.environment.response.flash
                     return call_or_redirect(self.settings.on_failed_authentication,
                                             self.settings.login_url +
                                             '?_next='+urllib.quote(next)
