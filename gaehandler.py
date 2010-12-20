@@ -28,12 +28,10 @@ import pickle
 import wsgiref.handlers
 import datetime
 
-
-try:
-    sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
-except ValueError:
-    pass
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+path = os.path.dirname(os.path.abspath(__file__))
+if path in sys.path:
+    sys.path.remove(path)
+sys.path.insert(0, path)
 
 sys.modules['cPickle'] = sys.modules['pickle']
 
