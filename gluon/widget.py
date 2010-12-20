@@ -192,36 +192,38 @@ class web2pyDialog(object):
 
         sticky = Tkinter.NW
 
-        # Password
-        Tkinter.Label(self.root,
-                      text='Choose a password:',
-                      justify=Tkinter.LEFT).grid(row=0,
-                                                 column=0,
-                                                 sticky=sticky)
-
-        self.password = Tkinter.Entry(self.root, show='*')
-        self.password.grid(row=0, column=1, sticky=sticky)
-
         # IP
         Tkinter.Label(self.root,
-                      text='Running from host:',
-                      justify=Tkinter.LEFT).grid(row=1,
+                      text='Server IP:',
+                      justify=Tkinter.LEFT).grid(row=0,
                                                  column=0,
                                                  sticky=sticky)
         self.ip = Tkinter.Entry(self.root)
         self.ip.insert(Tkinter.END, self.options.ip)
-        self.ip.grid(row=1, column=1, sticky=sticky)
+        self.ip.grid(row=0, column=1, sticky=sticky)
 
         # Port
         Tkinter.Label(self.root,
-                      text='Running from port:',
-                      justify=Tkinter.LEFT).grid(row=2,
+                      text='Server Port:',
+                      justify=Tkinter.LEFT).grid(row=1,
                                                  column=0,
                                                  sticky=sticky)
 
         self.port_number = Tkinter.Entry(self.root)
         self.port_number.insert(Tkinter.END, self.options.port)
-        self.port_number.grid(row=2, column=1, sticky=sticky)
+        self.port_number.grid(row=1, column=1, sticky=sticky)
+
+        # Password
+        Tkinter.Label(self.root,
+                      text='Choose Password:',
+                      justify=Tkinter.LEFT).grid(row=2,
+                                                 column=0,
+                                                 sticky=sticky)
+
+        self.password = Tkinter.Entry(self.root, show='*')
+        self.password.bind('<Return>', lambda e: self.start())
+        self.password.focus_force() 
+        self.password.grid(row=2, column=1, sticky=sticky)
 
         # Prepare the canvas
         self.canvas = Tkinter.Canvas(self.root,
