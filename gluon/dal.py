@@ -111,6 +111,7 @@ help(Field)
 ###################################################################################
 
 __all__ = ['DAL', 'Field']
+MAXCHARLENGTH = 512
 
 import re
 import sys
@@ -317,7 +318,7 @@ class ConnectionPool(object):
 
 class BaseAdapter(ConnectionPool):
 
-    maxcharlength = 512
+    maxcharlength = MAXCHARLENGTH
     commit_on_alter_table = False
     support_distributed_transaction = False
     uploads_in_blob = False
@@ -3573,7 +3574,7 @@ class Table(dict):
             field.tablename = field._tablename = tablename
             field.table = field._table = self
             field.db = field._db = self._db
-            field.length = field.length or self._db._adapter.maxcharlength
+            field.length = min(field.length,self._db and self._db._adapter.maxcharlength or MAXCHARLENGTH)
             if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
@@ -4074,7 +4075,7 @@ class Field(Expression):
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
         self.type = type  # 'string', 'integer'
-        self.length = length  # the length of the string (if None overwritten in Table.__init__)
+        self.length = (length==None) and MAXCHARLENGTH or length
         if default==DEFAULT:
             self.default = update or None
         else:

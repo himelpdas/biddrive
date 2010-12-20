@@ -51,7 +51,7 @@ class TestFields(unittest.TestCase):
         # Check that string, text, and password default length is 512
         for typ in ['string', 'password']:
             self.assert_(Field('abc', typ).length == 512,
-                         "Default length for type '%s' is not 512" % typ)
+                         "Default length for type '%s' is not 512 or 255" % typ)
 
         # Check that upload default length is 512
         self.assert_(Field('abc', 'upload').length == 512,
