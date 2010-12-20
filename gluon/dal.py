@@ -317,6 +317,7 @@ class ConnectionPool(object):
 
 class BaseAdapter(ConnectionPool):
 
+    maxcharlength = 512
     commit_on_alter_table = False
     support_distributed_transaction = False
     uploads_in_blob = False
@@ -1343,6 +1344,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
 
 class MySQLAdapter(BaseAdapter):
 
+    maxcharlength = 255
     commit_on_alter_table = True
     support_distributed_transaction = True
     types = {
@@ -3571,6 +3573,7 @@ class Table(dict):
             field.tablename = field._tablename = tablename
             field.table = field._table = self
             field.db = field._db = self._db
+            field.length = field.length or self._db._adapter.maxcharlength
             if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
@@ -4030,7 +4033,7 @@ class Field(Expression):
     string, boolean, integer, double, text, blob,
     date, time, datetime, upload, password
 
-    strings must have a length or 512 by default.
+    strings must have a length of Adater.maxcharlength by default (512 or 255 for mysql)
     fields should have a default or they will be required in SQLFORMs
     the requires argument is used to validate the field input in SQLFORMs
 
@@ -4070,10 +4073,8 @@ class Field(Expression):
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
-        if length == None:
-            length = 512
         self.type = type  # 'string', 'integer'
-        self.length = length  # the length of the string
+        self.length = length  # the length of the string (if None overwritten in Table.__init__)
         if default==DEFAULT:
             self.default = update or None
         else:
