@@ -344,7 +344,7 @@ def wsgibase(environ, responder):
                 # serve file if static
                 # ##################################################
 
-                if not environ['PATH_INFO'] and environ['REQUEST_URI']:
+                if not environ.get('PATH_INFO',None) and environ.get('REQUEST_URI',None):
                     # for fcgi, get path_info and query_string from request_uri
                     items = environ['REQUEST_URI'].split('?')
                     environ['PATH_INFO'] = items[0]
