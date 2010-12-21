@@ -102,9 +102,12 @@ web2py Shell {{=request.env.web2py_version}}
   <textarea class="prompt" id="caret" readonly="readonly" rows="4">&gt;&gt;&gt;</textarea>
   <textarea class="prompt" name="statement" id="statement" rows="4"></textarea>
 </form>
-<i>Using the shell may lock the database to other users of this app</i><br/>
-<a href="{{=URL(r=request,f='unlock',args=app)}}">unlock and commit</a>
-<a href="{{=URL(r=request,f='unlock',args=app,vars=dict(rollback=''))}}">unlock and rollback</a><br/>
+<i>
+Using the shell may lock the database to other users of this app.<br/>
+Each db statement is automatically committed.<br/>
+Creating new tables dynamically is not allowed.<br/>
+Models are automatically imported in the shell.<br/>
+</i>
 <script type="text/javascript">
 var bShellScrolling=0
 $(document).ready(function(){$('#statement').focus();})

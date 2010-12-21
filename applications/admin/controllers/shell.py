@@ -1,5 +1,8 @@
 import sys
 import cStringIO
+import gluon.contrib.shell
+import code, thread
+from gluon.shell import env
 
 if DEMO_MODE:
     session.flash = T('disabled in demo mode')
@@ -8,32 +11,15 @@ if DEMO_MODE:
 FE=10**9
 
 def index():
-    app = request.args[0]
+    app = request.args(0) or 'admin'
     reset()
     return dict(app=app)
-
-def __shell(app, response):
-    import code, thread
-    from gluon.shell import env
-    (shell, lock) = (code.InteractiveInterpreter(), thread.allocate_lock())
-    shell.locals = env(app,True)
-    response._custom_commit = lambda: None
-    response._custom_rollback = lambda: None
-    return (shell, lock)
-
-def unlock():
-    app = request.args[0]
-    (shell, lock) = cache.ram('shell/'+app,lambda a=app,r=response:__shell(a,r),FE)
-    if request.vars.rollback:
-        shell.runsource("SQLDB.close_all_instances(SQLDB.rollback)")
-    else:
-        shell.runsource("SQLDB.close_all_instances(SQLDB.commit)")
-    redirect(URL('default','design',args=app))
 
 def callback():    
     app = request.args[0]
     command = request.vars.statement
     escape = command[:1]!='!'
+    session['history:'+app] = session.get('history:'+app,gluon.contrib.shell.History())
     if not escape:
         command = command[1:]
     if command == '%reset':
@@ -41,26 +27,17 @@ def callback():
         return '*** reset ***'
     elif command[0] == '%':
         try:
-            command=session.shell_history[int(command[1:])]
+            command=session['commands:'+app][int(command[1:])]
         except ValueError:
             return ''
-    session.shell_history.append(command)
-    (shell, lock) = cache.ram('shell/'+app,lambda a=app,r=response:__shell(a,r),FE)
-    try:
-        lock.acquire()
-        (oldstdout, oldstderr) = (sys.stdout, sys.stderr)
-        sys.stdout = sys.stderr = cStringIO.StringIO()
-        shell.runsource(command)
-    finally:
-        output = sys.stdout.getvalue()
-        lock.release()
-        (sys.stdout, sys.stderr) = (oldstdout, oldstderr)
-    k = len(session.shell_history) - 1
+    session['commands:'+app].append(command)
+    output = gluon.contrib.shell.run(session.history,command,env(app,True))
+    k = len(session['commands:'+app]) - 1
     output = PRE(output)
     return TABLE(TR('In[%i]:'%k,PRE(command)),TR('Out[%i]:'%k,output))
 
 def reset():
-    app = request.args[0]
-    session.shell_history=[]
-    cache.ram('shell/'+app,lambda a=app,r=response:__shell(a,r),0)
+    app = request.args(0) or 'admin'
+    session['commands:'+app] = []
+    session['history:'+app] = gluon.contrib.shell.History()
     return 'done'
