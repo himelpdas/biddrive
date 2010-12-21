@@ -23,7 +23,8 @@
 #   that remain separable from, or merely link (or bind by name) to the interfaces of,
 #   the Work and Derivative Works thereof."
 #
-# In fact this file is Apache and it is separatble from the rest of web2py.
+# In fact this file is Apache-licensed and it is separable from the rest of web2py.
+
 
 """
 An interactive, stateful AJAX shell that runs Python code on the server.
