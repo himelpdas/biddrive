@@ -775,6 +775,8 @@ class SQLFORM(FORM):
                     continue
                 elif field.type == 'upload':
                     inp = UploadWidget.represent(field, default, upload)
+                elif field.type == 'boolean':
+                    inp = self.widgets.boolean.widget(field, default, _disabled=True)
                 else:
                     inp = field.formatter(default)
             elif hasattr(field, 'widget') and field.widget:
