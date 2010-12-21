@@ -135,7 +135,8 @@ def URL(
     anchor='',
     extension=None,
     env=None,
-    hmac_key=None
+    hmac_key=None,
+    hash_vars=True
     ):
     """
     generate a relative URL
@@ -163,6 +164,9 @@ def URL(
     :param vars: any variables (optional)
     :param anchor: anchorname, without # (optional)
     :param hmac_key: key to use when generating hmac signature(optional)
+    :param hash_vars: which of the vars to include in our hmac signature
+        True (default) - hash all vars, False - hash none of the vars,
+        iterable - hash only the included vars ['key1','key2']
 
     :raises SyntaxError: when no application, controller or function is
         available
@@ -196,22 +200,44 @@ def URL(
         args = [args]
     
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
-    m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
-                                   for key in sorted(vars.iterkeys())) or ''
+    
 
     if hmac_key:
         # need to generate an hmac signature of the vars & args so can later
         # verify the user hasn't messed with anything
-        # first join all the args & vars into one long string
+        
         m_args = '/%s/%s/%s%s' % (application, controller, function, other)        
         # get rid of var _sig if present
         if vars.has_key('_signature'): vars.pop('_signature')
-        # sort so we've got a way to ensure later we're 
+        
+        #how many of the vars should we include in our hash?
+        if hash_vars == True:
+            #include them all
+            m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
+                                   for key in sorted(vars.iterkeys())) or ''
+        elif hash_vars == False:
+            #include none of them
+            m_vars = ''
+        else:
+            #include just those specified
+            if hash_vars and not isinstance(hash_vars, (list, tuple)):
+                hash_vars = [hash_vars]
+            #the sorted() is there to ensure we make our string in a predictable order
+            #and can reliable recreate later during verification
+            m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
+                                   for key in sorted(hash_vars)) or ''
+        
+        
         # re-assembling the same way during hash authentication
         message = m_args+'?'+m_vars
+        
         sig = hmac.new(hmac_key,message, hashlib.sha1).hexdigest()
-        m_vars = m_vars+(m_vars and '&' or '')+'_signature='+sig
-
+        #add the signature into vars
+        vars['_signature'] = sig
+    
+    m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
+                                   for key in sorted(vars.iterkeys())) or ''
+                                   
     if extension:
         function += '.'+extension
     if anchor:
@@ -225,13 +251,16 @@ def URL(
         raise SyntaxError, 'CRLF Injection Detected'
     return XML(rewrite.filter_out(url, env))
     
-def verifyURL(request, hmac_key):
+def verifyURL(request, hmac_key, hash_vars=True):
     """
     Verifies that a request's args & vars have not been tampered with by the user
     
     :param request: web2py's request object
     :param hmac_key: the key to authenticate with, must be the same one previously 
-                     used when calling URL()
+                    used when calling URL()
+    :param hash_vars: which vars to include in our hashing. (Optional)
+                    Only uses the 1st value currently (it's really a hack for the _gURL.verify lambda)
+                    True (or undefined) means all, False none, an iterable just the specified keys
 
     do not call directly. Use instead:
 
@@ -241,26 +270,60 @@ def verifyURL(request, hmac_key):
     """
     
     if not request.get_vars.has_key('_signature'):
-        return False
+        return False #no signature in the request URL
 
-    # get our sig from request.get_vars
+    # get our sig from request.get_vars for later comparison
     original_sig = request.get_vars._signature
-    # remove the sig var since it is not part of our generated hmac
-    request.get_vars.pop('_signature')
-        
+    
     # now generate a new hmac for the remaining args & vars
-    # first join all the args & vars into one long string
     vars, args = request.get_vars, request.args
-    m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
-                                   for key in sorted(vars.iterkeys())) or ''
+    
+    # remove the signature var since it was not part of our signed message
+    request.get_vars.pop('_signature')
+    
+    # join all the args & vars into one long string
+    
+    #always include all of the args
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
     m_args = '/%s/%s/%s%s' % (request.application, 
                               request.controller, 
                               request.function, other)
-    # sort so we've got a way to ensure later we're re-assembling 
-    # the same way during hash authentication
+    
+    #but only include those vars specified (allows more flexibility for use with
+    #forms or ajax)
+    
+        #which of the vars are to be included?
+    if hash_vars == True:
+        #include them all
+        m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
+                               for key in sorted(vars.iterkeys())) or ''
+    elif hash_vars == False:
+        #include none of them
+        m_vars = ''
+    else:
+        #include just those specified
+        #wrap in a try - if the desired vars have been removed it'll fail
+        try:
+            if hash_vars and not isinstance(hash_vars, (list, tuple)):
+                hash_vars = [hash_vars]
+            #the sorted() is there to ensure we make our string is in a predictable order
+            #and can be sure we're using the same order as in URL
+            m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
+                               for key in sorted(hash_vars)) or ''
+        except:
+            #user has removed one of our vars! Immediate fail
+            return False
+    #build the full messase string with both args & vars   
     message = m_args+'?'+m_vars
-    sig = hmac.new(hmac_key, message, hashlib.sha1).hexdigest()    
+    #hash with the hmac_key provided
+    sig = hmac.new(str(hmac_key), message, hashlib.sha1).hexdigest()    
+    
+    #put _signature back in get_vars just incase a second call to URL.verify is performed 
+    #(otherwise it'll immediately return false)
+    request.get_vars['_signature'] = original_sig
+    
+    #return whether or not the signature in the request matched the one we just generated
+    #(I.E. was the message the same as the one we originally signed)
     return original_sig == sig
     
 def _gURL(request):
@@ -285,7 +348,10 @@ def _gURL(request):
                 args = []
         return URL(*args, **kwargs)
     _URL.__doc__ = URL.__doc__
-    _URL.verify = lambda hmac_key, request=request: verifyURL(request,hmac_key)
+    
+    #probably ugly work-around for the lambda call. Want for hash_vars to be an optional argument
+    _URL.verify = lambda request, hmac_key, *hash_vars: verifyURL(request, hmac_key, *hash_vars)
+    
     return _URL
 
 
