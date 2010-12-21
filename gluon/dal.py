@@ -112,6 +112,7 @@ help(Field)
 
 __all__ = ['DAL', 'Field']
 MAXCHARLENGTH = 512
+INFINITE = 10**10
 
 import re
 import sys
@@ -318,7 +319,7 @@ class ConnectionPool(object):
 
 class BaseAdapter(ConnectionPool):
 
-    maxcharlength = MAXCHARLENGTH
+    maxcharlength = INFINITE
     commit_on_alter_table = False
     support_distributed_transaction = False
     uploads_in_blob = False
@@ -3578,7 +3579,7 @@ class Table(dict):
             field.tablename = field._tablename = tablename
             field.table = field._table = self
             field.db = field._db = self._db
-            field.length = min(field.length,self._db and self._db._adapter.maxcharlength or MAXCHARLENGTH)
+            field.length = min(field.length,self._db and self._db._adapter.maxcharlength)
             if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
