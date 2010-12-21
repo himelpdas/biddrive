@@ -15,6 +15,15 @@
 # limitations under the License.
 #
 # Modified by Massimo Di Pierro so it works with and without GAE with web2py
+# the modified version of this file is still released under the original Apache license
+# and it is not released under the web2py license.
+#
+# This should be compatible with the Apache license since it states:
+# "For the purposes of this License, Derivative Works shall not include works 
+#   that remain separable from, or merely link (or bind by name) to the interfaces of,
+#   the Work and Derivative Works thereof."
+#
+# In fact this file is Apache and it is separatble from the rest of web2py.
 
 """
 An interactive, stateful AJAX shell that runs Python code on the server.
@@ -143,6 +152,7 @@ class History:
         """
         if name in self.unpicklable_names:
             self.unpicklable_names.remove(name)
+
 
 def run(history, statement, env={}):
     """
