@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-This file is part of web2py Web Framework (Copyrighted, 2007-2010).
-Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>.
-License: GPL v2
+This file is part of the web2py Web Framework
+Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
+License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 The widget is called from web2py.
 """
@@ -40,7 +40,7 @@ except NameError:
     BaseException = Exception
 
 ProgramName = 'web2py Enterprise Web Framework'
-ProgramAuthor = 'Created by Massimo Di Pierro, Copyright 2007-2010'
+ProgramAuthor = 'Created by Massimo Di Pierro, Copyright 2007-2011'
 versioninfo = open('VERSION', 'r')
 ProgramVersion = versioninfo.read().strip()
 versioninfo.close()

@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-This file is part of web2py Web Framework (Copyrighted, 2007-2010).
+This file is part of the web2py Web Framework
 Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu>,
 limodou <limodou@gmail.com> and srackham <srackham@gmail.com>.
-License: GPL v2
+License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 """
 

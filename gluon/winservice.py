@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-This file is part of web2py Web Framework (Copyrighted, 2007-2010).
+This file is part of the web2py Web Framework
 Developed by Massimo Di Pierro <mdipierro@cs.depaul.edu> and
 Limodou <limodou@gmail.com>.
-License: GPL v2
+License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 This makes uses of the pywin32 package
 (http://sourceforge.net/projects/pywin32/).

@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
+This file is part of the web2py Web Framework
+Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
+License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
+
 WSGI wrapper for mod_python. Requires Python 2.2 or greater.
 Part of CherryPy mut modified by Massimo Di Pierro (2008) for web2py
 

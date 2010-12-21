@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-This file is part of the web2py Web Framework (Copyrighted, 2007-2010).
-License: GPL v2
+This file is part of the web2py Web Framework (Copyrighted, 2007-2011).
+License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 Author: Thadeus Burgess
 
