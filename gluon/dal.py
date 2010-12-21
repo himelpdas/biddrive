@@ -820,6 +820,8 @@ class BaseAdapter(ConnectionPool):
         for fieldname in other.fields:
             other[fieldname] = copy.copy(other[fieldname])
             other[fieldname]._tablename = alias
+            other[fieldname].tablename = alias
+            other[fieldname].table = other
         table._db[alias] = table
         return other
 
