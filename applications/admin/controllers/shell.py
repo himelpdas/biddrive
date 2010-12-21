@@ -19,7 +19,7 @@ def callback():
     app = request.args[0]
     command = request.vars.statement
     escape = command[:1]!='!'
-    session['history:'+app] = session.get('history:'+app,gluon.contrib.shell.History())
+    history = session['history:'+app] = session.get('history:'+app,gluon.contrib.shell.History())
     if not escape:
         command = command[1:]
     if command == '%reset':
@@ -31,7 +31,8 @@ def callback():
         except ValueError:
             return ''
     session['commands:'+app].append(command)
-    output = gluon.contrib.shell.run(session.history,command,env(app,True))
+    environ=env(app,True)
+    output = gluon.contrib.shell.run(history,command,environ)
     k = len(session['commands:'+app]) - 1
     output = PRE(output)
     return TABLE(TR('In[%i]:'%k,PRE(command)),TR('Out[%i]:'%k,output))

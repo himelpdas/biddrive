@@ -47,12 +47,13 @@ skip_files: |
  (.*/RCS/.*)|
  (\..*)|
  ((admin|examples|welcome)\.tar)|
- (applications/(admin|examples)/.*)|
  (applications/.*?/databases/.*) |
  (applications/.*?/errors/.*)|
  (applications/.*?/cache/.*)|
  (applications/.*?/sessions/.*)|
  )$
+
+# (applications/(admin|examples)/.*)|
 
 builtins:
 - remote_api: on
