@@ -1,4 +1,4 @@
-#!/bin/env python
+!/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -4418,7 +4418,7 @@ class Set(object):
                     continue
                 uploadfolder = field.uploadfolder
                 if not uploadfolder:
-                    uploadfolder = os.path.join(self.db._folder, '..', 'uploads')
+                    uploadfolder = os.path.join(self.db._adapter.folder, '..', 'uploads')
                 if field.uploadseparate:
                     items = oldname.split('.')
                     uploadfolder = os.path.join(uploadfolder,
