@@ -135,11 +135,12 @@ def main():
                       default=False,
                       dest='profiler',
                       help='user profiler')
+    servers = ', '.join(x for x in dir(Servers) if not x[0]=='_')
     parser.add_option('-s',
                       '--server',
                       default='rocket',
                       dest='server',
-                      help='server name %s' % dir(Servers))
+                      help='server name (%s)' % servers)
     parser.add_option('-i',
                       '--ip',
                       default='127.0.0.1',
