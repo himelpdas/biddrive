@@ -956,3 +956,6 @@ recalled
 - LICENSE CHANGE FROM GPLv2 to LGPLv3
 - URL(...,hash_vars=...) allows to specify which vars need to be signed
 - fixed bug with aliasing in new DAL
+
+1.91.2-1.91.4
+- fixed a problem with deplyment on GAE
