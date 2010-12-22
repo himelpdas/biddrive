@@ -951,3 +951,8 @@ recalled
 
 1.90.6
 - fix issue with pickling new dal Row and Rows.
+
+1.91.1
+- LICENSE CHANGE FROM GPLv2 to LGPLv3
+- URL(...,hash_vars=...) allows to specify which vars need to be signed
+- fixed bug with aliasing in new DAL
