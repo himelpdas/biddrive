@@ -443,15 +443,16 @@ def add_path_first(path):
     sys.path = [path]+[p for p in sys.path if not p==path]
 
 def create_missing_folders():
-    for path in ('applications', 'deposit', 'site-packages', 'logs'):
-        path = abspath(path, gluon=True)
-        if not os.path.exists(path):
-            os.mkdir(path)
+    if not global_settings.web2py_runtime_gae:
+        for path in ('applications', 'deposit', 'site-packages', 'logs'):
+            path = abspath(path, gluon=True)
+            if not os.path.exists(path):
+                os.mkdir(path)
     paths = (global_settings.gluon_parent, abspath('site-packages', gluon=True), "")
     [add_path_first(path) for path in paths]
 
 def create_missing_app_folders(request):
-    if not request.env.web2py_runtime_gae:
+    if not global_settings.web2py_runtime_gae:
         if request.folder not in global_settings.app_folders:
             for subfolder in ('models', 'views', 'controllers', 'databases',
                               'modules', 'cron', 'errors', 'sessions',

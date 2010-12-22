@@ -49,8 +49,7 @@ global_settings.applications_parent = global_settings.gluon_parent
 web2py_path = global_settings.applications_parent # backward compatibility
 global_settings.app_folders = set()
 
-if not global_settings.web2py_runtime_gae:
-    create_missing_folders()
+create_missing_folders()
 
 # set up logging for subsequent imports
 import logging
@@ -365,8 +364,7 @@ def wsgibase(environ, responder):
                 # build missing folder
                 # ##################################################
 
-                if not global_settings.web2py_runtime_gae:
-                    create_missing_app_folders(request)
+                create_missing_app_folders(request)
 
                 # ##################################################
                 # get the GET and POST data
