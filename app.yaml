@@ -46,14 +46,13 @@ skip_files: |
  (.*\.py[co])|
  (.*/RCS/.*)|
  (\..*)|
+ (applications/(admin|examples)/.*)|	
  ((admin|examples|welcome)\.tar)|
  (applications/.*?/databases/.*) |
  (applications/.*?/errors/.*)|
  (applications/.*?/cache/.*)|
  (applications/.*?/sessions/.*)|
  )$
-
-# (applications/(admin|examples)/.*)|
 
 builtins:
 - remote_api: on
