@@ -3299,6 +3299,8 @@ class DAL(dict):
             credential_decoder = lambda cred: cred
         else:
             credential_decoder = lambda cred: urllib.unquote(cred)
+        if folder:
+            self.set_folder(folder)
         self._uri = uri
         self._pool_size = pool_size
         self._db_codec = db_codec
