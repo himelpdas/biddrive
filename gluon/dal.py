@@ -3386,7 +3386,7 @@ class DAL(dict):
                                     trigger_name=trigger_name,
                                     sequence_name=sequence_name))
         # db magic
-        if self._uri == 'None':
+        if self._uri in (None,'None'):
             return t
 
         t._create_references()
@@ -3672,6 +3672,7 @@ class Table(dict):
                 else:
                     self[k].notnull = True
 
+
     def _create_references(self):
         self._referenced_by = []
         for fieldname in self.fields:
@@ -3828,7 +3829,9 @@ class Table(dict):
             elif update and ofield.update!=None:
                 new_fields.append((ofield,ofield.update))
             elif ofield.compute:
-                new_fields.append((ofield,ofield.compute(Row(fields))))
+                try:
+                    new_fields.append((ofield,ofield.compute(Row(fields))))
+                except KeyError: pass
             elif not update and ofield.required:
                 raise SyntaxError,'Table: missing required field: %s' % name
         return new_fields
@@ -4215,8 +4218,10 @@ class Field(Expression):
                 pass
             elif self.uploadfolder:
                 path = self.uploadfolder
-            else:
+            elif self.db._adapter.folder:
                 path = os.path.join(self.db._adapter.folder, '..', 'uploads')
+            else:
+                raise RuntimeError, "you must specify a Field(...,uploadfolder=...)"
             if self.uploadseparate:
                 path = os.path.join(path,"%s.%s" % (self._tablename, self.name),uuid_key[:2])
             if not os.path.exists(path):
