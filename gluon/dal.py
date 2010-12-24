@@ -3072,7 +3072,8 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[10:] in field.db.tables:
         referenced = field.db[field_type[10:]]
-        field.represent = lambda id, r=referenced, f=ff: f(r, id)
+        def repr_ref(id, r=referenced, f=ff): f(r, id)
+        field.represent = field.represent or repr_ref
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field.db,referenced.id,
                                            referenced._format)
@@ -3088,7 +3089,7 @@ def sqlhtml_validators(field):
         def list_ref_repr(ids, r=referenced, f=ff):            
             refs = r._db(r.id.belongs(ids)).select(r.id)
             return (refs and ', '.join(str(f(r,ref.id)) for ref in refs) or '')
-        field.represent = list_ref_repr
+        field.represent = field.represent or list_ref_repr
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field.db,referenced.id,
                                            referenced._format,multiple=True)
@@ -3098,6 +3099,9 @@ def sqlhtml_validators(field):
         if field.unique:
             requires._and = validators.IS_NOT_IN_DB(field.db,field)
         return requires
+    elif field_type.startswith('list:'):
+        def repr_list(values): return', '.join(str(v) for v in (values or []))
+        field.represent = field.represent or repr_list
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field.db,field))
     sff = ['in', 'do', 'da', 'ti', 'de', 'bo']
