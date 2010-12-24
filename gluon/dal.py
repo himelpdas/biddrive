@@ -3092,9 +3092,12 @@ def sqlhtml_validators(field):
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field.db,referenced.id,
                                            referenced._format,multiple=True)
-            if field.unique:
-                requires._and = validators.IS_NOT_IN_DB(field.db,field)
-            return requires
+        else:
+            requires = validators.IS_IN_DB(field.db,referenced.id,
+                                           multiple=True)
+        if field.unique:
+            requires._and = validators.IS_NOT_IN_DB(field.db,field)
+        return requires
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field.db,field))
     sff = ['in', 'do', 'da', 'ti', 'de', 'bo']
