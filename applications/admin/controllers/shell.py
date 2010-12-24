@@ -34,8 +34,9 @@ def callback():
     environ=env(app,True)
     output = gluon.contrib.shell.run(history,command,environ)
     k = len(session['commands:'+app]) - 1
-    output = PRE(output)
-    return TABLE(TR('In[%i]:'%k,PRE(command)),TR('Out[%i]:'%k,output))
+    #output = PRE(output)
+    #return TABLE(TR('In[%i]:'%k,PRE(command)),TR('Out[%i]:'%k,output))
+    return 'In [%i] : %s%s\n' % (k + 1, command, output)
 
 def reset():
     app = request.args(0) or 'admin'

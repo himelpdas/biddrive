@@ -537,7 +537,7 @@ h3 {
   padding: 0.3em;
   -moz-border-radius: 0.5em;
   border-radius: 0.5em;
-  font-size: 0.8em;
+  font-size: 13px;
   text-transform: none;
 }
 
@@ -801,8 +801,11 @@ h3.currentapp {
   display: block;
   padding: 4px 0 4px 40px;
   background: url(../images/folder_sm.png) no-repeat;
-  font-weight: bold;
   margin: 0.5em 0;
+}
+
+.folder .file {
+  font-weight: bold;
 }
 
 .sublist {
@@ -883,7 +886,7 @@ ul#snapshot > li {
 .ticket h3 {
   margin-top: 0.5em;
   background: url(../images/ticket_section.png) no-repeat;
-  padding: 0.5em 0 0.2em 2em;
+  padding: 13px;
   text-transform: uppercase;
 }
 
@@ -938,8 +941,120 @@ ul#snapshot > li {
   clear: both;
 }
 
-/* IE7 hacks */
+/* Shell */
+
+.shell #wrapper {
+  margin: 0 auto;
+}
+
+.shell #output {
+  width: 75%;
+  height:30em;
+}
+
+.shell #output,
+.shell #output pre {
+  color: #e8953c;
+  background: white;
+  border: 1px solid #333;  
+}
+
+.shell .prompt, 
+.shell #output, 
+.shell pre,
+.shell #caret {
+  font-family: monospace;
+}
+
+.shell .prompt, 
+.shell #output,
+.shell #caret {
+  font-size: 10pt;
+  padding: 6px;
+  padding-right: 0em;
+}
+
+.shell #shellwrapper {
+  background: white;
+  border: 1px solid #333;  
+  color: #e8953c;
+  width: 75%;
+  padding: 6px;
+  -moz-border-radius: 1em;
+  border-radius: 1em;
+  margin: 1em 0
+}
+
+.shell #caret {
+  float: left;
+}
+
+.shell .prompt {
+  color: #e8953c;
+  width: 85%;
+  height: 4em;
+}
+
+.shell .prompt, .shell #output {
+  // border: none;
+  overflow: auto;
+}
+
+.shell table, tr, td {
+  text-align: left;
+  vertical-align: top;
+}
+
+.shell pre {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: #333333;
+}
+
+.shell .message {
+  color: #8AD;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.shell .error {
+  color: #F44;
+}
+
+.shell .username {
+  font-weight: bold;
+}
+
+.shell dd{
+  color: #000033;
+}
+
+.shell dt{
+  color: #333333;
+}
+
+.shell #ajax-status {
+  font-weight: bold;
+}
+
+.shell .processing {
+  background-image: url('../images/spinner.gif');
+}
+
+.shell #caret {
+  width: 2.5em;
+  margin-right: 0px;
+  padding-right: 0px;
+  border-right: 0px;
+}
+
+
+/* ie7 hacks */
 
 .sublist {
   zoom: 1;
 }
+
+.untranslated { background-color: #FFCC00; }
+.translated { background-color: white; }
