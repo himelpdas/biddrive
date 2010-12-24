@@ -25,7 +25,6 @@ from htmlentitydefs import name2codepoint
 from contrib.markmin.markmin2html import render
 
 from storage import Storage
-from validators import *
 from highlight import highlight
 from utils import web2py_uuid
 
@@ -145,9 +144,24 @@ def URL(
 
         >>> str(URL(a='a', c='c', f='f', args=['x', 'y', 'z'],
         ...     vars={'p':1, 'q':2}, anchor='1'))
-        '/a/c/f/x/y/z#1?q=2&p=1'
+        '/a/c/f/x/y/z?p=1&q=2#1'
 
-    generates a url \"/a/c/f\" corresponding to application a, controller c
+        >>> str(URL(a='a', c='c', f='f', args=['x', 'y', 'z'],
+        ...     vars={'p':(1,3), 'q':2}, anchor='1'))
+        '/a/c/f/x/y/z?p=1&p=3&q=2#1'
+
+        >>> str(URL(a='a', c='c', f='f', args=['x', 'y', 'z'],
+        ...     vars={'p':(3,1), 'q':2}, anchor='1'))
+        '/a/c/f/x/y/z?p=3&p=1&q=2#1'
+
+        >>> str(URL(a='a', c='c', f='f', anchor='1+2'))
+        '/a/c/f#1%2B2'
+
+        >>> str(URL(a='a', c='c', f='f', args=['x', 'y', 'z'],
+        ...     vars={'p':(1,3), 'q':2}, anchor='1', hmac_key='key'))
+        '/a/c/f/x/y/z?p=1&p=3&q=2&_signature=5d06bb8a4a6093dd325da2ee591c35c61afbd3c6#1'
+
+    generates a url '/a/c/f' corresponding to application a, controller c
     and function f. If r=request is passed, a, c, f are set, respectively,
     to r.application, r.controller, r.function.
 
@@ -179,7 +193,7 @@ def URL(
         controller = r.controller
         function = r.function
         env = r.env
-        if extension==None and r.extension != 'html':
+        if extension is None and r.extension != 'html':
             extension = r.extension
     if a:
         application = a
@@ -189,59 +203,55 @@ def URL(
         if not isinstance(f, str):
             function = f.__name__
         elif '.' in f:
-            function, extension = f.split('.',1)
+            function, extension = f.split('.', 1)
         else:
             function = f
 
     if not (application and controller and function):
         raise SyntaxError, 'not enough information to build the url'
     
-    if args != [] and not isinstance(args, (list, tuple)):
+    if not isinstance(args, (list, tuple)):
         args = [args]
-    
+
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
-    
+
+    list_vars = []
+    for (key, vals) in sorted(vars.items()):
+        if not isinstance(vals, (list, tuple)):
+            vals = [vals]
+        for val in vals:
+            list_vars.append((key, val))
 
     if hmac_key:
-        # need to generate an hmac signature of the vars & args so can later
+        # generate an hmac signature of the vars & args so can later
         # verify the user hasn't messed with anything
-        
-        m_args = '/%s/%s/%s%s' % (application, controller, function, other)        
+
+        h_args = '/%s/%s/%s%s' % (application, controller, function, other)        
         # get rid of var _sig if present
         if vars.has_key('_signature'): vars.pop('_signature')
         
-        #how many of the vars should we include in our hash?
-        if hash_vars == True:
-            #include them all
-            m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
-                                   for key in sorted(vars.iterkeys())) or ''
-        elif hash_vars == False:
-            #include none of them
-            m_vars = ''
-        else:
-            #include just those specified
+        # how many of the vars should we include in our hash?
+        if hash_vars is True:       # include them all
+            h_vars = list_vars  
+        elif hash_vars is False:    # include none of them
+            h_vars = ''         
+        else:                       # include just those specified
             if hash_vars and not isinstance(hash_vars, (list, tuple)):
                 hash_vars = [hash_vars]
-            #the sorted() is there to ensure we make our string in a predictable order
-            #and can reliable recreate later during verification
-            m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
-                                   for key in sorted(hash_vars)) or ''
-        
-        
+            h_vars = [(k, v) for (k, v) in list_vars if k in hash_vars]
+
         # re-assembling the same way during hash authentication
-        message = m_args+'?'+m_vars
+        message = h_args + '?' + urllib.urlencode(sorted(h_vars))
         
         sig = hmac.new(hmac_key,message, hashlib.sha1).hexdigest()
-        #add the signature into vars
+        # add the signature into vars
         vars['_signature'] = sig
+        list_vars.append(('_signature', sig))
     
-    m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
-                                   for key in sorted(vars.iterkeys())) or ''
-                                   
     if extension:
-        function += '.'+extension
+        function += '.' + extension
     if vars:
-        other += '?%s' % m_vars
+        other += '?%s' % urllib.urlencode(list_vars)
     if anchor:
         other += '#' + urllib.quote(str(anchor))
 
@@ -267,10 +277,27 @@ def verifyURL(request, hmac_key, hash_vars=True):
     URL.verify(hmac_key='...')
 
     the key has to match the one used to generate the URL.
+
+        >>> r = Storage()
+        >>> gv = Storage(p=(1,3),q=2,_signature='5d06bb8a4a6093dd325da2ee591c35c61afbd3c6')
+        >>> r.update(dict(application='a', controller='c', function='f'))
+        >>> r['args'] = ['x', 'y', 'z']
+        >>> r['get_vars'] = gv
+        >>> verifyURL(r, 'key')
+        True
+        >>> verifyURL(r, 'kay')
+        False
+        >>> r.get_vars.p = (3, 1)
+        >>> verifyURL(r, 'key')
+        True
+        >>> r.get_vars.p = (3, 2)
+        >>> verifyURL(r, 'key')
+        False
+
     """
     
     if not request.get_vars.has_key('_signature'):
-        return False #no signature in the request URL
+        return False # no signature in the request URL
 
     # get our sig from request.get_vars for later comparison
     original_sig = request.get_vars._signature
@@ -283,47 +310,47 @@ def verifyURL(request, hmac_key, hash_vars=True):
     
     # join all the args & vars into one long string
     
-    #always include all of the args
+    # always include all of the args
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
-    m_args = '/%s/%s/%s%s' % (request.application, 
+    h_args = '/%s/%s/%s%s' % (request.application, 
                               request.controller, 
                               request.function, other)
     
-    #but only include those vars specified (allows more flexibility for use with
-    #forms or ajax)
+    # but only include those vars specified (allows more flexibility for use with
+    # forms or ajax)
     
-        #which of the vars are to be included?
-    if hash_vars == True:
-        #include them all
-        m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
-                               for key in sorted(vars.iterkeys())) or ''
-    elif hash_vars == False:
-        #include none of them
-        m_vars = ''
-    else:
-        #include just those specified
-        #wrap in a try - if the desired vars have been removed it'll fail
+    list_vars = []
+    for (key, vals) in sorted(vars.items()):
+        if not isinstance(vals, (list, tuple)):
+            vals = [vals]
+        for val in vals:
+            list_vars.append((key, val))
+
+    # which of the vars are to be included?
+    if hash_vars is True:       # include them all
+        h_vars = list_vars
+    elif hash_vars is False:    # include none of them
+        h_vars = ''
+    else:                       # include just those specified
+        # wrap in a try - if the desired vars have been removed it'll fail
         try:
             if hash_vars and not isinstance(hash_vars, (list, tuple)):
                 hash_vars = [hash_vars]
-            #the sorted() is there to ensure we make our string is in a predictable order
-            #and can be sure we're using the same order as in URL
-            m_vars = vars and '&'.join(urllib.urlencode({key:vars[key]}) \
-                               for key in sorted(hash_vars)) or ''
+            h_vars = [(k, v) for (k, v) in list_vars if k in hash_vars]
         except:
-            #user has removed one of our vars! Immediate fail
+            # user has removed one of our vars! Immediate fail
             return False
-    #build the full messase string with both args & vars   
-    message = m_args+'?'+m_vars
-    #hash with the hmac_key provided
+    # build the full message string with both args & vars   
+    message = h_args + '?' + urllib.urlencode(sorted(h_vars))
+    # hash with the hmac_key provided
     sig = hmac.new(str(hmac_key), message, hashlib.sha1).hexdigest()    
     
-    #put _signature back in get_vars just incase a second call to URL.verify is performed 
-    #(otherwise it'll immediately return false)
+    # put _signature back in get_vars just in case a second call to URL.verify is performed 
+    # (otherwise it'll immediately return false)
     request.get_vars['_signature'] = original_sig
     
-    #return whether or not the signature in the request matched the one we just generated
-    #(I.E. was the message the same as the one we originally signed)
+    # return whether or not the signature in the request matched the one we just generated
+    # (I.E. was the message the same as the one we originally signed)
     return original_sig == sig
     
 def _gURL(request):
@@ -349,7 +376,7 @@ def _gURL(request):
         return URL(*args, **kwargs)
     _URL.__doc__ = URL.__doc__
     
-    #probably ugly work-around for the lambda call. Want for hash_vars to be an optional argument
+    # probably ugly work-around for the lambda call. Want for hash_vars to be an optional argument
     _URL.verify = lambda request, hmac_key, *hash_vars: verifyURL(request, hmac_key, *hash_vars)
     
     return _URL
@@ -468,7 +495,7 @@ class XML(XmlComponent):
 
     def elements(self, *args, **kargs):
         """
-        to be considered experimental since the behaviour of this method is quiestinable
+        to be considered experimental since the behavior of this method is questionable
         another options could be TAG(self.text).elements(*args,**kargs)
         """
         return []
@@ -1114,10 +1141,10 @@ class SCRIPT(DIV):
         co = '\n'.join([str(component) for component in
                        self.components])
         if co:
-            #<script [attributes]><!--//--><![CDATA[//><!--
-            #script body
-            #//--><!]]></script>
-            #return '<%s%s><!--//--><![CDATA[//><!--\n%s\n//--><!]]></%s>' % (self.tag, fa, co, self.tag)
+            # <script [attributes]><!--//--><![CDATA[//><!--
+            # script body
+            # //--><!]]></script>
+            # return '<%s%s><!--//--><![CDATA[//><!--\n%s\n//--><!]]></%s>' % (self.tag, fa, co, self.tag)
             return '<%s%s><!--\n%s\n//--></%s>' % (self.tag, fa, co, self.tag)
         else:
             return DIV.xml(self)
@@ -1133,9 +1160,9 @@ class STYLE(DIV):
         co = '\n'.join([str(component) for component in
                        self.components])
         if co:
-            #<style [attributes]><!--/*--><![CDATA[/*><!--*/
-            #style body
-            #/*]]>*/--></style>
+            # <style [attributes]><!--/*--><![CDATA[/*><!--*/
+            # style body
+            # /*]]>*/--></style>
             return '<%s%s><!--/*--><![CDATA[/*><!--*/\n%s\n/*]]>*/--></%s>' % (self.tag, fa, co, self.tag)
         else:
             return DIV.xml(self)
@@ -1438,7 +1465,7 @@ class INPUT(DIV):
         # # this only changes value, not _value
 
         name = self['_name']
-        if name == None or name == '':
+        if name is None or name == '':
             return True
         name = str(name)
 
@@ -1479,7 +1506,7 @@ class INPUT(DIV):
                 _value = self['_value'] = 'on'
             if not value:
                 value = []
-            elif value == True:
+            elif value is True:
                 value = [_value]
             elif not isinstance(value,(list,tuple)):
                 value = str(value).split('|')
@@ -1561,6 +1588,7 @@ class SELECT(INPUT):
     """
     example::
 
+        >>> from validators import IS_IN_SET
         >>> SELECT('yes', 'no', _name='selector', value='yes',
         ...    requires=IS_IN_SET(['yes', 'no'])).xml()
         '<select name=\"selector\"><option selected=\"selected\" value=\"yes\">yes</option><option value=\"no\">no</option></select>'
@@ -1622,6 +1650,7 @@ class FORM(DIV):
     """
     example::
 
+        >>> from validators import IS_NOT_EMPTY
         >>> form=FORM(INPUT(_name=\"test\", requires=IS_NOT_EMPTY()))
         >>> form.xml()
         '<form action=\"\" enctype=\"multipart/form-data\" method=\"post\"><input name=\"test\" type=\"text\" /></form>'
@@ -1785,7 +1814,7 @@ class BEAUTIFY(DIV):
                             filtered_key = keyfilter(key)
                         else:
                             filtered_key = str(key)
-                        if filtered_key == None:
+                        if filtered_key is None:
                             continue
                         value = c[key]
                         if type(value) == types.LambdaType:
@@ -1994,7 +2023,7 @@ class web2pyHTMLParser(HTMLParser):
             if parent_tagname[:len(tagname)]==tagname: break
 
 def markdown_serializer(text,tag=None,attr={}):
-    if tag==None: return re.sub('\s+',' ',text)
+    if tag is None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '#'+text+'\n\n'
     if tag=='h2': return '#'*2+text+'\n\n'
@@ -2009,7 +2038,7 @@ def markdown_serializer(text,tag=None,attr={}):
     return text
 
 def markmin_serializer(text,tag=None,attr={}):
-    if tag==None: return re.sub('\s+',' ',text)
+    if tag is None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '# '+text+'\n\n'
     if tag=='h2': return '#'*2+' '+text+'\n\n'
@@ -2055,7 +2084,7 @@ class MARKMIN(XmlComponent):
 
     def elements(self, *args, **kargs):
         """
-        to be considered experimental since the behaviour of this method is quiestinable
+        to be considered experimental since the behavior of this method is questionable
         another options could be TAG(self.text).elements(*args,**kargs)
         """
         return [self.text]
