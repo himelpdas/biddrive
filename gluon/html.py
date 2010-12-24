@@ -240,10 +240,10 @@ def URL(
                                    
     if extension:
         function += '.'+extension
-    if anchor:
-        other += '#' + urllib.quote(str(anchor))
     if vars:
         other += '?%s' % m_vars
+    if anchor:
+        other += '#' + urllib.quote(str(anchor))
 
     url = '/%s/%s/%s%s' % (application, controller, function, other)
     
