@@ -4258,7 +4258,7 @@ class Field(Expression):
         except (TypeError, AttributeError):
             filename = name
         if isinstance(self.uploadfield, str):  # ## if file is in DB
-            return (filename, cStringIO.StringIO(row[self.uploadfield]))
+            return (filename, cStringIO.StringIO(row[self.uploadfield] or ''))
         elif isinstance(self.uploadfield,Field):
             blob_uploadfield_name = self.uploadfield.uploadfield
             query = self.uploadfield == name
