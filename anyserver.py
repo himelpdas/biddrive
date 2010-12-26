@@ -68,6 +68,7 @@ class Servers:
 
     @staticmethod
     def gevent(app,address, **options):
+        from gevent import monkey; monkey.patch_all() 
         from gevent import wsgi
         wsgi.WSGIServer(address, app).serve_forever()
 
