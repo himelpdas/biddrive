@@ -407,7 +407,7 @@ class BaseAdapter(ConnectionPool):
             k = field.name
             if isinstance(field.type,SQLCustomType):
                 ftype = field.type.native or field.type.type
-            elif field.type[:10] == 'reference ':
+            elif field.type.startswith('reference'):
                 referenced = field.type[10:].strip()
                 constraint_name = self.constraint_name(tablename, field.name)
                 if hasattr(table,'_primarykey'):
@@ -416,7 +416,7 @@ class BaseAdapter(ConnectionPool):
                     rfield = rtable[rfieldname]
                     # must be PK reference or unique
                     if rfieldname in rtable._primarykey or rfield.unique:
-                        ftype = self.types[rfield.type[:9]] %dict(length=rfield.length)
+                        ftype = self.types[rfield.type[:9]] % dict(length=rfield.length)
                         # multicolumn primary key reference?
                         if not rfield.unique and len(rtable._primarykey)>1 :
                             # then it has to be a table level FK
@@ -498,7 +498,7 @@ class BaseAdapter(ConnectionPool):
             query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
                 (tablename, fields, other)
 
-        if self.uri[:10] == 'sqlite:///':
+        if self.uri.startswith('sqlite:///'):
             path_encoding = sys.getfilesystemencoding() or \
                 locale.getdefaultlocale()[1]
             dbpath = self.uri[9:self.uri.rfind('/')]\
