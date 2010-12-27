@@ -361,7 +361,37 @@ def wsgibase(environ, responder):
                     response.stream(static_file, request=request)
 
                 # ##################################################
-                # build missing folder
+                # fill in request items
+                # ##################################################
+
+                request.client = get_client(request.env)
+                request.folder = os.path.join(request.env.applications_parent,
+                        'applications', request.application) + '/'
+                request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
+                request.cid = request.env.http_web2py_component_element
+            
+                # ##################################################
+                # access the requested application
+                # ##################################################
+            
+                if not os.path.exists(request.folder):
+                    if request.application == rewrite.thread.routes.default_application:
+                        request.application = 'welcome'
+                        redirect(Url(r=request))
+                    elif rewrite.thread.routes.error_handler:
+                        redirect(Url(rewrite.thread.routes.error_handler['application'],
+                                     rewrite.thread.routes.error_handler['controller'],
+                                     rewrite.thread.routes.error_handler['function'],
+                                     args=request.application))
+                    else:
+                        raise HTTP(400,
+                                   rewrite.thread.routes.error_message % 'invalid request',
+                                   web2py_error='invalid application')
+                request.url = Url(r=request, args=request.args,
+                                       extension=request.raw_extension)
+
+                # ##################################################
+                # build missing folders
                 # ##################################################
 
                 create_missing_app_folders(request)
@@ -822,15 +852,15 @@ def parse_url(request, environ):
     request.function = \
         regex_space.sub('_', match.group('f') or rewrite.thread.routes.default_function)
     group_e = match.group('e')
-    raw_extension = group_e and regex_space.sub('_',group_e) or None
-    request.extension = raw_extension or 'html'
+    request.raw_extension = group_e and regex_space.sub('_', group_e) or None
+    request.extension = request.raw_extension or 'html'
     request.raw_args = match.group('r')
     request.args = List([])
     if request.application in rewrite.thread.routes.routes_apps_raw:
         # application is responsible for parsing args
         request.args = None
     elif request.raw_args:
-        match = regex_args.match(request.raw_args.replace(' ','_'))
+        match = regex_args.match(request.raw_args.replace(' ', '_'))
         if match:
             group_s = match.group('s')
             request.args = \
@@ -839,29 +869,4 @@ def parse_url(request, environ):
             raise HTTP(400,
                        rewrite.thread.routes.error_message % 'invalid request',
                        web2py_error='invalid path')
-    request.client = get_client(request.env)
-    request.folder = os.path.join(request.env.applications_parent,
-            'applications', request.application) + '/'
-    request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
-    request.cid = request.env.http_web2py_component_element
-
-    # ##################################################
-    # access the requested application
-    # ##################################################
-
-    if not os.path.exists(request.folder):
-        if request.application == rewrite.thread.routes.default_application:
-            request.application = 'welcome'
-            redirect(Url(r=request))
-        elif rewrite.thread.routes.error_handler:
-            redirect(Url(rewrite.thread.routes.error_handler['application'],
-                         rewrite.thread.routes.error_handler['controller'],
-                         rewrite.thread.routes.error_handler['function'],
-                         args=request.application))
-        else:
-            raise HTTP(400,
-                       rewrite.thread.routes.error_message % 'invalid request',
-                       web2py_error='invalid application')
-    request.url = Url(r=request,args=request.args,
-                           extension=raw_extension)
     return None
