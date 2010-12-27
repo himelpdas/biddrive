@@ -948,11 +948,17 @@ class BaseAdapter(ConnectionPool):
                 join = [join]
             joint = [t._tablename for t in join if not isinstance(t,Expression)]
             joinon = [t for t in join if isinstance(t, Expression)]
+            #patch join+left patch (solves problem with ordering in left joins)
+            tables_to_merge={}
+            [tables_to_merge.update(dict.fromkeys(self.tables(t))) for t in joinon]
             joinont = [t.first._tablename for t in joinon]
-            excluded = [t for t in tablenames if not t in joint + joinont]
-            sql_t = ', '.join(excluded)
+            [tables_to_merge.pop(t) for t in joinont if t in tables_to_merge]
+            important_tablenames = joint + joinont + tables_to_merge.keys()
+            excluded = [t for t in tablenames if not t in important_tablenames ]
+            sql_t = ', '.join([ t for t in excluded + tables_to_merge.keys()])
             if joint:
-                sql_t += ' %s %s' % (command, ', '.join(joint))
+                sql_t += ' %s %s' % (command, ','.join([t for t in joint]))
+            #/patch join+left patch
             for t in joinon:
                 sql_t += ' %s %s' % (command, str(t))
         else:
