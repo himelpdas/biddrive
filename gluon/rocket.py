@@ -11,7 +11,7 @@ import logging
 import platform
 
 # Define Constants
-VERSION = '1.2.1'
+VERSION = '1.2.1a'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
@@ -699,7 +699,6 @@ class ThreadPool(object):
 
         for thread in self.threads:
             thread.setDaemon(True)
-            thread._pool = self
             thread.start()
 
     def stop(self):
@@ -755,6 +754,7 @@ class ThreadPool(object):
                                        self.monitor_queue)
 
             self.threads.add(worker)
+            worker.setDaemon(True)
             worker.start()
 
     def shrink(self, amount=1):
