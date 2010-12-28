@@ -127,6 +127,7 @@ def site():
 
     elif file_or_appurl and request.vars.filename:
         # fetch an application via URL or file upload
+        f = None
         if request.vars.appurl is not '':
             try:
                 f = urllib.urlopen(request.vars.appurl)
@@ -137,15 +138,16 @@ def site():
         elif request.vars.file is not '':
             f = request.vars.file.file
             fname = request.vars.file.filename
-
-        appname = cleanpath(request.vars.filename).replace('.', '_')
-        installed = app_install(appname, f, request, fname,
-                                overwrite=request.vars.overwrite_check)
-        if installed:
+        
+        if f:
+            appname = cleanpath(request.vars.filename).replace('.', '_')
+            installed = app_install(appname, f, request, fname,
+                                    overwrite=request.vars.overwrite_check)
+        if f and installed:
             msg = 'application %(appname)s installed with md5sum: %(digest)s'
             session.flash = T(msg, dict(appname=appname,
                                         digest=md5_hash(installed)))
-        elif request.vars.overwrite_check:
+        elif f and request.vars.overwrite_check:
             msg = 'unable to install application "%(appname)s"'
             session.flash = T(msg, dict(appname=request.vars.filename))
 
