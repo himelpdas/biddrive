@@ -2614,7 +2614,20 @@ class GAENoSQLAdapter(NoSQLAdapter):
         self.db(table.id > 0).delete()
 
     def select_raw(self,query,fields=[],attributes={}):
-        tablename = self.get_table(query)
+        new_fields = []
+        for item in fields:
+            if isinstance(item,SQLALL):
+                new_fields += item.table
+            else:
+                new_fields.append(item)
+        fields = new_fields
+        if query:
+            tablename = self.get_table(query)
+        elif fields:
+            tablename = fields[0].tablename
+            query = fields[0].table.id>0
+        else:
+            raise SyntaxError, "Unable to determine a tablename"
         tableobj = self.db[tablename]._tableobj
         items = tableobj.all()
         filters = self.expand(query)
