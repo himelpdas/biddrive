@@ -4771,7 +4771,7 @@ class Rows(object):
 
         for record in self:
             row = []
-            for col in self.colnames:
+            for col in colnames:
                 if not table_field.match(col):
                     row.append(record._extra[col])
                 else:
