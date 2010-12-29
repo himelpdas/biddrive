@@ -3060,7 +3060,7 @@ def sqlhtml_validators(field):
         return []
     requires=[]
     def ff(r,id):
-        row=r[id]
+        row=r(id)
         if not row:
             return id
         elif hasattr(r, '_format') and isinstance(r._format,str):

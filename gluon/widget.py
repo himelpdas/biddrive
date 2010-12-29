@@ -684,7 +684,7 @@ def console():
                       '--args',
                       action='store',
                       dest='args',
-                      default='',
+                      default=None,
                       help='should be followed by a list of arguments to be passed to script, to be used with -S, -A must be the last option')
 
     msg = 'allows multiple interfaces to be served'
@@ -772,7 +772,8 @@ def start(cron=True):
 
     # ## if -S start interactive shell (also no cron)
     if options.shell:
-        sys.args = options.args
+        if options.args!=None:
+            sys.argv[:] = options.args
         run(options.shell, plain=options.plain,
             import_models=options.import_models, startfile=options.run)
         return

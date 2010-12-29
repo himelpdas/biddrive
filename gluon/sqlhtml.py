@@ -1313,13 +1313,13 @@ class SQLTABLE(TABLE):
                     ref = field.type[10:]
                     try:
                         href = linkto(r, 'reference', ref)
-                    except TypeError:
+                    except TypeError,e:
                         href = '%s/%s/%s' % (linkto, ref, r_old)
                         if ref.find('.') >= 0:
                             tref,fref = ref.split('.')
                             if hasattr(sqlrows.db[tref],'_primarykey'):
                                 href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:ur}))
-                    r = A(r, _href=href)
+                    r = A(str(r), _href=str(href))
                 elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \
