@@ -11,7 +11,7 @@ import logging
 import platform
 
 # Define Constants
-VERSION = '1.2.1a'
+VERSION = '1.2.2'
 SERVER_NAME = socket.gethostname()
 SERVER_SOFTWARE = 'Rocket %s' % VERSION
 HTTP_SERVER_SOFTWARE = '%s Python/%s' % (SERVER_SOFTWARE, sys.version.split(' ')[0])
@@ -89,19 +89,21 @@ except ImportError:
     has_ssl = False
 # package imports removed in monolithic build
 
-# Constants
-SOCKET_METHODS_USED = [
-    'sendall',
-    'settimeout',
-    'send',
-    'shutdown',
-    'makefile',
-    'fileno',
-    'gettimeout',
-    'setblocking'
-]
-
 class Connection(object):
+    __slots__ = [
+        'setblocking',
+        'sendall',
+        'shutdown',
+        'makefile',
+        'fileno',
+        'client_addr',
+        'client_port',
+        'server_port',
+        'socket',
+        'start_time',
+        'ssl',
+        'secure'
+    ]
 
     def __init__(self, sock_tuple, port, secure=False):
         self.client_addr, self.client_port = sock_tuple[1]
@@ -119,8 +121,11 @@ class Connection(object):
 
         self.socket.settimeout(SOCKET_TIMEOUT)
 
-        for x in SOCKET_METHODS_USED:
-            self.__dict__[x] = self.socket.__getattribute__(x)
+        self.sendall = self.socket.sendall
+        self.shutdown = self.socket.shutdown
+        self.fileno = self.socket.fileno
+        self.makefile = self.socket.makefile
+        self.setblocking = self.socket.setblocking
 
     def close(self):
         if hasattr(self.socket, '_sock'):
@@ -231,8 +236,7 @@ class Listener(Thread):
 
             self.ready = True
 
-    def wrap_socket(self, sock_pair):
-        sock, client = sock_pair
+    def wrap_socket(self, sock):
         try:
             sock = ssl.wrap_socket(sock,
                                    keyfile = self.interface[2],
@@ -244,8 +248,9 @@ class Listener(Thread):
             # secure socket. We don't do anything because it will be detected
             # by Worker and dealt with appropriately.
             pass
+        
+        return sock
 
-        return (sock, client)
 
     def run(self):
         if not self.ready:
@@ -256,11 +261,14 @@ class Listener(Thread):
             self.err_log.debug('Entering main loop.')
         while True:
             try:
-                sock = self.listener.accept()
+                sock, addr = self.listener.accept()
+
                 if self.secure:
                     sock = self.wrap_socket(sock)
 
-                self.active_queue.put((sock, self.interface[1], self.secure))
+                self.active_queue.put(((sock, addr),
+                                       self.interface[1],
+                                       self.secure))
 
             except socket.timeout:
                 # socket.timeout will be raised every THREAD_STOP_CHECK_INTERVAL
@@ -302,7 +310,6 @@ log = logging.getLogger('Rocket')
 log.addHandler(NullHandler())
 
 class Rocket(object):
-
     """The Rocket class is responsible for handling threads and accepting and
     dispatching connections."""
 
@@ -387,7 +394,7 @@ class Rocket(object):
         self._threadpool.start()
 
         # Start our monitor thread
-        self._monitor.daemon = True
+        self._monitor.setDaemon(True)
         self._monitor.start()
 
         # I know that EXPR and A or B is bad but I'm keeping it for Py2.4
@@ -472,16 +479,6 @@ from threading import Thread
 # Import Package Modules
 # package imports removed in monolithic build
 
-# Setup Polling if supported (but it doesn't work well on Jython)
-if hasattr(select, 'poll') and not IS_JYTHON:
-    try:
-        poll = select.epoll()
-    except:
-        poll = select.poll()
-else:
-    poll = None
-poll = False
-
 class Monitor(Thread):
     # Monitor worker class.
 
@@ -508,7 +505,6 @@ class Monitor(Thread):
         self.log.addHandler(NullHandler())
 
         self.active = True
-        poll_dict = dict()
         conn_list = list()
         list_changed = False
 
@@ -543,26 +539,19 @@ class Monitor(Thread):
                 if __debug__:
                     self.log.debug('Adding connection to monitor list.')
 
-                if poll:
-                    poll.register(c)
-                    poll_dict.update({c.fileno():c})
-
                 self.connections.add(c)
                 list_changed = True
 
             # Wait on those connections
             self.log.debug('Blocking on connections')
-            if poll:
-                readable = [poll_dict[x[0]] for x in poll.poll(THREAD_STOP_CHECK_INTERVAL)]
-            else:
-                if list_changed:
-                    conn_list = list(self.connections)
-                    list_changed = False
+            if list_changed:
+                conn_list = list(self.connections)
+                list_changed = False
 
-                readable = select.select(conn_list,
-                                         [],
-                                         [],
-                                         THREAD_STOP_CHECK_INTERVAL)[0]
+            readable = select.select(conn_list,
+                                     [],
+                                     [],
+                                     THREAD_STOP_CHECK_INTERVAL)[0]
 
             # If we have any readable connections, put them back
             for r in readable:
@@ -577,11 +566,7 @@ class Monitor(Thread):
 
                 r.start_time = time.time()
                 self.active_queue.put(r)
-
-                if poll:
-                    poll.unregister(r)
-                    del poll_dict[r.fileno()]
-
+                
                 self.connections.remove(r)
                 list_changed = True
 
@@ -598,13 +583,10 @@ class Monitor(Thread):
                         # "EXPR and A or B" kept for Py2.4 compatibility
                         data = (c.client_addr, c.server_port, c.ssl and '*' or '')
                         self.log.debug('Flushing stale connection: %s:%i%s' % data)
-                    if poll:
-                        poll.unregister(r)
-                        del poll_dict[r.fileno()]
 
                     self.connections.remove(c)
                     list_changed = True
-
+                    
                     try:
                         c.close()
                     finally:
@@ -615,7 +597,7 @@ class Monitor(Thread):
 
         if __debug__:
             self.log.debug('Flushing waiting connections')
-
+            
         for c in self.connections:
             try:
                 c.close()
@@ -624,10 +606,10 @@ class Monitor(Thread):
 
         if __debug__:
             self.log.debug('Flushing queued connections')
-
+            
         while not self.monitor_queue.empty():
             c = self.monitor_queue.get()
-
+            
             if c is None:
                 continue
 
@@ -651,7 +633,7 @@ import logging
 log = logging.getLogger('Rocket.Errors.ThreadPool')
 log.addHandler(NullHandler())
 
-class ThreadPool(object):
+class ThreadPool:
     """The ThreadPool class is a container class for all the worker threads. It
     manages the number of actively running threads."""
 
@@ -675,6 +657,8 @@ class ThreadPool(object):
         self.max_threads = max_threads
         self.monitor_queue = monitor_queue
         self.stop_server = False
+        
+        # TODO - Optimize this based on some real-world usage data
         self.grow_threshold = int(max_threads/10) + 2
 
         if not isinstance(app_info, dict):
@@ -682,7 +666,7 @@ class ThreadPool(object):
 
         app_info.update(max_threads=max_threads,
                         min_threads=min_threads)
-
+        
         self.app_info = app_info
 
         self.threads = set()
@@ -696,7 +680,7 @@ class ThreadPool(object):
         self.stop_server = False
         if __debug__:
             log.debug("Starting threads.")
-
+            
         for thread in self.threads:
             thread.setDaemon(True)
             thread.start()
@@ -704,7 +688,7 @@ class ThreadPool(object):
     def stop(self):
         if __debug__:
             log.debug("Stopping threads.")
-
+            
         self.stop_server = True
 
         # Prompt the threads to die
@@ -744,7 +728,7 @@ class ThreadPool(object):
             amount = self.max_threads
 
         amount = min([amount, self.max_threads - len(self.threads)])
-
+        
         if __debug__:
             log.debug("Growing by %i." % amount)
 
@@ -753,8 +737,8 @@ class ThreadPool(object):
                                        self.active_queue,
                                        self.monitor_queue)
 
-            self.threads.add(worker)
             worker.setDaemon(True)
+            self.threads.add(worker)
             worker.start()
 
     def shrink(self, amount=1):
@@ -822,6 +806,20 @@ except ImportError:
 
 # Define Constants
 re_SLASH = re.compile('%2F', re.IGNORECASE)
+re_REQUEST_LINE = re.compile(r"""^
+(?P<method>OPTIONS|GET|HEAD|POST|PUT|DELETE|TRACE|CONNECT)   # Request Method
+\                                                            # (single space)
+(
+    (?P<scheme>[^:/]+)                                       # Scheme
+    (://)  #
+    (?P<host>[^/]+)                                          # Host
+)? #
+(?P<path>(\*|/[^ \?]*))                                      # Path
+(\? (?P<query_string>[^ ]+))?                                # Query String
+\                                                            # (single space)
+(?P<protocol>HTTPS?/1\.[01])                                 # Protocol
+$
+""", re.X)
 LOG_LINE = '%(client_ip)s - "%(request_line)s" - %(status)s %(size)s'
 RESPONSE = '''\
 HTTP/1.1 %s
@@ -830,6 +828,8 @@ Content-Type: %s
 
 %s
 '''
+if IS_JYTHON:
+    HTTP_METHODS = set(['OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT'])
 
 ###
 # The Headers and FileWrapper classes are ripped straight from the Python
@@ -856,7 +856,7 @@ def _formatparam(param, value=None, quote=1):
     else:
         return param
 
-class Headers(object):
+class Headers:
     def __init__(self,headers):
         if type(headers) is not type([]):
             raise TypeError("Headers must be a list of name/value tuples")
@@ -927,8 +927,7 @@ class Headers(object):
                 parts.append(_formatparam(k.replace('_', '-'), v))
         self._headers.append((_name, "; ".join(parts)))
 
-class FileWrapper(object):
-
+class FileWrapper:
     """Wrapper to convert file-like objects to iterables"""
 
     def __init__(self, filelike, blksize=BUF_SIZE):
@@ -953,7 +952,6 @@ class FileWrapper(object):
         raise StopIteration
 
 class Worker(Thread):
-
     """The Worker class is a base class responsible for receiving connections
     and (a subclass) will run an application to process the the connection """
 
@@ -1123,7 +1121,7 @@ class Worker(Thread):
                 d = d.decode('ISO-8859-1')
 
             if d == '\r\n':
-                # Allow an extra NEWLINE at the beginner per HTTP 1.1 spec
+                # Allow an extra NEWLINE at the beginning per HTTP 1.1 spec
                 if __debug__:
                     self.err_log.debug('Client sent newline')
 
@@ -1133,19 +1131,46 @@ class Worker(Thread):
         except socket.timeout:
             raise SocketTimeout("Socket timed out before request.")
 
-        if d.strip() == '':
+        d = d.strip()
+
+        if not d:
             if __debug__:
                 self.err_log.debug('Client did not send a recognizable request.')
             raise SocketClosed('Client closed socket.')
 
-        try:
-            self.request_line = d.strip()
-            method, uri, proto = self.request_line.split(' ')
-            assert proto.startswith('HTTP')
-        except ValueError:
+        self.request_line = d
+
+        # NOTE: I've replaced the traditional method of procedurally breaking
+        # apart the request line with a (rather unsightly) regular expression.
+        # However, Java's regexp support sucks so bad that it actually takes
+        # longer in Jython to process the regexp than procedurally. So I've
+        # left the old code here for Jython's sake...for now.
+        if IS_JYTHON:
+            return self._read_request_line_jython(d)
+
+        match = re_REQUEST_LINE.match(d)
+
+        if not match:
             self.send_response('400 Bad Request')
             raise BadRequest
-        except AssertionError:
+
+        req = match.groupdict()
+        for k,v in req.items():
+            if not v:
+                req[k] = ""
+
+        return req
+
+    def _read_request_line_jython(self, d):
+        d = d.strip()
+        try:
+            method, uri, proto = d.split(' ')
+            if not proto.startswith('HTTP') or \
+               proto[-3:] not in ('1.0', '1.1') or \
+               method not in HTTP_METHODS:
+                self.send_response('400 Bad Request')
+                raise BadRequest
+        except ValueError:
             self.send_response('400 Bad Request')
             raise BadRequest
 
@@ -1174,18 +1199,19 @@ class Worker(Thread):
                    host=host)
         return req
 
+
     def read_headers(self, sock_file):
-        headers = Headers([])
+        headers = dict()
         l = sock_file.readline()
 
         lname = None
         lval = None
         while True:
-            try:
-                if PY3K:
+            if PY3K:
+                try:
                     l = str(l, 'ISO-8859-1')
-            except UnicodeDecodeError:
-                self.err_log.warning('Client sent invalid header: ' + repr(l))
+                except UnicodeDecodeError:
+                    self.err_log.warning('Client sent invalid header: ' + repr(l))
 
             if l == '\r\n':
                 break
@@ -1198,7 +1224,7 @@ class Worker(Thread):
                 l = l.split(':', 1)
                 # HTTP header names are us-ascii encoded
 
-                lname = l[0].strip().replace('-', '_')
+                lname = l[0].strip().upper().replace('-', '_')
                 lval = l[-1].strip()
             headers[str(lname)] = str(lval)
 
@@ -1218,34 +1244,38 @@ class SocketClosed(Exception):
     pass
 
 class ChunkedReader(object):
-
     def __init__(self, sock_file):
         self.stream = sock_file
-        self.buffer = None
-        self.buffer_size = 0
+        self.chunk_size = 0
 
-    def _read_chunk(self):
-        if not self.buffer or self.buffer.tell() == self.buffer_size:
-            try:
-                self.buffer_size = int(self.stream.readline().strip(), 16)
-            except ValueError:
-                self.buffer_size = 0
-
-            if self.buffer_size:
-                self.buffer = StringIO(self.stream.read(self.buffer_size))
-
-            self.stream.read(2) # flush out the remaining \r\n
-
+    def _read_header(self):
+        chunk_len = ""
+        try:
+            while "" == chunk_len:
+                chunk_len = self.stream.readline().strip()
+            return int(chunk_len, 16)
+        except ValueError:
+            return 0
 
     def read(self, size):
         data = b('')
+        chunk_size = self.chunk_size
         while size:
-            self._read_chunk()
-            if not self.buffer_size:
+            if not chunk_size:
+                chunk_size = self._read_header()
+
+            if size < chunk_size:
+                data += self.stream.read(size)
+                chunk_size -= size
                 break
-            read_size = min(size, self.buffer_size)
-            data += self.buffer.read(read_size)
-            size -= read_size
+            else:
+                if not chunk_size:
+                    break
+                data += self.stream.read(chunk_size)
+                size -= chunk_size
+                chunk_size = 0
+
+        self.chunk_size = chunk_size
         return data
 
     def readline(self):
@@ -1290,6 +1320,7 @@ else:
 NEWLINE = b('\r\n')
 HEADER_RESPONSE = '''HTTP/1.1 %s\r\n%s'''
 BASE_ENV = {'SERVER_NAME': SERVER_NAME,
+            'SCRIPT_NAME': '',  # Direct call WSGI does not need a name
             'wsgi.errors': sys.stderr,
             'wsgi.version': (1, 0),
             'wsgi.multiprocess': False,
@@ -1323,28 +1354,28 @@ class WSGIWorker(Worker):
         # Grab the request line
         request = self.read_request_line(sock_file)
 
-        # Grab the headers
-        self.headers = dict([(str('HTTP_'+k.upper()), v) for k, v in self.read_headers(sock_file).items()])
-
         # Copy the Base Environment
-        environ = dict(self.base_environ)
+        environ = self.base_environ.copy()
+
+        # Grab the headers
+        for k, v in self.read_headers(sock_file).items():
+            environ[str('HTTP_'+k)] = v
 
         # Add CGI Variables
         environ['REQUEST_METHOD'] = request['method']
         environ['PATH_INFO'] = request['path']
         environ['SERVER_PROTOCOL'] = request['protocol']
-        environ['SCRIPT_NAME'] = '' # Direct call WSGI does not need a name
         environ['SERVER_PORT'] = str(conn.server_port)
         environ['REMOTE_PORT'] = str(conn.client_port)
         environ['REMOTE_ADDR'] = str(conn.client_addr)
         environ['QUERY_STRING'] = request['query_string']
-        if 'HTTP_CONTENT_LENGTH' in self.headers:
-            environ['CONTENT_LENGTH'] = self.headers['HTTP_CONTENT_LENGTH']
-        if 'HTTP_CONTENT_TYPE' in self.headers:
-            environ['CONTENT_TYPE'] = self.headers['HTTP_CONTENT_TYPE']
+        if 'HTTP_CONTENT_LENGTH' in environ:
+            environ['CONTENT_LENGTH'] = environ['HTTP_CONTENT_LENGTH']
+        if 'HTTP_CONTENT_TYPE' in environ:
+            environ['CONTENT_TYPE'] = environ['HTTP_CONTENT_TYPE']
 
         # Save the request method for later
-        self.request_method = environ['REQUEST_METHOD'].upper()
+        self.request_method = environ['REQUEST_METHOD']
 
         # Add Dynamic WSGI Variables
         if conn.ssl:
@@ -1352,18 +1383,17 @@ class WSGIWorker(Worker):
             environ['HTTPS'] = 'on'
         else:
             environ['wsgi.url_scheme'] = 'http'
-        if self.headers.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked':
+
+        if environ.get('HTTP_TRANSFER_ENCODING', '') == 'chunked':
             environ['wsgi.input'] = ChunkedReader(sock_file)
         else:
             environ['wsgi.input'] = sock_file
-
-        # Add HTTP Headers
-        environ.update(self.headers)
 
         return environ
 
     def send_headers(self, data, sections):
         h_set = self.header_set
+
         # Does the app want us to send output chunked?
         self.chunked = h_set.get('transfer-encoding', '').lower() == 'chunked'
 
@@ -1395,7 +1425,7 @@ class WSGIWorker(Worker):
 
         if 'connection' not in h_set:
             # If the application did not provide a connection header, fill it in
-            client_conn = self.headers.get('HTTP_CONNECTION', '').lower()
+            client_conn = self.environ.get('HTTP_CONNECTION', '').lower()
             if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.1':
                 # HTTP = 1.1 defaults to keep-alive connections
                 if client_conn:
@@ -1493,12 +1523,13 @@ class WSGIWorker(Worker):
             self.environ = environ = self.build_environ(sock_file, conn)
 
             # Handle 100 Continue
-            if environ.get('HTTP_EXPECT', '').lower() == '100-continue':
+            if environ.get('HTTP_EXPECT', '') == '100-continue':
                 res = environ['SERVER_PROTOCOL'] + ' 100 Continue\r\n\r\n'
                 conn.sendall(b(res))
 
             # Send it to our WSGI application
             output = self.app(environ, self.start_response)
+
             if not hasattr(output, '__len__') and not hasattr(output, '__iter__'):
                 self.error = ('500 Internal Server Error',
                               'WSGI applications must return a list or '
