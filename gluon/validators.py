@@ -554,8 +554,7 @@ class IS_INT_IN_RANGE(Validator):
         self.minimum = self.maximum = None
         if minimum is None:
             if maximum is None:
-                if error_message is None:
-                    self.error_message = error_message or 'enter an integer'
+                self.error_message = error_message or 'enter an integer'
             else:
                 self.maximum = int(maximum)
                 if error_message is None:
