@@ -41,6 +41,8 @@ This allows multiple web2py instances to talk with one or more comet_messaging s
 
 Notice that "ws://127.0.0.1:8888/realtime/" must be contain the IP of the comet_messaging server.
 
+Source code inspired by the example http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
+
 """
 
 import tornado.httpserver
