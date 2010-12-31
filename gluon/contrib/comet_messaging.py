@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# example based on http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
 """
 This file is part of the web2py Web Framework
 Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
