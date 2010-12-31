@@ -10,11 +10,11 @@ how to use this?
 
 2) start this app:
 
-   python scripts/comet_messaging.py -k mykey -p 8888
+   python gluon/contrib/comet_messaging.py -k mykey -p 8888
 
 3) from a web2py app you can post messages with
 
-   from scripts.comet_messaging import comet_send
+   from gluon.contrib.comet_messaging import comet_send
    comet_send('http://127.0.0.1:8888','Hello World','mykey')
 
 4) from views you can receive them with
