@@ -13,12 +13,12 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
    python gluon/contrib/comet_messaging.py -k mykey -p 8888
 
-3) from a web2py app you can post messages with
+3) from any web2py app you can post messages with
 
    from gluon.contrib.comet_messaging import comet_send
    comet_send('http://127.0.0.1:8888','Hello World','mykey','mygroup')
 
-4) from views you can receive them with
+4) from any template you can receive them with
 
    <script>
    $(document).ready(function(){
@@ -41,8 +41,9 @@ Or if you want to send json messages and store evaluated json in a var called da
 - All validation is handled on the web2py side and there is no need to modify comet_messaging.py
 - Multiple web2py instances can talk with one or more comet_messaging servers.
 - "ws://127.0.0.1:8888/realtime/" must be contain the IP of the comet_messaging server.
+- Via group='mygroup' name you can support multiple groups of clients (think of many chat-rooms)
 
-Here is a complete sample web2py actions:
+Here is a complete sample web2py action:
 
     def index():
         form=SQLFORM.factory(Field('message'))
@@ -50,17 +51,16 @@ Here is a complete sample web2py actions:
             from gluon.contrib.comet_messaging import comet_send
             comet_send('http://127.0.0.1:8888',form.vars.message,'mykey','mygroup')
         script=SCRIPT('''
-            $(document).ready(function(){
-            vaf f=function(e){alert(e.data)};
-            if(!web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',f))
-               alert("html5 websocket not supported by your browser, try Google Chrome");
+            jQuery(document).ready(function(){
+              vaf callback=function(e){alert(e.data)};
+              if(!web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',callback))
+                alert("html5 websocket not supported by your browser, try Google Chrome");
             });
         ''')
         return dict(form=form, script=script)
 
-Notice that via 'mygroup' name you can support multiple groups of clients (think of chat-rooms).
-
-Source code inspired by the example http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
+Acknowledgements:
+Tornado code inspired by http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
 
 """
 
