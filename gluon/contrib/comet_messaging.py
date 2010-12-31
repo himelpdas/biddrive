@@ -16,13 +16,14 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 3) from a web2py app you can post messages with
 
    from gluon.contrib.comet_messaging import comet_send
-   comet_send('http://127.0.0.1:8888','Hello World','mykey')
+   comet_send('http://127.0.0.1:8888','Hello World','mykey','mygroup')
 
 4) from views you can receive them with
 
    <script>
    $(document).ready(function(){
-      web2py_comet('ws://127.0.0.1:8888/realtime/',function(e){alert(e.data)});
+      if(!web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',function(e){alert(e.data)})) 
+         alert("html5 websocket not supported by your browser, try Google Chrome");
    });
    </script>
 
@@ -41,6 +42,24 @@ This allows multiple web2py instances to talk with one or more comet_messaging s
 
 Notice that "ws://127.0.0.1:8888/realtime/" must be contain the IP of the comet_messaging server.
 
+Here is a complete sample web2py actions:
+
+    def index():
+        form=SQLFORM.factory(Field('message'))
+        if form.accepts(request,session):
+            from gluon.contrib.comet_messaging import comet_send
+            comet_send('http://127.0.0.1:8888',form.vars.message,'mykey',group='mygroup')
+        script=SCRIPT('''
+            $(document).ready(function(){
+            vaf f=function(e){alert(e.data)};
+            if(!web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',f))
+               alert("html5 websocket not supported by your browser, try Google Chrome");
+            });
+        ''')
+        return dict(form=form, script=script)
+
+Notice that via group=mygroup you can support multiple groups of clients (think of chat-rooms).
+
 Source code inspired by the example http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
 
 """
@@ -53,12 +72,13 @@ import hmac
 import sys
 import optparse
 import urllib
+import time
 
 listeners = {}
 
-def comet_send(url,message,hmac_key=None):
+def comet_send(url,message,hmac_key=None,group='default'):
     sig = hmac_key and hmac.new(hmac_key,message).hexdigest() or ''
-    params = urllib.urlencode({'message': message, 'signature': sig})
+    params = urllib.urlencode({'message': message, 'signature': sig, 'group':group})
     f = urllib.urlopen(url, params)
     data= f.read()
     f.close()
@@ -68,27 +88,27 @@ class PostHandler(tornado.web.RequestHandler):
     def post(self):
         if hmac_key and not 'signature' in self.request.arguments: return 'false'
         if 'message' in self.request.arguments:
-            print pessage
             message = self.request.arguments['message'][0]
             group = self.request.arguments.get('group',['default'])[0]           
+            print '%s:MESSAGE to %s:%s' % (time.time(), group, message)
             if hmac_key:
                 signature = self.request.arguments['signature'][0]
                 if not hmac.new(hmac_key,message).hexdigest()==signature: return 'false'
-            for client in listeners[group]: client.write_message(message)
+            for client in listeners.get(group,[]): client.write_message(message)
             return 'true'
         return 'false'
 
 class DistributeHandler(tornado.websocket.WebSocketHandler):
-    def open(self):        
-        self.group = self.request.arguments.get('group',['default'])[0]
+    def open(self,group=None):        
+        self.group = group or 'default'
         if not self.group in listeners: listeners[self.group]=[]
         listeners[self.group].append(self)
-        print 'client connected via websocket'
+        print '%s:CONNECT to %s' % (time.time(), self.group)
     def on_message(self, message):
         pass
     def on_close(self):
         if self.group in listeners: listeners[self.group].remove(self)
-        print 'client disconnected'
+        print '%s:DISCONNECT from %s' % (time.time(), self.group)
 
 if __name__ == "__main__":
     usage = __doc__
@@ -108,7 +128,7 @@ if __name__ == "__main__":
     hmac_key = options.hmac_key
     urls=[
         (r'/', PostHandler),
-        (r'/realtime/', DistributeHandler)]
+        (r'/realtime/(\w*)', DistributeHandler)]
     application = tornado.web.Application(urls, auto_reload=True)
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(int(options.port))
