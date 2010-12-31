@@ -36,7 +36,7 @@ import tornado.web
 import hmac
 import sys
 import optparse
-import urlib
+import urllib
 
 listeners = {}
 
@@ -75,7 +75,7 @@ class DistributeHandler(tornado.websocket.WebSocketHandler):
         print 'client disconnected'
 
 if __name__ == "__main__":
-    usage = "comet_messaging -p 8888 -k <hmac_key>"
+    usage = __doc__
     version= ""
     parser = optparse.OptionParser(usage, None, optparse.Option, version)
     parser.add_option('-p',
