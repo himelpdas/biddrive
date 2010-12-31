@@ -45,18 +45,22 @@ Or if you want to send json messages and store evaluated json in a var called da
 Here is a complete sample web2py action:
 
     def index():
-        form=SQLFORM.factory(Field('message'))
-        if form.accepts(request,session):
-            from gluon.contrib.comet_messaging import comet_send
-            comet_send('http://127.0.0.1:8888',form.vars.message,'mykey','mygroup')
+        form=LOAD('default','ajax_form',ajax=True)
         script=SCRIPT('''
             jQuery(document).ready(function(){
-              vaf callback=function(e){alert(e.data)};
+              var callback=function(e){alert(e.data)};
               if(!web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',callback))
                 alert("html5 websocket not supported by your browser, try Google Chrome");
             });
         ''')
         return dict(form=form, script=script)
+
+    def ajax_form():
+        form=SQLFORM.factory(Field('message'))
+        if form.accepts(request,session):
+            from gluon.contrib.comet_messaging import comet_send
+            comet_send('http://127.0.0.1:8888',form.vars.message,'mykey','mygroup')
+        return form
 
 Acknowledgements:
 Tornado code inspired by http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
