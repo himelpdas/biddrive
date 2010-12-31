@@ -1235,17 +1235,17 @@ class BaseAdapter(ConnectionPool):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
                 elif field_type.startswith('list:integer'):
-                    if self.uri != 'gae':
+                    if not self.uri.startswith('gae'):
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif field_type.startswith('list:reference'):
-                    if self.uri != 'gae':
+                    if not self.uri.startswith('gae'):
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif field_type.startswith('list:string'):
-                    if self.uri != 'gae':
+                    if not self.uri.startswith('gae'):
                         colset[fieldname] = bar_decode_string(value)
                     else:
                         colset[fieldname] = value
@@ -2442,6 +2442,7 @@ class NoSQLAdapter(BaseAdapter):
 try:
     from new import classobj
     from google.appengine.ext import db as gae
+    from google.appengine.api import namespace_manager
     # from google.appengine.api.datastore_types import Key  ### why was this needed????
     from google.appengine.ext.db.polymodel import PolyModel
     drivers.append('gae')
@@ -2486,12 +2487,15 @@ class GAENoSQLAdapter(NoSQLAdapter):
                 'list:reference': (lambda: gae.ListProperty(int,default=None)),
         })
         self.db = db
-        self.uri = 'gae'
+        self.uri = uri
         self.dbengine = 'gql'
         self.folder = folder
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
         self.pool_size = 0
+        match = re.compile('(?P<namespace>.+)').match(uri[6:])
+        if match:
+            namespace_manager.set_namespace(match.group('namespace'))
 
     def create_table(self,table,migrate=True,fake_migrate=False, polymodel=None):
         myfields = {}
@@ -3419,7 +3423,7 @@ class DAL(dict):
 
         t._create_references()
 
-        if migrate or self._uri=='gae':
+        if migrate or self._uri.startswith('gae'):
             try:
                 sql_locker.acquire()
                 self._adapter.create_table(t,migrate=migrate,
@@ -4478,7 +4482,7 @@ class Set(object):
             return Set(self.db, query)
 
     def _count(self):
-        return self.db._adapter.COUNT(self.query)
+        return self.db._adapter._count(self.query)
 
     def _select(self, *fields, **attributes):
         return self.db._adapter._select(self.query,fields,attributes)
