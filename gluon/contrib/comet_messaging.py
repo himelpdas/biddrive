@@ -33,7 +33,7 @@ Or if you want to send json messages and store evaluated json in a var called da
    <script>
    $(document).ready(function(){
       var data;
-      web2py_comet('ws://127.0.0.1:8888/realtime/',function(e){data=eval('('+e.data+')')});
+      web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',function(e){data=eval('('+e.data+')')});
    });
    </script>  
 
@@ -48,7 +48,7 @@ Here is a complete sample web2py actions:
         form=SQLFORM.factory(Field('message'))
         if form.accepts(request,session):
             from gluon.contrib.comet_messaging import comet_send
-            comet_send('http://127.0.0.1:8888',form.vars.message,'mykey',group='mygroup')
+            comet_send('http://127.0.0.1:8888',form.vars.message,'mykey','mygroup')
         script=SCRIPT('''
             $(document).ready(function(){
             vaf f=function(e){alert(e.data)};
@@ -58,7 +58,7 @@ Here is a complete sample web2py actions:
         ''')
         return dict(form=form, script=script)
 
-Notice that via group=mygroup you can support multiple groups of clients (think of chat-rooms).
+Notice that via 'mygroup' name you can support multiple groups of clients (think of chat-rooms).
 
 Source code inspired by the example http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
 
