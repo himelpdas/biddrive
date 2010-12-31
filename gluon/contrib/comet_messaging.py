@@ -37,10 +37,10 @@ Or if you want to send json messages and store evaluated json in a var called da
    });
    </script>  
 
-All communications between web2py and comet_messaging will be digitally signed with hmac.
-This allows multiple web2py instances to talk with one or more comet_messaging servers.
-
-Notice that "ws://127.0.0.1:8888/realtime/" must be contain the IP of the comet_messaging server.
+- All communications between web2py and comet_messaging will be digitally signed with hmac.
+- All validation is handled on the web2py side and there is no need to modify comet_messaging.py
+- Multiple web2py instances can talk with one or more comet_messaging servers.
+- "ws://127.0.0.1:8888/realtime/" must be contain the IP of the comet_messaging server.
 
 Here is a complete sample web2py actions:
 
