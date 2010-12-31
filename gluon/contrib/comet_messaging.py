@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # example based on http://thomas.pelletier.im/2010/08/websocket-tornado-redis/
-
 """
-how to use this?
+This file is part of the web2py Web Framework
+Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
+License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)  
 
 1) install tornado
 
@@ -26,6 +27,19 @@ how to use this?
    </script>
 
 When the server posts a message, all clients connected to the page will popup an alert message
+Or if you want to send json messages and store evaluated json in a var called data:
+
+   <script>
+   $(document).ready(function(){
+      var data;
+      web2py_comet('ws://127.0.0.1:8888/realtime/',function(e){data=eval('('+e.data+')')});
+   });
+   </script>  
+
+All communications between web2py and comet_messaging will be digitally signed with hmac.
+This allows multiple web2py instances to talk with one or more comet_messaging servers.
+
+Notice that "ws://127.0.0.1:8888/realtime/" must be contain the IP of the comet_messaging server.
 
 """
 
