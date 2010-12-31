@@ -4184,6 +4184,7 @@ class Field(Expression):
         uploadfolder=None,
         uploadseparate=False,
         compute=None,
+        custom_store=None,
         ):
         self.db = None
         self.op = None
@@ -4220,6 +4221,7 @@ class Field(Expression):
         self.represent = represent
         self.compute = compute
         self.isattachment = True
+        self.custom_store = custom_store
         if self.label == None:
             self.label = ' '.join([x.capitalize() for x in
                                   fieldname.split('_')])
@@ -4229,6 +4231,8 @@ class Field(Expression):
             self.requires = requires
 
     def store(self, file, filename=None, path=None):
+        if callable(self.custom_store):
+            return self.custom_store(file,filename,path)
         if not filename:
             filename = file.name
         filename = os.path.basename(filename.replace('/', os.sep)\
