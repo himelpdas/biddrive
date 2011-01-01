@@ -1402,18 +1402,20 @@ class Auth(object):
 
             if self.settings.remember_me_form:
                 ## adds a new input checkbox "remember me for longer"
-                addrow(form,XML("&nbsp;&nbsp;"),
-                        DIV(INPUT(_type='checkbox',
-                            _class='checkbox',
-                            _id="auth_user_remember",
-                            _name="remember",
-                        ),
-                        LABEL(
+                addrow(form,XML("&nbsp;"),
+                       DIV(XML("&nbsp;"),
+                           INPUT(_type='checkbox',
+                                 _class='checkbox',
+                                 _id="auth_user_remember",
+                                 _name="remember",
+                                 ),
+                           XML("&nbsp;&nbsp;"),
+                           LABEL(
                             self.messages.label_remember_me,
                             _for="auth_user_remember",
-                        )),"",
-                        self.settings.formstyle,
-                        'auth_user_remember__row')
+                            )),"",
+                       self.settings.formstyle,
+                       'auth_user_remember__row') 
 
             captcha = self.settings.login_captcha or \
                 (self.settings.login_captcha!=False and self.settings.captcha)
