@@ -599,7 +599,8 @@ class Recaptcha(DIV):
         use_ssl=False,
         error=None,
         error_message='invalid',
-        label = 'Verify:'
+        label = 'Verify:',
+        options = ''
         ):
         self.remote_addr = request.env.remote_addr
         self.public_key = public_key
@@ -661,12 +662,14 @@ class Recaptcha(DIV):
             server = self.API_SSL_SERVER
         else:
             server = self.API_SERVER
-        captcha = DIV(SCRIPT(_type="text/javascript",
-                             _src="%s/challenge?k=%s%s" % (server,public_key,error_param)),
-                      TAG.noscript(IFRAME(_src="%s/noscript?k=%s%s" % (server,public_key,error_param),
-                                           _height="300",_width="500",_frameborder="0"), BR(),
-                                   INPUT(_type='hidden', _name='recaptcha_response_field',
-                                         _value='manual_challenge')), _id='recaptcha')
+        captcha = DIV(
+            SCRIPT("var RecaptchaOptions = {%s};" % self.options),
+            SCRIPT(_type="text/javascript",
+                   _src="%s/challenge?k=%s%s" % (server,public_key,error_param)),
+            TAG.noscript(IFRAME(_src="%s/noscript?k=%s%s" % (server,public_key,error_param),
+                                _height="300",_width="500",_frameborder="0"), BR(),
+                         INPUT(_type='hidden', _name='recaptcha_response_field',
+                               _value='manual_challenge')), _id='recaptcha')
         if not self.errors.captcha:
             return XML(captcha).xml()
         else:
