@@ -22,6 +22,7 @@ from html import URL as Url
 from sql import SQLDB, Table, Row
 from storage import Storage
 from utils import md5_hash
+from validators import IS_EMPTY_OR
 
 import urllib
 import re
@@ -421,11 +422,20 @@ class UploadWidget(FormWidget):
             if UploadWidget.is_image(value):
                 br = BR()
                 image = IMG(_src = url, _width = UploadWidget.DEFAULT_WIDTH)
-            inp = DIV(inp, '[',
-                      A(UploadWidget.GENERIC_DESCRIPTION, _href = url), '|',
-                      INPUT(_type='checkbox',
-                            _name=field.name + UploadWidget.ID_DELETE_SUFFIX),
-                      '%s]' % UploadWidget.DELETE_FILE, br, image)
+            
+            requires = attr["requires"]
+            if requires == [] or isinstance(requires, IS_EMPTY_OR):
+                inp = DIV(inp, '[',
+                          A(UploadWidget.GENERIC_DESCRIPTION, _href = url),
+                          '|',
+                          INPUT(_type='checkbox',
+                                _name=field.name + UploadWidget.ID_DELETE_SUFFIX),
+                          UploadWidget.DELETE_FILE,
+                          ']', br, image)
+            else:
+                inp = DIV(inp, '[',
+                          A(UploadWidget.GENERIC_DESCRIPTION, _href = url),
+                          ']', br, image)
         return inp
 
     @staticmethod
@@ -779,10 +789,13 @@ class SQLFORM(FORM):
                     inp = self.widgets.boolean.widget(field, default, _disabled=True)
                 else:
                     inp = field.formatter(default)
+            elif field.type == 'upload':
+                if hasattr(field, 'widget') and field.widget:
+                    inp = field.widget(field, default, upload)
+                else:
+                    inp = self.widgets.upload.widget(field, default, upload)
             elif hasattr(field, 'widget') and field.widget:
                 inp = field.widget(field, default)
-            elif field.type == 'upload':
-                inp = self.widgets.upload.widget(field, default, upload)
             elif field.type == 'boolean':
                 inp = self.widgets.boolean.widget(field, default)
                 if default:
