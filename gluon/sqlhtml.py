@@ -1213,7 +1213,8 @@ class SQLTABLE(TABLE):
     :param orderby: Add an orderby link to column headers.
     :param headers: dictionary of headers to headers redefinions
                     headers can also be a string to gerenare the headers from data
-                    for now only headers="fieldname:capitalize" is supported
+                    for now only headers="fieldname:capitalize",
+                    headers="labels" and headers=None are supported
     :param truncate: length at which to truncate text in table cells.
         Defaults to 16 characters.
     :param columns: a list or dict contaning the names of the columns to be shown
