@@ -336,13 +336,13 @@ class Mail(object):
         if text != None or html != None:
             attachment = MIMEMultipart.MIMEMultipart('alternative')
             if text != None:
-                if isinstance(text, str):
+                if isinstance(text, basestring):
                     text = text.decode(encoding).encode('utf-8')
                 else:
                     text = text.read().decode(encoding).encode('utf-8')
                 attachment.attach(MIMEText.MIMEText(text,_charset='utf-8'))
             if html != None:
-                if isinstance(html, str):
+                if isinstance(html, basestring):
                     html = html.decode(encoding).encode('utf-8')
                 else:
                     html = html.read().decode(encoding).encode('utf-8')
