@@ -4,6 +4,7 @@ from gluon.admin import *
 from gluon.fileutils import abspath
 from glob import glob
 import shutil
+import platform
 
 if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','update_languages']:
     session.flash = T('disabled in demo mode')
@@ -64,11 +65,13 @@ def check_version():
     
     if new_version == -1:
         return A(T('Unable to check for upgrades'), _href=WEB2PY_URL)
-    elif new_version == True:
+    elif new_version != True:
+        return A(T('web2py is up to date'), _href=WEB2PY_URL)
+    else platform.system().lower()=='windows':
+        return SPAN('You should upgrade to version %' % version_number)
+    else:
         return sp_button(URL('upgrade_web2py'), T('upgrade now')) \
           + XML(' <strong class="upgrade_version">%s</strong>' % version_number)
-    else:
-        return A(T('web2py is up to date'), _href=WEB2PY_URL)
 
 
 def logout():
