@@ -24,8 +24,8 @@ class EXISTS(object):
     def __call__(self, value):
         if os.path.exists(value):
             return (value,None)
-        return (value,self.error_message)        
-    
+        return (value,self.error_message)
+
 def deploy():
     regex = re.compile('^\w+$')
     apps = sorted(file for file in os.listdir(apath(r=request)) if regex.match(file))
@@ -59,8 +59,8 @@ def deploy():
                                                         stdout=s.PIPE,
                                                         stderr=s.PIPE, close_fds=True),-1)
         p.stdin.write(form.vars.password)
-        fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK) 
-        fcntl.fcntl(p.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK) 
+        fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+        fcntl.fcntl(p.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
     return dict(form=form,command=cmd)
 
 def callback():
@@ -72,7 +72,7 @@ def callback():
     except:
         output=''
     try:
-        errors = p.stderr.read()        
+        errors = p.stderr.read()
     except:
         errors=''
     return (output+errors).replace('\n','<br/>')

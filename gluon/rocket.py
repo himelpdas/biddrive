@@ -248,7 +248,7 @@ class Listener(Thread):
             # secure socket. We don't do anything because it will be detected
             # by Worker and dealt with appropriately.
             pass
-        
+
         return sock
 
 
@@ -548,10 +548,16 @@ class Monitor(Thread):
                 conn_list = list(self.connections)
                 list_changed = False
 
-            readable = select.select(conn_list,
-                                     [],
-                                     [],
-                                     THREAD_STOP_CHECK_INTERVAL)[0]
+            try:
+                readable = select.select(conn_list,
+                                         [],
+                                         [],
+                                         THREAD_STOP_CHECK_INTERVAL)[0]
+            except:
+                if self.active:
+                    raise
+                else:
+                    break
 
             # If we have any readable connections, put them back
             for r in readable:
@@ -566,7 +572,7 @@ class Monitor(Thread):
 
                 r.start_time = time.time()
                 self.active_queue.put(r)
-                
+
                 self.connections.remove(r)
                 list_changed = True
 
@@ -586,7 +592,7 @@ class Monitor(Thread):
 
                     self.connections.remove(c)
                     list_changed = True
-                    
+
                     try:
                         c.close()
                     finally:
@@ -597,7 +603,7 @@ class Monitor(Thread):
 
         if __debug__:
             self.log.debug('Flushing waiting connections')
-            
+
         for c in self.connections:
             try:
                 c.close()
@@ -606,10 +612,10 @@ class Monitor(Thread):
 
         if __debug__:
             self.log.debug('Flushing queued connections')
-            
+
         while not self.monitor_queue.empty():
             c = self.monitor_queue.get()
-            
+
             if c is None:
                 continue
 
@@ -657,7 +663,7 @@ class ThreadPool:
         self.max_threads = max_threads
         self.monitor_queue = monitor_queue
         self.stop_server = False
-        
+
         # TODO - Optimize this based on some real-world usage data
         self.grow_threshold = int(max_threads/10) + 2
 
@@ -666,7 +672,7 @@ class ThreadPool:
 
         app_info.update(max_threads=max_threads,
                         min_threads=min_threads)
-        
+
         self.app_info = app_info
 
         self.threads = set()
@@ -680,7 +686,7 @@ class ThreadPool:
         self.stop_server = False
         if __debug__:
             log.debug("Starting threads.")
-            
+
         for thread in self.threads:
             thread.setDaemon(True)
             thread.start()
@@ -688,7 +694,7 @@ class ThreadPool:
     def stop(self):
         if __debug__:
             log.debug("Stopping threads.")
-            
+
         self.stop_server = True
 
         # Prompt the threads to die
@@ -728,7 +734,7 @@ class ThreadPool:
             amount = self.max_threads
 
         amount = min([amount, self.max_threads - len(self.threads)])
-        
+
         if __debug__:
             log.debug("Growing by %i." % amount)
 

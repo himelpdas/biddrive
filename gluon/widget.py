@@ -222,7 +222,7 @@ class web2pyDialog(object):
 
         self.password = Tkinter.Entry(self.root, show='*')
         self.password.bind('<Return>', lambda e: self.start())
-        self.password.focus_force() 
+        self.password.focus_force()
         self.password.grid(row=2, column=1, sticky=sticky)
 
         # Prepare the canvas

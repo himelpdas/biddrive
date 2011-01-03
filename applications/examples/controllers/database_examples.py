@@ -7,7 +7,7 @@ response.menu = [['Register User', False, URL(r=request,
 
 
 def register_user():
-    """ simple user registration form with validation and database.insert() 
+    """ simple user registration form with validation and database.insert()
         also lists all records currently in the table"""
 
     # ## create an insert form from the table
@@ -26,7 +26,7 @@ def register_user():
 
 
 def register_dog():
-    """ simple user registration form with validation and database.insert() 
+    """ simple user registration form with validation and database.insert()
         also lists all records currently in the table"""
 
     form = SQLFORM(db.dogs)
@@ -38,7 +38,7 @@ def register_dog():
 
 
 def register_product():
-    """ simple user registration form with validation and database.insert() 
+    """ simple user registration form with validation and database.insert()
         also lists all records currently in the table"""
 
     form = SQLFORM(db.products)
@@ -49,27 +49,27 @@ def register_product():
 
 
 def buy():
-    """ uses a form to query who is buying what. validates form and 
+    """ uses a form to query who is buying what. validates form and
         updates existing record or inserts new record in purchases """
 
     buyerRecords = db().select(db.users.ALL)
     buyerOptions = []
     for row in buyerRecords:
         buyerOptions.append(OPTION(row.name, _value=row.id))
-    
+
     productRecords = db().select(db.products.ALL)
     productOptions = []
     for row in productRecords:
         productOptions.append(OPTION(row.name, _value=row.id))
-    
+
     form = FORM(TABLE(
-                TR('Buyer id:', 
+                TR('Buyer id:',
                     SELECT(buyerOptions,_name='buyer_id')),
-                TR('Product id:', 
+                TR('Product id:',
                     SELECT(productOptions,_name='product_id')),
                 TR('Quantity:',
                     INPUT(_type='text', _name='quantity',
-                          requires=IS_INT_IN_RANGE(1, 100))), 
+                          requires=IS_INT_IN_RANGE(1, 100))),
                 TR('',
                     INPUT(_type='submit', _value='Order'))
                 ))

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 # this file is released under public domain and you can use without limitations
 
 #########################################################################
@@ -20,7 +20,7 @@ def index():
 def user():
     """
     exposes:
-    http://..../[app]/default/user/login 
+    http://..../[app]/default/user/login
     http://..../[app]/default/user/logout
     http://..../[app]/default/user/register
     http://..../[app]/default/user/profile

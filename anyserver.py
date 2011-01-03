@@ -68,7 +68,7 @@ class Servers:
 
     @staticmethod
     def gevent(app,address, **options):
-        from gevent import monkey; monkey.patch_all() 
+        from gevent import monkey; monkey.patch_all()
         from gevent import wsgi
         wsgi.WSGIServer(address, app).serve_forever()
 
@@ -76,7 +76,7 @@ class Servers:
     def bjoern(app,address, **options):
         import bjoern
         bjoern.run(app, *address)
-        
+
     @staticmethod
     def tornado(app,address, **options):
         import tornado.wsgi
@@ -123,7 +123,7 @@ def run(servername,ip,port,softcron=True,logging=False,profiler=None):
                                             profilerfilename=profiler)
     else:
         application = gluon.main.wsgibase
-    if softcron:        
+    if softcron:
         from gluon.settings import global_settings
         global_settings.web2py_crontype = 'soft'
     getattr(Servers,servername)(application,(ip,int(port)))

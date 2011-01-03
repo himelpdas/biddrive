@@ -25,7 +25,7 @@ if request.args:
 if not session.authorized:
     response.menu = [(T('login'), True, '')]
 else:
-    response.menu.append((T('logout'), False, 
+    response.menu.append((T('logout'), False,
                           URL(_a,'default',f='logout')))
 
 response.menu.append((T('help'), False, URL('examples','default','index')))

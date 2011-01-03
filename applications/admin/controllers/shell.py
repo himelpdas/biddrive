@@ -15,7 +15,7 @@ def index():
     reset()
     return dict(app=app)
 
-def callback():    
+def callback():
     app = request.args[0]
     command = request.vars.statement
     escape = command[:1]!='!'

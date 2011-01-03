@@ -2,7 +2,7 @@
 """
 This file is part of the web2py Web Framework
 Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
-License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)  
+License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 1) install tornado
 
@@ -21,7 +21,7 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
    <script>
    $(document).ready(function(){
-      if(!web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',function(e){alert(e.data)})) 
+      if(!web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',function(e){alert(e.data)}))
          alert("html5 websocket not supported by your browser, try Google Chrome");
    });
    </script>
@@ -34,7 +34,7 @@ Or if you want to send json messages and store evaluated json in a var called da
       var data;
       web2py_comet('ws://127.0.0.1:8888/realtime/mygroup',function(e){data=eval('('+e.data+')')});
    });
-   </script>  
+   </script>
 
 - All communications between web2py and comet_messaging will be digitally signed with hmac.
 - All validation is handled on the web2py side and there is no need to modify comet_messaging.py
@@ -92,7 +92,7 @@ class PostHandler(tornado.web.RequestHandler):
         if hmac_key and not 'signature' in self.request.arguments: return 'false'
         if 'message' in self.request.arguments:
             message = self.request.arguments['message'][0]
-            group = self.request.arguments.get('group',['default'])[0]           
+            group = self.request.arguments.get('group',['default'])[0]
             print '%s:MESSAGE to %s:%s' % (time.time(), group, message)
             if hmac_key:
                 signature = self.request.arguments['signature'][0]
@@ -102,7 +102,7 @@ class PostHandler(tornado.web.RequestHandler):
         return 'false'
 
 class DistributeHandler(tornado.websocket.WebSocketHandler):
-    def open(self,group=None):        
+    def open(self,group=None):
         self.group = group or 'default'
         if not self.group in listeners: listeners[self.group]=[]
         listeners[self.group].append(self)

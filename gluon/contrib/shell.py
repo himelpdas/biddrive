@@ -19,7 +19,7 @@
 # and it is not released under the web2py license.
 #
 # This should be compatible with the Apache license since it states:
-# "For the purposes of this License, Derivative Works shall not include works 
+# "For the purposes of this License, Derivative Works shall not include works
 #   that remain separable from, or merely link (or bind by name) to the interfaces of,
 #   the Work and Derivative Works thereof."
 #
@@ -249,7 +249,7 @@ def run(history, statement, env={}):
             for name, val in new_globals.items():
                 if not name.startswith('__'):
                     history.set_global(name, val)
-                    
+
     finally:
         sys.modules['__main__'] = old_main
     return output.getvalue()

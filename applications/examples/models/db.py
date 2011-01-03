@@ -6,18 +6,18 @@ from gluon.settings import settings
 
 # if running on Google App Engine
 if settings.web2py_runtime_gae:
-    from gluon.contrib.gql import *      
+    from gluon.contrib.gql import *
     # connect to Google BigTable
     db = DAL('gae')
     # and store sessions there
-    session.connect(request, response, db=db)  
+    session.connect(request, response, db=db)
 else:
     # if not, use SQLite or other DB
-    db = DAL('sqlite://storage.sqlite')  
+    db = DAL('sqlite://storage.sqlite')
 
 db.define_table(
-    'users', 
-    Field('name'), 
+    'users',
+    Field('name'),
     Field('email')
     )
 
@@ -33,17 +33,17 @@ db.define_table(
     )
 
 db.define_table(
-    'products', 
-    Field('name'), 
+    'products',
+    Field('name'),
     Field('description', 'text')
     )
 
 # MANY (users) TO MANY (purchases)
 
 db.define_table(
-    'purchases', 
+    'purchases',
     Field('buyer_id', db.users),
-    Field('product_id', db.products), 
+    Field('product_id', db.products),
     Field('quantity', 'integer')
     )
 

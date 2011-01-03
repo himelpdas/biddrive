@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 #########################################################################
 ## Changes the menu active item
 #########################################################################
 def toggle_menuclass(cssclass='pressed',menuid='headermenu'):
     """This function changes the menu class to put pressed appearance"""
-    
+
     positions = dict(
                            index='',
                            what='-108px -115px',
@@ -14,15 +14,15 @@ def toggle_menuclass(cssclass='pressed',menuid='headermenu'):
                            support='-418px -115px',
                            documentation='-520px -115px'
                            )
-                           
-    
+
+
     if request.function in positions.keys():
-            jscript = """ 
+            jscript = """
             <script>
              $(document).ready(function(){
                          $('.%(menuid)s a').removeClass('%(cssclass)s');
                          $('.%(function)s').toggleClass('%(cssclass)s').css('background-position','%(cssposition)s')
-          
+
              });
             </script>
             """ % dict(cssclass=cssclass,
@@ -30,7 +30,7 @@ def toggle_menuclass(cssclass='pressed',menuid='headermenu'):
                             function=request.function,
                             cssposition=positions[request.function]
                             )
-            
+
             return XML(jscript)
     else:
         return ''

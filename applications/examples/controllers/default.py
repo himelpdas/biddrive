@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 response.title = T('web2py Enterprise Web Framework')
 response.keywords = T('web2py, Python, Enterprise Web Framework')
@@ -9,15 +9,15 @@ session.forget()
 @cache('index')
 def index():
     return response.render()
-    
+
 @cache('what')
 def what():
     return response.render()
-      
+
 @cache('download')
 def download():
     return response.render()
-     
+
 @cache('who')
 def who():
     return response.render()
@@ -25,7 +25,7 @@ def who():
 @cache('support')
 def support():
     return response.render()
-    
+
 @cache('documentation')
 def documentation():
     return response.render()
@@ -38,9 +38,9 @@ def contact():
     redirect(URL('default','usergroups'))
 
 @cache('videos')
-def videos():   
+def videos():
     return response.render()
-    
+
 def security():
     redirect('http://www.web2py.com/book/default/chapter/01#security')
 

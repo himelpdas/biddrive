@@ -14,24 +14,24 @@ def get_content(b=None,\
                 l='en',\
                 format='markmin'):
     """Gets and renders the file in
-    <app>/private/content/<lang>/<controller>/<function>/<block>.<format> 
+    <app>/private/content/<lang>/<controller>/<function>/<block>.<format>
     """
-    
+
     def openfile():
         path = request.folder+\
                '/private/content/%(l)s/%(c)s/%(f)s/%(b)s.%(format)s' % \
                dict(b=b,c=c,f=f,l=l,format=format)
-        return open(path)        
-    
+        return open(path)
+
     try:
         openedfile = openfile()
     except Exception, IOError:
         l='en'
         openedfile = openfile()
-        
+
     if format == 'markmin':
         html = MARKMIN(str(T(openedfile.read())),markmin_dict)
     else:
         html = str(T(openedfile.read()))
-    
-    return html  
+
+    return html

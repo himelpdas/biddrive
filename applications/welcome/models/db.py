@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 # this file is released under public domain and you can use without limitations
 
 #########################################################################
@@ -18,7 +18,7 @@ else:                                         # else use a normal relational dat
 # session.forget()
 
 #########################################################################
-## Here is sample code if you need for 
+## Here is sample code if you need for
 ## - email capabilities
 ## - authentication (registration, login, logout, ... )
 ## - authorization (role based authorization)

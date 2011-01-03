@@ -960,3 +960,15 @@ recalled
 1.91.2-1.91.5
 - fixed a problem with deplyment on GAE
 - other new dal bug fixes
+
+1.92.1
+- web2py comet via gluon/contrib/comet_messaging.py (html5 websockets) experimental
+- fixed problem with services (broken in 1.91.5), thanks Vollrath
+- customizable uploadwidget, thanks Fran
+- fixed problem with mail unicode support, thanks Richard
+- no more upgrade button on windows since does not work
+- better remember-me login, thanks Martin Weissenboeck
+- support for recatcha options
+- support for GAE namespaces via DAL('gae://namespace')
+- new rocket (1.2.2), thanks Tim
+- many other bug fixes and improvements (thanks Jonathan)

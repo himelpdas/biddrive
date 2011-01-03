@@ -55,7 +55,7 @@ def verify_password(password):
         return gluon.contrib.pam.authenticate(session.pam_user,password)
     else:
         return _config['password'] == CRYPT()(password)[0]
-        
+
 
 
 # ###########################################################

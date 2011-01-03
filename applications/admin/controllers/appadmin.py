@@ -21,7 +21,7 @@ remote_addr = request.env.remote_addr
 try:
     hosts = (http_host, socket.gethostname(),
              socket.gethostbyname(http_host),
-             '::1','127.0.0.1','::ffff:127.0.0.1')   
+             '::1','127.0.0.1','::ffff:127.0.0.1')
 except:
     hosts = (http_host, )
 
@@ -207,7 +207,7 @@ def select():
     if form.accepts(request.vars, formname=None):
 #         regex = re.compile(request.args[0] + '\.(?P<table>\w+)\.id\>0')
         regex = re.compile(request.args[0] + '\.(?P<table>\w+)\..+')
-        
+
         match = regex.match(form.vars.query.strip())
         if match:
             table = match.group('table')
@@ -261,12 +261,12 @@ def update():
         session.flash = T('record does not exist')
         redirect(URL('select', args=request.args[:1],
                      vars=dict(query=qry)))
-    
+
     if keyed:
-        for k in db[table]._primarykey: 
+        for k in db[table]._primarykey:
             db[table][k].writable=False
-    
-    form = SQLFORM(db[table], record, deletable=True, delete_label=T('Check to delete'), 
+
+    form = SQLFORM(db[table], record, deletable=True, delete_label=T('Check to delete'),
                    ignore_rw=ignore_rw and not keyed,
                    linkto=URL('select',
                    args=request.args[:1]), upload=URL(r=request,
@@ -294,7 +294,7 @@ def ccache():
         P(TAG.BUTTON("Clear RAM", _type="submit", _name="ram", _value="ram")),
         P(TAG.BUTTON("Clear DISK", _type="submit", _name="disk", _value="disk")),
     )
-    
+
     if form.accepts(request.vars, session):
         clear_ram = False
         clear_disk = False
@@ -305,24 +305,24 @@ def ccache():
             clear_ram = True
         if request.vars.disk:
             clear_disk = True
-            
+
         if clear_ram:
             cache.ram.clear()
             session.flash += "Ram Cleared "
         if clear_disk:
             cache.disk.clear()
             session.flash += "Disk Cleared"
-            
+
         redirect(URL(r=request))
-    
+
     try:
         from guppy import hpy; hp=hpy()
     except ImportError:
         hp = False
-        
+
     import shelve, os, copy, time, math
     from gluon import portalocker
-    
+
     ram = {
         'bytes': 0,
         'objects': 0,
@@ -333,7 +333,7 @@ def ccache():
     }
     disk = copy.copy(ram)
     total = copy.copy(ram)
-    
+
     for key, value in cache.ram.storage.items():
         if isinstance(value, dict):
             ram['hits'] = value['hit_total'] - value['misses']
@@ -346,17 +346,17 @@ def ccache():
             if hp:
                 ram['bytes'] += hp.iso(value[1]).size
                 ram['objects'] += hp.iso(value[1]).count
-                
+
                 if value[0] < ram['oldest']:
                     ram['oldest'] = value[0]
-    
+
     locker = open(os.path.join(request.folder,
                                         'cache/cache.lock'), 'a')
     portalocker.lock(locker, portalocker.LOCK_EX)
     disk_storage = shelve.open(
         os.path.join(request.folder,
                 'cache/cache.shelve'))
-    
+
     for key, value in disk_storage.items():
         if isinstance(value, dict):
             disk['hits'] = value['hit_total'] - value['misses']
@@ -371,11 +371,11 @@ def ccache():
                 disk['objects'] += hp.iso(value[1]).count
                 if value[0] < disk['oldest']:
                     disk['oldest'] = value[0]
-        
+
     portalocker.unlock(locker)
     locker.close()
-    disk_storage.close()        
-    
+    disk_storage.close()
+
     total['bytes'] = ram['bytes'] + disk['bytes']
     total['objects'] = ram['objects'] + disk['objects']
     total['hits'] = ram['hits'] + disk['hits']
@@ -384,25 +384,25 @@ def ccache():
         total['ratio'] = total['hits'] * 100 / (total['hits'] + total['misses'])
     except (KeyError, ZeroDivisionError):
         total['ratio'] = 0
-    
+
     if disk['oldest'] < ram['oldest']:
         total['oldest'] = disk['oldest']
     else:
         total['oldest'] = ram['oldest']
-    
+
     def GetInHMS(seconds):
         hours = math.floor(seconds / 3600)
         seconds -= hours * 3600
         minutes = math.floor(seconds / 60)
         seconds -= minutes * 60
         seconds = math.floor(seconds)
-        
+
         return (hours, minutes, seconds)
 
     ram['oldest'] = GetInHMS(time.time() - ram['oldest'])
     disk['oldest'] = GetInHMS(time.time() - disk['oldest'])
     total['oldest'] = GetInHMS(time.time() - total['oldest'])
-    
+
     return dict(form=form, total=total,
                 ram=ram, disk=disk)
 

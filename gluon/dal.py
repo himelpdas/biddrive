@@ -711,7 +711,7 @@ class BaseAdapter(ConnectionPool):
         (rid._table, rid._record) = (table, None)
         return rid
 
-    def bulk_insert(self,table,items):        
+    def bulk_insert(self,table,items):
         return [self.insert(table,item) for item in items]
 
     def NOT(self,first):
@@ -2154,7 +2154,7 @@ class DB2Adapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
-        self.dbengine = "db2" 
+        self.dbengine = "db2"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
@@ -2757,7 +2757,7 @@ def int2uuid(n):
          n,i = divmod(n,16)
          uuid = '0123456789abcdef'[i]+uuid
      return uuid
-    
+
 class CouchDBAdapter(NoSQLAdapter):
     uploads_in_blob = True
     types = {
@@ -2844,7 +2844,7 @@ class CouchDBAdapter(NoSQLAdapter):
         return id
 
     def _select(self,query,fields,attributes):
-        if not isinstance(query,Query):            
+        if not isinstance(query,Query):
             raise SyntaxError, "Not Supported"
         for key in set(attributes.keys())-set(('orderby','groupby','limitby',
                                                'required','cache','left',
@@ -2861,7 +2861,7 @@ class CouchDBAdapter(NoSQLAdapter):
         def get(row,fd):
             return fd=='id' and int(row['_id']) or row.get(fd,None)
         fields = new_fields
-        tablename = self.get_table(query)        
+        tablename = self.get_table(query)
         fieldnames = [f.name for f in (fields or self.db[tablename])]
         colnames = ['%s.%s' % (tablename,k) for k in fieldnames]
         fields = ','.join(['%s.%s' % (tablename,uid(f)) for f in fieldnames])
@@ -2911,7 +2911,7 @@ class CouchDBAdapter(NoSQLAdapter):
             ctable = self.connection[tablename]
             try:
                 doc = ctable[str(id)]
-                for key,value in fields:                
+                for key,value in fields:
                     doc[key.name] = NoSQLAdapter.represent(self,value,self.db[tablename][key.name].type)
                 ctable.save(doc)
                 return 1
@@ -2924,7 +2924,7 @@ class CouchDBAdapter(NoSQLAdapter):
             table = self.db[tablename]
             for row in rows:
                 doc = ctable[str(row.id)]
-                for key,value in fields:                
+                for key,value in fields:
                     doc[key.name] = NoSQLAdapter.represent(self,value,table[key.name].type)
                 ctable.save(doc)
             return len(rows)
@@ -2985,7 +2985,7 @@ class MongoDBAdapter(NoSQLAdapter):
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
         self.pool_size = pool_size
-        
+
         m = re.compile('^(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(self._uri[10:])
         if not m:
             raise SyntaxError, "Invalid URI string in DAL: %s" % self._uri
@@ -2995,7 +2995,7 @@ class MongoDBAdapter(NoSQLAdapter):
         dbname = m.group('db')
         if not dbname:
             raise SyntaxError, 'mongodb: db name required'
-        port = m.group('port') or 27017        
+        port = m.group('port') or 27017
         self.pool_connection(lambda host=host,port=port,dbname=dbname: pymongo.Connection(host=host,port=port)[dbname])
 
     def insert(self,table,fields):
@@ -3016,7 +3016,7 @@ class MongoDBAdapter(NoSQLAdapter):
 
     def update(self,tablename,query,fields):
         raise RuntimeError, "Not implemented"
-        
+
 
 ########################################################################
 # end of adapters
@@ -3109,7 +3109,7 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[15:] in field.db.tables:
         referenced = field.db[field_type[15:]]
-        def list_ref_repr(ids, r=referenced, f=ff):            
+        def list_ref_repr(ids, r=referenced, f=ff):
             refs = r._db(r.id.belongs(ids)).select(r.id)
             return (refs and ', '.join(str(f(r,ref.id)) for ref in refs) or '')
         field.represent = field.represent or list_ref_repr
@@ -3640,7 +3640,7 @@ class Table(dict):
             db and db._adapter.sequence_name(tablename)
         self._trigger_name = args.get('trigger_name',None) or \
             db and db._adapter.trigger_name(tablename)
-        
+
         primarykey = args.get('primarykey', None)
         if primarykey and not isinstance(primarykey,list):
             raise SyntaxError, "primarykey must be a list of fields from table '%s'" \
@@ -3854,7 +3854,7 @@ class Table(dict):
         new_fields = []
         for ofield in self:
             name = ofield.name
-            if name in fields:                                    
+            if name in fields:
                 new_fields.append((ofield,fields[name]))
             elif not update and ofield.default!=None:
                 new_fields.append((ofield,ofield.default))
@@ -3870,7 +3870,7 @@ class Table(dict):
 
     def _insert(self, **fields):
         return self._db._adapter._insert(self,self._listify(fields))
-    
+
     def insert(self, **fields):
         return self._db._adapter.insert(self,self._listify(fields))
 

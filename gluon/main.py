@@ -369,11 +369,11 @@ def wsgibase(environ, responder):
                         'applications', request.application) + '/'
                 request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
                 request.cid = request.env.http_web2py_component_element
-            
+
                 # ##################################################
                 # access the requested application
                 # ##################################################
-            
+
                 if not os.path.exists(request.folder):
                     if request.application == rewrite.thread.routes.default_application:
                         request.application = 'welcome'

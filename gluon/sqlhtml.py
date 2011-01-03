@@ -422,7 +422,7 @@ class UploadWidget(FormWidget):
             if UploadWidget.is_image(value):
                 br = BR()
                 image = IMG(_src = url, _width = UploadWidget.DEFAULT_WIDTH)
-            
+
             requires = attr["requires"]
             if requires == [] or isinstance(requires, IS_EMPTY_OR):
                 inp = DIV(inp, '[',
@@ -1081,7 +1081,7 @@ class SQLFORM(FORM):
                 component['_disabled'] = True
             return True
 
-        for fieldname in self.fields:            
+        for fieldname in self.fields:
             if not fieldname in self.table:
                 continue
 
@@ -1089,7 +1089,7 @@ class SQLFORM(FORM):
                 ### this happens because FROM has no knowledge of writable
                 ### and thinks that a missing boolean field is a None
                 if self.table[fieldname].type == 'boolean' and self.vars[fieldname]==None:
-                    del self.vars[fieldname]                
+                    del self.vars[fieldname]
                 continue
 
             field = self.table[fieldname]
@@ -1334,6 +1334,8 @@ class SQLTABLE(TABLE):
                             if hasattr(sqlrows.db[tref],'_primarykey'):
                                 href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:ur}))
                     r = A(str(r), _href=str(href))
+                elif field.type.startswith('reference'):
+                    pass
                 elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \

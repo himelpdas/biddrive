@@ -59,7 +59,7 @@ def validators(*a):
     return b
 
 def call_or_redirect(f,*args):
-    if callable(f):        
+    if callable(f):
         redirect(f(*args))
     else:
         redirect(f)
@@ -695,7 +695,7 @@ def addrow(form,a,b,c,style,_id,position=-1):
         form[0].insert(position, TR(LABEL(a),
                                     b,c,
                                     _id = _id))
-        
+
 
 class Auth(object):
     """
@@ -1415,7 +1415,7 @@ class Auth(object):
                             _for="auth_user_remember",
                             )),"",
                        self.settings.formstyle,
-                       'auth_user_remember__row') 
+                       'auth_user_remember__row')
 
             captcha = self.settings.login_captcha or \
                 (self.settings.login_captcha!=False and self.settings.captcha)
@@ -2195,7 +2195,7 @@ class Auth(object):
                 raise HTTP(403, "Forbidden")
             user = self.settings.table_user(user_id)
             if not user:
-                raise HTTP(401, "Not Authorized")            
+                raise HTTP(401, "Not Authorized")
             auth.impersonator = cPickle.dumps(session)
             auth.user.update(
                 self.settings.table_user._filter_fields(user, True))

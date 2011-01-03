@@ -43,7 +43,7 @@ def commit():
         cmdutil.addremove(repo)
         repo.commit(text=form.vars.comment)
         if repo[repo.lookup('.')] == oldid:
-            response.flash = 'no changes' 
+            response.flash = 'no changes'
     files = TABLE(*[TR(file) for file in repo[repo.lookup('.')].files()])
     changes = TABLE(TR(TH('revision'),TH('description')))
     for change in repo.changelog:

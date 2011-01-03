@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 import os, uuid, re, pickle, urllib, glob
 from gluon.admin import app_create, plugin_install
@@ -18,7 +18,7 @@ def reset(session):
                   ('security_key',str(uuid.uuid4())),
                   ('email_server','localhost'),
                   ('email_sender','you@example.com'),
-                  ('email_login',''),                  
+                  ('email_login',''),
                   ('login_method','local'),
                   ('login_config','')],
         'tables':['auth_user'],
@@ -56,7 +56,7 @@ def index():
                     session.flash = "The app exists, was NOT created by wizard, continue to overwrite!"
         redirect(URL('step1'))
     return dict(step='Start',form=form)
-                         
+
 
 def step1():
     from gluon.contrib.simplejson import loads
@@ -90,14 +90,14 @@ def step1():
                 Field('login_method',requires=IS_IN_SET(('local','janrain')),
                       default=params.get('login_method','local')),
                 Field('login_config',default=params.get('login_config',None)))
-                
+
     if form.accepts(request.vars):
-        session.app['params']=[(key,form.vars.get(key,None)) 
+        session.app['params']=[(key,form.vars.get(key,None))
                                for key,value in session.app['params']]
         redirect(URL('step2'))
     return dict(step='1: Setting Parameters',form=form)
-        
-def step2():  
+
+def step2():
     response.view='wizard/step.html'
     form=SQLFORM.factory(Field('table_names','list:string',
                                default=session.app['tables']))
@@ -128,7 +128,7 @@ def step3():
     table=session.app['tables'][n]
     form=SQLFORM.factory(Field('field_names','list:string',
                                default=session.app.get('table_'+table,[])))
-    if form.accepts(request.vars) and form.vars.field_names:        
+    if form.accepts(request.vars) and form.vars.field_names:
         fields=listify(form.vars.field_names)
         if table=='auth_user':
             for field in ['first_name','last_name','username','email','password']:
@@ -155,7 +155,7 @@ def step4():
     if form.accepts(request.vars):
         session.app['pages']=[clean(t)
                               for t in listify(form.vars.pages)
-                              if t.strip()]        
+                              if t.strip()]
         if session.app['pages']:
             redirect(URL('step5',args=0))
         else:
@@ -197,7 +197,7 @@ def step6():
         if DEMO_MODE:
             session.flash = T('Application cannot be generated in demo mode')
             redirect(URL('index'))
-        create(form.vars)       
+        create(form.vars)
         session.flash = 'Application %s created' % app
         redirect(URL('generated'))
     return dict(step='6: Generate app "%s"' % app,form=form)
@@ -218,7 +218,7 @@ def sort_tables(tables):
     if is_auth_user:
         tables.append('auth_user')
     def append(table,trail=[]):
-        if table in trail: 
+        if table in trail:
             raise RuntimeError
         for t in d[table]: append(t,trail=trail+[table])
         if not table in tables: tables.append(table)
@@ -282,7 +282,7 @@ def make_table(table,fields):
         if 'notnull' in has or 'notempty' in has or 'required' in has:
             s+=', notnull=True'
         if 'unique' in has:
-            s+=', unique=True'        
+            s+=', unique=True'
         if ftype=='boolean' and 'true' in has:
             s+=",\n          default=True"
 
@@ -436,8 +436,8 @@ def make_view(page,contents):
         t=items[0]
         if items[1]=='read':
             s+="\n{{=A(T('edit %s'),_href=URL('%s_update',args=request.args(0)))}}\n<br/>\n"%(t,t)
-            s+='\n{{=form}}\n'            
-            s+="{{for t,f in db.t_%s._referenced_by:}}{{if not t[-8:]=='_archive':}}" % t        
+            s+='\n{{=form}}\n'
+            s+="{{for t,f in db.t_%s._referenced_by:}}{{if not t[-8:]=='_archive':}}" % t
             s+="[{{=A(t[2:],_href=URL('%s_select'%t[2:],args=(f,form.record.id)))}}]"
             s+='{{pass}}{{pass}}'
         elif items[1]=='create':
@@ -447,7 +447,7 @@ def make_view(page,contents):
             s+="\n{{=A(T('show %s'),_href=URL('%s_read',args=request.args(0)))}}\n<br/>\n"%(t,t)
             s+='\n{{=form}}\n'
         elif items[1]=='select':
-            s+="\n{{if request.args:}}<h3>{{=T('For %s #%s' % (request.args(0)[2:],request.args(1)))}}</h3>{{pass}}\n" 
+            s+="\n{{if request.args:}}<h3>{{=T('For %s #%s' % (request.args(0)[2:],request.args(1)))}}</h3>{{pass}}\n"
             s+="\n{{=A(T('create new %s'),_href=URL('%s_create'))}}\n<br/>\n"%(t,t)
             s+="\n{{=A(T('search %s'),_href=URL('%s_search'))}}\n<br/>\n"%(t,t)
             s+="\n{{if rows:}}"
@@ -497,7 +497,7 @@ def create(options):
             theme = urllib.urlopen(LAYOUTS_APP+'/static/plugin_layouts/plugins/'+fn)
             plugin_install(app, theme, request, fn)
         except: response.flash = T("unable to install there")
-    
+
     ### write configuration file into newapp/models/0.py
     model = os.path.join(request.folder,'..',app,'models','0.py')
     file = open(model,'wb')
@@ -533,7 +533,7 @@ def create(options):
     model = os.path.join(request.folder,'..',app,
                          'models','db_wizard_populate.py')
     if os.path.exists(model): os.unlink(model)
-    if options.populate_database:        
+    if options.populate_database:
         file = open(model,'wb')
         file.write(populate(session.app['tables']))
         file.close()
@@ -542,7 +542,7 @@ def create(options):
     if options.generate_controller:
         controller = os.path.join(request.folder,'..',app,'controllers','default.py')
         file = open(controller,'wb')
-        file.write("""# -*- coding: utf-8 -*- 
+        file.write("""# -*- coding: utf-8 -*-
 ### required - do no delete
 def user(): return dict(form=auth())
 def download(): return response.download(request,db)

@@ -1,4 +1,4 @@
-# coding: utf8 
+# coding: utf8
 
 from gluon.admin import *
 from gluon.fileutils import abspath
@@ -48,7 +48,7 @@ def index():
             redirect(send)
         else:
             response.flash = T('invalid password')
-            
+
     # f == file
     apps = [f for f in os.listdir(apath(r=request)) if f.find('.') < 0]
     return dict(apps=apps, send=send)
@@ -62,7 +62,7 @@ def check_version():
 
     new_version, version_number = check_new_version(request.env.web2py_version,
                                     WEB2PY_VERSION_URL)
-    
+
     if new_version == -1:
         return A(T('Unable to check for upgrades'), _href=WEB2PY_URL)
     elif new_version != True:
@@ -108,21 +108,21 @@ def site():
 
     # Shortcut to make the elif statements more legible
     file_or_appurl = 'file' in request.vars or 'appurl' in request.vars
-    
+
     if DEMO_MODE:
         pass
 
     elif request.vars.filename and not 'file' in request.vars:
-        # create a new application        
+        # create a new application
         appname = cleanpath(request.vars.filename).replace('.', '_')
-        if app_create(appname, request):            
+        if app_create(appname, request):
             session.flash = T('new application "%s" created', appname)
             redirect(URL('design',args=appname))
         else:
             session.flash = \
                 T('unable to create application "%s"', request.vars.filename)
         redirect(URL(r=request))
-        
+
     elif file_or_appurl and not request.vars.filename:
         # can't do anything without an app name
         msg = 'you must specify a name for the uploaded application'
@@ -141,7 +141,7 @@ def site():
         elif request.vars.file is not '':
             f = request.vars.file.file
             fname = request.vars.file.filename
-        
+
         if f:
             appname = cleanpath(request.vars.filename).replace('.', '_')
             installed = app_install(appname, f, request, fname,
@@ -244,7 +244,7 @@ def compile_app():
         session.flash = T('application compiled')
     else:
         session.flash = DIV(T('Cannot compile: there are errors in your app:',
-                              CODE(c)))    
+                              CODE(c)))
     redirect(URL('site'))
 
 
@@ -254,7 +254,7 @@ def remove_compiled_app():
     session.flash = T('compiled application removed')
     redirect(URL('site'))
 
-    
+
 def delete():
     """ Object delete handler """
 
@@ -276,7 +276,7 @@ def delete():
                               dict(filename=filename))
         redirect(URL(sender))
     return dict(filename=filename, sender=sender)
-        
+
 def peek():
     """ Visualize object code """
 
@@ -385,7 +385,7 @@ def edit():
             data = request.vars.data.replace('\r\n', '\n').strip() + '\n'
             safe_open(path + '.1', 'w').write(data)
             if 'from_ajax' in request.vars:
-                return response.json({'error': str(T('file changed on disk')), 
+                return response.json({'error': str(T('file changed on disk')),
                                       'redirect': URL('resolve',
                                                       args=request.args)})
             else:
@@ -408,14 +408,14 @@ def edit():
             code = request.vars.data.rstrip().replace('\r\n','\n')+'\n'
             compile(code, path, "exec", _ast.PyCF_ONLY_AST)
         except Exception, e:
-            start = sum([len(line)+1 for l, line 
-                            in enumerate(request.vars.data.split("\n")) 
-                            if l < e.lineno-1]) 
+            start = sum([len(line)+1 for l, line
+                            in enumerate(request.vars.data.split("\n"))
+                            if l < e.lineno-1])
             if e.text and e.offset:
                 offset = e.offset - (len(e.text) - len(e.text.splitlines()[-1]))
             else:
                 offset = 0
-            highlight = {'start': start, 'end': start + offset + 1} 
+            highlight = {'start': start, 'end': start + offset + 1}
             try:
                 ex_name = e.__class__.__name__
             except:
@@ -586,7 +586,7 @@ def edit_language():
             elem = INPUT(_type='text', _name=name,value=strings[key],
                          _size=70,_class=_class)
         else:
-            elem = TEXTAREA(_name=name, value=strings[key], _cols=70, 
+            elem = TEXTAREA(_name=name, value=strings[key], _cols=70,
                             _rows=5, _class=_class)
 
         # Making the short circuit compatible with <= python2.4
@@ -642,7 +642,7 @@ def design():
         redirect(URL(r=request))
 
 
-    # If we have only pyc files it means that 
+    # If we have only pyc files it means that
     # we cannot design
     if os.path.exists(apath('%s/compiled' % app, r=request)):
         session.flash = \
@@ -666,7 +666,7 @@ def design():
         data = safe_open(apath('%s/controllers/%s' % (app, c), r=request), 'r').read()
         items = regex_expose.findall(data)
         functions[c] = items
-    
+
     # Get all views
     views = sorted(listdir(apath('%s/views/' % app, r=request), '[\w/\-]+\.\w+$'))
     views = [x.replace('\\','/') for x in views]
@@ -681,17 +681,17 @@ def design():
 
         items = regex_include.findall(data)
         include[c] = [i[1] for i in items]
-    
+
     # Get all modules
     modules = listdir(apath('%s/modules/' % app, r=request), '.*\.py$')
     modules = modules=[x.replace('\\','/') for x in modules]
     modules.sort()
-    
+
     # Get all static files
     statics = listdir(apath('%s/static/' % app, r=request), '[^\.#].*')
     statics = [x.replace('\\','/') for x in statics]
     statics.sort()
-    
+
     # Get all languages
     languages = listdir(apath('%s/languages/' % app, r=request), '[\w-]*\.py')
 
@@ -708,7 +708,7 @@ def design():
         plugins[:]=list(set(plugins))
         plugins.sort()
         return [item for item in items if not item.startswith('plugin_')]
-    
+
     return dict(app=app,
                 models=filter_plugins(models,plugins),
                 defines=defines,
@@ -736,11 +736,11 @@ def delete_plugin():
             for folder in ['models','views','controllers','static','modules']:
                 path=os.path.join(apath(app,r=request),folder)
                 for item in os.listdir(path):
-                    if item.startswith(plugin_name): 
+                    if item.startswith(plugin_name):
                         filename=os.path.join(path,item)
                         if os.path.isdir(filename):
                             shutil.rmtree(filename)
-                        else:                            
+                        else:
                             os.unlink(filename)
             session.flash = T('plugin "%(plugin)s" deleted',
                               dict(plugin=plugin))
@@ -760,7 +760,7 @@ def plugin():
         msg = T('ATTENTION: you cannot edit the running application!')
         response.flash = msg
 
-    # If we have only pyc files it means that 
+    # If we have only pyc files it means that
     # we cannot design
     if os.path.exists(apath('%s/compiled' % app, r=request)):
         session.flash = \
@@ -784,7 +784,7 @@ def plugin():
         data = safe_open(apath('%s/controllers/%s' % (app, c), r=request), 'r').read()
         items = regex_expose.findall(data)
         functions[c] = items
-    
+
     # Get all views
     views = sorted(listdir(apath('%s/views/' % app, r=request), '[\w/\-]+\.\w+$'))
     views = [x.replace('\\','/') for x in views]
@@ -799,17 +799,17 @@ def plugin():
 
         items = regex_include.findall(data)
         include[c] = [i[1] for i in items]
-    
+
     # Get all modules
     modules = listdir(apath('%s/modules/' % app, r=request), '.*\.py$')
     modules = modules=[x.replace('\\','/') for x in modules]
     modules.sort()
-    
+
     # Get all static files
     statics = listdir(apath('%s/static/' % app, r=request), '[^\.#].*')
     statics = [x.replace('\\','/') for x in statics]
     statics.sort()
-    
+
     # Get all languages
     languages = listdir(apath('%s/languages/' % app, r=request), '[\w-]*\.py')
 
@@ -817,12 +817,12 @@ def plugin():
     crontab = apath('%s/cron/crontab' % app, r=request)
     if not os.path.exists(crontab):
         safe_open(crontab,'w').write('#crontab')
-    
+
 
     def filter_plugins(items):
         regex=re.compile('^plugin_'+plugin+'(/.*|\..*)?$')
         return [item for item in items if regex.match(item)]
-    
+
     return dict(app=app,
                 models=filter_plugins(models),
                 defines=defines,
@@ -886,7 +886,7 @@ def create_file():
             # Handle template (html) views
             if filename.find('.')<0:
                 filename += '.html'
-            
+
             if len(filename) == 5:
                 raise SyntaxError
 
@@ -908,13 +908,13 @@ def create_file():
                 raise SyntaxError
 
             text = dedent("""
-                   #!/usr/bin/env python 
-                   # coding: utf8 
+                   #!/usr/bin/env python
+                   # coding: utf8
                    from gluon.html import *
                    from gluon.http import *
                    from gluon.validators import *
                    from gluon.sqlhtml import *
-                   # request, response, session, cache, T, db(s) 
+                   # request, response, session, cache, T, db(s)
                    # must be passed and cannot be imported!""")
 
         elif path[-8:] == '/static/':
@@ -995,20 +995,20 @@ def errors():
     import hashlib
 
     app = request.args[0]
-    
+
     method = request.args(1) or 'new'
-            
-            
+
+
     if method == 'new':
         errors_path = apath('%s/errors' % app, r=request)
-        
+
         delete_hashes = []
         for item in request.vars:
             if item[:7] == 'delete_':
-                delete_hashes.append(item[7:])        
-        
+                delete_hashes.append(item[7:])
+
         hash2error = dict()
-                
+
         for fn in listdir(errors_path, '^\w.*'):
             fullpath = os.path.join(errors_path, fn)
             if not os.path.isfile(fullpath): continue
@@ -1016,9 +1016,9 @@ def errors():
                 error = pickle.load(open(fullpath, 'r'))
             except IOError:
                 continue
-            
+
             hash = hashlib.md5(error['traceback']).hexdigest()
-            
+
             if hash in delete_hashes:
                 os.unlink(fullpath)
             else:
@@ -1028,14 +1028,14 @@ def errors():
                     error_lines = error['traceback'].split("\n")
                     last_line = error_lines[-2]
                     error_causer = os.path.split(error['layer'])[1]
-                    hash2error[hash] = dict(count=1, pickel=error, 
+                    hash2error[hash] = dict(count=1, pickel=error,
                                             causer=error_causer,
                                             last_line=last_line,
                                             hash=hash,ticket=fn)
-                
+
         decorated = [(x['count'], x) for x in hash2error.values()]
         decorated.sort(key=operator.itemgetter(0), reverse=True)
-        
+
         return dict(errors = [x[1] for x in decorated], app=app, method=method)
     else:
         for item in request.vars:
@@ -1046,7 +1046,7 @@ def errors():
         tickets = sorted(listdir(apath('%s/errors/' % app, r=request), '^\w.*'),
                          key=func,
                          reverse=True)
-    
+
         return dict(app=app, tickets=tickets, method=method)
 
 
@@ -1058,7 +1058,7 @@ def make_link(path):
         (folder, filename) = os.path.split(tryFile)
         (base, ext) = os.path.splitext(filename)
         app = request.args[0]
-        
+
         editable = {'controllers': '.py', 'models': '.py', 'views': '.html'}
         for key in editable.keys():
             check_extension = folder.endswith("%s/%s" % (app,key))
