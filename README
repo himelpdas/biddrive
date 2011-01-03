@@ -961,7 +961,7 @@ recalled
 - fixed a problem with deplyment on GAE
 - other new dal bug fixes
 
-1.92.1
+1.91.6
 - web2py comet via gluon/contrib/comet_messaging.py (html5 websockets) experimental
 - fixed problem with services (broken in 1.91.5), thanks Vollrath
 - customizable uploadwidget, thanks Fran
