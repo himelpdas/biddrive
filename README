@@ -966,6 +966,7 @@ recalled
 - fixed problem with services (broken in 1.91.5), thanks Vollrath
 - customizable uploadwidget, thanks Fran
 - fixed problem with mail unicode support, thanks Richard
+- fixed problem with linkto=None and references fields in SQLTABLE, thanks villas
 - no more upgrade button on windows since does not work
 - better remember-me login, thanks Martin Weissenboeck
 - support for recatcha options
