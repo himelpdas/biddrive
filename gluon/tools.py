@@ -3566,7 +3566,7 @@ class Service(object):
         location = "%s://%s%s" % (
                         request.env.wsgi_url_scheme,
                         request.env.http_host,
-                        URL(r=request,f="call/soap",vars=None))
+                        URL(r=request,f="call/soap",vars={}))
         namespace = 'namespace' in response and response.namespace or location
         documentation = response.description or ''
         dispatcher = SoapDispatcher(
@@ -3594,7 +3594,7 @@ class Service(object):
             sample_req_xml, sample_res_xml, doc = dispatcher.help(method)
             body = [H1("Welcome to Web2Py SOAP webservice gateway"),
                     A("See all webservice operations",
-                      _href=URL(r=request,f="call/soap",vars=None)),
+                      _href=URL(r=request,f="call/soap",vars={})),
                     H2(method),
                     P(doc),
                     UL(LI("Location: %s" % dispatcher.location),
