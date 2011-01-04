@@ -137,9 +137,10 @@ def __routes_doctest():
     pass
 
 if __name__ == '__main__':
+    import os
     import gluon.main
     import doctest
     from gluon.rewrite import select, load, filter_url, filter_out, filter_err, compile_re
     select()
-    load(routes=__file__)
+    load(routes=os.path.basename(__file__))
     doctest.testmod()

@@ -349,12 +349,11 @@ def wsgibase(environ, responder):
                         environ['QUERY_STRING'] = items[1]
                     else:
                         environ['QUERY_STRING'] = ''
-                rewrite.select(environ)
-                if rewrite.thread.routes.routes_in:
-                    environ = rewrite.filter_in(environ)
-                for (key, value) in environ.items():
-                    request.env[key.lower().replace('.', '_')] = value
-                static_file = parse_url(request, environ)
+                rewrite.select(env=environ, request=request)
+                if rewrite.thread.routes.router.active:
+                    (static_file, environ) = rewrite.map_url_in(request, environ)
+                else:
+                    (static_file, environ) = parse_url(request, environ)
                 if static_file:
                     if request.env.get('query_string', '')[:10] == 'attachment':
                         response.headers['Content-Disposition'] = 'attachment'
@@ -549,7 +548,7 @@ def wsgibase(environ, responder):
 
 def save_password(password, port):
     """
-    used by main() to save the password in the parameters.py file.
+    used by main() to save the password in the parameters_port.py file.
     """
 
     password_file='parameters_%i.py' % port
@@ -558,7 +557,7 @@ def save_password(password, port):
         chars = string.letters + string.digits
         password = ''.join([random.choice(chars) for i in range(8)])
         cpassword = CRYPT()(password)[0]
-        print '******************* INPORTANT!!! ************************'
+        print '******************* IMPORTANT!!! ************************'
         print 'your admin password is "%s"' % password
         print '*********************************************************'
     elif password == '<recycle>':
@@ -689,11 +688,11 @@ class HttpServer(object):
             # not necessarily completely tested (e.g. content of tuples or ip-format)
             import types
             if isinstance(interfaces,types.ListType):
-            	for i in interfaces:
-         	    if not isinstance(i,types.TupleType):
-         	    	raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"
+                for i in interfaces:
+                    if not isinstance(i,types.TupleType):
+                        raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"
             else:
-      	        raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"
+                raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"
 
         if path:
             # if a path is specified change the global variables so that web2py
@@ -819,7 +818,19 @@ regex_args = re.compile(r'''
      ''', re.X)
 
 def parse_url(request, environ):
-    "parse rewritten incoming URL"
+    "rewrite and parse incoming URL"
+
+    # ##################################################
+    # select application
+    # rewrite URL if routes_in is defined
+    # update request.env
+    # ##################################################
+
+    if rewrite.thread.routes.routes_in:
+        environ = rewrite.filter_in(environ)
+
+    for (key, value) in environ.items():
+        request.env[key.lower().replace('.', '_')] = value
 
     path = request.env.path_info.replace('\\', '/')
 
@@ -832,7 +843,7 @@ def parse_url(request, environ):
         static_file = os.path.join(request.env.applications_parent,
                                    'applications', match.group('b'),
                                    'static', match.group('x'))
-        return static_file
+        return (static_file, environ)
 
     # ##################################################
     # parse application, controller and function
@@ -869,4 +880,5 @@ def parse_url(request, environ):
             raise HTTP(400,
                        rewrite.thread.routes.error_message % 'invalid request',
                        web2py_error='invalid path')
-    return None
+    return (None, environ)
+

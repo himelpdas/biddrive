@@ -135,7 +135,8 @@ def URL(
     extension=None,
     env=None,
     hmac_key=None,
-    hash_vars=True
+    hash_vars=True,
+    lang=None
     ):
     """
     generate a relative URL
@@ -376,6 +377,8 @@ def _gURL(request):
             if len(args) == 2 and not 'f' in kwargs and not 'c' in kwargs:
                 kwargs['c'], kwargs['f'] = args[0], args[1]
                 args = []
+        if not kwargs.has_key('lang'):
+            kwargs['lang'] = request.language
         return URL(*args, **kwargs)
     _URL.__doc__ = URL.__doc__
 

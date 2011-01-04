@@ -209,11 +209,10 @@ class translator(object):
 
     def get_possible_languages(self):
         possible_languages = self.current_languages
-	file_ending = re.compile("\.py$")
-	for langfile in os.listdir(self.folder+'languages/'):
-	    if file_ending.search(langfile):
-	        possible_languages.append(file_ending.sub('',langfile))
-
+        file_ending = re.compile("\.py$")
+        for langfile in os.listdir(self.folder+'languages/'):
+            if file_ending.search(langfile):
+                possible_languages.append(file_ending.sub('',langfile))
         return possible_languages
 
     def set_current_languages(self, *languages):
