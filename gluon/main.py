@@ -350,7 +350,7 @@ def wsgibase(environ, responder):
                     else:
                         environ['QUERY_STRING'] = ''
                 rewrite.select(env=environ, request=request)
-                if rewrite.thread.routes.router.active:
+                if rewrite.routers:
                     (static_file, environ) = rewrite.map_url_in(request, environ)
                 else:
                     (static_file, environ) = parse_url(request, environ)

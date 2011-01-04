@@ -25,32 +25,31 @@ logger = logging.getLogger('web2py.rewrite')
 
 thread = threading.local()  # thread-local storage for routing parameters
 
-def _router_default():
-    "return new copy of default router"
+def _router_default_base():
+    "return new copy of default base router"
     router = Storage(
         default_application = 'init',
             applications = 'ALL',
+        root_static = ['favicon.ico', 'robots.txt'],
+        domains = dict(),
+        acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
+        file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
+    )
+    return router
+
+def _router_default_app():
+    "return new copy of default app router"
+    router = Storage(
         default_controller = 'default',
             controllers = 'DEFAULT',
         default_function = 'index',
-        root_static = ['favicon.ico', 'robots.txt'],
-        map_domain = dict(),
         languages = [],
         default_language = None,
         check_args = True,
         map_hyphen = True,
-        acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
-        file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
         args_match = r'([\w@ -]+[=.]?)+$', # legal arg in args
     )
     return router
-
-_router_defaults = _router_default() # static copy for access to default values
-_router_defaults._acfe_match = re.compile(_router_defaults.acfe_match)
-_router_defaults._file_match = re.compile(_router_defaults.file_match)
-_router_defaults._args_match = re.compile(_router_defaults.args_match)
-_router_defaults.applications = []
-_router_defaults.controllers = []
 
 def _params_default(app=None):
     "return new copy of default parameters"
@@ -68,13 +67,13 @@ def _params_default(app=None):
     p.error_message = '<html><body><h1>%s</h1></body></html>'
     p.error_message_ticket = \
         '<html><body><h1>Internal error</h1>Ticket issued: <a href="/admin/default/ticket/%(ticket)s" target="_blank">%(ticket)s</a></body><!-- this is junk text else IE does not display the page: '+('x'*512)+' //--></html>'
-    p.router = Storage()
-    p.router.active = False
+    p.routers = Storage()
     return p
 
 params_apps = dict()
-params = _params_default(app=None)  # base (and legacy) rewrite parameters
-thread.routes = params # default to base rewrite parameters
+params = _params_default(app=None)  # regex rewrite parameters
+thread.routes = params              # default to base regex rewrite parameters
+routers = None
 
 def compile_re(k, v):
     """
@@ -115,24 +114,25 @@ def compile_re(k, v):
 
 def load(routes='routes.py', app=None):
     """
-    load: read and parse routes.py
-    (called from main.py at web2py initialization time)
+    load: read (if file) and parse routes
     store results in params
+    (called from main.py at web2py initialization time)
     """
-    if app is None:
-        path = abspath(routes)
-    else:
-        path = abspath('applications', app, routes)
-    if not os.path.exists(path):
-        return
+    if routes.endswith('.py'):
+        if app is None:
+            path = abspath(routes)
+        else:
+            path = abspath('applications', app, routes)
+        if not os.path.exists(path):
+            return
+        routesfp = open(path, 'r')
+        routes = routesfp.read().replace('\r\n','\n')
+        routesfp.close()
 
     symbols = {}
     try:
-        routesfp = open(path, 'r')
-        exec routesfp.read().replace('\r\n','\n') in symbols
-        routesfp.close()
+        exec (routes + '\n') in symbols
     except SyntaxError, e:
-        routesfp.close()
         logger.error(
             '%s has a syntax error and will not be loaded\n' % path
             + traceback.format_exc())
@@ -149,51 +149,68 @@ def load(routes='routes.py', app=None):
                 'default_application','default_controller', 'default_function'):
         if sym in symbols:
             p[sym] = symbols[sym]
-    if 'router' in symbols:
-        p.router = Storage(symbols['router'])
-        p.router.active = True
+    if 'routers' in symbols:
+        p.routers = Storage(symbols['routers'])
+        for key in p.routers:
+            if isinstance(p.routers[key], dict):
+                p.routers[key] = Storage(p.routers[key])
 
-    router = None
+    global params
+    all_apps = []
     if app is None:
-        global params
-        params = p  # install base rewrite parameters
-        if params.router.active:
-            router = _router_default()
-            router.update(params.router)
-            params.router = router
+        global routers
+        params = p                  # install base rewrite parameters
+        routers = params.routers    # establish routers if present
+        if routers:
+            router = _router_default_base()
+            if routers.BASE:
+                router.update(routers.BASE)
+            routers.BASE = router
+            router = Storage(routers.BASE)
+            router.update(_router_default_app())
+            if routers.DEFAULT:
+                router.update(routers.DEFAULT)
+            routers.DEFAULT = router
         for appname in os.listdir(abspath('applications')):
-            if os.path.exists(abspath('applications', appname, routes)):
-                load(routes, appname)
-    else:
-        if params.router.active or p.router.active:
-            router = Storage(params.router)  # new copy of base router
-            router.update(p.router)
-            router.default_application = app # local default app
-            p.router = router
+            if os.path.isdir(abspath('applications', appname)):
+                all_apps.append(appname)
+                if routers:
+                    router = Storage(routers.DEFAULT)   # new copy
+                    if appname in routers:
+                        router.update(routers[appname])
+                    routers[appname] = router
+                if os.path.exists(abspath('applications', appname, routes)):
+                    load(routes, appname)
+        if routers:
+            for appname in routers.keys():
+                # initialize apps in routers that aren't present, on behalf of doctest
+                if appname not in all_apps:
+                    router = Storage(routers.DEFAULT)   # new copy
+                    router.update(routers[appname])
+                    routers[appname] = router
+    else: # app
         params_apps[app] = p
-    if router is not None:
-        router._acfe_match = re.compile(router.acfe_match)
-        router._file_match = re.compile(router.file_match)
-        router._args_match = re.compile(router.args_match)
-        if isinstance(router.applications, str) and router.applications == 'ALL':
-            router.applications = []
-            for aname in os.listdir(abspath('applications')):
-                if os.path.isdir(abspath('applications', aname)):
-                    router.applications.append(aname)
-        if isinstance(router.controllers, str):
-            aname = router.controllers
-            if aname == 'DEFAULT':
-                if app is None:
-                    aname = router.default_application
-                else:
-                    aname = app
-            router.controllers = []
-            if os.path.isdir(abspath('applications', aname)):
-                cpath = abspath('applications', aname, 'controllers')
-                for cname in os.listdir(cpath):
-                    if os.path.isfile(abspath(cpath, cname)) and cname.endswith('.py'):
-                        router.controllers.append(cname[:-3])
-                router.controllers.append('static')
+        if routers:
+            if app in p.routers:
+                routers[app].update(p.routers[app])
+    if routers:
+        for app in routers.keys():
+            router = routers[app]
+            router._acfe_match = re.compile(router.acfe_match)
+            router._file_match = re.compile(router.file_match)
+            if router.args_match:
+                router._args_match = re.compile(router.args_match)
+            if isinstance(router.applications, str) and router.applications == 'ALL':
+                router.applications = all_apps
+            if app not in ('BASE', 'DEFAULT') and isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
+                router.controllers = []
+                if os.path.isdir(abspath('applications', app)):
+                    cpath = abspath('applications', app, 'controllers')
+                    for cname in os.listdir(cpath):
+                        if os.path.isfile(abspath(cpath, cname)) and cname.endswith('.py'):
+                            router.controllers.append(cname[:-3])
+                    router.controllers.append('static')
+        routers['DEFAULT'].controllers = []
 
     logger.debug('URL rewrite is on. configuration in %s' % path)
 
@@ -226,7 +243,7 @@ def select(env=None, app=None, request=None):
     if app:
         thread.routes = params_apps.get(app, params)
     elif env and params.routes_app:
-        if params.router.active:
+        if routers:
             app = map_url_in(request, env, app=True)
         else:
             (app, q, u) = filter_uri(env, params.routes_app, "routes_app")
@@ -254,7 +271,7 @@ def filter_out(url, e=None):
     "called from html.URL to rewrite outgoing URL"
     if not hasattr(thread, 'routes'):
         select()    # ensure thread.routes is set (for application threads)
-    if thread.routes.router.active:
+    if routers:
         return url  # already filtered
     if thread.routes.routes_out:
         items = url.split('?', 1)
@@ -326,11 +343,10 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
          'wsgi_url_scheme': scheme,
          'http_host': host
     }
-    if router:
+    if routers:
         request = Storage()
         e["applications_parent"] = '/'
         request.env = Storage(e)
-        request.language = lang
         if out:
             items = path_info.strip('/').split('/')
             a = items.pop(0)
@@ -354,8 +370,8 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
             result += ".%s" % request.extension
         if request.args:
             result += " %s" % request.args
-        if request.language:
-            result += " (%s)" % request.language
+        if request.uri_language:
+            result += " (%s)" % request.uri_language
         return result
     elif out:
         return filter_out(uri, e)
@@ -404,8 +420,7 @@ class MapUrlIn(object):
         self.request = request
         self.env = env
 
-        self.base_router = params.router
-        self.router = params.router
+        self.router = None
         self.application = None
         self.language = None
         self.controller = None
@@ -442,46 +457,39 @@ class MapUrlIn(object):
 
     def map_app(self):
         "determine application name"
-        router = self.base_router
+        base = routers.BASE  # base router
         arg0 = self.harg0
-        if arg0 in router.applications:
+        if arg0 in base.applications:
             self.application = arg0
-        elif self.host in router.map_domain:
-            self.application = router.map_domain[self.host]
-        elif arg0 and not router.applications:
+        elif self.host in base.domains:
+            self.application = base.domains[self.host]
+        elif arg0 and not base.applications:
             self.application = arg0
         else:
-            self.application = router.default_application
+            self.application = base.default_application
         self.pop_arg_if(self.application == arg0)
     
-        if not router._acfe_match.match(self.application):
+        if self.application not in routers or not base._acfe_match.match(self.application):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
                        web2py_error='invalid application')
 
-        #  set the application-specific router, if any
+        #  set the application router
         #
-        thread.routes = params_apps.get(self.application, params)
-        logger.debug("select application=%s and router=%s" % (self.application, thread.routes.name))
+        logger.debug("select application=%s" % self.application)
         self.request.application = self.application
-        self.router = thread.routes.router   # possibly switch to app-specific router
-
-    def map_defaults(self):
-        '''
-        If this is the base router, certain values apply only to the default application;
-        other applications get the default values.
-        '''
-        if self.application == self.router.default_application:
-            r = self.router
+        if self.application not in routers:
+            self.router = routers.DEFAULT            # support for bad apps in doctest
         else:
-            r = _router_defaults
-        self.controllers = r.controllers
-        self.languages = r.languages
-        self.default_language = r.default_language
-        self.check_args = r.check_args
-        self.map_hyphen = r.map_hyphen
-        self._acfe_match = r._acfe_match
-        self._file_match = r._file_match
-        self._args_match = r._args_match
+            self.router = routers[self.application]   # application router
+        self.controllers = self.router.controllers
+        self.languages = self.router.languages
+        self.default_language = self.router.default_language
+        self.check_args = self.router.check_args
+        self.map_hyphen = self.router.map_hyphen
+        self._acfe_match = self.router._acfe_match
+        self._file_match = self.router._file_match
+        self._args_match = self.router._args_match
+        #print "IN: %s=%s" % (self.application, self.router) # JKL DEBUG
 
     def map_root_static(self):
         "handle root-static files (no hyphen mapping)"
@@ -517,7 +525,7 @@ class MapUrlIn(object):
             self.controller = arg0
             self.pop_arg_if(True)
         logger.debug("route: controller=%s" % self.controller)
-        if not self._acfe_match.match(self.controller):
+        if not self.router._acfe_match.match(self.controller):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
                        web2py_error='invalid controller')
 
@@ -529,7 +537,7 @@ class MapUrlIn(object):
         if self.controller != "static":
             return None
         file = '/'.join(self.args)
-        if not self._file_match.match(file):
+        if not self.router._file_match.match(file):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
                        web2py_error='invalid static file')
         #
@@ -563,10 +571,10 @@ class MapUrlIn(object):
             self.function = self.router.default_function
         logger.debug("route: function.ext=%s.%s" % (self.function, self.extension))
     
-        if not self._acfe_match.match(self.function):
+        if not self.router._acfe_match.match(self.function):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
                        web2py_error='invalid function')
-        if self.extension and not self._acfe_match.match(self.extension):
+        if self.extension and not self.router._acfe_match.match(self.extension):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
                        web2py_error='invalid extension')
 
@@ -577,7 +585,7 @@ class MapUrlIn(object):
         '''
         if self.check_args:
             for arg in self.args:
-                if not self._args_match.match(arg):
+                if not self.router._args_match.match(arg):
                     raise HTTP(400, thread.routes.error_message % 'invalid request',
                                web2py_error='invalid args')
         else:
@@ -599,7 +607,7 @@ class MapUrlIn(object):
         self.request.args = self.args
         self.request.raw_args = self.raw_args
         if self.language:
-            self.request.language = self.language
+            self.request.uri_language = self.language
         for (key, value) in self.env.items():
             self.request.env[key.lower().replace('.', '_')] = value
 
@@ -626,27 +634,20 @@ class MapUrlOut(object):
 
     def __init__(self, application, controller, function, args, lang):
         "initialize a map-out object"
-        if not hasattr(thread, 'routes'):
-            thread.routes = params  # default to base rewrite parameters
-        self.router = thread.routes.router
-        self.base_router = params.router
-
+        self.default_application = routers.BASE.default_application
+        if application in routers:
+            self.router = routers[application]
+        else:
+            self.router = routers.DEFAULT
         self.application = application
         self.controller = controller
         self.function = function
         self.args = args
 
-        #  If this is the base router, certain values apply only to the default application;
-        #  other applications get the default values.
-        #
-        if self.application == self.router.default_application:
-            r = self.router
-        else:
-            r = _router_defaults
-        self.controllers = r.controllers
-        self.languages = r.languages
-        self.default_language = r.default_language
-        self.map_hyphen = r.map_hyphen
+        self.controllers = self.router.controllers
+        self.languages = self.router.languages
+        self.default_language = self.router.default_language
+        self.map_hyphen = self.router.map_hyphen
 
         if lang and lang in self.languages:
             self.language = lang
@@ -658,15 +659,6 @@ class MapUrlOut(object):
         self.omit_language = False
         self.omit_controller = False
         self.omit_function = False
-
-    def active(self):
-        "do we have an active router?"
-        return self.router is not None and self.router.active
-
-    @property
-    def base_default_application(self):
-        "default_application from base router"
-        return self.base_router.default_application
 
     def omit_lang(self):
         "omit language if possible"
@@ -685,18 +677,18 @@ class MapUrlOut(object):
             self.omit_function = True
             if self.controller == router.default_controller:
                 self.omit_controller = True
-                if self.application == self.base_default_application:
+                if self.application == self.default_application:
                     self.omit_application = True
     
         #  omit the base default application
         #  omit applications in the domain map
         #
-        if self.application == self.base_default_application or self.application in router.map_domain.values():
+        if self.application == self.default_application or self.application in router.domains.values():
             self.omit_application = True
     
-        #  omit controller if default controller for default app
+        #  omit controller if default controller
         #
-        if self.application == router.default_application and self.controller == router.default_controller:
+        if self.controller == router.default_controller:
             self.omit_controller = True
     
         #  prohibit ambiguous cases
@@ -731,7 +723,7 @@ class MapUrlOut(object):
     def acf(self):
         "convert components to /app/lang/controller/function"
 
-        if not self.active():
+        if not routers:
             return None         # use regex filter
         self.omit_lang()        # try to omit language
         self.omit_acf()         # try to omit a/c/f
@@ -747,7 +739,6 @@ def map_url_in(request, env, app=False):
     map.map_app()     # determine application
     if app:
         return map.application
-    map.map_defaults()    # adjust defaults if not default application
     root_static_file = map.map_root_static() # handle root-static files
     if root_static_file:
         return (root_static_file, map.env)
@@ -791,21 +782,7 @@ def map_url_out(application, controller, function, args, lang=None):
     return map.acf()
 
 def get_effective_router(appname):
-    "return a read-only copy of the effective router for the specified application"
-    if not thread.routes.router.active:
+    "return a private copy of the effective router for the specified application"
+    if not routers or appname not in routers:
         return None
-    router = Storage(thread.routes.router)  # return a copy
-    #
-    #  If this is the base router, adjust values for non-default application
-    #
-    if router.default_application != appname:
-        router.controllers = _router_defaults.controllers
-        router.languages = _router_defaults.languages
-        router.default_language = _router_defaults.default_language
-        router.check_args = _router_defaults.check_args
-        router.map_hyphen = _router_defaults.map_hyphen
-        router._acfe_match = _router_defaults._acfe_match
-        router._file_match = _router_defaults._file_match
-        router._args_match = _router_defaults._args_match
-    router.base_router = params.router
-    return router
+    return Storage(routers[appname])  # return a copy

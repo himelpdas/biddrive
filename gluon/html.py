@@ -259,8 +259,14 @@ def URL(
     if anchor:
         other += '#' + urllib.quote(str(anchor))
 
-    url = '/%s/%s/%s%s' % (application, controller, function, other)
+    if rewrite.routers:
+        acf = rewrite.map_url_out(application, controller, function, args, lang)
+        url = '%s%s' % (acf, other)
+        if regex_crlf.search(url):
+            raise SyntaxError, 'CRLF Injection Detected'
+        return XML(url)
 
+    url = '/%s/%s/%s%s' % (application, controller, function, other)
     if regex_crlf.search(url):
         raise SyntaxError, 'CRLF Injection Detected'
     return XML(rewrite.filter_out(url, env))
