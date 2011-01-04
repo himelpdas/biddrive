@@ -4,6 +4,8 @@ This file is part of the web2py Web Framework
 Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
 License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
+Attention: Requires Chrome or Safari. For IE of Firefox you need https://github.com/gimite/web-socket-js
+
 1) install tornado
 
    easy_install tornado
