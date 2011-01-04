@@ -363,6 +363,9 @@ class IS_IN_DB(Validator):
         sort=False,
         _and=None,
         ):
+        from gluon.dal import Table
+        if isinstance(field,Table): field = field._id
+
         if hasattr(dbset, 'define_table'):
             self.dbset = dbset()
         else:
@@ -475,6 +478,10 @@ class IS_NOT_IN_DB(Validator):
         error_message='value already in database or empty',
         allowed_override=[],
         ):
+
+        from gluon.dal import Table
+        if isinstance(field,Table): field = field._id
+
         if hasattr(dbset, 'define_table'):
             self.dbset = dbset()
         else:
