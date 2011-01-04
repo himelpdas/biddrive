@@ -3,7 +3,6 @@ CHECK_VERSION = True
 WEB2PY_URL = 'http://web2py.com'
 WEB2PY_VERSION_URL = WEB2PY_URL+'/examples/default/version'
 
-
 ###########################################################################
 # Preferences for EditArea
 # the user-interface feature that allows you to edit files in your web
@@ -46,6 +45,8 @@ import os
 # extract google_appengine_x.x.x.zip to applications/admin/private/
 GAE_APPCFG = os.path.abspath(os.path.join('/usr/local/bin/appcfg.py'))
 
+# To use web2py as a teaching tool, set MULTI_USER_MODE to True
+MULTI_USER_MODE = False
 
 # parameter for downloading LAYOUTS
 LAYOUTS_APP = 'http://web2py.com/layouts'

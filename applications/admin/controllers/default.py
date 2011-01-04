@@ -10,6 +10,10 @@ if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','up
     session.flash = T('disabled in demo mode')
     redirect(URL('site'))
 
+if not is_manager() and request.function in ['change_password','upgrade_web2py']:
+    session.flash = T('disabled in multi user mode')
+    redirect(URL('site'))
+
 if FILTER_APPS and request.args(0) and not request.args(0) in FILTER_APPS:
     session.flash = T('disabled in demo mode')
     redirect(URL('site'))
@@ -20,6 +24,13 @@ def safe_open(a,b):
             def write(self,data): pass
         return tmp()
     return open(a,b)
+
+def get_app(name=None):
+    app = name or request.args(0)
+    if not MULTI_USER_MODE or db(db.app.name==app)(db.app.owner==auth.user.id).count():
+        return app
+    session.flash = 'App does not exist or your are not authorized'
+    redirect(URL('site'))
 
 def index():
     """ Index handler """
@@ -49,9 +60,7 @@ def index():
         else:
             response.flash = T('invalid password')
 
-    # f == file
-    apps = [f for f in os.listdir(apath(r=request)) if f.find('.') < 0]
-    return dict(apps=apps, send=send)
+    return dict(send=send)
 
 
 def check_version():
@@ -76,8 +85,9 @@ def check_version():
 
 def logout():
     """ Logout handler """
-
     session.authorized = None
+    if MULTI_USER_MODE:
+        redirect(URL('user/logout'))
     redirect(URL('index'))
 
 
@@ -116,11 +126,13 @@ def site():
         # create a new application
         appname = cleanpath(request.vars.filename).replace('.', '_')
         if app_create(appname, request):
+            if MULTI_USER_MODE:
+                db.app.insert(name=appname,owner=auth.user.id)
             session.flash = T('new application "%s" created', appname)
             redirect(URL('design',args=appname))
         else:
             session.flash = \
-                T('unable to create application "%s"', request.vars.filename)
+                T('unable to create application "%s" (it may exist already)', request.vars.filename)
         redirect(URL(r=request))
 
     elif file_or_appurl and not request.vars.filename:
@@ -161,23 +173,29 @@ def site():
         redirect(URL(r=request))
 
     regex = re.compile('^\w+$')
-    apps = sorted([(f.upper(), f) for f in os.listdir(apath(r=request)) \
-                       if regex.match(f)])
-    apps = [item[1] for item in apps]
+
+    if is_manager():
+        apps = [f for f in os.listdir(apath(r=request)) if regex.match(f)]
+    else:
+        apps = [f.name for f in db(db.app.owner==auth.user_id).select()]
 
     if FILTER_APPS:
         apps = [f for f in apps if f in FILTER_APPS]
+
+    apps = sorted(apps,lambda a,b:cmp(a.upper(),b.upper()))
 
     return dict(app=None, apps=apps, myversion=myversion)
 
 
 def pack():
+    app = get_app()
+
     if len(request.args) == 1:
-        fname = 'web2py.app.%s.w2p' % request.args[0]
-        filename = app_pack(request.args[0], request)
+        fname = 'web2py.app.%s.w2p' % app
+        filename = app_pack(app, request)
     else:
-        fname = 'web2py.app.%s.compiled.w2p' % request.args[0]
-        filename = app_pack_compiled(request.args[0], request)
+        fname = 'web2py.app.%s.compiled.w2p' % app
+        filename = app_pack_compiled(app, request)
 
     if filename:
         response.headers['Content-Type'] = 'application/w2p'
@@ -189,9 +207,10 @@ def pack():
         redirect(URL('site'))
 
 def pack_plugin():
+    app = get_app()
     if len(request.args) == 2:
         fname = 'web2py.plugin.%s.w2p' % request.args[1]
-        filename = plugin_pack(request.args[0], request.args[1], request)
+        filename = plugin_pack(app, request.args[1], request)
     if filename:
         response.headers['Content-Type'] = 'application/w2p'
         disposition = 'attachment; filename=%s' % fname
@@ -214,8 +233,7 @@ def upgrade_web2py():
     return dict()
 
 def uninstall():
-    app = request.args[0]
-
+    app = get_app()
     if 'delete' in request.vars:
         deleted = app_uninstall(app, request)
         if deleted:
@@ -229,7 +247,8 @@ def uninstall():
 
 
 def cleanup():
-    clean = app_cleanup(request.args[0], request)
+    app = get_app()
+    clean = app_cleanup(app, request)
     if not clean:
         session.flash = T("some files could not be removed")
     else:
@@ -239,7 +258,8 @@ def cleanup():
 
 
 def compile_app():
-    c = app_compile(request.args[0], request)
+    app = get_app()
+    c = app_compile(app, request)
     if not c:
         session.flash = T('application compiled')
     else:
@@ -250,14 +270,14 @@ def compile_app():
 
 def remove_compiled_app():
     """ Remove the compiled application """
-    remove_compiled_application(apath(request.args[0], r=request))
+    app = get_app()
+    remove_compiled_application(apath(app, r=request))
     session.flash = T('compiled application removed')
     redirect(URL('site'))
 
-
 def delete():
     """ Object delete handler """
-
+    app = get_app()
     filename = '/'.join(request.args)
     sender = request.vars.sender
 
@@ -279,9 +299,8 @@ def delete():
 
 def peek():
     """ Visualize object code """
-
+    app = get_app()
     filename = '/'.join(request.args)
-
     try:
         data = safe_open(apath(filename, r=request), 'r').read().replace('\r','')
     except IOError:
@@ -298,9 +317,7 @@ def peek():
 
 def test():
     """ Execute controller tests """
-
-    app = request.args[0]
-
+    app = get_app()
     if len(request.args) > 1:
         file = request.args[1]
     else:
@@ -315,8 +332,9 @@ def keepalive():
 
 def search():
     keywords=request.vars.keywords or ''
+    app = get_app()
     def match(filename,keywords):
-        filename=os.path.join(apath(request.args[0], r=request),filename)
+        filename=os.path.join(apath(app, r=request),filename)
         if keywords in open(filename,'rb').read():
             return True
         return False
@@ -330,9 +348,8 @@ def search():
 def edit():
     """ File edit handler """
     # Load json only if it is ajax edited...
-
+    app = get_app()
     filename = '/'.join(request.args)
-
     # Try to discover the file type
     if filename[-3:] == '.py':
         filetype = 'python'
@@ -448,7 +465,7 @@ def edit():
     elif filetype == 'python' and request.args[1] == 'controllers':
         ## it's a controller file.
         ## Create links to all of the associated view files.
-        app = request.args[0]
+        app = get_app()
         viewname = os.path.splitext(request.args[2])[0]
         viewpath = os.path.join(app,'views',viewname)
         aviewpath = apath(viewpath, r=request)
@@ -499,12 +516,11 @@ def edit():
                     editviewlinks=editviewlinks)
 
 def resolve():
-    """  """
+    """
+    """
 
     filename = '/'.join(request.args)
-
     # ## check if file is not there
-
     path = apath(filename, r=request)
     a = safe_open(path, 'r').readlines()
 
@@ -567,9 +583,8 @@ def resolve():
 
 def edit_language():
     """ Edit language file """
-
+    app = get_app()
     filename = '/'.join(request.args)
-
     from gluon.languages import read_dict, write_dict
     strings = read_dict(apath(filename, r=request))
     keys = sorted(strings.keys(),lambda x,y: cmp(x.lower(), y.lower()))
@@ -611,9 +626,7 @@ def edit_language():
 
 def about():
     """ Read about info """
-
-    app = request.args[0]
-
+    app = get_app()
     # ## check if file is not there
     about = safe_open(apath('%s/ABOUT' % app, r=request), 'r').read()
     license = safe_open(apath('%s/LICENSE' % app, r=request), 'r').read()
@@ -623,9 +636,7 @@ def about():
 
 def design():
     """ Application design handler """
-
-    app = request.args[0]
-
+    app = get_app()
     if not response.flash and app == request.application:
         msg = T('ATTENTION: you cannot edit the running application!')
         response.flash = msg
@@ -725,7 +736,6 @@ def design():
 
 def delete_plugin():
     """ Object delete handler """
-
     app=request.args(0)
     plugin = request.args(1)
     plugin_name='plugin_'+plugin
@@ -752,8 +762,7 @@ def delete_plugin():
 
 def plugin():
     """ Application design handler """
-
-    app = request.args(0)
+    app = get_app()
     plugin = request.args(1)
 
     if not response.flash and app == request.application:
@@ -839,8 +848,8 @@ def plugin():
 
 def create_file():
     """ Create files handler """
-
     try:
+        app = get_app(name=request.vars.location.split('/')[0])
         path = apath(request.vars.location, r=request)
         filename = re.sub('[^\w./-]+', '_', request.vars.filename)
 
@@ -949,6 +958,7 @@ def upload_file():
     """ File uploading handler """
 
     try:
+        app = get_app(name=request.vars.location.split('/')[0])
         path = apath(request.vars.location, r=request)
 
         if request.vars.filename:
@@ -994,7 +1004,7 @@ def errors():
     import pickle
     import hashlib
 
-    app = request.args[0]
+    app = get_app()
 
     method = request.args(1) or 'new'
 
@@ -1057,7 +1067,7 @@ def make_link(path):
     if os.path.isabs(tryFile) and os.path.isfile(tryFile):
         (folder, filename) = os.path.split(tryFile)
         (base, ext) = os.path.splitext(filename)
-        app = request.args[0]
+        app = get_app()
 
         editable = {'controllers': '.py', 'models': '.py', 'views': '.html'}
         for key in editable.keys():
@@ -1117,8 +1127,8 @@ def ticket():
         session.flash = T('invalid ticket')
         redirect(URL('site'))
 
+    app = get_app()
     myversion = request.env.web2py_version
-    app = request.args[0]
     ticket = request.args[1]
     e = RestrictedError()
     e.load(request, app, ticket)
@@ -1139,7 +1149,7 @@ def error():
 def update_languages():
     """ Update available languages """
 
-    app = request.args[0]
+    app = get_app()
     update_all_languages(apath(app, r=request))
     session.flash = T('Language files (static strings) updated')
     redirect(URL('design',args=app))
@@ -1155,3 +1165,10 @@ def twitter():
     except Exception, e:
         return DIV(T('Unable to download because:'),BR(),str(e))
 
+def user():
+    if MULTI_USER_MODE:
+        if not db(db.auth_user).count():
+            auth.settings.registration_requires_approval = False            
+        return dict(form=auth())
+    else:
+        return dict(form=T("Disabled"))

@@ -73,7 +73,7 @@ if session.authorized:
 
 if not session.authorized and not \
     (request.controller == 'default' and \
-     request.function == 'index'):
+     request.function in ('index','user')):
 
     if request.env.query_string:
         query_string = '?' + request.env.query_string

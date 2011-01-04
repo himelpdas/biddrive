@@ -4,7 +4,7 @@ import gluon.contrib.shell
 import code, thread
 from gluon.shell import env
 
-if DEMO_MODE:
+if DEMO_MODE or MULTI_USER_MODE:
     session.flash = T('disabled in demo mode')
     redirect(URL('default','site'))
 
