@@ -883,7 +883,12 @@ def render(content = "hello world",
     context['response'] = globals.Response()
 
     # Execute the template.
-    exec(str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers, delimiters=delimiters))) in context
+    code = str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers, delimiters=delimiters))
+    try:
+        exec(code) in context
+    except Exception, e:
+        # for i,line in enumerate(code.split('\n')): print i,line
+        raise
 
     if close_stream:
         stream.close()

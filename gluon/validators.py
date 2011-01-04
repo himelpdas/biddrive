@@ -344,7 +344,7 @@ class IS_IN_DB(Validator):
     example::
 
         INPUT(_type='text', _name='name',
-              requires=IS_IN_DB(db, db.table, zero=''))
+              requires=IS_IN_DB(db, db.mytable.myfield, zero=''))
 
     used for reference fields, rendered as a dropbox
     """
