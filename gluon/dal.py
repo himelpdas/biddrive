@@ -4185,6 +4185,7 @@ class Field(Expression):
         uploadseparate=False,
         compute=None,
         custom_store=None,
+        custom_retrieve=None,
         ):
         self.db = None
         self.op = None
@@ -4222,6 +4223,7 @@ class Field(Expression):
         self.compute = compute
         self.isattachment = True
         self.custom_store = custom_store
+        self.custom_retrieve = custom_retrieve
         if self.label == None:
             self.label = ' '.join([x.capitalize() for x in
                                   fieldname.split('_')])
@@ -4231,7 +4233,7 @@ class Field(Expression):
             self.requires = requires
 
     def store(self, file, filename=None, path=None):
-        if callable(self.custom_store):
+        if self.custom_store:
             return self.custom_store(file,filename,path)
         if not filename:
             filename = file.name
@@ -4269,6 +4271,8 @@ class Field(Expression):
         return newfilename
 
     def retrieve(self, name, path=None):
+        if self.custom_retrieve:
+            return self.custom_retrieve(name, path)
         import http
         if self.authorize or isinstance(self.uploadfield, str):
             row = self.db(self == name).select().first()
