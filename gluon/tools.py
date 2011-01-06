@@ -3484,7 +3484,7 @@ class Service(object):
             return response.json(s)
         self.error()
 
-    class JsonRpcException(object):
+    class JsonRpcException(Exception):
         def __init__(self,code,info):
             self.code,self.info = code,info
 

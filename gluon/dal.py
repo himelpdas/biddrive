@@ -269,7 +269,7 @@ class ConnectionPool(object):
             return
         while thread.instances:
             instance = thread.instances.pop()
-            action(instance)
+            getattr(instance,action)()
             # ## if you want pools, recycle this connection
             really = True
             if instance.pool_size:

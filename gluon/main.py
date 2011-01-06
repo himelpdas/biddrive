@@ -463,7 +463,7 @@ def wsgibase(environ, responder):
                 if response._custom_commit:
                     response._custom_commit()
                 else:
-                    BaseAdapter.close_all_instances(BaseAdapter.commit)
+                    BaseAdapter.close_all_instances('commit')
 
                 # ##################################################
                 # if session not in db try store session on filesystem
@@ -505,7 +505,7 @@ def wsgibase(environ, responder):
                 if response._custom_rollback:
                     response._custom_rollback()
                 else:
-                    BaseAdapter.close_all_instances(BaseAdapter.rollback)
+                    BaseAdapter.close_all_instances('rollback')
 
                 http_response = \
                     HTTP(500,
@@ -525,7 +525,7 @@ def wsgibase(environ, responder):
                 if response._custom_rollback:
                     response._custom_rollback()
                 else:
-                    BaseAdapter.close_all_instances(BaseAdapter.rollback)
+                    BaseAdapter.close_all_instances('rollback')
             except:
                 pass
             e = RestrictedError('Framework', '', '', locals())
