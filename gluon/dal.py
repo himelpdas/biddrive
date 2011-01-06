@@ -1084,7 +1084,7 @@ class BaseAdapter(ConnectionPool):
             return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st', 'te', 'pa', 'up']:
             return 'NULL'
-        r = BaseAdapter.represent_exceptions(self,obj,fieldtype)
+        r = self.represent_exceptions(self,obj,fieldtype)
         if r != None:
             return r
         if fieldtype == 'boolean':
