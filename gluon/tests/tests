@@ -4,3 +4,4 @@ python test_dal.py
 python test_is_url.py
 python test_utils.py
 python test_template.py
+python test_router.py

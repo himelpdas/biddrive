@@ -280,7 +280,7 @@ class ConnectionPool(object):
                     really = False
                 sql_locker.release()
             if really:
-                instance.connection.close()
+                getattr(instance,'close')()
         return
 
     def find_or_make_work_folder(self):
@@ -1038,6 +1038,9 @@ class BaseAdapter(ConnectionPool):
     def rollback(self):
         return self.connection.rollback()
 
+    def close(self):
+        return self.connection.close()
+
     def distributed_transaction_begin(self,key):
         return
 
@@ -1084,7 +1087,7 @@ class BaseAdapter(ConnectionPool):
             return 'NULL'
         if obj == '' and not fieldtype[:2] in ['st', 'te', 'pa', 'up']:
             return 'NULL'
-        r = self.represent_exceptions(self,obj,fieldtype)
+        r = self.represent_exceptions(obj,fieldtype)
         if r != None:
             return r
         if fieldtype == 'boolean':
@@ -2400,6 +2403,13 @@ class NoSQLAdapter(BaseAdapter):
         remember: no transactions on many NoSQL
         """
         pass
+
+    def close(self):
+        """
+        remember: no transactions on many NoSQL
+        """
+        pass
+
 
     # these functions should never be called!
     def OR(self,first,second): raise SyntaxError, "Not supported"

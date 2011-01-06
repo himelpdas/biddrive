@@ -1,45 +1,33 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-#  router is a dictionary of URL routing parameters.
+#  routers are dictionaries of URL routing parameters.
 #
-#  For each request, the effective router is the default router (below),
-#  updated by the base router (if any) from routes.py,
-#  updated by the relevant application-specific router (if any)
-#  from applications/app/routes.py.
+#  For each request, the effective router is:
+#    the built-in default base router (shown below),
+#    updated by the BASE router in routes.py routers,
+#    updated by the app-specific router in routes.py routers,
+#    updated by the app-specific router from applcations/app/routes.py routers (if any)
 #
-#  Optional members of base router:
+#
+#  Router members:
 #
 #  default_application: default application name
 #  applications: list of all recognized applications, or 'ALL' to use all currently installed applications
 #      Names in applications are always treated as an application names when they appear first in an incoming URL.
+#      Set applications to [] to disable the removal of application names from outgoing URLs.
 #  domains: dict used to map domain names to application names
-#
-#  These values may be overridden by app-specific routers:
-#
 #  default_controller: name of default controller
 #  default_function: name of default function (all controllers)
 #  root_static: list of static files accessed from root
 #       (mapped to the selected application's static/ directory)
-#
-#
-#  Optional members of application-specific router:
-#
-#  These values override those in the base router:
-#
-#  default_controller
-#  default_function
-#  root_static
-#
-#  When these appear in the base router, they apply to the default application only:
-#
 #  domain: the domain that maps to this application (alternative to using domains in the base router)
 #  languages: list of all supported languages
 #      Names in controllers are always treated as language names when they appear in an incoming URL after
 #      the (optional) application name. 
 #  controllers: list of valid controllers in selected app
 #       or "DEFAULT" to use all controllers in the selected app plus 'static'
-#       or [] to disable controller-name omission
+#       or [] to disable controller-name removal.
 #      Names in controllers are always treated as controller names when they appear in an incoming URL after
 #      the (optional) application and language names. 
 #  default_language
@@ -57,25 +45,22 @@
 #  args_match: regex for valid args (see also check_args flag)
 #
 #
-#  The built-in default routers supply default values (undefined members are None):
-#
-#     base_router = dict(
-#         default_application = 'init',
-#             applications = 'ALL',
-#         root_static = ['favicon.ico', 'robots.txt'],
-#         domains = dict(),
-#         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
-#         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
-#     )
+#  The built-in default router supplies default values (undefined members are None):
 #
 #     default_router = dict(
+#         default_application = 'init',
+#             applications = 'ALL',
 #         default_controller = 'default',
 #             controllers = 'DEFAULT',
 #         default_function = 'index',
-#         languages = [],
 #         default_language = None,
+#             languages = [],
+#         root_static = ['favicon.ico', 'robots.txt'],
+#         domains = dict(),
 #         check_args = True,
 #         map_hyphen = True,
+#         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
+#         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
 #         args_match = r'([\w@ -]+[=.]?)+$', # legal arg in args
 #     )
 #
@@ -92,8 +77,11 @@ routers = dict(
         default_application = 'welcome',
     ),
 
-    # default application router
-    DEFAULT = dict(),
+    # 'admin' application router
+    admin = dict(
+        controllers = [],   # don't remove controller names from admin URLs
+        map_hyphen = False, # don't map hyphens to underscores
+    ),
 )
 
 
@@ -204,15 +192,6 @@ def __routes_doctest():
     >>> filter_url('http://domain.com/admin/static/filename-with_underscore')
     '/applications/admin/static/filename-with_underscore'
     
-    >>> get_effective_router('welcome').default_application
-    'welcome'
-    >>> get_effective_router('welcome').default_controller
-    'default'
-    >>> get_effective_router('welcome').controllers
-    ['appadmin', 'default', 'static']
-    >>> get_effective_router('admin').controllers
-    ['appadmin', 'default', 'gae', 'mercurial', 'shell', 'wizard', 'static']
-
     >>> filter_err(200)
     200
     >>> filter_err(399)

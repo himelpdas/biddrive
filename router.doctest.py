@@ -1,42 +1,35 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-#  router is a dictionary of URL routing parameters.
+#  routers are dictionaries of URL routing parameters.
 #
-#  For each request, the effective router is the default router (below),
-#  updated by the base router (if any) from routes.py,
-#  updated by the relevant application-specific router (if any)
-#  from applications/app/routes.py.
+#  For each request, the effective router is:
+#    the built-in default base router (shown below),
+#    updated by the BASE router in routes.py routers,
+#    updated by the app-specific router in routes.py routers,
+#    updated by the app-specific router from applcations/app/routes.py routers (if any)
 #
-#  Optional members of base router:
+#
+#  Router members:
 #
 #  default_application: default application name
-#  applications: list of all recognized applications,
-#       or 'ALL' to use all currently installed applications
+#  applications: list of all recognized applications, or 'ALL' to use all currently installed applications
+#      Names in applications are always treated as an application names when they appear first in an incoming URL.
+#      Set applications to [] to disable the removal of application names from outgoing URLs.
 #  domains: dict used to map domain names to application names
-#
-#  These values may be overridden by app-specific routers:
-#
 #  default_controller: name of default controller
 #  default_function: name of default function (all controllers)
 #  root_static: list of static files accessed from root
 #       (mapped to the selected application's static/ directory)
-#
-#
-#  Optional members of application-specific router:
-#
-#  These values override those in the base router:
-#
-#  default_controller
-#  default_function
-#  root_static
-#
-#  When these appear in the base router, they apply to the default application only:
-#
+#  domain: the domain that maps to this application (alternative to using domains in the base router)
+#  languages: list of all supported languages
+#      Names in controllers are always treated as language names when they appear in an incoming URL after
+#      the (optional) application name. 
 #  controllers: list of valid controllers in selected app
 #       or "DEFAULT" to use all controllers in the selected app plus 'static'
-#       or [] to disable controller-name omission
-#  languages: list of all supported languages
+#       or [] to disable controller-name removal.
+#      Names in controllers are always treated as controller names when they appear in an incoming URL after
+#      the (optional) application and language names. 
 #  default_language
 #       The language code (for example: en, it-it) optionally appears in the URL following
 #       the application (which may be omitted). For incoming URLs, the code is copied to
@@ -54,16 +47,16 @@
 #
 #  The built-in default router supplies default values (undefined members are None):
 #
-#     router = dict(
+#     default_router = dict(
 #         default_application = 'init',
 #             applications = 'ALL',
 #         default_controller = 'default',
 #             controllers = 'DEFAULT',
 #         default_function = 'index',
+#         default_language = None,
+#             languages = [],
 #         root_static = ['favicon.ico', 'robots.txt'],
 #         domains = dict(),
-#         languages = [],
-#         default_language = None,
 #         check_args = True,
 #         map_hyphen = True,
 #         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
@@ -72,14 +65,6 @@
 #     )
 #
 #  See rewrite.map_url_in() and rewrite.map_url_out() for implementation details.
-
-
-#  This simple router overrides only the default application name,
-#  but provides full rewrite functionality.
-#
-#  router = dict(
-#     default_application = 'welcome',
-#  )
 
 #  This router supports the doctests below; it's not very realistic.
 #
@@ -92,8 +77,6 @@ routers = dict(
             "domain2.com" : "app2"
         },
     ),
-    
-    DEFAULT = dict(),
     
     app = dict(),
     
@@ -113,6 +96,7 @@ routers = dict(
     app2 = dict(
         default_controller = 'ctr2',
         default_function = 'fcn2',
+        map_hyphen = False,
     ),
 )
 
@@ -256,6 +240,21 @@ def __routes_doctest():
     >>> filter_url('http://domain.com/app/static/filename-with_underscore')
     '/applications/app/static/filename-with_underscore'
     
+    >>> filter_url('http://domain2.com/ctr/fcn-1')
+    Traceback (most recent call last):
+    ...
+    HTTP
+    >>> filter_url('http://domain2.com/app2/ctr/fcn_1')
+    '/app2/ctr/fcn_1'
+    >>> filter_url('http://domain2.com/app2/ctr/fcn_1', out=True)
+    '/ctr/fcn_1'
+    >>> filter_url('http://domain2.com/app2/ctr/fcn_1', out=True)
+    '/ctr/fcn_1'
+    >>> filter_url('http://domain2.com/app2/static/filename-with_underscore', out=True)
+    '/static/filename-with_underscore'
+    >>> filter_url('http://domain2.com/app2/static/filename-with_underscore')
+    '/applications/app2/static/filename-with_underscore'
+
     >>> get_effective_router('myapp').default_application
     'myapp'
     >>> get_effective_router('myapp').default_controller
@@ -266,6 +265,10 @@ def __routes_doctest():
     ['myctlr', 'ctr']
     >>> get_effective_router('app').controllers
     []
+    >>> get_effective_router('welcome').controllers
+    ['appadmin', 'default', 'static']
+    >>> get_effective_router('admin').controllers
+    ['appadmin', 'default', 'gae', 'mercurial', 'shell', 'wizard', 'static']
 
     >>> filter_err(200)
     200
