@@ -69,10 +69,11 @@ params = _params_default(app=None)  # regex rewrite parameters
 thread.routes = params              # default to base regex rewrite parameters
 routers = None
 
-ROUTER_BASE_KEYS = set(('default_application', 'applications', 'domains', 'root_static', 'acfe_match', 'file_match'))
-ROUTER_APP_KEYS = set(('default_controller', 'controllers', 'default_function', 'domain', 
-    'languages', 'default_language', 'check_args', 'map_hyphen', 'args_match'))
-ROUTER_KEYS = ROUTER_BASE_KEYS | ROUTER_APP_KEYS
+ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 'controllers', 'default_function', 
+    'default_language', 'languages', 
+    'domain', 'domains', 'root_static', 
+    'check_args', 'map_hyphen', 
+    'acfe_match', 'file_match', 'args_match'))
 
 def compile_re(k, v):
     """
@@ -488,17 +489,22 @@ class MapUrlIn(object):
         else:
             self.application = base.default_application
         self.pop_arg_if(self.application == arg0)
-    
-        if self.application not in routers or not base._acfe_match.match(self.application):
+
+        if not base._acfe_match.match(self.application):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
                        web2py_error="invalid application: '%s'" % self.application)
+
+        if self.application not in routers and \
+          (self.application != thread.routes.default_application or self.application == 'welcome'):
+            raise HTTP(400, thread.routes.error_message % 'invalid request',
+                web2py_error="unknown application: '%s'" % self.application)
 
         #  set the application router
         #
         logger.debug("select application=%s" % self.application)
         self.request.application = self.application
         if self.application not in routers:
-            self.router = routers.BASE            # support for bad apps in doctest
+            self.router = routers.BASE                # support gluon.main.wsgibase init->welcome
         else:
             self.router = routers[self.application]   # application router
         self.controllers = self.router.controllers

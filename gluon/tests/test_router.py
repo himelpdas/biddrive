@@ -23,7 +23,7 @@ class TestRouter(unittest.TestCase):
 
         load(rdict=router_null)
         self.assertEqual(filter_url('http://domain.com/welcome', router='app'), 'welcome')
-        #self.assertEqual(filter_url('http://domain.com/', router='app'), 'welcome')
+        self.assertEqual(filter_url('http://domain.com/', router='app'), 'init')
 
     def test_router_welcome(self):
         """ Tests the welcome router """
