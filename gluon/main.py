@@ -374,7 +374,7 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 if not os.path.exists(request.folder):
-                    if request.application == rewrite.thread.routes.default_application:
+                    if request.application == rewrite.thread.routes.default_application and request.application != 'welcome':
                         request.application = 'welcome'
                         redirect(Url(r=request))
                     elif rewrite.thread.routes.error_handler:
