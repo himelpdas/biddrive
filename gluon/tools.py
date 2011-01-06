@@ -612,6 +612,7 @@ class Recaptcha(DIV):
         self.components = []
         self.attributes = {}
         self.label = label
+        self.options = options
         self.comment = ''
 
     def _validate(self):
