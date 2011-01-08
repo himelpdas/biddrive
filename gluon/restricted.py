@@ -184,7 +184,7 @@ def restricted(code, environment={}, layer='Unknown'):
             ccode = code
         else:
             ccode = compile2(code,layer)
-
+            
         exec ccode in environment
     except HTTP:
         raise

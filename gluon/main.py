@@ -12,6 +12,7 @@ Contains:
 
 """
 
+import gc
 import cgi
 import cStringIO
 import Cookie
@@ -190,6 +191,7 @@ def serve_controller(request, response, session):
             response._view_environment[key] = page[key]
         run_view_in(response._view_environment)
         page = response.body.getvalue()
+    gc.collect()
     raise HTTP(response.status, page, **response.headers)
 
 
