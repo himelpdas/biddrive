@@ -69,6 +69,9 @@ class HTTP(BaseException):
         self.body = body
         self.headers = headers
 
+    def __str__(self):
+        return self.body
+
     def to(self, responder):
         if self.status in defined_status:
             status = '%d %s' % (self.status, defined_status[self.status])
