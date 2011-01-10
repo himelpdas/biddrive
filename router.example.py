@@ -143,24 +143,24 @@ def __routes_doctest():
     '/welcome/default/abc.css'
     >>> filter_url('http://domain.com/default/index/abc')
     "/welcome/default/index ['abc']"
-    >>> filter_url('http://domain.com/default/index/a%20bc')
+    >>> filter_url('http://domain.com/default/index/a bc')
     "/welcome/default/index ['a bc']"
-    >>> filter_url('http://domain.com/bad!ctl')
+    >>> filter_url('http://domain.com/admin/bad!ctl')
     Traceback (most recent call last):
     ...
-    HTTP
-    >>> filter_url('http://domain.com/ctl/bad!fcn')
+    HTTP: 400 BAD REQUEST [invalid controller]
+    >>> filter_url('http://domain.com/admin/ctl/bad!fcn')
     Traceback (most recent call last):
     ...
-    HTTP
-    >>> filter_url('http://domain.com/ctl/fcn.bad!ext')
+    HTTP: 400 BAD REQUEST [invalid function]
+    >>> filter_url('http://domain.com/admin/ctl/fcn.bad!ext')
     Traceback (most recent call last):
     ...
-    HTTP
-    >>> filter_url('http://domain.com/ctl/fcn/bad!arg')
+    HTTP: 400 BAD REQUEST [invalid extension]
+    >>> filter_url('http://domain.com/admin/ctl/fcn/bad!arg')
     Traceback (most recent call last):
     ...
-    HTTP
+    HTTP: 400 BAD REQUEST [invalid arg <bad!arg>]
 
     >>> filter_url('https://domain.com/app/ctr/fcn', out=True)
     '/app/ctr/fcn'

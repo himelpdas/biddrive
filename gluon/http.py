@@ -69,9 +69,6 @@ class HTTP(BaseException):
         self.body = body
         self.headers = headers
 
-    def __str__(self):
-        return self.body
-
     def to(self, responder):
         if self.status in defined_status:
             status = '%d %s' % (self.status, defined_status[self.status])
@@ -98,6 +95,28 @@ class HTTP(BaseException):
         if hasattr(body, '__iter__') and not isinstance(self.body, str):
             return body
         return [str(body)]
+    
+    @property
+    def message(self):
+        '''
+        compose a message describing this exception
+        
+        "status defined_status [web2py_error]"
+        
+        message elements that are not defined are omitted
+        '''
+        msg = '%(status)d'
+        if self.status in defined_status:
+            msg = '%(status)d %(defined_status)s'
+        if 'web2py_error' in self.headers:
+            msg += ' [%(web2py_error)s]'
+        return msg % dict(status=self.status,
+                          defined_status=defined_status.get(self.status), 
+                          web2py_error=self.headers.get('web2py_error'))
+    
+    def __str__(self):
+        "stringify me"
+        return self.message
 
 
 def redirect(location, how=303):

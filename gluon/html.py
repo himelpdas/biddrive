@@ -136,7 +136,7 @@ def URL(
     env=None,
     hmac_key=None,
     hash_vars=True,
-    lang=None
+    _request=None
     ):
     """
     generate a relative URL
@@ -219,6 +219,7 @@ def URL(
 
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
 
+    if vars.has_key('_signature'): vars.pop('_signature')
     list_vars = []
     for (key, vals) in sorted(vars.items()):
         if not isinstance(vals, (list, tuple)):
@@ -231,8 +232,6 @@ def URL(
         # verify the user hasn't messed with anything
 
         h_args = '/%s/%s/%s%s' % (application, controller, function, other)
-        # get rid of var _sig if present
-        if vars.has_key('_signature'): vars.pop('_signature')
 
         # how many of the vars should we include in our hash?
         if hash_vars is True:       # include them all
@@ -260,7 +259,7 @@ def URL(
         other += '#' + urllib.quote(str(anchor))
 
     if rewrite.routers:
-        acf = rewrite.map_url_out(application, controller, function, args, lang)
+        acf = rewrite.map_url_out(application, controller, function, args, r or _request)
         url = '%s%s' % (acf, other)
         if regex_crlf.search(url):
             raise SyntaxError, 'CRLF Injection Detected'
@@ -383,8 +382,7 @@ def _gURL(request):
             if len(args) == 2 and not 'f' in kwargs and not 'c' in kwargs:
                 kwargs['c'], kwargs['f'] = args[0], args[1]
                 args = []
-        if not kwargs.has_key('lang'):
-            kwargs['lang'] = request.language
+        kwargs['_request'] = request
         return URL(*args, **kwargs)
     _URL.__doc__ = URL.__doc__
 

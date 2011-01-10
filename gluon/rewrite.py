@@ -12,7 +12,6 @@ import re
 import logging
 import traceback
 import threading
-import urllib
 from storage import Storage, List
 from http import HTTP
 from fileutils import abspath
@@ -341,7 +340,7 @@ def try_redirect_on_error(http_object, request, ticket=None):
 
 def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router=False, lang=None):
     "doctest interface to filter_in() and filter_out()"
-    regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>\S*)')
+    regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>.*)')
     match = regex_url.match(url)
     scheme = match.group('scheme').lower()
     host = match.group('host').lower()
@@ -368,12 +367,13 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
         request = Storage()
         e["applications_parent"] = '/'
         request.env = Storage(e)
+        request.uri_language = lang
         if out:
             items = path_info.strip('/').split('/')
             a = items.pop(0)
             c = items.pop(0)
             f = items.pop(0)
-            acf = map_url_out(a, c, f, items, lang)
+            acf = map_url_out(a, c, f, items, request)
             if items:
                 url = '%s/%s' % (acf, '/'.join(items))
             else:
@@ -457,21 +457,27 @@ class MapUrlIn(object):
         self.path = self.env['PATH_INFO']
         self.query = self.env.get('QUERY_STRING', None)
         self.env['REQUEST_URI'] = self.path + (self.query and ('?' + self.query) or '')
-        if '#' in self.query:
-            self.query, self.anchor = self.query.split('#', 1)
-        elif '#' in self.path:
-            self.path, self.anchor = self.path.split('#', 1)
-        else:
-            self.anchor = None
         self.path = self.path.strip('/')
         self.env['PATH_INFO'] = '/' + self.path
 
-        self.raw_args = List(self.path and self.path.split('/') or [])
-        self.args = List([urllib.unquote(arg) for arg in self.raw_args])
-        self.host = self.env.get('HTTP_HOST', 'localhost').lower()
-        i = self.host.find(':')
-        if i > 0:
-            self.host = self.host[:i]
+        self.args = List(self.path and self.path.split('/') or [])
+
+        # see http://www.python.org/dev/peps/pep-3333/#url-reconstruction for URL composition
+        self.host = self.env.get('HTTP_HOST')
+        self.port = None
+        if not self.host:
+            self.host = self.env.get('SERVER_NAME')
+            self.port = self.env.get('SERVER_PORT')
+        if not self.host:
+            self.host = 'localhost'
+            self.port = '80'
+        if ':' in self.host:
+            (self.host, self.port) = self.host.split(':')
+        if not self.port:
+            if self.env.get('wsgi.url_scheme') == 'https':
+                self.port = '443'
+            else:
+                self.port = '80'
         self.remote_addr = self.env.get('REMOTE_ADDR','localhost')
         self.scheme = self.env.get('WSGI_URL_SCHEME', 'http').lower()
         self.method = self.env.get('REQUEST_METHOD', 'get').lower()
@@ -608,11 +614,12 @@ class MapUrlIn(object):
         validate args if check_args flag is set
         else replace each invalid arg with None, leaving raw_args alone
         '''
+        self.raw_args = List(self.args)
         if self.check_args:
             for arg in self.args:
                 if not self.router._args_match.match(arg):
                     raise HTTP(400, thread.routes.error_message % 'invalid request',
-                               web2py_error='invalid args')
+                               web2py_error='invalid arg <%s>' % arg)
         else:
             args = []
             for arg in self.args:
@@ -628,7 +635,6 @@ class MapUrlIn(object):
         self.request.controller = self.controller
         self.request.function = self.function
         self.request.extension = self.extension
-        self.request.anchor = self.anchor
         self.request.args = self.args
         self.request.raw_args = self.raw_args
         if self.language:
@@ -652,12 +658,11 @@ class MapUrlIn(object):
         "conditionally remove first arg and return new first arg"
         if dopop:
             self.args.pop(0)
-            self.raw_args.pop(0)
 
 class MapUrlOut(object):
     "logic for mapping outgoing URLs"
 
-    def __init__(self, application, controller, function, args, lang):
+    def __init__(self, application, controller, function, args, request):
         "initialize a map-out object"
         self.default_application = routers.BASE.default_application
         if application in routers:
@@ -668,12 +673,14 @@ class MapUrlOut(object):
         self.controller = controller
         self.function = function
         self.args = args
+        self.request = request
 
         self.controllers = self.router.controllers
         self.languages = self.router.languages
         self.default_language = self.router.default_language
         self.map_hyphen = self.router.map_hyphen
 
+        lang = request and request.uri_language
         if lang and lang in self.languages:
             self.language = lang
         else:
@@ -777,7 +784,7 @@ def map_url_in(request, env, app=False):
     map.update_request()
     return (None, map.env)
 
-def map_url_out(application, controller, function, args, lang=None):
+def map_url_out(application, controller, function, args, request=None):
     '''
     supply /a/c/f (or /a/lang/c/f) portion of outgoing url
 
@@ -803,7 +810,7 @@ def map_url_out(application, controller, function, args, lang=None):
 
     We assume that language names do not collide with a/c/f names.
     '''
-    map = MapUrlOut(application, controller, function, args, lang)
+    map = MapUrlOut(application, controller, function, args, request)
     return map.acf()
 
 def get_effective_router(appname):

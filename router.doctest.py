@@ -158,7 +158,7 @@ def __routes_doctest():
     >>> filter_url('http://domain.com/bad!app', router='app')
     Traceback (most recent call last):
     ...
-    HTTP
+    HTTP: 400 BAD REQUEST [invalid application: 'bad!app']
     >>> filter_url('http://domain.com/favicon.ico')
     '/applications/myapp/static/favicon.ico'
     >>> filter_url('http://domain.com/abc')
@@ -175,7 +175,7 @@ def __routes_doctest():
     "/app1/default/index ['abc']"
     >>> filter_url('http://domain.com/en/abc/def')
     "/myapp/myctlr/abc ['def'] (en)"
-    >>> filter_url('http://domain1.com/default/index/a%20bc')
+    >>> filter_url('http://domain1.com/default/index/a bc')
     "/app1/default/index ['a bc']"
     >>> filter_url('http://domain.com/it/abc/def')
     "/myapp/myctlr/abc ['def'] (it)"
@@ -184,19 +184,19 @@ def __routes_doctest():
     >>> filter_url('http://domain.com/bad!ctl')
     Traceback (most recent call last):
     ...
-    HTTP
-    >>> filter_url('http://domain.com/ctl/bad!fcn')
+    HTTP: 400 BAD REQUEST [invalid function]
+    >>> filter_url('http://domain.com/myapp/ctr/bad!fcn')
     Traceback (most recent call last):
     ...
-    HTTP
-    >>> filter_url('http://domain.com/ctl/fcn.bad!ext')
+    HTTP: 400 BAD REQUEST [invalid function]
+    >>> filter_url('http://domain.com/myapp/ctr/fcn.bad!ext')
     Traceback (most recent call last):
     ...
-    HTTP
+    HTTP: 400 BAD REQUEST [invalid extension]
     >>> filter_url('http://domain.com/ctl/fcn/bad!arg')
     Traceback (most recent call last):
     ...
-    HTTP
+    HTTP: 400 BAD REQUEST [invalid arg <bad!arg>]
 
     >>> filter_url('https://domain.com/app/ctr/fcn', out=True)
     '/app/ctr/fcn'
@@ -243,7 +243,7 @@ def __routes_doctest():
     >>> filter_url('http://domain2.com/ctr/fcn-1')
     Traceback (most recent call last):
     ...
-    HTTP
+    HTTP: 400 BAD REQUEST [invalid function]
     >>> filter_url('http://domain2.com/app2/ctr/fcn_1')
     '/app2/ctr/fcn_1'
     >>> filter_url('http://domain2.com/app2/ctr/fcn_1', out=True)
