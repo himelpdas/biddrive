@@ -48,6 +48,20 @@ class Servers:
         server.start()
 
     @staticmethod
+    def rocket_with_repoze_profiler(app,address, **options):
+        from gluon.rocket import CherryPyWSGIServer
+        from repoze.profile.profiler import AccumulatingProfileMiddleware
+        wrapped = AccumulatingProfileMiddleware(
+            app,
+            log_filename='wsgi.prof',
+            discard_first_request=True,
+            flush_at_shutdown=True,
+            path='/__profile__'
+            )
+        server = CherryPyWSGIServer(address, wrapped)
+        server.start()
+
+    @staticmethod
     def paste(app,address,**options):
         from paste import httpserver
         from paste.translogger import TransLogger
@@ -142,11 +156,10 @@ def main():
                       dest='logging',
                       help='log into httpserver.log')
     parser.add_option('-P',
-                      '--profiler',
-                      action='store_true',
+                      '--profiler',                      
                       default=False,
                       dest='profiler',
-                      help='user profiler')
+                      help='profiler filename')
     servers = ', '.join(x for x in dir(Servers) if not x[0]=='_')
     parser.add_option('-s',
                       '--server',

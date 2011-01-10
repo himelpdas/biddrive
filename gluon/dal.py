@@ -2324,7 +2324,7 @@ class NoSQLAdapter(BaseAdapter):
         if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
             return None
         if obj != None:
-            if isinstance(obj, list):
+            if isinstance(obj, list) and not fieldtype.startswith('list'):
                 obj = [self.represent(o, fieldtype) for o in obj]
             elif fieldtype in ('integer','id'):
                 obj = long(obj)
