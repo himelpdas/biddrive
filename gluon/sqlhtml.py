@@ -659,6 +659,7 @@ class SQLFORM(FORM):
         ignore_rw = False,
         record_id = None,
         formstyle = 'table3cols',
+        buttons = ['submit'],
         **attributes
         ):
         """
@@ -871,7 +872,7 @@ class SQLFORM(FORM):
             self.custom.deletable = widget
         # when writable, add submit button
         self.custom.submit = ''
-        if not readonly:
+        if (not readonly) and ('submit' in buttons):
             widget = INPUT(_type='submit',
                            _value=submit_button)
             xfields.append(('submit_record'+SQLFORM.ID_ROW_SUFFIX,
