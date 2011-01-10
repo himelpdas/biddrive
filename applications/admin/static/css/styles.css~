@@ -979,13 +979,14 @@ ul#snapshot > li {
   border: 1px solid #333;  
   color: #e8953c;
   width: 75%;
-  padding: 6px;
-  -moz-border-radius: 1em;
-  border-radius: 1em;
+  // padding: 6px;
+  //  -moz-border-radius: 1em;
+  // border-radius: 1em;
   margin: 1em 0
 }
 
 .shell #caret {
+  border: 0;
   float: left;
 }
 
@@ -993,10 +994,10 @@ ul#snapshot > li {
   color: #e8953c;
   width: 85%;
   height: 4em;
+  border: 0;
 }
 
 .shell .prompt, .shell #output {
-  // border: none;
   overflow: auto;
 }
 
@@ -1013,6 +1014,7 @@ ul#snapshot > li {
 }
 
 .shell .message {
+  width: 100%;
   color: #8AD;
   font-weight: bold;
   font-style: italic;
