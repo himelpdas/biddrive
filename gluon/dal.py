@@ -4372,19 +4372,19 @@ class Field(Expression):
         return Expression(self.db, self.db._adapter.EXTRACT, self, 'second', 'integer')
 
     def count(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'count', 'integer')
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'COUNT', 'integer')
 
     def sum(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'sum', self.type)
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'SUM', self.type)
 
     def max(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'max', self.type)
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'MAX', self.type)
 
     def min(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'min', self.type)
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'MIN', self.type)
 
     def len(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'length', 'integer')
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'LENGTH', 'integer')
 
     def __nonzero__(self):
         return True

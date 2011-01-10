@@ -2206,7 +2206,7 @@ class Auth(object):
                 self.settings.login_onaccept(form)
             log = self.messages.impersonate_log
             if log:
-                self.log_event(log % dict(id=curren_id,other_id=auth.user.id))
+                self.log_event(log % dict(id=current_id,other_id=auth.user.id))
         elif user_id in (0, '0') and self.is_impersonating():
             session.clear()
             session.update(cPickle.loads(auth.impersonator))
