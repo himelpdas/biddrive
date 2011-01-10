@@ -2324,7 +2324,9 @@ class NoSQLAdapter(BaseAdapter):
         if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
             return None
         if obj != None:
-            if fieldtype in ('integer','id'):
+            if isinstance(obj, list):
+                obj = [self.represent(o, fieldtype) for o in obj]
+            elif fieldtype in ('integer','id'):
                 obj = long(obj)
             elif fieldtype == 'double':
                 obj = float(obj)
@@ -2453,7 +2455,7 @@ try:
     from new import classobj
     from google.appengine.ext import db as gae
     from google.appengine.api import namespace_manager
-    # from google.appengine.api.datastore_types import Key  ### why was this needed????
+    from google.appengine.api.datastore_types import Key  ### needed for belongs on ID
     from google.appengine.ext.db.polymodel import PolyModel
     drivers.append('gae')
 except ImportError:
@@ -2602,7 +2604,11 @@ class GAENoSQLAdapter(NoSQLAdapter):
     def BELONGS(self,first,second=None):
         if not isinstance(second,(list, tuple)):
             raise SyntaxError, "Not supported"
-        return [GAEF(first.name,'in',self.represent(second,first.type),lambda a,b:a in b)]
+        if first.type != 'id':
+            return [GAEF(first.name,'in',self.represent(second,first.type),lambda a,b:a in b)]
+        else:
+            second = [Key.from_path(first._tablename, i) for i in second]
+            return [GAEF(first.name,'in',second,lambda a,b:a in b)]
 
     def CONTAINS(self,first,second):
         if not first.type.startswith('list:'):
@@ -3120,6 +3126,8 @@ def sqlhtml_validators(field):
             field_type[15:] in field.db.tables:
         referenced = field.db[field_type[15:]]
         def list_ref_repr(ids, r=referenced, f=ff):
+            if not ids:
+                return None
             refs = r._db(r.id.belongs(ids)).select(r.id)
             return (refs and ', '.join(str(f(r,ref.id)) for ref in refs) or '')
         field.represent = field.represent or list_ref_repr
