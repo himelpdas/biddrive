@@ -191,7 +191,7 @@ def serve_controller(request, response, session):
             response._view_environment[key] = page[key]
         run_view_in(response._view_environment)
         page = response.body.getvalue()
-    gc.collect()
+    #gc.collect()
     raise HTTP(response.status, page, **response.headers)
 
 

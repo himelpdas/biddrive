@@ -51,12 +51,14 @@ class Servers:
     def rocket_with_repoze_profiler(app,address, **options):
         from gluon.rocket import CherryPyWSGIServer
         from repoze.profile.profiler import AccumulatingProfileMiddleware
+        from gluon.settings import global_settings
+        global_settings.web2py_crontype = 'none'
         wrapped = AccumulatingProfileMiddleware(
             app,
             log_filename='wsgi.prof',
             discard_first_request=True,
             flush_at_shutdown=True,
-            path='/__profile__'
+            path = '/__profile__'
             )
         server = CherryPyWSGIServer(address, wrapped)
         server.start()
