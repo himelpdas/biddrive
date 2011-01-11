@@ -355,7 +355,6 @@ def wsgibase(environ, responder):
                         environ['QUERY_STRING'] = items[1]
                     else:
                         environ['QUERY_STRING'] = ''
-                rewrite.select(env=environ, request=request)
                 if rewrite.routers:
                     (static_file, environ) = rewrite.map_url_in(request, environ)
                 else:
@@ -831,6 +830,8 @@ def parse_url(request, environ):
     # rewrite URL if routes_in is defined
     # update request.env
     # ##################################################
+
+    rewrite.select(env=environ, request=request)
 
     if rewrite.thread.routes.routes_in:
         environ = rewrite.filter_in(environ)

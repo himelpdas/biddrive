@@ -12,6 +12,7 @@ import re
 import logging
 import traceback
 import threading
+import urllib
 from storage import Storage, List
 from http import HTTP
 from fileutils import abspath
@@ -163,7 +164,6 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                 p.routers[key] = Storage(p.routers[key])
 
     global params
-    all_apps = []
     if app is None:
         global routers
         params = p                  # install base rewrite parameters
@@ -178,11 +178,12 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
             if routers.BASE:
                 router.update(routers.BASE)
             routers.BASE = router
-        #
+
         #  scan each app in applications/
         #    create a router, if routers are in use
         #    parse the app-specific routes.py if present
         #
+        all_apps = []
         for appname in os.listdir(abspath('applications')):
             if os.path.isdir(abspath('applications', appname)):
                 all_apps.append(appname)
@@ -198,39 +199,61 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
         #    (for unit testing)
         #
         if routers:
-            for appname in routers.keys():
-                # initialize apps in routers that aren't present, on behalf of doctest
-                if appname not in all_apps:
+            for app in routers.keys():
+                # initialize apps with routers that aren't present, on behalf of unit tests
+                if app not in all_apps:
+                    all_apps.append(app)
                     router = Storage(routers.BASE)   # new copy
-                    router.update(routers[appname])
-                    routers[appname] = router
+                    router.update(routers[app])
+                    routers[app] = router
+                router = routers[app]
+                for key in router.keys():
+                    if key not in ROUTER_KEYS:
+                        raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
+                if app != 'BASE':
+                    if 'domain' in router:
+                        routers.BASE.domains[router.domain] = app
+                    if isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
+                        router.controllers = []
+                        if os.path.isdir(abspath('applications', app)):
+                            cpath = abspath('applications', app, 'controllers')
+                            for cname in os.listdir(cpath):
+                                if os.path.isfile(abspath(cpath, cname)) and cname.endswith('.py'):
+                                    router.controllers.append(cname[:-3])
+                    if router.controllers and 'static' not in router.controllers:
+                        router.controllers.append('static')
+            if isinstance(routers.BASE.applications, str) and routers.BASE.applications == 'ALL':
+                routers.BASE.applications = list(all_apps)
+
+            for app in routers.keys():
+                router = routers[app]
+                router.name = app
+                router._acfe_match = re.compile(router.acfe_match)
+                router._file_match = re.compile(router.file_match)
+                if router.args_match:
+                    router._args_match = re.compile(router.args_match)
+
+            #  rewrite domains
+            #    key = (domain, port)
+            #    value = (application, controller)
+            #    where port and controller may be None
+            #
+            domains = Storage()
+            for (domain, app) in routers.BASE.domains.items():
+                port = None
+                if ':' in domain:
+                    (domain, port) = domain.split(':')
+                ctlr = None
+                if '/' in app:
+                    (app, ctlr) = app.split('/')
+                domains[(domain, port)] = (app, ctlr)
+            routers.BASE.domains = domains
+
     else: # app
         params_apps[app] = p
         if routers:
             if app in p.routers:
                 routers[app].update(p.routers[app])
-    if routers:
-        for app in routers.keys():
-            router = routers[app]
-            for key in router.keys():
-                if key not in ROUTER_KEYS:
-                    raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
-            if app != 'BASE' and 'domain' in router:
-                routers.BASE.domains[router.domain] = app
-            router._acfe_match = re.compile(router.acfe_match)
-            router._file_match = re.compile(router.file_match)
-            if router.args_match:
-                router._args_match = re.compile(router.args_match)
-            if isinstance(router.applications, str) and router.applications == 'ALL':
-                router.applications = all_apps
-            if app != 'BASE' and isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
-                router.controllers = []
-                if os.path.isdir(abspath('applications', app)):
-                    cpath = abspath('applications', app, 'controllers')
-                    for cname in os.listdir(cpath):
-                        if os.path.isfile(abspath(cpath, cname)) and cname.endswith('.py'):
-                            router.controllers.append(cname[:-3])
-                    router.controllers.append('static')
 
     logger.debug('URL rewrite is on. configuration in %s' % path)
 
@@ -264,10 +287,10 @@ def select(env=None, app=None, request=None):
         thread.routes = params_apps.get(app, params)
     elif env and params.routes_app:
         if routers:
-            app = map_url_in(request, env, app=True)
+            map_url_in(request, env, app=True)
         else:
             (app, q, u) = filter_uri(env, params.routes_app, "routes_app")
-        thread.routes = params_apps.get(app, params)
+            thread.routes = params_apps.get(app, params)
     else:
         thread.routes = params # default to base rewrite parameters
     logger.debug("select routing parameters: %s" % thread.routes.name)
@@ -338,8 +361,8 @@ def try_redirect_on_error(http_object, request, ticket=None):
                             Location=url)
     return http_object
 
-def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router=False, lang=None):
-    "doctest interface to filter_in() and filter_out()"
+def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router=False, lang=None, domain=(None,None)):
+    "doctest/unittest interface to filter_in() and filter_out()"
     regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>.*)')
     match = regex_url.match(url)
     scheme = match.group('scheme').lower()
@@ -349,6 +372,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
     if k < 0:
         k = len(uri)
     (path_info, query_string) = (uri[:k], uri[k+1:])
+    path_info = urllib.unquote(path_info)   # simulate server
     e = {
          'REMOTE_ADDR': remote,
          'REQUEST_METHOD': method,
@@ -363,13 +387,24 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
          'wsgi_url_scheme': scheme,
          'http_host': host
     }
+
     if routers:
         request = Storage()
         e["applications_parent"] = '/'
         request.env = Storage(e)
         request.uri_language = lang
+
+        #  determine application only
+        #
+        if router == "app":
+            return map_url_in(request, e, app=True)
+
+        #  rewrite outbound URL
+        #
         if out:
+            (request.env.domain_application, request.env.domain_controller) = domain
             items = path_info.strip('/').split('/')
+            assert len(items) >= 3, "at least /a/c/f is required"
             a = items.pop(0)
             c = items.pop(0)
             f = items.pop(0)
@@ -381,8 +416,9 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
             if query_string:
                 url += '?' + query_string
             return url
-        if router == "app":
-            return map_url_in(request, e, app=True)
+
+        #  rewrite inbound URL
+        #
         (static, e) = map_url_in(request, e)
         if static:
             return static
@@ -394,7 +430,10 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
         if request.uri_language:
             result += " (%s)" % request.uri_language
         return result
-    elif out:
+
+    #  regex rewriter
+    #
+    if out:
         return filter_out(uri, e)
     elif app:
         return select(e)
@@ -410,7 +449,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
     return scheme + '://' + host + path
 
 def filter_err(status, application='app', ticket='tkt'):
-    "doctest interface to routes_onerror"
+    "doctest/unittest interface to routes_onerror"
     if status > 399 and thread.routes.routes_onerror:
         keys = set(('%s/%s' % (application, status),
                   '%s/*' % (application),
@@ -429,10 +468,6 @@ def filter_err(status, application='app', ticket='tkt'):
 
 #  router support
 #
-#  TODO
-#    hook for user logic? (routes.py or in controller if app-specific)
-#    router doctest: supply app-specific router as argument?
-
 class MapUrlIn(object):
     "logic for mapping incoming URLs"
 
@@ -485,11 +520,19 @@ class MapUrlIn(object):
     def map_app(self):
         "determine application name"
         base = routers.BASE  # base router
+        self.domain_application = None
+        self.domain_controller = None
         arg0 = self.harg0
         if arg0 in base.applications:
             self.application = arg0
-        elif self.host in base.domains:
-            self.application = base.domains[self.host]
+        elif (self.host, self.port) in base.domains:
+            (self.application, self.domain_controller) = base.domains[(self.host, self.port)]
+            self.env['domain_application'] = self.application
+            self.env['domain_controller'] = self.domain_controller
+        elif (self.host, None) in base.domains:
+            (self.application, self.domain_controller) = base.domains[(self.host, None)]
+            self.env['domain_application'] = self.application
+            self.env['domain_controller'] = self.domain_controller
         elif arg0 and not base.applications:
             self.application = arg0
         else:
@@ -551,10 +594,10 @@ class MapUrlIn(object):
         #
         arg0 = self.harg0    # map hyphens
         if not arg0 or (self.controllers and arg0 not in self.controllers):
-            self.controller = self.router.default_controller
+            self.controller = self.domain_controller or self.router.default_controller
         else:
             self.controller = arg0
-            self.pop_arg_if(True)
+        self.pop_arg_if(arg0 == self.controller)
         logger.debug("route: controller=%s" % self.controller)
         if not self.router._acfe_match.match(self.controller):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
@@ -680,6 +723,9 @@ class MapUrlOut(object):
         self.default_language = self.router.default_language
         self.map_hyphen = self.router.map_hyphen
 
+        self.domain_application = self.request.env.domain_application
+        self.domain_controller = self.request.env.domain_controller
+
         lang = request and request.uri_language
         if lang and lang in self.languages:
             self.language = lang
@@ -712,15 +758,17 @@ class MapUrlOut(object):
                 if self.application == self.default_application:
                     self.omit_application = True
     
-        #  omit the base default application
-        #  omit applications in the domain map
+        #  omit default application
+        #  (which might be the domain default application)
         #
-        if self.application == self.default_application or self.application in router.domains.values():
+        default_application = self.domain_application or self.default_application
+        if self.application == default_application:
             self.omit_application = True
     
         #  omit controller if default controller
         #
-        if self.controller == router.default_controller:
+        default_controller = ((self.application == self.domain_application) and self.domain_controller) or router.default_controller
+        if self.controller == default_controller:
             self.omit_controller = True
     
         #  prohibit ambiguous cases
@@ -769,8 +817,17 @@ def map_url_in(request, env, app=False):
     #
     map = MapUrlIn(request=request, env=env)
     map.map_app()     # determine application
+
+    #  configure thread.routes for error rewrite
+    #
+    if params.routes_app:
+        thread.routes = params_apps.get(app, params)
+    else:
+        thread.routes = params
+
     if app:
         return map.application
+
     root_static_file = map.map_root_static() # handle root-static files
     if root_static_file:
         return (root_static_file, map.env)
