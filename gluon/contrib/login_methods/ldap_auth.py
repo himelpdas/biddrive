@@ -3,7 +3,7 @@ import sys
 
 def ldap_auth(server='ldap', port=None,
             base_dn='ou=users,dc=domain,dc=com',
-            mode='uid', secure=False, bind_dn=None, bind_pw=None):
+            mode='uid', secure=False, cert_path=None, bind_dn=None, bind_pw=None):
     """
     to use ldap login with MS Active Directory::
 
@@ -34,27 +34,30 @@ def ldap_auth(server='ldap', port=None,
             mode='cn', server='my.ldap.server',
             base_dn='ou=Users,dc=domain,dc=com'))
 
-    If using secure ldaps:// pass secure=True
+    If using secure ldaps:// pass secure=True and cert_path="..."
 
     If you need to bind to the directory with an admin account in order to search it then specify bind_dn & bind_pw to use for this.
     - currently only implemented for Active Directory
     """
 
     def ldap_auth_aux(username,
-            password,
-            ldap_server=server,
-            ldap_port=port,
-            ldap_basedn=base_dn,
-            ldap_mode=mode,
-            ldap_binddn=bind_dn,
-            ldap_bindpw=bind_pw,
-            secure=secure):
+                      password,
+                      ldap_server=server,
+                      ldap_port=port,
+                      ldap_basedn=base_dn,
+                      ldap_mode=mode,
+                      ldap_binddn=bind_dn,
+                      ldap_bindpw=bind_pw,
+                      secure=secure,
+                      cert_path=cert_path):
         try:
             if secure:
                 if not ldap_port:
                     ldap_port = 636
                 con = ldap.initialize(
                     "ldaps://" + ldap_server + ":" + str(ldap_port))
+                if cert_path:
+                    con.set_option(ldap.OPT_X_TLS_CACERTDIR, cert_path)
             else:
                 if not ldap_port:
                     ldap_port = 389
