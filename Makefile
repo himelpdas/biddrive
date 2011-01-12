@@ -21,7 +21,7 @@ epydoc:
 	epydoc --config epydoc.conf
 	cp applications/examples/static/title.png applications/examples/static/epydoc
 tests:
-	cd gluon/tests; ./tests 1>tests.log 2>&1 
+	cd gluon/tests; ./test.sh 1>tests.log 2>&1 
 src:
 	echo 'Version 1.91.6 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files

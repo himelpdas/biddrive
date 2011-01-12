@@ -37,7 +37,6 @@ def _router_default():
             languages = [],
         root_static = ['favicon.ico', 'robots.txt'],
         domains = dict(),
-        check_args = True,
         map_hyphen = True,
         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
@@ -72,7 +71,7 @@ routers = None
 ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 'controllers', 'default_function', 
     'default_language', 'languages', 
     'domain', 'domains', 'root_static', 
-    'check_args', 'map_hyphen', 
+    'map_hyphen', 
     'acfe_match', 'file_match', 'args_match'))
 
 def compile_re(k, v):
@@ -233,13 +232,19 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                 if router.args_match:
                     router._args_match = re.compile(router.args_match)
 
-            #  rewrite domains
-            #    key = (domain, port)
-            #    value = (application, controller)
-            #    where port and controller may be None
+            #  rewrite BASE.domains
             #
-            domains = Storage()
-            for (domain, app) in routers.BASE.domains.items():
+            #    incoming:
+            #      key = 'domain[:port]'
+            #      value = 'application[/controller]
+            #
+            #    outgoing:
+            #      key = (domain, port)
+            #      value = (application, controller)
+            #        where port and controller may be None
+            #
+            domains = dict()
+            for (domain, app) in [(d.strip(':'), a.strip('/')) for (d, a) in routers.BASE.domains.items()]:
                 port = None
                 if ':' in domain:
                     (domain, port) = domain.split(':')
@@ -486,7 +491,6 @@ class MapUrlIn(object):
         self.controllers = []
         self.languages = []
         self.default_language = None
-        self.check_args = True
         self.map_hyphen = True
 
         self.path = self.env['PATH_INFO']
@@ -559,7 +563,6 @@ class MapUrlIn(object):
         self.controllers = self.router.controllers
         self.languages = self.router.languages
         self.default_language = self.router.default_language
-        self.check_args = self.router.check_args
         self.map_hyphen = self.router.map_hyphen
         self._acfe_match = self.router._acfe_match
         self._file_match = self.router._file_match
@@ -654,23 +657,12 @@ class MapUrlIn(object):
 
     def validate_args(self):
         '''
-        validate args if check_args flag is set
-        else replace each invalid arg with None, leaving raw_args alone
+        check args against validation pattern
         '''
-        self.raw_args = List(self.args)
-        if self.check_args:
-            for arg in self.args:
-                if not self.router._args_match.match(arg):
-                    raise HTTP(400, thread.routes.error_message % 'invalid request',
-                               web2py_error='invalid arg <%s>' % arg)
-        else:
-            args = []
-            for arg in self.args:
-                if self._args_match.match(arg):
-                    args.append(arg)
-                else:
-                    args.append(None)
-            self.args = args
+        for arg in self.args:
+            if not self.router._args_match.match(arg):
+                raise HTTP(400, thread.routes.error_message % 'invalid request',
+                           web2py_error='invalid arg <%s>' % arg)
 
     def update_request(self):
         "update request from self"
@@ -679,7 +671,6 @@ class MapUrlIn(object):
         self.request.function = self.function
         self.request.extension = self.extension
         self.request.args = self.args
-        self.request.raw_args = self.raw_args
         if self.language:
             self.request.uri_language = self.language
         for (key, value) in self.env.items():

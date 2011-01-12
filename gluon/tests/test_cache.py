@@ -13,6 +13,19 @@ import unittest
 from storage import Storage
 from cache import CacheInRam, CacheOnDisk
 
+oldcwd = None
+
+def setUpModule():
+    global oldcwd
+    if oldcwd is None:
+        oldcwd = os.getcwd()
+        os.chdir(os.path.realpath('../../'))
+
+def tearDownModule():
+    global oldcwd
+    if oldcwd:
+        os.chdir(oldcwd)
+        oldcwd = None
 
 class TestCache(unittest.TestCase):
 
@@ -50,7 +63,6 @@ class TestCache(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    oldpwd = os.getcwd()
-    os.chdir(os.path.realpath('../../'))
+    setUpModule()       # pre-python-2.7
     unittest.main()
-    os.chdir(oldpwd)
+    tearDownModule()

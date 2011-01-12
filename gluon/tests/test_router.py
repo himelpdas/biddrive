@@ -15,10 +15,45 @@ from gluon.fileutils import abspath
 from gluon.settings import global_settings
 from gluon.http import HTTP
 
+oldcwd = None
+
+def setUpModule():
+    def make_apptree():
+        "build a temporary applications tree"
+        #  applications/
+        os.mkdir(abspath('applications'))
+        #  applications/app/
+        for app in ('admin', 'examples', 'welcome'):
+            os.mkdir(abspath('applications', app))
+            #  applications/app/(controllers, static)
+            for subdir in ('controllers', 'static'):
+                os.mkdir(abspath('applications', app, subdir))
+        #  applications/admin/controllers/*.py
+        for ctr in ('appadmin', 'default', 'gae', 'mercurial', 'shell', 'wizard'):
+            open(abspath('applications', 'admin', 'controllers', '%s.py' % ctr), 'w').close()
+        #  applications/examples/controllers/*.py
+        for ctr in ('ajax_examples', 'appadmin', 'default', 'global', 'spreadsheet'):
+            open(abspath('applications', 'examples', 'controllers', '%s.py' % ctr), 'w').close()
+        #  applications/welcome/controllers/*.py
+        for ctr in ('appadmin', 'default'):
+            open(abspath('applications', 'welcome', 'controllers', '%s.py' % ctr), 'w').close()
+
+    global oldcwd
+    if oldcwd is None:
+        oldcwd = os.getcwd()
+        os.chdir(os.path.realpath('../../'))
+        import gluon.main   # for initialization after chdir
+        global_settings.applications_parent = tempfile.mkdtemp()
+        make_apptree()
+
+def tearDownModule():
+    global oldcwd
+    if oldcwd is not None:
+        os.chdir(oldcwd)
+        oldcwd = None
 
 class TestRouter(unittest.TestCase):
     """ Tests the routers logic from gluon.rewrite """
-
 
     def test_router_null(self):
         """ Tests the null router """
@@ -282,31 +317,6 @@ class TestRouter(unittest.TestCase):
 
 
 if __name__ == '__main__':
-
-    def make_apptree():
-        "build a temporary applications tree"
-        #  applications/
-        os.mkdir(abspath('applications'))
-        #  applications/app/
-        for app in ('admin', 'examples', 'welcome'):
-            os.mkdir(abspath('applications', app))
-            #  applications/app/(controllers, static)
-            for subdir in ('controllers', 'static'):
-                os.mkdir(abspath('applications', app, subdir))
-        #  applications/admin/controllers/*.py
-        for ctr in ('appadmin', 'default', 'gae', 'mercurial', 'shell', 'wizard'):
-            open(abspath('applications', 'admin', 'controllers', '%s.py' % ctr), 'w').close()
-        #  applications/examples/controllers/*.py
-        for ctr in ('ajax_examples', 'appadmin', 'default', 'global', 'spreadsheet'):
-            open(abspath('applications', 'examples', 'controllers', '%s.py' % ctr), 'w').close()
-        #  applications/welcome/controllers/*.py
-        for ctr in ('appadmin', 'default'):
-            open(abspath('applications', 'welcome', 'controllers', '%s.py' % ctr), 'w').close()
-
-    oldpwd = os.getcwd()
-    os.chdir(os.path.realpath('../../'))
-    import gluon.main   # for initialization after chdir
-    global_settings.applications_parent = tempfile.mkdtemp()
-    make_apptree()
+    setUpModule()       # pre-2.7
     unittest.main()
-    os.chdir(oldpwd)
+    tearDownModule()

@@ -28,6 +28,14 @@ ALLOWED_DATATYPES = [
     ]
 
 
+def setUpModule():
+    pass
+
+def tearDownModule():
+    if os.path.isfile('sql.log'):
+        os.unlink('sql.log')
+
+
 class TestFields(unittest.TestCase):
 
     def testFieldName(self):
@@ -472,3 +480,4 @@ class TestVirtualFields(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    tearDownModule()
