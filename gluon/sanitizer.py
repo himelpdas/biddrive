@@ -168,6 +168,7 @@ class XssCleaner(HTMLParser):
           content, otherwise remove it
         """
 
+        if not isinstance(rawstring, str): return str(rawstring)
         for tag in self.requires_no_close:
             rawstring = rawstring.replace("<%s/>" % tag, "<%s />" % tag)
         if not escape:
@@ -211,5 +212,6 @@ def sanitize(text, permitted_tags=[
     ], allowed_attributes={'a': ['href', 'title'], 'img': ['src', 'alt'
                            ], 'blockquote': ['type']},
     escape=True):
+    if not isinstance(text, str): return str(text)
     return XssCleaner(permitted_tags=permitted_tags,
                       allowed_attributes=allowed_attributes).strip(text, escape)
