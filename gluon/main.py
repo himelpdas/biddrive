@@ -49,6 +49,7 @@ global_settings.gluon_parent = os.environ.get('web2py_path', os.getcwd())
 global_settings.applications_parent = global_settings.gluon_parent
 web2py_path = global_settings.applications_parent # backward compatibility
 global_settings.app_folders = set()
+global_settings.debugging = False
 
 create_missing_folders()
 
@@ -543,6 +544,9 @@ def wsgibase(environ, responder):
     finally:
         if response and hasattr(response, 'session_file') and response.session_file:
             response.session_file.close()
+        if global_settings.debugging:
+            import gluon.debug
+            #gluon.debug.stop_trace()
 
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,request,ticket)

@@ -14,7 +14,11 @@ def index():
     example action using the internationalization operator T and flash
     rendered by views/default/index.html or views/generic.html
     """
-    response.flash = T('You are successfully running web2py.')
+    m = 'You are successfully running web2py.'
+    import gluon.debug; 
+    gluon.debug.set_trace()
+    response.flash = T(m)
+    gluon.debug.stop_trace()
     return dict(message=T('Hello World'))
 
 def user():
@@ -51,5 +55,3 @@ def call():
     """
     session.forget()
     return service()
-
-
