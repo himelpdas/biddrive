@@ -16,6 +16,7 @@ import urllib
 from storage import Storage, List
 from http import HTTP
 from fileutils import abspath
+from settings import global_settings
 
 regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
 regex_anything = re.compile(r'(?<!\\)\$anything')
@@ -34,9 +35,9 @@ def _router_default():
             controllers = 'DEFAULT',
         default_function = 'index',
         default_language = None,
-            languages = [],
+            languages = None,
         root_static = ['favicon.ico', 'robots.txt'],
-        domains = dict(),
+        domains = None,
         map_hyphen = True,
         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
@@ -210,6 +211,8 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                     if key not in ROUTER_KEYS:
                         raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
                 if app != 'BASE':
+                    for base_only in ('applications', 'default_application', 'domains'):
+                        router.pop(base_only)
                     if 'domain' in router:
                         routers.BASE.domains[router.domain] = app
                     if isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
@@ -244,14 +247,15 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
             #        where port and controller may be None
             #
             domains = dict()
-            for (domain, app) in [(d.strip(':'), a.strip('/')) for (d, a) in routers.BASE.domains.items()]:
-                port = None
-                if ':' in domain:
-                    (domain, port) = domain.split(':')
-                ctlr = None
-                if '/' in app:
-                    (app, ctlr) = app.split('/')
-                domains[(domain, port)] = (app, ctlr)
+            if routers.BASE.domains:
+                for (domain, app) in [(d.strip(':'), a.strip('/')) for (d, a) in routers.BASE.domains.items()]:
+                    port = None
+                    if ':' in domain:
+                        (domain, port) = domain.split(':')
+                    ctlr = None
+                    if '/' in app:
+                        (app, ctlr) = app.split('/')
+                    domains[(domain, port)] = (app, ctlr)
             routers.BASE.domains = domains
 
     else: # app
@@ -368,7 +372,7 @@ def try_redirect_on_error(http_object, request, ticket=None):
 
 def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router=False, lang=None, domain=(None,None)):
     "doctest/unittest interface to filter_in() and filter_out()"
-    regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]+)(?P<uri>.*)')
+    regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]*)(?P<uri>.*)')
     match = regex_url.match(url)
     scheme = match.group('scheme').lower()
     host = match.group('host').lower()
@@ -395,7 +399,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
 
     if routers:
         request = Storage()
-        e["applications_parent"] = '/'
+        e["applications_parent"] = global_settings.applications_parent
         request.env = Storage(e)
         request.uri_language = lang
 
@@ -502,6 +506,9 @@ class MapUrlIn(object):
         self.args = List(self.path and self.path.split('/') or [])
 
         # see http://www.python.org/dev/peps/pep-3333/#url-reconstruction for URL composition
+        self.remote_addr = self.env.get('REMOTE_ADDR','localhost')
+        self.scheme = self.env.get('WSGI_URL_SCHEME', 'http').lower()
+        self.method = self.env.get('REQUEST_METHOD', 'get').lower()
         self.host = self.env.get('HTTP_HOST')
         self.port = None
         if not self.host:
@@ -513,13 +520,10 @@ class MapUrlIn(object):
         if ':' in self.host:
             (self.host, self.port) = self.host.split(':')
         if not self.port:
-            if self.env.get('wsgi.url_scheme') == 'https':
+            if self.scheme == 'https':
                 self.port = '443'
             else:
                 self.port = '80'
-        self.remote_addr = self.env.get('REMOTE_ADDR','localhost')
-        self.scheme = self.env.get('WSGI_URL_SCHEME', 'http').lower()
-        self.method = self.env.get('REQUEST_METHOD', 'get').lower()
 
     def map_app(self):
         "determine application name"
@@ -527,7 +531,7 @@ class MapUrlIn(object):
         self.domain_application = None
         self.domain_controller = None
         arg0 = self.harg0
-        if arg0 in base.applications:
+        if base.applications and arg0 in base.applications:
             self.application = arg0
         elif (self.host, self.port) in base.domains:
             (self.application, self.domain_controller) = base.domains[(self.host, self.port)]
@@ -540,7 +544,7 @@ class MapUrlIn(object):
         elif arg0 and not base.applications:
             self.application = arg0
         else:
-            self.application = base.default_application
+            self.application = base.default_application or ''
         self.pop_arg_if(self.application == arg0)
 
         if not base._acfe_match.match(self.application):
@@ -582,7 +586,7 @@ class MapUrlIn(object):
     def map_language(self):
         "handle language (no hyphen mapping)"
         arg0 = self.arg0  # no hyphen mapping
-        if arg0 and arg0 in self.languages:
+        if arg0 and self.languages and arg0 in self.languages:
             self.language = arg0
         else:
             self.language = self.default_language
@@ -597,7 +601,7 @@ class MapUrlIn(object):
         #
         arg0 = self.harg0    # map hyphens
         if not arg0 or (self.controllers and arg0 not in self.controllers):
-            self.controller = self.domain_controller or self.router.default_controller
+            self.controller = self.domain_controller or self.router.default_controller or ''
         else:
             self.controller = arg0
         self.pop_arg_if(arg0 == self.controller)
@@ -645,7 +649,7 @@ class MapUrlIn(object):
                 self.function = arg0
             self.pop_arg_if(True)
         else:
-            self.function = self.router.default_function
+            self.function = self.router.default_function or ""
         logger.debug("route: function.ext=%s.%s" % (self.function, self.extension))
     
         if not self.router._acfe_match.match(self.function):
@@ -709,6 +713,7 @@ class MapUrlOut(object):
         self.args = args
         self.request = request
 
+        self.applications = routers.BASE.applications
         self.controllers = self.router.controllers
         self.languages = self.router.languages
         self.default_language = self.router.default_language
@@ -718,7 +723,7 @@ class MapUrlOut(object):
         self.domain_controller = self.request.env.domain_controller
 
         lang = request and request.uri_language
-        if lang and lang in self.languages:
+        if lang and self.languages and lang in self.languages:
             self.language = lang
         else:
             self.language = None
@@ -758,19 +763,20 @@ class MapUrlOut(object):
     
         #  omit controller if default controller
         #
-        default_controller = ((self.application == self.domain_application) and self.domain_controller) or router.default_controller
+        default_controller = ((self.application == self.domain_application) and self.domain_controller) or router.default_controller or ''
         if self.controller == default_controller:
             self.omit_controller = True
-    
+
         #  prohibit ambiguous cases
         #
         #  because we presume the lang string to be unambiguous, its presence protects application omission
         #
         if self.omit_language:
-            if not router.applications or self.controller in router.applications:
+            if not self.applications or self.controller in self.applications:
                 self.omit_application = False
-            if not router.applications or self.function in router.applications:
-                self.omit_controller = False
+            if self.omit_application:
+                if not self.applications or self.function in self.applications:
+                    self.omit_controller = False
         if not self.controllers or self.function in self.controllers:
             self.omit_controller = False
 

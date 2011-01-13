@@ -7,6 +7,7 @@ import sys
 import os
 import unittest
 import tempfile
+import logging
 
 sys.path.append(os.path.realpath('../..'))
 
@@ -15,7 +16,9 @@ from gluon.fileutils import abspath
 from gluon.settings import global_settings
 from gluon.http import HTTP
 
+logger = None
 oldcwd = None
+root = None
 
 def setUpModule():
     def make_apptree():
@@ -37,13 +40,25 @@ def setUpModule():
         #  applications/welcome/controllers/*.py
         for ctr in ('appadmin', 'default'):
             open(abspath('applications', 'welcome', 'controllers', '%s.py' % ctr), 'w').close()
+        #  create an app-specific routes.py for examples app
+        routes = open(abspath('applications', 'examples', 'routes.py'), 'w')
+        routes.write("routers=dict(examples=dict(default_function='exdef'))")
+        routes.close()
+        #  create language files for examples app
+        for lang in ('en', 'it'):
+            os.mkdir(abspath('applications', 'examples', 'static', lang))
+            open(abspath('applications', 'examples', 'static', lang, 'file'), 'w').close()
 
     global oldcwd
     if oldcwd is None:
         oldcwd = os.getcwd()
         os.chdir(os.path.realpath('../../'))
         import gluon.main   # for initialization after chdir
+        global logger
+        logger = logging.getLogger('web2py.rewrite')
         global_settings.applications_parent = tempfile.mkdtemp()
+        global root
+        root = global_settings.applications_parent
         make_apptree()
 
 def tearDownModule():
@@ -55,28 +70,246 @@ def tearDownModule():
 class TestRouter(unittest.TestCase):
     """ Tests the routers logic from gluon.rewrite """
 
+    def test_router_syntax(self):
+        """ Test router syntax error """
+        level = logger.getEffectiveLevel()
+        logger.setLevel(logging.CRITICAL)  # disable logging temporarily
+        self.assertRaises(SyntaxError, load, data='x:y')
+        self.assertRaises(SyntaxError, load, rdict=dict(BASE=dict(badkey="value")))
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(SyntaxError, "invalid syntax", load, data='x:y')
+            self.assertRaisesRegexp(SyntaxError, "unknown key", load, rdict=dict(BASE=dict(badkey="value")))
+        except AttributeError:
+            pass
+        logger.setLevel(level)
+
+
     def test_router_null(self):
         """ Tests the null router """
-        router_null = dict()
-        load(rdict=router_null)
+        load(rdict=dict())
+        # app resolution
         self.assertEqual(filter_url('http://domain.com/welcome', router='app'), 'welcome')
         self.assertEqual(filter_url('http://domain.com/', router='app'), 'init')
-        self.assertEqual(filter_url('http://domain.com/favicon.ico'), '/applications/init/static/favicon.ico')
+        # incoming
+        self.assertEqual(filter_url('http://domain.com/favicon.ico'), '%s/applications/init/static/favicon.ico' % root)
         self.assertEqual(filter_url('http://domain.com/abc'), '/init/default/abc')
         self.assertEqual(filter_url('http://domain.com/index/abc'), "/init/default/index ['abc']")
         self.assertEqual(filter_url('http://domain.com/abc/def'), "/init/default/abc ['def']")
         self.assertEqual(filter_url('http://domain.com/index/a%20bc'), "/init/default/index ['a bc']")
+        self.assertEqual(filter_url('http://domain.com/welcome/static/path/to/static'), "%s/applications/welcome/static/path/to/static" % root)
+        self.assertRaises(HTTP, filter_url, 'http://domain.com/welcome/static/bad/path/to/st~tic')
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(HTTP, "400.*invalid static file", filter_url, 'http://domain.com/welcome/static/bad/path/to/st~tic')
+        except AttributeError:
+            pass
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/init/default/index', out=True), '/')
+        self.assertEqual(filter_url('http://domain.com/init/default/index/arg1', out=True), '/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/init/default/abc', out=True), '/abc')
+        self.assertEqual(filter_url('http://domain.com/init/static/abc', out=True), '/static/abc')
+        self.assertEqual(filter_url('http://domain.com/init/appadmin/index', out=True), '/appadmin')
+        self.assertEqual(filter_url('http://domain.com/init/appadmin/abc', out=True), '/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/init/admin/index', out=True), '/init/admin')
+        self.assertEqual(filter_url('http://domain.com/init/admin/abc', out=True), '/init/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
 
-    def test_router_welcome(self):
-        """ Tests the welcome router """
-        router_welcome = dict(BASE=dict(default_application='welcome'))
-        load(rdict=router_welcome)
+
+    def test_router_specific(self):
+        """ 
+        Test app-specific routes.py 
+        
+        Note that make_apptree above created applications/examples/routes.py with a default_function.
+        """
+        load(rdict=dict())
+        self.assertEqual(filter_url('http://domain.com/welcome'), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/examples'), '/examples/default/exdef')
+
+
+    def test_router_defapp(self):
+        """ Test the default-application function """
+        routers = dict(BASE=dict(default_application='welcome'))
+        load(rdict=routers)
+        # app resolution
         self.assertEqual(filter_url('http://domain.com/welcome', router='app'), 'welcome')
         self.assertEqual(filter_url('http://domain.com/', router='app'), 'welcome')
+        # incoming
+        self.assertEqual(filter_url('http://domain.com'), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/'), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/appadmin'), '/welcome/appadmin/index')
+        self.assertEqual(filter_url('http://domain.com/abc'), '/welcome/default/abc')
+        self.assertEqual(filter_url('http://domain.com/index/abc'), "/welcome/default/index ['abc']")
+        self.assertEqual(filter_url('http://domain.com/abc/def'), "/welcome/default/abc ['def']")
+        self.assertEqual(filter_url('http://domain.com/favicon.ico'), '%s/applications/welcome/static/favicon.ico' % root)
+        self.assertEqual(filter_url('http://domain.com/static/abc'), '%s/applications/welcome/static/abc' % root)
+        self.assertEqual(filter_url('http://domain.com/static/path/to/static'), "%s/applications/welcome/static/path/to/static" % root)
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/admin', out=True), '/default/admin')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/appadmin')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
+
+
+    def test_router_nodef(self):
+        """ Test no-default functions """
+        routers = dict(
+            BASE=dict(default_application='welcome'),
+            welcome=dict(controllers=None),
+        )
+        load(rdict=routers)
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/default')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/default/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/default/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/appadmin')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
+        # incoming
+        self.assertEqual(filter_url('http://domain.com'), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/'), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/appadmin'), '/welcome/appadmin/index')
+        self.assertEqual(filter_url('http://domain.com/abc'), '/welcome/abc/index')
+        self.assertEqual(filter_url('http://domain.com/index/abc'), "/welcome/index/abc")
+        self.assertEqual(filter_url('http://domain.com/abc/def'), "/welcome/abc/def")
+        self.assertEqual(filter_url('http://domain.com/abc/def/ghi'), "/welcome/abc/def ['ghi']")
+
+        routers = dict(
+            BASE=dict(default_application=None),
+        )
+        load(rdict=routers)
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/welcome')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/welcome/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/welcome/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/welcome/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/welcome/appadmin')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/welcome/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
+        # incoming
+        self.assertRaises(HTTP, filter_url, 'http://domain.com')
+        self.assertRaises(HTTP, filter_url, 'http://domain.com/appadmin')
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(HTTP, "400.*invalid application", filter_url, 'http://domain.com')
+            self.assertRaisesRegexp(HTTP, "400.*invalid application", filter_url, 'http://domain.com/appadmin')
+        except AttributeError:
+            pass
+
+        routers = dict(
+            BASE=dict(default_application='welcome', applications=None),
+        )
+        load(rdict=routers)
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/welcome')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/welcome/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/welcome/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/welcome/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/welcome/appadmin')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/welcome/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
+        # incoming
+        self.assertEqual(filter_url('http://domain.com'), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/'), '/welcome/default/index')
+        self.assertRaises(HTTP, filter_url, 'http://domain.com/appadmin')
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(HTTP, "400.*unknown application: 'appadmin'", filter_url, 'http://domain.com/appadmin')
+        except AttributeError:
+            pass
+
+        routers = dict(
+            BASE=dict(default_application='welcome', applications=None),
+            welcome=dict(controllers=None),
+        )
+        load(rdict=routers)
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/welcome/default')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/welcome/default/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/welcome/default/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/welcome/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/welcome/appadmin')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/welcome/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
+        # incoming
+        self.assertEqual(filter_url('http://domain.com'), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/'), '/welcome/default/index')
+        self.assertRaises(HTTP, filter_url, 'http://domain.com/appadmin')
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(HTTP, "400.*unknown application: 'appadmin'", filter_url, 'http://domain.com/appadmin')
+        except AttributeError:
+            pass
+
+        routers = dict(
+            BASE=dict(default_application='welcome', applications=None),
+            welcome=dict(default_controller=None),
+        )
+        load(rdict=routers)
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/welcome/default')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/welcome/default/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/welcome/default/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/welcome/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/welcome/appadmin')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/welcome/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
+        # incoming
+        self.assertRaises(HTTP, filter_url, 'http://domain.com')
+        self.assertRaises(HTTP, filter_url, 'http://domain.com/appadmin')
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(HTTP, "400.*invalid controller", filter_url, 'http://domain.com')
+            self.assertRaisesRegexp(HTTP, "400.*unknown application: 'appadmin'", filter_url, 'http://domain.com/appadmin')
+        except AttributeError:
+            pass
+
+        routers = dict(
+            BASE=dict(default_application='welcome', applications=None),
+            welcome=dict(controllers=None, default_function=None),
+        )
+        load(rdict=routers)
+        # outgoing
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/welcome/default/index')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/welcome/default/index/arg1')
+        self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/welcome/default/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/welcome/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/welcome/appadmin/index')
+        self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/welcome/appadmin/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin/index')
+        self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
+        self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
+        # incoming
+        self.assertRaises(HTTP, filter_url, 'http://domain.com')
+        self.assertRaises(HTTP, filter_url, 'http://domain.com/appadmin')
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(HTTP, "400.*invalid function", filter_url, 'http://domain.com')
+            self.assertRaisesRegexp(HTTP, "400.*unknown application: 'appadmin'", filter_url, 'http://domain.com/appadmin')
+        except AttributeError:
+            pass
+
 
     def test_router_app(self):
         """ Tests the doctest router app resolution"""
-        router_app = dict(
+        routers = dict(
             BASE = dict(
                 domains = {
                     "domain1.com" : "app1",
@@ -88,8 +321,8 @@ class TestRouter(unittest.TestCase):
             app2 = dict(),
             goodapp = dict(),
         )
-        router_app['bad!app'] = dict()
-        load(rdict=router_app)
+        routers['bad!app'] = dict()
+        load(rdict=routers)
         self.assertEqual(filter_url('http://domain.com/welcome', router='app'), 'welcome')
         self.assertEqual(filter_url('http://domain.com/welcome/', router='app'), 'welcome')
         self.assertEqual(filter_url('http://domain.com', router='app'), 'init')
@@ -109,13 +342,13 @@ class TestRouter(unittest.TestCase):
             pass
 
 
-    def test_router_domain(self):
+    def test_router_domains(self):
         '''
         Test URLs that map domains
         '''
-        router_domain = dict(
+        routers = dict(
             BASE = dict(
-                applications = ['app1', 'app2', 'app2A', 'app3'],
+                applications = ['app1', 'app2', 'app2A', 'app3', 'app4', 'app5', 'app6'],
                 domains = {
                     #  two domains to the same app
                     "domain1.com"     : "app1",
@@ -126,15 +359,22 @@ class TestRouter(unittest.TestCase):
                     #  two domains, same app, two controllers
                     "domain3a.com" : "app3/c3a",
                     "domain3b.com" : "app3/c3b",
+                    #  http vs https
+                    "domain6.com:80"  : "app6",
+                    "domain6.com:443" : "app6s",
                 },
             ),
             app1 =  dict( default_controller = 'c1',  default_function = 'f1',  controllers = ['c1'], ),
             app2a = dict( default_controller = 'c2a', default_function = 'f2a', controllers = ['c2a'], ),
             app2b = dict( default_controller = 'c2b', default_function = 'f2b', controllers = ['c2b'], ),
             app3 =  dict( controllers = ['c3a', 'c3b'], ),
+            app4 =  dict( default_controller = 'c4', controllers = ['c4'], domain = 'domain4.com' ),
+            app5 =  dict( default_controller = 'c5', controllers = ['c5'], domain = 'localhost' ),
+            app6 =  dict( default_controller = 'c6',  default_function = 'f6',  controllers = ['c6'], ),
+            app6s =  dict( default_controller = 'c6s',  default_function = 'f6s',  controllers = ['c6s'], ),
         )
 
-        load(rdict=router_domain)
+        load(rdict=routers)
         self.assertEqual(filter_url('http://domain1.com/abc'), '/app1/c1/abc')
         self.assertEqual(filter_url('http://domain1.com/c1/abc'), '/app1/c1/abc')
         self.assertEqual(filter_url('http://domain1.com/abc.html'), '/app1/c1/abc')
@@ -163,6 +403,16 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain3a.com/app3/c3a/fcn', domain=('app3','c3a'), out=True), "/fcn")
         self.assertEqual(filter_url('http://domain3a.com/app3/c3a/fcn', domain=('app3','c3b'), out=True), "/c3a/fcn")
         self.assertEqual(filter_url('http://domain3a.com/app3/c3a/fcn', domain=('app1',None), out=True), "/app3/c3a/fcn")
+
+        self.assertEqual(filter_url('http://domain4.com/abc'), '/app4/c4/abc')
+        self.assertEqual(filter_url('https://domain4.com/app4/c4/fcn', domain=('app4',None), out=True), "/fcn")
+
+        self.assertEqual(filter_url('http://localhost/abc'), '/app5/c5/abc')
+        self.assertEqual(filter_url('http:///abc'), '/app5/c5/abc') # test null host => localhost
+        self.assertEqual(filter_url('https://localhost/app5/c5/fcn', domain=('app5',None), out=True), "/fcn")
+
+        self.assertEqual(filter_url('http://domain6.com'), '/app6/c6/f6')
+        self.assertEqual(filter_url('https://domain6.com'), '/app6s/c6s/f6s')
 
 
     def test_router_raise(self):
@@ -245,13 +495,13 @@ class TestRouter(unittest.TestCase):
         load(rdict=router_hyphen)
         self.assertEqual(filter_url('http://domain.com/fcn-1'), "/init/default/fcn_1")
         self.assertEqual(filter_url('http://domain.com/init/default/fcn_1', out=True), "/fcn-1")
-        self.assertEqual(filter_url('http://domain.com/static/filename-with_underscore'), "/applications/init/static/filename-with_underscore")
+        self.assertEqual(filter_url('http://domain.com/static/filename-with_underscore'), "%s/applications/init/static/filename-with_underscore" % root)
         self.assertEqual(filter_url('http://domain.com/init/static/filename-with_underscore', out=True), "/static/filename-with_underscore")
 
         self.assertEqual(filter_url('http://domain.com/app2/fcn_1'), "/app2/default/fcn_1")
         self.assertEqual(filter_url('http://domain.com/app2/ctr/fcn_1', domain=('app2',None), out=True), "/ctr/fcn_1")
         self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore', domain=('app2',None), out=True), "/static/filename-with_underscore")
-        self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore'), "/applications/app2/static/filename-with_underscore")
+        self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore'), "%s/applications/app2/static/filename-with_underscore" % root)
 
 
     def test_router_lang(self):
@@ -259,22 +509,32 @@ class TestRouter(unittest.TestCase):
         Test language specifications
         '''
         router_lang = dict(
+            BASE = dict(default_application = 'admin'),
             welcome = dict(),
-            init = dict(
+            admin = dict(
                 controllers = ['default', 'ctr'],
+                languages = ['en', 'it', 'it-it'], default_language = 'en',
+            ),
+            examples = dict(
                 languages = ['en', 'it', 'it-it'], default_language = 'en',
             ),
         )
         load(rdict=router_lang)
-        self.assertEqual(filter_url('http://domain.com/index/abc'), "/init/default/index ['abc'] (en)")
-        self.assertEqual(filter_url('http://domain.com/en/abc/def'), "/init/default/abc ['def'] (en)")
-        self.assertEqual(filter_url('http://domain.com/it/abc/def'), "/init/default/abc ['def'] (it)")
-        self.assertEqual(filter_url('http://domain.com/it-it/abc/def'), "/init/default/abc ['def'] (it-it)")
-        self.assertEqual(filter_url('http://domain.com/index/a%20bc'), "/init/default/index ['a bc'] (en)")
+        self.assertEqual(filter_url('http://domain.com/index/abc'), "/admin/default/index ['abc'] (en)")
+        self.assertEqual(filter_url('http://domain.com/en/abc/def'), "/admin/default/abc ['def'] (en)")
+        self.assertEqual(filter_url('http://domain.com/it/abc/def'), "/admin/default/abc ['def'] (it)")
+        self.assertEqual(filter_url('http://domain.com/it-it/abc/def'), "/admin/default/abc ['def'] (it-it)")
+        self.assertEqual(filter_url('http://domain.com/index/a%20bc'), "/admin/default/index ['a bc'] (en)")
+        self.assertEqual(filter_url('http://domain.com/static/file'), "%s/applications/admin/static/file" % root)
+        self.assertEqual(filter_url('http://domain.com/en/static/file'), "%s/applications/admin/static/file" % root)
+        self.assertEqual(filter_url('http://domain.com/examples/en/static/file'), "%s/applications/examples/static/en/file" % root)
+        self.assertEqual(filter_url('http://domain.com/examples/static/file'), "%s/applications/examples/static/en/file" % root)
+        self.assertEqual(filter_url('http://domain.com/examples/it/static/file'), "%s/applications/examples/static/it/file" % root)
+        self.assertEqual(filter_url('http://domain.com/examples/it-it/static/file'), "%s/applications/examples/static/file" % root)
 
-        self.assertEqual(filter_url('https://domain.com/init/ctr/fcn', lang='en', out=True), "/ctr/fcn")
-        self.assertEqual(filter_url('https://domain.com/init/ctr/fcn', lang='it', out=True), "/it/ctr/fcn")
-        self.assertEqual(filter_url('https://domain.com/init/ctr/fcn', lang='it-it', out=True), "/it-it/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='en', out=True), "/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='it', out=True), "/it/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='it-it', out=True), "/it-it/ctr/fcn")
         self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='it', out=True), "/welcome/ctr/fcn")
         self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='es', out=True), "/welcome/ctr/fcn")        
 
@@ -297,12 +557,18 @@ class TestRouter(unittest.TestCase):
             ),
         )
         load(rdict=router_get_effective)
-        self.assertEqual(get_effective_router('a1').default_application, "a1")
+        self.assertEqual(get_effective_router('BASE').applications, ['a1','a2'])
+        self.assertEqual(get_effective_router('BASE').default_application, 'a1')
+        self.assertEqual(get_effective_router('BASE').domains, {})
+        self.assertEqual(get_effective_router('a1').applications, None)
+        self.assertEqual(get_effective_router('a1').default_application, None)
+        self.assertEqual(get_effective_router('a1').domains, None)
         self.assertEqual(get_effective_router('a1').default_controller, "default")
-        self.assertEqual(get_effective_router('a2').default_application, "a1")
+        self.assertEqual(get_effective_router('a2').default_application, None)
         self.assertEqual(get_effective_router('a2').default_controller, "c2")
         self.assertEqual(get_effective_router('a1').controllers, ['c1a', 'c1b', 'default', 'static'])
         self.assertEqual(get_effective_router('a2').controllers, [])
+        self.assertEqual(get_effective_router('xx'), None)
 
 
     def test_router_error(self):

@@ -15,13 +15,13 @@
 #  default_application: default application name
 #  applications: list of all recognized applications, or 'ALL' to use all currently installed applications
 #      Names in applications are always treated as an application names when they appear first in an incoming URL.
-#      Set applications to [] to disable the removal of application names from outgoing URLs.
+#      Set applications to None to disable the removal of application names from outgoing URLs.
 #  domains: optional dict mapping domain names to application names
 #      The domain name can include a port number: domain.com:8080
 #      The application name can include a controller:  appx/ctlrx
 #
-#  Note: default_application, applications & domains make sense only in the BASE router, and domain
-#        makes sense only in an application-specific router.
+#  Note: default_application, applications & domains make sense only in the BASE router,
+#        and domain makes sense only in an application-specific router.
 #        The remaining members can appear in the BASE router (as defaults for all applications)
 #        or in application-specific routers.
 #
@@ -29,7 +29,7 @@
 #  default_function: name of default function (all controllers)
 #  controllers: list of valid controllers in selected app
 #       or "DEFAULT" to use all controllers in the selected app plus 'static'
-#       or [] to disable controller-name removal.
+#       or None to disable controller-name removal.
 #      Names in controllers are always treated as controller names when they appear in an incoming URL after
 #      the (optional) application and language names. 
 #  languages: list of all supported languages
@@ -39,7 +39,7 @@
 #       The language code (for example: en, it-it) optionally appears in the URL following
 #       the application (which may be omitted). For incoming URLs, the code is copied to
 #       request.language; for outgoing URLs it is taken from request.language.
-#       If languages=[], language support is disabled.
+#       If languages=None, language support is disabled.
 #       The default_language, if any, is omitted from the URL.
 #  root_static: list of static files accessed from root
 #       (mapped to the current application's static/ directory)
@@ -63,9 +63,9 @@
 #             controllers = 'DEFAULT',
 #         default_function = 'index',
 #         default_language = None,
-#             languages = [],
+#             languages = None,
 #         root_static = ['favicon.ico', 'robots.txt'],
-#         domains = dict(),
+#         domains = None,
 #         map_hyphen = True,
 #         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
 #         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name

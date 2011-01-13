@@ -51,7 +51,7 @@ class BlockNode(Node):
     """
     Block Container.
 
-    This Node can contain other Nodes and will render in a heirarchical order
+    This Node can contain other Nodes and will render in a hierarchical order
     of when nodes were added.
 
     ie::
@@ -78,7 +78,7 @@ class BlockNode(Node):
 
     def __str__(self):
         """
-        Get this BlockNodes content, not including children Nodes
+        Get this BlockNodes content, not including child Nodes
         """
         lines = []
         for node in self.nodes:
@@ -97,20 +97,20 @@ class BlockNode(Node):
         if isinstance(node, str) or isinstance(node, Node):
             self.nodes.append(node)
         else:
-            raise TypeError("Invalid type, must be instance of ``str`` or ``BlockNode``. %s" % node)
+            raise TypeError("Invalid type; must be instance of ``str`` or ``BlockNode``. %s" % node)
 
     def extend(self, other):
         """
         Extend the list of nodes with another BlockNode class.
 
-        Keyword Arugments
+        Keyword Arguments
 
         - other -- BlockNode or Content object to extend from.
         """
         if isinstance(other, BlockNode):
             self.nodes.extend(other.nodes)
         else:
-            raise TypeError("Invalid type, must be instance of ``BlockNode``. %s" % other)
+            raise TypeError("Invalid type; must be instance of ``BlockNode``. %s" % other)
 
     def output(self, blocks):
         """
@@ -145,7 +145,7 @@ class Content(BlockNode):
     """
     def __init__(self, name = "ContentBlock", pre_extend = False):
         """
-        Keyword Arugments
+        Keyword Arguments
 
         name -- Unique name for this BlockNode
         """
@@ -215,7 +215,7 @@ class Content(BlockNode):
             self.nodes.extend(other.nodes)
             self.blocks.update(other.blocks)
         else:
-            raise TypeError("Invalid type, must be instance of ``BlockNode``. %s" % node)
+            raise TypeError("Invalid type; must be instance of ``BlockNode``. %s" % other)
 
     def clear_content(self):
         self.nodes = []
@@ -247,7 +247,7 @@ class TemplateParser(object):
         """
         text -- text to parse
         context -- context to parse in
-        path -- folder path to temlpates
+        path -- folder path to templates
         writer -- string of writer class to use
         lexers -- dict of custom lexers to use.
         delimiters -- for example ('{{','}}')
@@ -255,14 +255,13 @@ class TemplateParser(object):
                         this should only be set by "self.extend"
                         It contains a list of SuperNodes from a child
                         template that need to be handled.
-
         """
 
         # Keep a root level name.
         self.name = name
         # Raw text to start parsing.
         self.text = text
-        # Writer to use. (refer to the default for an example.)
+        # Writer to use (refer to the default for an example).
         # This will end up as
         # "%s(%s, escape=False)" % (self.writer, value)
         self.writer = writer
@@ -278,7 +277,7 @@ class TemplateParser(object):
         # Context for templates.
         self.context = context
 
-        # allow optional alterantive delimiters
+        # allow optional alternative delimiters
         self.delimiters = delimiters
         if delimiters!=('{{','}}'):
             escaped_delimiters = (re.escape(delimiters[0]),re.escape(delimiters[1]))
@@ -311,7 +310,7 @@ class TemplateParser(object):
 
     def to_string(self):
         """
-        Returns the parsed template with correct indentation.
+        Return the parsed template with correct indentation.
 
         Used to make it easier to port to python3.
         """
@@ -331,18 +330,18 @@ class TemplateParser(object):
         """
 
         # Get each of our lines into an array.
-        lines       = text.split('\n')
+        lines = text.split('\n')
 
         # Our new lines
-        new_lines   = []
+        new_lines = []
 
         # Keeps track of how many indents we have.
-        # Used for when we need to drop a level of indentaiton
-        # only to re-indent on the next line.
-        credit      = 0
+        # Used for when we need to drop a level of indentation
+        # only to reindent on the next line.
+        credit = 0
 
         # Current indentation
-        k           = 0
+        k = 0
 
         #################
         # THINGS TO KNOW
@@ -360,8 +359,8 @@ class TemplateParser(object):
                 continue
 
             # If we have a line that contains python code that
-            # should be un-indented for this line of code.
-            # and then re-indented for the next line.
+            # should be unindented for this line of code.
+            # and then reindented for the next line.
             if TemplateParser.re_block.match(line):
                 k = k + credit - 1
 
@@ -382,7 +381,7 @@ class TemplateParser(object):
             # However, we should stay on the same level
             # But the line right after us will be de-dented.
             # So we add one credit to keep us at the level
-            # While moving back one indentation level.
+            # while moving back one indentation level.
             if TemplateParser.re_unblock.match(line):
                 credit = 1
                 k -= 1
@@ -405,7 +404,7 @@ class TemplateParser(object):
 
     def _raise_error(self, message='', text=None):
         """
-        Raises an error using itself as the filename and textual content.
+        Raise an error using itself as the filename and textual content.
         """
         if text:
             raise restricted.RestrictedError(self.name, text, message)
@@ -423,14 +422,14 @@ class TemplateParser(object):
         if not filename.strip():
             self._raise_error('Invalid template filename')
 
-        # Get the file name, filename looks like ``"template.html"``.
-        # We need to eval to remove the qoutations and get the string type.
+        # Get the filename; filename looks like ``"template.html"``.
+        # We need to eval to remove the quotes and get the string type.
         filename = eval(filename, self.context)
 
         # Get the path of the file on the system.
         filepath = os.path.join(self.path, filename)
 
-        # Lets try to read teh text.
+        # try to read the text.
         try:
             fileobj = open(filepath, 'rb')
 
@@ -605,7 +604,7 @@ class TemplateParser(object):
                     # Get rid of '{{' and '}}'
                     line = line[2:-2].strip()
 
-                    # This is bad joo joo, but lets do it anyway
+                    # This is bad juju, but let's do it anyway
                     if not line:
                         continue
 
@@ -647,7 +646,7 @@ class TemplateParser(object):
                     # retain their formatting, but squish down to one
                     # line in the rendered template.
 
-                    # First lets check if we have any custom lexers
+                    # First check if we have any custom lexers
                     if name in self.lexers:
                         # Pass the information to the lexer
                         # and allow it to inject in the environment
@@ -658,7 +657,7 @@ class TemplateParser(object):
                         self.lexers[name](parser    = self,
                                           value     = value,
                                           top       = top,
-                                          stack     = stack,)
+                                          stack     = self.stack,)
 
                     elif name == '=':
                         # So we have a variable to insert into
@@ -691,7 +690,7 @@ class TemplateParser(object):
                         self.stack.pop()
 
                     elif name == 'super':
-                        # Lets get our correct target name
+                        # Get our correct target name
                         # If they just called {{super}} without a name
                         # attempt to assume the top blocks name.
                         if value:
@@ -733,7 +732,7 @@ class TemplateParser(object):
                         # we just add it anyways without formatting.
                         if line and in_tag:
 
-                            # Lets go ahead and split on the newlines >.<
+                            # Split on the newlines >.<
                             tokens = line.split('\n')
 
                             # We need to look for any instances of
@@ -767,23 +766,23 @@ class TemplateParser(object):
                     buf = "\n%s(%r, escape=False)" % (self.writer, i)
                     top.append(Node(buf, pre_extend = pre_extend))
 
-            # Remeber, tag, not tag, tag, not tag
+            # Remember: tag, not tag, tag, not tag
             in_tag = not in_tag
 
-        # Lets make a list of items to remove from child
+        # Make a list of items to remove from child
         to_rm = []
 
         # Go through each of the children nodes
         for node in self.child_super_nodes:
             # If we declared a block that this node wants to include
             if node.name in self.blocks:
-                # Lets go ahead and include it!
+                # Go ahead and include it!
                 node.value = self.blocks[node.name]
                 # Since we processed this child, we don't need to
                 # pass it along to the parent
                 to_rm.append(node)
 
-        # So now lets remove some of the processed nodes
+        # Remove some of the processed nodes
         for node in to_rm:
             # Since this is a pointer, it works beautifully.
             # Sometimes I miss C-Style pointers... I want my asterisk...
@@ -886,7 +885,7 @@ def render(content = "hello world",
     code = str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers, delimiters=delimiters))
     try:
         exec(code) in context
-    except Exception, e:
+    except Exception:
         # for i,line in enumerate(code.split('\n')): print i,line
         raise
 
