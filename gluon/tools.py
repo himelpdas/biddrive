@@ -3089,10 +3089,8 @@ class Crud(object):
             txtval = request.vars.get('txt' + fieldname, None)
             opval = request.vars.get('op' + fieldname, None)
             row = TR(TD(INPUT(_type = "checkbox", _name = "chk" + fieldname,
-                              #_readonly = (field.type == 'id'),
-                              #_selected = (field.type == 'id'),
-                              #_checked = (field.type == 'id'),
-                              value = chkval == 'on')),
+                              _disabled = (field.type == 'id'),
+                              value = (field.type == 'id' or chkval == 'on'))),
                      TD(field_labels.get(fieldname,field.label)),
                      TD(SELECT([OPTION(query_labels.get(op,op),
                                        _value=op) for op in ops],
@@ -3102,7 +3100,7 @@ class Crud(object):
                               _value = txtval, _id='txt' + fieldname,
                               _class = str(field.type))))
             tbl.append(row)
-            if chkval:
+            if request.post_vars and (chkval or field.type=='id'):
                 if txtval and opval != '':
                     if field.type[0:10] == 'reference ':
                         refsearch.append(self.get_query(field,
