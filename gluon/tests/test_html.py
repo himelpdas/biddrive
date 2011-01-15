@@ -7,7 +7,10 @@
 
 import sys
 import os
-sys.path.append(os.path.realpath('../'))
+if os.path.isdir('gluon'):
+    sys.path.append(os.path.realpath('gluon'))
+else:
+    sys.path.append(os.path.realpath('../'))
 
 import unittest
 from html import *

@@ -7,7 +7,10 @@
 
 import sys
 import os
-sys.path.append(os.path.realpath('../'))
+if os.path.isdir('gluon'):
+    sys.path.append(os.path.realpath('gluon'))
+else:
+    sys.path.append(os.path.realpath('../'))
 
 import unittest
 from storage import Storage
@@ -19,7 +22,8 @@ def setUpModule():
     global oldcwd
     if oldcwd is None:
         oldcwd = os.getcwd()
-        os.chdir(os.path.realpath('../../'))
+        if not os.path.isdir('gluon'):
+            os.chdir(os.path.realpath('../../'))
 
 def tearDownModule():
     global oldcwd

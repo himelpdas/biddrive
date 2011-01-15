@@ -6,10 +6,12 @@
 import sys
 import os
 import unittest
+if os.path.isdir('gluon'):
+    sys.path.append(os.path.realpath('gluon'))
+else:
+    sys.path.append(os.path.realpath('../'))
 
-sys.path.append(os.path.realpath('../..'))
-
-from gluon.utils import md5_hash
+from utils import md5_hash
 
 
 class TestUtils(unittest.TestCase):

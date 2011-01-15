@@ -6,7 +6,10 @@ Unit tests for IS_URL()
 
 import sys
 import os
-sys.path.append(os.path.realpath('../'))
+if os.path.isdir('gluon'):
+    sys.path.append(os.path.realpath('gluon'))
+else:
+    sys.path.append(os.path.realpath('../'))
 
 import unittest
 from validators import IS_URL, IS_HTTP_URL, IS_GENERIC_URL, \

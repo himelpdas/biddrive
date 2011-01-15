@@ -20,7 +20,7 @@ class Singleton(dict):
     >>> c.y=2
     >>> d=C()         # same singleton as c
     >>> print d.x, d.y
-    None, 2
+    None 2
     >>> d.set_state({}) # state can be reset
     >>> print d.x, d.y
     None None
@@ -85,4 +85,8 @@ class Singleton(dict):
         return getattr(Singleton.thread,str(self.__class__))
     def set_state(self,storage):
         setattr(Singleton.thread,str(self.__class__),storage)
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
 

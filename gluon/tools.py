@@ -9,10 +9,12 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 from contenttype import contenttype
 from storage import Storage, StorageList, Settings, Messages
-from validators import *
-from html import *
-from sqlhtml import *
-from http import *
+from validators import IS_NOT_IN_DB, IS_NOT_EMPTY, IS_IN_DB, IS_EMAIL, IS_EXPR, IS_IN_SET, IS_INT_IN_RANGE, CRYPT
+from html import DIV, URL, A, BR, SPAN, XML, UL, LI, H1, H2, H3, P, SCRIPT, TAG, IFRAME, LABEL, CODE
+from html import FORM, INPUT, OPTION, SELECT
+from html import TABLE, TR, TD
+from sqlhtml import SQLFORM, SQLTABLE, form_factory
+from http import HTTP, redirect
 from utils import web2py_uuid
 
 import base64
@@ -28,8 +30,9 @@ import smtplib
 import urllib
 import urllib2
 import Cookie
+import cStringIO
 
-from email import *
+from email import MIMEBase, MIMEMultipart, MIMEText, Encoders, Header, message_from_string
 
 import serializers
 import contrib.simplejson as simplejson
@@ -3118,7 +3121,7 @@ class Crud(object):
                 results = db(query).select(*selected)
                 for r in refsearch:
                     results = results.find(r)
-            except: # hmmm, we should do bettere here
+            except: # hmmm, we should do better here
                 results = None
         return form, results
 
@@ -3285,7 +3288,7 @@ class Service(object):
 
         Then call it with::
 
-            wget http://..../app/default/call/json/myfunc?a=hello&b=world
+            wget http://..../app/default/call/json/myfunction?a=hello&b=world
 
         """
         self.json_procedures[f.__name__] = f
@@ -3304,7 +3307,7 @@ class Service(object):
 
         Then call it with::
 
-            wget http://..../app/default/call/jsonrpc/myfunc?a=hello&b=world
+            wget http://..../app/default/call/jsonrpc/myfunction?a=hello&b=world
 
         """
         self.jsonrpc_procedures[f.__name__] = f
@@ -3767,9 +3770,9 @@ class PluginManager(object):
 
     Plugin Manager is similar to a storage object but it is a single level singleton
     this means that multiple instances within the same thread share the same attributes
-    Its contructor is also special. The first argument is the name of the plugin you are defining.
+    Its constructor is also special. The first argument is the name of the plugin you are defining.
     The named arguments are parameters needed by the plugin with default values.
-    If the parameteres were previous defined, the old values are used.
+    If the parameters were previous defined, the old values are used.
 
     For example:
 

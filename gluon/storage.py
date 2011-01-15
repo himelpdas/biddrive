@@ -87,6 +87,8 @@ class Storage(dict):
         list will be returned.  Otherwise, [object] will be returned.
 
         Simulated output with a query string of ?x=abc&y=abc&y=def
+        >>> request = Storage()
+        >>> request.vars = Storage()
         >>> request.vars.x = 'abc'
         >>> request.vars.y = ['abc', 'def']
         >>> request.vars.getlist('x')
@@ -111,6 +113,8 @@ class Storage(dict):
         will be returned as is.
 
         Simulated output with a query string of ?x=abc&y=abc&y=def
+        >>> request = Storage()
+        >>> request.vars = Storage()
         >>> request.vars.x = 'abc'
         >>> request.vars.y = ['abc', 'def']
         >>> request.vars.getfirst('x')
@@ -118,7 +122,6 @@ class Storage(dict):
         >>> request.vars.getfirst('y')
         'abc'
         >>> request.vars.getfirst('z')
-        None
 
         """
         value = self.getlist(obj)
@@ -133,6 +136,8 @@ class Storage(dict):
         will be returned as is.
 
         Simulated output with a query string of ?x=abc&y=abc&y=def
+        >>> request = Storage()
+        >>> request.vars = Storage()
         >>> request.vars.x = 'abc'
         >>> request.vars.y = ['abc', 'def']
         >>> request.vars.getlast('x')
@@ -140,7 +145,6 @@ class Storage(dict):
         >>> request.vars.getlast('y')
         'def'
         >>> request.vars.getlast('z')
-        None
 
         """
         value = self.getlist(obj)
@@ -205,3 +209,7 @@ class Messages(Storage):
         if isinstance(value, str):
             return str(self['T'](value))
         return value
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

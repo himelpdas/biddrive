@@ -91,6 +91,12 @@ def __routes_doctest():
     filter_err() accepts overrides for application and ticket:
         filter_err(status, application='app', ticket='tkt')
 
+    >>> import os
+    >>> import gluon.main
+    >>> from gluon.rewrite import select, load, filter_url, filter_out, filter_err, compile_re
+    >>> select()
+    >>> load(routes=os.path.basename(__file__))
+
     >>> filter_url('http://domain.com/favicon.ico')
     'http://domain.com/examples/static/favicon.ico'
     >>> filter_url('https://domain.com/robots.txt')
@@ -137,10 +143,5 @@ def __routes_doctest():
     pass
 
 if __name__ == '__main__':
-    import os
-    import gluon.main
     import doctest
-    from gluon.rewrite import select, load, filter_url, filter_out, filter_err, compile_re
-    select()
-    load(routes=os.path.basename(__file__))
     doctest.testmod()

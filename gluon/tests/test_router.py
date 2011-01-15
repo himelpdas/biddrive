@@ -9,12 +9,15 @@ import unittest
 import tempfile
 import logging
 
-sys.path.append(os.path.realpath('../..'))
+if os.path.isdir('gluon'):
+    sys.path.append(os.path.realpath('gluon'))
+else:
+    sys.path.append(os.path.realpath('../'))
 
-from gluon.rewrite import load, filter_url, filter_err, get_effective_router
-from gluon.fileutils import abspath
-from gluon.settings import global_settings
-from gluon.http import HTTP
+from rewrite import load, filter_url, filter_err, get_effective_router
+from fileutils import abspath
+from settings import global_settings
+from http import HTTP
 
 logger = None
 oldcwd = None
@@ -52,8 +55,9 @@ def setUpModule():
     global oldcwd
     if oldcwd is None:
         oldcwd = os.getcwd()
-        os.chdir(os.path.realpath('../../'))
-        import gluon.main   # for initialization after chdir
+        if not os.path.isdir('gluon'):
+            os.chdir(os.path.realpath('../../'))
+        import main   # for initialization after chdir
         global logger
         logger = logging.getLogger('web2py.rewrite')
         global_settings.applications_parent = tempfile.mkdtemp()

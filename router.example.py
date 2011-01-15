@@ -137,12 +137,17 @@ def __routes_doctest():
     filter_err() accepts overrides for application and ticket:
         filter_err(status, application='app', ticket='tkt')
 
+    >>> import os
+    >>> import gluon.main
+    >>> from gluon.rewrite import load, filter_url, filter_out, filter_err, get_effective_router
+    >>> load(routes=os.path.basename(__file__))
+
     >>> filter_url('http://domain.com/abc', router='app')
     'welcome'
     >>> filter_url('http://domain.com/welcome', router='app')
     'welcome'
-    >>> filter_url('http://domain.com/favicon.ico')
-    '/applications/welcome/static/favicon.ico'
+    >>> os.path.relpath(filter_url('http://domain.com/favicon.ico'))
+    'applications/welcome/static/favicon.ico'
     >>> filter_url('http://domain.com/abc')
     '/welcome/default/abc'
     >>> filter_url('http://domain.com/index/abc')
@@ -197,8 +202,8 @@ def __routes_doctest():
     '/examples/appadmin/fcn-1'
     >>> filter_url('http://domain.com/app/static/filename-with_underscore', out=True)
     '/app/static/filename-with_underscore'
-    >>> filter_url('http://domain.com/admin/static/filename-with_underscore')
-    '/applications/admin/static/filename-with_underscore'
+    >>> os.path.relpath(filter_url('http://domain.com/admin/static/filename-with_underscore'))
+    'applications/admin/static/filename-with_underscore'
     
     >>> filter_err(200)
     200
@@ -210,9 +215,5 @@ def __routes_doctest():
     pass
 
 if __name__ == '__main__':
-    import os
-    import gluon.main
     import doctest
-    from gluon.rewrite import load, filter_url, filter_out, filter_err, get_effective_router
-    load(routes=os.path.basename(__file__))
     doctest.testmod()
