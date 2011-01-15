@@ -3086,12 +3086,15 @@ class Crud(object):
             txtval = request.vars.get('txt' + fieldname, None)
             opval = request.vars.get('op' + fieldname, None)
             row = TR(TD(INPUT(_type = "checkbox", _name = "chk" + fieldname,
+                              #_readonly = (field.type == 'id'),
+                              #_selected = (field.type == 'id'),
+                              #_checked = (field.type == 'id'),
                               value = chkval == 'on')),
                      TD(field_labels.get(fieldname,field.label)),
-                        TD(SELECT([OPTION(query_labels.get(op,op),
-                                                 _value=op) for op in ops],
-                                                 _name = "op" + fieldname,
-                                         value = opval)),
+                     TD(SELECT([OPTION(query_labels.get(op,op),
+                                       _value=op) for op in ops],
+                               _name = "op" + fieldname,
+                               value = opval)),
                      TD(INPUT(_type = "text", _name = "txt" + fieldname,
                               _value = txtval, _id='txt' + fieldname,
                               _class = str(field.type))))

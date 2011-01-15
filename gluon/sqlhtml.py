@@ -1333,7 +1333,7 @@ class SQLTABLE(TABLE):
                         if ref.find('.') >= 0:
                             tref,fref = ref.split('.')
                             if hasattr(sqlrows.db[tref],'_primarykey'):
-                                href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:ur}))
+                                href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:r}))
                     r = A(str(r), _href=str(href))
                 elif field.type.startswith('reference'):
                     pass
