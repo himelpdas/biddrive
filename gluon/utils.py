@@ -10,7 +10,6 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 import hashlib
 import uuid
 import random
-import os
 import thread
 import time
 

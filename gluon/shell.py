@@ -21,7 +21,7 @@ import glob
 import fileutils
 import settings
 from utils import web2py_uuid
-from compileapp import *
+from compileapp import build_environment, read_pyc, run_models_in
 from restricted import RestrictedError
 from globals import Request, Response, Session
 from storage import Storage
@@ -38,7 +38,7 @@ def exec_environment(
     ):
     """
     .. function:: gluon.shell.exec_environment([pyfile=''[, request=Request()
-        [, response=Response[, sessions=Session()]]]])
+        [, response=Response[, session=Session()]]]])
 
         Environment builder and module loader.
 
@@ -205,7 +205,7 @@ def run(
         if not plain:
             try:
                 import IPython
-                # following 2 lines fixe a problem with IPython, thanks Michael Toomim
+                # following 2 lines fix a problem with IPython; thanks Michael Toomim
                 if '__builtins__' in _env:
                     del _env['__builtins__']
                 shell = IPython.Shell.IPShell(argv=[], user_ns=_env)

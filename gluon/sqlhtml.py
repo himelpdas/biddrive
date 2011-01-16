@@ -1328,7 +1328,7 @@ class SQLTABLE(TABLE):
                     ref = field.type[10:]
                     try:
                         href = linkto(r, 'reference', ref)
-                    except TypeError,e:
+                    except TypeError:
                         href = '%s/%s/%s' % (linkto, ref, r_old)
                         if ref.find('.') >= 0:
                             tref,fref = ref.split('.')

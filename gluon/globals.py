@@ -182,7 +182,6 @@ class Response(Storage):
         downloads from http://..../download/filename
         """
 
-        import os
         import contenttype as c
         if not request.args:
             raise HTTP(404)

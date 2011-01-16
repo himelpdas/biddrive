@@ -246,7 +246,7 @@ class CacheOnDisk(CacheAbstract):
                     'misses': 0,
                     }
                 storage.sync()
-        except ImportError, e:
+        except ImportError:
             pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
         except:
             logger.error('corrupted file: %s' % self.shelve_name)

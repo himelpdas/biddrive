@@ -14,7 +14,7 @@ import urllib
 from utils import web2py_uuid
 from shutil import rmtree
 from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
-from fileutils import up, listdir, fix_newlines, abspath, recursive_unlink
+from fileutils import up, fix_newlines, abspath, recursive_unlink
 from restricted import RestrictedError
 from settings import global_settings
 
@@ -159,7 +159,6 @@ def app_create(app, request,force=False,key=None):
         the global request object
 
     """
-    did_mkdir = False
     try:
         path = apath(app, request)
         os.mkdir(path)
