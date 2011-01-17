@@ -2366,13 +2366,18 @@ class IS_EMPTY_OR(Validator):
         value, empty = is_empty(value, empty_regex=self.empty_regex)
         if empty:
             return (self.null, None)
-        return self.other(value)
+        if isinstance(self.other, (list, tuple)):
+            for item in self.other:
+                value, error = item(value)
+                if error: break
+            return value, error
+        else:
+            return self.other(value)
 
     def formatter(self, value):
         if hasattr(self.other, 'formatter'):
-            return self.other.formatter(value)
+            return self.other.formatter(value)        
         return value
-
 
 IS_NULL_OR = IS_EMPTY_OR    # for backward compatibility
 
