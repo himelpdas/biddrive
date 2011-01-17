@@ -93,8 +93,8 @@ def __routes_doctest():
 
     >>> import os
     >>> import gluon.main
-    >>> from gluon.rewrite import select, load, filter_url, filter_out, filter_err, compile_re
-    >>> select()
+    >>> from gluon.rewrite import regex_select, load, filter_url, regex_filter_out, filter_err, compile_regex
+    >>> regex_select()
     >>> load(routes=os.path.basename(__file__))
 
     >>> filter_url('http://domain.com/favicon.ico')
@@ -109,7 +109,7 @@ def __routes_doctest():
     'http://domain.com/app/ctr/fcn?query'
     >>> filter_url('http://otherdomain.com/fcn')
     'http://otherdomain.com/app/ctr/fcn'
-    >>> filter_out('/app/ctr/fcn')
+    >>> regex_filter_out('/app/ctr/fcn')
     '/ctr/fcn'
     >>> filter_url('https://otherdomain.com/app/ctr/fcn', out=True)
     '/ctr/fcn'
@@ -131,13 +131,13 @@ def __routes_doctest():
     'myapp'
     >>> filter_url('http://domain.com', app=True)
     'myapp'
-    >>> compile_re('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')[0].pattern
+    >>> compile_regex('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')[0].pattern
     '^.*http://otherdomain.com.* (?P<any>.*)$'
-    >>> compile_re('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')[1]
+    >>> compile_regex('.*http://otherdomain.com.* (?P<any>.*)', '/app/ctr\g<any>')[1]
     '/app/ctr\\\\g<any>'
-    >>> compile_re('/$c/$f', '/init/$c/$f')[0].pattern
+    >>> compile_regex('/$c/$f', '/init/$c/$f')[0].pattern
     '^.*?:https?://[^:/]+:[a-z]+ /(?P<c>\\\\w+)/(?P<f>\\\\w+)$'
-    >>> compile_re('/$c/$f', '/init/$c/$f')[1]
+    >>> compile_regex('/$c/$f', '/init/$c/$f')[1]
     '/init/\\\\g<c>/\\\\g<f>'
     '''
     pass

@@ -139,7 +139,7 @@ def __routes_doctest():
 
     >>> import os
     >>> import gluon.main
-    >>> from gluon.rewrite import load, filter_url, filter_out, filter_err, get_effective_router
+    >>> from gluon.rewrite import load, filter_url, filter_err, get_effective_router
     >>> load(routes=os.path.basename(__file__))
 
     >>> filter_url('http://domain.com/abc', router='app')

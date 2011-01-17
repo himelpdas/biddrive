@@ -5,6 +5,15 @@
 This file is part of the web2py Web Framework
 Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
 License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
+
+gluon.rewrite parses incoming URLs and formats outgoing URLs for gluon.html.URL.
+
+In addition, it rewrites both incoming and outgoing URLs based on the (optional) user-supplied routes.py,
+which also allows for rewriting of certain error messages.
+
+routes.py supports two styles of URL rewriting, depending on whether 'routers' is defined.
+Refer to router.example.py and routes.example.py for additional documentation.
+
 """
 
 import os
@@ -17,10 +26,6 @@ from storage import Storage, List
 from http import HTTP
 from fileutils import abspath
 from settings import global_settings
-
-regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
-regex_anything = re.compile(r'(?<!\\)\$anything')
-regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
 logger = logging.getLogger('web2py.rewrite')
 
@@ -75,42 +80,61 @@ ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 
     'map_hyphen', 
     'acfe_match', 'file_match', 'args_match'))
 
-def compile_re(k, v):
-    """
-    Preprocess and compile the regular expressions in routes_app/in/out
+#  The external interface to rewrite consists of:
+#
+#  load: load routing configuration file(s)
+#  url_in: parse and rewrite incoming URL
+#  url_out: assemble and rewrite outgoing URL
+#
+#  thread.routes.default_application
+#  thread.routes.error_message
+#  thread.routes.error_message_ticket
+#  thread.routes.try_redirect_on_error
+#  thread.routes.error_handler
+#
+#  filter_url: helper for doctest & unittest
+#  filter_err: helper for doctest & unittest
+#  regex_filter_out: doctest
 
-    The resulting regex will match a pattern of the form:
+def url_in(request, environ):
+    "parse and rewrite incoming URL"
+    if routers:
+        return map_url_in(request, environ)
+    return regex_url_in(request, environ)
 
-        [remote address]:[protocol]://[host]:[method] [path]
 
-    We allow abbreviated regexes on input; here we try to complete them.
-    """
-    k0 = k  # original k for error reporting
-    # bracket regex in ^...$ if not already done
-    if not k[0] == '^':
-        k = '^%s' % k
-    if not k[-1] == '$':
-        k = '%s$' % k
-    # if there are no :-separated parts, prepend a catch-all for the IP address
-    if k.find(':') < 0:
-        # k = '^.*?:%s' % k[1:]
-        k = '^.*?:https?://[^:/]+:[a-z]+ %s' % k[1:]
-    # if there's no ://, provide a catch-all for the protocol, host & method
-    if k.find('://') < 0:
-        i = k.find(':/')
-        if i < 0:
-            raise SyntaxError, "routes pattern syntax error: path needs leading '/' [%s]" % k0
-        k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
-    # $anything -> ?P<anything>.*
-    for item in regex_anything.findall(k):
-        k = k.replace(item, '(?P<anything>.*)')
-    # $a (etc) -> ?P<a>\w+
-    for item in regex_at.findall(k):
-        k = k.replace(item, r'(?P<%s>\w+)' % item[1:])
-    # same for replacement pattern, but with \g
-    for item in regex_at.findall(v):
-        v = v.replace(item, r'\g<%s>' % item[1:])
-    return (re.compile(k, re.DOTALL), v)
+def url_out(request, env, application, controller, function, args, other):
+    "assemble and rewrite outgoing URL"
+    if routers:
+        acf = map_url_out(request, application, controller, function, args)
+        return '%s%s' % (acf, other)
+    url = '/%s/%s/%s%s' % (application, controller, function, other)
+    return regex_filter_out(url, env)
+
+
+def try_redirect_on_error(http_object, request, ticket=None):
+    "called from main.wsgibase to rewrite the http response"
+    status = int(str(http_object.status).split()[0])
+    if status>399 and thread.routes.routes_onerror:
+        keys=set(('%s/%s' % (request.application, status),
+                  '%s/*' % (request.application),
+                  '*/%s' % (status),
+                  '*/*'))
+        for (key,redir) in thread.routes.routes_onerror:
+            if key in keys:
+                if redir == '!':
+                    break
+                elif '?' in redir:
+                    url = '%s&code=%s&ticket=%s&requested_uri=%s&request_url=%s' % \
+                        (redir,status,ticket,request.env.request_uri,request.url)
+                else:
+                    url = '%s?code=%s&ticket=%s&requested_uri=%s&request_url=%s' % \
+                        (redir,status,ticket,request.env.request_uri,request.url)
+                return HTTP(303,
+                            'You are being redirected <a href="%s">here</a>' % url,
+                            Location=url)
+    return http_object
+
 
 def load(routes='routes.py', app=None, data=None, rdict=None):
     """
@@ -151,7 +175,7 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
     for sym in ('routes_app', 'routes_in', 'routes_out'):
         if sym in symbols:
             for (k, v) in symbols[sym]:
-                p[sym].append(compile_re(k, v))
+                p[sym].append(compile_regex(k, v))
     for sym in ('routes_onerror', 'routes_apps_raw',
                 'error_handler','error_message', 'error_message_ticket',
                 'default_application','default_controller', 'default_function'):
@@ -163,13 +187,13 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
             if isinstance(p.routers[key], dict):
                 p.routers[key] = Storage(p.routers[key])
 
-    global params
     if app is None:
-        global routers
+        global params
         params = p                  # install base rewrite parameters
         #
-        #  create the BASE router
+        #  create the BASE router if routers in use
         #
+        global routers
         routers = params.routers    # establish routers if present
         if isinstance(routers, dict):
             routers = Storage(routers)
@@ -194,69 +218,9 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                     routers[appname] = router
                 if os.path.exists(abspath('applications', appname, routes)):
                     load(routes, appname)
-        #
-        #  create a router for apps names in the routers dict that weren't in applications/
-        #    (for unit testing)
-        #
+
         if routers:
-            for app in routers.keys():
-                # initialize apps with routers that aren't present, on behalf of unit tests
-                if app not in all_apps:
-                    all_apps.append(app)
-                    router = Storage(routers.BASE)   # new copy
-                    router.update(routers[app])
-                    routers[app] = router
-                router = routers[app]
-                for key in router.keys():
-                    if key not in ROUTER_KEYS:
-                        raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
-                if app != 'BASE':
-                    for base_only in ('applications', 'default_application', 'domains'):
-                        router.pop(base_only)
-                    if 'domain' in router:
-                        routers.BASE.domains[router.domain] = app
-                    if isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
-                        router.controllers = []
-                        if os.path.isdir(abspath('applications', app)):
-                            cpath = abspath('applications', app, 'controllers')
-                            for cname in os.listdir(cpath):
-                                if os.path.isfile(abspath(cpath, cname)) and cname.endswith('.py'):
-                                    router.controllers.append(cname[:-3])
-                    if router.controllers and 'static' not in router.controllers:
-                        router.controllers.append('static')
-            if isinstance(routers.BASE.applications, str) and routers.BASE.applications == 'ALL':
-                routers.BASE.applications = list(all_apps)
-
-            for app in routers.keys():
-                router = routers[app]
-                router.name = app
-                router._acfe_match = re.compile(router.acfe_match)
-                router._file_match = re.compile(router.file_match)
-                if router.args_match:
-                    router._args_match = re.compile(router.args_match)
-
-            #  rewrite BASE.domains
-            #
-            #    incoming:
-            #      key = 'domain[:port]'
-            #      value = 'application[/controller]
-            #
-            #    outgoing:
-            #      key = (domain, port)
-            #      value = (application, controller)
-            #        where port and controller may be None
-            #
-            domains = dict()
-            if routers.BASE.domains:
-                for (domain, app) in [(d.strip(':'), a.strip('/')) for (d, a) in routers.BASE.domains.items()]:
-                    port = None
-                    if ':' in domain:
-                        (domain, port) = domain.split(':')
-                    ctlr = None
-                    if '/' in app:
-                        (app, ctlr) = app.split('/')
-                    domains[(domain, port)] = (app, ctlr)
-            routers.BASE.domains = domains
+            load_routers(all_apps)
 
     else: # app
         params_apps[app] = p
@@ -266,7 +230,108 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
 
     logger.debug('URL rewrite is on. configuration in %s' % path)
 
-def filter_uri(e, regexes, tag, default=None):
+
+regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
+regex_anything = re.compile(r'(?<!\\)\$anything')
+#regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
+
+def compile_regex(k, v):
+    """
+    Preprocess and compile the regular expressions in routes_app/in/out
+
+    The resulting regex will match a pattern of the form:
+
+        [remote address]:[protocol]://[host]:[method] [path]
+
+    We allow abbreviated regexes on input; here we try to complete them.
+    """
+    k0 = k  # original k for error reporting
+    # bracket regex in ^...$ if not already done
+    if not k[0] == '^':
+        k = '^%s' % k
+    if not k[-1] == '$':
+        k = '%s$' % k
+    # if there are no :-separated parts, prepend a catch-all for the IP address
+    if k.find(':') < 0:
+        # k = '^.*?:%s' % k[1:]
+        k = '^.*?:https?://[^:/]+:[a-z]+ %s' % k[1:]
+    # if there's no ://, provide a catch-all for the protocol, host & method
+    if k.find('://') < 0:
+        i = k.find(':/')
+        if i < 0:
+            raise SyntaxError, "routes pattern syntax error: path needs leading '/' [%s]" % k0
+        k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
+    # $anything -> ?P<anything>.*
+    for item in regex_anything.findall(k):
+        k = k.replace(item, '(?P<anything>.*)')
+    # $a (etc) -> ?P<a>\w+
+    for item in regex_at.findall(k):
+        k = k.replace(item, r'(?P<%s>\w+)' % item[1:])
+    # same for replacement pattern, but with \g
+    for item in regex_at.findall(v):
+        v = v.replace(item, r'\g<%s>' % item[1:])
+    return (re.compile(k, re.DOTALL), v)
+
+def load_routers(all_apps):
+    "load-time post-processing of routers"
+
+    for app in routers.keys():
+        # initialize apps with routers that aren't present, on behalf of unit tests
+        if app not in all_apps:
+            all_apps.append(app)
+            router = Storage(routers.BASE)   # new copy
+            router.update(routers[app])
+            routers[app] = router
+        router = routers[app]
+        for key in router.keys():
+            if key not in ROUTER_KEYS:
+                raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
+        if app != 'BASE':
+            for base_only in ('applications', 'default_application', 'domains'):
+                router.pop(base_only)
+            if 'domain' in router:
+                routers.BASE.domains[router.domain] = app
+            if isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
+                router.controllers = []
+                if os.path.isdir(abspath('applications', app)):
+                    cpath = abspath('applications', app, 'controllers')
+                    for cname in os.listdir(cpath):
+                        if os.path.isfile(abspath(cpath, cname)) and cname.endswith('.py'):
+                            router.controllers.append(cname[:-3])
+            if router.controllers and 'static' not in router.controllers:
+                router.controllers.append('static')
+
+    if isinstance(routers.BASE.applications, str) and routers.BASE.applications == 'ALL':
+        routers.BASE.applications = list(all_apps)
+
+    for app in routers.keys():
+        # set router name and compile URL validation patterns
+        router = routers[app]
+        router.name = app
+        router._acfe_match = re.compile(router.acfe_match)
+        router._file_match = re.compile(router.file_match)
+        if router.args_match:
+            router._args_match = re.compile(router.args_match)
+
+    #  rewrite BASE.domains as tuples
+    #
+    #      key:   'domain[:port]' -> (domain, port)
+    #      value: 'application[/controller] -> (application, controller)
+    #      (port and controller may be None)
+    #
+    domains = dict()
+    if routers.BASE.domains:
+        for (domain, app) in [(d.strip(':'), a.strip('/')) for (d, a) in routers.BASE.domains.items()]:
+            port = None
+            if ':' in domain:
+                (domain, port) = domain.split(':')
+            ctlr = None
+            if '/' in app:
+                (app, ctlr) = app.split('/')
+            domains[(domain, port)] = (app, ctlr)
+    routers.BASE.domains = domains
+
+def regex_uri(e, regexes, tag, default=None):
     "filter incoming URI against a list of regexes"
     query = e.get('QUERY_STRING', None)
     path = e['PATH_INFO']
@@ -287,10 +352,9 @@ def filter_uri(e, regexes, tag, default=None):
     logger.debug('%s: [%s] -> %s (not rewritten)' % (tag, key, default))
     return (default, query, original_uri)
 
-def select(env=None, app=None, request=None):
+def regex_select(env=None, app=None, request=None):
     """
-    select a set of rewrite params for the current request
-    called from main.wsgibase before any URL rewriting
+    select a set of regex rewrite params for the current request
     """
     if app:
         thread.routes = params_apps.get(app, params)
@@ -298,17 +362,17 @@ def select(env=None, app=None, request=None):
         if routers:
             map_url_in(request, env, app=True)
         else:
-            (app, q, u) = filter_uri(env, params.routes_app, "routes_app")
+            (app, q, u) = regex_uri(env, params.routes_app, "routes_app")
             thread.routes = params_apps.get(app, params)
     else:
         thread.routes = params # default to base rewrite parameters
     logger.debug("select routing parameters: %s" % thread.routes.name)
     return app  # for doctest
 
-def filter_in(e):
+def regex_filter_in(e):
     "called from main.wsgibase to rewrite incoming URL"
     if thread.routes.routes_in:
-        (path, query, original_uri) = filter_uri(e, thread.routes.routes_in, "routes_in", e['PATH_INFO'])
+        (path, query, original_uri) = regex_uri(e, thread.routes.routes_in, "routes_in", e['PATH_INFO'])
         if path.find('?') < 0:
             e['PATH_INFO'] = path
         else:
@@ -319,10 +383,130 @@ def filter_in(e):
             e['WEB2PY_ORIGINAL_URI'] = original_uri
     return e
 
-def filter_out(url, e=None):
-    "called from html.URL to rewrite outgoing URL"
+
+# pattern to replace spaces with underscore in URL
+#   also the html escaped variants '+' and '%20' are covered
+regex_space = re.compile('(\+|\s|%20)+')
+
+# pattern to find valid paths in url /application/controller/...
+#   this could be:
+#     for static pages:
+#        /<b:application>/static/<x:file>
+#     for dynamic pages:
+#        /<a:application>[/<c:controller>[/<f:function>[.<e:ext>][/<s:args>]]]
+#   application, controller, function and ext may only contain [a-zA-Z0-9_]
+#   file and args may also contain '-', '=', '.' and '/'
+#   apps in routes_apps_raw must parse raw_args into args
+
+regex_static = re.compile(r'''
+     (^                              # static pages
+         /(?P<b> \w+)                # b=app
+         /static                     # /b/static
+         /(?P<x> (\w[\-\=\./]?)* )   # x=file
+     $)
+     ''', re.X)
+
+regex_url = re.compile(r'''
+     (^(                                  # (/a/c/f.e/s)
+         /(?P<a> [\w\s+]+ )               # /a=app
+         (                                # (/c.f.e/s)
+             /(?P<c> [\w\s+]+ )           # /a/c=controller
+             (                            # (/f.e/s)
+                 /(?P<f> [\w\s+]+ )       # /a/c/f=function
+                 (                        # (.e)
+                     \.(?P<e> [\w\s+]+ )  # /a/c/f.e=extension
+                 )?
+                 (                        # (/s)
+                     /(?P<r>              # /a/c/f.e/r=raw_args
+                     .+
+                     )
+                 )?
+             )?
+         )?
+     )?
+     /?$)    # trailing slash
+     ''', re.X)
+
+regex_args = re.compile(r'''
+     (^
+         (?P<s>
+             ( [\w@-][=./]? )+          # s=args
+         )?
+     /?$)    # trailing slash
+     ''', re.X)
+
+def regex_url_in(request, environ):
+    "rewrite and parse incoming URL"
+
+    # ##################################################
+    # select application
+    # rewrite URL if routes_in is defined
+    # update request.env
+    # ##################################################
+
+    regex_select(env=environ, request=request)
+
+    if thread.routes.routes_in:
+        environ = regex_filter_in(environ)
+
+    for (key, value) in environ.items():
+        request.env[key.lower().replace('.', '_')] = value
+
+    path = request.env.path_info.replace('\\', '/')
+
+    # ##################################################
+    # serve if a static file
+    # ##################################################
+
+    match = regex_static.match(regex_space.sub('_', path))
+    if match and match.group('x'):
+        static_file = os.path.join(request.env.applications_parent,
+                                   'applications', match.group('b'),
+                                   'static', match.group('x'))
+        return (static_file, environ)
+
+    # ##################################################
+    # parse application, controller and function
+    # ##################################################
+
+    path = re.sub('%20', ' ', path)
+    match = regex_url.match(path)
+    if not match or match.group('c') == 'static':
+        raise HTTP(400,
+                   thread.routes.error_message % 'invalid request',
+                   web2py_error='invalid path')
+
+    request.application = \
+        regex_space.sub('_', match.group('a') or thread.routes.default_application)
+    request.controller = \
+        regex_space.sub('_', match.group('c') or thread.routes.default_controller)
+    request.function = \
+        regex_space.sub('_', match.group('f') or thread.routes.default_function)
+    group_e = match.group('e')
+    request.raw_extension = group_e and regex_space.sub('_', group_e) or None
+    request.extension = request.raw_extension or 'html'
+    request.raw_args = match.group('r')
+    request.args = List([])
+    if request.application in thread.routes.routes_apps_raw:
+        # application is responsible for parsing args
+        request.args = None
+    elif request.raw_args:
+        match = regex_args.match(request.raw_args.replace(' ', '_'))
+        if match:
+            group_s = match.group('s')
+            request.args = \
+                List((group_s and group_s.split('/')) or [])
+        else:
+            raise HTTP(400,
+                       thread.routes.error_message % 'invalid request',
+                       web2py_error='invalid path')
+    return (None, environ)
+
+
+def regex_filter_out(url, e=None):
+    "regex rewrite outgoing URL"
     if not hasattr(thread, 'routes'):
-        select()    # ensure thread.routes is set (for application threads)
+        regex_select()    # ensure thread.routes is set (for application threads)
     if routers:
         return url  # already filtered
     if thread.routes.routes_out:
@@ -347,31 +531,8 @@ def filter_out(url, e=None):
     return url
 
 
-def try_redirect_on_error(http_object, request, ticket=None):
-    "called from main.wsgibase to rewrite the http response"
-    status = int(str(http_object.status).split()[0])
-    if status>399 and thread.routes.routes_onerror:
-        keys=set(('%s/%s' % (request.application, status),
-                  '%s/*' % (request.application),
-                  '*/%s' % (status),
-                  '*/*'))
-        for (key,redir) in thread.routes.routes_onerror:
-            if key in keys:
-                if redir == '!':
-                    break
-                elif '?' in redir:
-                    url = '%s&code=%s&ticket=%s&requested_uri=%s&request_url=%s' % \
-                        (redir,status,ticket,request.env.request_uri,request.url)
-                else:
-                    url = '%s?code=%s&ticket=%s&requested_uri=%s&request_url=%s' % \
-                        (redir,status,ticket,request.env.request_uri,request.url)
-                return HTTP(303,
-                            'You are being redirected <a href="%s">here</a>' % url,
-                            Location=url)
-    return http_object
-
 def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router=False, lang=None, domain=(None,None)):
-    "doctest/unittest interface to filter_in() and filter_out()"
+    "doctest/unittest interface to regex_filter_in() and regex_filter_out()"
     regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]*)(?P<uri>.*)')
     match = regex_url.match(url)
     scheme = match.group('scheme').lower()
@@ -397,65 +558,67 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
          'http_host': host
     }
 
-    if routers:
-        request = Storage()
-        e["applications_parent"] = global_settings.applications_parent
-        request.env = Storage(e)
-        request.uri_language = lang
-
-        #  determine application only
+    if not routers:
         #
-        if router == "app":
-            return map_url_in(request, e, app=True)
-
-        #  rewrite outbound URL
+        #  regex rewriter
         #
         if out:
-            (request.env.domain_application, request.env.domain_controller) = domain
-            items = path_info.strip('/').split('/')
-            assert len(items) >= 3, "at least /a/c/f is required"
-            a = items.pop(0)
-            c = items.pop(0)
-            f = items.pop(0)
-            acf = map_url_out(a, c, f, items, request)
-            if items:
-                url = '%s/%s' % (acf, '/'.join(items))
+            return regex_filter_out(uri, e)
+        elif app:
+            return regex_select(e)
+        else:
+            regex_select(app=regex_select(e))
+            e = regex_filter_in(e)
+            if e.get('PATH_INFO','') == '':
+                path = e['REQUEST_URI']
+            elif query_string:
+                path = e['PATH_INFO'] + '?' + query_string
             else:
-                url = acf
-            if query_string:
-                url += '?' + query_string
-            return url
+                path = e['PATH_INFO']
+        return scheme + '://' + host + path
 
-        #  rewrite inbound URL
-        #
-        (static, e) = map_url_in(request, e)
-        if static:
-            return static
-        result = "/%s/%s/%s" % (request.application, request.controller, request.function)
-        if request.extension and request.extension != 'html':
-            result += ".%s" % request.extension
-        if request.args:
-            result += " %s" % request.args
-        if request.uri_language:
-            result += " (%s)" % request.uri_language
-        return result
+    request = Storage()
+    e["applications_parent"] = global_settings.applications_parent
+    request.env = Storage(e)
+    request.uri_language = lang
 
-    #  regex rewriter
+    #  determine application only
+    #
+    if router == "app":
+        return map_url_in(request, e, app=True)
+
+    #  rewrite outbound URL
     #
     if out:
-        return filter_out(uri, e)
-    elif app:
-        return select(e)
-    else:
-        select(app=select(e))
-        e = filter_in(e)
-        if e.get('PATH_INFO','') == '':
-            path = e['REQUEST_URI']
-        elif query_string:
-            path = e['PATH_INFO'] + '?' + query_string
+        (request.env.domain_application, request.env.domain_controller) = domain
+        items = path_info.strip('/').split('/')
+        assert len(items) >= 3, "at least /a/c/f is required"
+        a = items.pop(0)
+        c = items.pop(0)
+        f = items.pop(0)
+        acf = map_url_out(request, a, c, f, items)
+        if items:
+            url = '%s/%s' % (acf, '/'.join(items))
         else:
-            path = e['PATH_INFO']
-    return scheme + '://' + host + path
+            url = acf
+        if query_string:
+            url += '?' + query_string
+        return url
+
+    #  rewrite inbound URL
+    #
+    (static, e) = map_url_in(request, e)
+    if static:
+        return static
+    result = "/%s/%s/%s" % (request.application, request.controller, request.function)
+    if request.extension and request.extension != 'html':
+        result += ".%s" % request.extension
+    if request.args:
+        result += " %s" % request.args
+    if request.uri_language:
+        result += " (%s)" % request.uri_language
+    return result
+
 
 def filter_err(status, application='app', ticket='tkt'):
     "doctest/unittest interface to routes_onerror"
@@ -838,7 +1001,7 @@ def map_url_in(request, env, app=False):
     map.update_request()
     return (None, map.env)
 
-def map_url_out(application, controller, function, args, request=None):
+def map_url_out(request, application, controller, function, args):
     '''
     supply /a/c/f (or /a/lang/c/f) portion of outgoing url
 

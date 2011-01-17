@@ -75,11 +75,12 @@ from settings import global_settings
 from validators import CRYPT
 from cache import Cache
 from html import URL as Url
-from storage import List
 import newcron
 import rewrite
 
 __all__ = ['wsgibase', 'save_password', 'appfactory', 'HttpServer']
+
+requests = 0    # gc timer
 
 # Security Checks: validate URL and session_id here,
 # accept_language is validated in languages
@@ -356,10 +357,7 @@ def wsgibase(environ, responder):
                         environ['QUERY_STRING'] = items[1]
                     else:
                         environ['QUERY_STRING'] = ''
-                if rewrite.routers:
-                    (static_file, environ) = rewrite.map_url_in(request, environ)
-                else:
-                    (static_file, environ) = parse_url(request, environ)
+                (static_file, environ) = rewrite.url_in(request, environ)
                 if static_file:
                     if request.env.get('query_string', '')[:10] == 'attachment':
                         response.headers['Content-Disposition'] = 'attachment'
@@ -544,9 +542,9 @@ def wsgibase(environ, responder):
     finally:
         if response and hasattr(response, 'session_file') and response.session_file:
             response.session_file.close()
-        if global_settings.debugging:
-            import gluon.debug
-            #gluon.debug.stop_trace()
+#         if global_settings.debugging:
+#             import gluon.debug
+#             gluon.debug.stop_trace()
 
     session._unlock(response)
     http_response = rewrite.try_redirect_on_error(http_response,request,ticket)
@@ -774,122 +772,3 @@ class HttpServer(object):
             os.unlink(self.pid_filename)
         except:
             pass
-
-# pattern to replace spaces with underscore in URL
-#   also the html escaped variants '+' and '%20' are covered
-regex_space = re.compile('(\+|\s|%20)+')
-
-# pattern to find valid paths in url /application/controller/...
-#   this could be:
-#     for static pages:
-#        /<b:application>/static/<x:file>
-#     for dynamic pages:
-#        /<a:application>[/<c:controller>[/<f:function>[.<e:ext>][/<s:args>]]]
-#   application, controller, function and ext may only contain [a-zA-Z0-9_]
-#   file and args may also contain '-', '=', '.' and '/'
-#   apps in routes_apps_raw must parse raw_args into args
-
-regex_static = re.compile(r'''
-     (^                              # static pages
-         /(?P<b> \w+)                # b=app
-         /static                     # /b/static
-         /(?P<x> (\w[\-\=\./]?)* )   # x=file
-     $)
-     ''', re.X)
-
-regex_url = re.compile(r'''
-     (^(                                  # (/a/c/f.e/s)
-         /(?P<a> [\w\s+]+ )               # /a=app
-         (                                # (/c.f.e/s)
-             /(?P<c> [\w\s+]+ )           # /a/c=controller
-             (                            # (/f.e/s)
-                 /(?P<f> [\w\s+]+ )       # /a/c/f=function
-                 (                        # (.e)
-                     \.(?P<e> [\w\s+]+ )  # /a/c/f.e=extension
-                 )?
-                 (                        # (/s)
-                     /(?P<r>              # /a/c/f.e/r=raw_args
-                     .+
-                     )
-                 )?
-             )?
-         )?
-     )?
-     /?$)    # trailing slash
-     ''', re.X)
-
-regex_args = re.compile(r'''
-     (^
-         (?P<s>
-             ( [\w@-][=./]? )+          # s=args
-         )?
-     /?$)    # trailing slash
-     ''', re.X)
-
-def parse_url(request, environ):
-    "rewrite and parse incoming URL"
-
-    # ##################################################
-    # select application
-    # rewrite URL if routes_in is defined
-    # update request.env
-    # ##################################################
-
-    rewrite.select(env=environ, request=request)
-
-    if rewrite.thread.routes.routes_in:
-        environ = rewrite.filter_in(environ)
-
-    for (key, value) in environ.items():
-        request.env[key.lower().replace('.', '_')] = value
-
-    path = request.env.path_info.replace('\\', '/')
-
-    # ##################################################
-    # serve if a static file
-    # ##################################################
-
-    match = regex_static.match(regex_space.sub('_', path))
-    if match and match.group('x'):
-        static_file = os.path.join(request.env.applications_parent,
-                                   'applications', match.group('b'),
-                                   'static', match.group('x'))
-        return (static_file, environ)
-
-    # ##################################################
-    # parse application, controller and function
-    # ##################################################
-
-    path = re.sub('%20', ' ', path)
-    match = regex_url.match(path)
-    if not match or match.group('c') == 'static':
-        raise HTTP(400,
-                   rewrite.thread.routes.error_message % 'invalid request',
-                   web2py_error='invalid path')
-
-    request.application = \
-        regex_space.sub('_', match.group('a') or rewrite.thread.routes.default_application)
-    request.controller = \
-        regex_space.sub('_', match.group('c') or rewrite.thread.routes.default_controller)
-    request.function = \
-        regex_space.sub('_', match.group('f') or rewrite.thread.routes.default_function)
-    group_e = match.group('e')
-    request.raw_extension = group_e and regex_space.sub('_', group_e) or None
-    request.extension = request.raw_extension or 'html'
-    request.raw_args = match.group('r')
-    request.args = List([])
-    if request.application in rewrite.thread.routes.routes_apps_raw:
-        # application is responsible for parsing args
-        request.args = None
-    elif request.raw_args:
-        match = regex_args.match(request.raw_args.replace(' ', '_'))
-        if match:
-            group_s = match.group('s')
-            request.args = \
-                List((group_s and group_s.split('/')) or [])
-        else:
-            raise HTTP(400,
-                       rewrite.thread.routes.error_message % 'invalid request',
-                       web2py_error='invalid path')
-    return (None, environ)
-

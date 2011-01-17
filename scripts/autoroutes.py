@@ -105,9 +105,9 @@ def __routes_doctest():
     'http://domain.com/app/ctr/fcn?query'
     >>> filter_url('http://otherdomain.com/fcn')
     'http://otherdomain.com/fcn'
-    >>> filter_out('/app/ctr/fcn')
+    >>> regex_filter_out('/app/ctr/fcn')
     '/app/ctr/fcn'
-    >>> filter_out('/app1/ctr/fcn')
+    >>> regex_filter_out('/app1/ctr/fcn')
     '/app1/ctr/fcn'
     >>> filter_url('https://otherdomain.com/app1/default/fcn', out=True)
     '/fcn'
@@ -128,8 +128,9 @@ if __name__ == '__main__':
         os.chdir(os.path.dirname(os.path.dirname(__file__)))
         sys.path.append(os.path.dirname(os.path.dirname(__file__)))
         import gluon.main
-    import doctest
-    from gluon.rewrite import select, load, filter_url, filter_out, filter_err, compile_re
-    select()                # use base routing parameters
+    from gluon.rewrite import regex_select, load, filter_url, regex_filter_out
+    regex_select()          # use base routing parameters
     load(routes=__file__)   # load this file
+
+    import doctest
     doctest.testmod()
