@@ -1007,11 +1007,10 @@ class __TAG__(XmlComponent):
     def __getattr__(self, name):
         if name[-1:] == '_':
             name = name[:-1] + '/'
-
+        if isinstance(name,unicode):
+            name = name.encode('utf-8')
         class __tag__(DIV):
-
             tag = name
-
 
         return lambda *a, **b: __tag__(*a, **b)
 
