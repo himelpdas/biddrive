@@ -131,22 +131,20 @@ class LoadFactory(object):
             script = ''
             if ajax_trap:
                 script += "web2py_trap_form('%s','%s');" % \
-                    (html.URL(request.application,c,f,
-                              args=args,vars=vars,
-                              extension=extension),target)
+                    (html.URL(request.application, c, f, r=request,
+                              args=args, vars=vars, extension=extension),
+                     target)
             #for (name,value) in other_response.headers:
             #    if name == 'web2py-component-command':
             #        script += value
             return html.TAG[''](html.DIV(html.XML(page),_id=target),
                                 html.SCRIPT(script,_type="text/javascript"))
         else:
-            url = url or html.URL(request.application,c,
-                                  f, args=args,vars=vars,
-                                  extension=extension)
-            return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % \
-                                                (url,target),
-                                            _type="text/javascript"),
-                                html.DIV('loading...',_id=target))
+            url = url or html.URL(request.application, c, f, r=request,
+                                  args=args, vars=vars, extension=extension)
+            return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % (url, target),
+                                    _type="text/javascript"),
+                                html.DIV('loading...', _id=target))
 
 
 def local_import_aux(name, force=False, app='welcome'):
