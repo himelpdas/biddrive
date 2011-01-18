@@ -1,6 +1,8 @@
 import pymysql
 from pymysql.tests import base
 
+import sys
+
 try:
     import imp
     reload = imp.reload
@@ -104,8 +106,8 @@ KEY (`station`,`dh`,`echeance`)) ENGINE=MyISAM DEFAULT CHARSET=latin1;""")
         self.assertEqual('1', pymysql.converters.escape_item(1, "utf8"))
         self.assertEqual('1', pymysql.converters.escape_item(1L, "utf8"))
 
-        self.assertEqual('1', pymysql.converters.escape_object(1, "utf8"))
-        self.assertEqual('1', pymysql.converters.escape_object(1L, "utf8"))
+        self.assertEqual('1', pymysql.converters.escape_object(1))
+        self.assertEqual('1', pymysql.converters.escape_object(1L))
 
     def test_issue_15(self):
         """ query should be expanded before perform character encoding """
@@ -138,10 +140,11 @@ KEY (`station`,`dh`,`echeance`)) ENGINE=MyISAM DEFAULT CHARSET=latin1;""")
         db = self.databases[0]["db"]
         c = conn.cursor()
         # grant access to a table to a user with a password
-        c.execute("create table issue17 (x varchar(32) primary key)")
         try:
+            c.execute("create table issue17 (x varchar(32) primary key)")
             c.execute("insert into issue17 (x) values ('hello, world!')")
-            c.execute("grant all privileges on issue17 to issue17user identified by '1234'")
+            c.execute("grant all privileges on %s.issue17 to 'issue17user'@'%%' identified by '1234'" % db)
+            conn.commit()
             
             conn2 = pymysql.connect(host=host, user="issue17user", passwd="1234", db=db)
             c2 = conn2.cursor()
@@ -149,6 +152,13 @@ KEY (`station`,`dh`,`echeance`)) ENGINE=MyISAM DEFAULT CHARSET=latin1;""")
             self.assertEqual("hello, world!", c2.fetchone()[0])
         finally:
             c.execute("drop table issue17")
+
+def _uni(s, e):
+    # hack for py3
+    if sys.version_info[0] > 2:
+        return unicode(bytes(s, sys.getdefaultencoding()), e)
+    else:
+        return unicode(s, e)
 
 class TestNewIssues(base.PyMySQLTestCase):
     def test_issue_34(self):
@@ -164,12 +174,12 @@ class TestNewIssues(base.PyMySQLTestCase):
         conn = pymysql.connect(host="localhost", user="root", db=self.databases[0]["db"], charset="utf8")
         c = conn.cursor()
         try:
-            c.execute("create table hei\xc3\x9f (name varchar(32))")
-            c.execute("insert into hei\xc3\x9f (name) values ('Pi\xc3\xb1ata')")
-            c.execute("select name from hei\xc3\x9f")
-            self.assertEqual("Pi\xc3\xb1ata", c.fetchone()[0].encode("utf8"))
+            c.execute(_uni("create table hei\xc3\x9fe (name varchar(32))", "utf8"))
+            c.execute(_uni("insert into hei\xc3\x9fe (name) values ('Pi\xc3\xb1ata')", "utf8"))
+            c.execute(_uni("select name from hei\xc3\x9fe", "utf8"))
+            self.assertEqual(_uni("Pi\xc3\xb1ata","utf8"), c.fetchone()[0])
         finally:
-            c.execute("drop table hei\xc3\x9f")
+            c.execute(_uni("drop table hei\xc3\x9fe", "utf8"))
 
     # Will fail without manual intervention:
     #def test_issue_35(self):
@@ -216,9 +226,10 @@ class TestNewIssues(base.PyMySQLTestCase):
     def test_issue_38(self):
         conn = self.connections[0]
         c = conn.cursor()
-        datum = "a" * 1024 * 1024 * 64
-        c.execute("create table issue38 (id integer, data mediumblob)")
+        datum = "a" * 1024 * 1023 # reduced size for most default mysql installs
+        
         try:
+            c.execute("create table issue38 (id integer, data mediumblob)")
             c.execute("insert into issue38 values (1, %s)", datum)
         finally:
             c.execute("drop table issue38")
