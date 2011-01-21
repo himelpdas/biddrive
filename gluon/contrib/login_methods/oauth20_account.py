@@ -124,7 +124,8 @@ class OAuthAccount(object):
                     exps = 'expires_in'
                 else:
                     exps = 'expires'
-                self.session.token['expires'] == int(self.session.token[exps]) + time.time()
+                self.session.token['expires'] = int(self.session.token[exps]) + \
+                    time.time()
 
                 return self.session.token['access_token']
 
