@@ -3480,10 +3480,10 @@ class DAL(dict):
             yield self[tablename]
 
     def __getitem__(self, key):
-        return dict.__getitem__(self, str(key))
+        return dict.__getitem__(self, str(key).lower())
 
     def __setitem__(self, key, value):
-        dict.__setitem__(self, str(key), value)
+        dict.__setitem__(self, str(key).lower(), value)
 
     def __getattr__(self, key):
         return dict.__getitem__(self,key)
