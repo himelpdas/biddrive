@@ -233,7 +233,6 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
 
 regex_at = re.compile(r'(?<!\\)\$[a-zA-Z]\w*')
 regex_anything = re.compile(r'(?<!\\)\$anything')
-#regex_iter = re.compile(r'.*code=(?P<code>\d+)&ticket=(?P<ticket>.+).*')
 
 def compile_regex(k, v):
     """
