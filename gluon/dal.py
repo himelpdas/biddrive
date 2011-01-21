@@ -3803,7 +3803,7 @@ class Table(dict):
         elif str(key).isdigit():
             return self._db(self.id == key).select(limitby=(0,1)).first()
         elif key:
-            return dict.__getitem__(self, str(key))
+            return dict.__getitem__(self, str(key).lower())
 
     def __call__(self, key=DEFAULT, **kwargs):
         if key!=DEFAULT:
@@ -3848,7 +3848,7 @@ class Table(dict):
             if isinstance(key, dict):
                 raise SyntaxError,\
                     'value must be a dictionary: %s' % value
-            dict.__setitem__(self, str(key), value)
+            dict.__setitem__(self, str(key).lower(), value)
 
     def __delitem__(self, key):
         if isinstance(key, dict):
