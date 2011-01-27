@@ -1,6 +1,8 @@
 {{extend 'layout.html'}}
 {{
 import os
+def all(items):
+    return reduce(lambda a,b:a and b,items,True)
 def peekfile(path,file):
     return A(file.replace('\\\\','/'),_href=URL('peek', args=(app, path, file)))
 def editfile(path,file):
