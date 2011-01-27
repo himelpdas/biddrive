@@ -1070,7 +1070,7 @@ class BaseAdapter(ConnectionPool):
         return self.log_execute(*a, **b)
 
     def represent(self, obj, fieldtype):
-        if callable(obj):
+        if isinstance(obj,(types.LambdaType,types.FunctionType)):
             obj = obj()
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
@@ -2307,7 +2307,7 @@ class IngresUnicodeAdapter(IngresAdapter):
 class NoSQLAdapter(BaseAdapter):
 
     def represent(self, obj, fieldtype):
-        if callable(obj):
+        if isinstance(obj,(types.LambdaType,types.FunctionType)):
             obj = obj()
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
