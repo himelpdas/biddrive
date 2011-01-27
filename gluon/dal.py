@@ -3131,7 +3131,7 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[10:] in field.db.tables:
         referenced = field.db[field_type[10:]]
-        def repr_ref(id, r=referenced, f=ff): f(r, id)
+        def repr_ref(id, r=referenced, f=ff): return f(r, id)
         field.represent = field.represent or repr_ref
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field.db,referenced.id,
