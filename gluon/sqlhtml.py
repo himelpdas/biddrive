@@ -1087,9 +1087,10 @@ class SQLFORM(FORM):
                 continue
 
             if not self.ignore_rw and not self.table[fieldname].writable:
-                ### this happens because FROM has no knowledge of writable
+                ### this happens because FORM has no knowledge of writable
                 ### and thinks that a missing boolean field is a None
-                if self.table[fieldname].type == 'boolean' and self.vars[fieldname]==None:
+                if self.table[fieldname].type == 'boolean' and \
+                    self.vars.get(fieldname,True) == None:
                     del self.vars[fieldname]
                 continue
 

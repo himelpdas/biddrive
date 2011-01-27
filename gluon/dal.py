@@ -3486,7 +3486,7 @@ class DAL(dict):
         dict.__setitem__(self, str(key).lower(), value)
 
     def __getattr__(self, key):
-        return dict.__getitem__(self,key)
+        return self[key]
 
     def __setattr__(self, key, value):
         if key[:1]!='_' and key in self:
@@ -3859,12 +3859,12 @@ class Table(dict):
             raise SyntaxError, 'No such record: %s' % key
 
     def __getattr__(self, key):
-        return dict.__getitem__(self,key)
+        return self[key]
 
     def __setattr__(self, key, value):
         if key in self:
             raise SyntaxError, 'Object exists and cannot be redefined: %s' % key
-        dict.__setitem__(self,key,value)
+        self[key] = value
 
     def __iter__(self):
         for fieldname in self.fields:
