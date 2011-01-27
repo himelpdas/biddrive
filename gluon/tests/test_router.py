@@ -93,8 +93,8 @@ class TestRouter(unittest.TestCase):
         """ Tests the null router """
         load(rdict=dict())
         # app resolution
-        self.assertEqual(filter_url('http://domain.com/welcome', router='app'), 'welcome')
-        self.assertEqual(filter_url('http://domain.com/', router='app'), 'init')
+        self.assertEqual(filter_url('http://domain.com/welcome', app=True), 'welcome')
+        self.assertEqual(filter_url('http://domain.com/', app=True), 'init')
         # incoming
         self.assertEqual(filter_url('http://domain.com/favicon.ico'), '%s/applications/init/static/favicon.ico' % root)
         self.assertEqual(filter_url('http://domain.com/abc'), '/init/default/abc')
@@ -136,8 +136,8 @@ class TestRouter(unittest.TestCase):
         routers = dict(BASE=dict(default_application='welcome'))
         load(rdict=routers)
         # app resolution
-        self.assertEqual(filter_url('http://domain.com/welcome', router='app'), 'welcome')
-        self.assertEqual(filter_url('http://domain.com/', router='app'), 'welcome')
+        self.assertEqual(filter_url('http://domain.com/welcome', app=True), 'welcome')
+        self.assertEqual(filter_url('http://domain.com/', app=True), 'welcome')
         # incoming
         self.assertEqual(filter_url('http://domain.com'), '/welcome/default/index')
         self.assertEqual(filter_url('http://domain.com/'), '/welcome/default/index')
@@ -327,18 +327,18 @@ class TestRouter(unittest.TestCase):
         )
         routers['bad!app'] = dict()
         load(rdict=routers)
-        self.assertEqual(filter_url('http://domain.com/welcome', router='app'), 'welcome')
-        self.assertEqual(filter_url('http://domain.com/welcome/', router='app'), 'welcome')
-        self.assertEqual(filter_url('http://domain.com', router='app'), 'init')
-        self.assertEqual(filter_url('http://domain.com/', router='app'), 'init')
-        self.assertEqual(filter_url('http://domain.com/abc', router='app'), 'init')
-        self.assertEqual(filter_url('http://domain1.com/abc', router='app'), 'app1')
-        self.assertEqual(filter_url('http://www.domain1.com/abc', router='app'), 'app1')
-        self.assertEqual(filter_url('http://domain2.com/abc', router='app'), 'app2')
-        self.assertEqual(filter_url('http://domain2.com/admin', router='app'), 'admin')
+        self.assertEqual(filter_url('http://domain.com/welcome', app=True), 'welcome')
+        self.assertEqual(filter_url('http://domain.com/welcome/', app=True), 'welcome')
+        self.assertEqual(filter_url('http://domain.com', app=True), 'init')
+        self.assertEqual(filter_url('http://domain.com/', app=True), 'init')
+        self.assertEqual(filter_url('http://domain.com/abc', app=True), 'init')
+        self.assertEqual(filter_url('http://domain1.com/abc', app=True), 'app1')
+        self.assertEqual(filter_url('http://www.domain1.com/abc', app=True), 'app1')
+        self.assertEqual(filter_url('http://domain2.com/abc', app=True), 'app2')
+        self.assertEqual(filter_url('http://domain2.com/admin', app=True), 'admin')
 
-        self.assertEqual(filter_url('http://domain.com/goodapp', router='app'), 'goodapp')
-        self.assertRaises(HTTP, filter_url, 'http://domain.com/bad!app', router='app')
+        self.assertEqual(filter_url('http://domain.com/goodapp', app=True), 'goodapp')
+        self.assertRaises(HTTP, filter_url, 'http://domain.com/bad!app', app=True)
         try:
             # 2.7+ only
             self.assertRaisesRegexp(HTTP, '400.*invalid application', filter_url, 'http://domain.com/bad!app')
@@ -584,6 +584,23 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_err(200), 200)
         self.assertEqual(filter_err(399), 399)
         self.assertEqual(filter_err(400), 400)
+
+    def test_router_parse(self):
+        '''
+        Test URL parsing
+        '''
+        load(rdict=dict())
+        self.assertEqual(filter_url('http://domain.com/init/default/f/arg1'), 
+            "/init/default/f ['arg1']")
+        self.assertEqual(filter_url('http://domain.com/init/default/f/arg1/'), 
+            "/init/default/f ['arg1']")
+        self.assertEqual(filter_url('http://domain.com/init/default/f/arg1//'), 
+            "/init/default/f ['arg1']")
+        self.assertEqual(filter_url('http://domain.com/init/default/f//arg1'), 
+            "/init/default/f ['', 'arg1']")
+        self.assertEqual(filter_url('http://domain.com/init/default/f/arg1/arg2'), 
+            "/init/default/f ['arg1', 'arg2']")
+
 
 
 if __name__ == '__main__':

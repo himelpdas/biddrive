@@ -97,18 +97,26 @@ def __routes_doctest():
     >>> regex_select()
     >>> load(routes=os.path.basename(__file__))
 
-    >>> filter_url('http://domain.com/favicon.ico')
-    'http://domain.com/examples/static/favicon.ico'
-    >>> filter_url('https://domain.com/robots.txt')
-    'https://domain.com/examples/static/robots.txt'
+    >>> os.path.relpath(filter_url('http://domain.com/favicon.ico'))
+    'applications/examples/static/favicon.ico'
+    >>> os.path.relpath(filter_url('http://domain.com/robots.txt'))
+    'applications/examples/static/robots.txt'
     >>> filter_url('http://domain.com/app/ctr/fcn')
-    'http://domain.com/app/ctr/fcn'
+    '/app/ctr/fcn'
+    >>> filter_url('http://domain.com/app/ctr/fcn/arg1')
+    "/app/ctr/fcn ['arg1']"
+    >>> filter_url('http://domain.com/app/ctr/fcn/arg1/')
+    "/app/ctr/fcn ['arg1']"
+    >>> filter_url('http://domain.com/app/ctr/fcn/arg1//')
+    "/app/ctr/fcn ['arg1']"
+    >>> filter_url('http://domain.com/app/ctr/fcn//arg1')
+    "/app/ctr/fcn ['', 'arg1']"
     >>> filter_url('HTTP://DOMAIN.COM/app/ctr/fcn')
-    'http://domain.com/app/ctr/fcn'
+    '/app/ctr/fcn'
     >>> filter_url('http://domain.com/app/ctr/fcn?query')
-    'http://domain.com/app/ctr/fcn?query'
+    '/app/ctr/fcn'
     >>> filter_url('http://otherdomain.com/fcn')
-    'http://otherdomain.com/app/ctr/fcn'
+    '/app/ctr/fcn'
     >>> regex_filter_out('/app/ctr/fcn')
     '/ctr/fcn'
     >>> filter_url('https://otherdomain.com/app/ctr/fcn', out=True)

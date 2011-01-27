@@ -46,7 +46,7 @@ def _router_default():
         map_hyphen = True,
         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
-        args_match = r'([\w@ -]+[=.]?)+$', # legal arg in args
+        args_match = r'([\w@ -]+[=.]?)*$', # legal arg in args
     )
     return router
 
@@ -417,7 +417,7 @@ regex_url = re.compile(r'''
                  )?
                  (                        # (/s)
                      /(?P<r>              # /a/c/f.e/r=raw_args
-                     .+
+                     .*?
                      )
                  )?
              )?
@@ -429,7 +429,7 @@ regex_url = re.compile(r'''
 regex_args = re.compile(r'''
      (^
          (?P<s>
-             ( [\w@-][=./]? )+          # s=args
+             ( [\w@/-][=.]? )*          # s=args
          )?
      /?$)    # trailing slash
      ''', re.X)
@@ -490,7 +490,7 @@ def regex_url_in(request, environ):
         # application is responsible for parsing args
         request.args = None
     elif request.raw_args:
-        match = regex_args.match(request.raw_args.replace(' ', '_'))
+        match = regex_args.match(request.raw_args.replace(' ', '_').rstrip('/'))
         if match:
             group_s = match.group('s')
             request.args = \
@@ -498,7 +498,7 @@ def regex_url_in(request, environ):
         else:
             raise HTTP(400,
                        thread.routes.error_message % 'invalid request',
-                       web2py_error='invalid path')
+                       web2py_error='invalid path (args)')
     return (None, environ)
 
 
@@ -530,7 +530,7 @@ def regex_filter_out(url, e=None):
     return url
 
 
-def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router=False, lang=None, domain=(None,None)):
+def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=None, domain=(None,None)):
     "doctest/unittest interface to regex_filter_in() and regex_filter_out()"
     regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]*)(?P<uri>.*)')
     match = regex_url.match(url)
@@ -557,25 +557,6 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
          'http_host': host
     }
 
-    if not routers:
-        #
-        #  regex rewriter
-        #
-        if out:
-            return regex_filter_out(uri, e)
-        elif app:
-            return regex_select(e)
-        else:
-            regex_select(app=regex_select(e))
-            e = regex_filter_in(e)
-            if e.get('PATH_INFO','') == '':
-                path = e['REQUEST_URI']
-            elif query_string:
-                path = e['PATH_INFO'] + '?' + query_string
-            else:
-                path = e['PATH_INFO']
-        return scheme + '://' + host + path
-
     request = Storage()
     e["applications_parent"] = global_settings.applications_parent
     request.env = Storage(e)
@@ -583,8 +564,10 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
 
     #  determine application only
     #
-    if router == "app":
-        return map_url_in(request, e, app=True)
+    if app:
+        if routers:
+            return map_url_in(request, e, app=True)
+        return regex_select(e)
 
     #  rewrite outbound URL
     #
@@ -595,6 +578,8 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
         a = items.pop(0)
         c = items.pop(0)
         f = items.pop(0)
+        if not routers:
+            return regex_filter_out(uri, e)
         acf = map_url_out(request, a, c, f, items)
         if items:
             url = '%s/%s' % (acf, '/'.join(items))
@@ -606,7 +591,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, router
 
     #  rewrite inbound URL
     #
-    (static, e) = map_url_in(request, e)
+    (static, e) = url_in(request, e)
     if static:
         return static
     result = "/%s/%s/%s" % (request.application, request.controller, request.function)
