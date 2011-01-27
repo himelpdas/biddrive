@@ -1198,7 +1198,7 @@ class BaseAdapter(ConnectionPool):
                     else: ### reference not by id
                         colset[fieldname] = value
                 elif field_type == 'boolean':
-                    if value == True or value == 'T' or value == 't':
+                    if value == True or value.strip().lower() == 't':
                         colset[fieldname] = True
                     else:
                         colset[fieldname] = False
