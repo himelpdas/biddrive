@@ -137,6 +137,9 @@ import struct
 import urllib
 import hashlib
 
+CALLABLETYPES = (types.LambdaType, types.FunctionType, types.BuiltinFunctionType,
+                 types.MethodType, types.BuiltinMethodType)
+
 ###################################################################################
 # following checks allows running of dal without web2py as a standalone module
 ###################################################################################
@@ -1070,7 +1073,7 @@ class BaseAdapter(ConnectionPool):
         return self.log_execute(*a, **b)
 
     def represent(self, obj, fieldtype):
-        if isinstance(obj,(types.LambdaType,types.FunctionType)):
+        if isinstance(obj,CALLABLETYPES):
             obj = obj()
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
@@ -2307,7 +2310,7 @@ class IngresUnicodeAdapter(IngresAdapter):
 class NoSQLAdapter(BaseAdapter):
 
     def represent(self, obj, fieldtype):
-        if isinstance(obj,(types.LambdaType,types.FunctionType)):
+        if isinstance(obj,CALLABLETYPES):
             obj = obj()
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
