@@ -1546,6 +1546,9 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute("select currval('%s')" % table._sequence_name)
         return int(self.cursor.fetchone()[0])
 
+    def LIKE(self,first,second):
+        return '(%s ILIKE %s)' % (self.expand(first),self.expand(second,'string'))
+
 
 class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
