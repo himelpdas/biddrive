@@ -1198,8 +1198,7 @@ class SQLFORM(FORM):
         if 'table_name' in attributes:
             del attributes['table_name']
 
-        return SQLFORM(SQLDB(None).define_table(table_name, *fields),
-                       **attributes)
+        return SQLFORM(SQLDB(None).define_table(table_name, *fields), **attributes)
 
 
 class SQLTABLE(TABLE):

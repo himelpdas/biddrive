@@ -1747,8 +1747,7 @@ class FORM(DIV):
     def hidden_fields(self):
         c = []
         if 'hidden' in self.attributes:
-            for (key, value) in self.attributes.get('hidden',
-                    {}).items():
+            for (key, value) in self.attributes.get('hidden',{}).items():
                 c.append(INPUT(_type='hidden', _name=key, _value=value))
 
         if hasattr(self, 'formkey') and self.formkey:
