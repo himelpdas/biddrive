@@ -2327,14 +2327,14 @@ class NoSQLAdapter(BaseAdapter):
             return fieldtype.encoder(obj)
         if isinstance(obj, (Expression, Field)):
             raise SyntaxError, "non supported on GAE"
+        if 'gae' in globals():
+            if isinstance(fieldtype, gae.Property):
+                return obj
         if fieldtype.startswith('list:'):
             if not obj:
                 obj = []
             if not isinstance(obj, (list, tuple)):
                 obj = [obj]
-        if 'gae' in globals():
-            if isinstance(fieldtype, gae.Property):
-                return obj
         if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
             return None
         if obj != None:
