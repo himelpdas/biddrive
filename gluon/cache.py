@@ -106,11 +106,11 @@ class CacheAbstract(object):
 
     def _clear(self, storage, regex):
         """
-        Ausxiliary function called by `clear` to search and clear cache entries
+        Auxiliary function called by `clear` to search and clear cache entries
         """
         r = re.compile(regex)
         for (key, value) in storage.items():
-            if r.match(key):
+            if r.match(str(key)):
                 del storage[key]
 
 class CacheInRam(CacheAbstract):
