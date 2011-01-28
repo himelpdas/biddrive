@@ -1499,6 +1499,14 @@ class PostgreSQLAdapter(BaseAdapter):
     def rollback_prepared(self,key):
         self.execute("ROLLBACK PREPARED '%s';" % key)
 
+    def create_sequence_and_triggers(self, query, table, **args):
+        tablename = table._tablename
+        fieldname = table._id.name
+        sequence_name = table._sequence_name
+        self.execute(query)
+        self.execute('CREATE SEQUENCE %s;' % sequence_name)
+        self.execute("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NEXTVAL('%s');" % (tablename,fieldname,sequence_name))
+
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x):
         self.db = db
