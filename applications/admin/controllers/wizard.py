@@ -481,10 +481,12 @@ def populate(tables):
 def create(options):
     if DEMO_MODE:
         session.flash = T('disabled in demo mode')
-        redirect(URL('default','step6'))
+        redirect(URL('step6'))
     params = dict(session.app['params'])
     app = session.app['name']
-    app_create(app,request,force=True,key=params['security_key'])
+    if not app_create(app,request,force=True,key=params['security_key']):
+        session.flash = 'Failure to create application'
+        redirect(URL('step6'))
 
     ### save metadata in newapp/wizard.metadata
     meta = os.path.join(request.folder,'..',app,'wizard.metadata')
