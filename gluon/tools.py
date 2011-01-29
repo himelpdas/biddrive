@@ -1269,7 +1269,7 @@ class Auth(object):
             auth.log_event(description='this happened', origin='auth')
         """
 
-        if self.is_logged_in():
+        if self.is_logged_in():            
             user_id = self.user.id
         else:
             user_id = None  # user unknown
@@ -2668,7 +2668,7 @@ class Crud(object):
         elif args[0] == 'create':
             return self.create(args(1))
         elif args[0] == 'select':
-            return self.select(args(1),linkto=self.url('read'))
+            return self.select(args(1),linkto=self.url(args='read'))
         elif args[0] == 'read':
             return self.read(args(1), args(2))
         elif args[0] == 'update':
