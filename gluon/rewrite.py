@@ -866,8 +866,8 @@ class MapUrlOut(object):
         self.default_language = self.router.default_language
         self.map_hyphen = self.router.map_hyphen
 
-        self.domain_application = self.request.env.domain_application
-        self.domain_controller = self.request.env.domain_controller
+        self.domain_application = request and self.request.env.domain_application
+        self.domain_controller = request and self.request.env.domain_controller
 
         lang = request and request.uri_language
         if lang and self.languages and lang in self.languages:

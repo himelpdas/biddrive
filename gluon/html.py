@@ -216,7 +216,8 @@ def URL(
 
     if not isinstance(args, (list, tuple)):
         args = [args]
-
+    while args and args[-1] == '':
+        args.pop()
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
 
     if vars.has_key('_signature'): vars.pop('_signature')

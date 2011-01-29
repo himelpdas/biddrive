@@ -142,9 +142,9 @@ def __routes_doctest():
     >>> from gluon.rewrite import load, filter_url, filter_err, get_effective_router
     >>> load(routes=os.path.basename(__file__))
 
-    >>> filter_url('http://domain.com/abc', router='app')
+    >>> filter_url('http://domain.com/abc', app=True)
     'welcome'
-    >>> filter_url('http://domain.com/welcome', router='app')
+    >>> filter_url('http://domain.com/welcome', app=True)
     'welcome'
     >>> os.path.relpath(filter_url('http://domain.com/favicon.ico'))
     'applications/welcome/static/favicon.ico'

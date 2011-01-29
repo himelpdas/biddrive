@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" Unit tests for utils.py """
+"""Unit tests for rewrite.py routers option"""
 
 import sys
 import os
@@ -10,11 +10,12 @@ import tempfile
 import logging
 
 if os.path.isdir('gluon'):
-    sys.path.append(os.path.realpath('gluon'))
+    sys.path.append(os.path.realpath('gluon')) # running from web2py base
 else:
-    sys.path.append(os.path.realpath('../'))
+    sys.path.append(os.path.realpath('../')) # running from gluon/tests/
 
-from rewrite import load, filter_url, filter_err, get_effective_router
+from rewrite import load, filter_url, filter_err, get_effective_router, map_url_out
+from html import URL
 from fileutils import abspath
 from settings import global_settings
 from http import HTTP
@@ -53,10 +54,10 @@ def setUpModule():
             open(abspath('applications', 'examples', 'static', lang, 'file'), 'w').close()
 
     global oldcwd
-    if oldcwd is None:
+    if oldcwd is None:  # do this only once
         oldcwd = os.getcwd()
         if not os.path.isdir('gluon'):
-            os.chdir(os.path.realpath('../../'))
+            os.chdir(os.path.realpath('../../'))    # run from web2py base directory
         import main   # for initialization after chdir
         global logger
         logger = logging.getLogger('web2py.rewrite')
@@ -70,6 +71,7 @@ def tearDownModule():
     if oldcwd is not None:
         os.chdir(oldcwd)
         oldcwd = None
+
 
 class TestRouter(unittest.TestCase):
     """ Tests the routers logic from gluon.rewrite """
@@ -87,7 +89,6 @@ class TestRouter(unittest.TestCase):
         except AttributeError:
             pass
         logger.setLevel(level)
-
 
     def test_router_null(self):
         """ Tests the null router """
@@ -119,7 +120,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/init/admin/abc', out=True), '/init/admin/abc')
         self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
 
-
     def test_router_specific(self):
         """ 
         Test app-specific routes.py 
@@ -129,7 +129,6 @@ class TestRouter(unittest.TestCase):
         load(rdict=dict())
         self.assertEqual(filter_url('http://domain.com/welcome'), '/welcome/default/index')
         self.assertEqual(filter_url('http://domain.com/examples'), '/examples/default/exdef')
-
 
     def test_router_defapp(self):
         """ Test the default-application function """
@@ -159,7 +158,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
         self.assertEqual(filter_url('http://domain.com/welcome/admin/abc', out=True), '/welcome/admin/abc')
         self.assertEqual(filter_url('http://domain.com/admin/default/abc', out=True), '/admin/abc')
-
 
     def test_router_nodef(self):
         """ Test no-default functions """
@@ -310,7 +308,6 @@ class TestRouter(unittest.TestCase):
         except AttributeError:
             pass
 
-
     def test_router_app(self):
         """ Tests the doctest router app resolution"""
         routers = dict(
@@ -344,7 +341,6 @@ class TestRouter(unittest.TestCase):
             self.assertRaisesRegexp(HTTP, '400.*invalid application', filter_url, 'http://domain.com/bad!app')
         except AttributeError:
             pass
-
 
     def test_router_domains(self):
         '''
@@ -418,7 +414,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain6.com'), '/app6/c6/f6')
         self.assertEqual(filter_url('https://domain6.com'), '/app6s/c6s/f6s')
 
-
     def test_router_raise(self):
         '''
         Test URLs that raise exceptions
@@ -459,7 +454,6 @@ class TestRouter(unittest.TestCase):
         except AttributeError:
             pass
 
-
     def test_router_out(self):
         '''
         Test basic outgoing routing
@@ -478,7 +472,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/init/default/fcn?query', out=True), "/fcn?query")
         self.assertEqual(filter_url('http://domain.com/init/default/fcn#anchor', out=True), "/fcn#anchor")
         self.assertEqual(filter_url('http://domain.com/init/default/fcn?query#anchor', out=True), "/fcn?query#anchor")
-
 
     def test_router_hyphen(self):
         '''
@@ -506,7 +499,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/app2/ctr/fcn_1', domain=('app2',None), out=True), "/ctr/fcn_1")
         self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore', domain=('app2',None), out=True), "/static/filename-with_underscore")
         self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore'), "%s/applications/app2/static/filename-with_underscore" % root)
-
 
     def test_router_lang(self):
         '''
@@ -542,7 +534,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='it', out=True), "/welcome/ctr/fcn")
         self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='es', out=True), "/welcome/ctr/fcn")        
 
-
     def test_router_get_effective(self):
         '''
         Test get_effective_router
@@ -574,7 +565,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(get_effective_router('a2').controllers, [])
         self.assertEqual(get_effective_router('xx'), None)
 
-
     def test_router_error(self):
         '''
         Test rewrite of HTTP errors
@@ -585,9 +575,9 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_err(399), 399)
         self.assertEqual(filter_err(400), 400)
 
-    def test_router_parse(self):
+    def test_router_args(self):
         '''
-        Test URL parsing
+        Test URL args parsing/generation
         '''
         load(rdict=dict())
         self.assertEqual(filter_url('http://domain.com/init/default/f/arg1'), 
@@ -601,6 +591,17 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/init/default/f/arg1/arg2'), 
             "/init/default/f ['arg1', 'arg2']")
 
+        self.assertEqual(filter_url('http://domain.com/init/default/f', out=True), "/f")
+        self.assertEqual(map_url_out(None, 'init', 'default', 'f', None), "/f")
+        self.assertEqual(map_url_out(None, 'init', 'default', 'f', []), "/f")
+        self.assertEqual(map_url_out(None, 'init', 'default', 'f', ['arg1']), "/f")
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=None)), "/f")
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1'])), "/f/arg1")
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1', ''])), "/f/arg1")
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1', '', 'arg3'])), "/f/arg1//arg3")
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=['ar g'])), "/f/ar%20g")
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=['årg'])), "/f/%C3%A5rg")
+        self.assertEqual(str(URL(a='init', c='default', f='fünc')), "/f\xc3\xbcnc")
 
 
 if __name__ == '__main__':
