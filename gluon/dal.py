@@ -3465,7 +3465,7 @@ class DAL(dict):
         sequence_name = args.get('sequence_name', None)
         primarykey=args.get('primarykey',None)
         polymodel=args.get('polymodel',None)
-        tablename = cleanup(tablename)
+        tablename = cleanup(tablename).lower()
 
         if tablename in self.tables or hasattr(self,tablename):
             raise SyntaxError, 'table already defined: %s' % tablename
@@ -3909,24 +3909,25 @@ class Table(dict):
 
     def _listify(self,fields,update=False):
         fieldnames=self.fields
-        for fn in fields:
-            if not fn in fieldnames:
-                raise SyntaxError, 'Field %s does not belong to the table' % fn
         new_fields = []
+        for fn in fields:
+            name = fn.lower()
+            if not name in fieldnames:
+                raise SyntaxError, 'Field %s does not belong to the table' % fn
+            new_fields.append((self[name],fields[fn]))
         for ofield in self:
             name = ofield.name
-            if name in fields:
-                new_fields.append((ofield,fields[name]))
-            elif not update and ofield.default!=None:
-                new_fields.append((ofield,ofield.default))
-            elif update and ofield.update!=None:
-                new_fields.append((ofield,ofield.update))
-            elif ofield.compute:
-                try:
-                    new_fields.append((ofield,ofield.compute(Row(fields))))
-                except KeyError: pass
-            elif not update and ofield.required:
-                raise SyntaxError,'Table: missing required field: %s' % name
+            if not name in new_fields:
+                if not update and ofield.default!=None:
+                    new_fields.append((ofield,ofield.default))
+                if update and ofield.update!=None:
+                    new_fields.append((ofield,ofield.update))
+                if ofield.compute:
+                    try:
+                        new_fields.append((ofield,ofield.compute(Row(fields))))
+                    except KeyError: pass
+                if not update and ofield.required:
+                    raise SyntaxError,'Table: missing required field: %s' % name
         return new_fields
 
     def _insert(self, **fields):
@@ -4252,7 +4253,7 @@ class Field(Expression):
         self.op = None
         self.first = None
         self.second = None
-        self.name = fieldname = cleanup(fieldname)
+        self.name = fieldname = cleanup(fieldname).lower()
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
         if isinstance(type, Table):
