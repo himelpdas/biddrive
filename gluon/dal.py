@@ -3217,25 +3217,22 @@ class Row(dict):
     """
 
     def __getitem__(self, key):
-        key=str(key)
+        key=str(key).lower()
         if key in self.get('_extra',{}):
             return self._extra[key]
         return dict.__getitem__(self, key)
 
     def __call__(self,key):
-        key=str(key)
-        if key in self.get('_extra',{}):
-            return self._extra[key]
-        return dict.__getitem__(self, key) #### are we sure
+        return self.__getitem(self,key)
 
     def __setitem__(self, key, value):
-        dict.__setitem__(self, str(key), value)
-
+        dict.__setitem__(self, str(key).lower(), value)
+        
     def __getattr__(self, key):
-        return dict.__getitem__(self,key)
+        return self[key]
 
     def __setattr__(self, key, value):
-        dict.__setitem__(self,key,value)
+        self[key] = value
 
     def __repr__(self):
         return '<Row ' + dict.__repr__(self) + '>'
