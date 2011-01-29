@@ -946,7 +946,7 @@ class BaseAdapter(ConnectionPool):
             sql_s += 'DISTINCT ON (%s)' % distinct
         if left:
             join = attributes['left']
-            command = self.db._adapter.LEFT_JOIN()
+            command = self.LEFT_JOIN()
             if not isinstance(join, (tuple, list)):
                 join = [join]
             joint = [t._tablename for t in join if not isinstance(t,Expression)]
@@ -974,9 +974,9 @@ class BaseAdapter(ConnectionPool):
             if isinstance(orderby, (list, tuple)):
                 orderby = xorify(orderby)
             if str(orderby) == '<random>':
-                sql_o += ' ORDER BY %s' % self.db._adapter.RANDOM()
+                sql_o += ' ORDER BY %s' % self.RANDOM()
             else:
-                sql_o += ' ORDER BY %s' % self.db._adapter.expand(orderby)
+                sql_o += ' ORDER BY %s' % self.expand(orderby)
         if limitby:
             if not orderby and tablenames:
                 sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in ((hasattr(self.db[t],'_primarykey') and self.db[t]._primarykey) or [self.db[t]._id.name])])
@@ -1010,17 +1010,22 @@ class BaseAdapter(ConnectionPool):
         rows = self.rowslice(rows,limitby[0],None)
         return self.parse(rows,self._colnames)
 
-    def _count(self,query):
+    def _count(self,query,distinct=None):
         tablenames = self.tables(query)
         if query:
             sql_w = ' WHERE ' + self.expand(query)
         else:
             sql_w = ''
         sql_t = ','.join(tablenames)
+        if distinct:
+            if isinstance(distinct,(list,tuple)):
+                distinct = xorify(distinct)
+            sql_d = self.expand(distinct)
+            return 'SELECT count(DISTINCT %s) FROM %s%s' % (sql_d, sql_t, sql_w)
         return 'SELECT count(*) FROM %s%s' % (sql_t, sql_w)
 
-    def count(self,query):
-        self.execute(self._count(query))
+    def count(self,query,distinct=None):
+        self.execute(self._count(query,distinct))
         return self.cursor.fetchone()[0]
 
 
@@ -1970,7 +1975,7 @@ class FireBirdAdapter(BaseAdapter):
     def lastrowid(self,table):
         sequence_name = table._sequence_name
         self.execute('SELECT gen_id(%s, 0) FROM rdb$database' % sequence_name)
-        return int(self.db._adapter.cursor.fetchone()[0])
+        return int(self.cursor.fetchone()[0])
 
 
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
@@ -2188,7 +2193,7 @@ class DB2Adapter(BaseAdapter):
 
     def lastrowid(self,table):
         self.execute('SELECT DISTINCT IDENTITY_VAL_LOCAL() FROM %s;' % table)
-        return int(self.db._adapter.cursor.fetchone()[0])
+        return int(self.cursor.fetchone()[0])
 
     def rowslice(self,rows,minimum=0,maximum=None):
         if maximum==None:
@@ -2395,7 +2400,7 @@ class NoSQLAdapter(BaseAdapter):
     def _insert(self,table,fields):
         return 'insert %s in %s' % (fields, table)
 
-    def _count(self,query):
+    def _count(self,query,distinct=None):
         return 'count %s' % repr(query)
 
     def _select(self,query,fields,attributes):
@@ -2733,7 +2738,9 @@ class GAENoSQLAdapter(NoSQLAdapter):
         return self.parse(rows, colnames, False)
 
 
-    def count(self,query):
+    def count(self,query,distinct=None):
+        if distinct:
+            raise RuntimeError, "COUNT DISTINCT not supported"
         (items, tablename, fields) = self.select_raw(query)
         # self.db['_lastsql'] = self._count(query)
         try:
@@ -2979,7 +2986,9 @@ class CouchDBAdapter(NoSQLAdapter):
                 ctable.save(doc)
             return len(rows)
 
-    def count(self,query):
+    def count(self,query,distinct=None):
+        if distinct:
+            raise RuntimeError, "COUNT DISTINCT not supported"
         if not isinstance(query,Query):
             raise SyntaxError, "Not Supported"
         tablename = self.get_table(query)
@@ -4541,8 +4550,8 @@ class Set(object):
         else:
             return Set(self.db, query)
 
-    def _count(self):
-        return self.db._adapter._count(self.query)
+    def _count(self,distinct=None):
+        return self.db._adapter._count(self.query,distinct)
 
     def _select(self, *fields, **attributes):
         return self.db._adapter._select(self.query,fields,attributes)
@@ -4556,8 +4565,8 @@ class Set(object):
         fields = self.db[tablename]._listify(update_fields,update=True)
         return self.db._adapter._update(tablename,self.query,fields)
 
-    def count(self):
-        return self.db._adapter.count(self.query)
+    def count(self,distinct=None):
+        return self.db._adapter.count(self.query,distinct)
 
     def select(self, *fields, **attributes):
         return self.db._adapter.select(self.query,fields,attributes)
