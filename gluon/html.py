@@ -1502,7 +1502,7 @@ class INPUT(DIV):
         if not t:
             t = self['_type'] = 'text'
         t = t.lower()
-        value, _value = self['value'], self['_value']
+        value, _value = self['value'], str(self['_value'])
         if t == 'checkbox':
             if not _value:
                 _value = self['_value'] = 'on'
