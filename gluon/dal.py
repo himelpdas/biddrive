@@ -3907,14 +3907,16 @@ class Table(dict):
     def _listify(self,fields,update=False):
         fieldnames=self.fields
         new_fields = []
+        new_fields_names = []
         for fn in fields:
             name = fn.lower()
             if not name in fieldnames:
                 raise SyntaxError, 'Field %s does not belong to the table' % fn
             new_fields.append((self[name],fields[fn]))
+            new_fields_names.append(name)
         for ofield in self:
             name = ofield.name
-            if not name in new_fields:
+            if not name in new_fields_names:
                 if not update and ofield.default!=None:
                     new_fields.append((ofield,ofield.default))
                 if update and ofield.update!=None:
