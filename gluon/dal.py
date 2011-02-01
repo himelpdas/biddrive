@@ -754,7 +754,7 @@ class BaseAdapter(ConnectionPool):
         return '(%s = %s)' % (self.expand(first),self.expand(second,first.type))
 
     def NE(self,first,second=None):
-        if second==None:
+        if second is None:
             return '(%s IS NOT NULL)' % self.expand(first)
         return '(%s <> %s)' % (self.expand(first),self.expand(second,first.type))
 
@@ -1195,7 +1195,7 @@ class BaseAdapter(ConnectionPool):
                 if isinstance(field_type, SQLCustomType):
                     colset[fieldname] = field_type.decoder(value)
                     # field_type = field_type.type
-                elif not isinstance(field_type, str) or value==None:
+                elif not isinstance(field_type, str) or value is None:
                     colset[fieldname] = value
                 elif isinstance(field_type, str) and \
                         field_type.startswith('reference'):
@@ -1835,7 +1835,7 @@ class MSSQLAdapter(BaseAdapter):
         return pyodbc.IntegrityError
 
     def rowslice(self,rows,minimum=0,maximum=None):
-        if maximum==None:
+        if maximum is None:
             return rows[minimum:]
         return rows[minimum:maximum]
 
@@ -2196,7 +2196,7 @@ class DB2Adapter(BaseAdapter):
         return int(self.cursor.fetchone()[0])
 
     def rowslice(self,rows,minimum=0,maximum=None):
-        if maximum==None:
+        if maximum is None:
             return rows[minimum:]
         return rows[minimum:maximum]
 
@@ -3257,7 +3257,7 @@ class Row(dict):
         d = dict(self)
         for k in copy.copy(d.keys()):
             v=d[k]
-            if d[k]==None:
+            if d[k] is None:
                 continue
             elif isinstance(v,Row):
                 d[k]=v.as_dict()
@@ -4258,7 +4258,7 @@ class Field(Expression):
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
         self.type = type  # 'string', 'integer'
-        self.length = (length==None) and MAXCHARLENGTH or length
+        self.length = (length is None) and MAXCHARLENGTH or length
         if default==DEFAULT:
             self.default = update or None
         else:
@@ -4285,7 +4285,7 @@ class Field(Expression):
         self.isattachment = True
         self.custom_store = custom_store
         self.custom_retrieve = custom_retrieve
-        if self.label == None:
+        if self.label is None:
             self.label = ' '.join([x.capitalize() for x in
                                   fieldname.split('_')])
         if requires is None:
@@ -4830,7 +4830,7 @@ class Rows(object):
             - unicode text is encoded as such
             - None values are replaced with the given representation (default <NULL>)
             """
-            if value == None:
+            if value is None:
                 return null
             elif isinstance(value, unicode):
                 return value.encode('utf8')
