@@ -88,7 +88,7 @@ requests = 0    # gc timer
 # pattern used to validate client address
 regex_client = re.compile('[\w\-:]+(\.[\w\-]+)*\.?')  # ## to account for IPV6
 
-version_info = open(abspath('VERSION'), 'r')
+version_info = open(abspath('VERSION', gluon=True), 'r')
 web2py_version = version_info.read()
 version_info.close()
 
@@ -558,7 +558,7 @@ def save_password(password, port):
     used by main() to save the password in the parameters_port.py file.
     """
 
-    password_file='parameters_%i.py' % port
+    password_file = abspath('parameters_%i.py' % port)
     if password == '<random>':
         # make up a new password
         chars = string.letters + string.digits
