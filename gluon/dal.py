@@ -3913,12 +3913,12 @@ class Table(dict):
         return self._db._adapter.drop(self,mode)
 
     def _listify(self,fields,update=False):
-        fieldnames = self.fields
+        fieldnames = set(x.lower() for x in self.fields)
         new_fields = []
         new_fields_names = []
         for fn in fields:
             name = fn.lower()
-            if not fn in fieldnames:
+            if not name in fieldnames:
                 raise SyntaxError, 'Field %s does not belong to the table' % fn
             new_fields.append((self[name],fields[fn]))
             new_fields_names.append(name)
