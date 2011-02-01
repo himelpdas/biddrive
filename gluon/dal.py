@@ -3218,7 +3218,7 @@ class Row(dict):
     """
 
     def __getitem__(self, key):
-        key=str(key).lower()
+        key=str(key)
         if key in self.get('_extra',{}):
             return self._extra[key]
         return dict.__getitem__(self, key)
@@ -3227,7 +3227,7 @@ class Row(dict):
         return self.__getitem(self,key)
 
     def __setitem__(self, key, value):
-        dict.__setitem__(self, str(key).lower(), value)
+        dict.__setitem__(self, str(key), value)
         
     def __getattr__(self, key):
         return self[key]
@@ -3740,9 +3740,15 @@ class Table(dict):
                     tmp = field.uploadfield = '%s_blob' % field.name
                     fields.append(self._db.Field(tmp, 'blob', default=''))
 
+        lower_fieldnames = set()
         for field in fields:
             if db and db.check_reserved:
                 db.check_reserved_keyword(field.name)
+                
+            if field.name.lower() in lower_fieldnames:
+                raise SyntaxError, "duplicate field %s in table %s" % (field.name, tablename)
+            else:
+                lower_fieldnames.add(field.name.lower())
 
             self.fields.append(field.name)
             self[field.name] = field
@@ -3912,7 +3918,7 @@ class Table(dict):
         new_fields_names = []
         for fn in fields:
             name = fn.lower()
-            if not name in fieldnames:
+            if not fn in fieldnames:
                 raise SyntaxError, 'Field %s does not belong to the table' % fn
             new_fields.append((self[name],fields[fn]))
             new_fields_names.append(name)
