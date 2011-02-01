@@ -3463,9 +3463,10 @@ class DAL(dict):
         sequence_name = args.get('sequence_name', None)
         primarykey=args.get('primarykey',None)
         polymodel=args.get('polymodel',None)
-        tablename = cleanup(tablename).lower()
+        tablename = cleanup(tablename)
+        lowertablename = tablename.lower()
 
-        if tablename in self.tables or hasattr(self,tablename):
+        if lowertablename in self.tables or hasattr(self,lowertablename):
             raise SyntaxError, 'table already defined: %s' % tablename
         if tablename.startswith('_'):
             raise SyntaxError, 'invalid table name: %s' % tablename
@@ -3906,7 +3907,7 @@ class Table(dict):
         return self._db._adapter.drop(self,mode)
 
     def _listify(self,fields,update=False):
-        fieldnames=self.fields
+        fieldnames = self.fields
         new_fields = []
         new_fields_names = []
         for fn in fields:
@@ -3916,7 +3917,7 @@ class Table(dict):
             new_fields.append((self[name],fields[fn]))
             new_fields_names.append(name)
         for ofield in self:
-            name = ofield.name
+            name = ofield.name.lower()
             if not name in new_fields_names:
                 if not update and ofield.default!=None:
                     new_fields.append((ofield,ofield.default))
@@ -4253,7 +4254,7 @@ class Field(Expression):
         self.op = None
         self.first = None
         self.second = None
-        self.name = fieldname = cleanup(fieldname).lower()
+        self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
         if isinstance(type, Table):
