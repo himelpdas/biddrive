@@ -3289,7 +3289,6 @@ copy_reg.pickle(Row, Row_pickler, Row_unpickler)
 ################################################################################
 
 class SQLCallableList(list):
-
     def __call__(self):
         return copy.copy(self)
 
@@ -3913,12 +3912,11 @@ class Table(dict):
         return self._db._adapter.drop(self,mode)
 
     def _listify(self,fields,update=False):
-        fieldnames = set(x.lower() for x in self.fields)
         new_fields = []
         new_fields_names = []
         for fn in fields:
             name = fn.lower()
-            if not name in fieldnames:
+            if not fn in self.fields:
                 raise SyntaxError, 'Field %s does not belong to the table' % fn
             new_fields.append((self[name],fields[fn]))
             new_fields_names.append(name)
