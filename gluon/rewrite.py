@@ -423,7 +423,7 @@ regex_url = re.compile(r'''
              )?
          )?
      )?
-     /?$)    # trailing slash
+     $)
      ''', re.X)
 
 regex_args = re.compile(r'''
@@ -490,11 +490,13 @@ def regex_url_in(request, environ):
         # application is responsible for parsing args
         request.args = None
     elif request.raw_args:
-        match = regex_args.match(request.raw_args.replace(' ', '_').rstrip('/'))
+        match = regex_args.match(request.raw_args.replace(' ', '_'))
         if match:
             group_s = match.group('s')
             request.args = \
                 List((group_s and group_s.split('/')) or [])
+            if request.args and request.args[-1] == '':
+                request.args.pop()  # adjust for trailing empty arg
         else:
             raise HTTP(400,
                        thread.routes.error_message % 'invalid request',
@@ -573,7 +575,9 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=N
     #
     if out:
         (request.env.domain_application, request.env.domain_controller) = domain
-        items = path_info.strip('/').split('/')
+        items = path_info.lstrip('/').split('/')
+        if items[-1] == '':
+            items.pop() # adjust trailing empty args
         assert len(items) >= 3, "at least /a/c/f is required"
         a = items.pop(0)
         c = items.pop(0)
@@ -583,6 +587,8 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=N
         acf = map_url_out(request, a, c, f, items)
         if items:
             url = '%s/%s' % (acf, '/'.join(items))
+            if items[-1] == '':
+                url += '/'
         else:
             url = acf
         if query_string:
@@ -644,13 +650,18 @@ class MapUrlIn(object):
         self.default_language = None
         self.map_hyphen = True
 
-        self.path = self.env['PATH_INFO']
+        path = self.env['PATH_INFO']
         self.query = self.env.get('QUERY_STRING', None)
-        self.env['REQUEST_URI'] = self.path + (self.query and ('?' + self.query) or '')
-        self.path = self.path.strip('/')
-        self.env['PATH_INFO'] = '/' + self.path
+        self.env['REQUEST_URI'] = path + (self.query and ('?' + self.query) or '')
+        path = path.lstrip('/')
+        self.env['PATH_INFO'] = '/' + path
 
-        self.args = List(self.path and self.path.split('/') or [])
+        # to handle empty args, strip exactly one trailing slash, if present
+        # .../arg1// represents one trailing empty arg
+        #
+        if path.endswith('/'):
+            path = path[:-1]
+        self.args = List(path and path.split('/') or [])
 
         # see http://www.python.org/dev/peps/pep-3333/#url-reconstruction for URL composition
         self.remote_addr = self.env.get('REMOTE_ADDR','localhost')

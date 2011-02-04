@@ -108,7 +108,7 @@ def __routes_doctest():
     >>> filter_url('http://domain.com/app/ctr/fcn/arg1/')
     "/app/ctr/fcn ['arg1']"
     >>> filter_url('http://domain.com/app/ctr/fcn/arg1//')
-    "/app/ctr/fcn ['arg1']"
+    "/app/ctr/fcn ['arg1', '']"
     >>> filter_url('http://domain.com/app/ctr/fcn//arg1')
     "/app/ctr/fcn ['', 'arg1']"
     >>> filter_url('HTTP://DOMAIN.COM/app/ctr/fcn')
@@ -121,6 +121,8 @@ def __routes_doctest():
     '/ctr/fcn'
     >>> filter_url('https://otherdomain.com/app/ctr/fcn', out=True)
     '/ctr/fcn'
+    >>> filter_url('https://otherdomain.com/app/ctr/fcn/arg1//', out=True)
+    '/ctr/fcn/arg1//'
     >>> filter_url('http://otherdomain.com/app/ctr/fcn', out=True)
     '/fcn'
     >>> filter_url('http://otherdomain.com/app/ctr/fcn?query', out=True)

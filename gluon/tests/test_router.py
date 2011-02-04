@@ -585,7 +585,7 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/init/default/f/arg1/'), 
             "/init/default/f ['arg1']")
         self.assertEqual(filter_url('http://domain.com/init/default/f/arg1//'), 
-            "/init/default/f ['arg1']")
+            "/init/default/f ['arg1', '']")
         self.assertEqual(filter_url('http://domain.com/init/default/f//arg1'), 
             "/init/default/f ['', 'arg1']")
         self.assertEqual(filter_url('http://domain.com/init/default/f/arg1/arg2'), 
@@ -595,9 +595,10 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(map_url_out(None, 'init', 'default', 'f', None), "/f")
         self.assertEqual(map_url_out(None, 'init', 'default', 'f', []), "/f")
         self.assertEqual(map_url_out(None, 'init', 'default', 'f', ['arg1']), "/f")
+        self.assertEqual(map_url_out(None, 'init', 'default', 'f', ['arg1', '']), "/f")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=None)), "/f")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1'])), "/f/arg1")
-        self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1', ''])), "/f/arg1")
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1', ''])), "/f/arg1//")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1', '', 'arg3'])), "/f/arg1//arg3")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=['ar g'])), "/f/ar%20g")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=['årg'])), "/f/%C3%A5rg")

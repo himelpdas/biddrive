@@ -216,9 +216,9 @@ def URL(
 
     if not isinstance(args, (list, tuple)):
         args = [args]
-    while args and args[-1] == '':
-        args.pop()
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
+    if other.endswith('/'):
+        other += '/'    # add trailing slash to make last trailing empty arg explicit
 
     if vars.has_key('_signature'): vars.pop('_signature')
     list_vars = []
