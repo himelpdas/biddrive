@@ -2499,18 +2499,25 @@ class Auth(object):
         table_name='',
         record_id=0,
         user_id=None,
+        group_id=None, 
         ):
         """
         checks if user_id or current logged in user is member of a group
         that has 'name' permission on 'table_name' and 'record_id'
+        if group_id is passed, it checks whether the group has the permission
         """
 
-        if not user_id and self.user:
+        if not user_id and not group_id and self.user:
             user_id = self.user.id
-        membership = self.settings.table_membership
-        rows = self.db(membership.user_id
-                        == user_id).select(membership.group_id)
-        groups = set([row.group_id for row in rows])
+        if user_id:
+            membership = self.settings.table_membership
+            rows = self.db(membership.user_id
+                           == user_id).select(membership.group_id)
+            groups = set([row.group_id for row in rows])
+            if group_id and not group_id in groups:
+                return False
+        else:
+            groups = set([group_id])
         permission = self.settings.table_permission
         rows = self.db(permission.name == name)(permission.table_name
                  == str(table_name))(permission.record_id
@@ -2528,7 +2535,7 @@ class Auth(object):
         else:
             r = False
         log = self.messages.has_permission_log
-        if log:
+        if log and user_id:
             self.log_event(log % dict(user_id=user_id, name=name,
                            table_name=table_name, record_id=record_id))
         return r
