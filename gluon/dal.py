@@ -3941,6 +3941,18 @@ class Table(dict):
     def insert(self, **fields):
         return self._db._adapter.insert(self,self._listify(fields))
 
+    def update_or_insert(self, key=DEFAULT, **values):
+        if key==DEFAULT:
+            record = self(**values)
+        else:
+            record = self(key)
+        if record:
+            record.update_record(**values)
+            newid = None
+        else:
+            newid = self.insert(**values)            
+        return newid
+    
     def bulk_insert(self, items):
         """
         here items is a list of dictionaries
