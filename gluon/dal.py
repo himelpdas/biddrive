@@ -112,7 +112,7 @@ help(Field)
 
 __all__ = ['DAL', 'Field']
 MAXCHARLENGTH = 512
-INFINITY = 10**10
+INFINITY = 32768 # not quite but reasonable default max varchar length
 
 import re
 import sys
