@@ -417,13 +417,13 @@ regex_url = re.compile(r'''
                  )?
                  (                        # (/s)
                      /(?P<r>              # /a/c/f.e/r=raw_args
-                     .*?
+                     .*
                      )
                  )?
              )?
          )?
      )?
-     $)
+     /?$)
      ''', re.X)
 
 regex_args = re.compile(r'''

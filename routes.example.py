@@ -101,6 +101,14 @@ def __routes_doctest():
     'applications/examples/static/favicon.ico'
     >>> os.path.relpath(filter_url('http://domain.com/robots.txt'))
     'applications/examples/static/robots.txt'
+    >>> filter_url('http://domain.com')
+    '/init/default/index'
+    >>> filter_url('http://domain.com/')
+    '/init/default/index'
+    >>> filter_url('http://domain.com/init/default/fcn')
+    '/init/default/fcn'
+    >>> filter_url('http://domain.com/init/default/fcn/')
+    '/init/default/fcn'
     >>> filter_url('http://domain.com/app/ctr/fcn')
     '/app/ctr/fcn'
     >>> filter_url('http://domain.com/app/ctr/fcn/arg1')
