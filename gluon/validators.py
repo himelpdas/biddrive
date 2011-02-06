@@ -123,7 +123,7 @@ class IS_MATCH(Validator):
     def __init__(self, expression, error_message='invalid expression', strict=True):
         if strict:
             if not expression.endswith('$'):
-                expressions = expression+'$'
+                expression = '(%s)$' % expression
         self.regex = re.compile(expression)
         self.error_message = error_message
 
