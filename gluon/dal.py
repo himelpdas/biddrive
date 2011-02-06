@@ -2504,7 +2504,7 @@ class GAENoSQLAdapter(NoSQLAdapter):
                  credential_decoder=lambda x:x):
         self.types.update({
                 'boolean': gae.BooleanProperty,
-                'string': gae.StringProperty,
+                'string': (lambda: gae.StringProperty(multiline=True)),
                 'text': gae.TextProperty,
                 'password': gae.StringProperty,
                 'blob': gae.BlobProperty,
