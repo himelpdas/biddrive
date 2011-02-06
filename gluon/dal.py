@@ -251,6 +251,16 @@ except ImportError:
     logger.debug('no Ingres driver')
     # NOTE could try JDBC.......
 
+try:
+    from new import classobj
+    from google.appengine.ext import db as gae
+    from google.appengine.api import namespace_manager
+    from google.appengine.api.datastore_types import Key  ### needed for belongs on ID
+    from google.appengine.ext.db.polymodel import PolyModel
+    drivers.append('gae')
+except ImportError:
+    pass
+
 ###################################################################################
 # class that handles connection pooling (all adapters derived form this one)
 ###################################################################################
@@ -2473,16 +2483,6 @@ class NoSQLAdapter(BaseAdapter):
     def integrity_error_class(self): raise SyntaxError, "Not supported"
     def rowslice(self,rows,minimum=0,maximum=None): raise SyntaxError, "Not supported"
 
-
-try:
-    from new import classobj
-    from google.appengine.ext import db as gae
-    from google.appengine.api import namespace_manager
-    from google.appengine.api.datastore_types import Key  ### needed for belongs on ID
-    from google.appengine.ext.db.polymodel import PolyModel
-    drivers.append('gae')
-except ImportError:
-    pass
 
 class GAEF(object):
     def __init__(self,name,op,value,apply):
