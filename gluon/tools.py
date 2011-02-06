@@ -3516,7 +3516,7 @@ class Service(object):
         request = self.environment['request']
         methods = self.jsonrpc_procedures
         data = simplejson.loads(request.body.read())
-        id, method, params = data["id"], data["method"], data["params"]
+        id, method, params = data['id'], data['method'], data.get('params','')
         if not method in methods:
             return return_error(id, 100, 'method "%s" does not exist' % method)
         try:
