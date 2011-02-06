@@ -3664,7 +3664,7 @@ class Service(object):
 
         request = self.environment['request']
         if len(request.args) < 1:
-            raise HTTP(400, "Bad request")
+            raise HTTP(404, "Not Found")
         arg0 = request.args(0)
         if arg0 == 'run':
             return self.serve_run(request.args[1:])

@@ -387,7 +387,7 @@ def wsgibase(environ, responder):
                                      rewrite.thread.routes.error_handler['function'],
                                      args=request.application))
                     else:
-                        raise HTTP(400,
+                        raise HTTP(404,
                                    rewrite.thread.routes.error_message % 'invalid request',
                                    web2py_error='invalid application')
                 request.url = Url(r=request, args=request.args,

@@ -49,7 +49,7 @@ TEST_CODE = \
 def _TEST():
     import doctest, sys, cStringIO, types, cgi, gluon.fileutils
     if not gluon.fileutils.check_credentials(request):
-        raise HTTP(400, web2py_error='invalid credentials')
+        raise HTTP(401, web2py_error='invalid credentials')
     stdout = sys.stdout
     html = '<h2>Testing controller "%s.py" ... done.</h2><br/>\n' \
         % request.controller
@@ -366,7 +366,7 @@ def run_controller_in(controller, function, environment):
         filename = os.path.join(path, 'controllers_%s_%s.pyc'
                                  % (controller, function))
         if not os.path.exists(filename):
-            raise HTTP(400,
+            raise HTTP(404,
                        rewrite.thread.routes.error_message % badf,
                        web2py_error=badf)
         restricted(read_pyc(filename), environment, layer=filename)
@@ -374,7 +374,7 @@ def run_controller_in(controller, function, environment):
         filename = os.path.join(folder, 'controllers/%s.py'
                                  % controller)
         if not os.path.exists(filename):
-            raise HTTP(400,
+            raise HTTP(404,
                        rewrite.thread.routes.error_message % badc,
                        web2py_error=badc)
         environment['__symbols__'] = environment.keys()
@@ -387,7 +387,7 @@ def run_controller_in(controller, function, environment):
         filename = os.path.join(folder, 'controllers/%s.py'
                                  % controller)
         if not os.path.exists(filename):
-            raise HTTP(400,
+            raise HTTP(404,
                        rewrite.thread.routes.error_message % badc,
                        web2py_error=badc)
         fp = open(filename, 'r')
@@ -395,7 +395,7 @@ def run_controller_in(controller, function, environment):
         fp.close()
         exposed = regex_expose.findall(code)
         if not function in exposed:
-            raise HTTP(400,
+            raise HTTP(404,
                        rewrite.thread.routes.error_message % badf,
                        web2py_error=badf)
         code = "%s\nresponse._vars=response._caller(%s)\n" % (code, function)
@@ -448,7 +448,7 @@ def run_view_in(environment):
                 code = read_pyc(filename)
                 restricted(code, environment, layer=filename)
                 return
-        raise HTTP(400,
+        raise HTTP(404,
                    rewrite.thread.routes.error_message % badv,
                    web2py_error=badv)
     else:
@@ -457,7 +457,7 @@ def run_view_in(environment):
             response.view = 'generic.' + request.extension
         filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
-            raise HTTP(400,
+            raise HTTP(404,
                        rewrite.thread.routes.error_message % badv,
                        web2py_error=badv)
         layer = filename
