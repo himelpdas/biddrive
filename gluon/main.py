@@ -247,7 +247,7 @@ def environ_aux(environ,request):
 def parse_get_post_vars(request, environ):
 
     # always parse variables in URL for GET, POST, PUT, DELETE, etc. in get_vars
-    dget = cgi.parse_qsl(request.env.query_string, keep_blank_values=1)
+    dget = cgi.parse_qsl(request.env.query_string or '', keep_blank_values=1)
     for (key, value) in dget:
         if key in request.get_vars:
             if isinstance(request.get_vars[key], list):
