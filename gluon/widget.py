@@ -730,8 +730,12 @@ def console():
             fp.close()
 
         if not os.path.exists('welcome.w2p') or os.path.exists('NEWINSTALL'):
-            w2p_pack('welcome.w2p','applications/welcome')
-            os.unlink('NEWINSTALL')
+            try:
+                w2p_pack('welcome.w2p','applications/welcome')
+                os.unlink('NEWINSTALL')
+            except:
+                msg = "New installation: unable to create welcome.w2p file"
+                sys.stderr.write(msg)
 
     return (options, args)
 
