@@ -1459,13 +1459,13 @@ class MySQLAdapter(BaseAdapter):
                              password=credential_decoder(password),
                              host=host,
                              port=port,
-                             charset=charset: driver.connect(db=db,
-                                                             user=user,
-                                                             passwd=password,
-                                                             host=host,
-                                                             port=port,
-                                                             charset=charset,
-                                                             ))
+                             charset=charset: self.driver.connect(db=db,
+                                                                  user=user,
+                                                                  passwd=password,
+                                                                  host=host,
+                                                                  port=port,
+                                                                  charset=charset,
+                                                                  ))
         self.cursor = self.connection.cursor()
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
