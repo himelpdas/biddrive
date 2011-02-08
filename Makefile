@@ -64,12 +64,15 @@ app:
 	find gluon -path '*.pyc' -exec cp {} ../web2py_osx/site-packages/{} \;
 	cd ../web2py_osx/site-packages/; zip -r ../site-packages.zip *
 	mv ../web2py_osx/site-packages.zip ../web2py_osx/web2py/web2py.app/Contents/Resources/lib/python2.5
-	cp splashlogo.gif ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp ABOUT ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp NEWINSTALL ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp LICENSE ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp VERSION ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp README ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp splashlogo.gif ../web2py_osx/web2py/web2py.app/Contents/Resources
+        cp options_std.py ../web2py_osx/web2py/web2py.app/Contents/Resources
+        cp routes.example.py ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp router.example.py ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp -r applications/admin ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
 	cp -r applications/welcome ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
 	cp -r applications/examples ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
@@ -88,6 +91,9 @@ win:
 	cp VERSION ../web2py_win/web2py/
 	cp README ../web2py_win/web2py/
 	cp splashlogo.gif ../web2py_win/web2py/
+	cp options_std.py ../web2py_win/web2py/
+	cp routes.example.py ../web2py_win/web2py/
+	cp router.example.py ../web2py_win/web2py/
 	cp -r applications/admin ../web2py_win/web2py/applications
 	cp -r applications/welcome ../web2py_win/web2py/applications
 	cp -r applications/examples ../web2py_win/web2py/applications
