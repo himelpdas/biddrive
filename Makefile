@@ -70,8 +70,8 @@ app:
 	cp VERSION ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp README ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp splashlogo.gif ../web2py_osx/web2py/web2py.app/Contents/Resources
-        cp options_std.py ../web2py_osx/web2py/web2py.app/Contents/Resources
-        cp routes.example.py ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp options_std.py ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp routes.example.py ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp router.example.py ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp -r applications/admin ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
 	cp -r applications/welcome ../web2py_osx/web2py/web2py.app/Contents/Resources/applications

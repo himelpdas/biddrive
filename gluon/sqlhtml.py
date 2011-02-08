@@ -1346,6 +1346,8 @@ class SQLTABLE(TABLE):
                                  (k, record[tablename][k])) or (k, record[k]) \
                                     for k in field._table._primarykey ] ))
                     r = A(r, _href='%s/%s?%s' % (linkto, tablename, key))
+                elif field.type.startswith('list:'):
+                    r = field.represent(r or [])
                 elif field.represent:
                     r = field.represent(r)
                 elif field.type == 'blob' and r:
