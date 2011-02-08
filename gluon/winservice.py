@@ -17,15 +17,18 @@ import time
 import os
 import sys
 import traceback
-import win32serviceutil
-import win32service
-import win32event
+try:
+    import win32serviceutil
+    import win32service
+    import win32event
+except:
+    if os.name == 'nt':
+        print "Warning, winservice is unable to install the Mark Hammond Win32 extensions"
 import servicemanager
 import _winreg
 from fileutils import up
 
 __all__ = ['web2py_windows_service_handler']
-
 
 class Service(win32serviceutil.ServiceFramework):
 

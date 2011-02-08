@@ -34,6 +34,7 @@ try:
 except:
     pass
 
+
 try:
     BaseException
 except NameError:
