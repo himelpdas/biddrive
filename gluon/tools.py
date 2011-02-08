@@ -36,7 +36,7 @@ from email import MIMEBase, MIMEMultipart, MIMEText, Encoders, Header, message_f
 
 import serializers
 import contrib.simplejson as simplejson
-from sql import Field
+from dal import Field
 
 __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode', 'prettydate']
 
@@ -1261,6 +1261,19 @@ class Auth(object):
             table.origin.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.description.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
         self.settings.table_event = db[self.settings.table_event_name]
+        def lazy_user (auth = self): return auth.user_id
+        now = self.environment.request.now
+        self.signature = db.Table(None,'auth_signature',
+                                  Field('created_on','datetime',default=now,
+                                        writable=False,readable=False),
+                                  Field('created_by',self.settings.table_user,default=lazy_user,
+                                        writable=False,readable=False),
+                                  Field('modified_on','datetime',update=now,default=now,
+                                        writable=False,readable=False),
+                                  Field('updated_by',self.settings.table_user,
+                                        default=lazy_user,update=lazy_user,
+                                        writable=False,readable=False))
+        
 
     def log_event(self, description, origin='auth'):
         """

@@ -70,7 +70,7 @@ from compileapp import build_environment, run_models_in, \
     run_controller_in, run_view_in
 from fileutils import copystream
 from contenttype import contenttype
-from sql import BaseAdapter
+from dal import BaseAdapter
 from settings import global_settings
 from validators import CRYPT
 from cache import Cache

@@ -751,7 +751,7 @@ def start(cron=True):
     print ProgramAuthor
     print ProgramVersion
 
-    from sql import drivers
+    from dal import drivers
     print 'Database drivers available: %s' % ', '.join(drivers)
 
 

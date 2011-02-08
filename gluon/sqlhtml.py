@@ -19,7 +19,7 @@ from html import XML, SPAN, TAG, A, DIV, UL, LI, TEXTAREA, BR, IMG, SCRIPT
 from html import FORM, INPUT, LABEL, OPTION, SELECT
 from html import TABLE, THEAD, TBODY, TR, TD, TH
 from html import URL as Url
-from sql import SQLDB, Table, Row
+from dal import SQLDB, Table, Row, CALLABLETYPES
 from storage import Storage
 from utils import md5_hash
 from validators import IS_EMPTY_OR
@@ -765,6 +765,8 @@ class SQLFORM(FORM):
                 default = record[fieldname]
             else:
                 default = field.default
+                if isinstance(default,CALLABLETYPES):
+                    default=default()
 
             cond = readonly or \
                 (not ignore_rw and not field.writable and field.readable)

@@ -3465,6 +3465,8 @@ class DAL(dict):
         sequence_name = args.get('sequence_name', None)
         primarykey=args.get('primarykey',None)
         polymodel=args.get('polymodel',None)
+        if not isinstance(tablename,str):
+            raise SyntaxError, "missing table name"
         tablename = cleanup(tablename)
         lowertablename = tablename.lower()
 
@@ -3713,9 +3715,9 @@ class Table(dict):
         else:
             new_fields = [ Field('id', 'id') ]
         for field in fields:
-            if hasattr(field, '_db'):
-                field = copy.copy(field)
             if isinstance(field, Field):
+                if hasattr(field, '_db'):
+                    field = copy.copy(field)
                 if field.type == 'id':
                     # Keep this alias for the primary key.
                     new_fields[0] = field
@@ -3726,7 +3728,7 @@ class Table(dict):
                                field.fields if field[f].type!='id']
             else:
                 raise SyntaxError, \
-                    'define_table argument is not a Field: %s' % field
+                    'define_table argument is not a Field or Table: %s' % field
         fields = new_fields
         self._db = db
         self._id = fields[0]
@@ -4273,6 +4275,8 @@ class Field(Expression):
         self.op = None
         self.first = None
         self.second = None
+        if not isinstance(fieldname,str):
+            raise SyntaxError, "missing field name"
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_':
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
