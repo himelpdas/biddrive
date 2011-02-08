@@ -122,7 +122,7 @@ def __routes_doctest():
     >>> filter_url('HTTP://DOMAIN.COM/app/ctr/fcn')
     '/app/ctr/fcn'
     >>> filter_url('http://domain.com/app/ctr/fcn?query')
-    '/app/ctr/fcn'
+    '/app/ctr/fcn ?query'
     >>> filter_url('http://otherdomain.com/fcn')
     '/app/ctr/fcn'
     >>> regex_filter_out('/app/ctr/fcn')

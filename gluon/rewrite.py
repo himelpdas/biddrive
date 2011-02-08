@@ -144,11 +144,21 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
     If data is present, it's used instead of the routes.py contents.
     If rdict is present, it must be a dict to be used for routers (unit test)
     """
+    global params
+    global routers
+    if app is None:
+        # reinitialize
+        global params_apps
+        params_apps = dict()
+        params = _params_default(app=None)  # regex rewrite parameters
+        thread.routes = params              # default to base regex rewrite parameters
+        routers = None
+
     if isinstance(rdict, dict):
         symbols = dict(routers=rdict)
         path = 'rdict'
     else:
-        if data:
+        if data is not None:
             path = 'routes'
         else:
             if app is None:
@@ -188,12 +198,10 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                 p.routers[key] = Storage(p.routers[key])
 
     if app is None:
-        global params
         params = p                  # install base rewrite parameters
         #
         #  create the BASE router if routers in use
         #
-        global routers
         routers = params.routers    # establish routers if present
         if isinstance(routers, dict):
             routers = Storage(routers)
@@ -224,7 +232,7 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
 
     else: # app
         params_apps[app] = p
-        if routers:
+        if routers and p.routers:
             if app in p.routers:
                 routers[app].update(p.routers[app])
 
@@ -332,10 +340,8 @@ def load_routers(all_apps):
 
 def regex_uri(e, regexes, tag, default=None):
     "filter incoming URI against a list of regexes"
-    query = e.get('QUERY_STRING', None)
     path = e['PATH_INFO']
     host = e.get('HTTP_HOST', 'localhost').lower()
-    original_uri = path + (query and '?'+query or '')
     i = host.find(':')
     if i > 0:
         host = host[:i]
@@ -347,9 +353,9 @@ def regex_uri(e, regexes, tag, default=None):
         if regex.match(key):
             rewritten = regex.sub(value, key)
             logger.debug('%s: [%s] [%s] -> %s' % (tag, key, value, rewritten))
-            return (rewritten, query, original_uri)
+            return rewritten
     logger.debug('%s: [%s] -> %s (not rewritten)' % (tag, key, default))
-    return (default, query, original_uri)
+    return default
 
 def regex_select(env=None, app=None, request=None):
     """
@@ -361,7 +367,7 @@ def regex_select(env=None, app=None, request=None):
         if routers:
             map_url_in(request, env, app=True)
         else:
-            (app, q, u) = regex_uri(env, params.routes_app, "routes_app")
+            app = regex_uri(env, params.routes_app, "routes_app")
             thread.routes = params_apps.get(app, params)
     else:
         thread.routes = params # default to base rewrite parameters
@@ -369,17 +375,20 @@ def regex_select(env=None, app=None, request=None):
     return app  # for doctest
 
 def regex_filter_in(e):
-    "called from main.wsgibase to rewrite incoming URL"
+    "regex rewrite incoming URL"
+    query = e.get('QUERY_STRING', None)
+    e['WEB2PY_ORIGINAL_URI'] = e['PATH_INFO'] + (query and ('?' + query) or '')
     if thread.routes.routes_in:
-        (path, query, original_uri) = regex_uri(e, thread.routes.routes_in, "routes_in", e['PATH_INFO'])
-        if path.find('?') < 0:
-            e['PATH_INFO'] = path
-        else:
+        path = regex_uri(e, thread.routes.routes_in, "routes_in", e['PATH_INFO'])
+        items = path.split('?', 1)
+        e['PATH_INFO'] = items[0]
+        if len(items) > 1:
             if query:
-                path = path+'&'+query
-            e['PATH_INFO'] = ''
-            e['REQUEST_URI'] = path
-            e['WEB2PY_ORIGINAL_URI'] = original_uri
+                query = items[1] + '&' + query
+            else:
+                query = items[1]
+            e['QUERY_STRING'] = query
+    e['REQUEST_URI'] = e['PATH_INFO'] + (query and ('?' + query) or '')
     return e
 
 
@@ -605,6 +614,8 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=N
         result += ".%s" % request.extension
     if request.args:
         result += " %s" % request.args
+    if e['QUERY_STRING']:
+        result += " ?%s" % e['QUERY_STRING']
     if request.uri_language:
         result += " (%s)" % request.uri_language
     return result
