@@ -254,7 +254,7 @@ class Session(Storage):
         self._unlock(response)
         if not masterapp:
             masterapp = request.application
-        response.session_id_name = 'session_id_%s' % masterapp
+        response.session_id_name = 'session_id_%s' % masterapp.lower()
 
         if not db:
             client = request.client.replace(':', '.')
