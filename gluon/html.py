@@ -106,12 +106,8 @@ def xmlescape(data, quote = True):
     """
 
     # first try the xml function
-    try:
+    if hasattr(data,'xml') and callable(data.xml):
         return data.xml()
-    except AttributeError:
-        pass
-    except TypeError:
-        pass
 
     # otherwise, make it a string
     if not isinstance(data, (str, unicode)):
