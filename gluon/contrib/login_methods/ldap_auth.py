@@ -1,5 +1,11 @@
-import ldap
 import sys
+import logging
+try:
+    import ldap
+except e:
+    logging.error('missing ldap, try "easy_install python-ldap"')
+    raise e
+
 
 def ldap_auth(server='ldap', port=None,
             base_dn='ou=users,dc=domain,dc=com',
