@@ -46,12 +46,26 @@ skip_files: |
  (.*\.py[co])|
  (.*/RCS/.*)|
  (\..*)|
- (applications/(admin|examples)/.*)|	
- ((admin|examples|welcome)\.tar)|
- (applications/.*?/databases/.*) |
- (applications/.*?/errors/.*)|
- (applications/.*?/cache/.*)|
- (applications/.*?/sessions/.*)|
+ (applications/(admin|examples)/.*)|
+ ((admin|examples|welcome)\.(w2p|tar))|
+ (applications/.*?/(cron|databases|errors|cache|sessions)/.*)|
+ (applications/.*?/controllers/appadmin\.py)|
+ ((logs|scripts)/.*)|
+ (anyserver\.py)|
+ (web2py\.py)|
+ ((cgi|fcgi|modpython|wsgi)handler\.py)|
+ (epydoc\.(conf|css))|
+ (httpserver\.log)|
+ (logging\.example\.conf)|
+ (routes\.example\.py)|
+ (setup_(app|exe)\.py)|
+ (splashlogo\.gif)|
+ (parameters_\d+\.py)|
+ (options_std.py)|
+ (gluon/tests/.*)|
+ (gluon/rocket\.py)|
+ (gluon/winservice\.py)|
+ (.*\.(bak|orig))|
  )$
 
 builtins:
