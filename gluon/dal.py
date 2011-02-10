@@ -663,7 +663,7 @@ class BaseAdapter(ConnectionPool):
         return 'UPPER(%s)' % self.expand(first)
 
     def EXTRACT(self,first,what):
-        return "EXTRACT('%s' FROM %s)" % (what, self.expand(first))
+        return "EXTRACT(%s FROM %s)" % (what, self.expand(first))
 
     def AGGREGATE(self,first,what):
         return "%s(%s)" % (what,self.expand(first))
