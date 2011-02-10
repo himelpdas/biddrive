@@ -19,6 +19,7 @@ from html import URL
 from fileutils import abspath
 from settings import global_settings
 from http import HTTP
+from storage import Storage
 
 logger = None
 oldcwd = None
@@ -246,6 +247,47 @@ routes_out = [
         self.assertEqual(str(URL(a='welcome', c='default', f='f', args=['ar g'])), "/f/ar%20g")
         self.assertEqual(str(URL(a='welcome', c='default', f='f', args=['årg'])), "/f/%C3%A5rg")
         self.assertEqual(str(URL(a='welcome', c='default', f='fünc')), "/f\xc3\xbcnc")
+
+    def test_router_absolute(self):
+        '''
+        Test absolute URL
+        '''
+        load(data='')
+        r = Storage()
+        r.env = Storage()
+        r.env.http_host = 'domain.com'
+        r.env.WSGI_URL_SCHEME = 'httpx' # distinguish incoming scheme
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f')), "/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', host=True)), 
+            "httpx://domain.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', host='host.com')), 
+            "httpx://host.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme=True)), 
+            "httpx://domain.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme=False)), 
+            "/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme='https')), 
+            "https://domain.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme='wss')), 
+            "wss://domain.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme=True, host=True)), 
+            "httpx://domain.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme='https', host=True)), 
+            "https://domain.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme=False, host=True)), 
+            "httpx://domain.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme=True, host='host.com')), 
+            "httpx://host.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme=False, host='host.com')), 
+            "httpx://host.com/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', port=1234)), 
+            "httpx://domain.com:1234/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme=True, port=1234)), 
+            "httpx://domain.com:1234/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', host='host.com', port=1234)), 
+            "httpx://host.com:1234/a/c/f")
+        self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme='wss', host='host.com', port=1234)), 
+            "wss://host.com:1234/a/c/f")
 
 
 if __name__ == '__main__':

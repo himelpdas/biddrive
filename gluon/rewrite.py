@@ -102,15 +102,36 @@ def url_in(request, environ):
         return map_url_in(request, environ)
     return regex_url_in(request, environ)
 
-
-def url_out(request, env, application, controller, function, args, other):
+def url_out(request, env, application, controller, function, args, other, scheme, host, port):
     "assemble and rewrite outgoing URL"
     if routers:
         acf = map_url_out(request, application, controller, function, args)
-        return '%s%s' % (acf, other)
-    url = '/%s/%s/%s%s' % (application, controller, function, other)
-    return regex_filter_out(url, env)
-
+        url = '%s%s' % (acf, other)
+    else:
+        url = '/%s/%s/%s%s' % (application, controller, function, other)
+        url = regex_filter_out(url, env)
+    #
+    #  fill in scheme and host if absolute URL is requested
+    #  scheme can be a string, eg 'http', 'https', 'ws', 'wss'
+    #
+    if scheme or port is not None:
+        if host is None:    # scheme or port implies host
+            host = True
+    if not scheme or scheme is True:
+        if request and request.env:
+            scheme = request.env.get('WSGI_URL_SCHEME', 'http').lower()
+        else:
+            scheme = 'http' # some reasonable default in case we need it
+    if host is not None:
+        if host is True:
+            host = request.env.http_host
+    if host:
+        if port is None:
+            port = ''
+        else:
+            port = ':%s' % port
+        url = '%s://%s%s%s' % (scheme, host, port, url)
+    return url
 
 def try_redirect_on_error(http_object, request, ticket=None):
     "called from main.wsgibase to rewrite the http response"

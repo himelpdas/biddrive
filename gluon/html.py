@@ -132,10 +132,13 @@ def URL(
     env=None,
     hmac_key=None,
     hash_vars=True,
-    _request=None
+    _request=None,
+    scheme=None,
+    host=None,
+    port=None,
     ):
     """
-    generate a relative URL
+    generate a URL
 
     example::
 
@@ -174,10 +177,14 @@ def URL(
     :param args: any arguments (optional)
     :param vars: any variables (optional)
     :param anchor: anchorname, without # (optional)
-    :param hmac_key: key to use when generating hmac signature(optional)
+    :param hmac_key: key to use when generating hmac signature (optional)
     :param hash_vars: which of the vars to include in our hmac signature
         True (default) - hash all vars, False - hash none of the vars,
         iterable - hash only the included vars ['key1','key2']
+    :param _request: used internally for URL rewrite
+    :param scheme: URI scheme (True, 'http' or 'https', etc); forces absolute URL (optional)
+    :param host: string to force absolute URL with host (True means http_host)
+    :param port: optional port number (forces absolute URL)
 
     :raises SyntaxError: when no application, controller or function is
         available
@@ -257,7 +264,7 @@ def URL(
 
     if regex_crlf.search(''.join([application, controller, function, other])):
         raise SyntaxError, 'CRLF Injection Detected'
-    return XML(rewrite.url_out(r or _request, env, application, controller, function, args, other))
+    return XML(rewrite.url_out(r or _request, env, application, controller, function, args, other, scheme, host, port))
 
 def verifyURL(request, hmac_key, hash_vars=True):
     """
