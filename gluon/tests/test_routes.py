@@ -110,7 +110,7 @@ routes_in = (
         self.assertEqual(filter_url('http://localhost:8000/service/person/create'), "/app/default/call ['json', 'create'] ?model=person")
         self.assertEqual(filter_url('http://localhost:8000/service/person/create?var1=val1'), "/app/default/call ['json', 'create'] ?model=person&var1=val1")
 
-    def test_router_specific(self):
+    def test_routes_specific(self):
         """ 
         Test app-specific routes.py 
         
@@ -127,7 +127,7 @@ routes_app = [
         self.assertEqual(filter_url('http://domain.com/welcome'), '/welcome/default/index')
         self.assertEqual(filter_url('http://domain.com/examples'), '/examples/default/exdef')
 
-    def test_router_defapp(self):
+    def test_routes_defapp(self):
         """ Test the default-application function """
         data = r'''
 default_application = 'defapp'
@@ -142,7 +142,7 @@ default_application = 'defapp'
         self.assertEqual(filter_url('http://domain.com/welcome/static/abc'), '%s/applications/welcome/static/abc' % root)
         self.assertEqual(filter_url('http://domain.com/defapp/static/path/to/static'), "%s/applications/defapp/static/path/to/static" % root)
 
-    def test_router_raise(self):
+    def test_routes_raise(self):
         '''
         Test URLs that raise exceptions
         '''
@@ -174,7 +174,7 @@ default_application = 'defapp'
         except AttributeError:
             pass
 
-    def test_router_error(self):
+    def test_routes_error(self):
         '''
         Test rewrite of HTTP errors
         '''
@@ -184,7 +184,7 @@ default_application = 'defapp'
         self.assertEqual(filter_err(399), 399)
         self.assertEqual(filter_err(400), 400)
 
-    def test_router_args(self):
+    def test_routes_args(self):
         '''
         Test URL args parsing/generation
         '''
@@ -248,7 +248,23 @@ routes_out = [
         self.assertEqual(str(URL(a='welcome', c='default', f='f', args=['årg'])), "/f/%C3%A5rg")
         self.assertEqual(str(URL(a='welcome', c='default', f='fünc')), "/f\xc3\xbcnc")
 
-    def test_router_absolute(self):
+    def test_routes_anchor(self):
+        '''
+        Test URL with anchor
+        '''
+        self.assertEqual(str(URL(a='a', c='c', f='f', anchor='anchor')), "/a/c/f#anchor")
+        load(data='')
+        self.assertEqual(str(URL(a='a', c='c', f='f', anchor='anchor')), "/a/c/f#anchor")
+        args = ['a1', 'a2']
+        self.assertEqual(str(URL(a='a', c='c', f='f', args=args, anchor='anchor')), 
+            "/a/c/f/a1/a2#anchor")
+        vars = dict(v1=1, v2=2)
+        self.assertEqual(str(URL(a='a', c='c', f='f', vars=vars, anchor='anchor')), 
+            "/a/c/f?v1=1&v2=2#anchor")
+        self.assertEqual(str(URL(a='a', c='c', f='f', args=args, vars=vars, anchor='anchor')), 
+            "/a/c/f/a1/a2?v1=1&v2=2#anchor")
+
+    def test_routes_absolute(self):
         '''
         Test absolute URL
         '''

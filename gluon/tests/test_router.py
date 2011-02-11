@@ -605,6 +605,22 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(str(URL(a='init', c='default', f='f', args=['årg'])), "/f/%C3%A5rg")
         self.assertEqual(str(URL(a='init', c='default', f='fünc')), "/f\xc3\xbcnc")
 
+    def test_routes_anchor(self):
+        '''
+        Test URL with anchor
+        '''
+        self.assertEqual(str(URL(a='a', c='c', f='f', anchor='anchor')), "/a/c/f#anchor")
+        load(rdict=dict())
+        self.assertEqual(str(URL(a='a', c='c', f='f', anchor='anchor')), "/a/c/f#anchor")
+        args = ['a1', 'a2']
+        self.assertEqual(str(URL(a='a', c='c', f='f', args=args, anchor='anchor')), 
+            "/a/c/f/a1/a2#anchor")
+        vars = dict(v1=1, v2=2)
+        self.assertEqual(str(URL(a='a', c='c', f='f', vars=vars, anchor='anchor')), 
+            "/a/c/f?v1=1&v2=2#anchor")
+        self.assertEqual(str(URL(a='a', c='c', f='f', args=args, vars=vars, anchor='anchor')), 
+            "/a/c/f/a1/a2?v1=1&v2=2#anchor")
+
     def test_router_absolute(self):
         '''
         Test absolute URL
