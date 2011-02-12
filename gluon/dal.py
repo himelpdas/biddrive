@@ -977,7 +977,9 @@ class BaseAdapter(ConnectionPool):
         else:
             sql_t = ', '.join(tablenames)
         if groupby:
-            sql_o += ' GROUP BY %s' % attributes['groupby']
+            if isinstance(groupby, (list, tuple)):
+                groupby = xorify(groupby)
+            sql_o += ' GROUP BY %s' % self.expand(groupby)
             if having:
                 sql_o += ' HAVING %s' % attributes['having']
         if orderby:
