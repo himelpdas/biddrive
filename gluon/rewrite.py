@@ -220,6 +220,7 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
 
     if app is None:
         params = p                  # install base rewrite parameters
+        thread.routes = params      # install default as current routes
         #
         #  create the BASE router if routers in use
         #

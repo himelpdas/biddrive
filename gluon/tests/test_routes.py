@@ -264,6 +264,38 @@ routes_out = [
         self.assertEqual(str(URL(a='a', c='c', f='f', args=args, vars=vars, anchor='anchor')), 
             "/a/c/f/a1/a2?v1=1&v2=2#anchor")
 
+        data = r'''routes_out = [
+            ('/init/default/index', '/'), 
+        ]'''
+        load(data=data)
+        self.assertEqual(str(URL(a='init', c='default', f='index')),
+            "/")
+        self.assertEqual(str(URL(a='init', c='default', f='index', anchor='anchor')),
+            "/init/default/index#anchor")
+
+        data = r'''routes_out = [
+            (r'/init/default/index(?P<anchor>(#.*)?)', r'/\g<anchor>'), 
+        ]'''
+        load(data=data)
+        self.assertEqual(str(URL(a='init', c='default', f='index')),
+            "/")
+        self.assertEqual(str(URL(a='init', c='default', f='index', anchor='anchor')),
+            "/#anchor")
+
+        data = r'''routes_out = [
+            (r'/init/default/index(?P<qa>([?#].*)?)', r'/\g<qa>'), 
+        ]'''
+        load(data=data)
+        self.assertEqual(str(URL(a='init', c='default', f='index')),
+            "/")
+        self.assertEqual(str(URL(a='init', c='default', f='index', anchor='anchor')),
+            "/#anchor")
+        query = dict(var='abc')
+        self.assertEqual(str(URL(a='init', c='default', f='index', vars=query)),
+            "/?var=abc")
+        self.assertEqual(str(URL(a='init', c='default', f='index', vars=query, anchor='anchor')),
+            "/?var=abc#anchor")
+
     def test_routes_absolute(self):
         '''
         Test absolute URL

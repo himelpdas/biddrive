@@ -620,6 +620,14 @@ class TestRouter(unittest.TestCase):
             "/a/c/f?v1=1&v2=2#anchor")
         self.assertEqual(str(URL(a='a', c='c', f='f', args=args, vars=vars, anchor='anchor')), 
             "/a/c/f/a1/a2?v1=1&v2=2#anchor")
+        self.assertEqual(str(URL(a='init', c='default', f='index')),
+            "/")
+        self.assertEqual(str(URL(a='init', c='default', f='f')),
+            "/f")
+        self.assertEqual(str(URL(a='init', c='default', f='index', anchor='anchor')),
+            "/#anchor")
+        self.assertEqual(str(URL(a='init', c='default', f='f', anchor='anchor')),
+            "/f#anchor")
 
     def test_router_absolute(self):
         '''
