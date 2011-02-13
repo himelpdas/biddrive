@@ -19,8 +19,9 @@
 #  domains: optional dict mapping domain names to application names
 #      The domain name can include a port number: domain.com:8080
 #      The application name can include a controller:  appx/ctlrx
+#  path_prefix: a path fragment that is prefixed to all outgoing URLs and stripped from all incoming URLs
 #
-#  Note: default_application, applications & domains make sense only in the BASE router,
+#  Note: default_application, applications, domains & path_prefix are permitted only in the BASE router,
 #        and domain makes sense only in an application-specific router.
 #        The remaining members can appear in the BASE router (as defaults for all applications)
 #        or in application-specific routers.
@@ -47,6 +48,8 @@
 #  domain: the domain that maps to this application (alternative to using domains in the BASE router)
 #  map_hyphen: If True (default), hyphens in incoming /a/c/f fields are converted to underscores,
 #       and back to hyphens in outgoing URLs. Language, args and the query string are not affected.
+#  map_static: By default, the default application is not stripped from static URLs. Set map_static=True
+#       to override this policy.
 #  acfe_match: regex for valid application, controller, function, extension /a/c/f.e
 #  file_match: regex for valid file (used for static file names)
 #  args_match: regex for valid args

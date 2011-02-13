@@ -76,9 +76,11 @@ routers = None
 
 ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 'controllers', 'default_function', 
     'default_language', 'languages', 
-    'domain', 'domains', 'root_static', 
-    'map_hyphen', 
+    'domain', 'domains', 'root_static', 'path_prefix',
+    'map_hyphen', 'map_static',
     'acfe_match', 'file_match', 'args_match'))
+
+ROUTER_BASE_KEYS = set(('applications', 'default_application', 'domains', 'path_prefix'))
 
 #  The external interface to rewrite consists of:
 #
@@ -244,6 +246,9 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                 if routers:
                     router = Storage(routers.BASE)   # new copy
                     if appname in routers:
+                        for key in routers[appname].keys():
+                            if key in ROUTER_BASE_KEYS:
+                                raise SyntaxError, "BASE-only key '%s' in router '%s'" % (key, appname)
                         router.update(routers[appname])
                     routers[appname] = router
                 if os.path.exists(abspath('applications', appname, routes)):
@@ -309,6 +314,10 @@ def load_routers(all_apps):
         if app not in all_apps:
             all_apps.append(app)
             router = Storage(routers.BASE)   # new copy
+            if app != 'BASE':
+                for key in routers[app].keys():
+                    if key in ROUTER_BASE_KEYS:
+                        raise SyntaxError, "BASE-only key '%s' in router '%s'" % (key, app)
             router.update(routers[app])
             routers[app] = router
         router = routers[app]
@@ -316,8 +325,8 @@ def load_routers(all_apps):
             if key not in ROUTER_KEYS:
                 raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
         if app != 'BASE':
-            for base_only in ('applications', 'default_application', 'domains'):
-                router.pop(base_only)
+            for base_only in ROUTER_BASE_KEYS:
+                router.pop(base_only, None)
             if 'domain' in router:
                 routers.BASE.domains[router.domain] = app
             if isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
@@ -334,13 +343,18 @@ def load_routers(all_apps):
         routers.BASE.applications = list(all_apps)
 
     for app in routers.keys():
-        # set router name and compile URL validation patterns
+        # set router name
         router = routers[app]
         router.name = app
+        # compile URL validation patterns
         router._acfe_match = re.compile(router.acfe_match)
         router._file_match = re.compile(router.file_match)
         if router.args_match:
             router._args_match = re.compile(router.args_match)
+        # convert path_prefix to a list of path elements
+        if router.path_prefix:
+            if isinstance(router.path_prefix, str):
+                router.path_prefix = router.path_prefix.strip('/').split('/')
 
     #  rewrite BASE.domains as tuples
     #
@@ -716,6 +730,18 @@ class MapUrlIn(object):
             else:
                 self.port = '80'
 
+    def map_prefix(self):
+        "strip path prefix, if present in its entirety"
+        prefix = routers.BASE.path_prefix
+        if prefix:
+            prefixlen = len(prefix)
+            if prefixlen > len(self.args):
+                return
+            for i in xrange(prefixlen):
+                if prefix[i] != self.args[i]:
+                    return  # prefix didn't match
+            self.args = List(self.args[prefixlen:]) # strip the prefix
+
     def map_app(self):
         "determine application name"
         base = routers.BASE  # base router
@@ -764,7 +790,12 @@ class MapUrlIn(object):
         self._args_match = self.router._args_match
 
     def map_root_static(self):
-        "handle root-static files (no hyphen mapping)"
+        '''
+        handle root-static files (no hyphen mapping)
+        
+        a root-static file is one whose incoming URL expects it to be at the root,
+        typically robots.txt & favicon.ico
+        '''
         if len(self.args) == 1 and self.arg0 in self.router.root_static:   
             self.controller = self.request.controller = 'static'
             root_static_file = os.path.join(self.request.env.applications_parent,
@@ -909,6 +940,8 @@ class MapUrlOut(object):
         self.languages = self.router.languages
         self.default_language = self.router.default_language
         self.map_hyphen = self.router.map_hyphen
+        self.map_static = self.router.map_static
+        self.path_prefix = routers.BASE.path_prefix
 
         self.domain_application = request and self.request.env.domain_application
         self.domain_controller = request and self.request.env.domain_controller
@@ -971,6 +1004,17 @@ class MapUrlOut(object):
         if not self.controllers or self.function in self.controllers:
             self.omit_controller = False
 
+        #  handle static as a special case
+        #  (easier for external static handling)
+        #
+        if self.controller == 'static':
+            if not self.map_static:
+                self.omit_application = False
+                if self.language:
+                    self.omit_language = False
+            self.omit_controller = False
+            self.omit_function = False
+
     def build_acf(self):
         "build acf from components"
         if self.map_hyphen:
@@ -986,6 +1030,8 @@ class MapUrlOut(object):
             self._acf += '/' + self.controller
         if not self.omit_function:
             self._acf += '/' + self.function
+        if self.path_prefix:
+            self._acf = '/' + '/'.join(self.path_prefix) + self._acf
         return self._acf or '/'
 
     def acf(self):
@@ -1004,6 +1050,7 @@ def map_url_in(request, env, app=False):
     #  initialize router-url object
     #
     map = MapUrlIn(request=request, env=env)
+    map.map_prefix()  # strip prefix if present
     map.map_app()     # determine application
 
     #  configure thread.routes for error rewrite

@@ -83,10 +83,15 @@ class TestRouter(unittest.TestCase):
         logger.setLevel(logging.CRITICAL)  # disable logging temporarily
         self.assertRaises(SyntaxError, load, data='x:y')
         self.assertRaises(SyntaxError, load, rdict=dict(BASE=dict(badkey="value")))
+        self.assertRaises(SyntaxError, load, rdict=dict(BASE=dict(), app=dict(default_application="name")))
         try:
             # 2.7+ only
-            self.assertRaisesRegexp(SyntaxError, "invalid syntax", load, data='x:y')
-            self.assertRaisesRegexp(SyntaxError, "unknown key", load, rdict=dict(BASE=dict(badkey="value")))
+            self.assertRaisesRegexp(SyntaxError, "invalid syntax", 
+                load, data='x:y')
+            self.assertRaisesRegexp(SyntaxError, "unknown key", 
+                load, rdict=dict(BASE=dict(badkey="value")))
+            self.assertRaisesRegexp(SyntaxError, "BASE-only key", 
+                load, rdict=dict(BASE=dict(), app=dict(default_application="name")))
         except AttributeError:
             pass
         logger.setLevel(level)
@@ -114,7 +119,7 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/init/default/index', out=True), '/')
         self.assertEqual(filter_url('http://domain.com/init/default/index/arg1', out=True), '/index/arg1')
         self.assertEqual(filter_url('http://domain.com/init/default/abc', out=True), '/abc')
-        self.assertEqual(filter_url('http://domain.com/init/static/abc', out=True), '/static/abc')
+        self.assertEqual(filter_url('http://domain.com/init/static/abc', out=True), '/init/static/abc')
         self.assertEqual(filter_url('http://domain.com/init/appadmin/index', out=True), '/appadmin')
         self.assertEqual(filter_url('http://domain.com/init/appadmin/abc', out=True), '/appadmin/abc')
         self.assertEqual(filter_url('http://domain.com/init/admin/index', out=True), '/init/admin')
@@ -153,7 +158,8 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/index/arg1')
         self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/abc')
         self.assertEqual(filter_url('http://domain.com/welcome/default/admin', out=True), '/default/admin')
-        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), 
+            '/welcome/static/abc')
         self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/appadmin')
         self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/appadmin/abc')
         self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
@@ -171,7 +177,8 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/welcome/default/index', out=True), '/default')
         self.assertEqual(filter_url('http://domain.com/welcome/default/index/arg1', out=True), '/default/index/arg1')
         self.assertEqual(filter_url('http://domain.com/welcome/default/abc', out=True), '/default/abc')
-        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), '/static/abc')
+        self.assertEqual(filter_url('http://domain.com/welcome/static/abc', out=True), 
+            '/welcome/static/abc')
         self.assertEqual(filter_url('http://domain.com/welcome/appadmin/index', out=True), '/appadmin')
         self.assertEqual(filter_url('http://domain.com/welcome/appadmin/abc', out=True), '/appadmin/abc')
         self.assertEqual(filter_url('http://domain.com/welcome/admin/index', out=True), '/welcome/admin')
@@ -467,12 +474,25 @@ class TestRouter(unittest.TestCase):
         load(rdict=router_out)
         self.assertEqual(filter_url('https://domain.com/app/ctr/fcn', out=True), "/app/ctr/fcn")
         self.assertEqual(filter_url('https://domain.com/init/ctr/fcn', out=True), "/ctr/fcn")
-        self.assertEqual(filter_url('https://domain.com/init/default/fcn', out=True), "/fcn")
+        self.assertEqual(filter_url('https://domain.com/init/ctr/fcn', out=True), "/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/init/static/file', out=True), "/init/static/file")
+        self.assertEqual(filter_url('https://domain.com/init/static/index', out=True), "/init/static/index")
         self.assertEqual(filter_url('https://domain.com/init/default/index', out=True), "/")
         self.assertEqual(filter_url('https://domain.com/init/ctr/index', out=True), "/ctr")
         self.assertEqual(filter_url('http://domain.com/init/default/fcn?query', out=True), "/fcn?query")
         self.assertEqual(filter_url('http://domain.com/init/default/fcn#anchor', out=True), "/fcn#anchor")
-        self.assertEqual(filter_url('http://domain.com/init/default/fcn?query#anchor', out=True), "/fcn?query#anchor")
+        self.assertEqual(filter_url('http://domain.com/init/default/fcn?query#anchor', out=True), 
+            "/fcn?query#anchor")
+
+        router_out['BASE']['map_static'] = True
+        load(rdict=router_out)
+        self.assertEqual(filter_url('https://domain.com/init/static/file', out=True), "/static/file")
+        self.assertEqual(filter_url('https://domain.com/init/static/index', out=True), "/static/index")
+
+        router_out['init']['map_static'] = False
+        load(rdict=router_out)
+        self.assertEqual(filter_url('https://domain.com/init/static/file', out=True), "/init/static/file")
+        self.assertEqual(filter_url('https://domain.com/init/static/index', out=True), "/init/static/index")
 
     def test_router_hyphen(self):
         '''
@@ -493,13 +513,19 @@ class TestRouter(unittest.TestCase):
         load(rdict=router_hyphen)
         self.assertEqual(filter_url('http://domain.com/fcn-1'), "/init/default/fcn_1")
         self.assertEqual(filter_url('http://domain.com/init/default/fcn_1', out=True), "/fcn-1")
-        self.assertEqual(filter_url('http://domain.com/static/filename-with_underscore'), "%s/applications/init/static/filename-with_underscore" % root)
-        self.assertEqual(filter_url('http://domain.com/init/static/filename-with_underscore', out=True), "/static/filename-with_underscore")
+        self.assertEqual(filter_url('http://domain.com/static/filename-with_underscore'), 
+            "%s/applications/init/static/filename-with_underscore" % root)
+        self.assertEqual(filter_url('http://domain.com/init/static/filename-with_underscore', out=True), 
+            "/init/static/filename-with_underscore")
 
-        self.assertEqual(filter_url('http://domain.com/app2/fcn_1'), "/app2/default/fcn_1")
-        self.assertEqual(filter_url('http://domain.com/app2/ctr/fcn_1', domain=('app2',None), out=True), "/ctr/fcn_1")
-        self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore', domain=('app2',None), out=True), "/static/filename-with_underscore")
-        self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore'), "%s/applications/app2/static/filename-with_underscore" % root)
+        self.assertEqual(filter_url('http://domain.com/app2/fcn_1'), 
+            "/app2/default/fcn_1")
+        self.assertEqual(filter_url('http://domain.com/app2/ctr/fcn_1', domain=('app2',None), out=True), 
+            "/ctr/fcn_1")
+        self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore', domain=('app2',None), out=True), 
+            "/app2/static/filename-with_underscore")
+        self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore'), 
+            "%s/applications/app2/static/filename-with_underscore" % root)
 
     def test_router_lang(self):
         '''
@@ -532,6 +558,20 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='en', out=True), "/ctr/fcn")
         self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='it', out=True), "/it/ctr/fcn")
         self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='it-it', out=True), "/it-it/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/admin/static/file', lang='en', out=True), "/admin/en/static/file")
+        self.assertEqual(filter_url('https://domain.com/admin/static/file', lang='it', out=True), "/admin/it/static/file")
+        self.assertEqual(filter_url('https://domain.com/admin/static/file', lang='it-it', out=True), "/admin/it-it/static/file")
+        self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='it', out=True), "/welcome/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='es', out=True), "/welcome/ctr/fcn")        
+
+        router_lang['admin']['map_static'] = True
+        load(rdict=router_lang)
+        self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='en', out=True), "/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='it', out=True), "/it/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/admin/ctr/fcn', lang='it-it', out=True), "/it-it/ctr/fcn")
+        self.assertEqual(filter_url('https://domain.com/admin/static/file', lang='en', out=True), "/static/file")
+        self.assertEqual(filter_url('https://domain.com/admin/static/file', lang='it', out=True), "/it/static/file")
+        self.assertEqual(filter_url('https://domain.com/admin/static/file', lang='it-it', out=True), "/it-it/static/file")
         self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='it', out=True), "/welcome/ctr/fcn")
         self.assertEqual(filter_url('https://domain.com/welcome/ctr/fcn', lang='es', out=True), "/welcome/ctr/fcn")        
 
@@ -628,6 +668,35 @@ class TestRouter(unittest.TestCase):
             "/#anchor")
         self.assertEqual(str(URL(a='init', c='default', f='f', anchor='anchor')),
             "/f#anchor")
+
+    def test_router_prefix(self):
+        '''
+        Test path_prefix
+        '''
+        router_path_prefix = dict(
+            BASE = dict(
+                default_application = 'a1',
+                applications = ['a1', 'a2'],
+                path_prefix = '/path/to/apps',
+            ),
+            a1 = dict(
+                controllers = ['c1a', 'c1b', 'default'],
+            ),
+            a2 = dict(
+                default_controller = 'c2',
+                controllers = [],
+            ),
+        )
+        load(rdict=router_path_prefix)
+        self.assertEqual(str(URL(a='a1', c='c1a', f='f')), 
+            "/path/to/apps/c1a/f")
+        self.assertEqual(str(URL(a='a2', c='c', f='f')), 
+            "/path/to/apps/a2/c/f")
+        self.assertEqual(str(URL(a='a2', c='c2', f='f')), 
+            "/path/to/apps/a2/c2/f")
+        self.assertEqual(filter_url('http://domain.com/a1/'), "/a1/default/index")
+        self.assertEqual(filter_url('http://domain.com/path/to/apps/a1/'), "/a1/default/index")
+        self.assertEqual(filter_url('http://domain.com/path/to/a1/'), "/a1/default/path ['to', 'a1']")
 
     def test_router_absolute(self):
         '''
