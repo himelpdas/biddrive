@@ -12,8 +12,6 @@ Functions required to execute app components
 FOR INTERNAL USE ONLY
 """
 
-import sys
-sys.path.append('../gluon')
 import os
 import copy
 import random

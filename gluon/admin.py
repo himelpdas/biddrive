@@ -11,8 +11,8 @@ import sys
 import traceback
 import zipfile
 import urllib
-from utils import web2py_uuid
 from shutil import rmtree
+from utils import web2py_uuid
 from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
 from fileutils import up, fix_newlines, abspath, recursive_unlink
 from restricted import RestrictedError
@@ -439,7 +439,7 @@ def upgrade(request, url='http://web2py.com'):
         return False, e
 
 def add_path_first(path):
-    sys.path = [path]+[p for p in sys.path if not p==path]
+    sys.path = [path]+[p for p in sys.path if (not p==path and not p==(path+'/'))]
 
 def create_missing_folders():
     if not global_settings.web2py_runtime_gae:
@@ -447,7 +447,7 @@ def create_missing_folders():
             path = abspath(path, gluon=True)
             if not os.path.exists(path):
                 os.mkdir(path)
-    paths = (global_settings.gluon_parent, abspath('site-packages', gluon=True), "")
+    paths = (global_settings.gluon_parent, abspath('site-packages', gluon=True),  abspath('gluon', gluon=True), '')
     [add_path_first(path) for path in paths]
 
 def create_missing_app_folders(request):
