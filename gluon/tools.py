@@ -1270,7 +1270,7 @@ class Auth(object):
                                         writable=False,readable=False),
                                   Field('modified_on','datetime',update=now,default=now,
                                         writable=False,readable=False),
-                                  Field('updated_by',self.settings.table_user,
+                                  Field('modified_by',self.settings.table_user,
                                         default=lazy_user,update=lazy_user,
                                         writable=False,readable=False))
         
