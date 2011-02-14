@@ -1067,18 +1067,22 @@ class SQLFORM(FORM):
 
         if record_id and str(record_id) != str(self.record_id):
             raise SyntaxError, 'user is tampering with form\'s record_id: ' \
-                               '%s != %s' % (record_id, self.record_id)
+                '%s != %s' % (record_id, self.record_id)
+        
+        if record_id and dbio:
+            if keyed:
+                self.vars.update(record_id)
+            else:
+                self.vars.id = self.record.id
 
         if requested_delete and self.custom.deletable:
             if dbio:
                 if keyed:
                     qry = reduce(lambda x,y: x & y,
                                  [self.table[k]==record_id[k] for k in self.table._primarykey])
-                    if self.table._db(qry).delete():
-                        self.vars.update(record_id)
                 else:
-                    self.table._db(self.table.id == self.record.id).delete()
-                    self.vars.id = self.record.id
+                    qry = self.table.id == self.record.id
+                self.table._db(qry).delete()
             self.errors.clear()
             for component in self.elements('input, select, textarea'):
                 component['_disabled'] = True
