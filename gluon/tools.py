@@ -1319,10 +1319,10 @@ class Auth(object):
                            if k in table_user.fields])
             d.update(keys)
             user_id = table_user.insert(**d)
+            user =  self.user = table_user[user_id]
             if self.settings.create_user_groups:
                 group_id = self.add_group("user_%s" % user_id)
                 self.add_membership(group_id, user_id)
-            user = table_user[user_id]
         return user
 
     def basic(self):
