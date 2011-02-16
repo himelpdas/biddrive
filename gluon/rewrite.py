@@ -577,7 +577,7 @@ def regex_filter_out(url, e=None):
     return url
 
 
-def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=None, domain=(None,None)):
+def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=None, domain=(None,None), env=False):
     "doctest/unittest interface to regex_filter_in() and regex_filter_out()"
     regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]*)(?P<uri>.*)')
     match = regex_url.match(url)
@@ -654,6 +654,8 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=N
         result += " ?%s" % e['QUERY_STRING']
     if request.uri_language:
         result += " (%s)" % request.uri_language
+    if env:
+        return request.env
     return result
 
 
@@ -699,9 +701,9 @@ class MapUrlIn(object):
 
         path = self.env['PATH_INFO']
         self.query = self.env.get('QUERY_STRING', None)
-        self.env['REQUEST_URI'] = path + (self.query and ('?' + self.query) or '')
         path = path.lstrip('/')
         self.env['PATH_INFO'] = '/' + path
+        self.env['WEB2PY_ORIGINAL_URI'] = self.env['PATH_INFO'] + (self.query and ('?' + self.query) or '')
 
         # to handle empty args, strip exactly one trailing slash, if present
         # .../arg1// represents one trailing empty arg
@@ -891,7 +893,11 @@ class MapUrlIn(object):
                            web2py_error='invalid arg <%s>' % arg)
 
     def update_request(self):
-        "update request from self"
+        '''
+        update request from self
+        build env.request_uri
+        make lower-case versions of http headers in env
+        '''
         self.request.application = self.application
         self.request.controller = self.controller
         self.request.function = self.function
@@ -899,6 +905,16 @@ class MapUrlIn(object):
         self.request.args = self.args
         if self.language:
             self.request.uri_language = self.language
+        uri = '/%s/%s/%s' % (self.application, self.controller, self.function)
+        if self.map_hyphen:
+            uri = uri.replace('_', '-')
+        if self.extension != 'html':
+            uri += '.' + self.extension
+        if self.language:
+            uri = '/%s%s' % (self.language, uri)
+        uri += self.args and urllib.quote('/' + '/'.join([str(x) for x in self.args])) or ''
+        uri += (self.query and ('?' + self.query) or '')
+        self.env['REQUEST_URI'] = uri
         for (key, value) in self.env.items():
             self.request.env[key.lower().replace('.', '_')] = value
 

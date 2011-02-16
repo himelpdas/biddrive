@@ -337,6 +337,25 @@ routes_out = [
         self.assertEqual(str(URL(r=r, a='a', c='c', f='f', scheme='wss', host='host.com', port=1234)), 
             "wss://host.com:1234/a/c/f")
 
+    def test_request_uri(self):
+        '''
+        Test REQUEST_URI in env
+        '''
+        data = r'''routes_in = [
+    ('/abc', '/init/default/abc'), 
+    ('/index/$anything', '/init/default/index/$anything'), 
+    ]
+'''
+        load(data=data)
+        self.assertEqual(filter_url('http://domain.com/abc', env=True).request_uri, 
+            '/init/default/abc')
+        self.assertEqual(filter_url('http://domain.com/abc?def', env=True).request_uri, 
+            '/init/default/abc?def')
+        self.assertEqual(filter_url('http://domain.com/index/abc', env=True).request_uri, 
+            "/init/default/index/abc")
+        self.assertEqual(filter_url('http://domain.com/index/a%20bc', env=True).request_uri, 
+            "/init/default/index/a bc")
+
 
 if __name__ == '__main__':
     setUpModule()       # pre-2.7
