@@ -792,6 +792,9 @@ class BaseAdapter(ConnectionPool):
     def DIV(self,first,second):
         return '(%s / %s)' % (self.expand(first),self.expand(second,first.type))
 
+    def MOD(self,first,second): 
+        return '(%s %% %s)' % (self.expand(first),self.expand(second,first.type)) 
+
     def AS(self,first,second):
         return '(%s AS %s)' % (self.expand(first),second)
 
@@ -4109,6 +4112,9 @@ class Expression(object):
 
     def __div__(self, other):
         return Expression(self.db,self.db._adapter.DIV,self,other,self.type)
+
+    def __mod__(self, other): 
+        return Expression(self.db,self.db._adapter.MOD,self,other,self.type) 
 
     def __eq__(self, value):
         return Query(self.db, self.db._adapter.EQ, self, value)
