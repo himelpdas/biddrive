@@ -908,7 +908,7 @@ recalled
 - fixed cron for bytecode compiled apps, thanks Álvaro J. Iradier Muro
 - other bugs fixes and pep8 compliant fixes
 
-1.89.1-.5
+## 1.89.1-.5
 - new admin layout (thanks Branko Vukelic)
 - new admin search
 - new admin language selector (thanks Yair)
@@ -922,7 +922,7 @@ recalled
 - service.jsonrpc supports service.JsonRpcException (thanks Matt)
 - bug fixes
 
-1.90.1
+## 1.90.1
 - new DAL (complete rewrite of the web2py DAL is more modular)
 - rewrite has fail safe reload, thanks Jonathan
 - better CAS with v2 support, thanks Olivier ROCH VILATO
@@ -938,30 +938,30 @@ recalled
 - optional: digitally signed URLs, thanks Brian Meredyk
 - minor bug fixes
 
-1.90.2-4
+## 1.90.2-4
 - pymysql no longer requires ssl (if not used)
 - fixed bug with virtualfields
 - fixed bug in truncate (new dal)
 - fixed bug in select with alternate primary key (new dal)
 - fixed bug with IS_IN_DB and self refences (also new dal)
 
-1.90.5
+## 1.90.5
 - set poll = False in rocket because of poll python thread bug often unfixed, thanks Jonathan
 - fixes issue with crud and reCaptcha
 
-1.90.6
+## 1.90.6
 - fix issue with pickling new dal Row and Rows.
 
-1.91.1
+## 1.91.1
 - LICENSE CHANGE FROM GPLv2 to LGPLv3
 - URL(...,hash_vars=...) allows to specify which vars need to be signed
 - fixed bug with aliasing in new DAL
 
-1.91.2-1.91.5
+## 1.91.2-1.91.5
 - fixed a problem with deplyment on GAE
 - other new dal bug fixes
 
-1.91.6
+## 1.91.6
 - web2py comet via gluon/contrib/comet_messaging.py (html5 websockets) experimental
 - fixed problem with services (broken in 1.91.5), thanks Vollrath
 - customizable uploadwidget, thanks Fran
@@ -973,3 +973,15 @@ recalled
 - support for GAE namespaces via DAL('gae://namespace')
 - new rocket (1.2.2), thanks Tim
 - many other bug fixes and improvements (thanks Jonathan)
+
+## 1.92.1
+- much improved routing (thanks Jonathan)
+- Expression.__mod__ (thanks Denes)
+- admin has MULTI_USER_MODE (admin/models/0.py)
+- support for count(distinct=...)
+- has_permissions(...,group_id)
+- IS_MATCH(...,strict=True)
+- URL(...,scheme=,host=,port=), thanks Jonathan
+- admin in Afrikaans, thanks Caleb
+- auth.signature (experimental)
+- many other bug fixes
