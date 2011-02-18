@@ -13,7 +13,7 @@ from validators import IS_NOT_IN_DB, IS_NOT_EMPTY, IS_IN_DB, IS_EMAIL, IS_EXPR, 
 from html import DIV, URL, A, BR, SPAN, XML, UL, LI, H1, H2, H3, P, SCRIPT, TAG, IFRAME, LABEL, CODE
 from html import FORM, INPUT, OPTION, SELECT
 from html import TABLE, TR, TD
-from sqlhtml import SQLFORM, SQLTABLE, form_factory
+from sqlhtml import SQLFORM, SQLTABLE
 from http import HTTP, redirect
 from utils import web2py_uuid
 
@@ -1940,7 +1940,7 @@ class Auth(object):
             session.flash = self.messages.invalid_reset_password
             redirect(next)
         passfield = self.settings.password_field
-        form = form_factory(
+        form = SQLFORM.factory(
             Field('new_password', 'password',
                   label=self.messages.new_password,
                   requires=self.settings.table_user[passfield].requires),
@@ -1948,7 +1948,8 @@ class Auth(object):
                   label=self.messages.verify_password,
                   requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                                     self.messages.mismatched_password)]),
-            submit_button=self.messages.submit_button
+            submit_button=self.messages.submit_button,
+            formtyle=self.settings.formstyle,
         )
         if form.accepts(request,session,hideerror=self.settings.hideerror):
             user.update_record(**{passfield:form.vars.new_password,
@@ -2089,7 +2090,7 @@ class Auth(object):
         if log == DEFAULT:
             log = self.messages.change_password_log
         passfield = self.settings.password_field
-        form = form_factory(
+        form = SQLFORM.factory(
             Field('old_password', 'password',
                 label=self.messages.old_password,
                 requires=validators(
@@ -2103,7 +2104,8 @@ class Auth(object):
                 label=self.messages.verify_password,
                 requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                               self.messages.mismatched_password)]),
-            submit_button=self.messages.submit_button
+            submit_button=self.messages.submit_button,
+            formstyle = self.settings.formstyle
         )
         if form.accepts(request, session,
                         formname='change_password',
