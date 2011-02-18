@@ -688,17 +688,15 @@ def addrow(form,a,b,c,style,_id,position=-1):
                                      DIV(c, _class='w2p_fc'),
                                      _id = _id))
     elif style == "table2cols":
-        form[0].insert(position, TR(LABEL(a),
-                                    b, _id = _id))
+        form[0].insert(position, TR(LABEL(a),''))
+        form[0].insert(position+1, TR(b, _colspan=2, _id = _id))
     elif style == "ul":
         form[0].insert(position, LI(DIV(LABEL(a),_class='w2p_fl'),
                                     DIV(b, _class='w2p_fw'),
                                     DIV(c, _class='w2p_fc'),
                                     _id = _id))
     else:
-        form[0].insert(position, TR(LABEL(a),
-                                    b,c,
-                                    _id = _id))
+        form[0].insert(position, TR(LABEL(a),b,c,_id = _id))
 
 
 class Auth(object):
@@ -1618,26 +1616,27 @@ class Auth(object):
             log = self.messages.register_log
 
         passfield = self.settings.password_field
+        formstyle = self.settings.formstyle
         form = SQLFORM(table_user,
                        fields = self.settings.register_fields,
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label,
-                       formstyle=self.settings.formstyle
+                       formstyle=formstyle
                        )
         for i, row in enumerate(form[0].components):
-            item = row[1][0]
-            if isinstance(item, INPUT) and item['_name'] == passfield:
+            item = row.element('input',_name=passfield)
+            if item:
                 addrow(form, self.messages.verify_password + ':',
-                              INPUT(_name="password_two",  _type="password",
-                                    requires=IS_EXPR('value==%s' % \
-                                        repr(request.vars.get(passfield, None)),
-                                    error_message=self.messages.mismatched_password)),
-                              self.messages.verify_password_comment,
-                              self.settings.formstyle,
-                              '%s_%s__row' % (table_user, 'password_two'),
-                             position=i+1)
+                       INPUT(_name="password_two",  _type="password",
+                             requires=IS_EXPR('value==%s' % \
+                             repr(request.vars.get(passfield, None)),
+                             error_message=self.messages.mismatched_password)),
+                       self.messages.verify_password_comment,
+                       formstyle,
+                       '%s_%s__row' % (table_user, 'password_two'),
+                       position=i+1)
                 break
         captcha = self.settings.register_captcha or self.settings.captcha
         if captcha:
