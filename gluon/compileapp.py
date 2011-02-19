@@ -126,23 +126,23 @@ class LoadFactory(object):
                     other_response._view_environment[key] = page[key]
                 run_view_in(other_response._view_environment)
                 page = other_response.body.getvalue()
-            script = ''
+            js = None
             if ajax_trap:
-                script += "web2py_trap_form('%s','%s');" % \
-                    (html.URL(request.application, c, f, r=request,
-                              args=args, vars=vars, extension=extension),
-                     target)
-            #for (name,value) in other_response.headers:
-            #    if name == 'web2py-component-command':
-            #        script += value
-            return html.TAG[''](html.DIV(html.XML(page),_id=target),
-                                html.SCRIPT(script,_type="text/javascript"))
+                link = html.URL(request.application, c, f, r=request,
+                                args=args, vars=vars, extension=extension),
+                js = "web2py_trap_form('%s','%s');" % (link, target)            
+            # not sure about this
+            # for (name,value) in other_response.headers:
+            #     if name == 'web2py-component-command':
+            #         js += value
+            script = js and html.SCRIPT(js,_type="text/javascript") or ''
+            return html.TAG[''](html.DIV(html.XML(page),_id=target),script)
         else:
             url = url or html.URL(request.application, c, f, r=request,
                                   args=args, vars=vars, extension=extension)
-            return html.TAG[''](html.SCRIPT('web2py_component("%s","%s")' % (url, target),
-                                    _type="text/javascript"),
-                                html.DIV('loading...', _id=target))
+            script = html.SCRIPT('web2py_component("%s","%s")' % (url, target),
+                                 _type="text/javascript")
+            return html.TAG[''](script, html.DIV('loading...', _id=target))
 
 
 def local_import_aux(name, force=False, app='welcome'):
