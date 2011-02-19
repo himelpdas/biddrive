@@ -4,6 +4,7 @@
 # # Author: Mark Larsen, mostly stolen from Mark Hammond's
 # #   C:\Python25\Lib\site-packages\win32\Demos\win32gui_taskbar.py
 # # 11/7/08
+# dual licensed under the web2py license (LGPL) and the Python license.
 
 import os
 import sys

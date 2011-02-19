@@ -3,6 +3,7 @@
 
 """
 Developed by Robin Bhattacharyya (memecache for GAE)
+Released under the web2py license (LGPL)
 
 from gluon.contrib.gae_memcache import MemcacheClient
 cache.ram=cache.disk=MemcacheClient(request)
