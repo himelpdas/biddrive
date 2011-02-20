@@ -1628,11 +1628,14 @@ class Auth(object):
         for i, row in enumerate(form[0].components):
             item = row.element('input',_name=passfield)
             if item:
+                form.custom.widget.password_two = \
+                    INPUT(_name="password_two",  _type="password",
+                          requires=IS_EXPR('value==%s' % \
+                          repr(request.vars.get(passfield, None)),
+                          error_message=self.messages.mismatched_password))
+                
                 addrow(form, self.messages.verify_password + ':',
-                       INPUT(_name="password_two",  _type="password",
-                             requires=IS_EXPR('value==%s' % \
-                             repr(request.vars.get(passfield, None)),
-                             error_message=self.messages.mismatched_password)),
+                       form.custom.widget.password_two,
                        self.messages.verify_password_comment,
                        formstyle,
                        '%s_%s__row' % (table_user, 'password_two'),
