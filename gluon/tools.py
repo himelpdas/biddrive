@@ -1952,7 +1952,7 @@ class Auth(object):
                   requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                                     self.messages.mismatched_password)]),
             submit_button=self.messages.submit_button,
-            formtyle=self.settings.formstyle,
+            formstyle=self.settings.formstyle,
         )
         if form.accepts(request,session,hideerror=self.settings.hideerror):
             user.update_record(**{passfield:form.vars.new_password,
