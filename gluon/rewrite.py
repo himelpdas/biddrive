@@ -39,6 +39,7 @@ def _router_default():
         default_controller = 'default',
             controllers = 'DEFAULT',
         default_function = 'index',
+            functions = None,
         default_language = None,
             languages = None,
         root_static = ['favicon.ico', 'robots.txt'],
@@ -74,8 +75,8 @@ params = _params_default(app=None)  # regex rewrite parameters
 thread.routes = params              # default to base regex rewrite parameters
 routers = None
 
-ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 'controllers', 'default_function', 
-    'default_language', 'languages', 
+ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 'controllers',
+    'default_function', 'functions', 'default_language', 'languages', 
     'domain', 'domains', 'root_static', 'path_prefix',
     'map_hyphen', 'map_static',
     'acfe_match', 'file_match', 'args_match'))
@@ -324,6 +325,12 @@ def load_routers(all_apps):
         for key in router.keys():
             if key not in ROUTER_KEYS:
                 raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
+        if not router.applications:
+            router.applications = []
+        if not router.controllers:
+            router.controllers = []
+        if not router.functions:
+            router.functions = []
         if app != 'BASE':
             for base_only in ROUTER_BASE_KEYS:
                 router.pop(base_only, None)
@@ -695,6 +702,7 @@ class MapUrlIn(object):
         self.extension = 'html'
 
         self.controllers = []
+        self.functions = []
         self.languages = []
         self.default_language = None
         self.map_hyphen = True
@@ -784,6 +792,8 @@ class MapUrlIn(object):
         else:
             self.router = routers[self.application]   # application router
         self.controllers = self.router.controllers
+        self.default_controller = self.domain_controller or self.router.default_controller
+        self.functions = self.router.functions
         self.languages = self.router.languages
         self.default_language = self.router.default_language
         self.map_hyphen = self.router.map_hyphen
@@ -825,7 +835,7 @@ class MapUrlIn(object):
         #
         arg0 = self.harg0    # map hyphens
         if not arg0 or (self.controllers and arg0 not in self.controllers):
-            self.controller = self.domain_controller or self.router.default_controller or ''
+            self.controller = self.default_controller or ''
         else:
             self.controller = arg0
         self.pop_arg_if(arg0 == self.controller)
@@ -864,7 +874,10 @@ class MapUrlIn(object):
     def map_function(self):
         "handle function.extension"
         arg0 = self.harg0    # map hyphens
-        if arg0:
+        if not arg0 or self.functions and arg0 not in self.functions and self.controller == self.default_controller:
+            self.function = self.router.default_function or ""
+            self.pop_arg_if(arg0 and self.function == arg0)
+        else:
             func_ext = arg0.split('.')
             if len(func_ext) > 1:
                 self.function = func_ext[0]
@@ -872,8 +885,6 @@ class MapUrlIn(object):
             else:
                 self.function = arg0
             self.pop_arg_if(True)
-        else:
-            self.function = self.router.default_function or ""
         logger.debug("route: function.ext=%s.%s" % (self.function, self.extension))
     
         if not self.router._acfe_match.match(self.function):
@@ -953,6 +964,7 @@ class MapUrlOut(object):
 
         self.applications = routers.BASE.applications
         self.controllers = self.router.controllers
+        self.functions = self.router.functions
         self.languages = self.router.languages
         self.default_language = self.router.default_language
         self.map_hyphen = self.router.map_hyphen
@@ -961,6 +973,7 @@ class MapUrlOut(object):
 
         self.domain_application = request and self.request.env.domain_application
         self.domain_controller = request and self.request.env.domain_controller
+        self.default_function = self.router.default_function
 
         lang = request and request.uri_language
         if lang and self.languages and lang in self.languages:
@@ -968,7 +981,6 @@ class MapUrlOut(object):
         else:
             self.language = None
 
-        self._acf = ''
         self.omit_application = False
         self.omit_language = False
         self.omit_controller = False
@@ -1007,6 +1019,11 @@ class MapUrlOut(object):
         if self.controller == default_controller:
             self.omit_controller = True
 
+        #  omit function if default controller/function
+        #
+        if self.functions and self.function == self.default_function and self.omit_controller:
+            self.omit_function = True
+
         #  prohibit ambiguous cases
         #
         #  because we presume the lang string to be unambiguous, its presence protects application omission
@@ -1019,6 +1036,15 @@ class MapUrlOut(object):
                     self.omit_controller = False
         if not self.controllers or self.function in self.controllers:
             self.omit_controller = False
+        if self.args:
+            if self.args[0] in self.functions or self.args[0] in self.controllers or self.args[0] in self.applications:
+                self.omit_function = False
+        if self.omit_controller:
+            if self.function in self.controllers or self.function in self.applications:
+                self.omit_controller = False
+        if self.omit_application:
+            if self.controller in self.applications:
+                self.omit_application = False
 
         #  handle static as a special case
         #  (easier for external static handling)
@@ -1033,22 +1059,25 @@ class MapUrlOut(object):
 
     def build_acf(self):
         "build acf from components"
+        acf = ''
         if self.map_hyphen:
             self.application = self.application.replace('_', '-')
             self.controller = self.controller.replace('_', '-')
             if self.controller != 'static':
                 self.function = self.function.replace('_', '-')
         if not self.omit_application:
-            self._acf += '/' + self.application
+            acf += '/' + self.application
         if not self.omit_language:
-            self._acf += '/' + self.language
+            acf += '/' + self.language
         if not self.omit_controller:
-            self._acf += '/' + self.controller
+            acf += '/' + self.controller
         if not self.omit_function:
-            self._acf += '/' + self.function
+            acf += '/' + self.function
         if self.path_prefix:
-            self._acf = '/' + '/'.join(self.path_prefix) + self._acf
-        return self._acf or '/'
+            acf = '/' + '/'.join(self.path_prefix) + acf
+        if self.args:
+            return acf
+        return acf or '/'
 
     def acf(self):
         "convert components to /app/lang/controller/function"

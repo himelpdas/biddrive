@@ -84,18 +84,17 @@ alert_dependency = ['hashlib', 'uuid']
 # Now we remove the blacklisted modules if we are using the stated
 # python version.
 #
-# List of modules deprecated in python2.6 that are in the above set
+# List of modules deprecated in Python 2.6 or 2.7 that are in the above set
 py26_deprecated = ['mhlib', 'multifile', 'mimify', 'sets', 'MimeWriter']
+py27_deprecated = [] # ['optparse'] but we need it for now
 
-if python_version == '2.6':
+if python_version >= '2.6':
     base_modules += ['json', 'multiprocessing']
     base_modules = list(set(base_modules).difference(set(py26_deprecated)))
 
-# Example for python 2.7 (Uncomment if need)
-#py27_deprecated = ['put_the_deprecated_module_here']
-
-#if python_version == '2.7':
-#    base_modules = list(set(base_modules).difference(set(py27_deprecated)))
+if python_version >= '2.7':
+    base_modules += ['argparse']
+    base_modules = list(set(base_modules).difference(set(py27_deprecated)))
 
 # Now iterate in the base_modules, trying to do the import
 for module in base_modules + contributed_modules:

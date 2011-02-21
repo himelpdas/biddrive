@@ -494,6 +494,59 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('https://domain.com/init/static/file', out=True), "/init/static/file")
         self.assertEqual(filter_url('https://domain.com/init/static/index', out=True), "/init/static/index")
 
+    def test_router_functions(self):
+        '''
+        Test function-omission with functions=[something]
+        '''
+        router_functions = dict(
+            BASE = dict(
+                applications = ['init', 'app', 'app2'],
+                default_application = 'app',
+            ),
+            init = dict(
+                controllers = ['default'],
+            ),
+            app = dict(
+                controllers = ['default', 'ctr'],
+                functions = ['index', 'user', 'help'],
+            ),
+            app2 = dict(
+                controllers = ['default', 'ctr'],
+                functions = ['index', 'user', 'help'],
+            ),
+        )
+        load(rdict=router_functions)
+        self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1'])), "/init/f/arg1")
+        self.assertEqual(str(URL(a='init', c='default', f='index', args=['arg1'])), "/init/index/arg1")
+        self.assertEqual(str(URL(a='app', c='default', f='index', args=['arg1'])), "/arg1")
+        self.assertEqual(str(URL(a='app', c='default', f='user', args=['arg1'])), "/user/arg1")
+        self.assertEqual(str(URL(a='app', c='default', f='user', args=['index'])), "/user/index")
+        self.assertEqual(str(URL(a='app', c='default', f='index', args=['index'])), "/index/index")
+        self.assertEqual(str(URL(a='app', c='default', f='index', args=['init'])), "/index/init")
+        self.assertEqual(str(URL(a='app', c='default', f='index', args=['ctr'])), "/index/ctr")
+        self.assertEqual(str(URL(a='app', c='ctr', f='index', args=['arg'])), "/ctr/index/arg")
+
+        self.assertEqual(str(URL(a='app2', c='default', f='index', args=['arg1'])), "/app2/arg1")
+        self.assertEqual(str(URL(a='app2', c='default', f='user', args=['arg1'])), "/app2/user/arg1")
+        self.assertEqual(str(URL(a='app2', c='default', f='user', args=['index'])), "/app2/user/index")
+        self.assertEqual(str(URL(a='app2', c='default', f='index', args=['index'])), "/app2/index/index")
+        self.assertEqual(str(URL(a='app2', c='default', f='index', args=['init'])), "/app2/index/init")
+        self.assertEqual(str(URL(a='app2', c='default', f='index', args=['ctr'])), "/app2/index/ctr")
+
+        self.assertEqual(filter_url('http://d.com/arg'), "/app/default/index ['arg']")
+        self.assertEqual(filter_url('http://d.com/user'), "/app/default/user")
+        self.assertEqual(filter_url('http://d.com/user/arg'), "/app/default/user ['arg']")
+        self.assertEqual(filter_url('http://d.com/ctr'), "/app/ctr/index")
+        self.assertEqual(filter_url('http://d.com/ctr/index/arg'), "/app/ctr/index ['arg']")
+        self.assertEqual(filter_url('http://d.com/ctr/arg'), "/app/ctr/arg")
+
+        self.assertEqual(filter_url('http://d.com/app2/arg'), "/app2/default/index ['arg']")
+        self.assertEqual(filter_url('http://d.com/app2/user'), "/app2/default/user")
+        self.assertEqual(filter_url('http://d.com/app2/user/arg'), "/app2/default/user ['arg']")
+        self.assertEqual(filter_url('http://d.com/app2/ctr'), "/app2/ctr/index")
+        self.assertEqual(filter_url('http://d.com/app2/ctr/index/arg'), "/app2/ctr/index ['arg']")
+        self.assertEqual(filter_url('http://d.com/app2/ctr/arg'), "/app2/ctr/arg")
+
     def test_router_hyphen(self):
         '''
         Test hyphen conversion

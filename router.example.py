@@ -7,7 +7,7 @@
 #    the built-in default base router (shown below),
 #    updated by the BASE router in routes.py routers,
 #    updated by the app-specific router in routes.py routers (if any),
-#    updated by the app-specific router from applcations/app/routes.py routers (if any)
+#    updated by the app-specific router from applications/app/routes.py routers (if any)
 #
 #
 #  Router members:
@@ -15,7 +15,7 @@
 #  default_application: default application name
 #  applications: list of all recognized applications, or 'ALL' to use all currently installed applications
 #      Names in applications are always treated as an application names when they appear first in an incoming URL.
-#      Set applications to None to disable the removal of application names from outgoing URLs.
+#      Set applications=None to disable the removal of application names from outgoing URLs.
 #  domains: optional dict mapping domain names to application names
 #      The domain name can include a port number: domain.com:8080
 #      The application name can include a controller:  appx/ctlrx
@@ -27,14 +27,17 @@
 #        or in application-specific routers.
 #
 #  default_controller: name of default controller
-#  default_function: name of default function (all controllers)
+#  default_function: name of default function (in all controllers)
 #  controllers: list of valid controllers in selected app
 #       or "DEFAULT" to use all controllers in the selected app plus 'static'
 #       or None to disable controller-name removal.
 #      Names in controllers are always treated as controller names when they appear in an incoming URL after
 #      the (optional) application and language names. 
+#  functions: list of valid controllers in default controller (default None)
+#      If present, the default function name will be omitted when the controller is the default controller
+#      and the first arg does not create an ambiguity.
 #  languages: list of all supported languages
-#      Names in controllers are always treated as language names when they appear in an incoming URL after
+#      Names in languages are always treated as language names when they appear in an incoming URL after
 #      the (optional) application name. 
 #  default_language
 #       The language code (for example: en, it-it) optionally appears in the URL following
@@ -42,14 +45,14 @@
 #       request.language; for outgoing URLs it is taken from request.language.
 #       If languages=None, language support is disabled.
 #       The default_language, if any, is omitted from the URL.
-#  root_static: list of static files accessed from root
-#       (mapped to the current application's static/ directory)
-#       Each application has its own root-static files.
+#  root_static: list of static files accessed from root (by default, favicon.ico & robots.txt)
+#       (mapped to the default application's static/ directory)
+#       Each default (including domain-mapped) application has its own root-static files.
 #  domain: the domain that maps to this application (alternative to using domains in the BASE router)
 #  map_hyphen: If True (default), hyphens in incoming /a/c/f fields are converted to underscores,
 #       and back to hyphens in outgoing URLs. Language, args and the query string are not affected.
-#  map_static: By default, the default application is not stripped from static URLs. Set map_static=True
-#       to override this policy.
+#  map_static: By default, the default application is not stripped from static URLs. 
+#       Set map_static=True to override this policy.
 #  acfe_match: regex for valid application, controller, function, extension /a/c/f.e
 #  file_match: regex for valid file (used for static file names)
 #  args_match: regex for valid args
@@ -65,6 +68,7 @@
 #         default_controller = 'default',
 #             controllers = 'DEFAULT',
 #         default_function = 'index',
+#             functions = None,
 #         default_language = None,
 #             languages = None,
 #         root_static = ['favicon.ico', 'robots.txt'],
