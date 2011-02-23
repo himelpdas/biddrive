@@ -325,29 +325,42 @@ def load_routers(all_apps):
         for key in router.keys():
             if key not in ROUTER_KEYS:
                 raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
-        if not router.applications:
-            router.applications = []
         if not router.controllers:
-            router.controllers = []
-        if not router.functions:
-            router.functions = []
+            router.controllers = set()
+        elif not isinstance(router.controllers, str):
+            router.controllers = set(router.controllers)
+        if router.functions:
+            router.functions = set(router.functions)
+        else:
+            router.functions = set()
+        if router.languages:
+            router.languages = set(router.languages)
+        else:
+            router.languages = set()
         if app != 'BASE':
             for base_only in ROUTER_BASE_KEYS:
                 router.pop(base_only, None)
             if 'domain' in router:
                 routers.BASE.domains[router.domain] = app
             if isinstance(router.controllers, str) and router.controllers == 'DEFAULT':
-                router.controllers = []
+                router.controllers = set()
                 if os.path.isdir(abspath('applications', app)):
                     cpath = abspath('applications', app, 'controllers')
                     for cname in os.listdir(cpath):
                         if os.path.isfile(abspath(cpath, cname)) and cname.endswith('.py'):
-                            router.controllers.append(cname[:-3])
-            if router.controllers and 'static' not in router.controllers:
-                router.controllers.append('static')
+                            router.controllers.add(cname[:-3])
+            if router.controllers:
+                router.controllers.add('static')
+                router.controllers.add(router.default_controller)
+            if router.functions:
+                router.functions.add(router.default_function)
 
     if isinstance(routers.BASE.applications, str) and routers.BASE.applications == 'ALL':
         routers.BASE.applications = list(all_apps)
+    if routers.BASE.applications:
+        routers.BASE.applications = set(routers.BASE.applications)
+    else:
+        routers.BASE.applications = set()
 
     for app in routers.keys():
         # set router name
@@ -701,9 +714,9 @@ class MapUrlIn(object):
         self.function = None
         self.extension = 'html'
 
-        self.controllers = []
-        self.functions = []
-        self.languages = []
+        self.controllers = set()
+        self.functions = set()
+        self.languages = set()
         self.default_language = None
         self.map_hyphen = True
 

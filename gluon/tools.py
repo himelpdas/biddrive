@@ -2044,7 +2044,7 @@ class Auth(object):
             elif next and not next[0] == '/' and next[:4] != 'http':
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
-        old_requires = table_user.email.requires
+        # old_requires = table_user.email.requires
         return form
 
     def retrieve_password(

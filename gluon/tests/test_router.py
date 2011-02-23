@@ -644,9 +644,17 @@ class TestRouter(unittest.TestCase):
                 default_controller = 'c2',
                 controllers = [],
             ),
+            a3 = dict(
+                default_controller = 'c2',
+                controllers = ['c1'],
+            ),
+            a4 = dict(
+                default_function = 'f1',
+                functions = ['f2'],
+            ),
         )
         load(rdict=router_get_effective)
-        self.assertEqual(get_effective_router('BASE').applications, ['a1','a2'])
+        self.assertEqual(get_effective_router('BASE').applications, set(['a1','a2']))
         self.assertEqual(get_effective_router('BASE').default_application, 'a1')
         self.assertEqual(get_effective_router('BASE').domains, {})
         self.assertEqual(get_effective_router('a1').applications, None)
@@ -655,8 +663,10 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(get_effective_router('a1').default_controller, "default")
         self.assertEqual(get_effective_router('a2').default_application, None)
         self.assertEqual(get_effective_router('a2').default_controller, "c2")
-        self.assertEqual(get_effective_router('a1').controllers, ['c1a', 'c1b', 'default', 'static'])
-        self.assertEqual(get_effective_router('a2').controllers, [])
+        self.assertEqual(get_effective_router('a1').controllers, set(['c1a', 'c1b', 'default', 'static']))
+        self.assertEqual(get_effective_router('a2').controllers, set())
+        self.assertEqual(get_effective_router('a3').controllers, set(['c1', 'c2', 'static']))
+        self.assertEqual(get_effective_router('a4').functions, set(['f1', 'f2']))
         self.assertEqual(get_effective_router('xx'), None)
 
     def test_router_error(self):

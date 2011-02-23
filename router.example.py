@@ -33,7 +33,7 @@
 #       or None to disable controller-name removal.
 #      Names in controllers are always treated as controller names when they appear in an incoming URL after
 #      the (optional) application and language names. 
-#  functions: list of valid controllers in default controller (default None)
+#  functions: list of valid functions in the default controller (default None)
 #      If present, the default function name will be omitted when the controller is the default controller
 #      and the first arg does not create an ambiguity.
 #  languages: list of all supported languages
