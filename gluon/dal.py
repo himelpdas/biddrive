@@ -389,7 +389,7 @@ class BaseAdapter(ConnectionPool):
         os.unlink(filename)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "None"
         self.uri = uri
@@ -1325,7 +1325,7 @@ class SQLiteAdapter(BaseAdapter):
             return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "sqlite"
         self.uri = uri
@@ -1340,7 +1340,11 @@ class SQLiteAdapter(BaseAdapter):
             dbpath = uri.split('://')[1]
             if dbpath[0] != '/':
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
-        self.pool_connection(lambda dbpath=dbpath: sqlite3.Connection(dbpath, check_same_thread=False))
+        if not 'check_same_thread' in driver_options:
+            driver_options['check_same_thread'] = False
+        def connect(dbpath=dbpath, driver_options=driver_options):
+            return sqlite3.Connection(dbpath, **driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
@@ -1356,7 +1360,7 @@ class SQLiteAdapter(BaseAdapter):
 class JDBCSQLiteAdapter(SQLiteAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "sqlite"
         self.uri = uri
@@ -1371,7 +1375,9 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
             dbpath = uri.split('://')[1]
             if dbpath[0] != '/':
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
-        self.pool_connection(lambda dbpath=dbpath: zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath)))
+        def connect(dbpath=dbpath,driver_options=driver_options):
+            return zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath),**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
@@ -1432,7 +1438,7 @@ class MySQLAdapter(BaseAdapter):
         return '; ALTER TABLE %s ADD ' % table
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "mysql"
         self.uri = uri
@@ -1459,18 +1465,15 @@ class MySQLAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         port = int(m.group('port') or '3306')
         charset = m.group('charset') or 'utf8'
-        self.pool_connection(lambda db=db,
-                             user=credential_decoder(user),
-                             password=credential_decoder(password),
-                             host=host,
-                             port=port,
-                             charset=charset: self.driver.connect(db=db,
-                                                                  user=user,
-                                                                  passwd=password,
-                                                                  host=host,
-                                                                  port=port,
-                                                                  charset=charset,
-                                                                  ))
+        driver_options.update(dict(db=db,
+                                   user=credential_decoder(user),
+                                   password=credential_decoder(password),
+                                   host=host,
+                                   port=port,
+                                   charset=charset))
+        def connect(dbpath=dbpath,driver_options=driver_options):
+            return self.driver.connect(**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
@@ -1532,7 +1535,7 @@ class PostgreSQLAdapter(BaseAdapter):
         # self.execute("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NEXTVAL('%s');" % (tablename,fieldname,sequence_name))
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "postgres"
         self.uri = uri
@@ -1566,8 +1569,9 @@ class PostgreSQLAdapter(BaseAdapter):
             msg = ("dbname='%s' user='%s' host='%s'"
                    "port=%s password='%s'") \
                    % (db, user, host, port, password)
-
-        self.pool_connection(lambda msg=msg: psycopg2.connect(msg))
+        def connect(msg=msg,driver_options=driver_options):
+            return psycopg2.connect(msg,**driver_options)
+        self.pool_connection(connect)
         self.connection.set_client_encoding('UTF8')
         self.cursor = self.connection.cursor()
         self.execute('BEGIN;')
@@ -1585,7 +1589,7 @@ class PostgreSQLAdapter(BaseAdapter):
 class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "postgres"
         self.uri = uri
@@ -1611,7 +1615,9 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
             raise SyntaxError, 'Database name required'
         port = m.group('port') or '5432'
         msg = ('jdbc:postgresql://%s:%s/%s' % (host, port, db), user, password)
-        self.pool_connection(lambda msg=msg: zxJDBC.connect(*msg))
+        def connect(msg=msg,driver_options=driver_options):
+            return zxJDBC.connect(*msg,**driver_options)
+        self.pool_connection(connect)
         self.connection.set_client_encoding('UTF8')
         self.cursor = self.connection.cursor()
         self.execute('BEGIN;')
@@ -1696,7 +1702,7 @@ class OracleAdapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "oracle"
         self.uri = uri
@@ -1705,7 +1711,11 @@ class OracleAdapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         uri = uri.split('://')[1]
-        self.pool_connection(lambda uri=uri: cx_Oracle.connect(uri,threaded=True))
+        if not 'threaded' in driver_options:
+            driver_options['threaded']=True
+        def connect(uri=uri,driver_options=driver_options):
+            return cx_Oracle.connect(uri,**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         self.execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
         self.execute("ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
@@ -1790,7 +1800,7 @@ class MSSQLAdapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "mssql"
         self.uri = uri
@@ -1842,7 +1852,9 @@ class MSSQLAdapter(BaseAdapter):
             urlargs = ';'.join(['%s=%s' % (ak, av) for (ak, av) in argsdict.items()])
             cnxn = 'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
                 % (host, port, db, user, password, urlargs)
-        self.pool_connection(lambda cnxn=cnxn : pyodbc.connect(cnxn))
+        def connect(cnxn=cnxn,driver_options=driver_options):
+            return pyodbc.connect(cnxn,**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
     def lastrowid(self,table):
@@ -1946,7 +1958,7 @@ class FireBirdAdapter(BaseAdapter):
                 'SET GENERATOR %s TO 0;' % table._sequence_name]
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "firebird"
         self.uri = uri
@@ -1972,14 +1984,14 @@ class FireBirdAdapter(BaseAdapter):
         if not db:
             raise SyntaxError, 'Database name required'
         charset = m.group('charset') or 'UTF8'
-        self.pool_connection(lambda dsn='%s/%s:%s' % (host,port,db),
-                             user = credential_decoder(user),
-                             password = credential_decoder(password),
-                             charset = charset: \
-                                 kinterbasdb.connect(dsn=dsn,
-                                                     user=user,
-                                                     password=password,
-                                                     charset=charset))
+        driver_options.update(dict(dsn='%s/%s:%s' % (host,port,db),
+                                   user = credential_decoder(user),
+                                   password = credential_decoder(password),
+                                   charset = charset))
+        def connect(driver_options=driver_options):
+            return kinterbasdb.connect(**driver_options)
+        self.pool_connection(connect)
+
         self.cursor = self.connection.cursor()
 
     def create_sequence_and_triggers(self, query, table, **args):
@@ -2000,7 +2012,7 @@ class FireBirdAdapter(BaseAdapter):
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "firebird"
         self.uri = uri
@@ -2026,16 +2038,14 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         if not charset:
             charset = 'UTF8'
         host = ''
-        self.pool_connection(lambda host=host,
-                             database=pathdb,
-                             user=credential_decoder(user),
-                             password=credential_decoder(password),
-                             charset=charset: \
-                                 kinterbasdb.connect(host=host,
-                                                     database=pathdb,
-                                                     user=user,
-                                                     password=password,
-                                                     charset=charset))
+        driver_options.update(dict(host=host,
+                                   database=pathdb,
+                                   user=credential_decoder(user),
+                                   password=credential_decoder(password),
+                                   charset=charset))        
+        def connect(driver_options=driver_options):
+            return kinterbasdb.connect(**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
 
@@ -2099,7 +2109,7 @@ class InformixAdapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "informix"
         self.uri = uri
@@ -2126,11 +2136,12 @@ class InformixAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         user = credential_decoder(user)
         password = credential_decoder(password)
-        self.pool_connection(lambda dsn='%s@%s' % (db,user),
-                             user=user,password=password:
-                                 informixdb.connect(dsn, user=user,
-                                                    password=password,
-                                                    autocommit=True))
+        driver_options.update(dict(dsn='%s@%s' % (db,user),
+                                   user=user,password=password,
+                                   autocommit=True))
+        def connect(dsn=dsn,driver_options=driver_options):
+            return informixdb.connect(dsn,**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
     def execute(self,command):
@@ -2193,7 +2204,7 @@ class DB2Adapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "db2"
         self.uri = uri
@@ -2202,7 +2213,9 @@ class DB2Adapter(BaseAdapter):
         self.db_codec = db_codec
         self.find_or_make_work_folder()
         cnxn = uri.split(':', 1)[1]
-        self.pool_connection(lambda cnxn=cnxn: pyodbc.connect(cnxn))
+        def connect(cnxn=cnxn,driver_options=driver_options):
+            return pyodbc.connect(cnxn,**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
     def execute(self,command):
@@ -2266,7 +2279,7 @@ class IngresAdapter(BaseAdapter):
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.dbengine = "ingres"
         self.uri = uri
@@ -2283,14 +2296,13 @@ class IngresAdapter(BaseAdapter):
         vnode = '(local)'
         servertype = 'ingres'
         trace = (0, None) # No tracing
-        self.pool_connection(lambda database=database_name,
-                             vnode=vnode,
-                             servertype=servertype,
-                             trace=trace: \
-                                 ingresdbi.connect(database=database,
-                                                   vnode=vnode,
-                                                   servertype=servertype,
-                                                   trace=trace))
+        driver_options.update(dict(database=database_name,
+                                   vnode=vnode,
+                                   servertype=servertype,
+                                   trace=trace))
+        def connect(driver_options=driver_options):
+            return ingresdbi.connect(**driver_options)
+        self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
     def create_sequence_and_triggers(self, query, table, **args):
@@ -2507,7 +2519,7 @@ class GAENoSQLAdapter(NoSQLAdapter):
     def file_close(self, fileobj, unlock=True): pass
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.types.update({
                 'boolean': gae.BooleanProperty,
                 'string': (lambda: gae.StringProperty(multiline=True)),
@@ -2882,7 +2894,7 @@ class CouchDBAdapter(NoSQLAdapter):
 
     def __init__(self,db,uri='couchdb://127.0.0.1:5984',
                  pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.uri = uri
         self.dbengine = 'couchdb'
@@ -2892,7 +2904,9 @@ class CouchDBAdapter(NoSQLAdapter):
         self.pool_size = pool_size
 
         url='http://'+uri[10:]
-        self.pool_connection(lambda url=url: couchdb.Server(url))
+        def connect(url=url,driver_options=driver_options):
+            return couchdb.Server(url,**driver_options)
+        self.pool_connection(connect)
 
     def create_table(self, table, migrate=True, fake_migrate=False, polymodel=None):
         if migrate:
@@ -3045,7 +3059,7 @@ class MongoDBAdapter(NoSQLAdapter):
 
     def __init__(self,db,uri='mongodb://127.0.0.1:5984/db',
                  pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x):
+                 credential_decoder=lambda x:x, driver_options={}):
         self.db = db
         self.uri = uri
         self.dbengine = 'mongodb'
@@ -3064,7 +3078,10 @@ class MongoDBAdapter(NoSQLAdapter):
         if not dbname:
             raise SyntaxError, 'mongodb: db name required'
         port = m.group('port') or 27017
-        self.pool_connection(lambda host=host,port=port,dbname=dbname: pymongo.Connection(host=host,port=port)[dbname])
+        driver_options.update(dict(host=host,port=port))
+        def connect(dbname=dbname,driver_options=driver_options):
+            return pymongo.Connection(**driver_options)[dbname]
+        self.pool_connection(connect)
 
     def insert(self,table,fields):
         ctable = self.connection[table._tablename]
@@ -3361,7 +3378,7 @@ class DAL(dict):
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
                  db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
-                 decode_credentials=False):
+                 decode_credentials=False, driver_options={}):
         """
         Creates a new Database Abstraction Layer instance.
 
@@ -3406,8 +3423,7 @@ class DAL(dict):
                         self._dbname = regex_dbname.match(uri).group()
                         if not self._dbname in ADAPTERS:
                             raise SyntaxError, "Error in URI '%s' or database not supported" % self._dbname
-                        args = (self,uri,pool_size,folder,
-                                db_codec,credential_decoder)
+                        args = (self,uri,pool_size,folder,db_codec,credential_decoder,driver_options)
                         self._adapter = ADAPTERS[self._dbname](*args)
                         connected = True
                         break
