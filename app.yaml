@@ -11,7 +11,7 @@ handlers:
 - url: /_ah/stats.*
   script: $PYTHON_LIB/google/appengine/ext/appstats/ui.py
   login: admin
- 
+
 - url: /(?P<a>.+?)/static/(?P<b>.+)
   static_files: applications/\1/static/\2
   upload: applications/(.+?)/static/(.+)
@@ -21,20 +21,20 @@ handlers:
 - url: /_ah/admin/.*
   script: $PYTHON_LIB/google/appengine/ext/admin
   login: admin
- 
+
 - url: /_ah/queue/default
   script: gaehandler.py
   login: admin
 
 - url: .*
-  script: gaehandler.py  
+  script: gaehandler.py
   secure: optional
 
 admin_console:
   pages:
   - name: Appstats
     url: /_ah/stats
-   
+
 skip_files: |
  ^(.*/)?(
  (app\.yaml)|
@@ -57,14 +57,15 @@ skip_files: |
  (epydoc\.(conf|css))|
  (httpserver\.log)|
  (logging\.example\.conf)|
- (routes\.example\.py)|
+ (route[rs]\.example\.py)|
  (setup_(app|exe)\.py)|
  (splashlogo\.gif)|
  (parameters_\d+\.py)|
  (options_std.py)|
  (gluon/tests/.*)|
- (gluon/rocket\.py)|
- (gluon/winservice\.py)|
+ (gluon/(rocket|winservice)\.py)|
+ (contrib/(gateways|markdown|memcache|pymysql)/.*)|
+ (contrib/(populate|taskbar_widget)\.py)|
  (.*\.(bak|orig))|
  )$
 
