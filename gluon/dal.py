@@ -3463,6 +3463,12 @@ class DAL(dict):
             if name.upper() in self.RSK[backend]:
                 raise SyntaxError, 'invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper())
 
+    def __contains__(self, tablename):
+        if self.has_key(tablename):
+            return True
+        else:
+            return False
+
     def define_table(
         self,
         tablename,
@@ -3491,11 +3497,11 @@ class DAL(dict):
         tablename = cleanup(tablename)
         lowertablename = tablename.lower()
 
-        if lowertablename in self.tables or hasattr(self,lowertablename):
-            raise SyntaxError, 'table already defined: %s' % tablename
-        if tablename.startswith('_'):
+        if tablename.startswith('_') or hasattr(self,lowertablename):
             raise SyntaxError, 'invalid table name: %s' % tablename
-        if self.check_reserved:
+        elif lowertablename in self.tables:
+            raise SyntaxError, 'table already defined: %s' % tablename
+        else self.check_reserved:
             self.check_reserved_keyword(tablename)
 
         t = self[tablename] = Table(self, tablename, *fields,
