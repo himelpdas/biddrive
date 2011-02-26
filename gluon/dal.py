@@ -3501,7 +3501,7 @@ class DAL(dict):
             raise SyntaxError, 'invalid table name: %s' % tablename
         elif lowertablename in self.tables:
             raise SyntaxError, 'table already defined: %s' % tablename
-        else self.check_reserved:
+        elif self.check_reserved:
             self.check_reserved_keyword(tablename)
 
         t = self[tablename] = Table(self, tablename, *fields,
