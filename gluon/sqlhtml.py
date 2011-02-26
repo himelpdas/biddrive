@@ -956,7 +956,7 @@ class SQLFORM(FORM):
         if request_vars.__class__.__name__ == 'Request':
             request_vars = request_vars.post_vars
 
-        keyed = hasattr(self.table,'_primarykey')
+        keyed = hasattr(self.table, '_primarykey')
 
         # implement logic to detect whether record exist but has been modified
         # server side
@@ -973,14 +973,15 @@ class SQLFORM(FORM):
                 formname_id = '.'.join(str(self.record[k])
                                        for k in self.table._primarykey
                                        if hasattr(self.record,k))
-                record_id = dict((k,request_vars[k]) for k in self.table._primarykey)
+                record_id = dict((k, request_vars[k]) for k in self.table._primarykey)
             else:
-                (formname_id, record_id) = (self.record.id, request_vars.get('id', None))
+                (formname_id, record_id) = (self.record.id,
+                                            request_vars.get('id', None))
             keepvalues = True
         else:
             if keyed:
                 formname_id = 'create'
-                record_id = dict([(k,None) for k in self.table._primarykey])
+                record_id = dict([(k, None) for k in self.table._primarykey])
             else:
                 (formname_id, record_id) = ('create', None)
 
@@ -1026,9 +1027,9 @@ class SQLFORM(FORM):
             # this is because removing the file may not pass validation
             for key in self.errors.keys():
                 if self.table[key].type == 'upload' \
-                        and request_vars.get(key,None) in (None,'') \
+                        and request_vars.get(key, None) in (None, '') \
                         and self.record[key] \
-                        and not key+UploadWidget.ID_DELETE_SUFFIX in request_vars:
+                        and not key + UploadWidget.ID_DELETE_SUFFIX in request_vars:
                     del self.errors[key]
             if not self.errors:
                 ret = True
@@ -1057,11 +1058,11 @@ class SQLFORM(FORM):
                         value = self.record[fieldname]
                     else:
                         value = self.table[fieldname].default
-                    row_id = '%s_%s%s' % (self.table,fieldname,SQLFORM.ID_ROW_SUFFIX)
+                    row_id = '%s_%s%s' % (self.table, fieldname, SQLFORM.ID_ROW_SUFFIX)
                     widget = field.widget(field, value)
                     self.field_parent[row_id].components = [ widget ]
                     if not field.type.startswith('list:'):
-                        self.field_parent[row_id]._traverse(False,hideerror)
+                        self.field_parent[row_id]._traverse(False, hideerror)
                     self.custom.widget[ fieldname ] = widget
             return ret
 
@@ -1078,8 +1079,8 @@ class SQLFORM(FORM):
         if requested_delete and self.custom.deletable:
             if dbio:
                 if keyed:
-                    qry = reduce(lambda x,y: x & y,
-                                 [self.table[k]==record_id[k] for k in self.table._primarykey])
+                    qry = reduce(lambda x, y: x & y,
+                                 [self.table[k] == record_id[k] for k in self.table._primarykey])
                 else:
                     qry = self.table.id == self.record.id
                 self.table._db(qry).delete()
@@ -1089,14 +1090,14 @@ class SQLFORM(FORM):
             return True
 
         for fieldname in self.fields:
-            if not fieldname in self.table:
+            if not fieldname in self.table.fields:
                 continue
 
             if not self.ignore_rw and not self.table[fieldname].writable:
                 ### this happens because FORM has no knowledge of writable
                 ### and thinks that a missing boolean field is a None
                 if self.table[fieldname].type == 'boolean' and \
-                    self.vars.get(fieldname,True) == None:
+                    self.vars.get(fieldname, True) == None:
                     del self.vars[fieldname]
                 continue
 
@@ -1114,7 +1115,7 @@ class SQLFORM(FORM):
                 continue  # do not update if password was not changed
             elif field.type == 'upload':
                 f = self.vars[fieldname]
-                fd = fieldname + '__delete'
+                fd = '%s__delete' % fieldname
                 if f == '' or f == None:
                     if self.vars.get(fd, False) or not self.record:
                         fields[fieldname] = ''
@@ -1122,7 +1123,7 @@ class SQLFORM(FORM):
                         fields[fieldname] = self.record[fieldname]
                     self.vars[fieldname] = fields[fieldname]
                     continue
-                elif hasattr(f,'file'):
+                elif hasattr(f, 'file'):
                     (source_file, original_filename) = (f.file, f.filename)
                 elif isinstance(f, (str, unicode)):
                     ### do not know why this happens, it should not
@@ -1132,28 +1133,28 @@ class SQLFORM(FORM):
                 # this line is for backward compatibility only
                 self.vars['%s_newfilename' % fieldname] = newfilename
                 fields[fieldname] = newfilename
-                if isinstance(field.uploadfield,str):
+                if isinstance(field.uploadfield, str):
                     fields[field.uploadfield] = source_file.read()
                 # proposed by Hamdy (accept?) do we need fields at this point?
                 self.vars[fieldname] = fields[fieldname]
                 continue
             elif fieldname in self.vars:
                 fields[fieldname] = self.vars[fieldname]
-            elif field.default == None and field.type!='blob':
+            elif field.default == None and field.type != 'blob':
                 self.errors[fieldname] = 'no data'
                 return False
             value = fields.get(fieldname,None)
             if field.type == 'list:string':
-                if not isinstance(value,(tuple,list)):
+                if not isinstance(value, (tuple, list)):
                     fields[fieldname] = value and [value] or []
             elif field.type.startswith('list:'):
-                if not isinstance(value,list):
+                if not isinstance(value, list):
                     fields[fieldname] = [safe_int(x) for x in (value and [value] or [])]
             elif field.type == 'integer':
                 if value != None:
                     fields[fieldname] = safe_int(value)
             elif field.type.startswith('reference'):
-                if value != None and isinstance(self.table,Table) and not keyed:
+                if value != None and isinstance(self.table, Table) and not keyed:
                     fields[fieldname] = safe_int(value)
             elif field.type == 'double':
                 if value != None:
@@ -1167,9 +1168,10 @@ class SQLFORM(FORM):
 
         if dbio:
             if keyed:
-                if reduce(lambda x,y: x and y, record_id.values()): # if record_id
+                if reduce(lambda x, y: x and y, record_id.values()): # if record_id
                     if fields:
-                        qry = reduce(lambda x,y: x & y, [self.table[k]==self.record[k] for k in self.table._primarykey])
+                        qry = reduce(lambda x, y: x & y,
+                            [self.table[k] == self.record[k] for k in self.table._primarykey])
                         self.table._db(qry).update(**fields)
                 else:
                     pk = self.table.insert(**fields)
