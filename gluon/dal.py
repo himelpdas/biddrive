@@ -2361,6 +2361,8 @@ class IngresUnicodeAdapter(IngresAdapter):
 class DatabaseStoredFile:
 
     def __init__(self,db,filename,mode):
+        if db.engine != 'mysql':
+            raise RuntimeError, "only MySQL can store metadata .table files in database for now"
         self.db = db        
         self.filename = filename
         self.mode = mode
