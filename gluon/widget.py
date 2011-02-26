@@ -408,7 +408,7 @@ class web2pyDialog(object):
         """ Update canvas """
 
         try:
-            t1 = os.path.size('httpserver.log')
+            t1 = os.path.getsize('httpserver.log')
         except:
             self.canvas.after(1000, self.update_canvas)
             return
