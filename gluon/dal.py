@@ -2354,6 +2354,77 @@ class IngresUnicodeAdapter(IngresAdapter):
         'list:reference': 'NCLOB',
         }
 
+
+
+######## GAE MySQL ##########
+
+class DatabaseStoredFile:
+
+    def __init__(self,db,filename,mode):
+        self.db = db        
+        self.filename = filename
+        self.mode = mode
+        self.db.executesql("CREATE TABLE IF NOT EXISTS web2py_filesystem (path VARCHAR(512), content LONGTEXT, PRIMARY KEY(path) ) ENGINE=InnoDB;")
+        self.p=0
+        self.data = ''
+        if mode in ('r','rw','a'):
+            query = "SELECT content FROM web2py_filesystem WHERE path='%s'" % filename
+            rows = self.db.executesql(query)
+            if rows:
+                self.data = rows[0][0]
+            elif os.path.exists(filename):
+                self.data = open(filename,'r').read()
+            elif mode in ('r','rw'):
+                raise RuntimeError, "File %s does not exist" % filename
+
+    def read(self, bytes):
+        data = self.data[self.p:self.p+bytes]
+        self.p += len(data)
+        return data
+    
+    def readline(self):
+        i = self.data.find('\n',self.p)+1
+        if i>0:
+            data, self.p = self.data[self.p:i], i
+        else:
+            data, self.p = self.data[self.p:], len(self.data)
+        return data
+
+    def write(self,data):
+        self.data += data
+
+    def close(self):
+        self.db.executesql("DELETE FROM web2py_filesystem WHERE path='%s'" % self.filename)
+        query = "INSERT INTO web2py_filesystem(path,content) VALUES ('%s','%s')" % \
+            (self.filename, self.data.replace("'","''"))
+        self.db.executesql(query)
+
+    @staticmethod
+    def exists(db,filename):
+        if os.path.exists(filename):
+            return True
+        query = "SELECT path FROM web2py_filesystem WHERE path='%s'" % filename
+        if db.executesql(query):
+            return True
+        return False
+
+
+class UseDatabaseStoredFile:
+
+    def file_exists(self, filename):
+        return DatabaseStoredFile.exists(self.db,filename)
+        
+    def file_open(self, filename, mode='rb', lock=True):
+        return DatabaseStoredFile(self.db,filename,mode)
+
+    def file_close(self, fileobj, unlock=True):
+        fileobj.close()
+
+    def file_delete(self,filename):
+        query = "DELETE FROM web2py_filesystem WHERE path='%s'" % filename
+        self.db.executesql(query)
+
+
 class NoSQLAdapter(BaseAdapter):
 
     def represent(self, obj, fieldtype):
