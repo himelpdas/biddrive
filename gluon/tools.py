@@ -1262,6 +1262,7 @@ class Auth(object):
         def lazy_user (auth = self): return auth.user_id
         now = self.environment.request.now
         self.signature = db.Table(None,'auth_signature',
+                                  Field('active','boolean',default=True),
                                   Field('created_on','datetime',default=now,
                                         writable=False,readable=False),
                                   Field('created_by',self.settings.table_user,default=lazy_user,
