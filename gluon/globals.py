@@ -22,7 +22,7 @@ from contenttype import contenttype
 from html import xmlescape
 from http import HTTP
 from fileutils import up
-from serializers import json
+from serializers import json, custom_json
 import settings
 from utils import web2py_uuid
 
@@ -202,8 +202,8 @@ class Response(Storage):
                 "attachment; filename=%s" % filename
         return self.stream(stream, chunk_size = chunk_size, request=request)
 
-    def json(self, data):
-        return json(data)
+    def json(self, data, default=None):
+        return json(data, default = default or custom_json)
 
     def xmlrpc(self, request, methods):
         """

@@ -1,20 +1,17 @@
 """Implementation of JSONEncoder
-Modified by Massimo Di Pierro to handle datetime
 """
 import re
-import datetime
 from decimal import Decimal
 
 def _import_speedups():
     try:
-        raise ImportError # not not import this because conflict with python 2.6
         from simplejson import _speedups
         return _speedups.encode_basestring_ascii, _speedups.make_encoder
     except ImportError:
         return None, None
 c_encode_basestring_ascii, c_make_encoder = _import_speedups()
 
-from decoder import PosInf
+from simplejson.decoder import PosInf
 
 ESCAPE = re.compile(r'[\x00-\x1f\\"\b\f\n\r\t]')
 ESCAPE_ASCII = re.compile(r'([\\"]|[^\ -~])')
@@ -95,12 +92,7 @@ class JSONEncoder(object):
     +-------------------+---------------+
     | None              | null          |
     +-------------------+---------------+
-    | date              | string        |
-    +-------------------+---------------+
-    | datetime          | string        |
-    +-------------------+---------------+
-    | time              | string        |
-    +-------------------+---------------+
+
     To extend this to recognize other objects, subclass and implement a
     ``.default()`` method with another method that returns a serializable
     object for ``o`` if possible, otherwise it should call the superclass
@@ -195,14 +187,6 @@ class JSONEncoder(object):
                 return JSONEncoder.default(self, o)
 
         """
-        if isinstance(o, (datetime.date,
-                          datetime.datetime,
-                          datetime.time)):
-            return o.isoformat()[:19].replace('T',' ')
-        if isinstance(o, (int, long)):
-            return int(o)
-        if hasattr(o,'as_dict') and callable(o.as_dict):
-            return o.as_dict()
         raise TypeError(repr(o) + " is not JSON serializable")
 
     def encode(self, o):
@@ -284,7 +268,7 @@ class JSONEncoder(object):
 
         key_memo = {}
         if (_one_shot and c_make_encoder is not None
-                and not self.indent and not self.sort_keys):
+                and self.indent is None):
             _iterencode = c_make_encoder(
                 markers, self.default, _encoder, self.indent,
                 self.key_separator, self.item_separator, self.sort_keys,

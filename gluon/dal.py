@@ -4994,7 +4994,7 @@ class Rows(object):
         import sqlhtml
         return sqlhtml.SQLTABLE(self).xml()
 
-    def json(self, mode='object'):
+    def json(self, mode='object', default=None):
         """
         serializes the table to a JSON list of objects
         """
@@ -5024,7 +5024,7 @@ class Rows(object):
             items = [[inner_loop(record, col) for col in self.colnames]
                      for record in self]
         if have_serializers:
-            return serializers.json(items)
+            return serializers.json(items,default=default or serializers.custom_json)
         else:
             import simplejson
             return simplejson.dumps(items)

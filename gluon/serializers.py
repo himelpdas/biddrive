@@ -9,6 +9,17 @@ from html import TAG
 import contrib.simplejson as simplejson
 import contrib.rss2 as rss2
 
+def custom_json(o):
+    if isinstance(o, (datetime.date,
+                      datetime.datetime,
+                      datetime.time)):
+        return o.isoformat()[:19].replace('T',' ')
+    if isinstance(o, (int, long)):
+        return int(o)
+    if hasattr(o,'as_dict') and callable(o.as_dict):
+        return o.as_dict()
+    raise TypeError(repr(o) + " is not JSON serializable")
+
 
 def xml_rec(value, key):
     if isinstance(value, (dict, Storage)):
@@ -27,8 +38,8 @@ def xml(value, encoding='UTF-8', key='document'):
     return ('<?xml version="1.0" encoding="%s"?>' % encoding) + str(xml_rec(value,key))
 
 
-def json(value):
-    return simplejson.dumps(value)
+def json(value,default=custom_json):
+    return simplejson.dumps(value,default=default)
 
 
 def csv(value):

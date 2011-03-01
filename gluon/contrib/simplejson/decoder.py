@@ -4,10 +4,9 @@ import re
 import sys
 import struct
 
-from scanner import make_scanner
+from simplejson.scanner import make_scanner
 def _import_c_scanstring():
     try:
-        raise ImportError # not not import this because conflict with python 2.6
         from simplejson._speedups import scanstring
         return scanstring
     except ImportError:
@@ -51,7 +50,7 @@ class JSONDecodeError(ValueError):
         self.end = end
         self.lineno, self.colno = linecol(doc, pos)
         if end is not None:
-            self.endlineno, self.endcolno = linecol(doc, pos)
+            self.endlineno, self.endcolno = linecol(doc, end)
         else:
             self.endlineno, self.endcolno = None, None
 
@@ -198,7 +197,7 @@ def JSONObject((s, end), encoding, strict, scan_once, object_hook,
         if nextchar == '}':
             if object_pairs_hook is not None:
                 result = object_pairs_hook(pairs)
-                return result, end
+                return result, end + 1
             pairs = {}
             if object_hook is not None:
                 pairs = object_hook(pairs)
