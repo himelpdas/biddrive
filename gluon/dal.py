@@ -516,8 +516,7 @@ class BaseAdapter(ConnectionPool):
                 (tablename, fields, other)
 
         if self.uri.startswith('sqlite:///'):
-            path_encoding = sys.getfilesystemencoding() or \
-                locale.getdefaultlocale()[1]
+            path_encoding = sys.getfilesystemencoding() or locale.getdefaultlocale()[1] or 'utf8'
             dbpath = self.uri[9:self.uri.rfind('/')]\
                 .decode('utf8').encode(path_encoding)
         else:
@@ -4748,13 +4747,14 @@ class Set(object):
                 if os.path.exists(oldpath):
                     os.unlink(oldpath)
 
+
 def update_record(pack, a={}):
     (colset, table, id) = pack
     b = a or dict(colset)
     c = dict([(k,v) for (k,v) in b.items() if k in table.fields and table[k].type!='id'])
     table._db(table._id==id).update(**c)
     for (k, v) in c.items():
-        colset[k] = v
+        colset[k] = k 
 
 
 class Rows(object):
