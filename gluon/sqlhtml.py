@@ -1332,19 +1332,23 @@ class SQLTABLE(TABLE):
                     except TypeError:
                         href = '%s/%s/%s' % (linkto, tablename, r_old)
                     r = A(r, _href=href)
-                elif linkto and field.type.startswith('reference'):
-                    ref = field.type[10:]
-                    try:
-                        href = linkto(r, 'reference', ref)
-                    except TypeError:
-                        href = '%s/%s/%s' % (linkto, ref, r_old)
-                        if ref.find('.') >= 0:
-                            tref,fref = ref.split('.')
-                            if hasattr(sqlrows.db[tref],'_primarykey'):
-                                href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:r}))
-                    r = A(str(r), _href=str(href))
                 elif field.type.startswith('reference'):
-                    pass
+                    if linkto:
+                        ref = field.type[10:]
+                        try:
+                            href = linkto(r, 'reference', ref)
+                        except TypeError:
+                            href = '%s/%s/%s' % (linkto, ref, r_old)
+                            if ref.find('.') >= 0:
+                                tref,fref = ref.split('.')
+                                if hasattr(sqlrows.db[tref],'_primarykey'):
+                                    href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:r}))
+                        if field.represent:
+                            r = A(field.represent(r), _href=str(href))
+                        else:
+                            r = A(str(r), _href=str(href))
+                    elif field.represent:
+                        r = field.represent(r)
                 elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \
