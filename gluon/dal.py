@@ -3606,10 +3606,10 @@ class DAL(dict):
             yield self[tablename]
 
     def __getitem__(self, key):
-        return dict.__getitem__(self, str(key).lower())
+        return dict.__getitem__(self, str(key))
 
     def __setitem__(self, key, value):
-        dict.__setitem__(self, str(key).lower(), value)
+        dict.__setitem__(self, str(key), value)
 
     def __getattr__(self, key):
         return self[key]
@@ -3935,7 +3935,7 @@ class Table(dict):
         elif str(key).isdigit():
             return self._db(self.id == key).select(limitby=(0,1)).first()
         elif key:
-            return dict.__getitem__(self, str(key).lower())
+            return dict.__getitem__(self, str(key))
 
     def __call__(self, key=DEFAULT, **kwargs):
         if key!=DEFAULT:
@@ -3980,7 +3980,7 @@ class Table(dict):
             if isinstance(key, dict):
                 raise SyntaxError,\
                     'value must be a dictionary: %s' % value
-            dict.__setitem__(self, str(key).lower(), value)
+            dict.__setitem__(self, str(key), value)
 
     def __delitem__(self, key):
         if isinstance(key, dict):
@@ -4019,15 +4019,13 @@ class Table(dict):
     def _listify(self,fields,update=False):
         new_fields = []
         new_fields_names = []
-        for fn in fields:
-            name = fn.lower()
-            if not fn in self.fields:
-                raise SyntaxError, 'Field %s does not belong to the table' % fn
-            new_fields.append((self[name],fields[fn]))
+        for name in fields:
+            if not name in self.fields:
+                raise SyntaxError, 'Field %s does not belong to the table' % name
+            new_fields.append((self[name],fields[name]))
             new_fields_names.append(name)
         for ofield in self:
-            name = ofield.name.lower()
-            if not name in new_fields_names:
+            if not ofield.name in new_fields_names:
                 if not update and ofield.default!=None:
                     new_fields.append((ofield,ofield.default))
                 if update and ofield.update!=None:
@@ -4037,7 +4035,7 @@ class Table(dict):
                         new_fields.append((ofield,ofield.compute(Row(fields))))
                     except KeyError: pass
                 if not update and ofield.required:
-                    raise SyntaxError,'Table: missing required field: %s' % name
+                    raise SyntaxError,'Table: missing required field: %s' % ofield.name
         return new_fields
 
     def _insert(self, **fields):
@@ -4707,6 +4705,8 @@ class Set(object):
     def update(self, **update_fields):
         tablename = self.db._adapter.get_table(self.query)
         fields = self.db[tablename]._listify(update_fields,update=True)
+        if not fields:
+            raise SyntaxError, "No fields to update"
         self.delete_uploaded_files(update_fields)
         return self.db._adapter.update(tablename,self.query,fields)
 
@@ -4745,8 +4745,7 @@ class Set(object):
 def update_record(pack, a={}):
     (colset, table, id) = pack
     b = a or dict(colset)
-    c = dict([(k,v) for (k,v) in b.items() \
-                  if k in table.fields and not k=='id'])
+    c = dict([(k,v) for (k,v) in b.items() if k in table.fields and table[k].type!='id'])
     table._db(table._id==id).update(**c)
     for (k, v) in c.items():
         colset[k] = v
