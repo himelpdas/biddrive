@@ -19,7 +19,7 @@ from html import XML, SPAN, TAG, A, DIV, UL, LI, TEXTAREA, BR, IMG, SCRIPT
 from html import FORM, INPUT, LABEL, OPTION, SELECT
 from html import TABLE, THEAD, TBODY, TR, TD, TH
 from html import URL as Url
-from dal import SQLDB, Table, Row, CALLABLETYPES
+from dal import DAL, Table, Row, CALLABLETYPES
 from storage import Storage
 from utils import md5_hash
 from validators import IS_EMPTY_OR
@@ -952,7 +952,7 @@ class SQLFORM(FORM):
         ):
 
         """
-        similar FORM.accepts but also does insert, update or delete in SQLDB.
+        similar FORM.accepts but also does insert, update or delete in DAL.
         but if detect_record_change == True than:
           form.record_changed = False (record is properly validated/submitted)
           form.record_changed = True (record cannot be submitted because changed)
@@ -1213,7 +1213,7 @@ class SQLFORM(FORM):
         if 'table_name' in attributes:
             del attributes['table_name']
 
-        return SQLFORM(SQLDB(None).define_table(table_name, *fields), **attributes)
+        return SQLFORM(DAL(None).define_table(table_name, *fields), **attributes)
 
 
 class SQLTABLE(TABLE):
