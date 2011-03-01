@@ -127,7 +127,7 @@ class TokenHandler(tornado.web.RequestHandler):
 
 class DistributeHandler(tornado.websocket.WebSocketHandler):
     def open(self,params):
-        group,token,name = params.split('/')+[None,None,None]
+        group,token,name = params.split('/')+[None,None]
         self.group = group or 'default'
         self.token = token or 'none'
         self.name = name or 'anonymous'     
@@ -161,6 +161,11 @@ if __name__ == "__main__":
                       default='8888',
                       dest='port',
                       help='socket')
+    parser.add_option('-l',
+                      '--listen',
+                      default='0.0.0.0',
+                      dest='address',
+                      help='listener address')
     parser.add_option('-k',
                       '--hmac_key',
                       default='',
@@ -181,5 +186,5 @@ if __name__ == "__main__":
         (r'/realtime/(.*)', DistributeHandler)]
     application = tornado.web.Application(urls, auto_reload=True)
     http_server = tornado.httpserver.HTTPServer(application)
-    http_server.listen(int(options.port))
+    http_server.listen(int(options.port), address=options.address)
     tornado.ioloop.IOLoop.instance().start()
