@@ -2139,7 +2139,7 @@ class InformixAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         user = credential_decoder(user)
         password = credential_decoder(password)
-        driver_args.update(dict(dsn='%s@%s' % (db,user),
+        driver_args.update(dict(dsn='%s@%s' % (db,host),
                                    user=user,password=password,
                                    autocommit=True))
         def connect(dsn=dsn,driver_args=driver_args):
