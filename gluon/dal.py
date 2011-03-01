@@ -140,6 +140,7 @@ import hashlib
 CALLABLETYPES = (types.LambdaType, types.FunctionType, types.BuiltinFunctionType,
                  types.MethodType, types.BuiltinMethodType)
 
+
 ###################################################################################
 # following checks allows running of dal without web2py as a standalone module
 ###################################################################################
@@ -181,6 +182,9 @@ table_field = re.compile('^[\w_]+\.[\w_]+$')
 regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
 string_unpack=re.compile('(?<!\|)\|(?!\|)')
+regex_python_keywords = re.compile('^(and|del|from|not|while|as|elif|global|or|with|assert|else|if|pass|yield|break|except|import|print|class|exec|in|raise|continue|finally|is|return|def|for|lambda|try)$')
+
+
 
 # list of drivers will be built on the fly
 # and lists only what is available
@@ -3570,7 +3574,8 @@ class DAL(dict):
         tablename = cleanup(tablename)
         lowertablename = tablename.lower()
 
-        if tablename.startswith('_') or hasattr(self,lowertablename):
+        if tablename.startswith('_') or hasattr(self,lowertablename) or \
+                regex_python_keywords.match(tablename):
             raise SyntaxError, 'invalid table name: %s' % tablename
         elif lowertablename in self.tables:
             raise SyntaxError, 'table already defined: %s' % tablename
@@ -4379,7 +4384,8 @@ class Field(Expression):
         if not isinstance(fieldname,str):
             raise SyntaxError, "missing field name"
         self.name = fieldname = cleanup(fieldname)
-        if hasattr(Table,fieldname) or fieldname[0] == '_':
+        if hasattr(Table,fieldname) or fieldname[0] == '_' or \
+                regex_python_keywords.match(fieldname):
             raise SyntaxError, 'Field: invalid field name: %s' % fieldname
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
