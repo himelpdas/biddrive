@@ -203,6 +203,7 @@ WRAPPER = """
 \\documentclass[12pt]{article}
 \\usepackage{hyperref}
 \\usepackage{listings}
+\\usepackage{upquote}
 \\usepackage{color}
 \\usepackage{graphicx}
 \\usepackage{grffile}

@@ -688,7 +688,7 @@ def console():
                       default=None,
                       help='should be followed by a list of arguments to be passed to script, to be used with -S, -A must be the last option')
 
-    msg = 'allows multiple interfaces to be served'
+    msg = 'listen on multiple addresses: "ip:port:cert:key;ip2:port2:cert2:key2;..." (:cert:key optional; no spaces)'
     parser.add_option('--interfaces',
                       action='store',
                       dest='interfaces',
@@ -718,6 +718,15 @@ def console():
         options.plain = True    # cronjobs use a plain shell
 
     options.folder = os.path.abspath(options.folder)
+
+    #  accept --interfaces in the form "ip:port:cert:key;ip2:port2;ip3:port3:cert3:key3"
+    #  (no spaces; optional cert:key indicate SSL)
+    #
+    if isinstance(options.interfaces, str):
+        options.interfaces = [interface.split(':') for interface in options.interfaces.split(';')]
+        for interface in options.interfaces:
+            interface[1] = int(interface[1])    # numeric port
+        options.interfaces = [tuple(interface) for interface in options.interfaces]
 
     if options.numthreads is not None and options.minthreads is None:
         options.minthreads = options.numthreads  # legacy
