@@ -1588,6 +1588,18 @@ class PostgreSQLAdapter(BaseAdapter):
     def LIKE(self,first,second):
         return '(%s ILIKE %s)' % (self.expand(first),self.expand(second,'string'))
 
+    def STARTSWITH(self,first,second):
+        return '(%s ILIKE %s)' % (self.expand(first),self.expand(second+'%','string'))
+
+    def ENDSWITH(self,first,second):
+        return '(%s ILIKE %s)' % (self.expand(first),self.expand('%'+second,'string'))
+
+    def CONTAINS(self,first,second):
+        if first.type in ('string','text'):
+            key = '%'+str(second).replace('%','%%')+'%'
+        elif first.type.startswith('list:'):
+            key = '%|'+str(second).replace('|','||').replace('%','%%')+'|%'
+        return '(%s ILIKE %s)' % (self.expand(first),self.expand(key,'string'))
 
 class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
