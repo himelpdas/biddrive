@@ -1107,6 +1107,7 @@ def map_url_in(request, env, app=False):
 
     #  initialize router-url object
     #
+    thread.routes = params  # default to base routes
     map = MapUrlIn(request=request, env=env)
     map.map_prefix()  # strip prefix if present
     map.map_app()     # determine application
@@ -1115,8 +1116,6 @@ def map_url_in(request, env, app=False):
     #
     if params.routes_app:
         thread.routes = params_apps.get(app, params)
-    else:
-        thread.routes = params
 
     if app:
         return map.application
