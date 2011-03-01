@@ -891,46 +891,53 @@ class SQLFORM(FORM):
         (begin, end) = self._xml()
         self.custom.begin = XML("<%s %s>" % (self.tag, begin))
         self.custom.end = XML("%s</%s>" % (end, self.tag))
-        if formstyle == 'table3cols':
+        table = self.createform(xfields)
+        self.components = [table]
+
+    def createform(self, xfields):
+        if self.formstyle == 'table3cols':
             table = TABLE()
             for id,a,b,c in xfields:
                 td_b = self.field_parent[id] = TD(b,_class='w2p_fw')
                 table.append(TR(TD(a,_class='w2p_fl'),
                                 td_b,
                                 TD(c,_class='w2p_fc'),_id=id))
-        elif formstyle == 'table2cols':
+        elif self.formstyle == 'table2cols':
             table = TABLE()
             for id,a,b,c in xfields:
                 td_b = self.field_parent[id] = TD(b,_class='w2p_fw',_colspan="2")
                 table.append(TR(TD(a,_class='w2p_fl'),
-                                TD(c,_class='w2p_fc'),_id=id+'1',_class='even'))
+                                TD(c,_class='w2p_fc'),_id=id
+                                +'1',_class='even'))
                 table.append(TR(td_b,_id=id+'2',_class='odd'))
-        elif formstyle == 'divs':
+        elif self.formstyle == 'divs':
             table = TAG['']()
             for id,a,b,c in xfields:
                 div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
                 table.append(DIV(DIV(a,_class='w2p_fl'),
                                  div_b,
                                  DIV(c,_class='w2p_fc'),_id=id))
-        elif formstyle == 'ul':
+        elif self.formstyle == 'ul':
             table = UL()
             for id,a,b,c in xfields:
                 div_b = self.field_parent[id] = DIV(b,_class='w2p_fw')
                 table.append(LI(DIV(a,_class='w2p_fl'),
-                                 div_b,
-                                 DIV(c,_class='w2p_fc'),_id=id))
-        elif type(formstyle) == type(lambda:None):
+                                div_b,
+                                DIV(c,_class='w2p_fc'),_id=id))
+        elif type(self.formstyle) == type(lambda:None):
             table = TABLE()
             for id,a,b,c in xfields:
                 td_b = self.field_parent[id] = TD(b,_class='w2p_fw')
                 newrows = formstyle(id,a,td_b,c)
+                newrows = self.formstyle(id,a,td_b,c)
                 if type(newrows).__name__ != "tuple":
                     newrows = [newrows]
                 for newrow in newrows:
                     table.append(newrow)
         else:
             raise RuntimeError, 'formsyle not supported'
-        self.components = [table]
+        return table
+
 
     def accepts(
         self,
