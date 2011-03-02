@@ -988,3 +988,11 @@ recalled
 
 ## 1.63.1
 - support for multiple interfaces, thanks Jonathan
+- better formstyle support
+- many bug fixes
+- better comet_messaging.py
+- jquery 1.5.1
+- simplejson 2.1.3
+- leaner app.yaml
+- css3 buttons in welcome
+- android support (experimental)
