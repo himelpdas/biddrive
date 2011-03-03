@@ -993,6 +993,7 @@ recalled
 - better comet_messaging.py
 - jquery 1.5.1
 - simplejson 2.1.3
+- customizable simplejson
 - leaner app.yaml
 - css3 buttons in welcome
 - android support (experimental)
