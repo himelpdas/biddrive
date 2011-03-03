@@ -20,7 +20,8 @@ def reset(session):
                   ('email_sender','you@example.com'),
                   ('email_login',''),
                   ('login_method','local'),
-                  ('login_config','')],
+                  ('login_config',''),
+                  ('plugins',[])],
         'tables':['auth_user'],
         'table_auth_user':['username','first_name','last_name','email','password'],
         'pages':['index','error'],
@@ -71,6 +72,14 @@ def step1():
         except:
             session.themes = ['Default']
     themes = session.themes
+    if not session.plugins:
+        url = PLUGINS_APP+'/default/plugins.json'
+        try:
+            data = urllib.urlopen(url).read()
+            session.plugins = loads(data)['plugins']
+        except:
+            session.plugins = []
+    plugins = [x.split('.')[2] for x in session.plugins]
     response.view='wizard/step.html'
     params = dict(session.app['params'])
     form=SQLFORM.factory(
@@ -91,7 +100,8 @@ def step1():
                 Field('email_login',default=params.get('email_login',None)),
                 Field('login_method',requires=IS_IN_SET(('local','janrain')),
                       default=params.get('login_method','local')),
-                Field('login_config',default=params.get('login_config',None)))
+                Field('login_config',default=params.get('login_config',None)),
+                Field('plugins',requires=IS_IN_SET(plugins,multiple=True)))
 
     if form.accepts(request.vars):
         session.app['params']=[(key,form.vars.get(key,None))
@@ -475,7 +485,7 @@ def populate(tables):
     s+= 'if not db(db.auth_user).count():\n'
     for table in sort_tables(tables):
         t=table=='auth_user' and 'auth_user' or 't_'+table
-        s+="     populate(db.%s,100)\n" % t
+        s+="     populate(db.%s,10)\n" % t
     return s
 
 def create(options):
@@ -500,8 +510,15 @@ def create(options):
             fn = 'web2py.plugin.layout_%s.w2p' % params['layout_theme']
             theme = urllib.urlopen(LAYOUTS_APP+'/static/plugin_layouts/plugins/'+fn)
             plugin_install(app, theme, request, fn)
-        except: response.flash = T("unable to install there")
+        except: response.flash = T("unable to download layout")
 
+    ### apply plugins
+    for plugin in params['plugins']:
+        try:
+            stream = urllib.urlopen(PLUGINS_APP+'/static/web2py.plugin.'+plugin+'.w2p')
+            plugin_install(app, stream, request, plugin)
+        except: response.flash = T("unable to download plugin: %s" % plugin)
+                    
     ### write configuration file into newapp/models/0.py
     model = os.path.join(request.folder,'..',app,'models','0.py')
     file = open(model,'wb')
