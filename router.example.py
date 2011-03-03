@@ -91,12 +91,6 @@ routers = dict(
     BASE = dict(
         default_application = 'welcome',
     ),
-
-    # 'admin' application router
-    admin = dict(
-        controllers = [],   # don't remove controller names from admin URLs
-        map_hyphen = False, # don't map hyphens to underscores
-    ),
 )
 
 
@@ -165,22 +159,6 @@ def __routes_doctest():
     "/welcome/default/index ['abc']"
     >>> filter_url('http://domain.com/default/index/a bc')
     "/welcome/default/index ['a bc']"
-    >>> filter_url('http://domain.com/admin/bad!ctl')
-    Traceback (most recent call last):
-    ...
-    HTTP: 400 BAD REQUEST [invalid controller]
-    >>> filter_url('http://domain.com/admin/ctl/bad!fcn')
-    Traceback (most recent call last):
-    ...
-    HTTP: 400 BAD REQUEST [invalid function]
-    >>> filter_url('http://domain.com/admin/ctl/fcn.bad!ext')
-    Traceback (most recent call last):
-    ...
-    HTTP: 400 BAD REQUEST [invalid extension]
-    >>> filter_url('http://domain.com/admin/ctl/fcn/bad!arg')
-    Traceback (most recent call last):
-    ...
-    HTTP: 400 BAD REQUEST [invalid arg <bad!arg>]
 
     >>> filter_url('https://domain.com/app/ctr/fcn', out=True)
     '/app/ctr/fcn'
@@ -198,19 +176,6 @@ def __routes_doctest():
     '/fcn#anchor'
     >>> filter_url('http://domain.com/welcome/default/fcn?query#anchor', out=True)
     '/fcn?query#anchor'
-
-    >>> filter_url('http://domain.com/appadmin/fcn-1')
-    '/welcome/appadmin/fcn_1'
-    >>> filter_url('http://domain.com/welcome/appadmin/fcn_1', out=True)
-    '/appadmin/fcn-1'
-    >>> filter_url('http://domain.com/examples/appadmin/fcn-1')
-    '/examples/appadmin/fcn_1'
-    >>> filter_url('http://domain.com/examples/appadmin/fcn_1', out=True)
-    '/examples/appadmin/fcn-1'
-    >>> filter_url('http://domain.com/app/static/filename-with_underscore', out=True)
-    '/app/static/filename-with_underscore'
-    >>> os.path.relpath(filter_url('http://domain.com/admin/static/filename-with_underscore'))
-    'applications/admin/static/filename-with_underscore'
     
     >>> filter_err(200)
     200

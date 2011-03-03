@@ -350,6 +350,14 @@ class TestRouter(unittest.TestCase):
         except AttributeError:
             pass
 
+        routers['BASE']['domains']['domain3.com'] = 'app3'
+        self.assertRaises(SyntaxError, load, rdict=routers)
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(SyntaxError, "unknown.*app3", load, rdict=routers)
+        except AttributeError:
+            pass
+
     def test_router_domains(self):
         '''
         Test URLs that map domains
@@ -553,10 +561,14 @@ class TestRouter(unittest.TestCase):
         '''
         router_hyphen = dict(
             BASE = dict(
-                applications = ['init', 'app2'],
+                applications = ['init', 'app1', 'app2'],
             ),
             init = dict(
                 controllers = ['default'],
+            ),
+            app1 = dict(
+                controllers = ['default'],
+                map_hyphen = True,
             ),
             app2 = dict(
                 controllers = ['default'],
@@ -579,6 +591,14 @@ class TestRouter(unittest.TestCase):
             "/app2/static/filename-with_underscore")
         self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore'), 
             "%s/applications/app2/static/filename-with_underscore" % root)
+
+        self.assertEqual(str(URL(a='app1', c='default', f='a_b')), "/app1/a-b")
+        self.assertEqual(str(URL(a='app2', c='default', f='a_b')), "/app2/a_b")
+        self.assertEqual(str(URL(a='app1', c='static', f='a/b_c')), "/app1/static/a/b_c")
+        self.assertEqual(str(URL(a='app1', c='static/a', f='b_c')), "/app1/static/a/b_c")
+        self.assertEqual(str(URL(a='app2', c='static', f='a/b_c')), "/app2/static/a/b_c")
+        self.assertEqual(str(URL(a='app2', c='static/a', f='b_c')), "/app2/static/a/b_c")
+
 
     def test_router_lang(self):
         '''

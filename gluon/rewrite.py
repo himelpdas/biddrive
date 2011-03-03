@@ -391,6 +391,8 @@ def load_routers(all_apps):
             ctlr = None
             if '/' in app:
                 (app, ctlr) = app.split('/')
+            if app not in all_apps and app not in routers:
+                raise SyntaxError, "unknown app '%s' in domains" % app
             domains[(domain, port)] = (app, ctlr)
     routers.BASE.domains = domains
 
@@ -862,7 +864,7 @@ class MapUrlIn(object):
         handle static files
         file_match but no hyphen mapping
         '''
-        if self.controller != "static":
+        if self.controller != 'static':
             return None
         file = '/'.join(self.args)
         if not self.router._file_match.match(file):
@@ -1062,7 +1064,7 @@ class MapUrlOut(object):
         #  handle static as a special case
         #  (easier for external static handling)
         #
-        if self.controller == 'static':
+        if self.controller == 'static' or self.controller.startswith('static/'):
             if not self.map_static:
                 self.omit_application = False
                 if self.language:
@@ -1076,7 +1078,7 @@ class MapUrlOut(object):
         if self.map_hyphen:
             self.application = self.application.replace('_', '-')
             self.controller = self.controller.replace('_', '-')
-            if self.controller != 'static':
+            if self.controller != 'static' and not self.controller.startswith('static/'):
                 self.function = self.function.replace('_', '-')
         if not self.omit_application:
             acf += '/' + self.application
