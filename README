@@ -988,12 +988,17 @@ recalled
 
 ## 1.63.1
 - support for multiple interfaces, thanks Jonathan
-- better formstyle support
-- many bug fixes
-- better comet_messaging.py
 - jquery 1.5.1
 - simplejson 2.1.3
 - customizable simplejson
 - leaner app.yaml
 - css3 buttons in welcome
 - android support (experimental)
+- Field(':hidden'), Field('.readonly'), Field('name=value')
+- combined expressions print db.data.body.len().sum()
+- wizard can download plugins
+- better json serilization (object.custom_json)
+- better xml serialization (object.custom_xml)
+- better formstyle support
+- better comet_messaging.py (needs more testing)
+- many bug fixes
