@@ -2706,6 +2706,8 @@ class GAENoSQLAdapter(NoSQLAdapter):
         return a+b
 
     def EQ(self,first,second=None):
+        if isinstance(second, Key):
+            return [GAEF(first.name,'=',second,lambda a,b:a==b)]
         return [GAEF(first.name,'=',self.represent(second,first.type),lambda a,b:a==b)]
 
     def NE(self,first,second=None):
@@ -2805,6 +2807,9 @@ class GAENoSQLAdapter(NoSQLAdapter):
             elif filter.name=='__key__' and filter.op=='=':
                 if filter.value==0:
                     items = []
+                elif isinstance(filter.value, Key):
+                    items = tableobj.get(filter.value)
+                    items = (item and [item]) or []
                 else:
                     item = tableobj.get_by_id(filter.value)
                     items = (item and [item]) or []
@@ -3466,7 +3471,7 @@ class DAL(dict):
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
                  db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
-                 decode_credentials=False, driver_args={}):
+                 decode_credentials=False, driver_args=None):
         """
         Creates a new Database Abstraction Layer instance.
 
@@ -3477,7 +3482,7 @@ class DAL(dict):
         :pool_size: How many open connections to make to the database object.
         :folder: <please update me>
         :db_codec: string encoding of the database (default: 'UTF-8')
-        :check_reserve: list of adapters to check tablenames and column names
+        :check_reserved: list of adapters to check tablenames and column names
                          against sql reserved keywords. (Default None)
 
         * 'common' List of sql keywords that are common to all database types
@@ -3511,7 +3516,8 @@ class DAL(dict):
                         self._dbname = regex_dbname.match(uri).group()
                         if not self._dbname in ADAPTERS:
                             raise SyntaxError, "Error in URI '%s' or database not supported" % self._dbname
-                        args = (self,uri,pool_size,folder,db_codec,credential_decoder,driver_args)
+                        # notice that driver args or {} else driver_args defaults to {} global, not correct
+                        args = (self,uri,pool_size,folder,db_codec,credential_decoder,driver_args or {})
                         self._adapter = ADAPTERS[self._dbname](*args)
                         connected = True
                         break

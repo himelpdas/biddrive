@@ -928,7 +928,6 @@ class SQLFORM(FORM):
             table = TABLE()
             for id,a,b,c in xfields:
                 td_b = self.field_parent[id] = TD(b,_class='w2p_fw')
-                newrows = formstyle(id,a,td_b,c)
                 newrows = self.formstyle(id,a,td_b,c)
                 if type(newrows).__name__ != "tuple":
                     newrows = [newrows]
