@@ -6,32 +6,40 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 import datetime
 from storage import Storage
 from html import TAG
+from html import xmlescape
 import contrib.simplejson as simplejson
 import contrib.rss2 as rss2
 
 def custom_json(o):
+    if hasattr(o,'custom_json') and callable(o.custom_json):
+        return o.custom_json()
     if isinstance(o, (datetime.date,
                       datetime.datetime,
                       datetime.time)):
         return o.isoformat()[:19].replace('T',' ')
-    if isinstance(o, (int, long)):
+    elif isinstance(o, (int, long)):
         return int(o)
-    if hasattr(o,'as_dict') and callable(o.as_dict):
+    elif hasattr(o,'as_list') and callable(o.as_list):
+        return o.as_list()
+    elif hasattr(o,'as_dict') and callable(o.as_dict):
         return o.as_dict()
-    raise TypeError(repr(o) + " is not JSON serializable")
+    else:
+        raise TypeError(repr(o) + " is not JSON serializable")
 
 
 def xml_rec(value, key):
-    if isinstance(value, (dict, Storage)):
+    if hasattr(value,'custom_xml') and callable(value.custom_xml):
+        return value.custom_xml()
+    elif isinstance(value, (dict, Storage)):
         return TAG[key](*[TAG[k](xml_rec(v, '')) for k, v in value.items()])
     elif isinstance(value, list):
         return TAG[key](*[TAG.item(xml_rec(item, '')) for item in value])
-    elif value == None:
-        return 'None'
-    elif isinstance(value,unicode):
-        return value.encode('utf-8')
+    elif hasattr(value,'as_list') and callable(value.as_list):
+        return str(xml_rec(value.as_list(),''))
+    elif hasattr(value,'as_dict') and callable(value.as_dict):
+        return str(xml_rec(value.as_dict(),''))
     else:
-        return str(value)
+        return xmlescape(value)
 
 
 def xml(value, encoding='UTF-8', key='document'):
