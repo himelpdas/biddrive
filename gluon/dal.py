@@ -1118,7 +1118,7 @@ class BaseAdapter(ConnectionPool):
         if r != None:
             return r
         if fieldtype == 'boolean':
-            if obj and not str(obj)[0].upper() in ['F', '0']:
+            if obj and not str(obj)[:1].upper() in ['F', '0']:
                 return "'T'"
             else:
                 return "'F'"
@@ -1225,7 +1225,7 @@ class BaseAdapter(ConnectionPool):
                     else: ### reference not by id
                         colset[fieldname] = value
                 elif field_type == 'boolean':
-                    if value == True or str(value)[0].lower() == 't':
+                    if value == True or str(value)[:1].lower() == 't':
                         colset[fieldname] = True
                     else:
                         colset[fieldname] = False
