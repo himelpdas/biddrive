@@ -248,8 +248,8 @@ def make_table(table,fields):
     first_field='id'
     for field in fields:
         items=[x.lower() for x in field.split()]
-        has={}
-        keys=[]
+        has = {}
+        keys = []
         for key in ['notnull','unique','integer','double','boolean','float',
                     'boolean', 'date','time','datetime','text','wiki',
                     'html','file','upload','image','true',
@@ -267,14 +267,16 @@ def make_table(table,fields):
 
         ### determine field type
         ftype='string'
-        for key in ['integer','double','boolean','float','boolean',
-                    'date','time','datetime','text','file','image','wiki','html']:
-            if key in has:
-                ftype = {'integer':'integer','double':'double','boolean':'boolean',
-                         'float':'double','bool':'boolean',
-                         'date':'date','time':'time','datetime':'datetime',
-                         'text':'text','file':'upload','image':'upload',
-                         'wiki':'text', 'html':'text'}[key]
+        deftypes={'integer':'integer','double':'double','boolean':'boolean',
+                  'float':'double','bool':'boolean',
+                  'date':'date','time':'time','datetime':'datetime',
+                  'text':'text','file':'upload','image':'upload','upload':'upload',
+                  'wiki':'text', 'html':'text'}
+        for key,t in deftypes.items():
+            if key in has:                
+                ftype = t
+        print ftype
+        print '-'*10
         if refs:
             key = refs[0]
             if not key=='auth_user': key='t_'+key
@@ -510,14 +512,17 @@ def create(options):
             fn = 'web2py.plugin.layout_%s.w2p' % params['layout_theme']
             theme = urllib.urlopen(LAYOUTS_APP+'/static/plugin_layouts/plugins/'+fn)
             plugin_install(app, theme, request, fn)
-        except: response.flash = T("unable to download layout")
+        except: session.flash = T("unable to download layout")
 
     ### apply plugins
     for plugin in params['plugins']:
+        print plugin
         try:
-            stream = urllib.urlopen(PLUGINS_APP+'/static/web2py.plugin.'+plugin+'.w2p')
-            plugin_install(app, stream, request, plugin)
-        except: response.flash = T("unable to download plugin: %s" % plugin)
+            plugin_name = 'web2py.plugin.'+plugin+'.w2p'
+            stream = urllib.urlopen(PLUGINS_APP+'/static/'+plugin_name)
+            plugin_install(app, stream, request, plugin_name)
+        except Exception, e: 
+            session.flash = T("unable to download plugin: %s" % plugin)
                     
     ### write configuration file into newapp/models/0.py
     model = os.path.join(request.folder,'..',app,'models','0.py')

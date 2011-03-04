@@ -986,7 +986,7 @@ recalled
 - auth.signature (experimental)
 - many other bug fixes
 
-## 1.63.1
+## 1.63.1-2
 - support for multiple interfaces, thanks Jonathan
 - jquery 1.5.1
 - simplejson 2.1.3

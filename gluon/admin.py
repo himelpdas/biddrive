@@ -325,7 +325,7 @@ def plugin_install(app, fobj, request, filename):
         fix_newlines(path)
         return upname
     except Exception:
-        os.unlink(upfile)
+        os.unlink(upname)
         return False
 
 def check_new_version(myversion, version_URL):
