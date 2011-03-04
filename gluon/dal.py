@@ -1528,13 +1528,10 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute("ROLLBACK PREPARED '%s';" % key)
 
     def create_sequence_and_triggers(self, query, table, **args):
-        tablename = table._tablename
-        fieldname = table._id.name
-        # following lines should only be executed if sequence_name does not exist 
-        # sequence_name = table._sequence_name
-        # self.execute('CREATE SEQUENCE %s;' % sequence_name)
+        # following lines should only be executed if table._sequence_name does not exist 
+        # self.execute('CREATE SEQUENCE %s;' % table._sequence_name)
         # self.execute("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NEXTVAL('%s');" \
-        #              % (tablename,fieldname,sequence_name))
+        #              % (table._tablename, table._fieldname, table._sequence_name))
         self.execute(query)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
