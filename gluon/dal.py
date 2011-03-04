@@ -4198,6 +4198,60 @@ class Expression(object):
         else:
             self.type = type
 
+    def sum(self):
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'SUM', self.type)
+
+    def max(self):
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'MAX', self.type)
+
+    def min(self):
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'MIN', self.type)
+
+    def len(self):
+        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'LENGTH', 'integer')
+
+    def lower(self):
+        return Expression(self.db, self.db._adapter.LOWER, self, None, self.type)
+
+    def upper(self):
+        return Expression(self.db, self.db._adapter.UPPER, self, None, self.type)
+
+    def year(self):
+        return Expression(self.db, self.db._adapter.EXTRACT, self, 'year', 'integer')
+
+    def month(self):
+        return Expression(self.db, self.db._adapter.EXTRACT, self, 'month', 'integer')
+
+    def day(self):
+        return Expression(self.db, self.db._adapter.EXTRACT, self, 'day', 'integer')
+
+    def hour(self):
+        return Expression(self.db, self.db._adapter.EXTRACT, self, 'hour', 'integer')
+
+    def minutes(self):
+        return Expression(self.db, self.db._adapter.EXTRACT, self, 'minute', 'integer')
+
+    def seconds(self):
+        return Expression(self.db, self.db._adapter.EXTRACT, self, 'second', 'integer')
+
+    def __getslice__(self, start, stop):
+        if start < 0:
+            pos0 = '(%s - %d)' % (self.len(), abs(start) - 1)
+        else:
+            pos0 = start + 1
+
+        if stop < 0:
+            length = '(%s - %d - %s)' % (self.len(), abs(stop) - 1, pos0)
+        elif stop == sys.maxint:
+            length = self.len()
+        else:
+            length = '(%s - %s)' % (stop + 1, pos0)
+        return Expression(self.db,self.db._adapter.SUBSTRING,
+                          self, (pos0, length), self.type)
+
+    def __getitem__(self, i):
+        return self[i:i + 1]
+
     def __str__(self):
         return self.db._adapter.expand(self,self.type)
 
@@ -4221,7 +4275,6 @@ class Expression(object):
             raise SyntaxError, "subtraction operation not supported for type"
         return Expression(self.db,self.db._adapter.SUB,self,other,
                           result_type)
-
     def __mul__(self, other):
         return Expression(self.db,self.db._adapter.MUL,self,other,self.type)
 
@@ -4547,65 +4600,11 @@ class Field(Expression):
                 return (value, error)
         return (value, None)
 
-    def lower(self):
-        return Expression(self.db, self.db._adapter.LOWER, self, None, self.type)
-
-    def upper(self):
-        return Expression(self.db, self.db._adapter.UPPER, self, None, self.type)
-
-    def year(self):
-        return Expression(self.db, self.db._adapter.EXTRACT, self, 'year', 'integer')
-
-    def month(self):
-        return Expression(self.db, self.db._adapter.EXTRACT, self, 'month', 'integer')
-
-    def day(self):
-        return Expression(self.db, self.db._adapter.EXTRACT, self, 'day', 'integer')
-
-    def hour(self):
-        return Expression(self.db, self.db._adapter.EXTRACT, self, 'hour', 'integer')
-
-    def minutes(self):
-        return Expression(self.db, self.db._adapter.EXTRACT, self, 'minute', 'integer')
-
-    def seconds(self):
-        return Expression(self.db, self.db._adapter.EXTRACT, self, 'second', 'integer')
-
     def count(self):
         return Expression(self.db, self.db._adapter.AGGREGATE, self, 'COUNT', 'integer')
 
-    def sum(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'SUM', self.type)
-
-    def max(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'MAX', self.type)
-
-    def min(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'MIN', self.type)
-
-    def len(self):
-        return Expression(self.db, self.db._adapter.AGGREGATE, self, 'LENGTH', 'integer')
-
     def __nonzero__(self):
         return True
-
-    def __getslice__(self, start, stop):
-        if start < 0:
-            pos0 = '(%s - %d)' % (self.len(), abs(start) - 1)
-        else:
-            pos0 = start + 1
-
-        if stop < 0:
-            length = '(%s - %d - %s)' % (self.len(), abs(stop) - 1, pos0)
-        elif stop == sys.maxint:
-            length = self.len()
-        else:
-            length = '(%s - %s)' % (stop + 1, pos0)
-        return Expression(self.db,self.db._adapter.SUBSTRING,
-                          self, (pos0, length), self.type)
-
-    def __getitem__(self, i):
-        return self[i:i + 1]
 
     def __str__(self):
         try:
