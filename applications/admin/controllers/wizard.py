@@ -397,7 +397,7 @@ response.menu = [
                 not page.endswith('_update') and \
                 not page.endswith('_search') and \
                 not page.startswith('_') and not page.startswith('error'):
-            s+="    (T('%s'),URL('%s').xml()==URL().xml(),URL('%s'),[]),\n" % \
+            s+="    (T('%s'),URL('default','%s').xml()==URL().xml(),URL('default','%s'),[]),\n" % \
                 (' '.join(x.capitalize() for x in page.split('_')),page,page)
     s+=']'
     return s
