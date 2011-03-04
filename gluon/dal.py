@@ -1469,12 +1469,12 @@ class MySQLAdapter(BaseAdapter):
         port = int(m.group('port') or '3306')
         charset = m.group('charset') or 'utf8'
         driver_args.update(dict(db=db,
-                                   user=credential_decoder(user),
-                                   password=credential_decoder(password),
-                                   host=host,
-                                   port=port,
-                                   charset=charset))
-        def connect(dbpath=dbpath,driver_args=driver_args):
+                                user=credential_decoder(user),
+                                passwd=credential_decoder(password),
+                                host=host,
+                                port=port,
+                                charset=charset))
+        def connect(driver_args=driver_args):
             return self.driver.connect(**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
