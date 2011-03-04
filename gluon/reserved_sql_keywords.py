@@ -1586,5 +1586,3 @@ ADAPTERS = {
 }
 
 ADAPTERS['all'] = reduce(lambda a,b:a.union(b),(x for x in ADAPTERS.values()))
-for key in ALL:
-    if not key in ADAPTERS['all']: print key
