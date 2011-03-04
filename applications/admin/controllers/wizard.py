@@ -101,7 +101,7 @@ def step1():
                 Field('login_method',requires=IS_IN_SET(('local','janrain')),
                       default=params.get('login_method','local')),
                 Field('login_config',default=params.get('login_config',None)),
-                Field('plugins',requires=IS_IN_SET(plugins,multiple=True)))
+                Field('plugins','list:string',requires=IS_IN_SET(plugins,multiple=True)))
 
     if form.accepts(request.vars):
         session.app['params']=[(key,form.vars.get(key,None))

@@ -501,7 +501,7 @@ POSTGRESQL_NONRESERVED = set((
     'MOVE',
     'MULTISET',
     'MUMPS',
-    'NAME',
+#    'NAME',
     'NAMES',
     'NAMESPACE',
     'NCLOB',
