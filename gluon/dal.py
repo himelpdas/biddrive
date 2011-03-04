@@ -1530,12 +1530,12 @@ class PostgreSQLAdapter(BaseAdapter):
     def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
         fieldname = table._id.name
-        sequence_name = table._sequence_name
-        self.execute(query)
-
-        # following too lines should only be executed if sequence_name does not exist 
+        # following lines should only be executed if sequence_name does not exist 
+        # sequence_name = table._sequence_name
         # self.execute('CREATE SEQUENCE %s;' % sequence_name)
-        # self.execute("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NEXTVAL('%s');" % (tablename,fieldname,sequence_name))
+        # self.execute("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NEXTVAL('%s');" \
+        #              % (tablename,fieldname,sequence_name))
+        self.execute(query)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={}):
@@ -2151,9 +2151,8 @@ class InformixAdapter(BaseAdapter):
             raise SyntaxError, 'Database name required'
         user = credential_decoder(user)
         password = credential_decoder(password)
-        driver_args.update(dict(dsn='%s@%s' % (db,host),
-                                   user=user,password=password,
-                                   autocommit=True))
+        dsn = '%s@%s' % (db,host)
+        driver_args.update(dict(user=user,password=password,autocommit=True))
         def connect(dsn=dsn,driver_args=driver_args):
             return informixdb.connect(dsn,**driver_args)
         self.pool_connection(connect)
@@ -4454,9 +4453,9 @@ class Field(Expression):
         if not isinstance(fieldname,str):
             raise SyntaxError, "missing field name"
         if fieldname.startswith(':'):
-            fieldname,readbale,writable=fieldname[1:],False,False
+            fieldname,readable,writable=fieldname[1:],False,False
         elif fieldname.startswith('.'):
-            fieldname,readbale,writable=fieldname[1:],False,False
+            fieldname,readable,writable=fieldname[1:],False,False
         if '=' in fieldname:
             fieldname,default = fieldname.split('=',1)
         self.name = fieldname = cleanup(fieldname)
