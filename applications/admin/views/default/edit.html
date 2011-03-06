@@ -24,15 +24,15 @@ jQuery(document).ready(function(){
 <h2>{{=T('Editing file "%s"',filename)}}</h2>
 
 {{if functions:}}
-<div style="text-align:left;" id="exposed">
-  <p class="formfield">{{=B(T('exposes:'))}}
-  {{=XML(', '.join([A(f,_href=URL(a=app,c=controller,f=f)).xml() for f in functions]))}}
+  <p class="formfield">
+<span style="text-align:left;" id="exposed">
+  {{=B(T('exposes:'))}}{{=XML(', '.join([A(f,_href=URL(a=app,c=controller,f=f)).xml() for f in functions]))}}
+</span>
   {{if editviewlinks:}}<br/>
   {{=B(T('edit views:'))}}
   {{=XML(', '.join([v.xml() for v in editviewlinks]))}}
   {{pass}}
   </p>
-</div>
 {{pass}}
 
 <p class="right controls">
