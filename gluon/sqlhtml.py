@@ -328,7 +328,10 @@ class CheckboxesWidget(OptionsWidget):
         """
 
         # was values = re.compile('[\w\-:]+').findall(str(value))
-        values = not isinstance(value,(list,tuple)) and [value] or value
+        if isinstance(value, (list, tuple)): 
+            values = [str(v) for v in value] 
+        else: 
+            values = [str(value)] 
 
         attr = OptionsWidget._attributes(field, {}, **attributes)
 
