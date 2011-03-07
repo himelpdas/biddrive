@@ -4773,7 +4773,7 @@ def update_record(pack, a={}):
     c = dict([(k,v) for (k,v) in b.items() if k in table.fields and table[k].type!='id'])
     table._db(table._id==id).update(**c)
     for (k, v) in c.items():
-        colset[k] = k 
+        colset[k] = v
 
 
 class Rows(object):
