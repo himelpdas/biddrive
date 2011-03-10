@@ -2797,6 +2797,7 @@ class Crud(object):
         log=DEFAULT,
         message=DEFAULT,
         deletable=DEFAULT,
+        formname=DEFAULT,
         ):
         """
         .. method:: Crud.update(table, record, [next=DEFAULT
@@ -2868,6 +2869,8 @@ class Crud(object):
         else:
             (_session, _formname) = \
                 (session, '%s/%s' % (table._tablename, form.record_id))
+        if formname!=DEFAULT:
+            _formname = formname
         keepvalues = self.settings.keepvalues
         if request.vars.delete_this_record:
             keepvalues = False
@@ -2909,6 +2912,7 @@ class Crud(object):
         onaccept=DEFAULT,
         log=DEFAULT,
         message=DEFAULT,
+        formname=DEFAULT,
         ):
         """
         .. method:: Crud.create(table, [next=DEFAULT [, onvalidation=DEFAULT
@@ -2934,6 +2938,7 @@ class Crud(object):
             log=log,
             message=message,
             deletable=False,
+            formname=formname,
             )
 
     def read(self, table, record):
