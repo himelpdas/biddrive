@@ -3112,7 +3112,8 @@ class Crud(object):
         query_labels = args.get('query_labels', {})
         query = args.get('query',table.id > 0)
         field_labels = args.get('field_labels',{})
-        for field in table:
+        for field in fields:
+            field = table[field]
             if not field.readable: continue
             fieldname = field.name
             chkval = request.vars.get('chk' + fieldname, None)
