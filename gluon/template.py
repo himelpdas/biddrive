@@ -622,24 +622,20 @@ class TemplateParser(object):
                                 remove_newline,
                                 line)
 
-                    if line.startswith('='):
-                        # IE: {{=response.title}}
-                        name, value = '=', line[1:].strip()
+                    v = line.split(' ', 1)
+                    if len(v) == 1:
+                        # Example
+                        # {{ include }}
+                        # {{ end }}
+                        name = v[0]
+                        value = ''
                     else:
-                        v = line.split(' ', 1)
-                        if len(v) == 1:
-                            # Example
-                            # {{ include }}
-                            # {{ end }}
-                            name = v[0]
-                            value = ''
-                        else:
-                            # Example
-                            # {{ block pie }}
-                            # {{ include "layout.html" }}
-                            # {{ for i in range(10): }}
-                            name = v[0]
-                            value = v[1]
+                        # Example
+                        # {{ block pie }}
+                        # {{ include "layout.html" }}
+                        # {{ for i in range(10): }}
+                        name = v[0]
+                        value = v[1]
 
                     # This will replace newlines in block comments
                     # with the newline character. This is so that they
@@ -658,12 +654,6 @@ class TemplateParser(object):
                                           value     = value,
                                           top       = top,
                                           stack     = self.stack,)
-
-                    elif name == '=':
-                        # So we have a variable to insert into
-                        # the template
-                        buf = "\n%s(%s)" % (self.writer, value)
-                        top.append(Node(buf, pre_extend = pre_extend))
 
                     elif name == 'block':
                         # Make a new node with name.

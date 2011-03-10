@@ -809,11 +809,9 @@ class Auth(object):
              + datetime.timedelta(days=0, seconds=auth.expiration)\
              > request.now:
             self.user = auth.user
-            self.user_id = self.user.id
             auth.last_visit = request.now
         else:
             self.user = None
-            self.user_id = None
             session.auth = None
         self.settings = Settings()
 
@@ -1007,6 +1005,10 @@ class Auth(object):
             # sets for appropriate cookie an appropriate expiration time
             response.cookies[response.session_id_name]["expires"] = auth.expiration
 
+    def _get_user_id(self):
+       "accessor for auth.user_id"
+       return self.user and self.user.id or None
+    user_id = property(_get_user_id, doc="user.id or None")
 
     def _HTTP(self, *a, **b):
         """

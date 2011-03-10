@@ -12,31 +12,39 @@ else:
     sys.path.append(os.path.realpath('../'))
 
 import unittest
-from template import parse_template, TemplateParser, render
+from template import render
 
 class TestVirtualFields(unittest.TestCase):
 
     def testRun(self):
-        assert render(content='{{for i in range(n):}}{{=i}}{{pass}}',
-                      context=dict(n=3)) == '012'
-        assert render(content='{{if n>2:}}ok{{pass}}',
-                      context=dict(n=3)) == 'ok'
-        assert render(content='{{try:}}{{n/0}}{{except:}}fail{{pass}}',
-                      context=dict(n=3)) == 'fail'
-        assert render(content='{{="<&>"}}') == '&lt;&amp;&gt;'
-        assert render(content='"abc"') == '"abc"'
-        assert render(content='"a\'bc"') == '"a\'bc"'
-        assert render(content='"a\"bc"') == '"a\"bc"'
-        assert render(content=r'''"a\"bc"''') == r'"a\"bc"'
-        assert render(content=r'''"""abc\""""''') == r'"""abc\""""'
-        
+        self.assertEqual(render(content='{{for i in range(n):}}{{=i}}{{pass}}',
+                      context=dict(n=3)), '012')
+        self.assertEqual(render(content='{{if n>2:}}ok{{pass}}',
+                      context=dict(n=3)), 'ok')
+        self.assertEqual(render(content='{{try:}}{{n/0}}{{except:}}fail{{pass}}',
+                      context=dict(n=3)), 'fail')
+        self.assertEqual(render(content='{{="<&>"}}'), '&lt;&amp;&gt;')
+        self.assertEqual(render(content='"abc"'), '"abc"')
+        self.assertEqual(render(content='"a\'bc"'), '"a\'bc"')
+        self.assertEqual(render(content='"a\"bc"'), '"a\"bc"')
+        self.assertEqual(render(content=r'''"a\"bc"'''), r'"a\"bc"')
+        self.assertEqual(render(content=r'''"""abc\""""'''), r'"""abc\""""')
+
+    def testEqualWrite(self):
+        "test generation of response.write from ="
+        self.assertEqual(render(content='{{="abc"}}'), 'abc')
+        self.assertEqual(render(content='{{ ="abc"}}'), 'abc')
+        self.assertEqual(render(content='{{ ="abc" }}'), 'abc')
+        self.assertEqual(render(content='{{pass\n="abc" }}'), 'abc')
+        self.assertEqual(render(content='{{xyz="xyz"\n="abc"\n="def"\n=xyz }}'), 'abcdefxyz')
+        self.assertEqual(render(content='{{="abc"\n="def" }}'), 'abcdef')
+        self.assertEqual(render(content='{{if True:\n="abc"\npass }}'), 'abc')
+        self.assertEqual(render(content='{{if True:\n="abc"\npass\n="def" }}'), 'abcdef')
+        self.assertEqual(render(content='{{if False:\n="abc"\npass\n="def" }}'), 'def')
+        self.assertEqual(render(content='{{if True:\n="abc"\nelse:\n="def"\npass }}'), 'abc')
+        self.assertEqual(render(content='{{if False:\n="abc"\nelse:\n="def"\npass }}'), 'def')
+
+
+
 if __name__ == '__main__':
     unittest.main()
-    
-    
-#   def parse_template(filename,
-#      path    = 'views/',
-#       context = dict(),
-#       lexers  = {}):
-#       
-#     return str(TemplateParser(text, context=context, path=path, lexers=lexers))
