@@ -3441,8 +3441,8 @@ class Service(object):
         if not args:
             args = request.args
         if args and args[0] in self.run_procedures:
-            return universal_caller(self.run_procedures[args[0]],
-                                    *args[1:], **dict(request.vars))
+            return str(universal_caller(self.run_procedures[args[0]],
+                                        *args[1:], **dict(request.vars)))
         self.error()
 
     def serve_csv(self, args=None):
