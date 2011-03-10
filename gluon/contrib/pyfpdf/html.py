@@ -62,7 +62,7 @@ class HTML2FPDF(HTMLParser):
 
     def handle_data(self, txt):
         if self.td is not None: # drawing a table?
-            if 'width' not in self.td and 'colspan' not in self.td:
+            if 'width' not in self.td and 'colspan' not in self.td and len(self.table_col_width) > 0 and not self.table_col_index > len(self.table_col_width) - 1:
                 l = [self.table_col_width[self.table_col_index]]
             elif 'colspan' in self.td:
                 i = self.table_col_index
@@ -236,7 +236,7 @@ class HTML2FPDF(HTMLParser):
         if tag=='th':
             self.td = dict([(k.lower(), v) for k,v in attrs.items()])
             self.th = True
-            if self.td['width']:
+            if 'width' in self.td:
                 self.table_col_width.append(self.td['width'])
         if tag=='thead':
             self.thead = {}
