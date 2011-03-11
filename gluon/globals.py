@@ -55,7 +55,7 @@ class Request(Storage):
     - args
     - extension
     - now: datetime.datetime.today()
-
+    - restful()
     """
 
     def __init__(self):
@@ -71,6 +71,14 @@ class Request(Storage):
         self.args = List()
         self.extension = None
         self.now = datetime.datetime.today()
+    def restful(self):
+        def wrapper(action,self=self):            
+            def f(_action=action,_self=self,*a,**b):
+                return _action()[_self.env.request_method]()
+            f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            return f
+        return wrapper
 
 
 class Response(Storage):
