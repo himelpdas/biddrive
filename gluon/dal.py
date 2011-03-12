@@ -3702,10 +3702,10 @@ def index():
                 if i==len(tags) and table:
                     otable,ofield = vars.get('order','%s.%s' % (table,field)).split('.',1)
                     try:
-                        if otable[:0]=='~': orderby = ~db[otable[1:]][ofield]
+                        if otable[:1]=='~': orderby = ~db[otable[1:]][ofield]
                         else: orderby = db[otable][ofield]
                     except KeyError:
-                        Row({'status':400,'error':'invalid orderby','response':None})
+                        return Row({'status':400,'error':'invalid orderby','response':None})
                     fields = [field for field in db[table] if field.readable]
                     count = dbset.count()
                     try:
