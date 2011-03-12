@@ -3600,8 +3600,8 @@ class DAL(dict):
         else:
             return False
 
-    def parse_as_rest(self,args,patterns,attributes={}):
-        """
+    def parse_as_rest(self,patterns,args,vars,nested_select=True):
+        """        
         EXAMPLE:
         
 db.define_table('person',Field('name'),Field('info'))
@@ -3609,32 +3609,31 @@ db.define_table('pet',Field('person',db.person),Field('name'),Field('info'))
 
 @request.restful()
 def index():
-    def GET(*args):
+    def GET(*args,**vars):
         patterns = [
-            "/{person.name}",
+            "/{person.name.startswith}",
             "/{person.name}/:field",
             "/{person.name}/pets[pet.person]",
             "/{person.name}/pet[pet.person]/{pet.name}",
             "/{person.name}/pet[pet.person]/{pet.name}/:field"
             ]
-        parser = db.parse_as_rest(args,patterns)
+        parser = db.parse_as_rest(patterns,args,vars)
         if parser.status == 200:
             return dict(content=parser.response)
         else:
             raise HTTP(parser.status,parser.error)
-    def POST(table_name):
+    def POST(table_name,**vars):
         if table_name == 'person':
-            return db.person.validate_and_insert(**request.vars)
+            return db.person.validate_and_insert(**vars)
         elif table_name == 'pet':
-            # errors = db.person.validate_variables(request.vars)                                                                        
-            return db.pet.validate_and_insert(**request.vars)
+            return db.pet.validate_and_insert(**vars)
         else:
             raise HTTP(400)
     return locals()
         """
 
         db = self
-        re1 = re.compile('^{.+\..+}$')
+        re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith))?(\.not)?}$')
         re2 = re.compile('^.+\[.+\..+\]$')
         for pattern in patterns:
             otable=None
@@ -3648,51 +3647,69 @@ def index():
                 # print i, tag, args[i]
                 if re1.match(tag):
                     # print 're1:'+tag
-                    table,field = tag[1:-1].split('.')
-                    if not table in db.tables or not field in db[table].fields:
-                        break
-                    if not otable or table == otable:
-                        dbset=dbset(db[table][field]==args[i])
+                    tokens = tag[1:-1].split('.')
+                    table, field = tokens[0], tokens[1]
+                    if not otable or table == otable:  
+                        if len(tokens)==2 or tokens[2]=='eq':
+                            query = db[table][field]==args[i]
+                        elif tokens[2]=='ne':
+                            query = db[table][field]!=args[i]
+                        elif tokens[2]=='lt':
+                            query = db[table][field]<args[i]
+                        elif tokens[2]=='gt':
+                            query = db[table][field]>args[i]
+                        elif tokens[2]=='ge':
+                            query = db[table][field]<=args[i]
+                        elif tokens[2]=='ne':
+                            query = db[table][field]>=args[i]
+                        elif tokens[2]=='startswith':
+                            query = db[table][field].startswith(args[i])
+                        elif tokesn[2]=='contains':
+                            query = db[table][field].contains(args[i])
+                        else:
+                            raise RuntimeError, "invalid pattern: " % pattern                        
+                        if len(tokens)==4 and tokens[3]=='not':
+                            query = ~query
+                        elif len(tokens)>=4:
+                            raise RuntimeError, "invalid pattern: " % pattern
+                        dbset=dbset(query)
                     else:
-                        dbset=db(db[table][field].belongs(dbset._select()))
-                elif re2.match(tag) and args[i]==tag[:tag.find('[')]: 
+                        raise RuntimeError, "missing relation in patter: " % pattern
+                elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]: 
                     # print 're2:'+tag
                     table,field = tag[tag.find('[')+1:-1].split('.')
                     # print table,field
-                    if not table in db.tables or not field in db[table].fields:
-                        break
-                    item = dbset.select(db[otable]._id,limitby=(0,1)).first()
-                    if not item:
-                        return Row({'status':404,'pattern':pattern,'error':'record not found','response':None})
-                    dbset=db(db[table][field]==item.id)
-                elif tag==':field':
+                    if nested_select:
+                        dbset=db(db[table][field].belongs(dbset._select(db[otable]._id)))
+                    else:
+                        items = [item.id for item in dbset.select(db[otable]._id)]
+                        dbset=db(db[table][field].belongs(items))
+                elif tag==':field' and table:
                     # # print 're3:'+tag
                     field = args[i]
-                    if not field in db[table].fields:
-                        break
+                    if not field in db[table]: break
                     item =  dbset.select(db[table][field],limitby=(0,1)).first()
                     if not item:
-                        return Row({'status':404,'pattern':pattern,'error':'record not found','response':None})
+                        return Row({'status':404,'pattern':pattern,
+                                    'error':'record not found','response':None})
                     else: 
-                        response = item[field]
-                        return Row({'status':200,'response':response,'pattern':pattern})
-                else:
+                        return Row({'status':200,'response':item[field],
+                                    'pattern':pattern})
+                elif tag != args[i]:
                     break
                 otable = table
                 i += 1
-                if i==len(tags):
-                    otable,ofield = attributes.get('order','%s.%s' % (table,field)).split('.',1)
+                if i==len(tags) and table:
+                    otable,ofield = vars.get('order','%s.%s' % (table,field)).split('.',1)
                     try:
-                        if otable[0]=='~':
-                            orderby = ~db[otable[1:]][ofield]
-                        else:
-                            orderby = db[otable][ofield]
+                        if otable[:0]=='~': orderby = ~db[otable[1:]][ofield]
+                        else: orderby = db[otable][ofield]
                     except KeyError:
                         Row({'status':400,'error':'invalid orderby','response':None})
                     fields = [field for field in db[table] if field.readable]
                     count = dbset.count()
                     try:
-                        limits = (attributes.get('min',0),attributes.get('max',1000))
+                        limits = (int(vars.get('min',0)),int(vars.get('max',1000)))
                     except ValueError:
                         Row({'status':400,'error':'invalid limits','response':None})
                     if count > limits[1]-limits[0]:

@@ -78,11 +78,14 @@ class Request(Storage):
                 if len(_self.args) and '.' in _self.args[-1]:
                     _self.args[-1],_self.extension = _self.args[-1].rsplit('.',1)
                 if not method in ['GET','POST','DELETE','PUT']:
-                    raise HTTP(400)
+                    raise HTTP(400,"invalid method")
                 rest_action = _action().get(method,None)
                 if not rest_action:
-                    raise HTTP(400)
-                return rest_action(*_self.args)
+                    raise HTTP(400,"method not supported")
+                try:
+                    return rest_action(*_self.args,**_self.vars)
+                except TypeError:
+                    raise HTTP(400,"invalid arguments")
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
             return f
