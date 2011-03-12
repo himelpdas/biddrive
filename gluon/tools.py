@@ -3157,6 +3157,27 @@ class Crud(object):
         return form, results
 
     def rest(self, patterns,args):        
+        """
+        EXAMPLE:
+
+        db.define_table('person',Field('name'),Field('weight','double'))
+        db.define_table('pet',Field('person',db.person),Field('name'),Field('weight'))
+
+        @request.restful()
+        def index():
+            def GET(*args):
+                patterns = [
+                    "/{person.name}",
+                    "/{person.name}/:field",
+                    "/{person.name}/pets[pet.person]",
+                    "/{person.name}/pet[pet.person]/{pet.name}",
+                    "/{person.name}/pet[pet.person]/{pet.name}/:field"
+                    ]
+                return crud.rest(patterns,args)
+            def POST(*args):
+                return db.person.insert(**request.vars)
+            return locals()
+        """
         import re
         db = self.db
         re1 = re.compile('^{.+\..+}$')
