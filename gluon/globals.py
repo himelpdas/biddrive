@@ -72,9 +72,17 @@ class Request(Storage):
         self.extension = None
         self.now = datetime.datetime.today()
     def restful(self):
-        def wrapper(action,self=self):            
-            def f(_action=action,_self=self,*a,**b):
-                return _action()[_self.env.request_method]()
+        def wrapper(action,self=self):
+            def f(_action=action,_self=self,*a,**b):                
+                method = _self.env.request_method
+                if len(_self.args) and '.' in _self.args[-1]:
+                    _self.args[-1],_self.extension = _self.args[-1].rsplit('.',1)
+                if not method in ['GET','POST','DELETE','PUT']:
+                    raise HTTP(400)
+                rest_action = _action().get(method,None)
+                if not rest_action:
+                    raise HTTP(400)
+                return rest_action(*_self.args)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
             return f
