@@ -3600,6 +3600,108 @@ class DAL(dict):
         else:
             return False
 
+    def parse_as_rest(self,args,patterns,attributes={}):
+        """
+        EXAMPLE:
+        
+db.define_table('person',Field('name'),Field('info'))
+db.define_table('pet',Field('person',db.person),Field('name'),Field('info'))
+
+@request.restful()
+def index():
+    def GET(*args):
+        patterns = [
+            "/{person.name}",
+            "/{person.name}/:field",
+            "/{person.name}/pets[pet.person]",
+            "/{person.name}/pet[pet.person]/{pet.name}",
+            "/{person.name}/pet[pet.person]/{pet.name}/:field"
+            ]
+        parser = db.parse_as_rest(args,patterns)
+        if parser.status == 200:
+            return dict(content=parser.response)
+        else:
+            raise HTTP(parser.status,parser.error)
+    def POST(table_name):
+        if table_name == 'person':
+            return db.person.validate_and_insert(**request.vars)
+        elif table_name == 'pet':
+            # errors = db.person.validate_variables(request.vars)                                                                        
+            return db.pet.validate_and_insert(**request.vars)
+        else:
+            raise HTTP(400)
+    return locals()
+        """
+
+        db = self
+        re1 = re.compile('^{.+\..+}$')
+        re2 = re.compile('^.+\[.+\..+\]$')
+        for pattern in patterns:
+            otable=None
+            dbset=db()
+            i=0
+            tags = pattern[1:].split('/')
+            # print pattern
+            if len(tags)!=len(args):
+                continue
+            for tag in tags: 
+                # print i, tag, args[i]
+                if re1.match(tag):
+                    # print 're1:'+tag
+                    table,field = tag[1:-1].split('.')
+                    if not table in db.tables or not field in db[table].fields:
+                        break
+                    if not otable or table == otable:
+                        dbset=dbset(db[table][field]==args[i])
+                    else:
+                        dbset=db(db[table][field].belongs(dbset._select()))
+                elif re2.match(tag) and args[i]==tag[:tag.find('[')]: 
+                    # print 're2:'+tag
+                    table,field = tag[tag.find('[')+1:-1].split('.')
+                    # print table,field
+                    if not table in db.tables or not field in db[table].fields:
+                        break
+                    item = dbset.select(db[otable]._id,limitby=(0,1)).first()
+                    if not item:
+                        return Row({'status':404,'pattern':pattern,'error':'record not found','response':None})
+                    dbset=db(db[table][field]==item.id)
+                elif tag==':field':
+                    # # print 're3:'+tag
+                    field = args[i]
+                    if not field in db[table].fields:
+                        break
+                    item =  dbset.select(db[table][field],limitby=(0,1)).first()
+                    if not item:
+                        return Row({'status':404,'pattern':pattern,'error':'record not found','response':None})
+                    else: 
+                        response = item[field]
+                        return Row({'status':200,'response':response,'pattern':pattern})
+                else:
+                    break
+                otable = table
+                i += 1
+                if i==len(tags):
+                    otable,ofield = attributes.get('order','%s.%s' % (table,field)).split('.',1)
+                    try:
+                        if otable[0]=='~':
+                            orderby = ~db[otable[1:]][ofield]
+                        else:
+                            orderby = db[otable][ofield]
+                    except KeyError:
+                        Row({'status':400,'error':'invalid orderby','response':None})
+                    fields = [field for field in db[table] if field.readable]
+                    count = dbset.count()
+                    try:
+                        limits = (attributes.get('min',0),attributes.get('max',1000))
+                    except ValueError:
+                        Row({'status':400,'error':'invalid limits','response':None})
+                    if count > limits[1]-limits[0]:
+                        Row({'status':400,'error':'too many records','response':None})
+                    response = dbset.select(limitby=limits,orderby=orderby,*fields)
+                    return Row({'status':200,'response':response,'pattern':pattern})
+        return Row({'status':400,'error':'no mathcing pattern','response':None})
+
+
     def define_table(
         self,
         tablename,
@@ -3933,6 +4035,13 @@ class Table(dict):
                 else:
                     self[k].notnull = True
 
+    def _validate(self,**vars):
+        errors = Row()
+        for key,value in vars.items():
+            value,error = self[key].validate(value)
+            if error:
+                errors[key] = error
+        return errors
 
     def _create_references(self):
         self._referenced_by = []
@@ -4102,6 +4211,15 @@ class Table(dict):
 
     def insert(self, **fields):
         return self._db._adapter.insert(self,self._listify(fields))
+
+    def validate_and_insert(self,**fields):
+        response = Row()
+        response.errors = self._validate(**fields)
+        if not response.errors:
+            response.id = self.insert(**fields)
+        else:
+            response.id = None
+        return response
 
     def update_or_insert(self, key=DEFAULT, **values):
         if key==DEFAULT:
