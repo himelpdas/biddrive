@@ -3664,7 +3664,7 @@ def index():
                             query = db[table][field]>=args[i]
                         elif tokens[2]=='startswith':
                             query = db[table][field].startswith(args[i])
-                        elif tokesn[2]=='contains':
+                        elif tokens[2]=='contains':
                             query = db[table][field].contains(args[i])
                         else:
                             raise RuntimeError, "invalid pattern: " % pattern                        
@@ -3674,7 +3674,7 @@ def index():
                             raise RuntimeError, "invalid pattern: " % pattern
                         dbset=dbset(query)
                     else:
-                        raise RuntimeError, "missing relation in patter: " % pattern
+                        raise RuntimeError, "missing relation in pattern: " % pattern
                 elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]: 
                     # print 're2:'+tag
                     table,field = tag[tag.find('[')+1:-1].split('.')
@@ -4586,7 +4586,7 @@ class Field(Expression):
     string, boolean, integer, double, text, blob,
     date, time, datetime, upload, password
 
-    strings must have a length of Adater.maxcharlength by default (512 or 255 for mysql)
+    strings must have a length of Adapter.maxcharlength by default (512 or 255 for mysql)
     fields should have a default or they will be required in SQLFORMs
     the requires argument is used to validate the field input in SQLFORMs
 
