@@ -3635,7 +3635,7 @@ def index():
         db = self
         re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith|year|month|day|hour|minute|second))?(\.not)?}$')
         re2 = re.compile('^.+\[.+\..+\]$')
-        if patterns == ':all':
+        if patterns=='all':
             patterns=[]
             for table in db.tables:
                 for field in db[table].fields:
@@ -3670,8 +3670,8 @@ def index():
                         tag+='/{%s.%s.second}' % (table,field)
                         patterns.append(tag)
                         patterns.append(tag+'/:field')
-        if '/'.join(args) == 'api/list':
-            return Row({'status':200,'pattern':'/api/list',
+        if '/'.join(args) == 'list':
+            return Row({'status':200,'pattern':'list',
                         'error':None,'response':patterns})
         for pattern in patterns:
             otable=table=None
