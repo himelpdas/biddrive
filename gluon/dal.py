@@ -3633,10 +3633,48 @@ def index():
         """
 
         db = self
-        re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith))?(\.not)?}$')
+        re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith|year|month|day|hour|minute|second))?(\.not)?}$')
         re2 = re.compile('^.+\[.+\..+\]$')
+        if patterns == ':all':
+            patterns=[]
+            for table in db.tables:
+                for field in db[table].fields:
+                    tag = '/%s-by-%s' % (table.replace('_','-'),field.replace('_','-'))
+                    f = db[table][field]
+                    if not f.readable: continue
+                    if f.type in ('id','integer') or 'slug' in field or f.type.startswith('reference'):
+                        tag += '/{%s.%s}' % (table,field)
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+                    elif f.type.startswith('reference'):
+                        tag += '/{%s.%s.contains}' % (table,field)
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+                    elif f.type in ('date','datetime'):
+                        tag+= '/{%s.%s.year}' % (table,field)
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+                        tag+='/{%s.%s.month}' % (table,field)
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+                        tag+='/{%s.%s.day}' % (table,field) 
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+                    if f.type in ('datetime','time'):
+                        tag+= '/{%s.%s.hour}' % (table,field)
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+                        tag+='/{%s.%s.minute}' % (table,field)
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+                        tag+='/{%s.%s.second}' % (table,field)
+                        patterns.append(tag)
+                        patterns.append(tag+'/:field')
+        if '/'.join(args) == 'api/list':
+            return Row({'status':200,'pattern':'/api/list',
+                        'error':None,'response':patterns})
         for pattern in patterns:
-            otable=None
+            otable=table=None
             dbset=db()
             i=0
             tags = pattern[1:].split('/')
@@ -3662,25 +3700,41 @@ def index():
                             query = db[table][field]<=args[i]
                         elif tokens[2]=='ne':
                             query = db[table][field]>=args[i]
+                        elif tokens[2]=='year':
+                            query = db[table][field].year()==args[i]
+                        elif tokens[2]=='month':
+                            query = db[table][field].month()==args[i]
+                        elif tokens[2]=='day':
+                            query = db[table][field].day()==args[i]
+                        elif tokens[2]=='hour':
+                            query = db[table][field].hour()==args[i]
+                        elif tokens[2]=='minute':
+                            query = db[table][field].minutes()==args[i]
+                        elif tokens[2]=='second':
+                            query = db[table][field].seconds()==args[i]
                         elif tokens[2]=='startswith':
                             query = db[table][field].startswith(args[i])
                         elif tokens[2]=='contains':
                             query = db[table][field].contains(args[i])
                         else:
-                            raise RuntimeError, "invalid pattern: " % pattern                        
+                            raise RuntimeError, "invalid pattern: %s" % pattern                        
                         if len(tokens)==4 and tokens[3]=='not':
                             query = ~query
                         elif len(tokens)>=4:
-                            raise RuntimeError, "invalid pattern: " % pattern
+                            raise RuntimeError, "invalid pattern: %s" % pattern
                         dbset=dbset(query)
                     else:
-                        raise RuntimeError, "missing relation in pattern: " % pattern
+                        raise RuntimeError, "missing relation in pattern: %s" % pattern
                 elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]: 
                     # print 're2:'+tag
                     table,field = tag[tag.find('[')+1:-1].split('.')
                     # print table,field
                     if nested_select:
-                        dbset=db(db[table][field].belongs(dbset._select(db[otable]._id)))
+                        try:
+                            dbset=db(db[table][field].belongs(dbset._select(db[otable]._id)))
+                        except ValueError:
+                            return Row({'status':400,'pattern':pattern,
+                                        'error':'invalid path','response':None})
                     else:
                         items = [item.id for item in dbset.select(db[otable]._id)]
                         dbset=db(db[table][field].belongs(items))
@@ -3688,7 +3742,11 @@ def index():
                     # # print 're3:'+tag
                     field = args[i]
                     if not field in db[table]: break
-                    item =  dbset.select(db[table][field],limitby=(0,1)).first()
+                    try:
+                        item =  dbset.select(db[table][field],limitby=(0,1)).first()
+                    except ValueError:
+                        return Row({'status':400,'pattern':pattern,
+                                    'error':'invalid path','response':None})
                     if not item:
                         return Row({'status':404,'pattern':pattern,
                                     'error':'record not found','response':None})
@@ -3710,11 +3768,16 @@ def index():
                     count = dbset.count()
                     try:
                         limits = (int(vars.get('min',0)),int(vars.get('max',1000)))
+                        if limits[0]<0 or limits[1]<limits[0]: raise ValueError 
                     except ValueError:
                         Row({'status':400,'error':'invalid limits','response':None})
                     if count > limits[1]-limits[0]:
                         Row({'status':400,'error':'too many records','response':None})
-                    response = dbset.select(limitby=limits,orderby=orderby,*fields)
+                    try:
+                        response = dbset.select(limitby=limits,orderby=orderby,*fields)
+                    except ValueError:
+                        return Row({'status':400,'pattern':pattern,
+                                    'error':'invalid path','response':None})
                     return Row({'status':200,'response':response,'pattern':pattern})
         return Row({'status':400,'error':'no mathcing pattern','response':None})
 
