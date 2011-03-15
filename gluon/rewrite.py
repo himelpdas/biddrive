@@ -241,8 +241,9 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
         #    parse the app-specific routes.py if present
         #
         all_apps = []
-        for appname in os.listdir(abspath('applications')):
-            if os.path.isdir(abspath('applications', appname)):
+        for appname in [app for app in os.listdir(abspath('applications')) if not app.startswith('.')]:
+            if os.path.isdir(abspath('applications', appname)) and \
+               os.path.isdir(abspath('applications', appname, 'controllers')):
                 all_apps.append(appname)
                 if routers:
                     router = Storage(routers.BASE)   # new copy

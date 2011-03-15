@@ -33,17 +33,27 @@ class TestVirtualFields(unittest.TestCase):
     def testEqualWrite(self):
         "test generation of response.write from ="
         self.assertEqual(render(content='{{="abc"}}'), 'abc')
+        # whitespace is stripped
         self.assertEqual(render(content='{{ ="abc"}}'), 'abc')
         self.assertEqual(render(content='{{ ="abc" }}'), 'abc')
         self.assertEqual(render(content='{{pass\n="abc" }}'), 'abc')
-        self.assertEqual(render(content='{{xyz="xyz"\n="abc"\n="def"\n=xyz }}'), 'abcdefxyz')
-        #self.assertEqual(render(content='{{="abc"\n="def" }}'), 'abcdef')
+        # = recognized only at the beginning of a physical line
+        self.assertEqual(render(content='{{xyz = "xyz"\n="abc"\n="def"\n=xyz }}'), 'abcdefxyz')
+        # = in python blocks
         self.assertEqual(render(content='{{if True:\n="abc"\npass }}'), 'abc')
         self.assertEqual(render(content='{{if True:\n="abc"\npass\n="def" }}'), 'abcdef')
         self.assertEqual(render(content='{{if False:\n="abc"\npass\n="def" }}'), 'def')
         self.assertEqual(render(content='{{if True:\n="abc"\nelse:\n="def"\npass }}'), 'abc')
         self.assertEqual(render(content='{{if False:\n="abc"\nelse:\n="def"\npass }}'), 'def')
-
+        # codeblock-leading = handles internal newlines, escaped or not
+        self.assertEqual(render(content='{{=list((1,2,3))}}'), '[1, 2, 3]')
+        self.assertEqual(render(content='{{=list((1,2,\\\n3))}}'), '[1, 2, 3]')
+        self.assertEqual(render(content='{{=list((1,2,\n3))}}'), '[1, 2, 3]')
+        # ...but that means no more = operators in the codeblock
+        self.assertRaises(SyntaxError, render, content='{{="abc"\n="def" }}')
+        # = embedded in codeblock won't handle newlines in its argument
+        self.assertEqual(render(content='{{pass\n=list((1,2,\\\n3))}}'), '[1, 2, 3]')
+        self.assertRaises(SyntaxError, render, content='{{pass\n=list((1,2,\n3))}}')
 
 
 if __name__ == '__main__':
