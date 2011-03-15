@@ -387,6 +387,12 @@ class Session(Storage):
         self._forget = True
 
     def _try_store_in_db(self, request, response):
+        # trick for speedup, do not tray to safe session if no change
+        __hash = self.__hash
+        if __hash: ### CHECK CHECK WHY IS THIS SOMETIMES FALSE 
+            del self.__hash
+            if __hash == hash(str(self)):
+                return
         if not response._dbtable_and_field or not response.session_id\
              or self._forget:
             return
