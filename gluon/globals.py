@@ -26,6 +26,7 @@ from serializers import json, custom_json
 import settings
 from utils import web2py_uuid
 
+import hashlib
 import portalocker
 import cPickle
 import cStringIO
@@ -359,9 +360,9 @@ class Session(Storage):
             response.session_id = '%s:%s' % (record_id, unique_key)
         response.cookies[response.session_id_name] = response.session_id
         response.cookies[response.session_id_name]['path'] = '/'
+        self.__hash = hashlib.md5(str(self)).hexdigest()
         if self.flash:
             (response.flash, self.flash) = (self.flash, None)
-        self.__hash = hash(str(self))
 
     def is_new(self):
         if self._start_timestamp:
@@ -389,9 +390,9 @@ class Session(Storage):
     def _try_store_in_db(self, request, response):
         # trick for speedup, do not tray to safe session if no change
         __hash = self.__hash
-        if __hash: ### CHECK CHECK WHY IS THIS SOMETIMES FALSE 
+        if __hash is not None: ### CHECK CHECK WHY IS THIS SOMETIMES FALSE 
             del self.__hash
-            if __hash == hash(str(self)):
+            if __hash == hashlib.md5(str(self)).hexdigest():
                 return
         if not response._dbtable_and_field or not response.session_id\
              or self._forget:
