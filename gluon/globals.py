@@ -423,7 +423,7 @@ class Session(Storage):
             try:
                 portalocker.unlock(response.session_file)
                 response.session_file.close()
-                del response.session_file
+                response.session_file = None
             except: ### this should never happen but happens in Windows
                 pass
 
