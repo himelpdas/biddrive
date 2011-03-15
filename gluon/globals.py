@@ -361,6 +361,7 @@ class Session(Storage):
         response.cookies[response.session_id_name]['path'] = '/'
         if self.flash:
             (response.flash, self.flash) = (self.flash, None)
+        self.__hash = hash(str(self))
 
     def is_new(self):
         if self._start_timestamp:
@@ -404,6 +405,16 @@ class Session(Storage):
         response.cookies[response.session_id_name]['path'] = '/'
 
     def _try_store_on_disk(self, request, response):
+        # trick for speedup, do not tray to safe session if no change
+        __hash = self.__hash
+        if __hash: ### CHECK CHECK WHY IS THIS SOMETIMES FALSE 
+            del self.__hash
+            if __hash == hash(str(self)):
+                if response.session_file:
+                    portalocker.unlock(response.session_file)
+                return
+
+        # the following is for weird OSes
         if not hasattr(os,'mkdir'): return
         if response._dbtable_and_field \
                 or not response.session_id \

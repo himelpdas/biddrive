@@ -31,7 +31,6 @@ class List(list):
         else:
             return default
 
-
 class Storage(dict):
 
     """
