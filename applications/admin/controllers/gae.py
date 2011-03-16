@@ -65,7 +65,7 @@ def deploy():
                                                         stdin=s.PIPE,
                                                         stdout=s.PIPE,
                                                         stderr=s.PIPE, close_fds=True),-1)
-        p.stdin.write(form.vars.password)
+        p.stdin.write(form.vars.password+'\n')
         fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         fcntl.fcntl(p.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
     return dict(form=form,command=cmd)
