@@ -361,7 +361,7 @@ class Session(Storage):
             response.session_id = '%s:%s' % (record_id, unique_key)
         response.cookies[response.session_id_name] = response.session_id
         response.cookies[response.session_id_name]['path'] = '/'
-        self.__hash = hashlib.md5(str(self)).hexdigest()
+        self.__hash = hashlib.md5(str(self)).digest()
         if self.flash:
             (response.flash, self.flash) = (self.flash, None)
 
@@ -395,7 +395,7 @@ class Session(Storage):
         __hash = self.__hash
         if __hash is not None:
             del self.__hash
-            if __hash == hashlib.md5(str(self)).hexdigest():
+            if __hash == hashlib.md5(str(self)).digest():
                 return
         (record_id_name, table, record_id, unique_key) = \
             response._dbtable_and_field
@@ -415,11 +415,11 @@ class Session(Storage):
         # the following is for weird OSes
         if not hasattr(os,'mkdir'): return
 
-        # trick for speedup, do not tray to safe session if no change
+        # trick for speedup, do not try to safe session if no change
         __hash = self.__hash
         if __hash is not None:
             del self.__hash
-            if __hash == hashlib.md5(str(self)).hexdigest():
+            if __hash == hashlib.md5(str(self)).digest():
                 if response.session_file:
                     portalocker.unlock(response.session_file)
                 return
