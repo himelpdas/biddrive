@@ -35,6 +35,8 @@ import datetime
 import re
 import Cookie
 import os
+import sys
+import traceback
 
 regex_session_id = re.compile('^([\w\-]+/)?[\w\-\.]+$')
 
@@ -87,8 +89,12 @@ class Request(Storage):
                     raise HTTP(400,"method not supported")
                 try:
                     return rest_action(*_self.args,**_self.vars)
-                except TypeError:
-                    raise HTTP(400,"invalid arguments")
+                except TypeError, e:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    if len(traceback.extract_tb(exc_traceback))==1:
+                        raise HTTP(400,"invalid arguments")
+                    else:
+                        raise e
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
             return f

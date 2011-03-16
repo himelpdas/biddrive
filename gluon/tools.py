@@ -2274,10 +2274,10 @@ class Auth(object):
         def decorator(action):
 
             def f(*a, **b):
-                if self.settings.allow_basic_login_only and not self.basic():
-                    return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not condition:
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
                     if not self.basic() and not self.is_logged_in():
                         request = self.environment.request
                         next = URL(r=request,args=request.args,
@@ -2308,8 +2308,12 @@ class Auth(object):
             def f(*a, **b):
 
                 if self.settings.allow_basic_login_only and not self.basic():
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
                 if not self.basic() and not self.is_logged_in():
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
@@ -2335,12 +2339,15 @@ class Auth(object):
         """
 
         def decorator(action):
-
             def f(*a, **b):
                 if self.settings.allow_basic_login_only and not self.basic():
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not self.basic() and not self.is_logged_in():
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
@@ -2377,9 +2384,13 @@ class Auth(object):
 
             def f(*a, **b):
                 if self.settings.allow_basic_login_only and not self.basic():
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not self.basic() and not self.is_logged_in():
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
                     request = self.environment.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
