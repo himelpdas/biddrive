@@ -32,7 +32,7 @@ def deploy():
     regex = re.compile('^\w+$')
     apps = sorted(file for file in os.listdir(apath(r=request)) if regex.match(file))
     form = SQLFORM.factory(
-        Field('appcfg',default=GAE_APPCFG,label='Path to appcgf.py',
+        Field('appcfg',default=GAE_APPCFG,label='Path to appcfg.py',
               requires=EXISTS(error_message=T('file not found'))),
         Field('google_application_id',requires=IS_ALPHANUMERIC()),
         Field('applications',requires=IS_IN_SET(apps,multiple=True),
