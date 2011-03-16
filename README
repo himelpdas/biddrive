@@ -1002,3 +1002,10 @@ recalled
 - better formstyle support
 - better comet_messaging.py (needs more testing)
 - many bug fixes
+
+## 1.94.1
+- moderniz 1.17
+- web2py no longer saves session if no change, this makes it up to 10x faster for simple actions
+- experimental REST API
+- better support for MSSQL NOT NULL
+- small bug fixes

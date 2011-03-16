@@ -3643,7 +3643,7 @@ def index():
 
         db = self
         re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith|year|month|day|hour|minute|second))?(\.not)?}$')
-        re2 = re.compile('^.+\[.+\..+\]$')
+        re2 = re.compile('^.+\[.+\]$')
         if patterns=='all':
             patterns=[]
             for table in db.tables:
@@ -3736,17 +3736,21 @@ def index():
                         raise RuntimeError, "missing relation in pattern: %s" % pattern
                 elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]:
                     # print 're2:'+tag
-                    table,field = tag[tag.find('[')+1:-1].split('.')
-                    # print table,field
-                    if nested_select:
-                        try:
-                            dbset=db(db[table][field].belongs(dbset._select(db[otable]._id)))
-                        except ValueError:
-                            return Row({'status':400,'pattern':pattern,
-                                        'error':'invalid path','response':None})
+                    ref = tag[tag.find('[')+1:-1]
+                    if '.' in ref:
+                        table,field = ref.split('.')
+                        # print table,field
+                        if nested_select:
+                            try:
+                                dbset=db(db[table][field].belongs(dbset._select(db[otable]._id)))
+                            except ValueError:
+                                return Row({'status':400,'pattern':pattern,
+                                            'error':'invalid path','response':None})
+                        else:
+                            items = [item.id for item in dbset.select(db[otable]._id)]
+                            dbset=db(db[table][field].belongs(items))
                     else:
-                        items = [item.id for item in dbset.select(db[otable]._id)]
-                        dbset=db(db[table][field].belongs(items))
+                        dbset=dbset(db[ref])
                 elif tag==':field' and table:
                     # # print 're3:'+tag
                     field = args[i]
