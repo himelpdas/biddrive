@@ -505,6 +505,8 @@ class BaseAdapter(ConnectionPool):
             if not field.type.startswith('id') and not field.type.startswith('reference'):
                 if field.notnull:
                     ftype += ' NOT NULL'
+                else:
+                    ftype += self.ALLOW_NULL()
                 if field.unique:
                     ftype += ' UNIQUE'
 
@@ -714,6 +716,9 @@ class BaseAdapter(ConnectionPool):
 
     def NOT_NULL(self,default,field_type):
         return 'NOT NULL DEFAULT %s' % self.represent(default,field_type)
+        
+    def ALLOW_NULL(self):
+        return ''
 
     def SUBSTRING(self,field,parameters):
         return 'SUBSTR(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
@@ -1809,7 +1814,7 @@ class MSSQLAdapter(BaseAdapter):
         'time': 'CHAR(8)',
         'datetime': 'DATETIME',
         'id': 'INT IDENTITY PRIMARY KEY',
-        'reference': 'INT, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'reference': 'INT NULL, CONSTRAINT %(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
         'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
         'list:integer': 'TEXT',
@@ -1825,6 +1830,9 @@ class MSSQLAdapter(BaseAdapter):
 
     def RANDOM(self):
         return 'NEWID()'
+        
+    def ALLOW_NULL(self):
+        return ' NULL'
 
     def SUBSTRING(self,field,parameters):
         return 'SUBSTRING(%s,%s,%s)' % (self.expand(field), parameters[0], parameters[1])
@@ -1847,7 +1855,7 @@ class MSSQLAdapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={}, fake_connect=False):
         self.db = db
         self.dbengine = "mssql"
         self.uri = uri
@@ -1901,8 +1909,9 @@ class MSSQLAdapter(BaseAdapter):
                 % (host, port, db, user, password, urlargs)
         def connect(cnxn=cnxn,driver_args=driver_args):
             return pyodbc.connect(cnxn,**driver_args)
-        self.pool_connection(connect)
-        self.cursor = self.connection.cursor()
+        if not fake_connect:
+            self.pool_connection(connect)
+            self.cursor = self.connection.cursor()
 
     def lastrowid(self,table):
         #self.execute('SELECT @@IDENTITY;')
