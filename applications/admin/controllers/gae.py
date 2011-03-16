@@ -1,10 +1,12 @@
 ### this works on linux only
 
+import re
 try:
     import fcntl
     import subprocess
     import signal
     import os
+    import shutil
 except:
     session.flash='sorry, only on Unix systems'
     redirect(URL(request.application,'default','site'))
@@ -32,10 +34,11 @@ def deploy():
     form = SQLFORM.factory(
         Field('appcfg',default=GAE_APPCFG,label='Path to appcgf.py',
               requires=EXISTS(error_message=T('file not found'))),
+        Field('google_application_id',requires=IS_ALPHANUMERIC()),
         Field('applications',requires=IS_IN_SET(apps,multiple=True),
-              label=T('Applications to deploy')),
-        Field('email',label=T('GAE Email')),
-        Field('password',requires=IS_EMAIL(),label=T('GAE Password')))
+              label=T('web2py apps to deploy')),
+        Field('email',requires=IS_EMAIL(),label=T('GAE Email')),
+        Field('password',requires=IS_NOT_EMPTY(),label=T('GAE Password')))
     cmd = output = errors= ""
     if form.accepts(request,session):
         try:
@@ -46,7 +49,11 @@ def deploy():
                            if not item[1] in request.vars.applications]
         regex = re.compile('\(applications/\(.*')
         yaml = apath('../app.yaml', r=request)
+        if not os.path.exists(yaml):
+            example = apath('../app.example.yaml', r=request)
+            shutil.copyfile(example,yaml)            
         data=open(yaml,'r').read()
+        data = re.sub('application:.*','application: %s' % form.vars.google_application_id,data)
         data = regex.sub('(applications/(%s)/.*)|' % '|'.join(ignore_apps),data)
         open(yaml,'w').write(data)
 

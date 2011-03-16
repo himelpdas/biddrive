@@ -14,7 +14,7 @@ $(document).ready(function() {
 
 <h2>Google App Engine Deployment Interface</h2>
 
-<p class="help">{{=T("This page can upload your application to the Google App Engine computing cloud. Mind that you must first create indexes locally and this is done by installing the Google appserver and running the app locally with it once, or there will be errors when selecting records. Attention: deployment may take long time, depending on the network speed. DO NOT SUBMIT TWICE.")}}</p>
+<p class="help">{{=T("This page can upload your application to the Google App Engine computing cloud. Mind that you must first create indexes locally and this is done by installing the Google appserver and running the app locally with it once, or there will be errors when selecting records. Attention: deployment may take long time, depending on the network speed. Attention: it will overwrite your app.yaml. DO NOT SUBMIT TWICE.")}}</p>
 
 {{if command:}}
 <h3>Command</h3>
