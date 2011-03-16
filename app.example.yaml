@@ -1,3 +1,8 @@
+#  For Google App Engine deployment, copy this file to app.yaml
+#  and edit as required
+#  See http://code.google.com/appengine/docs/python/config/appconfig.html
+#  and http://web2py.com/book/default/chapter/11?search=app.yaml
+
 application: web2py
 version: 1
 api_version: 1
@@ -58,7 +63,6 @@ skip_files: |
  (applications/(admin|examples)/.*)|
  ((admin|examples|welcome)\.(w2p|tar))|
  (applications/.*?/(cron|databases|errors|cache|sessions)/.*)|
- (applications/.*?/controllers/appadmin\.py)|
  ((logs|scripts)/.*)|
  (anyserver\.py)|
  (web2py\.py)|
