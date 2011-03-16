@@ -3644,9 +3644,10 @@ def index():
         db = self
         re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith|year|month|day|hour|minute|second))?(\.not)?}$')
         re2 = re.compile('^.+\[.+\]$')
-        if patterns=='all':
+        if patterns=='auto':
             patterns=[]
             for table in db.tables:
+                if table.startswith('auth_'): continue
                 for field in db[table].fields:
                     tag = '/%s-by-%s' % (table.replace('_','-'),field.replace('_','-'))
                     f = db[table][field]
