@@ -76,7 +76,7 @@ thread.routes = params              # default to base regex rewrite parameters
 routers = None
 
 ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 'controllers',
-    'default_function', 'functions', 'default_language', 'languages', 
+    'default_function', 'functions', 'default_language', 'languages',
     'domain', 'domains', 'root_static', 'path_prefix',
     'map_hyphen', 'map_static',
     'acfe_match', 'file_match', 'args_match'))
@@ -194,7 +194,7 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
             routesfp = open(path, 'r')
             data = routesfp.read().replace('\r\n','\n')
             routesfp.close()
-    
+
         symbols = {}
         try:
             exec (data + '\n') in symbols
@@ -820,11 +820,11 @@ class MapUrlIn(object):
     def map_root_static(self):
         '''
         handle root-static files (no hyphen mapping)
-        
+
         a root-static file is one whose incoming URL expects it to be at the root,
         typically robots.txt & favicon.ico
         '''
-        if len(self.args) == 1 and self.arg0 in self.router.root_static:   
+        if len(self.args) == 1 and self.arg0 in self.router.root_static:
             self.controller = self.request.controller = 'static'
             root_static_file = os.path.join(self.request.env.applications_parent,
                                    'applications', self.application,
@@ -902,7 +902,7 @@ class MapUrlIn(object):
                 self.function = arg0
             self.pop_arg_if(True)
         logger.debug("route: function.ext=%s.%s" % (self.function, self.extension))
-    
+
         if not self.router._acfe_match.match(self.function):
             raise HTTP(400, thread.routes.error_message % 'invalid request',
                        web2py_error='invalid function')
@@ -1007,7 +1007,7 @@ class MapUrlOut(object):
 
         if not self.language or self.language == self.default_language:
             self.omit_language = True
-    
+
     def omit_acf(self):
         "omit what we can of a/c/f"
 
@@ -1021,14 +1021,14 @@ class MapUrlOut(object):
                 self.omit_controller = True
                 if self.application == self.default_application:
                     self.omit_application = True
-    
+
         #  omit default application
         #  (which might be the domain default application)
         #
         default_application = self.domain_application or self.default_application
         if self.application == default_application:
             self.omit_application = True
-    
+
         #  omit controller if default controller
         #
         default_controller = ((self.application == self.domain_application) and self.domain_controller) or router.default_controller or ''

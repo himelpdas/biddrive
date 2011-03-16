@@ -2379,7 +2379,7 @@ class IS_EMPTY_OR(Validator):
 
     def formatter(self, value):
         if hasattr(self.other, 'formatter'):
-            return self.other.formatter(value)        
+            return self.other.formatter(value)
         return value
 
 IS_NULL_OR = IS_EMPTY_OR    # for backward compatibility

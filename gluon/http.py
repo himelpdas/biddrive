@@ -95,14 +95,14 @@ class HTTP(BaseException):
         if hasattr(body, '__iter__') and not isinstance(self.body, str):
             return body
         return [str(body)]
-    
+
     @property
     def message(self):
         '''
         compose a message describing this exception
-        
+
         "status defined_status [web2py_error]"
-        
+
         message elements that are not defined are omitted
         '''
         msg = '%(status)d'
@@ -111,9 +111,9 @@ class HTTP(BaseException):
         if 'web2py_error' in self.headers:
             msg += ' [%(web2py_error)s]'
         return msg % dict(status=self.status,
-                          defined_status=defined_status.get(self.status), 
+                          defined_status=defined_status.get(self.status),
                           web2py_error=self.headers.get('web2py_error'))
-    
+
     def __str__(self):
         "stringify me"
         return self.message

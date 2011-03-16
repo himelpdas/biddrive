@@ -262,13 +262,13 @@ try:
     from google.appengine.api.datastore_types import Key  ### needed for belongs on ID
     from google.appengine.ext.db.polymodel import PolyModel
     drivers.append('gae')
-    
+
     class GAEDecimalProperty(gae.Property):
         """
         GAE decimal implementation
         """
         data_type = decimal.Decimal
-        
+
         def __init__(self, precision, scale, **kwargs):
             super(GAEDecimalProperty, self).__init__(self, **kwargs)
             d = '1.'
@@ -288,7 +288,7 @@ try:
                 return decimal.Decimal(value).quantize(self.round)
             else:
                 return None
-            
+
         def validate(self, value):
             value = super(GAEDecimalProperty, self).validate(value)
             if value is None or isinstance(value, decimal.Decimal):
@@ -716,7 +716,7 @@ class BaseAdapter(ConnectionPool):
 
     def NOT_NULL(self,default,field_type):
         return 'NOT NULL DEFAULT %s' % self.represent(default,field_type)
-        
+
     def ALLOW_NULL(self):
         return ''
 
@@ -835,8 +835,8 @@ class BaseAdapter(ConnectionPool):
     def DIV(self,first,second):
         return '(%s / %s)' % (self.expand(first),self.expand(second,first.type))
 
-    def MOD(self,first,second): 
-        return '(%s %% %s)' % (self.expand(first),self.expand(second,first.type)) 
+    def MOD(self,first,second):
+        return '(%s %% %s)' % (self.expand(first),self.expand(second,first.type))
 
     def AS(self,first,second):
         return '(%s AS %s)' % (self.expand(first),second)
@@ -1568,7 +1568,7 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute("ROLLBACK PREPARED '%s';" % key)
 
     def create_sequence_and_triggers(self, query, table, **args):
-        # following lines should only be executed if table._sequence_name does not exist 
+        # following lines should only be executed if table._sequence_name does not exist
         # self.execute('CREATE SEQUENCE %s;' % table._sequence_name)
         # self.execute("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NEXTVAL('%s');" \
         #              % (table._tablename, table._fieldname, table._sequence_name))
@@ -1830,7 +1830,7 @@ class MSSQLAdapter(BaseAdapter):
 
     def RANDOM(self):
         return 'NEWID()'
-        
+
     def ALLOW_NULL(self):
         return ' NULL'
 
@@ -2098,7 +2098,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
                                    database=pathdb,
                                    user=credential_decoder(user),
                                    password=credential_decoder(password),
-                                   charset=charset))        
+                                   charset=charset))
         def connect(driver_args=driver_args):
             return kinterbasdb.connect(**driver_args)
         self.pool_connection(connect)
@@ -2418,7 +2418,7 @@ class DatabaseStoredFile:
     def __init__(self,db,filename,mode):
         if db.engine != 'mysql':
             raise RuntimeError, "only MySQL can store metadata .table files in database for now"
-        self.db = db        
+        self.db = db
         self.filename = filename
         self.mode = mode
         self.db.executesql("CREATE TABLE IF NOT EXISTS web2py_filesystem (path VARCHAR(512), content LONGTEXT, PRIMARY KEY(path) ) ENGINE=InnoDB;")
@@ -2438,7 +2438,7 @@ class DatabaseStoredFile:
         data = self.data[self.p:self.p+bytes]
         self.p += len(data)
         return data
-    
+
     def readline(self):
         i = self.data.find('\n',self.p)+1
         if i>0:
@@ -2470,7 +2470,7 @@ class UseDatabaseStoredFile:
 
     def file_exists(self, filename):
         return DatabaseStoredFile.exists(self.db,filename)
-        
+
     def file_open(self, filename, mode='rb', lock=True):
         return DatabaseStoredFile(self.db,filename,mode)
 
@@ -2775,7 +2775,7 @@ class GAENoSQLAdapter(NoSQLAdapter):
             return [GAEF(first.name,'<=',self.represent(second,first.type),lambda a,b:a<=b)]
         else:
             second = Key.from_path(first._tablename, long(second))
-            return [GAEF(first.name,'<=',second,lambda a,b:a<=b)]            
+            return [GAEF(first.name,'<=',second,lambda a,b:a<=b)]
 
     def GT(self,first,second=None):
         if first.type != 'id' or second==0 or second == '0':
@@ -3392,7 +3392,7 @@ class Row(dict):
 
     def __setitem__(self, key, value):
         dict.__setitem__(self, str(key), value)
-        
+
     def __getattr__(self, key):
         return self[key]
 
@@ -3610,9 +3610,9 @@ class DAL(dict):
             return False
 
     def parse_as_rest(self,patterns,args,vars,nested_select=True):
-        """        
+        """
         EXAMPLE:
-        
+
 db.define_table('person',Field('name'),Field('info'))
 db.define_table('pet',Field('person',db.person),Field('name'),Field('info'))
 
@@ -3666,7 +3666,7 @@ def index():
                         tag+='/{%s.%s.month}' % (table,field)
                         patterns.append(tag)
                         patterns.append(tag+'/:field')
-                        tag+='/{%s.%s.day}' % (table,field) 
+                        tag+='/{%s.%s.day}' % (table,field)
                         patterns.append(tag)
                         patterns.append(tag+'/:field')
                     if f.type in ('datetime','time'):
@@ -3690,13 +3690,13 @@ def index():
             # print pattern
             if len(tags)!=len(args):
                 continue
-            for tag in tags: 
+            for tag in tags:
                 # print i, tag, args[i]
                 if re1.match(tag):
                     # print 're1:'+tag
                     tokens = tag[1:-1].split('.')
                     table, field = tokens[0], tokens[1]
-                    if not otable or table == otable:  
+                    if not otable or table == otable:
                         if len(tokens)==2 or tokens[2]=='eq':
                             query = db[table][field]==args[i]
                         elif tokens[2]=='ne':
@@ -3726,7 +3726,7 @@ def index():
                         elif tokens[2]=='contains':
                             query = db[table][field].contains(args[i])
                         else:
-                            raise RuntimeError, "invalid pattern: %s" % pattern                        
+                            raise RuntimeError, "invalid pattern: %s" % pattern
                         if len(tokens)==4 and tokens[3]=='not':
                             query = ~query
                         elif len(tokens)>=4:
@@ -3734,7 +3734,7 @@ def index():
                         dbset=dbset(query)
                     else:
                         raise RuntimeError, "missing relation in pattern: %s" % pattern
-                elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]: 
+                elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]:
                     # print 're2:'+tag
                     table,field = tag[tag.find('[')+1:-1].split('.')
                     # print table,field
@@ -3759,7 +3759,7 @@ def index():
                     if not item:
                         return Row({'status':404,'pattern':pattern,
                                     'error':'record not found','response':None})
-                    else: 
+                    else:
                         return Row({'status':200,'response':item[field],
                                     'pattern':pattern})
                 elif tag != args[i]:
@@ -3777,7 +3777,7 @@ def index():
                     count = dbset.count()
                     try:
                         limits = (int(vars.get('min',0)),int(vars.get('max',1000)))
-                        if limits[0]<0 or limits[1]<limits[0]: raise ValueError 
+                        if limits[0]<0 or limits[1]<limits[0]: raise ValueError
                     except ValueError:
                         Row({'status':400,'error':'invalid limits','response':None})
                     if count > limits[1]-limits[0]:
@@ -4098,7 +4098,7 @@ class Table(dict):
         for field in fields:
             if db and db.check_reserved:
                 db.check_reserved_keyword(field.name)
-                
+
             if field.name.lower() in lower_fieldnames:
                 raise SyntaxError, "duplicate field %s in table %s" % (field.name, tablename)
             else:
@@ -4319,9 +4319,9 @@ class Table(dict):
             record.update_record(**values)
             newid = None
         else:
-            newid = self.insert(**values)            
+            newid = self.insert(**values)
         return newid
-    
+
     def bulk_insert(self, items):
         """
         here items is a list of dictionaries
@@ -4525,8 +4525,8 @@ class Expression(object):
     def __div__(self, other):
         return Expression(self.db,self.db._adapter.DIV,self,other,self.type)
 
-    def __mod__(self, other): 
-        return Expression(self.db,self.db._adapter.MOD,self,other,self.type) 
+    def __mod__(self, other):
+        return Expression(self.db,self.db._adapter.MOD,self,other,self.type)
 
     def __eq__(self, value):
         return Query(self.db, self.db._adapter.EQ, self, value)

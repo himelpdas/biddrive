@@ -328,10 +328,10 @@ class CheckboxesWidget(OptionsWidget):
         """
 
         # was values = re.compile('[\w\-:]+').findall(str(value))
-        if isinstance(value, (list, tuple)): 
-            values = [str(v) for v in value] 
-        else: 
-            values = [str(value)] 
+        if isinstance(value, (list, tuple)):
+            values = [str(v) for v in value]
+        else:
+            values = [str(value)]
 
         attr = OptionsWidget._attributes(field, {}, **attributes)
 
@@ -1078,7 +1078,7 @@ class SQLFORM(FORM):
         if record_id and str(record_id) != str(self.record_id):
             raise SyntaxError, 'user is tampering with form\'s record_id: ' \
                 '%s != %s' % (record_id, self.record_id)
-        
+
         if record_id and dbio:
             if keyed:
                 self.vars.update(record_id)

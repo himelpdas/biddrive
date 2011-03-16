@@ -1274,7 +1274,7 @@ class Auth(object):
                                   Field('modified_by',self.settings.table_user,
                                         default=lazy_user,update=lazy_user,
                                         writable=False,readable=False))
-        
+
 
     def log_event(self, description, origin='auth'):
         """
@@ -1283,7 +1283,7 @@ class Auth(object):
             auth.log_event(description='this happened', origin='auth')
         """
 
-        if self.is_logged_in():            
+        if self.is_logged_in():
             user_id = self.user.id
         else:
             user_id = None  # user unknown
@@ -1636,7 +1636,7 @@ class Auth(object):
                           requires=IS_EXPR('value==%s' % \
                           repr(request.vars.get(passfield, None)),
                           error_message=self.messages.mismatched_password))
-                
+
                 addrow(form, self.messages.verify_password + ':',
                        form.custom.widget.password_two,
                        self.messages.verify_password_comment,
@@ -2519,7 +2519,7 @@ class Auth(object):
         table_name='',
         record_id=0,
         user_id=None,
-        group_id=None, 
+        group_id=None,
         ):
         """
         checks if user_id or current logged in user is member of a group

@@ -20,9 +20,9 @@ class Pipe(Queue.Queue):
     def __init__(self, name, mode='r', *args, **kwargs):
         self.__name = name
         Queue.Queue.__init__(self, *args, **kwargs)
-        
+
     def write(self, data):
-        logger.debug("debug %s writting %s" % (self.__name, data))    
+        logger.debug("debug %s writting %s" % (self.__name, data))
         self.put(data)
 
     def flush(self):
@@ -32,20 +32,20 @@ class Pipe(Queue.Queue):
         # wait until it is processed
         self.join()
         logger.debug("debug %s flush done" % self.__name)
-        
+
     def read(self, count=None, timeout=None):
-        logger.debug("debug %s reading..." % (self.__name, ))    
+        logger.debug("debug %s reading..." % (self.__name, ))
         data = self.get(block=True, timeout=timeout)
         # signal that we are ready
         self.task_done()
-        logger.debug("debug %s read %s" % (self.__name, data))    
+        logger.debug("debug %s read %s" % (self.__name, data))
         return data
 
     def readline(self):
-        logger.debug("debug %s readline..." % (self.__name, ))    
+        logger.debug("debug %s readline..." % (self.__name, ))
         return self.read()
-        
-        
+
+
 pipe_in = Pipe('in')
 pipe_out = Pipe('out')
 
@@ -59,7 +59,7 @@ def set_trace():
 
 def stop_trace():
     "stop waiting for the debugger (called atexit)"
-    # this should prevent communicate is wait forever a command result 
+    # this should prevent communicate is wait forever a command result
     # and the main thread has finished
     logger.info("DEBUG: stop_trace!")
     pipe_out.write("debug finished!")
@@ -69,7 +69,7 @@ def stop_trace():
 def communicate(command=None):
     "send command to debbuger, wait result"
     if command is not None:
-        logger.info("DEBUG: sending command %s" % command)    
+        logger.info("DEBUG: sending command %s" % command)
         pipe_in.write(command)
         #pipe_in.flush()
     result = []
@@ -78,7 +78,7 @@ def communicate(command=None):
         if data is None:
             break
         result.append(data)
-    logger.info("DEBUG: result %s" % repr(result))    
+    logger.info("DEBUG: result %s" % repr(result))
     return ''.join(result)
 
 

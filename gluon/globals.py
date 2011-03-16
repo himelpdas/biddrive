@@ -417,9 +417,9 @@ class Session(Storage):
 
         # trick for speedup, do not tray to safe session if no change
         __hash = self.__hash
-        if __hash: ### CHECK CHECK WHY IS THIS SOMETIMES FALSE 
+        if __hash is not None:
             del self.__hash
-            if __hash == hash(str(self)):
+            if __hash == hashlib.md5(str(self)).hexdigest():
                 if response.session_file:
                     portalocker.unlock(response.session_file)
                 return
