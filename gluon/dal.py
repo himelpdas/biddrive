@@ -3679,7 +3679,7 @@ def index():
                         tag+='/{%s.%s.second}' % (table,field)
                         patterns.append(tag)
                         patterns.append(tag+'/:field')
-        if '/'.join(args) == 'list':
+        if '/'.join(args) == 'patterns':
             return Row({'status':200,'pattern':'list',
                         'error':None,'response':patterns})
         for pattern in patterns:
