@@ -278,6 +278,7 @@ class Session(Storage):
         response.session_id_name = 'session_id_%s' % masterapp.lower()
 
         if not db:
+            response.session_new = False
             client = request.client.replace(':', '.')
             if response.session_id_name in request.cookies:
                 response.session_id = \
@@ -389,14 +390,13 @@ class Session(Storage):
 
     def _try_store_in_db(self, request, response):
         # trick for speedup, do not try to save session if no change
+        if not response._dbtable_and_field or not response.session_id or self._forget:
+            return
         __hash = self.__hash
-        if __hash is not None: ### CHECK CHECK WHY IS THIS SOMETIMES FALSE 
+        if __hash is not None:
             del self.__hash
             if __hash == hashlib.md5(str(self)).hexdigest():
                 return
-        if not response._dbtable_and_field or not response.session_id\
-             or self._forget:
-            return
         (record_id_name, table, record_id, unique_key) = \
             response._dbtable_and_field
         dd = dict(locked=False, client_ip=request.env.remote_addr,
@@ -412,6 +412,9 @@ class Session(Storage):
         response.cookies[response.session_id_name]['path'] = '/'
 
     def _try_store_on_disk(self, request, response):
+        # the following is for weird OSes
+        if not hasattr(os,'mkdir'): return
+
         # trick for speedup, do not tray to safe session if no change
         __hash = self.__hash
         if __hash: ### CHECK CHECK WHY IS THIS SOMETIMES FALSE 
@@ -421,8 +424,6 @@ class Session(Storage):
                     portalocker.unlock(response.session_file)
                 return
 
-        # the following is for weird OSes
-        if not hasattr(os,'mkdir'): return
         if response._dbtable_and_field \
                 or not response.session_id \
                 or self._forget:
