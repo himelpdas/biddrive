@@ -45,6 +45,8 @@ from admin import add_path_first, create_missing_folders, create_missing_app_fol
 #  The two are identical unless web2py_path is changed via the web2py.py -f folder option
 #  main.web2py_path is the same as applications_parent (for backward compatibility)
 #
+if not hasattr(os, 'mkdir'):
+    global_settings.db_sessions = True
 global_settings.gluon_parent = os.environ.get('web2py_path', os.getcwd())
 global_settings.applications_parent = global_settings.gluon_parent
 web2py_path = global_settings.applications_parent # backward compatibility

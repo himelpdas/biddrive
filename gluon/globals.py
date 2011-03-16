@@ -25,6 +25,7 @@ from fileutils import up
 from serializers import json, custom_json
 import settings
 from utils import web2py_uuid
+from settings import global_settings
 
 import hashlib
 import portalocker
@@ -278,6 +279,8 @@ class Session(Storage):
         response.session_id_name = 'session_id_%s' % masterapp.lower()
 
         if not db:
+            if global_settings.db_sessions:
+                return
             response.session_new = False
             client = request.client.replace(':', '.')
             if response.session_id_name in request.cookies:
@@ -318,6 +321,7 @@ class Session(Storage):
                                  'sessions', response.session_id)
                 response.session_new = True
         else:
+            global_settings.db_sessions = True
             if settings.global_settings.web2py_runtime_gae:
                 # in principle this could work without GAE
                 request.tickets_db = db
@@ -389,14 +393,18 @@ class Session(Storage):
         self._forget = True
 
     def _try_store_in_db(self, request, response):
-        # trick for speedup, do not try to save session if no change
-        if not response._dbtable_and_field or not response.session_id or self._forget:
+
+        # don't save if file-based sessions, no session id, or session being forgotten
+        if not global_settings.db_sessions or not response.session_id or self._forget:
             return
+
+        # don't save if no change to session
         __hash = self.__hash
         if __hash is not None:
             del self.__hash
             if __hash == hashlib.md5(str(self)).digest():
                 return
+
         (record_id_name, table, record_id, unique_key) = \
             response._dbtable_and_field
         dd = dict(locked=False, client_ip=request.env.remote_addr,
@@ -412,10 +420,12 @@ class Session(Storage):
         response.cookies[response.session_id_name]['path'] = '/'
 
     def _try_store_on_disk(self, request, response):
-        # the following is for weird OSes
-        if not hasattr(os,'mkdir'): return
 
-        # trick for speedup, do not try to safe session if no change
+        # don't save if sessions not not file-based
+        if global_settings.db_sessions:
+            return
+
+        # don't save if no change to session
         __hash = self.__hash
         if __hash is not None:
             del self.__hash
@@ -424,11 +434,10 @@ class Session(Storage):
                     portalocker.unlock(response.session_file)
                 return
 
-        if response._dbtable_and_field \
-                or not response.session_id \
-                or self._forget:
+        if not response.session_id or self._forget:
             self._unlock(response)
             return
+
         if response.session_new:
             # Tests if the session sub-folder exists, if not, create it
             session_folder = os.path.dirname(response.session_filename)
@@ -436,6 +445,7 @@ class Session(Storage):
                 os.mkdir(session_folder)
             response.session_file = open(response.session_filename, 'wb')
             portalocker.lock(response.session_file, portalocker.LOCK_EX)
+
         if response.session_file:
             cPickle.dump(dict(self), response.session_file)
             response.session_file.truncate()
@@ -447,7 +457,7 @@ class Session(Storage):
                 pass
 
     def _unlock(self, response):
-        if response and response.session_file:
+        if not global_settings.db_sessions and response and response.session_file:
             try:
                 portalocker.unlock(response.session_file)
             except: ### this should never happen but happens in Windows

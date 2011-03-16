@@ -47,6 +47,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 
 global_settings.web2py_runtime_gae = True
+global_settings.db_sessions = True
 if os.environ.get('SERVER_SOFTWARE', '').startswith('Devel'):
     (global_settings.web2py_runtime, DEBUG) = \
         ('gae:development', True)
