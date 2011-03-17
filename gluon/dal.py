@@ -3609,7 +3609,7 @@ class DAL(dict):
         else:
             return False
 
-    def parse_as_rest(self,patterns,args,vars,nested_select=True):
+    def parse_as_rest(self,patterns,args,vars,query=None,nested_select=True):
         """
         EXAMPLE:
 
@@ -3620,6 +3620,7 @@ db.define_table('pet',Field('person',db.person),Field('name'),Field('info'))
 def index():
     def GET(*args,**vars):
         patterns = [
+            "/persons[person]",
             "/{person.name.startswith}",
             "/{person.name}/:field",
             "/{person.name}/pets[pet.person]",
@@ -3644,48 +3645,68 @@ def index():
         db = self
         re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith|year|month|day|hour|minute|second))?(\.not)?}$')
         re2 = re.compile('^.+\[.+\]$')
+
+        def auto_table(table,base=''):
+            patterns = []
+            for field in db[table].fields:
+                if base:
+                    tag = '%s/%s' % (base,field.replace('_','-'))
+                else:
+                    tag = '/%s/%s' % (table.replace('_','-'),field.replace('_','-'))
+                f = db[table][field]
+                if not f.readable: continue
+                if f.type in ('id','integer') or 'slug' in field or f.type.startswith('reference'):
+                    tag += '/{%s.%s}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                elif f.type.startswith('reference'):
+                    tag += '/{%s.%s.contains}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                elif f.type in ('date','datetime'):
+                    tag+= '/{%s.%s.year}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                    tag+='/{%s.%s.month}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                    tag+='/{%s.%s.day}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                if f.type in ('datetime','time'):
+                    tag+= '/{%s.%s.hour}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                    tag+='/{%s.%s.minute}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                    tag+='/{%s.%s.second}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+            return patterns
+
         if patterns=='auto':
             patterns=[]
             for table in db.tables:
-                if table.startswith('auth_'): continue
-                for field in db[table].fields:
-                    tag = '/%s-by-%s' % (table.replace('_','-'),field.replace('_','-'))
-                    f = db[table][field]
-                    if not f.readable: continue
-                    if f.type in ('id','integer') or 'slug' in field or f.type.startswith('reference'):
-                        tag += '/{%s.%s}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
-                    elif f.type.startswith('reference'):
-                        tag += '/{%s.%s.contains}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
-                    elif f.type in ('date','datetime'):
-                        tag+= '/{%s.%s.year}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
-                        tag+='/{%s.%s.month}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
-                        tag+='/{%s.%s.day}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
-                    if f.type in ('datetime','time'):
-                        tag+= '/{%s.%s.hour}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
-                        tag+='/{%s.%s.minute}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
-                        tag+='/{%s.%s.second}' % (table,field)
-                        patterns.append(tag)
-                        patterns.append(tag+'/:field')
+                if not table.startswith('auth_'):
+                    patterns += auto_table(table)
+        else:
+            i = 0
+            while i<len(patterns):
+                pattern = patterns[i]
+                tokens = pattern.split('/')
+                if tokens[-1].startswith(':auto') and re2.match(tokens[-1]):
+                    new_patterns = auto_table(tokens[-1][tokens[-1].find('[')+1:-1],'/'.join(tokens[:-1]))
+                    patterns = patterns[:i]+new_patterns+patterns[i+1:]
+                    i += len(new_patterns)
+                else:
+                    i += 1
         if '/'.join(args) == 'patterns':
             return Row({'status':200,'pattern':'list',
                         'error':None,'response':patterns})
         for pattern in patterns:
             otable=table=None
-            dbset=db()
+            dbset=db(query)
             i=0
             tags = pattern[1:].split('/')
             # print pattern
@@ -3737,7 +3758,7 @@ def index():
                         raise RuntimeError, "missing relation in pattern: %s" % pattern
                 elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]:
                     # print 're2:'+tag
-                    ref = tag[tag.find('[')+1:-1]
+                    ref = tag[tag.find('[')+1:-1]                    
                     if '.' in ref:
                         table,field = ref.split('.')
                         # print table,field
