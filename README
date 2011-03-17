@@ -1012,3 +1012,6 @@ recalled
 
 ## 1.94.2
 - reverted wrong behavior of auth.requires(condition) in 1.94.1
+
+## 1.94.3
+- fixed major bug in auth redirection

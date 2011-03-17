@@ -75,10 +75,11 @@ class Request(Storage):
         self.args = List()
         self.extension = None
         self.now = datetime.datetime.today()
+        self.is_restful = False
     def restful(self):
         def wrapper(action,self=self):
             def f(_action=action,_self=self,*a,**b):
-                self.restful = True
+                self.is_restful = True
                 method = _self.env.request_method
                 if len(_self.args) and '.' in _self.args[-1]:
                     _self.args[-1],_self.extension = _self.args[-1].rsplit('.',1)
