@@ -3646,7 +3646,7 @@ def index():
         re1 = re.compile('^{[^\.]+\.[^\.]+(\.(lt|gt|le|ge|eq|ne|contains|startswith|year|month|day|hour|minute|second))?(\.not)?}$')
         re2 = re.compile('^.+\[.+\]$')
 
-        def auto_table(table,base=''):
+        def auto_table(table,base='',depth=0):
             patterns = []
             for field in db[table].fields:
                 if base:
@@ -3655,11 +3655,19 @@ def index():
                     tag = '/%s/%s' % (table.replace('_','-'),field.replace('_','-'))
                 f = db[table][field]
                 if not f.readable: continue
-                if f.type in ('id','integer') or 'slug' in field or f.type.startswith('reference'):
+                if f.type=='id' or 'slug' in field or f.type.startswith('reference'):
                     tag += '/{%s.%s}' % (table,field)
                     patterns.append(tag)
                     patterns.append(tag+'/:field')
-                elif f.type.startswith('reference'):
+                elif f.type.startswith('boolean'):
+                    tag += '/{%s.%s}' % (table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                elif f.type.startswith('double') or f.type.startswith('integer'):
+                    tag += '/{%s.%s.ge}/{%s.%s.lt}' % (table,field,table,field)
+                    patterns.append(tag)
+                    patterns.append(tag+'/:field')
+                elif f.type.startswith('list:'):
                     tag += '/{%s.%s.contains}' % (table,field)
                     patterns.append(tag)
                     patterns.append(tag+'/:field')
@@ -3683,13 +3691,18 @@ def index():
                     tag+='/{%s.%s.second}' % (table,field)
                     patterns.append(tag)
                     patterns.append(tag+'/:field')
+                if depth>0:
+                    for rtable,rfield in db[table]._referenced_by:
+                        tag+='/%s[%s.%s]' % (rtable,rtable,rfield)
+                        patterns.append(tag)
+                        patterns += auto_table(rtable,base=tag,depth=depth-1)
             return patterns
 
         if patterns=='auto':
             patterns=[]
             for table in db.tables:
                 if not table.startswith('auth_'):
-                    patterns += auto_table(table)
+                    patterns += auto_table(table,base='',depth=1)
         else:
             i = 0
             while i<len(patterns):
@@ -3728,9 +3741,9 @@ def index():
                         elif tokens[2]=='gt':
                             query = db[table][field]>args[i]
                         elif tokens[2]=='ge':
-                            query = db[table][field]<=args[i]
-                        elif tokens[2]=='ne':
                             query = db[table][field]>=args[i]
+                        elif tokens[2]=='le':
+                            query = db[table][field]<=args[i]
                         elif tokens[2]=='year':
                             query = db[table][field].year()==args[i]
                         elif tokens[2]=='month':
