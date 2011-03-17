@@ -1009,3 +1009,6 @@ recalled
 - experimental REST API
 - better support for MSSQL NOT NULL
 - small bug fixes
+
+## 1.94.2
+- reverted wrong behavior of auth.requires(condition) in 1.94.1

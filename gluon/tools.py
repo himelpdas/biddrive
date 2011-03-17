@@ -2274,6 +2274,11 @@ class Auth(object):
         def decorator(action):
 
             def f(*a, **b):
+                
+                if self.settings.allow_basic_login_only and not self.basic():
+                    if self.environment.request.restful:
+                        raise HTTP(403,"Not authorized")
+                    return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not condition:
                     if self.environment.request.restful:
