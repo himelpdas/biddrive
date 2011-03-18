@@ -2318,7 +2318,6 @@ class Auth(object):
                     return call_or_redirect(self.settings.on_failed_authorization)
                 
                 if not self.basic() and not self.is_logged_in():
-                    print self.environment.request.is_restful
                     if self.environment.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     request = self.environment.request
