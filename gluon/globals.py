@@ -286,7 +286,7 @@ class Session(Storage):
         response.session_id_name = 'session_id_%s' % masterapp.lower()
 
         if not db:
-            if global_settings.db_sessions:
+            if global_settings.db_sessions is True or masterapp in global_settings.db_sessions:
                 return
             response.session_new = False
             client = request.client.replace(':', '.')
@@ -312,10 +312,6 @@ class Session(Storage):
                         raise Exception, "cookie attack"
                 except:
                     self._unlock(response)
-                    if response.session_file:
-                        # Only if open succeeded and later an exception was raised
-                        response.session_file.close()
-                        del response.session_file
                     response.session_id = None
             if not response.session_id:
                 uuid = web2py_uuid()
@@ -328,7 +324,11 @@ class Session(Storage):
                                  'sessions', response.session_id)
                 response.session_new = True
         else:
-            global_settings.db_sessions = True
+            if global_settings.db_sessions is not True:
+                global_settings.db_sessions.add(masterapp)
+            response.session_db = True
+            if response.session_file:
+                self._unlock(response)
             if settings.global_settings.web2py_runtime_gae:
                 # in principle this could work without GAE
                 request.tickets_db = db
@@ -402,7 +402,7 @@ class Session(Storage):
     def _try_store_in_db(self, request, response):
 
         # don't save if file-based sessions, no session id, or session being forgotten
-        if not global_settings.db_sessions or not response.session_id or self._forget:
+        if not response.session_db or not response.session_id or self._forget:
             return
 
         # don't save if no change to session
@@ -429,7 +429,7 @@ class Session(Storage):
     def _try_store_on_disk(self, request, response):
 
         # don't save if sessions not not file-based
-        if global_settings.db_sessions:
+        if response.session_db:
             return
 
         # don't save if no change to session
@@ -437,8 +437,7 @@ class Session(Storage):
         if __hash is not None:
             del self.__hash
             if __hash == hashlib.md5(str(self)).digest():
-                if response.session_file:
-                    portalocker.unlock(response.session_file)
+                self._unlock(response)
                 return
 
         if not response.session_id or self._forget:
@@ -456,16 +455,13 @@ class Session(Storage):
         if response.session_file:
             cPickle.dump(dict(self), response.session_file)
             response.session_file.truncate()
+            self._unlock(response)
+
+    def _unlock(self, response):
+        if response and response.session_file:
             try:
                 portalocker.unlock(response.session_file)
                 response.session_file.close()
                 response.session_file = None
-            except: ### this should never happen but happens in Windows
-                pass
-
-    def _unlock(self, response):
-        if not global_settings.db_sessions and response and response.session_file:
-            try:
-                portalocker.unlock(response.session_file)
             except: ### this should never happen but happens in Windows
                 pass

@@ -47,6 +47,8 @@ from admin import add_path_first, create_missing_folders, create_missing_app_fol
 #
 if not hasattr(os, 'mkdir'):
     global_settings.db_sessions = True
+if global_settings.db_sessions is not True:
+    global_settings.db_sessions = set()
 global_settings.gluon_parent = os.environ.get('web2py_path', os.getcwd())
 global_settings.applications_parent = global_settings.gluon_parent
 web2py_path = global_settings.applications_parent # backward compatibility
