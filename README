@@ -1016,5 +1016,8 @@ recalled
 ## 1.94.3
 - fixed major bug in auth redirection
 
-## 1.64.4
+## 1.94.4
 - removed debug print statement that caused problems on GAE and mod_wsgi
+
+## 1.94.5
+- fixed a major bug with session introdued in 1.94.1
