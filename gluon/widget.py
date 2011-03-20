@@ -701,6 +701,8 @@ def console():
     sys.argv, other_args = sys.argv[:k], sys.argv[k+1:]
     (options, args) = parser.parse_args()
     options.args = [options.run] + other_args
+    global_settings.cmd_options = options
+    global_settings.cmd_args = args
 
     if options.quiet:
         capture = cStringIO.StringIO()
