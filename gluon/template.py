@@ -665,7 +665,7 @@ class TemplateParser(object):
                         buf = "\n%s(%s)" % (self.writer, value)
                         top.append(Node(buf, pre_extend = pre_extend))
 
-                    elif name == 'block':
+                    elif name == 'block' and not value.startswith('='):
                         # Make a new node with name.
                         node = BlockNode(name = value.strip(),
                                          pre_extend = pre_extend,
@@ -680,7 +680,7 @@ class TemplateParser(object):
                         # "nest" nodes.
                         self.stack.append(node)
 
-                    elif name == 'end':
+                    elif name == 'end' and not value.startswith('='):
                         # We are done with this node.
 
                         # Save an instance of it
@@ -689,7 +689,7 @@ class TemplateParser(object):
                         # Pop it.
                         self.stack.pop()
 
-                    elif name == 'super':
+                    elif name == 'super' and not value.startswith('='):
                         # Get our correct target name
                         # If they just called {{super}} without a name
                         # attempt to assume the top blocks name.
@@ -708,7 +708,7 @@ class TemplateParser(object):
                         # And put in in the tree
                         top.append(node)
 
-                    elif name == 'include':
+                    elif name == 'include' and not value.startswith('='):
                         # If we know the target file to include
                         if value:
                             self.include(top, value)
@@ -721,7 +721,7 @@ class TemplateParser(object):
                                                      delimiters = self.delimiters)
                             top.append(include_node)
 
-                    elif name == 'extend':
+                    elif name == 'extend' and not value.startswith('='):
                         # We need to extend the following
                         # template.
                         extend = value
