@@ -1247,7 +1247,7 @@ class BaseAdapter(ConnectionPool):
                     value = value.encode('utf-8')
                 if not tablename in new_row:
                     colset = new_row[tablename] = Row()
-                    virtualtables.append((tablename,db[tablename].virtualfields))
+                    virtualtables.append(tablename)
                 else:
                     colset = new_row[tablename]
 
@@ -1332,8 +1332,8 @@ class BaseAdapter(ConnectionPool):
                     colset['id'] = id
             new_rows.append(new_row)
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
-        for table, virtualfields in virtualtables:
-            for item in virtualfields:
+        for table in virtualtables:
+            for item in db[tablename].virtualfields:
                 try:
                     rowsobj = rowsobj.setvirtualfields(**{table:item})
                 except KeyError:
