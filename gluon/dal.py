@@ -4181,9 +4181,9 @@ class Table(dict):
                     raise SyntaxError, 'Table: reference to nothing: %s' %ref
                 refs = ref.split('.')
                 rtablename = refs[0]
-                rtable = self._db[rtablename]
                 if not rtablename in self._db:
-                    raise SyntaxError, "Table: table '%s'does not exist" % rtablename
+                    raise SyntaxError, "Table: table '%s' does not exist" % rtablename
+                rtable = self._db[rtablename]
                 if self._tablename in rtable.fields:
                     raise SyntaxError, \
                         'Field: table %s has same name as a field in referenced table %s' \
