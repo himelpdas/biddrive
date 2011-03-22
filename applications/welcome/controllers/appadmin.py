@@ -353,7 +353,7 @@ def ccache():
                     ram['oldest'] = value[0]
 
     locker = open(os.path.join(request.folder,
-                               'cache/cache.lock'), 'a')
+                                        'cache/cache.lock'), 'a')
     portalocker.lock(locker, portalocker.LOCK_EX)
     disk_storage = shelve.open(
         os.path.join(request.folder,
