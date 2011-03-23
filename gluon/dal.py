@@ -238,6 +238,13 @@ except ImportError:
     logger.debug('no informixdb driver')
 
 try:
+    import sapdb
+    drivers.append('SAPDB')
+    logger.warning('SAPDB support is experimental')
+except ImportError:
+    logger.debug('no sapdb driver')    
+
+try:
     from com.ziclix.python.sql import zxJDBC
     import java.sql
     from org.sqlite import JDBC # required later by java.sql; ensure we have it
@@ -2409,6 +2416,84 @@ class IngresUnicodeAdapter(IngresAdapter):
         'list:reference': 'NCLOB',
         }
 
+class SAPDBAdapter(BaseAdapter):
+
+    support_distributed_transaction = False
+    types = {
+        'boolean': 'CHAR(1)',
+        'string': 'VARCHAR(%(length)s)',
+        'text': 'LONG',
+        'password': 'VARCHAR(%(length)s)',
+        'blob': 'LONG',
+        'upload': 'VARCHAR(%(length)s)',
+        'integer': 'INT',
+        'double': 'FLOAT',
+        'decimal': 'FIXED(%(precision)s,%(scale)s)',
+        'date': 'DATE',
+        'time': 'TIME',
+        'datetime': 'TIMESTAMP',
+        'id': 'INT PRIMARY KEY',
+        'reference': 'INT, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'list:integer': 'LONG',
+        'list:string': 'LONG',
+        'list:reference': 'LONG',
+        }
+
+    def sequence_name(self,table):
+        return '%s_id_Seq' % table
+
+    def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
+        if limitby:
+            (lmin, lmax) = limitby
+            if len(sql_w) > 1:
+                sql_w_row = sql_w + ' AND w_row > %i' % lmin
+            else:
+                sql_w_row = 'WHERE w_row > %i' % lmin
+            return '%s %s FROM (SELECT w_tmp.*, ROWNO w_row FROM (SELECT %s FROM %s%s%s) w_tmp WHERE ROWNO=%i) %s %s %s;' % (sql_s, sql_f, sql_f, sql_t, sql_w, sql_o, lmax, sql_t, sql_w_row, sql_o)
+        return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
+
+    def create_sequence_and_triggers(self, query, table, **args):
+        # following lines should only be executed if table._sequence_name does not exist
+        self.execute('CREATE SEQUENCE %s;' % table._sequence_name)
+        self.execute("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NEXTVAL('%s');" \
+                         % (table._tablename, table._id.name, table._sequence_name))
+        self.execute(query)
+
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x, driver_args={}):
+        self.db = db
+        self.dbengine = "sapdb"
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1]
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
+        if not m:
+            raise SyntaxError, "Invalid URI string in DAL"
+        user = m.group('user')
+        if not user:
+            raise SyntaxError, 'User required'
+        password = m.group('password')
+        if not password:
+            password = ''
+        host = m.group('host')
+        if not host:
+            raise SyntaxError, 'Host name required'
+        db = m.group('db')
+        if not db:
+            raise SyntaxError, 'Database name required'
+        def connect(user=user,password=password,database=db,host=host,driver_args=driver_args):
+            return sapdb.Connection(user,password,database,host,**driver_args)
+        self.pool_connection(connect)
+        # self.connection.set_client_encoding('UTF8')
+        self.cursor = self.connection.cursor()
+        
+    def lastrowid(self,table):
+        self.execute("select %s.NEXTVAL from dual" % table._sequence_name)
+        return int(self.cursor.fetchone()[0])
+
 
 
 ######## GAE MySQL ##########
@@ -3260,6 +3345,7 @@ ADAPTERS = {
     'firebird_embedded': FireBirdAdapter,
     'ingres': IngresAdapter,
     'ingresu': IngresUnicodeAdapter,
+    'sapdb': SAPDBAdapter,
     'jdbc:sqlite': JDBCSQLiteAdapter,
     'jdbc:sqlite:memory': JDBCSQLiteAdapter,
     'jdbc:postgres': JDBCPostgreSQLAdapter,
