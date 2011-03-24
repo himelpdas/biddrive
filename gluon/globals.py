@@ -305,13 +305,14 @@ class Session(Storage):
                         open(response.session_filename, 'rb+')
                     portalocker.lock(response.session_file,
                             portalocker.LOCK_EX)
+                    response.session_locked = True
                     self.update(cPickle.load(response.session_file))
                     response.session_file.seek(0)
                     oc = response.session_filename.split('/')[-1].split('-')[0]
                     if check_client and client!=oc:
                         raise Exception, "cookie attack"
                 except:
-                    self._unlock(response)
+                    self._close(response)
                     response.session_id = None
             if not response.session_id:
                 uuid = web2py_uuid()
@@ -328,7 +329,7 @@ class Session(Storage):
                 global_settings.db_sessions.add(masterapp)
             response.session_db = True
             if response.session_file:
-                self._unlock(response)
+                self._close(response)
             if settings.global_settings.web2py_runtime_gae:
                 # in principle this could work without GAE
                 request.tickets_db = db
@@ -396,7 +397,7 @@ class Session(Storage):
         self._secure = True
 
     def forget(self, response=None):
-        self._unlock(response)
+        self._close(response)
         self._forget = True
 
     def _try_store_in_db(self, request, response):
@@ -437,11 +438,11 @@ class Session(Storage):
         if __hash is not None:
             del self.__hash
             if __hash == hashlib.md5(str(self)).digest():
-                self._unlock(response)
+                self._close(response)
                 return
 
         if not response.session_id or self._forget:
-            self._unlock(response)
+            self._close(response)
             return
 
         if response.session_new:
@@ -451,17 +452,26 @@ class Session(Storage):
                 os.mkdir(session_folder)
             response.session_file = open(response.session_filename, 'wb')
             portalocker.lock(response.session_file, portalocker.LOCK_EX)
+            response.session_locked = True
 
         if response.session_file:
             cPickle.dump(dict(self), response.session_file)
             response.session_file.truncate()
-            self._unlock(response)
+            self._close(response)
 
     def _unlock(self, response):
-        if response and response.session_file:
+        if response and response.session_file and response.session_locked:
             try:
                 portalocker.unlock(response.session_file)
-                response.session_file.close()
-                response.session_file = None
+                response.session_locked = False
             except: ### this should never happen but happens in Windows
+                pass
+
+    def _close(self, response):
+        if response and response.session_file:
+            self._unlock(response)
+            try:
+                response.session_file.close()
+                del response.session_file
+            except:
                 pass
