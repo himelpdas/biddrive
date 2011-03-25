@@ -108,14 +108,14 @@ jQuery(document).ready(function(){
       <ul>
       	<li>List the fields for this table (do not include an id field, it is automatic), for example "name unique" or "birthday date" or "image upload" or "comments multiple" or "description wiki required"</li>
       	<li>The first keyword(s) for each entry will be used to generate a name for the table field and its label. You can use spaces an other unicode characters.</li>
-        <li>Keywords "string" (default), "text", "integer", "boolean", "float",, "double", "file", "date", "time", "datetime", "file", "upload" will be used to determine the field type and they will not be made part of the field name.</ li>
+        <li>Keywords "string" (default), "text", "integer", "boolean", "float", "double", "file", "date", "time", "datetime", "file", "upload" will be used to determine the field type and they will not be made part of the field name.</ li>
         <li>For a reference file use a field name, followed by the name of the referenced table.</li>
       	<li>Other special keywords are "required", "notnull" or "notempty", "unique". They map into equivalent validators but (at this time) should only be used with string and text types.</li>
       	<li>The keywords "html" and "wiki" force a text type and set a representation for the field value as sanitized HTML and MARKMIN resepectively.</li>
         <li>string, integer and reference fields can be "multiple", i.e. multiple values will be allowed</li>
       	<li>For the "auth_user" table do not add attributes to the default fields (username, first_name, last_name, password and email). They are handled automatically.</li>
         <li>Some fields will be added automatically upon creation and handled automatically: "created_by", "created_on", "modified_by", "modified_on", "active" (only active fileds can be selected).</li>
-        <li>For every table "table" another table "table_archive" is create and it contants the previsous versions of each record. This is only accessible via appadmin or programmatically.</li> 
+        <li>For every table "table" another table "table_archive" is created and it contains the previous versions of each record. This is only accessible via appadmin or programmatically.</li> 
       </ul>
       {{elif request.function=='step4':}}
       <ul>
