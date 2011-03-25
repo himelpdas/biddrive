@@ -4410,14 +4410,16 @@ class Table(dict):
             if not ofield.name in new_fields_names:
                 if not update and ofield.default!=None:
                     new_fields.append((ofield,ofield.default))
-                if update and ofield.update!=None:
+                elif update and ofield.update!=None:
                     new_fields.append((ofield,ofield.update))
-                if ofield.compute:
-                    try:
-                        new_fields.append((ofield,ofield.compute(Row(fields))))
-                    except KeyError: pass
-                if not update and ofield.required:
-                    raise SyntaxError,'Table: missing required field: %s' % ofield.name
+        for ofield in self:
+            if not ofield.name in new_fields_names and ofield.compute:
+                try:
+                    new_fields.append((ofield,ofield.compute(Row(fields))))
+                except KeyError:
+                    pass
+            if not update and ofield.required and not ofield.name in new_fields_names:
+                raise SyntaxError,'Table: missing required field: %s' % ofield.name
         return new_fields
 
     def _insert(self, **fields):
