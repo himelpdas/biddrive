@@ -357,10 +357,14 @@ class CheckboxesWidget(OptionsWidget):
         for r_index in range(rows):
             tds = []
             for k, v in options[r_index*cols:(r_index+1)*cols]:
+                if int(k) in values:
+                    r_value = k
+                else:
+                    r_value = []
                 tds.append(TD(INPUT(_type='checkbox', _name=field.name,
                          requires=attr.get('requires',None),
                          hideerror=True, _value=k,
-                         value=(k in values)), v))
+                         value=r_value), v))
             opts.append(TR(tds))
 
         if opts:
