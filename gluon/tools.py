@@ -1496,7 +1496,7 @@ class Auth(object):
                         self.log_event(self.settings.login_failed_log % request.post_vars)
                     # invalid login
                     session.flash = self.messages.invalid_login
-                    redirect(self.url(args=request.args))
+                    redirect(self.url(args=request.args,vars=request.get_vars))
 
         else:
             # use a central authentication server
