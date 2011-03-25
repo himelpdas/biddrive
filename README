@@ -1,5 +1,9 @@
 ## web2py file structure
 
+start web2py with:
+ 
+   python web2py.py
+
 ``
     \project
 	README

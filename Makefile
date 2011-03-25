@@ -50,7 +50,7 @@ src:
 	### build web2py_src.zip
 	echo '' > NEWINSTALL
 	mv web2py_src.zip web2py_src_old.zip | echo 'no old'
-	cd ..; zip -r web2py/web2py_src.zip web2py/gluon/*.py web2py/gluon/contrib/* web2py/splashlogo.gif web2py/*.py web2py/ABOUT  web2py/LICENSE web2py/README web2py/NEWINSTALL web2py/VERSION web2py/Makefile web2py/epydoc.css web2py/epydoc.conf web2py/app.yaml web2py/logging.example.conf web2py/queue.yaml web2py/scripts/*.sh web2py/scripts/*.py web2py/applications/admin web2py/applications/examples/ web2py/applications/welcome web2py/applications/__init__.py
+	cd ..; zip -r web2py/web2py_src.zip web2py/gluon/*.py web2py/gluon/contrib/* web2py/splashlogo.gif web2py/*.py web2py/ABOUT  web2py/LICENSE web2py/README web2py/NEWINSTALL web2py/VERSION web2py/Makefile web2py/epydoc.css web2py/epydoc.conf web2py/app.example.yaml web2py/logging.example.conf web2py/queue.example.yaml mkweb2pyenv startweb2py web2py/scripts/*.sh web2py/scripts/*.py web2py/applications/admin web2py/applications/examples/ web2py/applications/welcome web2py/applications/__init__.py 
 
 mdp:
 	make epydoc
@@ -73,6 +73,8 @@ app:
 	cp options_std.py ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp routes.example.py ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp router.example.py ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp app.example.yaml ../web2py_osx/web2py/web2py.app/Contents/Resources
+	cp queue.example.yaml ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp -r applications/admin ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
 	cp -r applications/welcome ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
 	cp -r applications/examples ../web2py_osx/web2py/web2py.app/Contents/Resources/applications
@@ -94,6 +96,8 @@ win:
 	cp options_std.py ../web2py_win/web2py/
 	cp routes.example.py ../web2py_win/web2py/
 	cp router.example.py ../web2py_win/web2py/
+	cp app.example.yaml ../web2py_win/web2py/
+	cp queue.example.yaml ../web2py_win/web2py/
 	cp -r applications/admin ../web2py_win/web2py/applications
 	cp -r applications/welcome ../web2py_win/web2py/applications
 	cp -r applications/examples ../web2py_win/web2py/applications
@@ -107,8 +111,4 @@ push:
 	echo '' > NEWINSTALL
 	hg push
 	bzr push bzr+ssh://mdipierro@bazaar.launchpad.net/~mdipierro/web2py/devel --use-existing-dir
-post:
-	scp -i ~/web2py.pem web2py_src.zip ubuntu@www.web2py.com:~/
-	scp -i ~/web2py.pem web2py_win.zip ubuntu@www.web2py.com:~/
-	scp -i ~/web2py.pem web2py_osx.zip ubuntu@www.web2py.com:~/
 
