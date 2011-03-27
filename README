@@ -1025,3 +1025,9 @@ recalled
 
 ## 1.94.5
 - fixed a major bug with session introdued in 1.94.1
+
+## 1.94.6
+- fixed a number of minor bugs including adding some missing files
+- better session handling on session._unlock(..), thanks Jonathan
+- added experimental pip support, thanks Lifeeth
+- added experimental SAP DB support
