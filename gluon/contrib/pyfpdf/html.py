@@ -50,7 +50,7 @@ class HTML2FPDF(HTMLParser):
         self.thead = None
         self.tfoot = None
         self.theader_out = self.tfooter_out = False
-
+        
     def width2mm(self, length):
         if length[-1]=='%':
             total = self.pdf.w - self.pdf.r_margin - self.pdf.l_margin
@@ -62,7 +62,7 @@ class HTML2FPDF(HTMLParser):
 
     def handle_data(self, txt):
         if self.td is not None: # drawing a table?
-            if 'width' not in self.td and 'colspan' not in self.td and len(self.table_col_width) > 0 and not self.table_col_index > len(self.table_col_width) - 1:
+            if 'width' not in self.td and 'colspan' not in self.td:
                 l = [self.table_col_width[self.table_col_index]]
             elif 'colspan' in self.td:
                 i = self.table_col_index
@@ -94,13 +94,13 @@ class HTML2FPDF(HTMLParser):
                 self.pdf.add_page()
                 self.theader_out = self.tfooter_out = False
             if self.tfoot is None and self.thead is None:
-                if not self.theader_out:
+                if not self.theader_out: 
                     self.output_table_header()
                 self.box_shadow(w, h, bgcolor)
                 if DEBUG: print "td cell", self.pdf.x, w, txt, "*"
                 self.pdf.cell(w,h,txt,border,0,align)
         elif self.table is not None:
-            # ignore anything else than td inside a table
+            # ignore anything else than td inside a table 
             pass
         elif self.align:
             if DEBUG: print "cell", txt, "*"
@@ -125,28 +125,33 @@ class HTML2FPDF(HTMLParser):
         if self.theader:
             b = self.b
             x = self.pdf.x
+            self.pdf.set_x(self.table_offset)
             self.set_style('B',True)
             for cell, bgcolor in self.theader:
                 self.box_shadow(cell[0], cell[1], bgcolor)
                 self.pdf.cell(*cell)
             self.set_style('B',b)
             self.pdf.ln(self.theader[0][0][1])
-            self.pdf.set_x(x)
+            self.pdf.set_x(self.table_offset)
+            #self.pdf.set_x(x)
         self.theader_out = True
-
+        
     def output_table_footer(self):
         if self.tfooter:
             x = self.pdf.x
+            self.pdf.set_x(self.table_offset)
             #TODO: self.output_table_sep()
             for cell, bgcolor in self.tfooter:
                 self.box_shadow(cell[0], cell[1], bgcolor)
                 self.pdf.cell(*cell)
             self.pdf.ln(self.tfooter[0][0][1])
             self.pdf.set_x(x)
-            #TODO: self.output_table_sep()
+        if int(self.table.get('border', 0)):
+            self.output_table_sep()
         self.tfooter_out = True
-
+            
     def output_table_sep(self):
+        self.pdf.set_x(self.table_offset)
         x1 = self.pdf.x
         y1 = self.pdf.y
         w = sum([self.width2mm(lenght) for lenght in self.table_col_width])
@@ -236,7 +241,7 @@ class HTML2FPDF(HTMLParser):
         if tag=='th':
             self.td = dict([(k.lower(), v) for k,v in attrs.items()])
             self.th = True
-            if 'width' in self.td:
+            if self.td['width']:
                 self.table_col_width.append(self.td['width'])
         if tag=='thead':
             self.thead = {}
@@ -336,7 +341,7 @@ class HTML2FPDF(HTMLParser):
         self.set_style('u', False)
         self.set_style('b', False)
         self.set_style('i', False)
-        self.set_text_color()
+        self.set_text_color()        
 
     def set_style(self, tag=None, enable=None):
         #Modify style and select corresponding font
@@ -358,7 +363,7 @@ class HTML2FPDF(HTMLParser):
             self.r = r
             self.g = g
             self.b = b
-
+    
     def put_link(self, url, txt):
         #Put a hyperlink
         self.set_text_color(0,0,255)
@@ -431,13 +436,13 @@ or on an image: click on the logo.<br>
             self.cell(80)
             self.cell(30,10,'Title',1,0,'C')
             self.ln(20)
-
+            
         def footer(self):
             self.set_y(-15)
             self.set_font('Arial','I',8)
             txt = 'Page %s of %s' % (self.page_no(), self.alias_nb_pages())
             self.cell(0,10,txt,0,0,'C')
-
+        
     pdf=MyFPDF()
     #First page
     pdf.add_page()
