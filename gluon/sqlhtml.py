@@ -949,7 +949,7 @@ class SQLFORM(FORM):
         self,
         request_vars,
         session=None,
-        formname='%(tablename)s_%(record_id)s',
+        formname='%(tablename)s/%(record_id)s',
         keepvalues=False,
         onvalidation=None,
         dbio=True,
