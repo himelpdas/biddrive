@@ -101,28 +101,30 @@ def app_cleanup(app, request):
 
     # Remove error files
     path = apath('%s/errors/' % app, request)
-    for f in os.listdir(path):
-        try:
-            os.unlink(os.path.join(path,f))
-        except IOError:
-            r = False
+    if os.path.exists(path):
+        for f in os.listdir(path):
+            try:
+                os.unlink(os.path.join(path,f))
+            except IOError:
+                r = False
 
     # Remove session files
     path = apath('%s/sessions/' % app, request)
-    for f in os.listdir(path):
-        try:
-            recursive_unlink(os.path.join(path,f))
-        except IOError:
-            r = False
+    if os.path.exists(path):
+        for f in os.listdir(path):
+            try:
+                recursive_unlink(os.path.join(path,f))
+            except IOError:
+                r = False
 
     # Remove cache files
     path = apath('%s/sessions/' % app, request)
-    for f in os.listdir(path):
-        try:
-            os.unlink(os.path.join(path,f))
-        except IOError:
-            r = False
-
+    if os.path.exists(path):
+        for f in os.listdir(path):
+            try:
+                os.unlink(os.path.join(path,f))
+            except IOError:
+                r = False
     return r
 
 
