@@ -18,6 +18,7 @@ import logging
 from utils import web2py_uuid
 from storage import Storage
 from http import HTTP
+from html import BEAUTIFY
 
 logger = logging.getLogger("web2py")
 
@@ -276,8 +277,6 @@ def snapshot(info=None, context=5, code=None, environment=None):
     # add web2py environment variables
     for k,v in environment.items():
         if k in ('request', 'response', 'session'):
-            s[k] = {}
-            for name, value in v.items():
-                s[k][name] = pydoc.text.repr(value)
+            s[k] = BEAUTIFY(v)
 
     return s
