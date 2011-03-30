@@ -724,6 +724,9 @@ class BaseAdapter(ConnectionPool):
     def NOT_NULL(self,default,field_type):
         return 'NOT NULL DEFAULT %s' % self.represent(default,field_type)
 
+    def COALESCE_ZERO(self,first):
+        return 'COALESCE(%s,0)' % self.expand(first)
+
     def ALLOW_NULL(self):
         return ''
 
@@ -4601,6 +4604,9 @@ class Expression(object):
 
     def minutes(self):
         return Expression(self.db, self.db._adapter.EXTRACT, self, 'minute', 'integer')
+
+    def coalesce_zero(self):
+            return Expression(self.db, self.db._adapter.COALESCE_ZERO, self, None, self.type)
 
     def seconds(self):
         return Expression(self.db, self.db._adapter.EXTRACT, self, 'second', 'integer')
