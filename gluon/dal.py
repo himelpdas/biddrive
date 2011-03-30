@@ -1342,10 +1342,10 @@ class BaseAdapter(ConnectionPool):
                     colset['id'] = id
             new_rows.append(new_row)
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
-        for table in virtualtables:
+        for tablename in virtualtables:
             for item in db[tablename].virtualfields:
                 try:
-                    rowsobj = rowsobj.setvirtualfields(**{table:item})
+                    rowsobj = rowsobj.setvirtualfields(**{tablename:item})
                 except KeyError:
                     # to avoid breaking virtualfields when partial select
                     pass
