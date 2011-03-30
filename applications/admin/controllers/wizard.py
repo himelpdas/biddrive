@@ -275,8 +275,6 @@ def make_table(table,fields):
         for key,t in deftypes.items():
             if key in has:                
                 ftype = t
-        print ftype
-        print '-'*10
         if refs:
             key = refs[0]
             if not key=='auth_user': key='t_'+key
@@ -516,7 +514,6 @@ def create(options):
 
     ### apply plugins
     for plugin in params['plugins']:
-        print plugin
         try:
             plugin_name = 'web2py.plugin.'+plugin+'.w2p'
             stream = urllib.urlopen(PLUGINS_APP+'/static/'+plugin_name)
