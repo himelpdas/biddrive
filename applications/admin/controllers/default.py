@@ -6,7 +6,7 @@ from glob import glob
 import shutil
 import platform
 
-if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','update_languages']:
+if DEMO_MODE and request.function in ['change_password','pack','pack_plugin','upgrade_web2py','uninstall','cleanup','compile_app','remove_compiled_app','delete','delete_plugin','create_file','upload_file','update_languages','reload_routes']:
     session.flash = T('disabled in demo mode')
     redirect(URL('site'))
 
@@ -1172,3 +1172,8 @@ def user():
         return dict(form=auth())
     else:
         return dict(form=T("Disabled"))
+
+def reload_routes():
+   """ Reload routes.py """
+   gluon.rewrite.load()
+   redirect(URL('site'))
