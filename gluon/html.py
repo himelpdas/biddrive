@@ -264,7 +264,7 @@ def URL(
 
     if regex_crlf.search(''.join([application, controller, function, other])):
         raise SyntaxError, 'CRLF Injection Detected'
-    return XML(rewrite.url_out(r or _request, env, application, controller, function, args, other, scheme, host, port))
+    return rewrite.url_out(r or _request, env, application, controller, function, args, other, scheme, host, port)
 
 def verifyURL(request, hmac_key, hash_vars=True):
     """
