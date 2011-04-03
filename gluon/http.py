@@ -81,7 +81,7 @@ class HTTP(BaseException):
             if not body:
                 body = status
             if isinstance(body, str):
-                if len(body)<512:
+                if len(body)<512 and self.headers['Content-Type'].startswith('text/html'):
                     body += '<!-- %s //-->' % ('x'*512) ### trick IE
                 self.headers['Content-Length'] = len(body)
         headers = []
