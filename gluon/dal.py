@@ -265,9 +265,10 @@ except ImportError:
 try:
     from new import classobj
     from google.appengine.ext import db as gae
-    from google.appengine.api import namespace_manager
+    from google.appengine.api import namespace_manager, rdbms
     from google.appengine.api.datastore_types import Key  ### needed for belongs on ID
     from google.appengine.ext.db.polymodel import PolyModel
+
     drivers.append('gae')
 
     class GAEDecimalProperty(gae.Property):
@@ -535,9 +536,12 @@ class BaseAdapter(ConnectionPool):
 
         # backend-specific extensions to fields
         if self.dbengine == 'mysql':
+            if_not_exists = 'IF NOT EXISTS '
             if not hasattr(table, "_primarykey"):
                 fields.append('PRIMARY KEY(%s)' % table.fields[0])
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
+        else:
+            if_not_exists = ''
 
         fields = ',\n    '.join(fields)
         for rtablename in TFK:
@@ -553,11 +557,11 @@ class BaseAdapter(ConnectionPool):
                      on_delete_action=field.ondelete)
 
         if hasattr(table,'_primarykey'):
-            query = '''CREATE TABLE %s(\n    %s,\n    %s) %s''' % \
-               (tablename, fields, self.PRIMARY_KEY(', '.join(table._primarykey)),other)
+            query = '''CREATE TABLE %s%s(\n    %s,\n    %s) %s''' % \
+                (if_not_exists,tablename, fields, self.PRIMARY_KEY(', '.join(table._primarykey)),other)
         else:
-            query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
-                (tablename, fields, other)
+            query = '''CREATE TABLE %s%s(\n    %s\n)%s''' % \
+                (if_not_exists,tablename, fields, other)
 
         if self.uri.startswith('sqlite:///'):
             path_encoding = sys.getfilesystemencoding() or locale.getdefaultlocale()[1] or 'utf8'
@@ -2504,7 +2508,7 @@ class SAPDBAdapter(BaseAdapter):
 class DatabaseStoredFile:
 
     def __init__(self,db,filename,mode):
-        if db.engine != 'mysql':
+        if db._adapter.dbengine != 'mysql':
             raise RuntimeError, "only MySQL can store metadata .table files in database for now"
         self.db = db
         self.filename = filename
@@ -2543,6 +2547,7 @@ class DatabaseStoredFile:
         query = "INSERT INTO web2py_filesystem(path,content) VALUES ('%s','%s')" % \
             (self.filename, self.data.replace("'","''"))
         self.db.executesql(query)
+        self.db.commit()
 
     @staticmethod
     def exists(db,filename):
@@ -2568,6 +2573,43 @@ class UseDatabaseStoredFile:
     def file_delete(self,filename):
         query = "DELETE FROM web2py_filesystem WHERE path='%s'" % filename
         self.db.executesql(query)
+        self.db.commit()
+
+class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
+
+    """
+    This adapter was developed under contract with Google, Inc and it is released under the the web2py license.
+    """
+
+    def __init__(self, db, uri='gae:mysql://realm:domain/database', pool_size=0,
+                 folder=None, db_codec='UTF-8', check_reserved=None,
+                 migrate=True, fake_migrate=False,
+                 credential_decoder = lambda x:x, driver_args={}):
+
+        self.db = db
+        self.dbengine = "mysql"
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+
+        m = re.compile('^(?P<instance>.*)/(?P<db>.*)$').match(self.uri[12:])
+        if not m:
+            raise SyntaxError, "Invalid URI string in SQLDB: %s" % self._uri
+        instance = credential_decoder(m.group('instance'))
+        db = credential_decoder(m.group('db'))
+        driver_args.update(dict(instance=instance))
+        def connect(driver_args=driver_args):
+	    return rdbms.connect(**driver_args)
+        self.pool_connection(connect)
+        self.cursor = self.connection.cursor()
+        # self.execute('DROP DATABASE %s' % db)
+        self.execute('CREATE DATABASE IF NOT EXISTS %s' % db)
+        self.execute('USE %s' % db)
+        self.execute('SET FOREIGN_KEY_CHECKS=1;')
+        self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
+
 
 
 class NoSQLAdapter(BaseAdapter):
@@ -2726,7 +2768,7 @@ class GAEF(object):
     def __repr__(self):
         return '(%s %s %s:%s)' % (self.name, self.op, repr(self.value), type(self.value))
 
-class GAENoSQLAdapter(NoSQLAdapter):
+class GoogleNoSQLAdapter(NoSQLAdapter):
     uploads_in_blob = True
     types = {}
 
@@ -3352,7 +3394,8 @@ ADAPTERS = {
     'jdbc:sqlite': JDBCSQLiteAdapter,
     'jdbc:sqlite:memory': JDBCSQLiteAdapter,
     'jdbc:postgres': JDBCPostgreSQLAdapter,
-    'gae': GAENoSQLAdapter,
+    'gae': GoogleNoSQLAdapter,
+    'gae:mysql': GoogleSQLAdapter,
     'couchdb': CouchDBAdapter,
     'mongodb': CouchDBAdapter,
 }
