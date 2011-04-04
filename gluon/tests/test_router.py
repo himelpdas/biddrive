@@ -576,8 +576,7 @@ class TestRouter(unittest.TestCase):
             ),
         )
         load(rdict=router_hyphen)
-        self.assertEqual(filter_url('http://domain.com/fcn-1'), "/init/default/fcn_1")
-        self.assertEqual(filter_url('http://domain.com/init/default/fcn_1', out=True), "/fcn-1")
+        self.assertEqual(filter_url('http://domain.com/init/default/fcn_1', out=True), "/fcn_1")
         self.assertEqual(filter_url('http://domain.com/static/filename-with_underscore'), 
             "%s/applications/init/static/filename-with_underscore" % root)
         self.assertEqual(filter_url('http://domain.com/init/static/filename-with_underscore', out=True), 
@@ -592,6 +591,7 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain.com/app2/static/filename-with_underscore'), 
             "%s/applications/app2/static/filename-with_underscore" % root)
 
+        self.assertEqual(str(URL(a='init', c='default', f='a_b')), "/a_b")
         self.assertEqual(str(URL(a='app1', c='default', f='a_b')), "/app1/a-b")
         self.assertEqual(str(URL(a='app2', c='default', f='a_b')), "/app2/a_b")
         self.assertEqual(str(URL(a='app1', c='static', f='a/b_c')), "/app1/static/a/b_c")

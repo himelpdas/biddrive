@@ -44,7 +44,7 @@ def _router_default():
             languages = None,
         root_static = ['favicon.ico', 'robots.txt'],
         domains = None,
-        map_hyphen = True,
+        map_hyphen = False,
         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
         args_match = r'([\w@ -]+[=.]?)*$', # legal arg in args
@@ -721,7 +721,7 @@ class MapUrlIn(object):
         self.functions = set()
         self.languages = set()
         self.default_language = None
-        self.map_hyphen = True
+        self.map_hyphen = False
 
         path = self.env['PATH_INFO']
         self.query = self.env.get('QUERY_STRING', None)

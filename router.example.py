@@ -19,6 +19,10 @@
 #  domains: optional dict mapping domain names to application names
 #      The domain name can include a port number: domain.com:8080
 #      The application name can include a controller:  appx/ctlrx
+#      Example:
+#      domains = {   "domain.com" : "app",
+#                  "x.domain.com" : "appx",
+#                },
 #  path_prefix: a path fragment that is prefixed to all outgoing URLs and stripped from all incoming URLs
 #
 #  Note: default_application, applications, domains & path_prefix are permitted only in the BASE router,
@@ -49,8 +53,9 @@
 #       (mapped to the default application's static/ directory)
 #       Each default (including domain-mapped) application has its own root-static files.
 #  domain: the domain that maps to this application (alternative to using domains in the BASE router)
-#  map_hyphen: If True (default), hyphens in incoming /a/c/f fields are converted to underscores,
-#       and back to hyphens in outgoing URLs. Language, args and the query string are not affected.
+#  map_hyphen: If True (default is False), hyphens in incoming /a/c/f fields are converted 
+#              to underscores, and back to hyphens in outgoing URLs.
+#              Language, args and the query string are not affected.
 #  map_static: By default, the default application is not stripped from static URLs. 
 #       Set map_static=True to override this policy.
 #  acfe_match: regex for valid application, controller, function, extension /a/c/f.e
@@ -73,7 +78,7 @@
 #             languages = None,
 #         root_static = ['favicon.ico', 'robots.txt'],
 #         domains = None,
-#         map_hyphen = True,
+#         map_hyphen = False,
 #         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
 #         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
 #         args_match = r'([\w@ -]+[=.]?)+$', # legal arg in args
