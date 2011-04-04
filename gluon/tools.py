@@ -805,11 +805,12 @@ class Auth(object):
         request = self.environment.request
         session = self.environment.session
         auth = session.auth
-        if auth and auth.last_visit and auth.last_visit\
-             + datetime.timedelta(days=0, seconds=auth.expiration)\
-             > request.now:
+        if auth and auth.last_visit and auth.last_visit + \
+                datetime.timedelta(days=0, seconds=auth.expiration) > request.now:
             self.user = auth.user
-            auth.last_visit = request.now
+            # this is a trick to speed up sessions
+            if (request.now - auth.last_visit).seconds > (auth.expiration/10):
+                auth.last_visit = request.now
         else:
             self.user = None
             session.auth = None
