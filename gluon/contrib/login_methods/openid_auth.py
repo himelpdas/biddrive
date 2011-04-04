@@ -240,8 +240,8 @@ class OpenIDAuth(object):
         """
         Associate the user logged in with given OpenID
         """
-        print "[DB] %s authenticated" % oid
-        self.db.alt_logins.insert(username=oid, user=user)
+        # print "[DB] %s authenticated" % oid
+        self.db.alt_logins.insert(username=oid, user=user.id)
 
     def _form_with_notification(self):
         """
