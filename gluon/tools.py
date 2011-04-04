@@ -900,7 +900,10 @@ class Auth(object):
         self.settings.retrieve_password_next = self.url('index')
         self.settings.request_reset_password_next = self.url('user', args='login')
         self.settings.reset_password_next = self.url('user', args='login')
+
         self.settings.change_password_next = self.url('index')
+        self.settings.change_password_onvalidation = []
+        self.settings.change_password_onaccept = []
 
         self.settings.retrieve_password_onvalidation = []
         self.settings.reset_password_onvalidation = []
