@@ -317,7 +317,7 @@ class ConnectionPool(object):
     pools = {}
 
     @staticmethod
-    def set_folder(folder):
+    def set_folder(folder):        
         thread.folder = folder
 
     # ## this allows gluon to commit/rollback all dbs in this thread
@@ -536,12 +536,9 @@ class BaseAdapter(ConnectionPool):
 
         # backend-specific extensions to fields
         if self.dbengine == 'mysql':
-            if_not_exists = 'IF NOT EXISTS '
             if not hasattr(table, "_primarykey"):
                 fields.append('PRIMARY KEY(%s)' % table.fields[0])
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
-        else:
-            if_not_exists = ''
 
         fields = ',\n    '.join(fields)
         for rtablename in TFK:
@@ -557,16 +554,15 @@ class BaseAdapter(ConnectionPool):
                      on_delete_action=field.ondelete)
 
         if hasattr(table,'_primarykey'):
-            query = '''CREATE TABLE %s%s(\n    %s,\n    %s) %s''' % \
-                (if_not_exists,tablename, fields, self.PRIMARY_KEY(', '.join(table._primarykey)),other)
+            query = '''CREATE TABLE %s(\n    %s,\n    %s) %s''' % \
+                (tablename, fields, self.PRIMARY_KEY(', '.join(table._primarykey)),other)
         else:
-            query = '''CREATE TABLE %s%s(\n    %s\n)%s''' % \
-                (if_not_exists,tablename, fields, other)
+            query = '''CREATE TABLE %s(\n    %s\n)%s''' % \
+                (tablename, fields, other)
 
         if self.uri.startswith('sqlite:///'):
             path_encoding = sys.getfilesystemencoding() or locale.getdefaultlocale()[1] or 'utf8'
-            dbpath = self.uri[9:self.uri.rfind('/')]\
-                .decode('utf8').encode(path_encoding)
+            dbpath = self.uri[9:self.uri.rfind('/')].decode('utf8').encode(path_encoding)
         else:
             dbpath = self.folder
         if not migrate:
@@ -2585,14 +2581,14 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
                  folder=None, db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
                  credential_decoder = lambda x:x, driver_args={}):
-
+        
         self.db = db
         self.dbengine = "mysql"
         self.uri = uri
         self.pool_size = pool_size
         self.folder = folder
         self.db_codec = db_codec
-        self.find_or_make_work_folder()
+        self.folder = folder or '$HOME/'+thread.folder.split('/applications/',1)[1]
 
         m = re.compile('^(?P<instance>.*)/(?P<db>.*)$').match(self.uri[12:])
         if not m:
