@@ -565,6 +565,7 @@ class BaseAdapter(ConnectionPool):
             dbpath = self.uri[9:self.uri.rfind('/')].decode('utf8').encode(path_encoding)
         else:
             dbpath = self.folder
+
         if not migrate:
             return query
         elif self.uri.startswith('sqlite:memory'):
@@ -1141,7 +1142,10 @@ class BaseAdapter(ConnectionPool):
 
     def log_execute(self,*a,**b):
         self.db._lastsql = a[0]
-        return self.cursor.execute(*a,**b)
+        t0 = time.time()
+        ret = self.cursor.execute(*a,**b)
+        self.db._timings.append((a[0],time.time()-t0))
+        return ret
 
     def execute(self,*a,**b):
         return self.log_execute(*a, **b)
@@ -2502,14 +2506,18 @@ class SAPDBAdapter(BaseAdapter):
 ######## GAE MySQL ##########
 
 class DatabaseStoredFile:
-
+    
+    web2py_filesystem = False
+    
     def __init__(self,db,filename,mode):
         if db._adapter.dbengine != 'mysql':
             raise RuntimeError, "only MySQL can store metadata .table files in database for now"
         self.db = db
         self.filename = filename
         self.mode = mode
-        self.db.executesql("CREATE TABLE IF NOT EXISTS web2py_filesystem (path VARCHAR(512), content LONGTEXT, PRIMARY KEY(path) ) ENGINE=InnoDB;")
+        if not self.web2py_filesystem:
+            self.db.executesql("CREATE TABLE IF NOT EXISTS web2py_filesystem (path VARCHAR(512), content LONGTEXT, PRIMARY KEY(path) ) ENGINE=InnoDB;")
+            DatabaseStoredFile.web2py_filesystem = True
         self.p=0
         self.data = ''
         if mode in ('r','rw','a'):
@@ -2595,18 +2603,19 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
             raise SyntaxError, "Invalid URI string in SQLDB: %s" % self._uri
         instance = credential_decoder(m.group('instance'))
         db = credential_decoder(m.group('db'))
-        driver_args.update(dict(instance=instance))
+        driver_args['instance'] = instance
+        if not migrate: 
+            driver_args['database'] = db
         def connect(driver_args=driver_args):
 	    return rdbms.connect(**driver_args)
         self.pool_connection(connect)
-        self.cursor = self.connection.cursor()
-        # self.execute('DROP DATABASE %s' % db)
-        self.execute('CREATE DATABASE IF NOT EXISTS %s' % db)
-        self.execute('USE %s' % db)
-        self.execute('SET FOREIGN_KEY_CHECKS=1;')
+        self.cursor = self.connection.cursor()        
+        if migrate:
+            # self.execute('DROP DATABASE %s' % db)
+            self.execute('CREATE DATABASE IF NOT EXISTS %s' % db)
+            self.execute('USE %s' % db)
+        self.execute("SET FOREIGN_KEY_CHECKS=1;")
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
-
-
 
 class NoSQLAdapter(BaseAdapter):
 
@@ -3678,6 +3687,7 @@ class DAL(dict):
         self._pool_size = pool_size
         self._db_codec = db_codec
         self._lastsql = ''
+        self._timings = []
         if uri:
             uris = isinstance(uri,(list,tuple)) and uri or [uri]
             error = ''
@@ -3974,8 +3984,8 @@ def index():
                     'trigger_name',
                     'sequence_name']:
                 raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
-        migrate = args.get('migrate',self._migrate)
-        fake_migrate = args.get('fake_migrate', self._fake_migrate)
+        migrate = self._migrate and args.get('migrate',True) 
+        fake_migrate = self._fake_migrate or args.get('fake_migrate',False)
         format = args.get('format',None)
         trigger_name = args.get('trigger_name', None)
         sequence_name = args.get('sequence_name', None)
