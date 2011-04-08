@@ -2581,10 +2581,6 @@ class UseDatabaseStoredFile:
 
 class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
 
-    """
-    This adapter was developed under contract with Google, Inc and it is released under the the web2py license.
-    """
-
     def __init__(self, db, uri='gae:mysql://realm:domain/database', pool_size=0,
                  folder=None, db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
@@ -3654,7 +3650,7 @@ class DAL(dict):
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
                  db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
-                 migrate_all=True, fake_migrate_all=False,
+                 migrate_none=False, fake_migrate_all=False,
                  decode_credentials=False, driver_args=None):
         """
         Creates a new Database Abstraction Layer instance.
@@ -3727,7 +3723,7 @@ class DAL(dict):
             self.RSK = RSK
         self._migrate = migrate
         self._fake_migrate = fake_migrate
-        self._migrate_all = migrate_all
+        self._migrate_none = migrate_none
         self._fake_migrate_all = fake_migrate_all
 
     def check_reserved_keyword(self, name):
@@ -3987,7 +3983,7 @@ def index():
                     'trigger_name',
                     'sequence_name']:
                 raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
-        migrate = self._migrate_all and args.get('migrate',self._migrate) 
+        migrate = (not self._migrate_none) and args.get('migrate',self._migrate)
         fake_migrate = self._fake_migrate_all or args.get('fake_migrate',self._fake_migrate)
         format = args.get('format',None)
         trigger_name = args.get('trigger_name', None)
