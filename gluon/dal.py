@@ -4545,6 +4545,9 @@ class Table(dict):
                 value = None
             elif field.type.startswith('list:string'):
                 value = bar_decode_string(value)
+            elif field.type.startswith('list:reference'):
+                ref_table = field.type[10:].strip()
+                value = [id_map[ref_table][int(v)] for v in bar_decode_string(value)]
             elif field.type.startswith('list:'):
                 value = bar_decode_integer(value)
             elif id_map and field.type.startswith('reference'):
