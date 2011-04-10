@@ -3650,7 +3650,7 @@ class DAL(dict):
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
                  db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
-                 migrate_none=False, fake_migrate_all=False,
+                 migrate_enabled=True, fake_migrate_enabled=False,
                  decode_credentials=False, driver_args=None):
         """
         Creates a new Database Abstraction Layer instance.
@@ -3672,6 +3672,10 @@ class DAL(dict):
                 (recommended)
         * '<adaptername>_nonreserved' Checks against the specific adapters
                 list of nonreserved keywords. (if available)
+        :migrate (defaults to True) sets default migrate behavior for all tables
+        :fake_migrate (defaults to False) sets default fake_migrate behavior for all tables
+        :migrate_enabled (defaults to True). If set to False disables ALL migrations
+        :fake_migrate_enabled (defaults to False). If sets to True fake migrates ALL tables
         """
 
         if not decode_credentials:
@@ -3723,8 +3727,8 @@ class DAL(dict):
             self.RSK = RSK
         self._migrate = migrate
         self._fake_migrate = fake_migrate
-        self._migrate_none = migrate_none
-        self._fake_migrate_all = fake_migrate_all
+        self._migrate_enabled = migrate_enabled
+        self._fake_migrate_enabled = fake_migrate_enabled
 
     def check_reserved_keyword(self, name):
         """
@@ -3984,8 +3988,8 @@ def index():
                     'sequence_name',
                     'polymodel']:
                 raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
-        migrate = (not self._migrate_none) and args.get('migrate',self._migrate)
-        fake_migrate = self._fake_migrate_all or args.get('fake_migrate',self._fake_migrate)
+        migrate = self._migrate_enabled and args.get('migrate',self._migrate)
+        fake_migrate = self._fake_migrate_enabled or args.get('fake_migrate',self._fake_migrate)
         format = args.get('format',None)
         trigger_name = args.get('trigger_name', None)
         sequence_name = args.get('sequence_name', None)
