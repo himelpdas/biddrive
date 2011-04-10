@@ -3981,7 +3981,8 @@ def index():
                     'fake_migrate',
                     'format',
                     'trigger_name',
-                    'sequence_name']:
+                    'sequence_name',
+                    'polymodel']:
                 raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
         migrate = (not self._migrate_none) and args.get('migrate',self._migrate)
         fake_migrate = self._fake_migrate_all or args.get('fake_migrate',self._fake_migrate)
