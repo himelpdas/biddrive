@@ -2800,13 +2800,13 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
                 'list:reference': (lambda: gae.ListProperty(int,default=None)),
         })
         self.db = db
-        self.uri = uri.replace('gae','google:datastore')
+        self.uri = uri
         self.dbengine = 'google:datastore'
         self.folder = folder
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
         self.pool_size = 0
-        match = re.compile('(?P<namespace>.+)').match(uri[len('google:datastore://'):])
+        match = re.compile('.*://(?P<namespace>.+)').match(uri)
         if match:
             namespace_manager.set_namespace(match.group('namespace'))
 
