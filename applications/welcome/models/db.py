@@ -6,7 +6,7 @@
 #########################################################################
 
 if request.env.web2py_runtime_gae:            # if running on Google App Engine
-    db = DAL('gae')                           # connect to Google BigTable
+    db = DAL('google:datastore')              # connect to Google BigTable
                                               # optional DAL('gae://namespace')
     session.connect(request, response, db = db) # and store sessions and tickets there
     ### or use the following lines to store sessions in Memcache

@@ -99,7 +99,8 @@ Supported DAL URI strings:
 'firebird_embedded://username:password@c://path'
 'informix://user:password@server:3050/database'
 'informixu://user:password@server:3050/database' # unicode informix
-'gae' # for google app engine (work in progress)
+'google:datastore' # for google app engine datastore
+'google:sql' # for google app engine with sql (mysql compatible)
 
 For more info:
 help(DAL)
@@ -269,7 +270,7 @@ try:
     from google.appengine.api.datastore_types import Key  ### needed for belongs on ID
     from google.appengine.ext.db.polymodel import PolyModel
 
-    drivers.append('gae')
+    drivers.append('google')
 
     class GAEDecimalProperty(gae.Property):
         """
@@ -1319,17 +1320,17 @@ class BaseAdapter(ConnectionPool):
                         value = decimal.Decimal(str(value))
                     colset[fieldname] = value
                 elif field_type.startswith('list:integer'):
-                    if not self.uri.startswith('gae'):
+                    if not self.dbengine=='google:datastore':
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif field_type.startswith('list:reference'):
-                    if not self.uri.startswith('gae'):
+                    if not self.dbengine=='google:datastore':
                         colset[fieldname] = bar_decode_integer(value)
                     else:
                         colset[fieldname] = value
                 elif field_type.startswith('list:string'):
-                    if not self.uri.startswith('gae'):
+                    if not self.dbengine=='google:datastore':
                         colset[fieldname] = bar_decode_string(value)
                     else:
                         colset[fieldname] = value
@@ -2581,7 +2582,7 @@ class UseDatabaseStoredFile:
 
 class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
 
-    def __init__(self, db, uri='gae:mysql://realm:domain/database', pool_size=0,
+    def __init__(self, db, uri='google:sql://realm:domain/database', pool_size=0,
                  folder=None, db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
                  credential_decoder = lambda x:x, driver_args={}):
@@ -2594,7 +2595,7 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
         self.db_codec = db_codec
         self.folder = folder or '$HOME/'+thread.folder.split('/applications/',1)[1]
 
-        m = re.compile('^(?P<instance>.*)/(?P<db>.*)$').match(self.uri[12:])
+        m = re.compile('^(?P<instance>.*)/(?P<db>.*)$').match(self.uri[len('google:sql://'):])
         if not m:
             raise SyntaxError, "Invalid URI string in SQLDB: %s" % self._uri
         instance = credential_decoder(m.group('instance'))
@@ -2622,7 +2623,7 @@ class NoSQLAdapter(BaseAdapter):
             return fieldtype.encoder(obj)
         if isinstance(obj, (Expression, Field)):
             raise SyntaxError, "non supported on GAE"
-        if 'gae' in globals():
+        if self.dbengine=='google:datastore' in globals():
             if isinstance(fieldtype, gae.Property):
                 return obj
         if fieldtype.startswith('list:'):
@@ -2769,7 +2770,7 @@ class GAEF(object):
     def __repr__(self):
         return '(%s %s %s:%s)' % (self.name, self.op, repr(self.value), type(self.value))
 
-class GoogleNoSQLAdapter(NoSQLAdapter):
+class GoogleDatastoreAdapter(NoSQLAdapter):
     uploads_in_blob = True
     types = {}
 
@@ -2799,13 +2800,13 @@ class GoogleNoSQLAdapter(NoSQLAdapter):
                 'list:reference': (lambda: gae.ListProperty(int,default=None)),
         })
         self.db = db
-        self.uri = uri
-        self.dbengine = 'gql'
+        self.uri = uri.replace('gae','google:datastore')
+        self.dbengine = 'google:datastore'
         self.folder = folder
         db['_lastsql'] = ''
         self.db_codec = 'UTF-8'
         self.pool_size = 0
-        match = re.compile('(?P<namespace>.+)').match(uri[6:])
+        match = re.compile('(?P<namespace>.+)').match(uri[len('google:datastore://'):])
         if match:
             namespace_manager.set_namespace(match.group('namespace'))
 
@@ -3395,8 +3396,9 @@ ADAPTERS = {
     'jdbc:sqlite': JDBCSQLiteAdapter,
     'jdbc:sqlite:memory': JDBCSQLiteAdapter,
     'jdbc:postgres': JDBCPostgreSQLAdapter,
-    'gae': GoogleNoSQLAdapter,
-    'gae:mysql': GoogleSQLAdapter,
+    'gae': GoogleDatastoreAdapter, # discouraged, for backward compatibility
+    'google:datastore': GoogleDatastoreAdapter,
+    'google:sql': GoogleSQLAdapter,
     'couchdb': CouchDBAdapter,
     'mongodb': CouchDBAdapter,
 }
@@ -4018,7 +4020,7 @@ def index():
 
         t._create_references()
 
-        if migrate or self._uri.startswith('gae'):
+        if migrate or self._adapter.dbengine=='google:datastore':
             try:
                 sql_locker.acquire()
                 self._adapter.create_table(t,migrate=migrate,
