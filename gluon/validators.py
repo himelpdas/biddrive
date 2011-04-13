@@ -366,7 +366,7 @@ class IS_IN_DB(Validator):
         sort=False,
         _and=None,
         ):
-        from gluon.dal import Table
+        from dal import Table
         if isinstance(field,Table): field = field._id
 
         if hasattr(dbset, 'define_table'):
@@ -482,7 +482,7 @@ class IS_NOT_IN_DB(Validator):
         allowed_override=[],
         ):
 
-        from gluon.dal import Table
+        from dal import Table
         if isinstance(field,Table): field = field._id
 
         if hasattr(dbset, 'define_table'):
