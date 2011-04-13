@@ -3523,7 +3523,7 @@ class Row(dict):
         return dict.__getitem__(self, key)
 
     def __call__(self,key):
-        return self.__getitem(self,key)
+        return self.__getitem__(key)
 
     def __setitem__(self, key, value):
         dict.__setitem__(self, str(key), value)
