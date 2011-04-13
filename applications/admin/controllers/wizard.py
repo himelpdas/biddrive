@@ -114,22 +114,24 @@ def step2():
     form=SQLFORM.factory(Field('table_names','list:string',
                                default=session.app['tables']))
     if form.accepts(request.vars):
-        session.app['tables']=[clean(t)
-                               for t in listify(form.vars.table_names)
-                               if t.strip()]
-        for table in session.app['tables']:
-            if not 'table_'+table in session.app:
-                session.app['table_'+table]=['name']
-            if not table=='auth_user':
-                for key in ['create','read','update','select','search']:
-                    name = table+'_'+key
-                    if not name in session.app['pages']:
-                        session.app['pages'].append(name)
-                        session.app['page_'+name]='## %s %s' % (key.capitalize(),table)
-        if session.app['tables']:
-            redirect(URL('step3',args=0))
+        table_names = [clean(t) for t in listify(form.vars.table_names) if t.strip()]
+        if [t for t in table_names if t.startswith('auth_') and not t=='auth_user']:
+            form.error.table_names = T('invalid table names (auth_* tables already defined)')
         else:
-            redirect(URL('step4'))
+            session.app['tables']=table_names
+            for table in session.app['tables']:
+                if not 'table_'+table in session.app:
+                    session.app['table_'+table]=['name']
+                if not table=='auth_user':
+                    for key in ['create','read','update','select','search']:
+                        name = table+'_'+key
+                        if not name in session.app['pages']:
+                            session.app['pages'].append(name)
+                            session.app['page_'+name]='## %s %s' % (key.capitalize(),table)
+            if session.app['tables']:
+                redirect(URL('step3',args=0))
+            else:
+                redirect(URL('step4'))
     return dict(step='2: Tables',form=form)
 
 def step3():
