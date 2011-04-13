@@ -102,10 +102,11 @@ class LoadFactory(object):
                                  _type="text/javascript")
             return html.TAG[''](script, html.DIV('loading...', _id=target))
         else:
+            c = c or request.controller
             other_environment = copy.copy(self.environment)
             other_request = globals.Request()
             other_request.application = request.application
-            other_request.controller = c or request.controller
+            other_request.controller = c
             other_request.function = f
             other_request.extension = extension or request.extension
             other_request.args = List(args)
