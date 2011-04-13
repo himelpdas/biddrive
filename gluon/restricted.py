@@ -62,7 +62,7 @@ class TicketStorage(Storage):
         root = request.folder
         if app:
             root = os.path.join(os.path.join(root, '..'), app)
-        errors_folder = os.path.join(root, 'errors') #.replace('\\', '/')
+        errors_folder = os.path.abspath(os.path.join(root, 'errors'))#.replace('\\', '/')
         return open(os.path.join(errors_folder, ticket_id), mode)
 
     def _get_table(self, db, tablename, app):
