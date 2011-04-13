@@ -144,6 +144,7 @@ def run(
     plain=False,
     import_models=False,
     startfile=None,
+    bpython=False
     ):
     """
     Start interactive shell or run Python script (startfile) in web2py
@@ -203,6 +204,15 @@ def run(
             print e.traceback
     else:
         if not plain:
+            if bpython:
+                try:
+                    import bpython
+                    bpython.embed(locals_=_env)
+                    return
+                except:
+                    logger.warning(
+                        'import bpython error; trying ipython...')
+
             try:
                 import IPython
                 # following 2 lines fix a problem with IPython; thanks Michael Toomim
@@ -332,6 +342,17 @@ def execute_from_command_line(argv=None):
     parser.add_option('-S', '--shell', dest='shell', metavar='APPNAME',
         help='run web2py in interactive shell or IPython(if installed) ' + \
             'with specified appname')
+    msg = 'run web2py in interactive shell or bpython (if installed) with'
+    msg += ' specified appname (if app does not exist it will be created).'
+    msg += '\n Use combined with --shell'
+    parser.add_option(
+        '-B',
+        '--bpython',
+        action='store_true',
+        default=False,
+        dest='bpython',
+        help=msg,
+        )
     parser.add_option(
         '-P',
         '--plain',
@@ -369,7 +390,7 @@ def execute_from_command_line(argv=None):
         startfile = args[0]
     else:
         startfile = ''
-    run(options.shell, options.plain, startfile=startfile)
+    run(options.shell, options.plain, startfile=startfile, bpython=options.bpython)
 
 
 if __name__ == '__main__':

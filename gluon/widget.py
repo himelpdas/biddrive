@@ -585,6 +585,16 @@ def console():
                       metavar='APPNAME',
                       help=msg)
 
+    msg = 'run web2py in interactive shell or bpython (if installed) with'
+    msg += ' specified appname (if app does not exist it will be created).'
+    msg += '\n Use combined with --shell'
+    parser.add_option('-B',
+                      '--bpython',
+                      action='store_true',
+                      default=False,
+                      dest='bpython',
+                      help=msg)
+
     msg = 'only use plain python shell; should be used with --shell option'
     parser.add_option('-P',
                       '--plain',
@@ -790,7 +800,7 @@ def start(cron=True):
     if options.shell:
         if options.args!=None:
             sys.argv[:] = options.args
-        run(options.shell, plain=options.plain,
+        run(options.shell, plain=options.plain, bpython=options.bpython,
             import_models=options.import_models, startfile=options.run)
         return
 
