@@ -95,11 +95,17 @@ class LoadFactory(object):
         request = self.environment['request']
         if '.' in f:
             f, extension = f.split('.',1)
-        if c and not url and not ajax:
+        if url or ajax:
+            url = url or html.URL(request.application, c, f, r=request,
+                                  args=args, vars=vars, extension=extension)
+            script = html.SCRIPT('web2py_component("%s","%s")' % (url, target),
+                                 _type="text/javascript")
+            return html.TAG[''](script, html.DIV('loading...', _id=target))
+        else:
             other_environment = copy.copy(self.environment)
             other_request = globals.Request()
             other_request.application = request.application
-            other_request.controller = c
+            other_request.controller = c or request.controller
             other_request.function = f
             other_request.extension = extension or request.extension
             other_request.args = List(args)
@@ -137,12 +143,6 @@ class LoadFactory(object):
             #         js += value
             script = js and html.SCRIPT(js,_type="text/javascript") or ''
             return html.TAG[''](html.DIV(html.XML(page),_id=target),script)
-        else:
-            url = url or html.URL(request.application, c, f, r=request,
-                                  args=args, vars=vars, extension=extension)
-            script = html.SCRIPT('web2py_component("%s","%s")' % (url, target),
-                                 _type="text/javascript")
-            return html.TAG[''](script, html.DIV('loading...', _id=target))
 
 
 def local_import_aux(name, force=False, app='welcome'):
