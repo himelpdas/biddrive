@@ -18,7 +18,7 @@ def get_content(b=None,\
     """
 
     def openfile():
-        path = os.path.join(request.folder,'/private/content',l,c,f,b+'.'+format)
+        path = os.path.join(request.folder,'private','content',l,c,f,b+'.'+format)
         return open(path)
 
     try:
