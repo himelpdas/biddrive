@@ -62,7 +62,7 @@ function web2py_ajax_init() {
   });
 };
 
-jQuery(document).ready(function() {   
+jQuery(function() {   
    var flash = jQuery('.flash');
    flash.hide();
    if(flash.html()) flash.slideDown();
@@ -101,7 +101,7 @@ function web2py_ajax_page(method,action,data,target) {
     });
 }
 function web2py_component(action,target) {
-  jQuery(document).ready(function(){ web2py_ajax_page('get',action,null,target); });
+  jQuery(function(){ web2py_ajax_page('get',action,null,target); });
 }
 function web2py_comet(url,onmessage,onopen,onclose) {
   if ("WebSocket" in window) {
