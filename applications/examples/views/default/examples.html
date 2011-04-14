@@ -49,7 +49,7 @@
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
 
     <b>and view: simple_examples/hello3.html</b>
-    {{=CODE(open(request.folder+'views/simple_examples/hello3.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/simple_examples/hello3.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>If you return a dictionary, the variables defined in the dictionery are visible to the view (template).
     <br/>Try it here: <a href="/{{=request.application}}/simple_examples/hello3.html">hello3</a></p>
 
@@ -207,7 +207,7 @@
         session.counter+=1
         return dict(counter=session.counter)
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: session_examples/counter.html</b>
-    {{=CODE(open(request.folder+'views/session_examples/counter.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/session_examples/counter.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>Click to count. The session.counter is persistent for this user and application. Every applicaiton within the system has its own separate session management.
     <br/>Try it here: <a href="/{{=request.application}}/session_examples/counter">counter</a></p>
 
@@ -218,7 +218,7 @@
     {{=CODE("""
     def variables(): return dict(a=10, b=20)
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/variables.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/variables.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/variables.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>A view (also known as template) is just an HTML file with &#123;&#123;...&#125;&#125; tags. You can put ANY python code into the tags, no need to indent but you must use pass to close blocks. The view is transformed into a python code and then executed. &#123;&#123;=a&#125;&#125; prints a.xml() or escape(str(a)).
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/variables">variables</a></p>
 
@@ -226,7 +226,7 @@
     {{=CODE("""
     def test_for(): return dict()
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/test_for.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/test_for.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/test_for.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>You can do for and while loops.
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/test_for">test_for</a></p>
 
@@ -234,7 +234,7 @@
     {{=CODE("""
     def test_if(): return dict()
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/test_if.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/test_if.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/test_if.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>You can do if, elif, else.
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/test_if">test_if</a></p>
 
@@ -242,7 +242,7 @@
     {{=CODE("""
     def test_try(): return dict()
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/test_try.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/test_try.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/test_try.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>You can do try, except, finally.
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/test_try">test_try</a></p>
 
@@ -250,7 +250,7 @@
     {{=CODE("""
     def test_def(): return dict()
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/test_def.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/test_def.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/test_def.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>You can write functions in HTML too.
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/test_def">test_def</a></p>
 
@@ -258,7 +258,7 @@
     {{=CODE("""
     def escape(): return dict(message='<h1>text is escaped</h1>')
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/escape.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/escape.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/escape.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>The argument of  &#123;&#123;=...&#125;&#125; is always escaped unless it is an object with a .xml() method such as link, A(...), a FORM(...), a XML(...) block, etc.
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/escape">escape</a></p>
 
@@ -267,7 +267,7 @@
     def xml():
         return dict(message=XML('<h1>text is not escaped</h1>'))
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/xml.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/xml.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/xml.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>If you do not want to escape the argument of  &#123;&#123;=...&#125;&#125; mark it as XML.
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/xml">xml</a></p>
 
@@ -275,7 +275,7 @@
     {{=CODE("""
     def beautify(): return dict(message=BEAUTIFY(request))
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: template_examples/beautify.html</b>
-    {{=CODE(open(request.folder+'views/template_examples/beautify.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/template_examples/beautify.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>You can use BEAUTIFY to turn lists and dictionaries into organized HTML.
     <br/>Try it here: <a href="/{{=request.application}}/template_examples/beautify">beautify</a></p>
 
@@ -291,7 +291,7 @@
         response.flash='you clicked on civilized'
         return dict(message="you clicked on civilized")
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: layout_examples/civilized.html</b>
-    {{=CODE(open(request.folder+'views/layout_examples/civilized.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/layout_examples/civilized.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>You can specify the layout file at the top of your view. civilized Layout file is a view that somewhere in the body contains &#123;&#123;include&#125;&#125;.
     <br/>Try it here: <a href="/{{=request.application}}/layout_examples/civilized">civilized</a></p>
 
@@ -304,7 +304,7 @@
         response.flash='you clicked on slick'
         return dict(message="you clicked on slick")
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: layout_examples/slick.html</b>
-    {{=CODE(open(request.folder+'views/layout_examples/slick.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/layout_examples/slick.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>Same here, but using a different template.<br/>Try it here: <a href="/{{=request.application}}/layout_examples/slick">slick</a></p>
 
     <h3>Example {{=c}}{{c+=1}}</h3><b>In controller: layout_examples.py </b>
@@ -316,7 +316,7 @@
         response.flash='you clicked on basic'
         return dict(message="you clicked on basic")
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: layout_examples/basic.html</b>
-    {{=CODE(open(request.folder+'views/layout_examples/basic.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/layout_examples/basic.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>'layout.html' is the default template, every application has a copy of it.
     <br/>Try it here: <a href="/{{=request.application}}/layout_examples/basic">basic</a></p>
 
@@ -412,7 +412,7 @@
         records=SQLTABLE(db().select(db.users.ALL))
         return dict(form=form,records=records)
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: database_examples/register_user.html</b>
-    {{=CODE(open(request.folder+'views/database_examples/register_user.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/database_examples/register_user.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>This is a simple user registration form. SQLFORM takes a table and returns the corresponding entry form with validators, etc. SQLFORM.accepts is similar to FORM.accepts but, if form is validated, the corresponding insert is also performed. SQLFORM can also do update and edit if a record is passed as its second argument.
     SQLTABLE instead turns a set of records (result of a select) into an HTML table with links as specified by its optional parameters.
     The response.menu on top is just a variable used by the layout to make the navigation menu for all functions in this controller.<br/>
@@ -428,7 +428,7 @@
         records=SQLTABLE(db().select(db.dogs.ALL),upload=download)
         return dict(form=form,records=records)
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: database_examples/register_dog.html</b>
-    {{=CODE(open(request.folder+'views/database_examples/register_dog.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/database_examples/register_dog.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>Here is a dog registration form. Notice that the "image" (type "upload") field is rendered into a &lt;INPUT type="file"&gt; html tag. SQLFORM.accepts(...) handles the upload of the file into the uploads/ folder.
     <br/>Try it here: <a href="/{{=request.application}}/database_examples/register_dog">register_dog</a></p>
 
@@ -441,7 +441,7 @@
         records=SQLTABLE(db().select(db.products.ALL))
         return dict(form=form,records=records)
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: database_examples/register_product.html</b>
-    {{=CODE(open(request.folder+'views/database_examples/register_product.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/database_examples/register_product.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>Nothing new here.
     <br/>Try it here: <a href="/{{=request.application}}/database_examples/register_product">register_product</a></p>
 
@@ -478,7 +478,7 @@
         records=db(purchased).select(db.users.name,db.purchases.quantity,db.products.name)
         return dict(form=form,records=SQLTABLE(records),vars=form.vars,vars2=request.vars)
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}<b>and view: database_examples/buy.html</b>
-    {{=CODE(open(request.folder+'views/database_examples/buy.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/database_examples/buy.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>Here is a rather sophisticated buy form. It checks that the buyer and the product are in the database and updates the corresponding record or inserts a new purchase. It also does a JOIN to list all purchases.
     <br/>Try it here: <a href="/{{=request.application}}/database_examples/buy">buy</a></p>
 
@@ -601,7 +601,7 @@
         return TABLE(*[TR(v) for v in session.m]).xml()
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <b>In view: ajax_examples/index.html</b>
-    {{=CODE(open(request.folder+'views/ajax_examples/index.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/ajax_examples/index.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>The javascript function "ajax" is provided in "web2py_ajax.html" and included by "layout.html". It takes three arguments, a url, a list of ids and a target id. When called, it sends to the url (via a get) the values of the ids and display the response in the value (of innerHTML) of the target id.
     <br/>Try it here: <a href="/{{=request.application}}/ajax_examples/index">index</a></p>
 
@@ -619,7 +619,7 @@
         return dict()
     """.strip(),language='web2py',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <b>In view: ajax_examples/fade.html </b><br/>
-    {{=CODE(open(request.folder+'views/ajax_examples/fade.html','r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
+    {{=CODE(open(os.path.join(request.folder,'views/ajax_examples/fade.html'),'r').read(),language='html',link=URL(r=request,c='global',f='vars'),_class='boxCode')}}
     <p>Try it here: <a href="/{{=request.application}}/ajax_examples/fade">fade</a></p>
 
     <h3>Excel-like spreadsheet via Ajax</h3>

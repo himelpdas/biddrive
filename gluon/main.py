@@ -372,7 +372,7 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 request.client = get_client(request.env)
-                request.folder = abspath('applications', request.application)
+                request.folder = abspath('applications', request.application) + os.sep
                 request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
                 request.cid = request.env.http_web2py_component_element
 
