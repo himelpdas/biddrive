@@ -212,18 +212,18 @@ def run(
                 except:
                     logger.warning(
                         'import bpython error; trying ipython...')
-
-            try:
-                import IPython
-                # following 2 lines fix a problem with IPython; thanks Michael Toomim
-                if '__builtins__' in _env:
-                    del _env['__builtins__']
-                shell = IPython.Shell.IPShell(argv=[], user_ns=_env)
-                shell.mainloop()
-                return
-            except:
-                logger.warning(
-                    'import IPython error; use default python shell')
+            else:
+                try:
+                    import IPython
+                    # following 2 lines fix a problem with IPython; thanks Michael Toomim
+                    if '__builtins__' in _env:
+                        del _env['__builtins__']
+                    shell = IPython.Shell.IPShell(argv=[], user_ns=_env)
+                    shell.mainloop()
+                    return
+                except:
+                    logger.warning(
+                        'import IPython error; use default python shell')
         try:
             import readline
             import rlcompleter
