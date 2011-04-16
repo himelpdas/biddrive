@@ -1039,7 +1039,8 @@ class SQLFORM(FORM):
             # - there is existing file and user is not trying to delete it
             # this is because removing the file may not pass validation
             for key in self.errors.keys():
-                if self.table[key].type == 'upload' \
+                if key in self.table \
+                        and self.table[key].type == 'upload' \
                         and request_vars.get(key, None) in (None, '') \
                         and self.record[key] \
                         and not key + UploadWidget.ID_DELETE_SUFFIX in request_vars:
