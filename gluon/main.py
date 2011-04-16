@@ -31,6 +31,7 @@ import string
 from fileutils import abspath
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
+from custom_import import custom_import_install
 
 #  calling script has inserted path to script directory into sys.path
 #  applications_parent (path to applications/, site-packages/ etc) defaults to that directory
@@ -54,6 +55,8 @@ global_settings.applications_parent = global_settings.gluon_parent
 web2py_path = global_settings.applications_parent # backward compatibility
 global_settings.app_folders = set()
 global_settings.debugging = False
+
+custom_import_install(web2py_path)
 
 create_missing_folders()
 
