@@ -9,7 +9,7 @@ except e:
 
 def ldap_auth(server='ldap', port=None,
             base_dn='ou=users,dc=domain,dc=com',
-            mode='uid', secure=False, cert_path=None, bind_dn=None, bind_pw=None):
+            mode='uid', secure=False, cert_path=None, bind_dn=None, bind_pw=None, filterstr='(objectClass=*)'):
     """
     to use ldap login with MS Active Directory::
 
@@ -44,6 +44,10 @@ def ldap_auth(server='ldap', port=None,
 
     If you need to bind to the directory with an admin account in order to search it then specify bind_dn & bind_pw to use for this.
     - currently only implemented for Active Directory
+
+    If you need to restrict the set of allowed users (e.g. to members of a department) then specify
+    a rfc4515 search filter string.
+    - currently only implemented for mode in ['ad', 'company', 'uid_r']
     """
 
     def ldap_auth_aux(username,
@@ -55,7 +59,8 @@ def ldap_auth(server='ldap', port=None,
                       ldap_binddn=bind_dn,
                       ldap_bindpw=bind_pw,
                       secure=secure,
-                      cert_path=cert_path):
+                      cert_path=cert_path,
+                      filterstr=filterstr):
         try:
             if secure:
                 if not ldap_port:
@@ -78,6 +83,7 @@ def ldap_auth(server='ldap', port=None,
                         if "DC=" in x.upper():
                             domain.append(x.split('=')[-1])
                     username = "%s@%s" % (username, '.'.join(domain))
+                username_bare = username.split("@")[0]
                 con.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
                 if ldap_binddn:
                     # need to search directory with an admin account 1st
@@ -85,13 +91,11 @@ def ldap_auth(server='ldap', port=None,
                 else:
                     # credentials should be in the form of username@domain.tld
                     con.simple_bind_s(username, password)
-                if "@" in username:
-                    username_bare = username.split("@")[0]
                 # this will throw an index error if the account is not found
                 # in the ldap_basedn
                 result = con.search_ext_s(
                     ldap_basedn, ldap.SCOPE_SUBTREE,
-                    "sAMAccountName=%s" % username_bare, ["sAMAccountName"])[0][1]
+                    "(&(sAMAccountName=%s)(%s))" % (username_bare, filterstr), ["sAMAccountName"])[0][1]
                 if ldap_binddn:
                     # We know the user exists & is in the correct OU
                     # so now we just check the password
@@ -120,7 +124,7 @@ def ldap_auth(server='ldap', port=None,
                 # bind anonymously
                 con.simple_bind_s(dn, pw)
                 # search by e-mail address
-                filter = '(mail=' + username + ')'
+                filter = '(&(mail=' + username + ')(' + filterstr + '))'
                 # find the uid
                 attrs = ['uid']
                 # perform the actual search
@@ -137,7 +141,7 @@ def ldap_auth(server='ldap', port=None,
                     basedns = ldap_basedn
                 else:
                     basedns = [ldap_basedn]
-                filter = '(uid=%s)' % username
+                filter = '(&(uid=%s)(%s))' % (username, filterstr)
                 for basedn in basedns:
                     try:
                         result = con.search_s(basedn, ldap.SCOPE_SUBTREE, filter)
@@ -159,4 +163,7 @@ def ldap_auth(server='ldap', port=None,
             return False
         except IndexError, ex: # for AD membership test
             return False
+
+    if filterstr[0] == '(' and filterstr[-1] == ')': # rfc4515 syntax
+        filterstr = filterstr[1:-1] # parens added again where used
     return ldap_auth_aux
