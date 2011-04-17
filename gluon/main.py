@@ -378,6 +378,12 @@ def wsgibase(environ, responder):
                 request.folder = abspath('applications', request.application) + os.sep
                 request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
                 request.cid = request.env.http_web2py_component_element
+                
+                # ##################################################
+                # compute a request.uuid to be used for tickets and toolbar
+                # ##################################################
+                
+                response.uuid = request.compute_uuid()
 
                 # ##################################################
                 # access the requested application

@@ -74,8 +74,17 @@ class Request(Storage):
         self.function = None
         self.args = List()
         self.extension = None
-        self.now = datetime.datetime.today()
+        self.now = datetime.datetime.now()
         self.is_restful = False
+        
+    def compute_uuid(self):
+        self.uuid = '%s/%s.%s.%s' % (
+            self.application,
+            self.client.replace(':', '_'),
+            self.now.strftime('%Y-%m-%d.%H-%M-%S'),
+            web2py_uuid())
+        return self.uuid
+
     def restful(self):
         def wrapper(action,self=self):
             def f(_action=action,_self=self,*a,**b):

@@ -24,7 +24,6 @@ logger = logging.getLogger("web2py")
 
 __all__ = ['RestrictedError', 'restricted', 'TicketStorage', 'compile2']
 
-
 class TicketStorage(Storage):
 
     """
@@ -132,7 +131,6 @@ class RestrictedError(Exception):
         """
 
         try:
-            a = request.application
             d = {
                 'layer': str(self.layer),
                 'code': str(self.code),
@@ -140,14 +138,9 @@ class RestrictedError(Exception):
                 'traceback': str(self.traceback),
                 'snapshot': self.snapshot,
                 }
-            fmt = '%Y-%m-%d.%H-%M-%S'
-            f = '%s.%s.%s' % (request.client.replace(':', '_'),
-                              datetime.datetime.now().strftime(fmt),
-                              web2py_uuid())
-
             ticket_storage = TicketStorage(db=request.tickets_db)
-            ticket_storage.store(request, f, d)
-            return '%s/%s' % (a, f)
+            ticket_storage.store(request, request.uuid.split('/',1)[1], d)
+            return request.uuid
         except:
             logger.error(self.traceback)
             return None
