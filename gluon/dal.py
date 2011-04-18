@@ -2282,7 +2282,7 @@ class DB2Adapter(BaseAdapter):
         self.folder = folder
         self.db_codec = db_codec
         self.find_or_make_work_folder()
-        cnxn = uri.split(':', 1)[1]
+        cnxn = uri.split('://', 1)[1]
         def connect(cnxn=cnxn,driver_args=driver_args):
             return pyodbc.connect(cnxn,**driver_args)
         self.pool_connection(connect)
