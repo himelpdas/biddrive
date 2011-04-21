@@ -172,13 +172,12 @@ def restricted(code, environment={}, layer='Unknown'):
     in code it raises a RestrictedError containing the traceback. layer is
     passed to RestrictedError to identify where the error occurred.
     """
-
+    environment['__file__'] = layer
     try:
         if type(code) == types.CodeType:
             ccode = code
         else:
             ccode = compile2(code,layer)
-
         exec ccode in environment
     except HTTP:
         raise
