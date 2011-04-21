@@ -168,10 +168,10 @@ def serve_controller(request, response, session):
     It first runs all models, then runs the function in the controller,
     and then tries to render the output using a view/template.
     this function must run from the [application] folder.
-    A typical examples would be the call to the url
+    A typical example would be the call to the url
     /[application]/[controller]/[function] that would result in a call
     to [function]() in applications/[application]/[controller].py
-    rendered by applications/[application]/[controller]/[view].html
+    rendered by applications/[application]/views/[controller]/[function].html
     """
 
     # ##################################################
