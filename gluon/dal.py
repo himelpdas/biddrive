@@ -5154,6 +5154,9 @@ class Set(object):
         fields = self.db[tablename]._listify(update_fields,update=True)
         return self.db._adapter._update(tablename,self.query,fields)
 
+    def isempty(self):
+        return not self.select(limitby=(0,1))
+
     def count(self,distinct=None):
         return self.db._adapter.count(self.query,distinct)
 
