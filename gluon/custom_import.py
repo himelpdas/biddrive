@@ -43,9 +43,10 @@ def custom_import_install(path):
             result = None
             for name in name.split("."):
                 new_mod = _old__import__(prefix, globals, locals, [name], level)
-                if not hasattr(new_mod.__dict__, name):
+                try:
+                    result = result or new_mod.__dict__[name]
+                except KeyError:
                     raise ImportError()
-                result = result or new_mod.__dict__[name]
                 prefix += "." + name
             return result
 
