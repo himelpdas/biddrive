@@ -43,6 +43,8 @@ def custom_import_install(path):
             result = None
             for name in name.split("."):
                 new_mod = _old__import__(prefix, globals, locals, [name], level)
+                if not hasattr(new_mod.__dict__, name):
+                    raise ImportError()
                 result = result or new_mod.__dict__[name]
                 prefix += "." + name
             return result
@@ -64,12 +66,12 @@ def custom_import_install(path):
                     modules_prefix = \
                         ".".join((match_app_dir.group(1).replace(os.path.sep, "."), 
                                   "modules"))
-                    if name.find(".") != -1 and not fromlist:
-                        # import like "import x.y" (1 or more dots)
+                    if not fromlist:
+                        # import like "import x" or "import x.y"
                         return _web2py__import__dot(modules_prefix, name, globals,
                                                     locals, fromlist, level)
                     else:
-                        # import like "import x" or "from x import a, b, ..."
+                        # import like "from x import a, b, ..."
                         return _old__import__(modules_prefix + "." + name, globals, 
                                               locals, fromlist, level)
                 except ImportError:
