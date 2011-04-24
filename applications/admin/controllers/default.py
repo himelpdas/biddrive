@@ -238,7 +238,7 @@ def uninstall():
         if MULTI_USER_MODE:
             if is_manager() and db(db.app.name==app).delete():
                 pass
-            else db(db.app.name==app)(db.app.owner==auth.user.id).delete():
+            elif db(db.app.name==app)(db.app.owner==auth.user.id).delete():
                 pass
             else:
                 session.flash = T('no permission to uninstall "%s"', app)
