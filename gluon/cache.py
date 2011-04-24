@@ -216,6 +216,8 @@ class CacheOnDisk(CacheAbstract):
     Values stored in disk cache must be pickable.
     """
 
+    speedup_checks = set()
+
     def __init__(self, request, folder=None):
         self.request = request
 
@@ -228,32 +230,34 @@ class CacheOnDisk(CacheAbstract):
 
         ### we need this because of a possible bug in shelve that may
         ### or may not lock
-        self.locker_name = os.path.join(request.folder,
-                                        'cache/cache.lock')
-        self.shelve_name = os.path.join(request.folder,
-                'cache/cache.shelve')
+        self.locker_name = os.path.join(folder,'cache.lock')
+        self.shelve_name = os.path.join(folder,'cache.shelve')
 
         locker, locker_locked = None, False
-        try:
-            locker = open(self.locker_name, 'a')
-            portalocker.lock(locker, portalocker.LOCK_EX)
-            locker_locked = True
-            storage = shelve.open(self.shelve_name)
+        speedup_key = (folder,CacheAbstract.cache_stats_name)
+        if not speedup_key in self.speedup_checks or \
+                not os.path.exists(self.shelve_name):
+            try:
+                locker = open(self.locker_name, 'a')
+                portalocker.lock(locker, portalocker.LOCK_EX)
+                locker_locked = True
+                storage = shelve.open(self.shelve_name)
 
-            if not storage.has_key(CacheAbstract.cache_stats_name):
-                storage[CacheAbstract.cache_stats_name] = {
-                    'hit_total': 0,
-                    'misses': 0,
-                    }
-                storage.sync()
-        except ImportError:
-            pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
-        except:
-            logger.error('corrupted file: %s' % self.shelve_name)
-        if locker_locked:
-            portalocker.unlock(locker)
-        if locker:
-            locker.close()
+                if not storage.has_key(CacheAbstract.cache_stats_name):
+                    storage[CacheAbstract.cache_stats_name] = {
+                        'hit_total': 0,
+                        'misses': 0,
+                        }
+                    storage.sync()
+                self.speedup_checks.add(speedup_key)
+            except ImportError:
+                pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
+            except:
+                logger.error('corrupted file: %s' % self.shelve_name)
+            if locker_locked:
+                portalocker.unlock(locker)
+            if locker:
+                locker.close()
 
     def clear(self, regex=None):
         locker = open(self.locker_name,'a')
