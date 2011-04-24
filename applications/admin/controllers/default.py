@@ -235,8 +235,15 @@ def upgrade_web2py():
 def uninstall():
     app = get_app()
     if 'delete' in request.vars:
-        deleted = app_uninstall(app, request)
-        if deleted:
+        if MULTI_USER_MODE:
+            if is_manager() and db(db.app.name==app).delete():
+                pass
+            else db(db.app.name==app)(db.app.owner==auth.user.id).delete():
+                pass
+            else:
+                session.flash = T('no permission to uninstall "%s"', app)
+                redirect(URL('site'))
+        if app_uninstall(app, request):            
             session.flash = T('application "%s" uninstalled', app)
         else:
             session.flash = T('unable to uninstall "%s"', app)
