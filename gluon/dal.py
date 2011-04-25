@@ -851,7 +851,7 @@ class BaseAdapter(ConnectionPool):
         return '(%s %% %s)' % (self.expand(first),self.expand(second,first.type))
 
     def AS(self,first,second):
-        return '(%s AS %s)' % (self.expand(first),second)
+        return '%s AS %s' % (self.expand(first),second)
 
     def ON(self,first,second):
         return '%s ON %s' % (self.expand(first),self.expand(second))
