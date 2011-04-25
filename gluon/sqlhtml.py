@@ -941,7 +941,7 @@ class SQLFORM(FORM):
                 for newrow in newrows:
                     table.append(newrow)
         else:
-            raise RuntimeError, 'formsyle not supported'
+            raise RuntimeError, 'formstyle not supported'
         return table
 
 
