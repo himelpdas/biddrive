@@ -1250,12 +1250,19 @@ class HR(DIV):
 
 
 class A(DIV):
+
     tag = 'a'
+
     def xml(self):
-        if self['cid']:
+        if self['callback']:
+            self['_onclick']="ajax('%s',[],'%s');return false;" % \
+                (self['callback'],self['target'] or '')
+            self['_href'] = self['_href'] or '#null'
+        elif self['cid']:
             self['_onclick']='web2py_component("%s","%s");return false;' % \
                 (self['_href'],self['cid'])
         return DIV.xml(self)
+
 
 class EM(DIV):
 
