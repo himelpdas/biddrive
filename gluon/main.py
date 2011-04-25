@@ -31,21 +31,26 @@ import string
 from fileutils import abspath
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
-from custom_import import custom_import_install
 
+# this will be uncommented in future versions:
+# from custom_import import custom_import_install
+
+#  Remarks:
 #  calling script has inserted path to script directory into sys.path
-#  applications_parent (path to applications/, site-packages/ etc) defaults to that directory
-#  set sys.path to ("", gluon_parent/site-packages, gluon_parent, ...)
+#  applications_parent (path to applications/, site-packages/ etc) 
+#  defaults to that directory set sys.path to 
+#  ("", gluon_parent/site-packages, gluon_parent, ...)
 #
 #  this is wrong:
 #  web2py_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #  because we do not want the path to this file which may be Library.zip
-#
-#  gluon_parent is the directory containing gluon, web2py.py, logging.conf and the handlers.
-#  applications_parent (web2py_path) is the directory containing applications/ and routes.py
+#  gluon_parent is the directory containing gluon, web2py.py, logging.conf 
+#  and the handlers.
+#  applications_parent (web2py_path) is the directory containing applications/ 
+#  and routes.py
 #  The two are identical unless web2py_path is changed via the web2py.py -f folder option
 #  main.web2py_path is the same as applications_parent (for backward compatibility)
-#
+
 if not hasattr(os, 'mkdir'):
     global_settings.db_sessions = True
 if global_settings.db_sessions is not True:
@@ -56,7 +61,7 @@ web2py_path = global_settings.applications_parent # backward compatibility
 global_settings.app_folders = set()
 global_settings.debugging = False
 
-custom_import_install(web2py_path)
+# custom_import_install(web2py_path)
 
 create_missing_folders()
 

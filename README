@@ -1031,3 +1031,19 @@ recalled
 - better session handling on session._unlock(..), thanks Jonathan
 - added experimental pip support, thanks Lifeeth
 - added experimental SAP DB support
+
+## 1.95.1
+- Google MySQL support (experimental)
+- pip support, thanks lifeeth
+- better setup_exe.py, thanks meredyk
+- importved pyfpdf
+- domain check in email_auth.py, thanks Gyuris
+- added change_password_onvalidation and change_password_onaccept
+- DAL(...,migrate_enabled=True)
+- login_methods/loginza.py, thanks Vladimir
+- bpython shell support, thanks Arun
+- request.uuid and response.uuid (for a future toolbar)
+- db._timings contains database query timing info
+- efficient db(...).isempty()
+- setup-web2py-nginx-uwsgi-ubuntu.sh
+- Many bug fixes, thanks Jonathan
