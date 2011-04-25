@@ -76,7 +76,7 @@ class Request(Storage):
         self.extension = None
         self.now = datetime.datetime.now()
         self.is_restful = False
-        
+
     def compute_uuid(self):
         self.uuid = '%s/%s.%s.%s' % (
             self.application,

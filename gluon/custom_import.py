@@ -5,12 +5,12 @@ import re
 import os
 import __builtin__
 
-# Install the new import function: 
+# Install the new import function:
 def custom_import_install(path):
     _old__import__ = None # To keep the old __builtins__.__import__
 
     re_escaped_path_sep = re.escape(os.path.sep)  # os.path.sep escaped for re
-    
+
     # Regular expression to match a directory of a web2py application relative to
     # the web2py install.
     # Like web2py installation dir path/applications/app_name/modules.
@@ -18,10 +18,10 @@ def custom_import_install(path):
     re_app_dir = re.compile(re_escaped_path_sep.join(
             (
                 "^" + re.escape(path),
-                "(" + "applications", 
-                "[^", 
-                "]+)", 
-                "", 
+                "(" + "applications",
+                "[^",
+                "]+)",
+                "",
                 ) ))
 
     def _web2py__import__(name, globals={}, locals={}, fromlist=[], level=-1):
@@ -30,7 +30,7 @@ def custom_import_install(path):
         If this does not work, it falls back on the regular import method.
         @see: __builtins__.__import__
         """
-        
+
         def _web2py__import__dot(prefix, name, globals, locals, fromlist, level):
             """
             Here we will import x.y.z as many imports like:
@@ -39,7 +39,7 @@ def custom_import_install(path):
             from applications.app_name.modules.x.y import z.
             x will be the module returned.
             """
-        
+
             result = None
             for name in name.split("."):
                 new_mod = _old__import__(prefix, globals, locals, [name], level)
@@ -62,10 +62,10 @@ def custom_import_install(path):
             match_app_dir = re_app_dir.match(caller_file_name)
             if match_app_dir:
                 try:
-                    # Get the prefix to add for the import 
+                    # Get the prefix to add for the import
                     # (like applications.app_name.modules):
                     modules_prefix = \
-                        ".".join((match_app_dir.group(1).replace(os.path.sep, "."), 
+                        ".".join((match_app_dir.group(1).replace(os.path.sep, "."),
                                   "modules"))
                     if not fromlist:
                         # import like "import x" or "import x.y"
@@ -73,11 +73,11 @@ def custom_import_install(path):
                                                     locals, fromlist, level)
                     else:
                         # import like "from x import a, b, ..."
-                        return _old__import__(modules_prefix + "." + name, globals, 
+                        return _old__import__(modules_prefix + "." + name, globals,
                                               locals, fromlist, level)
                 except ImportError:
                     pass
-        return _old__import__(name, globals, locals, fromlist, level)   
+        return _old__import__(name, globals, locals, fromlist, level)
 
     (_old__import__, __builtin__.__import__) = (__builtin__.__import__, _web2py__import__)
 

@@ -243,7 +243,7 @@ try:
     drivers.append('SAPDB')
     logger.warning('SAPDB support is experimental')
 except ImportError:
-    logger.debug('no sapdb driver')    
+    logger.debug('no sapdb driver')
 
 try:
     from com.ziclix.python.sql import zxJDBC
@@ -318,7 +318,7 @@ class ConnectionPool(object):
     pools = {}
 
     @staticmethod
-    def set_folder(folder):        
+    def set_folder(folder):
         thread.folder = folder
 
     # ## this allows gluon to commit/rollback all dbs in this thread
@@ -2497,7 +2497,7 @@ class SAPDBAdapter(BaseAdapter):
         self.pool_connection(connect)
         # self.connection.set_client_encoding('UTF8')
         self.cursor = self.connection.cursor()
-        
+
     def lastrowid(self,table):
         self.execute("select %s.NEXTVAL from dual" % table._sequence_name)
         return int(self.cursor.fetchone()[0])
@@ -2507,9 +2507,9 @@ class SAPDBAdapter(BaseAdapter):
 ######## GAE MySQL ##########
 
 class DatabaseStoredFile:
-    
+
     web2py_filesystem = False
-    
+
     def __init__(self,db,filename,mode):
         if db._adapter.dbengine != 'mysql':
             raise RuntimeError, "only MySQL can store metadata .table files in database for now"
@@ -2586,7 +2586,7 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
                  folder=None, db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
                  credential_decoder = lambda x:x, driver_args={}):
-        
+
         self.db = db
         self.dbengine = "mysql"
         self.uri = uri
@@ -2601,12 +2601,12 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
         instance = credential_decoder(m.group('instance'))
         db = credential_decoder(m.group('db'))
         driver_args['instance'] = instance
-        if not migrate: 
+        if not migrate:
             driver_args['database'] = db
         def connect(driver_args=driver_args):
 	    return rdbms.connect(**driver_args)
         self.pool_connection(connect)
-        self.cursor = self.connection.cursor()        
+        self.cursor = self.connection.cursor()
         if migrate:
             # self.execute('DROP DATABASE %s' % db)
             self.execute('CREATE DATABASE IF NOT EXISTS %s' % db)
@@ -3914,7 +3914,7 @@ def index():
                         raise RuntimeError, "missing relation in pattern: %s" % pattern
                 elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]:
                     # print 're2:'+tag
-                    ref = tag[tag.find('[')+1:-1]                    
+                    ref = tag[tag.find('[')+1:-1]
                     if '.' in ref:
                         table,field = ref.split('.')
                         # print table,field
