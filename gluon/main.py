@@ -361,7 +361,8 @@ def wsgibase(environ, responder):
                 # serve file if static
                 # ##################################################
 
-                if not environ.get('PATH_INFO',None) and environ.get('REQUEST_URI',None):
+                if not environ.get('PATH_INFO',None) and \
+                        environ.get('REQUEST_URI',None):
                     # for fcgi, get path_info and query_string from request_uri
                     items = environ['REQUEST_URI'].split('?')
                     environ['PATH_INFO'] = items[0]
@@ -369,6 +370,10 @@ def wsgibase(environ, responder):
                         environ['QUERY_STRING'] = items[1]
                     else:
                         environ['QUERY_STRING'] = ''
+                if not environ.get('HTTP_HOST',None):
+                    environ['HTTP_HOST'] = '%s:%s' % (environ.get('SERVER_NAME'),
+                                                      environ.get('SERVER_PORT'))
+
                 (static_file, environ) = rewrite.url_in(request, environ)
                 if static_file:
                     if request.env.get('query_string', '')[:10] == 'attachment':
