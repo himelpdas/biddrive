@@ -3653,7 +3653,8 @@ class DAL(dict):
                  db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
                  migrate_enabled=True, fake_migrate_enabled=False,
-                 decode_credentials=False, driver_args=None):
+                 decode_credentials=False, driver_args=None,
+                 attempts=5):
         """
         Creates a new Database Abstraction Layer instance.
 
@@ -3678,6 +3679,7 @@ class DAL(dict):
         :fake_migrate (defaults to False) sets default fake_migrate behavior for all tables
         :migrate_enabled (defaults to True). If set to False disables ALL migrations
         :fake_migrate_enabled (defaults to False). If sets to True fake migrates ALL tables
+        :attempts (defaults to 5). Number of times to attempt connecting
         """
 
         if not decode_credentials:
@@ -3691,11 +3693,13 @@ class DAL(dict):
         self._db_codec = db_codec
         self._lastsql = ''
         self._timings = []
+        if not str(attempts).isdigit() or attempts < 0:
+            attempts = 5
         if uri:
             uris = isinstance(uri,(list,tuple)) and uri or [uri]
             error = ''
             connected = False
-            for k in range(5):
+            for k in range(attempts):
                 for uri in uris:
                     try:
                         if is_jdbc and not uri.startswith('jdbc:'):
@@ -3717,7 +3721,7 @@ class DAL(dict):
                 else:
                     time.sleep(1)
             if not connected:
-                raise RuntimeError, "Failure to connect, tried 5 times:\n%s" % error
+                raise RuntimeError, "Failure to connect, tried %d times:\n%s" % (attempts, error)
         else:
             args = (self,'None',0,folder,db_codec)
             self._adapter = BaseAdapter(*args)
