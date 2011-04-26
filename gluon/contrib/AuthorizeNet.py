@@ -191,7 +191,7 @@ class AIM:
         return responses[int(self.results[0])]
 
 def process(creditcard,expiration,total,cvv=None,tax=None,invoice=None,
-            login='cnpdev4289', transkey='SR2P8g4jdEn7vFLQ',testmode=False):
+            login='cnpdev4289', transkey='SR2P8g4jdEn7vFLQ',testmode=True):
     payment = AIM(login,transkey,testmode)
     expiration = expiration.replace('/','')
     payment.setTransaction(creditcard, expiration, total, cvv, tax, invoice)
