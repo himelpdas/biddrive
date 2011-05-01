@@ -51,12 +51,12 @@ def listdir(
     expression='^.+$',
     drop=True,
     add_dirs=False,
+    sort=True,
     ):
     """
     like os.listdir() but you can specify a regex pattern to filter files.
     if add_dirs is True, the returned items will have the full path.
     """
-
     if path[-1:] != '/':
         path = path + '/'
     if drop:
@@ -71,10 +71,13 @@ def listdir(
                 dirs.remove(dir)
         if add_dirs:
             items.append(root[n:])
-        for file in files:
+        for file in sorted(files):
             if regex.match(file) and not file.startswith('.'):
                 items.append(os.path.join(root, file)[n:])
-    return sorted(items)
+    if sort:
+        return sorted(items)
+    else:
+        return items
 
 
 def recursive_unlink(f):

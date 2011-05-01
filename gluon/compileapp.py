@@ -339,10 +339,15 @@ def run_models_in(environment):
             restricted(read_pyc(model), environment, layer=model)
     else:
         path = os.path.join(folder, 'models')        
-        models = listdir(os.path.join(folder,'models'), '^\w+\.py$',0)
-        models += listdir(os.path.join(folder,'models',c), '^\w+\.py$',0)
-        models += listdir(os.path.join(folder,'models',c,f),'^\w+\.py$',0)
+        models = listdir(os.path.join(folder,'models'), '^\w+\.py$',0,sort=False)
+        paths = (path,
+                 os.path.join(path,c),
+                 os.path.join(path,c,f))                 
+        print paths
         for model in models:
+            print model, os.path.split(model)[0]
+            if not os.path.split(model)[0] in paths: continue
+            print '<<<'
             layer = model
             if is_gae:
                 code = getcfs(model, model,
