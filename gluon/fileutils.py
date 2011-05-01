@@ -20,6 +20,7 @@ from settings import global_settings
 __all__ = [
     'up',
     'abspath',
+    'mktree',
     'listdir',
     'recursive_unlink',
     'cleanpath',
@@ -45,6 +46,14 @@ def abspath(*relpath, **base):
     if gluon:
         return os.path.join(global_settings.gluon_parent, path)
     return os.path.join(global_settings.applications_parent, path)
+
+
+def mktree(path):
+    head,tail =os.path.split(path)
+    if head:
+        if tail: mktree(head)
+        if not os.path.exists(head):
+            os.mkdir(head)
 
 def listdir(
     path,

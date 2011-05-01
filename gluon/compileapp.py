@@ -18,7 +18,7 @@ import random
 from storage import Storage, List
 from template import parse_template
 from restricted import restricted, compile2
-from fileutils import listdir
+from fileutils import mktree, listdir
 from myregex import regex_expose
 from languages import translator
 from sql import BaseAdapter, SQLDB, SQLField, DAL, Field
@@ -30,6 +30,7 @@ import html
 import validators
 from http import HTTP, redirect
 import marshal
+import shutil
 import imp
 import logging
 logger = logging.getLogger("web2py")
@@ -290,8 +291,8 @@ def compile_models(folder):
         fp = open(os.path.join(path, file), 'r')
         data = fp.read()
         fp.close()
-        filename = os.path.join(folder, 'compiled', ('models/'
-                                 + file).replace('/', '_'))
+        filename = os.path.join(folder, 'compiled','models',file)
+        mktree(filename)
         fp = open(filename, 'w')
         fp.write(data)
         fp.close()
@@ -333,28 +334,29 @@ def run_models_in(environment):
     folder = environment['request'].folder
     c = environment['request'].controller
     f = environment['request'].function
-    path = os.path.join(folder, 'compiled')
-    if os.path.exists(path):
-        for model in listdir(path, '^models_.+\.pyc$', 0):
+    cpath = os.path.join(folder, 'compiled')
+    if os.path.exists(cpath):
+        for model in listdir(cpath, '^models_\w+\.pyc$', 0):
             restricted(read_pyc(model), environment, layer=model)
+        path = os.path.join(cpath, 'models')
+        models = listdir(path, '^\w+\.pyc$',0,sort=False)
+        compiled=True
     else:
         path = os.path.join(folder, 'models')        
-        models = listdir(os.path.join(folder,'models'), '^\w+\.py$',0,sort=False)
-        paths = (path,
-                 os.path.join(path,c),
-                 os.path.join(path,c,f))                 
-        print paths
-        for model in models:
-            print model, os.path.split(model)[0]
-            if not os.path.split(model)[0] in paths: continue
-            print '<<<'
-            layer = model
-            if is_gae:
-                code = getcfs(model, model,
-                              lambda: compile2(open(model, 'r').read(),layer))
-            else:
-                code = getcfs(model, model, None)
-            restricted(code, environment, layer)
+        models = listdir(path, '^\w+\.py$',0,sort=False)
+        compiled=False
+    paths = (path, os.path.join(path,c), os.path.join(path,c,f))
+    for model in models:
+        if not os.path.split(model)[0] in paths:
+            continue
+        elif compiled:
+            code = read_pyc(model)
+        elif is_gae:
+            code = getcfs(model, model,
+                          lambda: compile2(open(model, 'r').read(),layer))
+        else:
+            code = getcfs(model, model, None)
+        restricted(code, environment, layer=model)
 
 
 def run_controller_in(controller, function, environment):
@@ -485,14 +487,10 @@ def remove_compiled_application(folder):
     Deletes the folder `compiled` containing the compiled application.
     """
     try:
-        path = os.path.join(folder, 'compiled')
-        for file in listdir(path):
-            os.unlink(os.path.join(path, file))
-        os.rmdir(path)
+        shutil.rmtree(os.path.join(folder, 'compiled'))
         path = os.path.join(folder, 'controllers')
-        for file in os.listdir(path):
-            if file.endswith('.pyc'):
-                os.unlink(os.path.join(path, file))
+        for file in listdir(path,'.*\.pyc$',drop=False):
+            os.unlink(file)
     except OSError:
         pass
 
