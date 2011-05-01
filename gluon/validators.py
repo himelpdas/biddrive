@@ -2362,8 +2362,13 @@ class IS_EMPTY_OR(Validator):
         return options
 
     def set_self_id(self, id):
-        if hasattr(self.other, 'set_self_id'):
-            self.other.set_self_id(id)
+        if isinstance(self.other, (list, tuple)):
+            for item in self.other:
+                if hasattr(item, 'set_self_id'):
+                    item.set_self_id(id)
+        else:
+            if hasattr(self.other, 'set_self_id'):
+                self.other.set_self_id(id)
 
     def __call__(self, value):
         value, empty = is_empty(value, empty_regex=self.empty_regex)
