@@ -331,13 +331,17 @@ def run_models_in(environment):
     """
 
     folder = environment['request'].folder
+    c = environment['request'].controller
+    f = environment['request'].function
     path = os.path.join(folder, 'compiled')
     if os.path.exists(path):
         for model in listdir(path, '^models_.+\.pyc$', 0):
             restricted(read_pyc(model), environment, layer=model)
     else:
-        models = listdir(os.path.join(folder, 'models'), '^\w+\.py$',
-                         0)
+        path = os.path.join(folder, 'models')        
+        models = listdir(os.path.join(folder,'models'), '^\w+\.py$',0)
+        models += listdir(os.path.join(folder,'models',c), '^\w+\.py$',0)
+        models += listdir(os.path.join(folder,'models',c,f),'^\w+\.py$',0)
         for model in models:
             layer = model
             if is_gae:
