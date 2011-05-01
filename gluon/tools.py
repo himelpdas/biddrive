@@ -3021,15 +3021,13 @@ class Crud(object):
         if next: # Only redirect when explicit
             redirect(next)
 
-    def select(
+    def rows(
         self,
         table,
         query=None,
         fields=None,
         orderby=None,
         limitby=None,
-        headers={},
-        **attr
         ):
         request = self.environment.request
         if not (isinstance(table, self.db.Table) or table in self.db.tables):
@@ -3044,8 +3042,21 @@ class Crud(object):
             query = table.id > 0
         if not fields:
             fields = [field for field in table if field.readable]
-        rows = self.db(query).select(*fields, **dict(orderby=orderby,
-                                                     limitby=limitby))
+        rows = self.db(query).select(*fields,**dict(orderby=orderby,
+                                                    limitby=limitby))
+        return rows
+
+    def select(
+        self,
+        table,
+        query=None,
+        fields=None,
+        orderby=None,
+        limitby=None,
+        headers={},
+        **attr
+        ):
+        rows = self.rows(table,query,fields,orderby,orderby,limitby)
         if not rows:
             return None # Nicer than an empty table.
         if not 'upload' in attr:
@@ -3054,7 +3065,7 @@ class Crud(object):
             return rows.as_list()
         if not headers:
             headers = dict((str(k),k.label) for k in table)
-        return SQLTABLE(rows, headers=headers, **attr)
+        return SQLTABLE(rows,headers=headers,**attr)
 
     def get_format(self, field):
         rtable = field._db[field.type[10:]]
