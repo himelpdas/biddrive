@@ -698,6 +698,12 @@ def console():
                       default=None,
                       help='should be followed by a list of arguments to be passed to script, to be used with -S, -A must be the last option')
 
+    parser.add_option('--no-banner',
+                      action='store_true',
+                      default=False,
+                      dest='nobanner',
+                      help='Do not print header banner')
+
     msg = 'listen on multiple addresses: "ip:port:cert:key;ip2:port2:cert2:key2;..." (:cert:key optional; no spaces)'
     parser.add_option('--interfaces',
                       action='store',
@@ -768,12 +774,14 @@ def start(cron=True):
 
     (options, args) = console()
 
-    print ProgramName
-    print ProgramAuthor
-    print ProgramVersion
+    if not options.nobanner:
+        print ProgramName
+        print ProgramAuthor
+        print ProgramVersion
 
     from dal import drivers
-    print 'Database drivers available: %s' % ', '.join(drivers)
+    if not options.nobanner:
+        print 'Database drivers available: %s' % ', '.join(drivers)
 
 
     # ## if -L load options from options.config file
@@ -880,16 +888,17 @@ def start(cron=True):
     if not root and options.password == '<ask>':
         options.password = raw_input('choose a password:')
 
-    if not options.password:
+    if not options.password and not options.nobanner:
         print 'no password, no admin interface'
 
     # ## start server
 
     (ip, port) = (options.ip, int(options.port))
 
-    print 'please visit:'
-    print '\thttp://%s:%s' % (ip, port)
-    print 'use "kill -SIGTERM %i" to shutdown the web2py server' % os.getpid()
+    if not options.nobanner:
+        print 'please visit:'
+        print '\thttp://%s:%s' % (ip, port)
+        print 'use "kill -SIGTERM %i" to shutdown the web2py server' % os.getpid()
 
     server = main.HttpServer(ip=ip,
                              port=port,
