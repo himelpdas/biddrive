@@ -2394,7 +2394,7 @@ class CLEANUP(Validator):
     removes special characters on validation
     """
 
-    def __init__(self, regex='[^\x0a\x0d\x20-\x7e]'):
+    def __init__(self, regex='[^\x09\x0a\x0d\x20-\x7e]'):
         self.regex = re.compile(regex)
 
     def __call__(self, value):
