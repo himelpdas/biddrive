@@ -779,11 +779,11 @@ def start(cron=True):
     # ## if -L load options from options.config file
     if options.config:
         try:
-            options2 = __import__(options.config, [], [], '')
+            options2 = __import__(options.config, {}, {}, '')
         except Exception:
             try:
                 # Jython doesn't like the extra stuff
-                options = __import__(options.config)
+                options2 = __import__(options.config)
             except Exception:
                 print 'Cannot import config file [%s]' % options.config
                 sys.exit(1)
