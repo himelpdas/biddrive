@@ -3400,7 +3400,7 @@ ADAPTERS = {
     'google:datastore': GoogleDatastoreAdapter,
     'google:sql': GoogleSQLAdapter,
     'couchdb': CouchDBAdapter,
-    'mongodb': CouchDBAdapter,
+    'mongodb': MongoDBAdapter,
 }
 
 
