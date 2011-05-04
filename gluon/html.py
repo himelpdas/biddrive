@@ -132,7 +132,6 @@ def URL(
     env=None,
     hmac_key=None,
     hash_vars=True,
-    _request=None,
     scheme=None,
     host=None,
     port=None,
@@ -181,7 +180,6 @@ def URL(
     :param hash_vars: which of the vars to include in our hmac signature
         True (default) - hash all vars, False - hash none of the vars,
         iterable - hash only the included vars ['key1','key2']
-    :param _request: used internally for URL rewrite
     :param scheme: URI scheme (True, 'http' or 'https', etc); forces absolute URL (optional)
     :param host: string to force absolute URL with host (True means http_host)
     :param port: optional port number (forces absolute URL)
@@ -196,6 +194,8 @@ def URL(
 
     application = controller = function = None
     if not r:
+        if a and not c and not f: (f,a,c)=(a,c,f)
+        elif a and c and not f: (c,f,a)=(a,c,f)
         from globals import current
         r = current.request
     application = r.application
@@ -266,7 +266,10 @@ def URL(
 
     if regex_crlf.search(''.join([application, controller, function, other])):
         raise SyntaxError, 'CRLF Injection Detected'
-    return rewrite.url_out(r or _request, env, application, controller, function, args, other, scheme, host, port)
+    url = rewrite.url_out(r, env, application, controller, function, 
+                          args, other, scheme, host, port)
+    return url
+
 
 def verifyURL(request, hmac_key, hash_vars=True):
     """

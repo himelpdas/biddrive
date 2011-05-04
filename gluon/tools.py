@@ -16,6 +16,7 @@ from html import TABLE, TR, TD
 from sqlhtml import SQLFORM, SQLTABLE
 from http import HTTP, redirect
 from utils import web2py_uuid
+from gluon import current
 
 import base64
 import cPickle
@@ -786,24 +787,19 @@ class Auth(object):
 
 
     def url(self, f=None, args=[], vars={}):
-        return self.environment.URL(r=self.environment.request,
-                                    c=self.settings.controller,
-                                    f=f, args=args, vars=vars)
+        return URL(self.settings.controller,f, args=args, vars=vars)
 
     def __init__(self, environment, db=None, controller='default'):
         """
         auth=Auth(globals(), db)
 
-        - globals() has to be the web2py environment including
-          request, response, session
+        - environment is there for legacy but unused (awful)
         - db has to be the database where to create tables for authentication
 
         """
-
-        self.environment = Storage(environment)
         self.db = db
-        request = self.environment.request
-        session = self.environment.session
+        request = current.request
+        session = current.session
         auth = session.auth
         if auth and auth.last_visit and auth.last_visit + \
                 datetime.timedelta(days=0, seconds=auth.expiration) > request.now:
@@ -913,7 +909,7 @@ class Auth(object):
 
 
         # ## these are messages that can be customized
-        self.messages = Messages(self.environment.T)
+        self.messages = Messages(current.T)
         self.messages.submit_button = 'Submit'
         self.messages.verify_password = 'Verify Password'
         self.messages.delete_label = 'Check to delete:'
@@ -994,12 +990,12 @@ class Auth(object):
         self.messages.label_client_ip = 'Client IP'
         self.messages.label_origin = 'Origin'
         self.messages.label_remember_me = "Remember me (for 30 days)"
-        self.messages['T'] = self.environment.T
+        self.messages['T'] = current.T
         self.messages.verify_password_comment = 'please input your password again'
         self.messages.lock_keys = True
 
         # for "remember me" option
-        response = self.environment.response
+        response = current.response
         if auth  and  auth.remember: #when user wants to be logged in for longer
             #import time
             #t = time.strftime(
@@ -1028,7 +1024,7 @@ class Auth(object):
         def authentication(): return dict(form=auth())
         """
 
-        request = self.environment.request
+        request = current.request
         args = request.args
         if not args:
             redirect(self.url(args='login',vars=request.vars))
@@ -1064,8 +1060,8 @@ class Auth(object):
             raise HTTP(404)
 
     def navbar(self,prefix='Welcome',action=None):
-        request = self.environment.request
-        T = self.environment.T
+        request = current.request
+        T = current.T
         if isinstance(prefix,str):
             prefix = T(prefix)
         if not action:
@@ -1245,10 +1241,10 @@ class Auth(object):
             table  = db.define_table(
                 self.settings.table_event_name,
                 Field('time_stamp', 'datetime',
-                        default=self.environment.request.now,
+                        default=current.request.now,
                         label=self.messages.label_time_stamp),
                 Field('client_ip',
-                        default=self.environment.request.client,
+                        default=current.request.client,
                         label=self.messages.label_client_ip),
                 Field('user_id', self.settings.table_user, default=None,
                         label=self.messages.label_user_id),
@@ -1266,7 +1262,7 @@ class Auth(object):
             table.description.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
         self.settings.table_event = db[self.settings.table_event_name]
         def lazy_user (auth = self): return auth.user_id
-        now = self.environment.request.now
+        now = current.request.now
         self.signature = db.Table(self.db,'auth_signature',
                                   Field('is_active','boolean',default=True),
                                   Field('created_on','datetime',default=now,
@@ -1333,7 +1329,7 @@ class Auth(object):
     def basic(self):
         if not self.settings.allow_basic_login:
             return False
-        basic = self.environment.request.env.http_authorization
+        basic = current.request.env.http_authorization
         if not basic or not basic[:6].lower() == 'basic ':
             return False
         (username, password) = base64.b64decode(basic[6:]).split(':')
@@ -1344,8 +1340,8 @@ class Auth(object):
         logins user
         """
 
-        request = self.environment.request
-        session = self.environment.session
+        request = current.request
+        session = current.session
         table_user = self.settings.table_user
         if self.settings.login_userfield:
             userfield = self.settings.login_userfield
@@ -1393,9 +1389,9 @@ class Auth(object):
             tmpvalidator = IS_EMAIL(error_message=self.messages.invalid_email)
         old_requires = table_user[username].requires
         table_user[username].requires = tmpvalidator
-        request = self.environment.request
-        response = self.environment.response
-        session = self.environment.session
+        request = current.request
+        response = current.response
+        session = current.session
         passfield = self.settings.password_field
         if next == DEFAULT:
             next = request.get_vars._next \
@@ -1460,11 +1456,13 @@ class Auth(object):
                     elif temp_user.registration_key in ('disabled','blocked'):
                         response.flash = self.messages.login_disabled
                         return form
-                    elif temp_user.registration_key!=None and temp_user.registration_key.strip():
+                    elif temp_user.registration_key!=None and \
+                            temp_user.registration_key.strip():
                         response.flash = \
                             self.messages.registration_verifying
                         return form
-                    # try alternate logins 1st as these have the current version of the password
+                    # try alternate logins 1st as these have the 
+                    # current version of the password
                     user = None
                     for login_method in self.settings.login_methods:
                         if login_method != self and \
@@ -1585,8 +1583,8 @@ class Auth(object):
             if cas_user:
                 next = cas.logout_url(next)
 
-        self.environment.session.auth = None
-        self.environment.session.flash = self.messages.logged_out
+        current.session.auth = None
+        current.session.flash = self.messages.logged_out
         if next:
             redirect(next)
 
@@ -1606,9 +1604,9 @@ class Auth(object):
         """
 
         table_user = self.settings.table_user
-        request = self.environment.request
-        response = self.environment.response
-        session = self.environment.session
+        request = current.request
+        response = current.response
+        session = current.session
         if self.is_logged_in():
             redirect(self.settings.logged_url)
         if next == DEFAULT:
@@ -1722,17 +1720,17 @@ class Auth(object):
 
         """
 
-        key = self.environment.request.args[-1]
+        key = current.request.args[-1]
         table_user = self.settings.table_user
         user = self.db(table_user.registration_key == key).select().first()
         if not user:
             raise HTTP(404)
         if self.settings.registration_requires_approval:
             user.update_record(registration_key = 'pending')
-            self.environment.session.flash = self.messages.registration_pending
+            current.session.flash = self.messages.registration_pending
         else:
             user.update_record(registration_key = '')
-            self.environment.session.flash = self.messages.email_verified
+            current.session.flash = self.messages.email_verified
         if log == DEFAULT:
             log = self.messages.verify_email_log
         if next == DEFAULT:
@@ -1763,9 +1761,9 @@ class Auth(object):
         table_user = self.settings.table_user
         if not 'username' in table_user.fields:
             raise HTTP(404)
-        request = self.environment.request
-        response = self.environment.response
-        session = self.environment.session
+        request = current.request
+        response = current.response
+        session = current.session
         captcha = self.settings.retrieve_username_captcha or \
                 (self.settings.retrieve_username_captcha!=False and self.settings.captcha)
         if not self.settings.mailer:
@@ -1800,7 +1798,7 @@ class Auth(object):
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
             if not user:
-                self.environment.session.flash = \
+                current.session.flash = \
                     self.messages.invalid_email
                 redirect(self.url(args=request.args))
             username = user.username
@@ -1850,9 +1848,9 @@ class Auth(object):
         """
 
         table_user = self.settings.table_user
-        request = self.environment.request
-        response = self.environment.response
-        session = self.environment.session
+        request = current.request
+        response = current.response
+        session = current.session
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
@@ -1882,11 +1880,11 @@ class Auth(object):
                         onvalidation=onvalidation,hideerror=self.settings.hideerror):
             user = self.db(table_user.email == form.vars.email).select().first()
             if not user:
-                self.environment.session.flash = \
+                current.session.flash = \
                     self.messages.invalid_email
                 redirect(self.url(args=request.args))
             elif user.registration_key in ('pending','disabled','blocked'):
-                self.environment.session.flash = \
+                current.session.flash = \
                     self.messages.registration_pending
                 redirect(self.url(args=request.args))
             password = self.random_password()
@@ -1931,9 +1929,9 @@ class Auth(object):
         """
 
         table_user = self.settings.table_user
-        request = self.environment.request
-        # response = self.environment.response
-        session = self.environment.session
+        request = current.request
+        # response = current.response
+        session = current.session
 
         if next == DEFAULT:
             next = request.get_vars._next \
@@ -1985,9 +1983,9 @@ class Auth(object):
         """
 
         table_user = self.settings.table_user
-        request = self.environment.request
-        response = self.environment.response
-        session = self.environment.session
+        request = current.request
+        response = current.response
+        session = current.session
         captcha = self.settings.retrieve_password_captcha or \
                 (self.settings.retrieve_password_captcha!=False and self.settings.captcha)
 
@@ -2087,8 +2085,8 @@ class Auth(object):
         usern = self.settings.table_user_name
         s = db(table_user.id == self.user.id)
 
-        request = self.environment.request
-        session = self.environment.session
+        request = current.request
+        session = current.session
         if next == DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
@@ -2156,8 +2154,8 @@ class Auth(object):
             redirect(self.settings.login_url)
         passfield = self.settings.password_field
         self.settings.table_user[passfield].writable = False
-        request = self.environment.request
-        session = self.environment.session
+        request = current.request
+        session = current.session
         if next == DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
@@ -2197,7 +2195,7 @@ class Auth(object):
         return form
 
     def is_impersonating(self):
-        return self.environment.session.auth.impersonator
+        return current.session.auth.impersonator
 
     def impersonate(self, user_id=DEFAULT):
         """
@@ -2207,15 +2205,15 @@ class Auth(object):
         requires impersonator is logged in and
         has_permission('impersonate', 'auth_user', user_id)
         """
-        request = self.environment.request
-        session = self.environment.session
+        request = current.request
+        session = current.session
         auth = session.auth
-        if not self.is_logged_in() or not self.environment.request.post_vars:
+        if not self.is_logged_in() or not current.request.post_vars:
             raise HTTP(401, "Not Authorized")
         current_id = auth.user.id
         requested_id = user_id
         if user_id == DEFAULT:
-            user_id = self.environment.request.post_vars.user_id
+            user_id = current.request.post_vars.user_id
         if user_id and user_id != self.user.id and user_id != '0':
             if not self.has_permission('impersonate',
                                        self.settings.table_user_name,
@@ -2280,23 +2278,23 @@ class Auth(object):
             def f(*a, **b):
 
                 if self.settings.allow_basic_login_only and not self.basic():
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not condition:
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     if not self.basic() and not self.is_logged_in():
-                        request = self.environment.request
+                        request = current.request
                         next = URL(r=request,args=request.args,
                                    vars=request.get_vars)
-                        self.environment.session.flash = self.environment.response.flash
+                        current.session.flash = current.response.flash
                         return call_or_redirect(self.settings.on_failed_authentication,
                                                 self.settings.login_url + \
                                                     '?_next='+urllib.quote(next))
                     else:
-                        self.environment.session.flash = \
+                        current.session.flash = \
                             self.messages.access_denied
                         return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
@@ -2317,17 +2315,17 @@ class Auth(object):
             def f(*a, **b):
 
                 if self.settings.allow_basic_login_only and not self.basic():
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not self.basic() and not self.is_logged_in():
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
-                    request = self.environment.request
+                    request = current.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    self.environment.session.flash = self.environment.response.flash
+                    current.session.flash = current.response.flash
                     return call_or_redirect(self.settings.on_failed_authentication,
                                             self.settings.login_url + \
                                                 '?_next='+urllib.quote(next)
@@ -2351,23 +2349,23 @@ class Auth(object):
         def decorator(action):
             def f(*a, **b):
                 if self.settings.allow_basic_login_only and not self.basic():
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not self.basic() and not self.is_logged_in():
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
-                    request = self.environment.request
+                    request = current.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    self.environment.session.flash = self.environment.response.flash
+                    current.session.flash = current.response.flash
                     return call_or_redirect(self.settings.on_failed_authentication,
                                             self.settings.login_url + \
                                                 '?_next='+urllib.quote(next)
                                             )
                 if not self.has_membership(group_id=group_id, role=role):
-                    self.environment.session.flash = \
+                    current.session.flash = \
                         self.messages.access_denied
                     return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
@@ -2394,24 +2392,24 @@ class Auth(object):
 
             def f(*a, **b):
                 if self.settings.allow_basic_login_only and not self.basic():
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not self.basic() and not self.is_logged_in():
-                    if self.environment.request.is_restful:
+                    if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
-                    request = self.environment.request
+                    request = current.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
-                    self.environment.session.flash = self.environment.response.flash
+                    current.session.flash = current.response.flash
                     return call_or_redirect(self.settings.on_failed_authentication,
                                             self.settings.login_url +
                                             '?_next='+urllib.quote(next)
                                             )
 
                 if not self.has_permission(name, table_name, record_id):
-                    self.environment.session.flash = \
+                    current.session.flash = \
                         self.messages.access_denied
                     return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
@@ -2658,12 +2656,9 @@ class Crud(object):
         this should point to the controller that exposes
         download and crud
         """
-        return self.environment.URL(r=self.environment.request,
-                                    c=self.settings.controller,
-                                    f=f, args=args, vars=vars)
+        return URL(self.settings.controller,f, args=args, vars=vars)
 
     def __init__(self, environment, db, controller='default'):
-        self.environment = Storage(environment)
         self.db = db
         self.settings = Settings()
         self.settings.auth = None
@@ -2692,7 +2687,7 @@ class Crud(object):
         self.settings.detect_record_change = True
         self.settings.lock_keys = True
 
-        self.messages = Messages(self.environment.T)
+        self.messages = Messages(current.T)
         self.messages.submit_button = 'Submit'
         self.messages.delete_label = 'Check to delete:'
         self.messages.record_created = 'Record Created'
@@ -2708,7 +2703,7 @@ class Crud(object):
 
     def __call__(self):
 
-        args = self.environment.request.args
+        args = current.request.args
         if len(args) < 1:
             redirect(self.url(args='tables'))
         elif args[0] == 'tables':
@@ -2843,9 +2838,9 @@ class Crud(object):
                 and not self.has_permission('create', table, record_id):
             redirect(self.settings.auth.settings.on_failed_authorization)
 
-        request = self.environment.request
-        response = self.environment.response
-        session = self.environment.session
+        request = current.request
+        response = current.response
+        session = current.session
         if request.extension == 'json' and request.vars.json:
             request.vars.update(simplejson.loads(request.vars.json))
         if next == DEFAULT:
@@ -2981,7 +2976,7 @@ class Crud(object):
             showid=self.settings.showid,
             formstyle=self.settings.formstyle
             )
-        if not self.environment.request.extension in ('html','load'):
+        if not current.request.extension in ('html','load'):
             return table._filter_fields(form.record, id=True)
         return form
 
@@ -3003,8 +2998,8 @@ class Crud(object):
             table = self.db[table]
         if not self.has_permission('delete', table, record_id):
             redirect(self.settings.auth.settings.on_failed_authorization)
-        request = self.environment.request
-        session = self.environment.session
+        request = current.request
+        session = current.session
         if next == DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
@@ -3028,7 +3023,7 @@ class Crud(object):
         orderby=None,
         limitby=None,
         ):
-        request = self.environment.request
+        request = current.request
         if not (isinstance(table, self.db.Table) or table in self.db.tables):
             raise HTTP(404)
         if not self.has_permission('select', table):
@@ -3130,7 +3125,7 @@ class Crud(object):
         """
         table = tables[0]
         fields = args.get('fields', table.fields)
-        request = self.environment.request
+        request = current.request
         db = self.db
         if not (isinstance(table, db.Table) or table in db.tables):
             raise HTTP(404)
@@ -3249,7 +3244,6 @@ def universal_caller(f, *a, **b):
 class Service(object):
 
     def __init__(self, environment):
-        self.environment = environment
         self.run_procedures = {}
         self.csv_procedures = {}
         self.xml_procedures = {}
@@ -3470,7 +3464,7 @@ class Service(object):
         return _soap
 
     def serve_run(self, args=None):
-        request = self.environment['request']
+        request = current.request
         if not args:
             args = request.args
         if args and args[0] in self.run_procedures:
@@ -3479,8 +3473,8 @@ class Service(object):
         self.error()
 
     def serve_csv(self, args=None):
-        request = self.environment['request']
-        response = self.environment['response']
+        request = current.request
+        response = current.response
         response.headers['Content-Type'] = 'text/x-csv'
         if not args:
             args = request.args
@@ -3515,8 +3509,8 @@ class Service(object):
         self.error()
 
     def serve_xml(self, args=None):
-        request = self.environment['request']
-        response = self.environment['response']
+        request = current.request
+        response = current.response
         response.headers['Content-Type'] = 'text/xml'
         if not args:
             args = request.args
@@ -3529,8 +3523,8 @@ class Service(object):
         self.error()
 
     def serve_rss(self, args=None):
-        request = self.environment['request']
-        response = self.environment['response']
+        request = current.request
+        response = current.response
         if not args:
             args = request.args
         if args and args[0] in self.rss_procedures:
@@ -3542,8 +3536,8 @@ class Service(object):
         return serializers.rss(feed)
 
     def serve_json(self, args=None):
-        request = self.environment['request']
-        response = self.environment['response']
+        request = current.request
+        response = current.response
         response.headers['Content-Type'] = 'text/x-json'
         if not args:
             args = request.args
@@ -3572,7 +3566,7 @@ class Service(object):
                                         'code': code, 'message': message}
                                      })
 
-        request = self.environment['request']
+        request = current.request
         methods = self.jsonrpc_procedures
         data = simplejson.loads(request.body.read())
         id, method, params = data['id'], data['method'], data.get('params','')
@@ -3593,8 +3587,8 @@ class Service(object):
             return return_error(id, 100, 'Exception %s: %s' % (etype, eval))
 
     def serve_xmlrpc(self):
-        request = self.environment['request']
-        response = self.environment['response']
+        request = current.request
+        response = current.response
         services = self.xmlrpc_procedures.values()
         return response.xmlrpc(request, services)
 
@@ -3604,8 +3598,8 @@ class Service(object):
             import pyamf.remoting.gateway
         except:
             return "pyamf not installed or not in Python sys.path"
-        request = self.environment['request']
-        response = self.environment['response']
+        request = current.request
+        response = current.response
         if version == 3:
             services = self.amfrpc3_procedures
             base_gateway = pyamf.remoting.gateway.BaseGateway(services)
@@ -3630,8 +3624,8 @@ class Service(object):
             from contrib.pysimplesoap.server import SoapDispatcher
         except:
             return "pysimplesoap not installed in contrib"
-        request = self.environment['request']
-        response = self.environment['response']
+        request = current.request
+        response = current.response
         procedures = self.soap_procedures
 
         location = "%s://%s%s" % (
@@ -3721,7 +3715,7 @@ class Service(object):
         http://..../app/default/call/soap
         """
 
-        request = self.environment['request']
+        request = current.request
         if len(request.args) < 1:
             raise HTTP(404, "Not Found")
         arg0 = request.args(0)
