@@ -591,7 +591,7 @@ class Mail(object):
 class Recaptcha(DIV):
 
     API_SSL_SERVER = 'https://www.google.com/recaptcha/api'
-    API_SERVER = 'https://www.google.com/recaptcha/api'
+    API_SERVER = 'http://www.google.com/recaptcha/api'
     VERIFY_SERVER = 'http://www.google.com/recaptcha/api/verify'
 
     def __init__(
@@ -658,7 +658,7 @@ class Recaptcha(DIV):
 
     def xml(self):
         public_key = self.public_key
-        use_ssl = (self.use_ssl, )
+        use_ssl = self.use_ssl
         error_param = ''
         if self.error:
             error_param = '&error=%s' % self.error
