@@ -56,6 +56,13 @@ __all__ = [
     'IS_URL',
     ]
 
+def translate(text):
+    if isinstance(text,(str,unicode)):
+        from globals import current
+        if hasattr(current,'T'):
+            return current.T(text)
+    return text
+
 def options_sorter(x,y):
     return (str(x[1]).upper()>str(y[1]).upper() and 1) or -1
 
@@ -131,7 +138,7 @@ class IS_MATCH(Validator):
         match = self.regex.match(value)
         if match:
             return (match.group(), None)
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 
 class IS_EQUAL_TO(Validator):
@@ -158,7 +165,7 @@ class IS_EQUAL_TO(Validator):
     def __call__(self, value):
         if value == self.expression:
             return (value, None)
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 
 class IS_EXPR(Validator):
@@ -186,7 +193,7 @@ class IS_EXPR(Validator):
         exec '__ret__=' + self.expression in environment
         if environment['__ret__']:
             return (value, None)
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 
 class IS_LENGTH(Validator):
@@ -220,10 +227,11 @@ class IS_LENGTH(Validator):
         ('1234567890', 'enter from 20 to 50 characters')
     """
 
-    def __init__(self, maxsize=255, minsize=0, error_message='enter from %(min)g to %(max)g characters'):
+    def __init__(self, maxsize=255, minsize=0,
+                 error_message='enter from %(min)g to %(max)g characters'):
         self.maxsize = maxsize
         self.minsize = minsize
-        self.error_message = error_message % dict(min=minsize, max=maxsize)
+        self.error_message = error_message
 
     def __call__(self, value):
         if isinstance(value, cgi.FieldStorage):
@@ -248,7 +256,8 @@ class IS_LENGTH(Validator):
                 return (value, None)
             except:
                 pass
-        return (value, self.error_message)
+        return (value, translate(self.error_message) \
+                    % dict(min=self.minsize, max=self.maxsize))
 
 
 class IS_IN_SET(Validator):
@@ -329,11 +338,11 @@ class IS_IN_SET(Validator):
         if failures and self.theset:
             if self.multiple and (value == None or value == ''):
                 return ([], None)
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         if self.multiple:
             if isinstance(self.multiple,(tuple,list)) and \
                     not self.multiple[0]<=len(values)<self.multiple[1]:
-                return (values, self.error_message)
+                return (values, translate(self.error_message))
             return (values, None)
         return (value, None)
 
@@ -445,7 +454,7 @@ class IS_IN_DB(Validator):
                 values = []
             if isinstance(self.multiple,(tuple,list)) and \
                     not self.multiple[0]<=len(values)<self.multiple[1]:
-                return (values, self.error_message)
+                return (values, translate(self.error_message))
             if not [x for x in values if not x in self.theset]:
                 return (values, None)
         elif self.theset:
@@ -462,7 +471,7 @@ class IS_IN_DB(Validator):
                     return self._and(value)
                 else:
                     return (value, None)
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 
 class IS_NOT_IN_DB(Validator):
@@ -500,7 +509,7 @@ class IS_NOT_IN_DB(Validator):
     def __call__(self, value):
         value=str(value)
         if not value.strip():
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         if value in self.allowed_override:
             return (value, None)
         (tablename, fieldname) = str(self.field).split('.')
@@ -510,9 +519,9 @@ class IS_NOT_IN_DB(Validator):
             if isinstance(self.record_id, dict):
                 for f in self.record_id:
                     if str(getattr(rows[0], f)) != str(self.record_id[f]):
-                        return (value, self.error_message)
+                        return (value, translate(self.error_message))
             elif str(rows[0].id) != str(self.record_id):
-                return (value, self.error_message)
+                return (value, translate(self.error_message))
         return (value, None)
 
 
@@ -569,18 +578,19 @@ class IS_INT_IN_RANGE(Validator):
                 self.maximum = int(maximum)
                 if error_message is None:
                     error_message = 'enter an integer less than or equal to %(max)g'
-                self.error_message = error_message % dict(max=self.maximum-1)
+                self.error_message = translate(error_message) % dict(max=self.maximum-1)
         elif maximum is None:
             self.minimum = int(minimum)
             if error_message is None:
                 error_message = 'enter an integer greater than or equal to %(min)g'
-            self.error_message = error_message % dict(min=self.minimum)
+            self.error_message = translate(error_message) % dict(min=self.minimum)
         else:
             self.minimum = int(minimum)
             self.maximum = int(maximum)
             if error_message is None:
                 error_message = 'enter an integer between %(min)g and %(max)g'
-            self.error_message = error_message % dict(min=self.minimum, max=self.maximum-1)
+            self.error_message = translate(error_message) \
+                % dict(min=self.minimum, max=self.maximum-1)
 
     def __call__(self, value):
         try:
@@ -666,7 +676,8 @@ class IS_FLOAT_IN_RANGE(Validator):
             self.maximum = float(maximum)
             if error_message is None:
                 error_message = 'enter a number between %(min)g and %(max)g'
-        self.error_message = error_message % dict(min=self.minimum, max=self.maximum)
+        self.error_message = translate(error_message) \
+            % dict(min=self.minimum, max=self.maximum)
 
     def __call__(self, value):
         try:
@@ -772,7 +783,8 @@ class IS_DECIMAL_IN_RANGE(Validator):
             self.maximum = decimal.Decimal(str(maximum))
             if error_message is None:
                 error_message = 'enter a number between %(min)g and %(max)g'
-        self.error_message = error_message % dict(min=self.minimum, max=self.maximum)
+        self.error_message = translate(error_message) \
+            % dict(min=self.minimum, max=self.maximum)
 
     def __call__(self, value):
         try:
@@ -847,7 +859,7 @@ class IS_NOT_EMPTY(Validator):
     def __call__(self, value):
         value, empty = is_empty(value, empty_regex=self.empty_regex)
         if empty:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         return (value, None)
 
 
@@ -1004,7 +1016,7 @@ class IS_EMAIL(Validator):
             if (not self.banned or not self.banned.match(domain)) \
                     and (not self.forced or self.forced.match(domain)):
                 return (value, None)
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 
 # URL scheme source:
@@ -1392,7 +1404,7 @@ class IS_GENERIC_URL(Validator):
         except:
             pass
         # else the URL is not valid
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 # Sources (obtained 2008-Nov-11):
 #    http://en.wikipedia.org/wiki/Top-level_domain
@@ -1830,7 +1842,7 @@ class IS_HTTP_URL(Validator):
         except:
             pass
         # else the HTTP URL is not valid
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 
 class IS_URL(Validator):
@@ -1971,7 +1983,7 @@ class IS_URL(Validator):
             except Exception:
                 #If we are not able to convert the unicode url into a
                 # US-ASCII URL, then the URL is not valid
-                return (value, self.error_message)
+                return (value, translate(self.error_message))
 
             methodResult = subMethod(asciiValue)
             #if the validation of the US-ASCII version of the value failed
@@ -2051,7 +2063,7 @@ class IS_TIME(Validator):
             pass
         except ValueError:
             pass
-        return (ivalue, self.error_message)
+        return (ivalue, translate(self.error_message))
 
 
 class IS_DATE(Validator):
@@ -2075,7 +2087,7 @@ class IS_DATE(Validator):
             value = datetime.date(y, m, d)
             return (value, None)
         except:
-            return (value, self.error_message % IS_DATETIME.nice(self.format))
+            return (value, translate(self.error_message) % IS_DATETIME.nice(self.format))
 
     def formatter(self, value):
         format = self.format
@@ -2129,7 +2141,7 @@ class IS_DATETIME(Validator):
             value = datetime.datetime(y, m, d, hh, mm, ss)
             return (value, None)
         except:
-            return (value, self.error_message % IS_DATETIME.nice(self.format))
+            return (value, translate(self.error_message) % IS_DATETIME.nice(self.format))
 
     def formatter(self, value):
         format = self.format
@@ -2181,9 +2193,9 @@ class IS_DATE_IN_RANGE(IS_DATE):
         if msg is not None:
             return (value, msg)
         if self.minimum and self.minimum > value:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         if self.maximum and value > self.maximum:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         return (value, None)
 
 
@@ -2225,9 +2237,9 @@ class IS_DATETIME_IN_RANGE(IS_DATETIME):
         if msg is not None:
             return (value, msg)
         if self.minimum and self.minimum > value:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         if self.maximum and value > self.maximum:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         return (value, None)
 
 
@@ -2323,7 +2335,7 @@ class IS_SLUG(Validator):
 
     def __call__(self,value):
         if self.check and value != IS_SLUG.urlify(value,self.maxlen):
-            return (value,self.error_message)
+            return (value,translate(self.error_message))
         return (IS_SLUG.urlify(value,self.maxlen), None)
 
 class IS_EMPTY_OR(Validator):
@@ -2512,11 +2524,11 @@ class IS_STRONG(object):
                     failures.append("May not include any numbers")
         if len(failures) == 0:
             return (value, None)
-        if not self.error_message:
+        if not translate(self.error_message):
             from html import XML
             return (value, XML('<br />'.join(failures)))
         else:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
 
 
 class IS_IN_SUBSET(IS_IN_SET):
@@ -2528,7 +2540,7 @@ class IS_IN_SUBSET(IS_IN_SET):
         values = re.compile("\w+").findall(str(value))
         failures = [x for x in values if IS_IN_SET.__call__(self, x)[1]]
         if failures:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         return (value, None)
 
 
@@ -2603,7 +2615,7 @@ class IS_IMAGE(Validator):
             value.file.seek(0)
             return (value, None)
         except:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
 
     def __bmp(self, stream):
         if stream.read(2) == 'BM':
@@ -2694,7 +2706,7 @@ class IS_UPLOAD_FILENAME(Validator):
         try:
             string = value.filename
         except:
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         if self.case == 1:
             string = string.lower()
         elif self.case == 2:
@@ -2706,9 +2718,9 @@ class IS_UPLOAD_FILENAME(Validator):
         if dot == -1:
             dot = len(string)
         if self.filename and not self.filename.match(string[:dot]):
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         elif self.extension and not self.extension.match(string[dot + 1:]):
-            return (value, self.error_message)
+            return (value, translate(self.error_message))
         else:
             return (value, None)
 
@@ -2872,7 +2884,7 @@ class IS_IPV4(Validator):
                     ok = False
             if ok:
                 return (value, None)
-        return (value, self.error_message)
+        return (value, translate(self.error_message))
 
 if __name__ == '__main__':
     import doctest
