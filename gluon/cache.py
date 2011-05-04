@@ -413,6 +413,10 @@ class Cache(object):
             cache_model = self.ram
 
         def tmp(func):
-            return lambda: cache_model(key, func, time_expire)
+            def action():
+                return cache_model(key, func, time_expire)
+            action.__name___ = func.__name__
+            action.__doc__ = func.__doc__
+            return action
 
         return tmp
