@@ -194,8 +194,6 @@ def URL(
     application = None
     controller = None
     function = None
-    extension = None
-    env = {}
     
     if not r:
         if a and not c and not f: (f,a,c)=(a,c,f)
