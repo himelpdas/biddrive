@@ -196,13 +196,20 @@ def URL(
         if a and not c and not f: (f,a,c)=(a,c,f)
         elif a and c and not f: (c,f,a)=(a,c,f)
         from globals import current
-        r = current.request
-    application = r.application
-    controller = r.controller
-    function = r.function
-    env = r.env
-    if extension is None and r.extension != 'html':
-        extension = r.extension
+        if hasattr(current,'request'):
+            r = current.request
+            application = r.application
+            controller = r.controller
+            function = r.function
+            env = r.env
+            if extension is None and r.extension != 'html':
+                extension = r.extension
+        else:
+            application = None
+            controller = None
+            function = None
+            extension = None
+            env = {}
     if a:
         application = a
     if c:
