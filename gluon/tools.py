@@ -7,17 +7,6 @@ Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
 License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 
-from contenttype import contenttype
-from storage import Storage, StorageList, Settings, Messages
-from validators import IS_NOT_IN_DB, IS_NOT_EMPTY, IS_IN_DB, IS_EMAIL, IS_EXPR, IS_IN_SET, IS_INT_IN_RANGE, CRYPT
-from html import DIV, URL, A, BR, SPAN, XML, UL, LI, H1, H2, H3, P, SCRIPT, TAG, IFRAME, LABEL, CODE
-from html import FORM, INPUT, OPTION, SELECT
-from html import TABLE, TR, TD
-from sqlhtml import SQLFORM, SQLTABLE
-from http import HTTP, redirect
-from utils import web2py_uuid
-from gluon import current
-
 import base64
 import cPickle
 import datetime
@@ -32,12 +21,16 @@ import urllib
 import urllib2
 import Cookie
 import cStringIO
-
 from email import MIMEBase, MIMEMultipart, MIMEText, Encoders, Header, message_from_string
+
+from contenttype import contenttype
+from storage import Storage, StorageList, Settings, Messages
+from utils import web2py_uuid
+from gluon import *
 
 import serializers
 import contrib.simplejson as simplejson
-from dal import Field
+
 
 __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode', 'prettydate']
 
@@ -787,9 +780,9 @@ class Auth(object):
 
 
     def url(self, f=None, args=[], vars={}):
-        return URL(self.settings.controller,f, args=args, vars=vars)
+        return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
-    def __init__(self, environment, db=None, controller='default'):
+    def __init__(self, environment=None, db=None, controller='default'):
         """
         auth=Auth(globals(), db)
 
@@ -798,6 +791,8 @@ class Auth(object):
 
         """
         self.db = db
+        if not db and environment and isinstance(environment,DAL):
+            self.db = environment
         request = current.request
         session = current.session
         auth = session.auth
@@ -2656,10 +2651,14 @@ class Crud(object):
         this should point to the controller that exposes
         download and crud
         """
-        return URL(self.settings.controller,f, args=args, vars=vars)
+        return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
-    def __init__(self, environment, db, controller='default'):
+    def __init__(self, environment, db=None, controller='default'):
         self.db = db
+        if not db and environment and isinstance(environment,DAL):
+            self.db = environment
+        elif not db:
+            raise SyntaxError, "must pass db as first or second argument"
         self.settings = Settings()
         self.settings.auth = None
         self.settings.logger = None
@@ -3243,7 +3242,7 @@ def universal_caller(f, *a, **b):
 
 class Service(object):
 
-    def __init__(self, environment):
+    def __init__(self, environment=None):
         self.run_procedures = {}
         self.csv_procedures = {}
         self.xml_procedures = {}

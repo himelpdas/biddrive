@@ -192,7 +192,6 @@ def URL(
     args = args or []
     vars = vars or {}
 
-    application = controller = function = None
     if not r:
         if a and not c and not f: (f,a,c)=(a,c,f)
         elif a and c and not f: (c,f,a)=(a,c,f)
