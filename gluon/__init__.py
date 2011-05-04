@@ -10,3 +10,6 @@ Web2Py framework modules
 ========================
 """
 from globals import current
+from html import *
+from validators import *
+from http import redirect, HTTP

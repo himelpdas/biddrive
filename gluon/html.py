@@ -195,13 +195,15 @@ def URL(
     vars = vars or {}
 
     application = controller = function = None
-    if r:
-        application = r.application
-        controller = r.controller
-        function = r.function
-        env = r.env
-        if extension is None and r.extension != 'html':
-            extension = r.extension
+    if not r:
+        from globals import current
+        r = current.request
+    application = r.application
+    controller = r.controller
+    function = r.function
+    env = r.env
+    if extension is None and r.extension != 'html':
+        extension = r.extension
     if a:
         application = a
     if c:
@@ -274,8 +276,9 @@ def verifyURL(request, hmac_key, hash_vars=True):
     :param hmac_key: the key to authenticate with, must be the same one previously
                     used when calling URL()
     :param hash_vars: which vars to include in our hashing. (Optional)
-                    Only uses the 1st value currently (it's really a hack for the _gURL.verify lambda)
-                    True (or undefined) means all, False none, an iterable just the specified keys
+                    Only uses the 1st value currently
+                    True (or undefined) means all, False none, 
+                    an iterable just the specified keys
 
     do not call directly. Use instead:
 
@@ -358,35 +361,7 @@ def verifyURL(request, hmac_key, hash_vars=True):
     # (I.E. was the message the same as the one we originally signed)
     return original_sig == sig
 
-def _gURL(request):
-    """
-    A proxy function for URL which contains knowledge
-    of a given request object.
-
-    Usage is exactly like URL except you do not have
-    to specify r=request!
-    """
-    def _URL(*args, **kwargs):
-        # If they use URL as just passing along
-        # args, we don't want to overwrite it and
-        # cause issues.
-        if not kwargs.has_key('r') and len(args) < 3:
-            kwargs['r'] = request
-            if len(args) == 1 and not 'f' in kwargs:
-                kwargs['f'] = args[0]
-                args = []
-            if len(args) == 2 and not 'f' in kwargs and not 'c' in kwargs:
-                kwargs['c'], kwargs['f'] = args[0], args[1]
-                args = []
-        kwargs['_request'] = request
-        return URL(*args, **kwargs)
-    _URL.__doc__ = URL.__doc__
-
-    # probably ugly work-around for the lambda call. Want for hash_vars to be an optional argument
-    _URL.verify = lambda request, hmac_key, *hash_vars: verifyURL(request, hmac_key, *hash_vars)
-
-    return _URL
-
+URL.verify = verifyURL
 
 ON = True
 
