@@ -793,6 +793,7 @@ class Auth(object):
         self.db = db
         if not db and environment and isinstance(environment,DAL):
             self.db = environment
+        self.environment = current
         request = current.request
         session = current.session
         auth = session.auth
