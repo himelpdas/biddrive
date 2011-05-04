@@ -31,7 +31,7 @@ import string
 from fileutils import abspath
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
-
+from globals import current
 # this will be uncommented in future versions:
 from custom_import import custom_import_install
 
@@ -342,6 +342,7 @@ def wsgibase(environ, responder):
       - file and sub may also contain '-', '=', '.' and '/'
     """
 
+    current.__dict__.clear()
     request = Request()    
     response = Response()
     session = Session()
