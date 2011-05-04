@@ -24,6 +24,7 @@ from languages import translator
 from sql import BaseAdapter, SQLDB, SQLField, DAL, Field
 from sqlhtml import SQLFORM, SQLTABLE
 from cache import Cache
+from globals import current
 import settings
 from cfs import getcfs
 import html
@@ -220,13 +221,18 @@ def build_environment(request, response, session):
         environment[key] = getattr(validators, key)
     if not request.env:
         request.env = Storage()
-    environment['T'] = translator(request)
+
+    current.request = request
+    current.response = response
+    current.session = session
+    current.T = environment['T'] = translator(request)    
+    current.cache = environment['cache'] = Cache(request)
+
     environment['HTTP'] = HTTP
     environment['redirect'] = redirect
     environment['request'] = request
     environment['response'] = response
-    environment['session'] = session
-    environment['cache'] = Cache(request)
+    environment['session'] = session    
     environment['DAL'] = DAL
     environment['Field'] = Field
     environment['SQLDB'] = SQLDB        # for backward compatibility

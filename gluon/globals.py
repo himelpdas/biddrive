@@ -15,7 +15,6 @@ Contains the classes for the global used variables:
 """
 
 from storage import Storage, List
-from compileapp import run_view_in
 from streamer import streamer, stream_file_or_304_or_206, DEFAULT_CHUNK_SIZE
 from xmlrpc import handler
 from contenttype import contenttype
@@ -37,11 +36,13 @@ import Cookie
 import os
 import sys
 import traceback
+import threading
 
 regex_session_id = re.compile('^([\w\-]+/)?[\w\-\.]+$')
 
 __all__ = ['Request', 'Response', 'Session']
 
+current = threading.local()  # thread-local storage for request-scope globals
 
 class Request(Storage):
 
@@ -142,6 +143,7 @@ class Response(Storage):
             self.body.write(xmlescape(data))
 
     def render(self, *a, **b):
+        from compileapp import run_view_in
         if len(a) > 2:
             raise SyntaxError, 'Response.render can be called with two arguments, at most'
         elif len(a) == 2:

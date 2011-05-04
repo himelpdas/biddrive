@@ -342,7 +342,7 @@ def wsgibase(environ, responder):
       - file and sub may also contain '-', '=', '.' and '/'
     """
 
-    request = Request()
+    request = Request()    
     response = Response()
     session = Session()
     request.env.web2py_path = global_settings.applications_parent

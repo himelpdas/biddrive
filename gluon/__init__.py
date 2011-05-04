@@ -9,3 +9,4 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 Web2Py framework modules
 ========================
 """
+from globals import current
