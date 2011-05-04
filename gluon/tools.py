@@ -591,9 +591,8 @@ class Mail(object):
 class Recaptcha(DIV):
 
     API_SSL_SERVER = 'https://www.google.com/recaptcha/api'
-    # was 'https://api-secure.recaptcha.net'
-    API_SERVER = 'http://api.recaptcha.net'
-    VERIFY_SERVER = 'api-verify.recaptcha.net'
+    API_SERVER = 'https://www.google.com/recaptcha/api'
+    VERIFY_SERVER = 'http://www.google.com/recaptcha/api/verify'
 
     def __init__(
         self,
@@ -641,7 +640,7 @@ class Recaptcha(DIV):
             'response': recaptcha_response_field,
             })
         request = urllib2.Request(
-            url='http://%s/verify' % self.VERIFY_SERVER,
+            url=self.VERIFY_SERVER,
             data=params,
             headers={'Content-type': 'application/x-www-form-urlencoded',
                         'User-agent': 'reCAPTCHA Python'})
