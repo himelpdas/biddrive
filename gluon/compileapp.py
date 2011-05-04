@@ -353,7 +353,7 @@ def run_models_in(environment):
             code = read_pyc(model)
         elif is_gae:
             code = getcfs(model, model,
-                          lambda: compile2(open(model, 'r').read(),layer))
+                          lambda: compile2(open(model, 'r').read(),model))
         else:
             code = getcfs(model, model, None)
         restricted(code, environment, layer=model)
