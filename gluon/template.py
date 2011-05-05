@@ -454,7 +454,7 @@ class TemplateParser(object):
                            writer  = self.writer,
                            delimiters = self.delimiters)
 
-        content.append(str(t.content))
+        content.append(t.content)
 
     def extend(self, filename):
         """
