@@ -2986,7 +2986,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
                 if filter.value==0:
                     items = []
                 elif isinstance(filter.value, Key):
-                    items = tableobj.get(filter.value)
+                    item = tableobj.get(filter.value)
                     items = (item and [item]) or []
                 else:
                     item = tableobj.get_by_id(filter.value)
