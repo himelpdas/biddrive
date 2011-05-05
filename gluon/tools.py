@@ -424,7 +424,7 @@ class Mail(object):
                 c.set_armor(1)
                 # collect the public keys for encryption
                 recipients=[]
-                rec=to
+                rec=to[:]
                 if cc:
                     rec.extend(cc)
                 if bcc:
@@ -531,6 +531,7 @@ class Mail(object):
             # no cryptography process as usual
             payload=payload_in
         payload['From'] = encode_header(self.settings.sender.decode(encoding))
+        origTo = to[:]
         if to:
             payload['To'] = encode_header(', '.join(to).decode(encoding))
         if reply_to:
@@ -550,18 +551,23 @@ class Mail(object):
                                  ('-'*40,self.settings.sender,
                                   ', '.join(to),text or html,'-'*40))
             elif self.settings.server == 'gae':
+                xcc = dict()
+                if cc:
+                    xcc['cc'] = cc
+                if bcc:
+                    xcc['bcc'] = bcc
                 from google.appengine.api import mail
                 attachments = attachments and [(a.my_filename,a.my_payload) for a in attachments]
                 if attachments:
-                    result = mail.send_mail(sender=self.settings.sender, to=to,
+                    result = mail.send_mail(sender=self.settings.sender, to=origTo,
                                             subject=subject, body=text, html=html,
-                                            attachments=attachments)
+                                            attachments=attachments, **xcc)
                 elif html:
-                    result = mail.send_mail(sender=self.settings.sender, to=to,
-                                            subject=subject, body=text, html=html)
+                    result = mail.send_mail(sender=self.settings.sender, to=origTo,
+                                            subject=subject, body=text, html=html, **xcc)
                 else:
-                    result = mail.send_mail(sender=self.settings.sender, to=to,
-                                            subject=subject, body=text)
+                    result = mail.send_mail(sender=self.settings.sender, to=origTo,
+                                            subject=subject, body=text, **xcc)
             else:
                 server = smtplib.SMTP(*self.settings.server.split(':'))
                 if self.settings.login != None:
