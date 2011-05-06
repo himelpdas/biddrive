@@ -34,6 +34,7 @@ from admin import add_path_first, create_missing_folders, create_missing_app_fol
 from globals import current
 
 from custom_import import custom_import_install
+from contrib.simplejson import dumps
 
 #  Remarks:
 #  calling script has inserted path to script directory into sys.path
@@ -504,12 +505,13 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 if request.cid:
+                    
                     if response.flash and not 'web2py-component-flash' in http_response.headers:
                         http_response.headers['web2py-component-flash'] = \
-                            str(response.flash).replace('\n','')
+                            dumps(str(response.flash).replace('\n',''))
                     if response.js and not 'web2py-component-command' in http_response.headers:
                         http_response.headers['web2py-component-command'] = \
-                            str(response.js).replace('\n','')
+                            dumps(str(response.js).replace('\n',''))
                 if session._forget:
                     del response.cookies[response.session_id_name]
                 elif session._secure:
