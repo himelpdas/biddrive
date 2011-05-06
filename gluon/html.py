@@ -194,7 +194,7 @@ def URL(
     application = None
     controller = None
     function = None
-    
+
     if not r:
         if a and not c and not f: (f,a,c)=(a,c,f)
         elif a and c and not f: (c,f,a)=(a,c,f)
@@ -270,7 +270,7 @@ def URL(
 
     if regex_crlf.search(''.join([application, controller, function, other])):
         raise SyntaxError, 'CRLF Injection Detected'
-    url = rewrite.url_out(r, env, application, controller, function, 
+    url = rewrite.url_out(r, env, application, controller, function,
                           args, other, scheme, host, port)
     return url
 
@@ -284,7 +284,7 @@ def verifyURL(request, hmac_key, hash_vars=True):
                     used when calling URL()
     :param hash_vars: which vars to include in our hashing. (Optional)
                     Only uses the 1st value currently
-                    True (or undefined) means all, False none, 
+                    True (or undefined) means all, False none,
                     an iterable just the specified keys
 
     do not call directly. Use instead:

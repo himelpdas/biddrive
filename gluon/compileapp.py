@@ -220,14 +220,14 @@ def build_environment(request, response, session):
     current.request = request
     current.response = response
     current.session = session
-    current.T = environment['T'] = translator(request)    
+    current.T = environment['T'] = translator(request)
     current.cache = environment['cache'] = Cache(request)
 
     environment['HTTP'] = HTTP
     environment['redirect'] = redirect
     environment['request'] = request
     environment['response'] = response
-    environment['session'] = session    
+    environment['session'] = session
     environment['DAL'] = DAL
     environment['Field'] = Field
     environment['SQLDB'] = SQLDB        # for backward compatibility
@@ -343,7 +343,7 @@ def run_models_in(environment):
         models = listdir(path, '^\w+\.pyc$',0,sort=False)
         compiled=True
     else:
-        path = os.path.join(folder, 'models')        
+        path = os.path.join(folder, 'models')
         models = listdir(path, '^\w+\.py$',0,sort=False)
         compiled=False
     paths = (path, os.path.join(path,c), os.path.join(path,c,f))

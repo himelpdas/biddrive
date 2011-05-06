@@ -344,7 +344,7 @@ def wsgibase(environ, responder):
     """
 
     current.__dict__.clear()
-    request = Request()    
+    request = Request()
     response = Response()
     session = Session()
     request.env.web2py_path = global_settings.applications_parent
@@ -505,7 +505,7 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 if request.cid:
-                    
+
                     if response.flash and not 'web2py-component-flash' in http_response.headers:
                         http_response.headers['web2py-component-flash'] = \
                             dumps(str(response.flash).replace('\n',''))

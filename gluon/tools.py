@@ -1463,7 +1463,7 @@ class Auth(object):
                         response.flash = \
                             self.messages.registration_verifying
                         return form
-                    # try alternate logins 1st as these have the 
+                    # try alternate logins 1st as these have the
                     # current version of the password
                     user = None
                     for login_method in self.settings.login_methods:
