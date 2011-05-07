@@ -3562,11 +3562,11 @@ class Service(object):
     def serve_jsonrpc(self):
         import contrib.simplejson as simplejson
         def return_response(id, result):
-            return simplejson.dumps({'version': '1.1',
+            return serializers.json({'version': '1.1',
                 'id': id, 'result': result, 'error': None})
 
         def return_error(id, code, message):
-            return simplejson.dumps({'id': id,
+            return serializers.json({'id': id,
                                      'version': '1.1',
                                      'error': {'name': 'JSONRPCError',
                                         'code': code, 'message': message}
