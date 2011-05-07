@@ -3136,6 +3136,9 @@ class Crud(object):
         db = self.db
         if not (isinstance(table, db.Table) or table in db.tables):
             raise HTTP(404)
+        attributes = {}
+        for key in ('orderby','groupby','left','distinct','limitby','cache'):
+            if key in args: attributes[key]=args[key]
         tbl = TABLE()
         selected = []; refsearch = []; results = []
         ops = args.get('queries', [])
@@ -3183,7 +3186,7 @@ class Crud(object):
         form = FORM(tbl,INPUT(_type="submit"))
         if selected:
             try:
-                results = db(query).select(*selected)
+                results = db(query).select(*selected,**attributes)
                 for r in refsearch:
                     results = results.find(r)
             except: # hmmm, we should do better here
