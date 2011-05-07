@@ -115,7 +115,10 @@ class RestrictedError(Exception):
         self.code = code
         self.output = output
         if layer:
-            self.traceback = traceback.format_exc()
+            try:
+                self.traceback = traceback.format_exc()
+            except:
+                self.traceback = 'no traceback because template parting error'
             try:
                 self.snapshot = snapshot(context=10,code=code,environment=environment)
             except:

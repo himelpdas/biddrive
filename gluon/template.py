@@ -406,11 +406,8 @@ class TemplateParser(object):
         """
         Raise an error using itself as the filename and textual content.
         """
-        if text:
-            raise restricted.RestrictedError(self.name, text, message)
-        else:
-            raise restricted.RestrictedError(self.name, self.text, message)
-
+        raise restricted.RestrictedError(self.name, text or self.test, message)
+        
     def _get_file_text(self, filename):
         """
         Attempt to open ``filename`` and retrieve its text.
