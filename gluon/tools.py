@@ -2666,6 +2666,7 @@ class Crud(object):
             self.db = environment
         elif not db:
             raise SyntaxError, "must pass db as first or second argument"
+        self.environment = current
         self.settings = Settings()
         self.settings.auth = None
         self.settings.logger = None
@@ -3056,12 +3057,12 @@ class Crud(object):
         headers={},
         **attr
         ):
-        rows = self.rows(table,query,fields,orderby,orderby,limitby)
+        rows = self.rows(table,query,fields,orderby,limitby)
         if not rows:
             return None # Nicer than an empty table.
         if not 'upload' in attr:
             attr['upload'] = self.url('download')
-        if not request.extension in ('html','load'):
+        if not current.request.extension in ('html','load'):
             return rows.as_list()
         if not headers:
             headers = dict((str(k),k.label) for k in table)
