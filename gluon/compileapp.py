@@ -382,6 +382,13 @@ def run_controller_in(controller, function, environment):
                        web2py_error=badf)
         restricted(read_pyc(filename), environment, layer=filename)
     elif function == '_TEST':
+        # TESTING: adjust the path to include site packages
+        from settings import global_settings
+        from admin import abspath, add_path_first
+        paths = (global_settings.gluon_parent, abspath('site-packages', gluon=True),  abspath('gluon', gluon=True), '')
+        [add_path_first(path) for path in paths]
+        # TESTING END
+
         filename = os.path.join(folder, 'controllers/%s.py'
                                  % controller)
         if not os.path.exists(filename):

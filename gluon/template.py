@@ -407,7 +407,7 @@ class TemplateParser(object):
         Raise an error using itself as the filename and textual content.
         """
         raise restricted.RestrictedError(self.name, text or self.text, message)
-        
+
     def _get_file_text(self, filename):
         """
         Attempt to open ``filename`` and retrieve its text.
