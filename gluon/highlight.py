@@ -258,29 +258,26 @@ def highlight(
     attributes={},
     ):
     if not 'CODE' in styles:
-        code_style = \
-            """
+        code_style = """
         font-size: 11px;
         font-family: Bitstream Vera Sans Mono,monospace;
         background-color: transparent;
-            margin: 0;
-            padding: 5px;
-            border: none;
-            overflow: auto;
-    """
+        margin: 0;
+        padding: 5px;
+        border: none;
+        overflow: auto;
+        white-space: pre !important;\n"""
     else:
         code_style = styles['CODE']
     if not 'LINENUMBERS' in styles:
-        linenumbers_style = \
-            """
+        linenumbers_style = """
         font-size: 11px;
         font-family: Bitstream Vera Sans Mono,monospace;
         background-color: transparent;
-            margin: 0;
-            padding: 5px;
-            border: none;
-        color: #A0A0A0;
-    """
+        margin: 0;
+        padding: 5px;
+        border: none;
+        color: #A0A0A0;\n"""
     else:
         linenumbers_style = styles['LINENUMBERS']
     if not 'LINEHIGHLIGHT' in styles:
