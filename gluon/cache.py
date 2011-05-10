@@ -254,6 +254,7 @@ class CacheOnDisk(CacheAbstract):
                 pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
             except:
                 logger.error('corrupted file: %s' % self.shelve_name)
+                os.unlink(self.locker_name)
             if locker_locked:
                 portalocker.unlock(locker)
             if locker:
