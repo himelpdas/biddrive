@@ -1519,10 +1519,10 @@ class MySQLAdapter(BaseAdapter):
         if not m:
             raise SyntaxError, \
                 "Invalid URI string in DAL: %s" % self.uri
-        user = m.group('user')
+        user = credential_decoder(m.group('user'))
         if not user:
             raise SyntaxError, 'User required'
-        password = m.group('password')
+        password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
@@ -1613,10 +1613,10 @@ class PostgreSQLAdapter(BaseAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
         if not m:
             raise SyntaxError, "Invalid URI string in DAL"
-        user = m.group('user')
+        user = credential_decoder(m.group('user'))
         if not user:
             raise SyntaxError, 'User required'
-        password = m.group('password')
+        password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
@@ -1680,10 +1680,10 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
         if not m:
             raise SyntaxError, "Invalid URI string in DAL"
-        user = m.group('user')
+        user = credential_decoder(m.group('user'))
         if not user:
             raise SyntaxError, 'User required'
-        password = m.group('password')
+        password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
@@ -1912,10 +1912,10 @@ class MSSQLAdapter(BaseAdapter):
             if not m:
                 raise SyntaxError, \
                     "Invalid URI string in DAL: %s" % uri
-            user = m.group('user')
+            user = credential_decoder(m.group('user'))
             if not user:
                 raise SyntaxError, 'User required'
-            password = m.group('password')
+            password = credential_decoder(m.group('password'))
             if not password:
                 password = ''
             host = m.group('host')
@@ -2056,10 +2056,10 @@ class FireBirdAdapter(BaseAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+?)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
             raise SyntaxError, "Invalid URI string in DAL: %s" % uri
-        user = m.group('user')
+        user = credential_decoder(m.group('user'))
         if not user:
             raise SyntaxError, 'User required'
-        password = m.group('password')
+        password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
@@ -2121,10 +2121,10 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         if not m:
             raise SyntaxError, \
                 "Invalid URI string in DAL: %s" % self.uri
-        user = m.group('user')
+        user = credential_decoder(m.group('user'))
         if not user:
             raise SyntaxError, 'User required'
-        password = m.group('password')
+        password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         pathdb = m.group('path')
@@ -2231,10 +2231,10 @@ class InformixAdapter(BaseAdapter):
         if not m:
             raise SyntaxError, \
                 "Invalid URI string in DAL: %s" % self.uri
-        user = m.group('user')
+        user = credential_decoder(m.group('user'))
         if not user:
             raise SyntaxError, 'User required'
-        password = m.group('password')
+        password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
@@ -2521,10 +2521,10 @@ class SAPDBAdapter(BaseAdapter):
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
         if not m:
             raise SyntaxError, "Invalid URI string in DAL"
-        user = m.group('user')
+        user = credential_decoder(m.group('user'))
         if not user:
             raise SyntaxError, 'User required'
-        password = m.group('password')
+        password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
