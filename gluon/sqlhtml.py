@@ -1181,6 +1181,9 @@ class SQLFORM(FORM):
                 fields[fieldname] = self.vars[fieldname]
 
         if dbio:
+            if 'delete_this_record' in fields:
+                # this should never happen but seems to happen to some
+                del fields['delete_this_record']
             if keyed:
                 if reduce(lambda x, y: x and y, record_id.values()): # if record_id
                     if fields:

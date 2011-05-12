@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-response.title = T('web2py Enterprise Web Framework')
-response.keywords = T('web2py, Python, Enterprise Web Framework')
-response.description = T('web2py Enterprise Web Framework')
+response.title = T('web2py Web Framework')
+response.keywords = T('web2py, Python, Web Framework')
+response.description = T('web2py Web Framework')
 
 session.forget()
 
