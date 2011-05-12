@@ -232,6 +232,12 @@ except ImportError:
     logger.debug('no kinterbasdb driver')
 
 try:
+    import firebirdsql
+    drivers.append('Firebird')
+except ImportError:
+    logger.debug('no Firebird driver')
+
+try:
     import informixdb
     drivers.append('Informix')
     logger.warning('Informix support is experimental')
@@ -437,7 +443,8 @@ class BaseAdapter(ConnectionPool):
         os.unlink(filename)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "None"
         self.uri = uri
@@ -1383,7 +1390,8 @@ class SQLiteAdapter(BaseAdapter):
             return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "sqlite"
         self.uri = uri
@@ -1418,7 +1426,8 @@ class SQLiteAdapter(BaseAdapter):
 class JDBCSQLiteAdapter(SQLiteAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "sqlite"
         self.uri = uri
@@ -1496,7 +1505,8 @@ class MySQLAdapter(BaseAdapter):
         return '; ALTER TABLE %s ADD ' % table
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "mysql"
         self.uri = uri
@@ -1590,7 +1600,8 @@ class PostgreSQLAdapter(BaseAdapter):
         self.execute(query)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "postgres"
         self.uri = uri
@@ -1656,7 +1667,8 @@ class PostgreSQLAdapter(BaseAdapter):
 class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "postgres"
         self.uri = uri
@@ -1769,7 +1781,8 @@ class OracleAdapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "oracle"
         self.uri = uri
@@ -1870,7 +1883,8 @@ class MSSQLAdapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}, fake_connect=False):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}, fake_connect=False):
         self.db = db
         self.dbengine = "mssql"
         self.uri = uri
@@ -2029,7 +2043,8 @@ class FireBirdAdapter(BaseAdapter):
                 'SET GENERATOR %s TO 0;' % table._sequence_name]
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "firebird"
         self.uri = uri
@@ -2059,8 +2074,17 @@ class FireBirdAdapter(BaseAdapter):
                                    user = credential_decoder(user),
                                    password = credential_decoder(password),
                                    charset = charset))
-        def connect(driver_args=driver_args):
-            return kinterbasdb.connect(**driver_args)
+        def connect(driver_args=driver_args, adapter_args=adapter_args):
+            if adapter_args.has_key('driver_name'):
+                if adapter_args['driver_name'] == 'kinterbasdb':
+                    conn = kinterbasdb.connect(**driver_args)
+                elif adapter_args['driver_name'] == 'firebirdsql':
+                    conn = firebirdsql.connect(**driver_args)
+            else:
+                conn = kinterbasdb.connect(**driver_args)
+
+            return conn
+
         self.pool_connection(connect)
 
         self.cursor = self.connection.cursor()
@@ -2083,7 +2107,8 @@ class FireBirdAdapter(BaseAdapter):
 class FireBirdEmbeddedAdapter(FireBirdAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "firebird"
         self.uri = uri
@@ -2114,9 +2139,21 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
                                    user=credential_decoder(user),
                                    password=credential_decoder(password),
                                    charset=charset))
-        def connect(driver_args=driver_args):
-            return kinterbasdb.connect(**driver_args)
+        #def connect(driver_args=driver_args):
+        #    return kinterbasdb.connect(**driver_args)
+        def connect(driver_args=driver_args, adapter_args=adapter_args):
+            if adapter_args.has_key('driver_name'):
+                if adapter_args['driver_name'] == 'kinterbasdb':
+                    conn = kinterbasdb.connect(**driver_args)
+                elif adapter_args['driver_name'] == 'firebirdsql':
+                    conn = firebirdsql.connect(**driver_args)
+            else:
+                conn = kinterbasdb.connect(**driver_args)
+
+            return conn
+
         self.pool_connection(connect)
+
         self.cursor = self.connection.cursor()
 
 
@@ -2180,7 +2217,8 @@ class InformixAdapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "informix"
         self.uri = uri
@@ -2274,7 +2312,8 @@ class DB2Adapter(BaseAdapter):
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "db2"
         self.uri = uri
@@ -2349,7 +2388,8 @@ class IngresAdapter(BaseAdapter):
         return 'SELECT %s %s FROM %s%s%s;' % (sql_s, sql_f, sql_t, sql_w, sql_o)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "ingres"
         self.uri = uri
@@ -2468,7 +2508,8 @@ class SAPDBAdapter(BaseAdapter):
         self.execute(query)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.dbengine = "sapdb"
         self.uri = uri
@@ -2585,7 +2626,8 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
     def __init__(self, db, uri='google:sql://realm:domain/database', pool_size=0,
                  folder=None, db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
-                 credential_decoder = lambda x:x, driver_args={}):
+                 credential_decoder = lambda x:x, driver_args={},
+                    adapter_args={}):
 
         self.db = db
         self.dbengine = "mysql"
@@ -2779,7 +2821,8 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
     def file_close(self, fileobj, unlock=True): pass
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.types.update({
                 'boolean': gae.BooleanProperty,
                 'string': (lambda: gae.StringProperty(multiline=True)),
@@ -3165,7 +3208,8 @@ class CouchDBAdapter(NoSQLAdapter):
 
     def __init__(self,db,uri='couchdb://127.0.0.1:5984',
                  pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.uri = uri
         self.dbengine = 'couchdb'
@@ -3330,7 +3374,8 @@ class MongoDBAdapter(NoSQLAdapter):
 
     def __init__(self,db,uri='mongodb://127.0.0.1:5984/db',
                  pool_size=0,folder=None,db_codec ='UTF-8',
-                 credential_decoder=lambda x:x, driver_args={}):
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
         self.db = db
         self.uri = uri
         self.dbengine = 'mongodb'
@@ -3654,7 +3699,7 @@ class DAL(dict):
                  migrate=True, fake_migrate=False,
                  migrate_enabled=True, fake_migrate_all=False,
                  decode_credentials=False, driver_args=None,
-                 attempts=5):
+                 adapter_args={}, attempts=5):
         """
         Creates a new Database Abstraction Layer instance.
 
@@ -3708,7 +3753,7 @@ class DAL(dict):
                         if not self._dbname in ADAPTERS:
                             raise SyntaxError, "Error in URI '%s' or database not supported" % self._dbname
                         # notice that driver args or {} else driver_args defaults to {} global, not correct
-                        args = (self,uri,pool_size,folder,db_codec,credential_decoder,driver_args or {})
+                        args = (self,uri,pool_size,folder,db_codec,credential_decoder,driver_args or {}, adapter_args)
                         self._adapter = ADAPTERS[self._dbname](*args)
                         connected = True
                         break
