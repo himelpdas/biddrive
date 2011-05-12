@@ -11,7 +11,10 @@ DEBUG = True
 
 # Install the new import function:
 def custom_import_install(web2py_path):
-    _Web2pyImporter(web2py_path)
+    if DEBUG:
+        _Web2pyDateTrackerImporter(web2py_path)
+    else:
+        _Web2pyImporter(web2py_path)
 
 
 class _BaseImporter(object):
@@ -173,13 +176,12 @@ class _DateTrackerImporter(_BaseImporter):
                 file = os.path.dirname(file)  # Track dir for packages
         return file
 
-class _Web2pyImporter(object):
+class _Web2pyImporter(_BaseImporter):
     """
     The standard web2py importer. Like the standard Python importer but it
     tries to transform import statements as something like
     "import applications.app_name.modules.x". If the import failed, fall back
-    on _BaseImporter. Either use _BaseImporter or _DateTrackerImporter as
-    delegate to do the import.
+    on _BaseImporter.
     """
 
     _RE_ESCAPED_PATH_SEP = re.escape(os.path.sep)  # os.path.sep escaped for re
@@ -190,65 +192,69 @@ class _Web2pyImporter(object):
         """
 
         global DEBUG
-        # Regular expression to match a directory of a web2py application
-        # relative to the web2py install.
-        # Like web2py installation dir path/applications/app_name/modules.
-        # We also capture "applications/app_name" as a group.
-        if not hasattr(_Web2pyImporter, "_RE_APP_DIR"):
-            _Web2pyImporter._RE_APP_DIR = re.compile( \
-                self._RE_ESCAPED_PATH_SEP.join( \
-                (
-                    "^" + re.escape(web2py_path),
-                    "(" + "applications",
-                    "[^",
-                    "]+)",
-                    "",
-                    ) ))
+        super(_Web2pyImporter, self).__init__()
         self.web2py_path =  web2py_path
-        if DEBUG:
-            self.delegate = _DateTrackerImporter()
-        else:
-            self.delegate = _BaseImporter()
-        __builtin__.__import__ = self
+        self.__web2py_path_os_path_sep = self.web2py_path+os.path.sep
+        self.__web2py_path_os_path_sep_len = len(self.__web2py_path_os_path_sep)
+        self.__RE_APP_DIR = re.compile(
+          self._RE_ESCAPED_PATH_SEP.join( \
+          ( \
+            #"^" + re.escape(web2py_path),   # Not working with Python 2.5
+            "^(" + "applications",
+            "[^",
+            "]+)",
+            "",
+          ) ))
+
+    def _matchAppDir(self, file_path):
+        """
+        Does the file in a directory inside the "applications" directory?
+        """
+
+        if file_path.startswith(self.__web2py_path_os_path_sep):
+            file_path = file_path[self.__web2py_path_os_path_sep_len:]
+            return self.__RE_APP_DIR.match(file_path)
+        return False
 
     def __call__(self, name, globals={}, locals={}, fromlist=[], level=-1):
         """
         The import method itself.
         """
 
-        delegate = self.delegate
-        delegate.begin()
-        try:
-            # if not relative and not from applications:
-            if not name.startswith(".") and level <= 0 \
-                    and not name.startswith("applications."):
-                # Get the name of the file do the import
-                caller_file_name = os.path.join(self.web2py_path, \
-                                                globals.get("__file__", ""))
-                # Is the path in an application directory?
-                match_app_dir = self._RE_APP_DIR.match(caller_file_name)
-                if match_app_dir:
-                    try:
-                        # Get the prefix to add for the import
-                        # (like applications.app_name.modules):
-                        modules_prefix = \
-                            ".".join((match_app_dir.group(1). \
-                            replace(os.path.sep, "."), "modules"))
-                        if not fromlist:
-                            # import like "import x" or "import x.y"
-                            return self.__import__dot(modules_prefix, name,
-                              globals, locals, fromlist, level)
-                        else:
-                            # import like "from x import a, b, ..."
-                            return delegate(modules_prefix + "." + name,
-                              globals, locals, fromlist, level)
-                    except ImportError:
-                        pass
-            return delegate(name, globals, locals, fromlist, level)
-        except Exception, e:
-            raise e  # Don't hide something that went wrong
-        finally:
-            delegate.end()
+        self.begin()
+        #try:
+        # if not relative and not from applications:
+        if not name.startswith(".") and level <= 0 \
+                and not name.startswith("applications."):
+            # Get the name of the file do the import
+            caller_file_name = os.path.join(self.web2py_path, \
+                                            globals.get("__file__", ""))
+            # Is the path in an application directory?
+            match_app_dir = self._matchAppDir(caller_file_name)
+            if match_app_dir:
+                try:
+                    # Get the prefix to add for the import
+                    # (like applications.app_name.modules):
+                    modules_prefix = \
+                        ".".join((match_app_dir.group(1). \
+                        replace(os.path.sep, "."), "modules"))
+                    if not fromlist:
+                        # import like "import x" or "import x.y"
+                        return self.__import__dot(modules_prefix, name,
+                            globals, locals, fromlist, level)
+                    else:
+                        # import like "from x import a, b, ..."
+                        return super(_Web2pyImporter, self) \
+                            .__call__(modules_prefix+"."+name,
+                                    globals, locals, fromlist, level)
+                except ImportError:
+                    pass
+        return super(_Web2pyImporter, self).__call__(name, globals, locals,
+                                                    fromlist, level)
+        #except Exception, e:
+        #    raise e  # Don't hide something that went wrong
+        #finally:
+        self.end()
 
     def __import__dot(self, prefix, name, globals, locals, fromlist,
                       level):
@@ -262,10 +268,16 @@ class _Web2pyImporter(object):
 
         result = None
         for name in name.split("."):
-            new_mod = self.delegate(prefix, globals, locals, [name], level)
+            new_mod = super(_Web2pyImporter, self).__call__(prefix, globals,
+                                                        locals, [name], level)
             try:
                 result = result or new_mod.__dict__[name]
             except KeyError:
                 raise ImportError()
             prefix += "." + name
         return result
+
+class _Web2pyDateTrackerImporter(_Web2pyImporter, _DateTrackerImporter):
+    """
+    Like _Web2pyImporter but using a _DateTrackerImporter.
+    """
