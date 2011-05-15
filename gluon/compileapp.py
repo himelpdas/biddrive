@@ -105,7 +105,6 @@ class LoadFactory(object):
             return html.TAG[''](script, html.DIV('loading...', _id=target))
         else:
             c = c or request.controller
-            other_environment = copy.copy(self.environment)
             other_request = globals.Request()
             other_request.application = request.application
             other_request.controller = c
@@ -114,21 +113,21 @@ class LoadFactory(object):
             other_request.args = List(args)
             other_request.folder = request.folder
             other_request.env = request.env
-            if not ajax_trap:
-                other_request.vars = request.vars
-                other_request.get_vars = request.get_vars
-                other_request.post_vars = request.post_vars
-            else:
-                other_request.vars = vars
-            other_environment['request'] = other_request
+            other_request.vars = request.vars
+            other_request.get_vars = request.get_vars
+            other_request.post_vars = request.post_vars
             other_response = globals.Response()
-            other_environment['response'] = other_response
-            other_response._view_environment = other_environment
             other_request.env.http_web2py_component_location = \
                 request.env.path_info
             other_request.env.http_web2py_component_element = target
             other_response.view = '%s/%s.%s' % (c,f, other_request.extension)
+
+            other_environment = copy.copy(self.environment)
+            other_response._view_environment = other_environment
+            other_environment['request'] = other_request
+            other_environment['response'] = other_response
             page = run_controller_in(c, f, other_environment)
+
             if isinstance(page, dict):
                 other_response._vars = page
                 for key in page:

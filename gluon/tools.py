@@ -1391,9 +1391,11 @@ class Auth(object):
             tmpvalidator = IS_EMAIL(error_message=self.messages.invalid_email)
         old_requires = table_user[username].requires
         table_user[username].requires = tmpvalidator
+        
         request = current.request
         response = current.response
         session = current.session
+
         passfield = self.settings.password_field
         if next == DEFAULT:
             next = request.get_vars._next \
@@ -1442,10 +1444,12 @@ class Auth(object):
             if captcha:
                 addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
             accepted_form = False
+                
             if form.accepts(request, session,
                             formname='login', dbio=False,
                             onvalidation=onvalidation,
                             hideerror=self.settings.hideerror):
+                
                 accepted_form = True
                 # check for username in db
                 user = self.db(table_user[username] == form.vars[username]).select().first()

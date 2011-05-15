@@ -28,6 +28,7 @@ import socket
 import tempfile
 import random
 import string
+import socket
 from fileutils import abspath
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
@@ -386,10 +387,17 @@ def wsgibase(environ, responder):
                 # fill in request items
                 # ##################################################
 
+                http_host = request.env.http_host.split(':',1)[0]
+                local_hosts = (http_host, socket.gethostname(),
+                               socket.gethostbyname(http_host),
+                               '::1','127.0.0.1','::ffff:127.0.0.1')
                 request.client = get_client(request.env)
                 request.folder = abspath('applications', request.application) + os.sep
                 request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
                 request.cid = request.env.http_web2py_component_element
+                request.is_local = request.env.remote_addr in local_hosts
+                request.is_https = request.env.wsgi_url_scheme in ['https', 'HTTPS'] \
+                    or request.env.https == 'on'
 
                 # ##################################################
                 # compute a request.uuid to be used for tickets and toolbar

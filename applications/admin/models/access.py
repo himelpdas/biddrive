@@ -9,18 +9,10 @@ if request.env.web2py_runtime_gae:
     session_db = DAL('gae')
     session.connect(request, response, db=session_db)
     hosts = (http_host, )
-else:
-    hosts = (http_host, socket.gethostname(),
-             socket.gethostbyname(http_host),
-             '::1','127.0.0.1','::ffff:127.0.0.1')
 
-remote_addr = request.env.remote_addr
-
-if request.env.http_x_forwarded_for \
-        or request.env.wsgi_url_scheme in ['https', 'HTTPS'] \
-        or request.env.https == 'on':
+if request.env.http_x_forwarded_for or request.is_http:
     session.secure()
-elif not remote_addr in hosts and not DEMO_MODE:
+elif not request.is_local and not DEMO_MODE:
     raise HTTP(200, T('Admin is disabled because insecure channel'))
 
 try:
