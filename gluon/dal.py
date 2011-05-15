@@ -724,6 +724,9 @@ class BaseAdapter(ConnectionPool):
     def AGGREGATE(self,first,what):
         return "%s(%s)" % (what,self.expand(first))
 
+    def JOIN(self):
+        return 'JOIN'
+
     def LEFT_JOIN(self):
         return 'LEFT JOIN'
 
@@ -976,7 +979,7 @@ class BaseAdapter(ConnectionPool):
     def _select(self, query, fields, attributes):
         for key in set(attributes.keys())-set(('orderby','groupby','limitby',
                                                'required','cache','left',
-                                               'distinct','having')):
+                                               'distinct','having', 'join')):
             raise SyntaxError, 'invalid select attribute: %s' % key
         # ## if not fields specified take them all from the requested tables
         new_fields = []
@@ -1010,6 +1013,7 @@ class BaseAdapter(ConnectionPool):
         sql_o = ''
         sql_s = ''
         left = attributes.get('left', False)
+        inner_join = attributes.get('join', False)
         distinct = attributes.get('distinct', False)
         groupby = attributes.get('groupby', False)
         orderby = attributes.get('orderby', False)
@@ -1019,6 +1023,14 @@ class BaseAdapter(ConnectionPool):
             sql_s += 'DISTINCT'
         elif distinct:
             sql_s += 'DISTINCT ON (%s)' % distinct
+        if inner_join:
+            icommand = self.JOIN()
+            if not isinstance(inner_join, (tuple, list)):
+                inner_join = [inner_join]
+            ijoint = [t._tablename for t in inner_join if not isinstance(t,Expression)]
+            ijoinon = [t for t in inner_join if isinstance(t, Expression)]
+            ijoinont = [t.first._tablename for t in ijoinon]
+            iexcluded = [t for t in tablenames if not t in ijoint + ijoinont]
         if left:
             join = attributes['left']
             command = self.LEFT_JOIN()
@@ -1033,14 +1045,26 @@ class BaseAdapter(ConnectionPool):
             [tables_to_merge.pop(t) for t in joinont if t in tables_to_merge]
             important_tablenames = joint + joinont + tables_to_merge.keys()
             excluded = [t for t in tablenames if not t in important_tablenames ]
+        if inner_join and not left:
+            sql_t = ', '.join(iexcluded)
+            for t in ijoinon:
+                sql_t += ' %s %s' % (icommand, str(t))
+        elif not inner_join and left:
             sql_t = ', '.join([ t for t in excluded + tables_to_merge.keys()])
             if joint:
                 sql_t += ' %s %s' % (command, ','.join([t for t in joint]))
-            #/patch join+left patch
+            for t in joinon:
+                sql_t += ' %s %s' % (command, str(t))
+        elif inner_join and left:
+            sql_t = ','.join([ t for t in excluded +  tables_to_merge.keys() if t in iexcluded ])
+            for t in ijoinon:
+                sql_t += ' %s %s' % (icommand, str(t))
+            if joint:
+                sql_t += ' %s %s' % (command, ','.join([t for t in joint]))
             for t in joinon:
                 sql_t += ' %s %s' % (command, str(t))
         else:
-            sql_t = ', '.join(tablenames)
+            sql_t = ', '.join(tablenames)              
         if groupby:
             if isinstance(groupby, (list, tuple)):
                 groupby = xorify(groupby)
