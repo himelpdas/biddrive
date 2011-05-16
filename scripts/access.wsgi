@@ -15,14 +15,13 @@
 #   <Directory /path/to/>
 #     WSGIAccessScript /path/to/web2py/scripts/access.wsgi
 #   </Directory>
-#   ...
 # </VirtualHost>
 #
 # in yourapp/controllers/default.py
 #
 # def check_access():
 #     request_uri = request.vars.request_uri
-#     raise HTTP(200) if auth.is_logged_in() else HTTP(404)
+#     return 'true' if auth.is_logged_in() else 'false'
 #
 # start web2py as deamon
 #
@@ -33,13 +32,15 @@
 #    http://domain/myapp/whatever/myfile
 #
 # and you will have access ONLY if you are logged into myapp
+#
 
-import urllib
-import urllib2
-import os
-import datetime
+URL_CHECK_ACCESS = 'http://127.0.0.1:8002/%(app)s/default/check_access'
 
 def allow_access(environ,host):
+    import os
+    import urllib
+    import urllib2
+    import datetime
     header = '%s @ %s ' % (datetime.datetime.now(),host) + '='*20
     pprint = '\n'.join('%s:%s' % item for item in environ.items())
     filename = os.path.join(os.path.dirname(__file__),'access.wsgi.log')
@@ -49,15 +50,11 @@ def allow_access(environ,host):
     headers = {}
     for key in environ:
         if key.startswith('HTTP_'):
-            headers[key[5:]] = environ[key]
-    data = urllib.urlencode({'request_uri':environ['REQUEST_URI']})
+            headers[key[5:]] = environ[key] # this passes the cookies through!
     try:
-        request = urllib2.Request('http://127.0.0.1:8002/%s/default/check_access' % app,data,headers)
-        r = urllib2.urlopen(request)
-	return True
-	open(filename,'a').write('\n%s\n%s\n' % (r.code,r.read()))
-    except urllib2.HTTPError, e:
-        return False
-    except urllib2.URLError, e:
-        return False
-    return True
+        data = urllib.urlencode({'request_uri':environ['REQUEST_URI']})
+        request = urllib2.Request(URL_CHECK_ACCESS % dict(app=app),data,headers)
+	response = urllib2.urlopen(request).read().strip().lower()
+	if response.startswith('true'): return True
+    except: pass
+    return False
