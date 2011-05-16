@@ -392,12 +392,14 @@ def wsgibase(environ, responder):
                                socket.gethostbyname(http_host),
                                '::1','127.0.0.1','::ffff:127.0.0.1')
                 request.client = get_client(request.env)
-                request.folder = abspath('applications', request.application) + os.sep
-                request.ajax = str(request.env.http_x_requested_with).lower() == 'xmlhttprequest'
+                request.folder = abspath('applications',
+                                         request.application) + os.sep
+                x_req_with = str(request.env.http_x_requested_with).lower()
+                request.ajax = x_req_with == 'xmlhttprequest'
                 request.cid = request.env.http_web2py_component_element
                 request.is_local = request.env.remote_addr in local_hosts
-                request.is_https = request.env.wsgi_url_scheme in ['https', 'HTTPS'] \
-                    or request.env.https == 'on'
+                request.is_https = request.env.wsgi_url_scheme \
+                    in ['https', 'HTTPS'] or request.env.https == 'on'
 
                 # ##################################################
                 # compute a request.uuid to be used for tickets and toolbar

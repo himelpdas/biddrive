@@ -48,5 +48,4 @@ def call():
     decorate with @services.jsonrpc the functions to expose
     supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
     """
-    session.forget()
     return service()

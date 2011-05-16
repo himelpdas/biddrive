@@ -452,15 +452,15 @@ def run_view_in(environment):
         x = response.view.replace('/', '_')
         if request.extension == 'html':
             # for backward compatibility
-            files = [os.path.join(path, 'views_%s.pyc' % x),
-                     os.path.join(path, 'views_%s.pyc' % x[:-5]),
-                     os.path.join(path, 'views_generic.html.pyc'),
-                     os.path.join(path, 'views_generic.pyc')]
-        else:
-            files = [os.path.join(path, 'views_%s.pyc' % x),
-                     os.path.join(path, 'views_generic.%s.pyc'
-                                  % request.extension)]
-        for filename in files:
+            files = ['views_%s.pyc' % x,
+                     'views_%s.pyc' % x[:-5],
+                     'views_generic.html.pyc',
+                     'views_generic.pyc']
+        elif response.allow_generic_views:
+            files = ['views_%s.pyc' % x,
+                     'views_generic.%s.pyc' % request.extension]
+        for f in files:
+            filename = os.path.join(path,f)
             if os.path.exists(filename):
                 code = read_pyc(filename)
                 restricted(code, environment, layer=filename)
@@ -471,8 +471,11 @@ def run_view_in(environment):
     else:
         filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
-            response.view = 'generic.' + request.extension
-        filename = os.path.join(folder, 'views', response.view)
+            if request.extension == 'html':
+                response.view = 'generic.html'
+            elif response.allow_generic_views:
+                response.view = 'generic.' + request.extension
+            filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
             raise HTTP(404,
                        rewrite.thread.routes.error_message % badv,

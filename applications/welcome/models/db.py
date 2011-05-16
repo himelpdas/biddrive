@@ -15,8 +15,8 @@ if request.env.web2py_runtime_gae:            # if running on Google App Engine
     # session.connect(request, response, db = MEMDB(Client()))
 else:                                         # else use a normal relational database
     db = DAL('sqlite://storage.sqlite')       # if not, use SQLite or other DB
-## if no need for session
-# session.forget()
+
+response.allow_generic_views = request.is_local
 
 #########################################################################
 ## Here is sample code if you need for
@@ -52,13 +52,14 @@ auth.messages.reset_password = 'Click on the link http://'+request.env.http_host
 ## If you need to use OpenID, Facebook, MySpace, Twitter, Linkedin, etc.
 ## register with janrain.com, uncomment and customize following
 # from gluon.contrib.login_methods.rpx_account import RPXAccount
-# auth.settings.actions_disabled=['register','change_password','request_reset_password']
+# auth.settings.actions_disabled = \
+#    ['register','change_password','request_reset_password']
 # auth.settings.login_form = RPXAccount(request, api_key='...',domain='...',
 #    url = "http://localhost:8000/%s/default/user/login" % request.application)
 ## other login methods are in gluon/contrib/login_methods
 #########################################################################
 
-crud.settings.auth = None                      # =auth to enforce authorization on crud
+crud.settings.auth = None        # =auth to enforce authorization on crud
 
 #########################################################################
 ## Define your tables below (or better in another model file) for example
