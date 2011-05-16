@@ -7,6 +7,7 @@ import datetime
 from storage import Storage
 from html import TAG
 from html import xmlescape
+from languages import lazyT
 import contrib.simplejson as simplejson
 import contrib.rss2 as rss2
 
@@ -19,6 +20,8 @@ def custom_json(o):
         return o.isoformat()[:19].replace('T',' ')
     elif isinstance(o, (int, long)):
         return int(o)
+    elif isinstance(o, lazyT):
+        return str(o)
     elif hasattr(o,'as_list') and callable(o.as_list):
         return o.as_list()
     elif hasattr(o,'as_dict') and callable(o.as_dict):

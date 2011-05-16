@@ -28,7 +28,7 @@ response.allowed_generic_extensions = ['*.*'] if request.is_local else []
 ## (more options discussed in gluon/tools.py)
 #########################################################################
 
-from gluon.tools import *
+from gluon.tools import Mail, Auth, Crud, Service, PluginManager, prettydate
 mail = Mail()                                  # mailer
 auth = Auth(db)                                # authentication/authorization
 crud = Crud(db)                                # for CRUD helpers using auth
