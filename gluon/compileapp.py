@@ -12,6 +12,8 @@ Functions required to execute app components
 FOR INTERNAL USE ONLY
 """
 
+import re
+import fnmatch
 import os
 import copy
 import random
@@ -94,7 +96,7 @@ class LoadFactory(object):
                  url=None):
         import globals
         target = target or 'c'+str(random.random())[2:]
-        request = self.environment['request']
+        request = self.environment['request']        
         if '.' in f:
             f, extension = f.split('.',1)
         if url or ajax:
@@ -444,21 +446,24 @@ def run_view_in(environment):
     folder = request.folder
     path = os.path.join(folder, 'compiled')
     badv = 'invalid view (%s)' % response.view
+    patterns = response.allowed_generic_extensions or []
+    regex = re.compile('|'.join(fnmatch.translate(r) for r in patterns))
+    allow_generic = regex.match(response.view)
     if not isinstance(response.view, str):
         ccode = parse_template(response.view, os.path.join(folder, 'views'),
                                context=environment)
         restricted(ccode, environment, 'file stream')
     elif os.path.exists(path):
-        x = response.view.replace('/', '_')
+        x = response.view.replace('/', '_')        
+        files = ['views_%s.pyc' % x]
+        if allowed_generic:
+            files.append('views_generic.%s.pyc' % request.extension)
+        # for backward compatibility
         if request.extension == 'html':
-            # for backward compatibility
-            files = ['views_%s.pyc' % x,
-                     'views_%s.pyc' % x[:-5],
-                     'views_generic.html.pyc',
-                     'views_generic.pyc']
-        elif response.allow_generic_views:
-            files = ['views_%s.pyc' % x,
-                     'views_generic.%s.pyc' % request.extension]
+            files.append('views_%s.pyc' % x[:-5])
+            if allowed_generic:
+                files.append('views_generic.pyc')
+        # end backward compatibility code
         for f in files:
             filename = os.path.join(path,f)
             if os.path.exists(filename):
@@ -470,11 +475,8 @@ def run_view_in(environment):
                    web2py_error=badv)
     else:
         filename = os.path.join(folder, 'views', response.view)
-        if not os.path.exists(filename):
-            if request.extension == 'html':
-                response.view = 'generic.html'
-            elif response.allow_generic_views:
-                response.view = 'generic.' + request.extension
+        if not os.path.exists(filename) and allow_generic:
+            response.view = 'generic.' + request.extension
             filename = os.path.join(folder, 'views', response.view)
         if not os.path.exists(filename):
             raise HTTP(404,
