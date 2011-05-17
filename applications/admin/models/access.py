@@ -72,7 +72,10 @@ if not session.authorized and not \
     else:
         query_string = ''
 
-    url = request.env.path_info + query_string
+    if request.env.web2py_original_uri:
+        url = request.env.web2py_original_uri
+    else:
+        url = request.env.path_info + query_string
     redirect(URL(request.application, 'default', 'index', vars=dict(send=url)))
 elif session.authorized and \
      request.controller == 'default' and \
