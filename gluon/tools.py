@@ -1544,6 +1544,7 @@ class Auth(object):
                 )
 
             self.user = user
+            callback(onaccept,None)
             session.flash = self.messages.logged_in
         if log and self.user:
             self.log_event(log % self.user)

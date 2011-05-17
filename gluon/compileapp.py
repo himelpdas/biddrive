@@ -446,11 +446,11 @@ def run_view_in(environment):
     folder = request.folder
     path = os.path.join(folder, 'compiled')
     badv = 'invalid view (%s)' % response.view
-    patterns = response.allowed_generic_extensions or []
+    patterns = response.generic_patterns or []
     regex = re.compile('|'.join(fnmatch.translate(r) for r in patterns))
-    allow_generic = regex.match('%s/%s.%s' % (request.controller,
-                                              request.function,
-                                              request.extension))
+    allow_generic = regex.search('%s/%s.%s' % (request.controller,
+                                               request.function,
+                                               request.extension))
     if not isinstance(response.view, str):
         ccode = parse_template(response.view, os.path.join(folder, 'views'),
                                context=environment)
