@@ -458,12 +458,12 @@ def run_view_in(environment):
     elif os.path.exists(path):
         x = response.view.replace('/', '_')        
         files = ['views_%s.pyc' % x]
-        if allowed_generic:
+        if allow_generic:
             files.append('views_generic.%s.pyc' % request.extension)
         # for backward compatibility
         if request.extension == 'html':
             files.append('views_%s.pyc' % x[:-5])
-            if allowed_generic:
+            if allow_generic:
                 files.append('views_generic.pyc')
         # end backward compatibility code
         for f in files:
