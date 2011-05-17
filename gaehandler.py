@@ -86,6 +86,12 @@ def wsgiapp(env, res):
         res('200 OK',[('Content-Type','text/plain')])
         return ['']
     env['PATH_INFO'] = env['PATH_INFO'].encode('utf8')
+
+    #this deals with a problem where GAE development server seems to forget
+    # the path between requests
+    if global_settings.web2py_runtime == 'gae:development':
+        gluon.admin.create_missing_folders()
+
     return gluon.main.wsgibase(env, res)
 
 
