@@ -16,15 +16,21 @@ Thanks to
     * and many others who have contributed to current and previous versions
 
 This file contains the DAL support for many relational databases,
-including SQLite, MySQL, Postgres, Oracle, MS SQL, DB2, Interbase, Ingres
-
-Completely refactored by MDP on Dec, 2010
-
-TODO:
-- create more functions in adapters to abstract more
-- fix insert, create, migrate
-- move startswith, endswith, contains into adapters
-- handle _lastsql (where?)
+including:
+- SQLite
+- MySQL
+- Postgres
+- Oracle
+- MS SQL
+- DB2
+- Interbase
+- Ingres
+- SapDB (experimental)
+- Cubrid (experimental)
+- CouchDB (experimental)
+- MongoDB (in progress)
+- Google:nosql
+- Google:sql
 
 Example of usage:
 
@@ -250,6 +256,13 @@ try:
     logger.warning('SAPDB support is experimental')
 except ImportError:
     logger.debug('no sapdb driver')
+
+try:
+    import cubriddb
+    drivers.append('Cubrid')
+    logger.warning('Cubrid support is experimental')
+except ImportError:
+    logger.debug('no cubriddb driver')
 
 try:
     from com.ziclix.python.sql import zxJDBC
@@ -2567,6 +2580,47 @@ class SAPDBAdapter(BaseAdapter):
         self.execute("select %s.NEXTVAL from dual" % table._sequence_name)
         return int(self.cursor.fetchone()[0])
 
+class CubridAdapter(MySQLAdapter):
+
+    driver = globals().get('cubriddb',None)
+
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x, driver_args={},
+                 adapter_args={}):
+        self.db = db
+        self.dbengine = "cubrid"
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        uri = uri.split('://')[1]
+        m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
+        if not m:
+            raise SyntaxError, \
+                "Invalid URI string in DAL: %s" % self.uri
+        user = credential_decoder(m.group('user'))
+        if not user:
+            raise SyntaxError, 'User required'
+        password = credential_decoder(m.group('password'))
+        if not password:
+            password = ''
+        host = m.group('host')
+        if not host:
+            raise SyntaxError, 'Host name required'
+        db = m.group('db')
+        if not db:
+            raise SyntaxError, 'Database name required'
+        port = int(m.group('port') or '30000')
+        charset = m.group('charset') or 'utf8'
+        user=credential_decoder(user),
+        passwd=credential_decoder(password),
+        def connect(host,port,db,user,passwd,driver_args=driver_args):
+            return self.driver.connect(host,port,db,user,passwd,**driver_args)
+        self.pool_connection(connect)
+        self.cursor = self.connection.cursor()
+        self.execute('SET FOREIGN_KEY_CHECKS=1;')
+        self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
 
 
 ######## GAE MySQL ##########
@@ -3462,6 +3516,7 @@ ADAPTERS = {
     'ingres': IngresAdapter,
     'ingresu': IngresUnicodeAdapter,
     'sapdb': SAPDBAdapter,
+    'cubrid': CubridAdapter,
     'jdbc:sqlite': JDBCSQLiteAdapter,
     'jdbc:sqlite:memory': JDBCSQLiteAdapter,
     'jdbc:postgres': JDBCPostgreSQLAdapter,
