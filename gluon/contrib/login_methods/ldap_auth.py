@@ -9,7 +9,7 @@ except Exception, e:
 
 def ldap_auth(server='ldap', port=None,
             base_dn='ou=users,dc=domain,dc=com',
-            mode='uid', secure=False, cert_path=None, bind_dn=None, bind_pw=None, filterstr='(objectClass=*)'):
+            mode='uid', secure=False, cert_path=None, bind_dn=None, bind_pw=None, filterstr='objectClass=*'):
     """
     to use ldap login with MS Active Directory::
 
