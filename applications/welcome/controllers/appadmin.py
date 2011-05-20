@@ -206,7 +206,7 @@ def select():
             response.flash = T('data uploaded')
         except Exception, e:
             response.flash = DIV(T('unable to parse csv file'),PRE(str(e)))
-    if form.accepts(request.vars, formname=None):
+    elif form.accepts(request.vars, formname=None):
 #         regex = re.compile(request.args[0] + '\.(?P<table>\w+)\.id\>0')
         regex = re.compile(request.args[0] + '\.(?P<table>\w+)\..+')
 

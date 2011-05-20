@@ -4678,11 +4678,14 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
+            elif field.type in ('double','integer'):
+                value = None
             elif field.type.startswith('list:string'):
                 value = bar_decode_string(value)
             elif field.type.startswith('list:reference'):
                 ref_table = field.type[10:].strip()
-                value = [id_map[ref_table][int(v)] for v in bar_decode_string(value)]
+                value = [id_map[ref_table][int(v)] \
+                             for v in bar_decode_string(value)]
             elif field.type.startswith('list:'):
                 value = bar_decode_integer(value)
             elif id_map and field.type.startswith('reference'):
@@ -4712,7 +4715,8 @@ class Table(dict):
                     if colname == unique:
                         unique_idx = i
             else:
-                items = [fix(self[colnames[i]], line[i], id_map) for i in cols]
+                items = [fix(self[colnames[i]], line[i], id_map) \
+                             for i in cols if colnames[i] in self.fields]
                 # Validation. Check for duplicate of 'unique' &,
                 # if present, update instead of insert.
                 if not unique or unique not in colnames:
