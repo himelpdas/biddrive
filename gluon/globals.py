@@ -122,6 +122,7 @@ class Response(Storage):
     def __init__(self):
         self.status = 200
         self.headers = Storage()
+        self.headers['X-Powered-By'] = 'web2py'
         self.body = cStringIO.StringIO()
         self.session_id = None
         self.cookies = Cookie.SimpleCookie()
