@@ -60,8 +60,7 @@ echo '<uwsgi>
         <script>wsgihandler</script> 
     </app> 
 </uwsgi>' >/etc/uwsgi-python/apps-available/web2py.xml 
-ln -s /etc/uwsgi-python/apps-available/web2py.xml /etc/uwsgi-python/ 
-apps-enabled/web2py.xml 
+ln -s /etc/uwsgi-python/apps-available/web2py.xml /etc/uwsgi-python/apps-enabled/web2py.xml 
 
 # Install Web2py 
 apt-get -y install unzip 
