@@ -63,7 +63,7 @@ def exec_environment(
         if os.path.isfile(pycfile):
             exec read_pyc(pycfile) in env
         else:
-            execfile(pyfile, env)
+            execfile(pyfile, env)            
     return Storage(env)
 
 
@@ -127,6 +127,8 @@ def env(
         except RestrictedError, e:
             sys.stderr.write(e.traceback+'\n')
             sys.exit(1)
+
+    environment['__name__'] = '__main__'
     return environment
 
 
