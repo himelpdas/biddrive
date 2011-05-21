@@ -19,7 +19,7 @@ import struct
 import decimal
 import unicodedata
 from cStringIO import StringIO
-from utils import simple_hash, smart_hash
+from utils import simple_hash, hmac_hash
 
 __all__ = [
     'CLEANUP',
@@ -2439,7 +2439,7 @@ class CRYPT(object):
 
     def __call__(self, value):
         if self.key:
-            return (smart_hash(value, self.key, self.digest_alg), None)
+            return (hmac_hash(value, self.key, self.digest_alg), None)
         else:
             return (simple_hash(value, self.digest_alg), None)
 

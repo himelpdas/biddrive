@@ -16,7 +16,6 @@ import time
 
 def md5_hash(text):
     """ Generate a md5 hash with the given text """
-
     return hashlib.md5(text).hexdigest()
 
 def simple_hash(text, digest_alg = 'md5'):
@@ -55,13 +54,13 @@ def get_digest(value):
     else:
         raise ValueError("Invalid digest algorithm")
 
-def smart_hash(value, key, digest_alg='md5', user=None):
+def hmac_hash(value, key, digest_alg='md5', salt=None):
     if ':' in key:
         digest_alg, key = key.split(':')
     digest_alg = get_digest(digest_alg)
     d = hmac.new(key,value,digest_alg)
-    if user:
-        d.digest(str(user))
+    if salt:
+        d.update(str(salt))
     return d.hexdigest()
 
 web2py_uuid_locker = thread.allocate_lock()
