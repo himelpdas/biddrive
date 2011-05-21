@@ -133,6 +133,7 @@ def URL(
     hmac_key=None,    
     hash_vars=True,
     salt=None,
+    user_signature=None,
     scheme=None,
     host=None,
     port=None,
@@ -217,9 +218,12 @@ def URL(
         if not isinstance(f, str):
             function = f.__name__
         elif '.' in f:
-            function, extension = f.split('.', 1)
+            function, extension = f.split('.',1)
         else:
             function = f
+    if not extension:
+        extension = 'html'
+    function = '%s.%s' % (function,extension)
 
     if not (application and controller and function):
         raise SyntaxError, 'not enough information to build the url'
@@ -238,10 +242,15 @@ def URL(
         for val in vals:
             list_vars.append((key, val))
 
+    if user_signature:
+        from globals import current
+        if current.session.auth:
+            hmac_key = current.session.auth.hmac_key
+
     if hmac_key:
         # generate an hmac signature of the vars & args so can later
         # verify the user hasn't messed with anything
-
+        
         h_args = '/%s/%s/%s%s' % (application, controller, function, other)
 
         # how many of the vars should we include in our hash?
@@ -262,8 +271,6 @@ def URL(
         vars['_signature'] = sig
         list_vars.append(('_signature', sig))
 
-    if extension:
-        function += '.' + extension
     if vars:
         other += '?%s' % urllib.urlencode(list_vars)
     if anchor:
@@ -276,7 +283,7 @@ def URL(
     return url
 
 
-def verifyURL(request, hmac_key, hash_vars=True, salt=None):
+def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=None):
     """
     Verifies that a request's args & vars have not been tampered with by the user
 
@@ -315,6 +322,15 @@ def verifyURL(request, hmac_key, hash_vars=True, salt=None):
     if not request.get_vars.has_key('_signature'):
         return False # no signature in the request URL
 
+    # check if user_signature requires
+    if user_signature:
+        from globals import current
+        if not current.session:
+            return False
+        hmac_key = current.session.auth.hmac_key
+    if not hmac_key:
+        return False
+
     # get our sig from request.get_vars for later comparison
     original_sig = request.get_vars._signature
 
@@ -328,9 +344,11 @@ def verifyURL(request, hmac_key, hash_vars=True, salt=None):
 
     # always include all of the args
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
-    h_args = '/%s/%s/%s%s' % (request.application,
-                              request.controller,
-                              request.function, other)
+    h_args = '/%s/%s/%s.%s%s' % (request.application,
+                                 request.controller,
+                                 request.function, 
+                                 request.extension,
+                                 other)
 
     # but only include those vars specified (allows more flexibility for use with
     # forms or ajax)
@@ -358,6 +376,7 @@ def verifyURL(request, hmac_key, hash_vars=True, salt=None):
             return False
     # build the full message string with both args & vars
     message = h_args + '?' + urllib.urlencode(sorted(h_vars))
+
     # hash with the hmac_key provided
     sig = hmac_hash(message,str(hmac_key),salt=salt)
 

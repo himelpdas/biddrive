@@ -1358,7 +1358,8 @@ class Auth(object):
             if not user.registration_key and user[passfield] == password:
                 user = Storage(table_user._filter_fields(user, id=True))
                 session.auth = Storage(user=user, last_visit=request.now,
-                                       expiration=self.settings.expiration)
+                                       expiration=self.settings.expiration,
+                                       hmac_key = web2py_uuid())
                 self.user = user
                 return user
         return False
@@ -1533,6 +1534,7 @@ class Auth(object):
                     last_visit = request.now,
                     expiration = self.settings.long_expiration,
                     remember = True,
+                    hmac_key = web2py_uuid()
                 )
             else:
                 # user doesn't want to be logged in for longer
@@ -1541,6 +1543,7 @@ class Auth(object):
                     last_visit = request.now,
                     expiration = self.settings.expiration,
                     remember =  False,
+                    hmac_key = web2py_uuid()
                 )
 
             self.user = user
@@ -1688,7 +1691,8 @@ class Auth(object):
                 user = self.db(table_user[username] == form.vars[username]).select().first()
                 user = Storage(table_user._filter_fields(user, id=True))
                 session.auth = Storage(user=user, last_visit=request.now,
-                                   expiration=self.settings.expiration)
+                                       expiration=self.settings.expiration,
+                                       hmac_key = web2py_uuid())
                 self.user = user
                 session.flash = self.messages.logged_in
             if log:
@@ -2297,12 +2301,11 @@ class Auth(object):
                         next = URL(r=request,args=request.args,
                                    vars=request.get_vars)
                         current.session.flash = current.response.flash
-                        return call_or_redirect(self.settings.on_failed_authentication,
-                                                self.settings.login_url + \
-                                                    '?_next='+urllib.quote(next))
+                        return call_or_redirect(
+                            self.settings.on_failed_authentication,
+                            self.settings.login_url + '?_next='+urllib.quote(next))
                     else:
-                        current.session.flash = \
-                            self.messages.access_denied
+                        current.session.flash = self.messages.access_denied
                         return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
@@ -2333,10 +2336,10 @@ class Auth(object):
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
                     current.session.flash = current.response.flash
-                    return call_or_redirect(self.settings.on_failed_authentication,
-                                            self.settings.login_url + \
-                                                '?_next='+urllib.quote(next)
-                                            )
+                    return call_or_redirect(
+                        self.settings.on_failed_authentication,
+                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        )
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
@@ -2367,13 +2370,12 @@ class Auth(object):
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
                     current.session.flash = current.response.flash
-                    return call_or_redirect(self.settings.on_failed_authentication,
-                                            self.settings.login_url + \
-                                                '?_next='+urllib.quote(next)
-                                            )
+                    return call_or_redirect(
+                        self.settings.on_failed_authentication,
+                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        )
                 if not self.has_membership(group_id=group_id, role=role):
-                    current.session.flash = \
-                        self.messages.access_denied
+                    current.session.flash = self.messages.access_denied
                     return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
@@ -2382,6 +2384,7 @@ class Auth(object):
             return f
 
         return decorator
+
 
     def requires_permission(
         self,
@@ -2410,14 +2413,49 @@ class Auth(object):
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
                     current.session.flash = current.response.flash
-                    return call_or_redirect(self.settings.on_failed_authentication,
-                                            self.settings.login_url +
-                                            '?_next='+urllib.quote(next)
-                                            )
-
+                    return call_or_redirect(
+                        self.settings.on_failed_authentication,
+                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        )
                 if not self.has_permission(name, table_name, record_id):
-                    current.session.flash = \
-                        self.messages.access_denied
+                    current.session.flash = self.messages.access_denied
+                    return call_or_redirect(self.settings.on_failed_authorization)
+                return action(*a, **b)
+            f.__doc__ = action.__doc__
+            f.__name__ = action.__name__
+            f.__dict__.update(action.__dict__)
+            return f
+
+        return decorator
+
+    def requires_signature(self):
+        """
+        decorator that prevents access to action if not logged in or
+        if user logged in is not a member of group_id.
+        If role is provided instead of group_id then the
+        group_id is calculated.
+        """
+
+        def decorator(action):
+            def f(*a, **b):
+                if self.settings.allow_basic_login_only and not self.basic():
+                    if current.request.is_restful:
+                        raise HTTP(403,"Not authorized")
+                    return call_or_redirect(self.settings.on_failed_authorization)
+
+                if not self.basic() and not self.is_logged_in():
+                    if current.request.is_restful:
+                        raise HTTP(403,"Not authorized")
+                    request = current.request
+                    next = URL(r=request,args=request.args,
+                               vars=request.get_vars)
+                    current.session.flash = current.response.flash
+                    return call_or_redirect(
+                        self.settings.on_failed_authentication,
+                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        )
+                if not URL.verify(current.request,user_signature=True):
+                    current.session.flash = self.messages.access_denied
                     return call_or_redirect(self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
@@ -2715,9 +2753,6 @@ class Crud(object):
         self.messages.lock_keys = True
 
     def __call__(self):
-        if self.settings.hmac_key and \
-                not URL.verify(current.request,hmac_key=self.settings.hmac_key):
-            raise HTTP(403,"Not authorized")            
         args = current.request.args
         if len(args) < 1:
             raise HTTP(404)
@@ -2730,6 +2765,9 @@ class Crud(object):
             return self.create(table)
         elif args[0] == 'select':
             return self.select(table,linkto=self.url(args='read'))
+        elif args[0] == 'search':
+            form, rows = self.search(table,linkto=self.url(args='read'))
+            return DIV(form,SQLTABLE(rows))
         elif args[0] == 'read':
             return self.read(table, args(2))
         elif args[0] == 'update':

@@ -7,33 +7,58 @@ import re
 import sys
 import threading
 
-DEBUG = True
-
 # Install the new import function:
 def custom_import_install(web2py_path):
-    if DEBUG:
-        _Web2pyDateTrackerImporter(web2py_path)
-    else:
-        _Web2pyImporter(web2py_path)
+        global _web2py_importer
+        global _web2py_path
+        if _web2py_importer:
+            return  # Already installed
+        _web2py_path = web2py_path
+        _web2py_importer = _Web2pyImporter(web2py_path)
+        __builtin__.__import__ = _web2py_importer
 
+def is_tracking_changes():
+    """
+    @return: True: neo_importer is tracking changes made to Python source
+    files. False: neo_import does not reload Python modules.
+    """
+
+    global _is_tracking_changes
+    return _is_tracking_changes
+
+def track_changes(track=True):
+    """
+    Tell neo_importer to start/stop tracking changes made to Python modules.
+    @param track: True: Start tracking changes. False: Stop tracking changes.
+    """
+
+    global _is_tracking_changes
+    global _web2py_importer
+    global _web2py_date_tracker_importer
+    assert track is True or track is False, "Boolean expected."
+    if track == _is_tracking_changes:
+        return
+    if track:
+        if not _web2py_date_tracker_importer:
+            _web2py_date_tracker_importer = \
+              _Web2pyDateTrackerImporter(_web2py_path)
+        __builtin__.__import__ = _web2py_date_tracker_importer
+    else:
+        __builtin__.__import__ = _web2py_importer
+    _is_tracking_changes = track
+
+_STANDARD_PYTHON_IMPORTER = __builtin__.__import__ # Keep standard importer
+_web2py_importer = None # The standard web2py importer
+_web2py_date_tracker_importer = None # The web2py importer with date tracking
+_web2py_path = None # Absolute path of the web2py directory
+
+_is_tracking_changes = False # The tracking mode
 
 class _BaseImporter(object):
     """
     The base importer. Dispatch the import the call to the standard Python
     importer.
     """
-
-    _installed = False
-
-    def __init__(self):
-        """
-        Install this importer and gives access to the standard Python importer.
-        """
-
-        if not self._installed:
-            _BaseImporter.std_python_importer = __builtin__.__import__
-        __builtin__.__import__ = self
-        _BaseImporter._installed = True
 
     def begin(self):
         """
@@ -46,7 +71,8 @@ class _BaseImporter(object):
         The import method itself.
         """
 
-        return self.std_python_importer(name, globals, locals, fromlist, level)
+        return _STANDARD_PYTHON_IMPORTER(name, globals, locals, fromlist, 
+                                         level)
 
     def end(self):
         """
@@ -67,7 +93,8 @@ class _DateTrackerImporter(_BaseImporter):
         self._import_dates = {} # Import dates of the files of the modules
         # Avoid reloading cause by file modifications of reload:
         self._tl = threading.local()
-
+        self._tl._modules_loaded = None
+        
     def begin(self):
         self._tl._modules_loaded = set()
 

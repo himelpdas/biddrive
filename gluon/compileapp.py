@@ -93,7 +93,7 @@ class LoadFactory(object):
         self.environment = environment
     def __call__(self, c=None, f='index', args=[], vars={},
                  extension=None, target=None,ajax=False,ajax_trap=False,
-                 url=None):
+                 url=None,user_signature=False):
         import globals
         target = target or 'c'+str(random.random())[2:]
         request = self.environment['request']        
@@ -101,7 +101,8 @@ class LoadFactory(object):
             f, extension = f.split('.',1)
         if url or ajax:
             url = url or html.URL(request.application, c, f, r=request,
-                                  args=args, vars=vars, extension=extension)
+                                  args=args, vars=vars, extension=extension,
+                                  user_signature=user_signature)
             script = html.SCRIPT('web2py_component("%s","%s")' % (url, target),
                                  _type="text/javascript")
             return html.TAG[''](script, html.DIV('loading...', _id=target))
@@ -139,7 +140,8 @@ class LoadFactory(object):
             js = None
             if ajax_trap:
                 link = html.URL(request.application, c, f, r=request,
-                                args=args, vars=vars, extension=extension),
+                                args=args, vars=vars, extension=extension,
+                                user_signature=user_signature),
                 js = "web2py_trap_form('%s','%s');" % (link, target)
             # not sure about this
             # for (name,value) in other_response.headers:

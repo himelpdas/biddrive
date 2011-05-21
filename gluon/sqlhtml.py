@@ -1290,6 +1290,8 @@ class SQLTABLE(TABLE):
         self.attributes = attributes
         self.sqlrows = sqlrows
         (components, row) = (self.components, [])
+        if not sqlrows:
+            return
         if not columns:
             columns = sqlrows.colnames
         if headers=='fieldname:capitalize':
