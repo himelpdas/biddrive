@@ -26,7 +26,7 @@ from contrib.markmin.markmin2html import render
 
 from storage import Storage
 from highlight import highlight
-from utils import web2py_uuid
+from utils import web2py_uuid, smart_hash
 
 import hmac
 import hashlib
@@ -256,7 +256,7 @@ def URL(
         # re-assembling the same way during hash authentication
         message = h_args + '?' + urllib.urlencode(sorted(h_vars))
 
-        sig = hmac.new(hmac_key,message, hashlib.sha1).hexdigest()
+        sig = smart_hash(message,hmac_key)
         # add the signature into vars
         vars['_signature'] = sig
         list_vars.append(('_signature', sig))
@@ -358,7 +358,7 @@ def verifyURL(request, hmac_key, hash_vars=True):
     # build the full message string with both args & vars
     message = h_args + '?' + urllib.urlencode(sorted(h_vars))
     # hash with the hmac_key provided
-    sig = hmac.new(str(hmac_key), message, hashlib.sha1).hexdigest()
+    sig = smart_hash(message,str(hmac_key))
 
     # put _signature back in get_vars just in case a second call to URL.verify is performed
     # (otherwise it'll immediately return false)

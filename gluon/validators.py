@@ -14,13 +14,12 @@ import re
 import datetime
 import time
 import cgi
-import hmac
 import urllib
 import struct
 import decimal
 import unicodedata
 from cStringIO import StringIO
-from utils import hash, get_digest
+from utils import simple_hash, smart_hash
 
 __all__ = [
     'CLEANUP',
@@ -2434,21 +2433,15 @@ class CRYPT(object):
     the name of a hashlib algorithm as a string or the algorithm itself.
     """
 
-    def __init__(self, key=None, digest_alg=None):
-        if key and not digest_alg:
-            if key.count(':')==1:
-                (digest_alg, key) = key.split(':')
-        if not digest_alg:
-            digest_alg = 'md5' # for backward compatibility
+    def __init__(self, key=None, digest_alg='md5'):
         self.key = key
         self.digest_alg = digest_alg
 
     def __call__(self, value):
         if self.key:
-            alg = get_digest(self.digest_alg)
-            return (hmac.new(self.key, value, alg).hexdigest(), None)
+            return (smart_hash(value, self.key, self.digest_alg), None)
         else:
-            return (hash(value, self.digest_alg), None)
+            return (simple_hash(value, self.digest_alg), None)
 
 
 class IS_STRONG(object):

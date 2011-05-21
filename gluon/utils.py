@@ -8,6 +8,7 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 
 import hashlib
+import hmac
 import uuid
 import random
 import thread
@@ -18,13 +19,14 @@ def md5_hash(text):
 
     return hashlib.md5(text).hexdigest()
 
-
-def hash(text, digest_alg = 'md5'):
+def simple_hash(text, digest_alg = 'md5'):
     """
     Generates hash with the given text using the specified
     digest hashing algorithm
     """
-    if not isinstance(digest_alg,str):
+    if not digest_alg:
+        raise RuntimeError, "simple_hash with digest_alg=None"
+    elif not isinstance(digest_alg,str):
         h = digest_alg(text)
     else:
         h = hashlib.new(digest_alg)
@@ -52,6 +54,15 @@ def get_digest(value):
         return hashlib.sha512
     else:
         raise ValueError("Invalid digest algorithm")
+
+def smart_hash(value, key, digest_alg='md5', user=None):
+    if ':' in key:
+        digest_alg, key = key.split(':')
+    digest_alg = get_digest(digest_alg)
+    d = hmac.new(key,value,digest_alg)
+    if user:
+        d.digest(str(user))
+    return d.hexdigest()
 
 web2py_uuid_locker = thread.allocate_lock()
 node_id = uuid.getnode()

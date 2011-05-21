@@ -2697,6 +2697,7 @@ class Crud(object):
         self.settings.formstyle = 'table3cols'
         self.settings.hideerror = False
         self.settings.detect_record_change = True
+        self.settings.hmac_key = None
         self.settings.lock_keys = True
 
         self.messages = Messages(current.T)
@@ -2714,22 +2715,27 @@ class Crud(object):
         self.messages.lock_keys = True
 
     def __call__(self):
-
+        if self.settings.hmac_key and \
+                not URL.verify(current.request,hmac_key=self.settings.hmac_key):
+            raise HTTP(403,"Not authorized")            
         args = current.request.args
         if len(args) < 1:
-            redirect(self.url(args='tables'))
+            raise HTTP(404)
         elif args[0] == 'tables':
             return self.tables()
-        elif args[0] == 'create':
-            return self.create(args(1))
+        elif len(args) > 1 and not args(1) in self.db.tables:
+            raise HTTP(404)
+        table = self.db[args(1)]
+        if args[0] == 'create':
+            return self.create(table)
         elif args[0] == 'select':
-            return self.select(args(1),linkto=self.url(args='read'))
+            return self.select(table,linkto=self.url(args='read'))
         elif args[0] == 'read':
-            return self.read(args(1), args(2))
+            return self.read(table, args(2))
         elif args[0] == 'update':
-            return self.update(args(1), args(2))
+            return self.update(table, args(2))
         elif args[0] == 'delete':
-            return self.delete(args(1), args(2))
+            return self.delete(table, args(2))
         else:
             raise HTTP(404)
 
