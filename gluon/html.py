@@ -218,12 +218,11 @@ def URL(
         if not isinstance(f, str):
             function = f.__name__
         elif '.' in f:
-            function, extension = f.split('.',1)
+            function, extension = f.split('.', 1)
         else:
             function = f
-    if not extension:
-        extension = 'html'
-    function = '%s.%s' % (function,extension)
+
+    function2 = '%s.%s' % (function,extension or 'html')
 
     if not (application and controller and function):
         raise SyntaxError, 'not enough information to build the url'
@@ -251,7 +250,7 @@ def URL(
         # generate an hmac signature of the vars & args so can later
         # verify the user hasn't messed with anything
         
-        h_args = '/%s/%s/%s%s' % (application, controller, function, other)
+        h_args = '/%s/%s/%s%s' % (application, controller, function2, other)
 
         # how many of the vars should we include in our hash?
         if hash_vars is True:       # include them all
@@ -275,6 +274,8 @@ def URL(
         other += '?%s' % urllib.urlencode(list_vars)
     if anchor:
         other += '#' + urllib.quote(str(anchor))
+    if extension:
+        function += '.' + extension
 
     if regex_crlf.search(''.join([application, controller, function, other])):
         raise SyntaxError, 'CRLF Injection Detected'
