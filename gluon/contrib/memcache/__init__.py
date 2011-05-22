@@ -15,9 +15,11 @@ locker = thread.allocate_lock()
 
 def MemcacheClient(*a, **b):
     locker.acquire()
-    if not hasattr(MemcacheClient, '__mc_instance'):
-        MemcacheClient.__mc_instance = _MemcacheClient(*a, **b)
-    locker.release()
+    try:
+        if not hasattr(MemcacheClient, '__mc_instance'):
+            MemcacheClient.__mc_instance = _MemcacheClient(*a, **b)
+    finally:
+        locker.release()
     return MemcacheClient.__mc_instance
 
 class _MemcacheClient(Client):
