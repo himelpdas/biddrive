@@ -1,3 +1,11 @@
+## INSTALLATION INSTRUCTION - IMPORTANT
+
+To start web2py there is NO NEED to install it. Just unzip and do:
+
+> python web2py.py
+
+Thats is it!!!
+
 ## web2py file structure
 
 start web2py with:
