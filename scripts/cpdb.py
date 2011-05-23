@@ -17,7 +17,8 @@ def main():
     print 'creating tables...'
     for table in db:
         other_db.define_table(table._tablename,*[field for field in table])
-        other_db[table._tablename].truncate()
+        # uncomment to erase all previous records
+        # other_db[table._tablename].truncate()
     print 'exporting data...'
     db.export_to_csv_file(open('tmp.sql','wb'))
     print 'importing data...'
