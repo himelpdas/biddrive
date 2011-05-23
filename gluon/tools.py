@@ -819,7 +819,7 @@ class Auth(object):
 
         # ## what happens after registration?
 
-        self.settings.cas = True
+        self.settings.cas_domains = [request.env.http_host] 
         self.settings.hideerror = False
         self.settings.actions_disabled = []
         self.settings.reset_password_requires_verification = False
@@ -1248,7 +1248,7 @@ class Auth(object):
             table.description.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
         self.settings.table_event = db[self.settings.table_event_name]
         now = current.request.now
-        if self.settings.cas:
+        if self.settings.cas_domains:
             if not self.settings.table_cas_name in db.tables:
                 table  = db.define_table(
                     self.settings.table_cas_name,
@@ -1373,19 +1373,27 @@ class Auth(object):
         ):
         request, session = current.request, current.session
         db, table = self.db, self.settings.table_cas
-        if self.is_logged_in():
-            row = table(url=request.vars.service,user_id=self.user.id)
+        session._cas_service = request.vars.service or session._cas_service
+        if not request.env.http_host in self.settings.cas_domains or \
+                not session._cas_service:
+            raise HTTP(403,'not authorized')
+        def allow_access():
+            row = table(url=session._cas_service,user_id=self.user.id)
             if row:
                 row.update_record(created_on=request.now)
-                redirect(request.vars.service+"?ticket="+row.uuid)
-        session.cas_service = request.vars.service
+                uuid = row.uuid
+            else:
+                uuid = web2py_uuid()
+                table.insert(url=session._cas_service, user_id=self.user.id, 
+                             uuid=uuid, created_on=request.now)
+            url = session._cas_service
+            del session._cas_service
+            redirect(url+"?ticket="+uuid)
+        if self.is_logged_in():
+            allow_access()
         def cas_onaccept(form, onaccept=onaccept):
             if onaccept!=DEFAULT: onaccept(form)
-            db(table.url==session.cas_service).delete()
-            uuid = web2py_uuid()
-            table.insert(url=session.cas_service, uuid=uuid,
-                         user_id=self.user.id, created_on=request.now)
-            redirect(session.cas_service+"?ticket="+uuid)
+            allow_access()
         return self.login(next,onvalidation,cas_onaccept,log)
 
     def cas_check(self):
