@@ -9,6 +9,8 @@ License: GPL v2
 Tinkered by Szabolcs Gyuris < szimszo n @ o regpreshaz dot eu>
 """
 
+from gluon import current, redirect
+
 class CasAuth( object ):
     """
     Login will be done via Web2py's CAS application, instead of web2py's
@@ -19,9 +21,8 @@ class CasAuth( object ):
         from gluon.contrib.login_methods.cas_auth import CasAuth
         auth.define_tables(username=True)
         auth.settings.login_form=CasAuth(
-            globals(),
-            urlbase = "https://web2py.com/cas/cas",
-                 actions=['login','check','logout'])
+            urlbase = "https://[your CAS provider]/app/default/user",
+                 actions=['cas_login','cas_check','logout'])
 
     where urlbase is the actual CAS server url without the login,logout...
     Enjoy.
@@ -29,7 +30,6 @@ class CasAuth( object ):
     ###UPDATE###
     if you want to connect to a CAS version 2 JASIG Server use this:
         auth.settings.login_form=CasAuth(
-            globals(),
             urlbase = "https://[Your CAS server]/cas",
             actions = ['login','serviceValidate','logout'],
             casversion = 2,
@@ -39,7 +39,7 @@ class CasAuth( object ):
     user's username.
 
     """
-    def __init__(self, g,
+    def __init__(self, g=None, ### g for backward compatibility ###
                  urlbase = "https://web2py.com/cas/cas",
                  actions=['login','check','logout'],
                  maps=dict(username=lambda v:v[2],
@@ -52,25 +52,22 @@ class CasAuth( object ):
         self.cas_login_url="%s/%s"%(self.urlbase,actions[0])
         self.cas_check_url="%s/%s"%(self.urlbase,actions[1])
         self.cas_logout_url="%s/%s"%(self.urlbase,actions[2])
-        self.globals=g
-        self.request=self.globals['request']
-        self.session=self.globals['session']
         self.maps=maps
         self.casversion = casversion
         self.casusername = casusername
-        http_host=self.request.env.http_x_forwarded_for
-        if not http_host: http_host=self.request.env.http_host
-        self.cas_my_url='http://%s%s'%( http_host, self.request.env.path_info )
+        http_host=current.request.env.http_x_forwarded_for
+        if not http_host: http_host=current.request.env.http_host
+        self.cas_my_url='http://%s%s'%( http_host, current.request.env.path_info )
     def login_url( self, next = "/" ):
-        self.session.token=self._CAS_login()
+        current.session.token=self._CAS_login()
         return next
     def logout_url( self, next = "/" ):
-        self.session.token=None
-        self.session.auth=None
+        current.session.token=None
+        current.session.auth=None
         self._CAS_logout()
         return next
     def get_user( self ):
-        user=self.session.token
+        user=current.session.token
         if user:
             d = {'source':'web2py cas'}
             for key in self.maps:
@@ -83,10 +80,10 @@ class CasAuth( object ):
         returns a token on success, None on failed authentication
         """
         import urllib
-        self.ticket=self.request.vars.ticket
-        if not self.request.vars.ticket:
-            self.globals['redirect']( "%s?service=%s"% (self.cas_login_url,
-                                                        self.cas_my_url))
+        self.ticket=current.request.vars.ticket
+        if not current.request.vars.ticket:
+            redirect( "%s?service=%s"% (self.cas_login_url,
+                                        self.cas_my_url))
         else:
             url="%s?service=%s&ticket=%s" % (self.cas_check_url,
                                              self.cas_my_url,
@@ -110,6 +107,4 @@ class CasAuth( object ):
         redirects to the CAS logout page
         """
         import urllib
-        self.globals['redirect']( "%s?service=%s"%(
-                                                  self.cas_logout_url,
-                                                  self.cas_my_url ) )
+        redirect("%s?service=%s" % (self.cas_logout_url,self.cas_my_url))

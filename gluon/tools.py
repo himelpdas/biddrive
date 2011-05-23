@@ -201,20 +201,20 @@ class Mail(object):
             mail = Mail('example.com:25', 'me@example.com', 'me:password')
         """
 
-        self.settings = Settings()
-        self.settings.server = server
-        self.settings.sender = sender
-        self.settings.login = login
-        self.settings.tls = tls
-        self.settings.cipher_type = None
-        self.settings.sign = True
-        self.settings.sign_passphrase = None
-        self.settings.encrypt = True
-        self.settings.x509_sign_keyfile = None
-        self.settings.x509_sign_certfile = None
-        self.settings.x509_crypt_certfiles = None
-        self.settings.debug = False
-        self.settings.lock_keys = True
+        settings = self.settings = Settings()
+        settings.server = server
+        settings.sender = sender
+        settings.login = login
+        settings.tls = tls
+        settings.cipher_type = None
+        settings.sign = True
+        settings.sign_passphrase = None
+        settings.encrypt = True
+        settings.x509_sign_keyfile = None
+        settings.x509_sign_certfile = None
+        settings.x509_crypt_certfiles = None
+        settings.debug = False
+        settings.lock_keys = True
         self.result = {}
         self.error = None
 
@@ -789,7 +789,7 @@ class Auth(object):
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
     def __init__(self, environment=None, db=None, 
-                 controller='default'):
+                 controller='default', cas_provider = None):
         """
         auth=Auth(globals(), db)
 
@@ -813,192 +813,192 @@ class Auth(object):
         else:
             self.user = None
             session.auth = None
-        self.settings = Settings()
+        settings = self.settings = Settings()
 
         # ## what happens after login?
 
         # ## what happens after registration?
 
-        self.settings.cas_domains = [request.env.http_host] 
-        self.settings.hideerror = False
-        self.settings.actions_disabled = []
-        self.settings.reset_password_requires_verification = False
-        self.settings.registration_requires_verification = False
-        self.settings.registration_requires_approval = False
-        self.settings.alternate_requires_registration = False
-        self.settings.create_user_groups = True
+        settings.cas_domains = [request.env.http_host] 
+        settings.hideerror = False
+        settings.actions_disabled = []
+        settings.reset_password_requires_verification = False
+        settings.registration_requires_verification = False
+        settings.registration_requires_approval = False
+        settings.alternate_requires_registration = False
+        settings.create_user_groups = True
 
-        self.settings.controller = controller
-        self.settings.login_url = self.url('user', args='login')
-        self.settings.logged_url = self.url('user', args='profile')
-        self.settings.download_url = self.url('download')
-        self.settings.mailer = None
-        self.settings.login_captcha = None
-        self.settings.register_captcha = None
-        self.settings.retrieve_username_captcha = None
-        self.settings.retrieve_password_captcha = None
-        self.settings.captcha = None
-        self.settings.expiration = 3600            # one hour
-        self.settings.long_expiration = 3600*30*24 # one month
-        self.settings.remember_me_form = True
-        self.settings.allow_basic_login = False
-        self.settings.allow_basic_login_only = False
-        self.settings.on_failed_authorization = \
+        settings.controller = controller
+        settings.login_url = self.url('user', args='login')
+        settings.logged_url = self.url('user', args='profile')
+        settings.download_url = self.url('download')
+        settings.mailer = None
+        settings.login_captcha = None
+        settings.register_captcha = None
+        settings.retrieve_username_captcha = None
+        settings.retrieve_password_captcha = None
+        settings.captcha = None
+        settings.expiration = 3600            # one hour
+        settings.long_expiration = 3600*30*24 # one month
+        settings.remember_me_form = True
+        settings.allow_basic_login = False
+        settings.allow_basic_login_only = False
+        settings.on_failed_authorization = \
             self.url('user',args='not_authorized')
 
-        self.settings.on_failed_authentication = lambda x: redirect(x)
+        settings.on_failed_authentication = lambda x: redirect(x)
 
-        self.settings.formstyle = 'table3cols'
+        settings.formstyle = 'table3cols'
 
         # ## table names to be used
 
-        self.settings.password_field = 'password'
-        self.settings.table_user_name = 'auth_user'
-        self.settings.table_group_name = 'auth_group'
-        self.settings.table_membership_name = 'auth_membership'
-        self.settings.table_permission_name = 'auth_permission'
-        self.settings.table_event_name = 'auth_event'
-        self.settings.table_cas_name = 'auth_cas'
+        settings.password_field = 'password'
+        settings.table_user_name = 'auth_user'
+        settings.table_group_name = 'auth_group'
+        settings.table_membership_name = 'auth_membership'
+        settings.table_permission_name = 'auth_permission'
+        settings.table_event_name = 'auth_event'
+        settings.table_cas_name = 'auth_cas'
 
         # ## if none, they will be created
 
-        self.settings.table_user = None
-        self.settings.table_group = None
-        self.settings.table_membership = None
-        self.settings.table_permission = None
-        self.settings.table_event = None
-        self.settings.table_cas = None
+        settings.table_user = None
+        settings.table_group = None
+        settings.table_membership = None
+        settings.table_permission = None
+        settings.table_event = None
+        settings.table_cas = None
 
         # ##
 
-        self.settings.showid = False
+        settings.showid = False
 
         # ## these should be functions or lambdas
 
-        self.settings.login_next = self.url('index')
-        self.settings.login_onvalidation = []
-        self.settings.login_onaccept = []
-        self.settings.login_methods = [self]
-        self.settings.login_form = self
-        self.settings.login_email_validate = True
-        self.settings.login_userfield = None
+        settings.login_next = self.url('index')
+        settings.login_onvalidation = []
+        settings.login_onaccept = []
+        settings.login_methods = [self]
+        settings.login_form = self
+        settings.login_email_validate = True
+        settings.login_userfield = None
 
-        self.settings.logout_next = self.url('index')
-        self.settings.logout_onlogout = None
+        settings.logout_next = self.url('index')
+        settings.logout_onlogout = None
 
-        self.settings.register_next = self.url('index')
-        self.settings.register_onvalidation = []
-        self.settings.register_onaccept = []
-        self.settings.register_fields = None
+        settings.register_next = self.url('index')
+        settings.register_onvalidation = []
+        settings.register_onaccept = []
+        settings.register_fields = None
 
-        self.settings.verify_email_next = self.url('user', args='login')
-        self.settings.verify_email_onaccept = []
+        settings.verify_email_next = self.url('user', args='login')
+        settings.verify_email_onaccept = []
 
-        self.settings.profile_next = self.url('index')
-        self.settings.profile_onvalidation = []
-        self.settings.profile_onaccept = []
-        self.settings.profile_fields = None
-        self.settings.retrieve_username_next = self.url('index')
-        self.settings.retrieve_password_next = self.url('index')
-        self.settings.request_reset_password_next = self.url('user', args='login')
-        self.settings.reset_password_next = self.url('user', args='login')
+        settings.profile_next = self.url('index')
+        settings.profile_onvalidation = []
+        settings.profile_onaccept = []
+        settings.profile_fields = None
+        settings.retrieve_username_next = self.url('index')
+        settings.retrieve_password_next = self.url('index')
+        settings.request_reset_password_next = self.url('user', args='login')
+        settings.reset_password_next = self.url('user', args='login')
 
-        self.settings.change_password_next = self.url('index')
-        self.settings.change_password_onvalidation = []
-        self.settings.change_password_onaccept = []
+        settings.change_password_next = self.url('index')
+        settings.change_password_onvalidation = []
+        settings.change_password_onaccept = []
 
-        self.settings.retrieve_password_onvalidation = []
-        self.settings.reset_password_onvalidation = []
+        settings.retrieve_password_onvalidation = []
+        settings.reset_password_onvalidation = []
 
-        self.settings.hmac_key = None
-        self.settings.lock_keys = True
+        settings.hmac_key = None
+        settings.lock_keys = True
 
 
         # ## these are messages that can be customized
-        self.messages = Messages(current.T)
-        self.messages.submit_button = 'Submit'
-        self.messages.verify_password = 'Verify Password'
-        self.messages.delete_label = 'Check to delete:'
-        self.messages.function_disabled = 'Function disabled'
-        self.messages.access_denied = 'Insufficient privileges'
-        self.messages.registration_verifying = 'Registration needs verification'
-        self.messages.registration_pending = 'Registration is pending approval'
-        self.messages.login_disabled = 'Login disabled by administrator'
-        self.messages.logged_in = 'Logged in'
-        self.messages.email_sent = 'Email sent'
-        self.messages.unable_to_send_email = 'Unable to send email'
-        self.messages.email_verified = 'Email verified'
-        self.messages.logged_out = 'Logged out'
-        self.messages.registration_successful = 'Registration successful'
-        self.messages.invalid_email = 'Invalid email'
-        self.messages.unable_send_email = 'Unable to send email'
-        self.messages.invalid_login = 'Invalid login'
-        self.messages.invalid_user = 'Invalid user'
-        self.messages.invalid_password = 'Invalid password'
-        self.messages.is_empty = "Cannot be empty"
-        self.messages.mismatched_password = "Password fields don't match"
-        self.messages.verify_email = \
+        messages = self.messages = Messages(current.T)
+        messages.submit_button = 'Submit'
+        messages.verify_password = 'Verify Password'
+        messages.delete_label = 'Check to delete:'
+        messages.function_disabled = 'Function disabled'
+        messages.access_denied = 'Insufficient privileges'
+        messages.registration_verifying = 'Registration needs verification'
+        messages.registration_pending = 'Registration is pending approval'
+        messages.login_disabled = 'Login disabled by administrator'
+        messages.logged_in = 'Logged in'
+        messages.email_sent = 'Email sent'
+        messages.unable_to_send_email = 'Unable to send email'
+        messages.email_verified = 'Email verified'
+        messages.logged_out = 'Logged out'
+        messages.registration_successful = 'Registration successful'
+        messages.invalid_email = 'Invalid email'
+        messages.unable_send_email = 'Unable to send email'
+        messages.invalid_login = 'Invalid login'
+        messages.invalid_user = 'Invalid user'
+        messages.invalid_password = 'Invalid password'
+        messages.is_empty = "Cannot be empty"
+        messages.mismatched_password = "Password fields don't match"
+        messages.verify_email = \
             'Click on the link http://...verify_email/%(key)s to verify your email'
-        self.messages.verify_email_subject = 'Email verification'
-        self.messages.username_sent = 'Your username was emailed to you'
-        self.messages.new_password_sent = 'A new password was emailed to you'
-        self.messages.password_changed = 'Password changed'
-        self.messages.retrieve_username = 'Your username is: %(username)s'
-        self.messages.retrieve_username_subject = 'Username retrieve'
-        self.messages.retrieve_password = 'Your password is: %(password)s'
-        self.messages.retrieve_password_subject = 'Password retrieve'
-        self.messages.reset_password = \
+        messages.verify_email_subject = 'Email verification'
+        messages.username_sent = 'Your username was emailed to you'
+        messages.new_password_sent = 'A new password was emailed to you'
+        messages.password_changed = 'Password changed'
+        messages.retrieve_username = 'Your username is: %(username)s'
+        messages.retrieve_username_subject = 'Username retrieve'
+        messages.retrieve_password = 'Your password is: %(password)s'
+        messages.retrieve_password_subject = 'Password retrieve'
+        messages.reset_password = \
             'Click on the link http://...reset_password/%(key)s to reset your password'
-        self.messages.reset_password_subject = 'Password reset'
-        self.messages.invalid_reset_password = 'Invalid reset password'
-        self.messages.profile_updated = 'Profile updated'
-        self.messages.new_password = 'New password'
-        self.messages.old_password = 'Old password'
-        self.messages.group_description = \
+        messages.reset_password_subject = 'Password reset'
+        messages.invalid_reset_password = 'Invalid reset password'
+        messages.profile_updated = 'Profile updated'
+        messages.new_password = 'New password'
+        messages.old_password = 'Old password'
+        messages.group_description = \
             'Group uniquely assigned to user %(id)s'
 
-        self.messages.register_log = 'User %(id)s Registered'
-        self.messages.login_log = 'User %(id)s Logged-in'
-        self.messages.login_failed_log = None
-        self.messages.logout_log = 'User %(id)s Logged-out'
-        self.messages.profile_log = 'User %(id)s Profile updated'
-        self.messages.verify_email_log = 'User %(id)s Verification email sent'
-        self.messages.retrieve_username_log = 'User %(id)s Username retrieved'
-        self.messages.retrieve_password_log = 'User %(id)s Password retrieved'
-        self.messages.reset_password_log = 'User %(id)s Password reset'
-        self.messages.change_password_log = 'User %(id)s Password changed'
-        self.messages.add_group_log = 'Group %(group_id)s created'
-        self.messages.del_group_log = 'Group %(group_id)s deleted'
-        self.messages.add_membership_log = None
-        self.messages.del_membership_log = None
-        self.messages.has_membership_log = None
-        self.messages.add_permission_log = None
-        self.messages.del_permission_log = None
-        self.messages.has_permission_log = None
-        self.messages.impersonate_log = 'User %(id)s is impersonating %(other_id)s'
+        messages.register_log = 'User %(id)s Registered'
+        messages.login_log = 'User %(id)s Logged-in'
+        messages.login_failed_log = None
+        messages.logout_log = 'User %(id)s Logged-out'
+        messages.profile_log = 'User %(id)s Profile updated'
+        messages.verify_email_log = 'User %(id)s Verification email sent'
+        messages.retrieve_username_log = 'User %(id)s Username retrieved'
+        messages.retrieve_password_log = 'User %(id)s Password retrieved'
+        messages.reset_password_log = 'User %(id)s Password reset'
+        messages.change_password_log = 'User %(id)s Password changed'
+        messages.add_group_log = 'Group %(group_id)s created'
+        messages.del_group_log = 'Group %(group_id)s deleted'
+        messages.add_membership_log = None
+        messages.del_membership_log = None
+        messages.has_membership_log = None
+        messages.add_permission_log = None
+        messages.del_permission_log = None
+        messages.has_permission_log = None
+        messages.impersonate_log = 'User %(id)s is impersonating %(other_id)s'
 
-        self.messages.label_first_name = 'First name'
-        self.messages.label_last_name = 'Last name'
-        self.messages.label_username = 'Username'
-        self.messages.label_email = 'E-mail'
-        self.messages.label_password = 'Password'
-        self.messages.label_registration_key = 'Registration key'
-        self.messages.label_reset_password_key = 'Reset Password key'
-        self.messages.label_registration_id = 'Registration identifier'
-        self.messages.label_role = 'Role'
-        self.messages.label_description = 'Description'
-        self.messages.label_user_id = 'User ID'
-        self.messages.label_group_id = 'Group ID'
-        self.messages.label_name = 'Name'
-        self.messages.label_table_name = 'Table name'
-        self.messages.label_record_id = 'Record ID'
-        self.messages.label_time_stamp = 'Timestamp'
-        self.messages.label_client_ip = 'Client IP'
-        self.messages.label_origin = 'Origin'
-        self.messages.label_remember_me = "Remember me (for 30 days)"
-        self.messages['T'] = current.T
-        self.messages.verify_password_comment = 'please input your password again'
-        self.messages.lock_keys = True
+        messages.label_first_name = 'First name'
+        messages.label_last_name = 'Last name'
+        messages.label_username = 'Username'
+        messages.label_email = 'E-mail'
+        messages.label_password = 'Password'
+        messages.label_registration_key = 'Registration key'
+        messages.label_reset_password_key = 'Reset Password key'
+        messages.label_registration_id = 'Registration identifier'
+        messages.label_role = 'Role'
+        messages.label_description = 'Description'
+        messages.label_user_id = 'User ID'
+        messages.label_group_id = 'Group ID'
+        messages.label_name = 'Name'
+        messages.label_table_name = 'Table name'
+        messages.label_record_id = 'Record ID'
+        messages.label_time_stamp = 'Timestamp'
+        messages.label_client_ip = 'Client IP'
+        messages.label_origin = 'Origin'
+        messages.label_remember_me = "Remember me (for 30 days)"
+        messages['T'] = current.T
+        messages.verify_password_comment = 'please input your password again'
+        messages.lock_keys = True
 
         # for "remember me" option
         response = current.response
@@ -1010,6 +1010,13 @@ class Auth(object):
             #)
             # sets for appropriate cookie an appropriate expiration time
             response.cookies[response.session_id_name]["expires"] = auth.expiration
+        if cas_provider:
+            settings.actions_disabled = \
+                ['register','change_password','request_reset_password']
+            from gluon.contrib.login_methods.cas_auth import CasAuth            
+            settings.login_form=CasAuth(
+                urlbase = cas_provider,
+                actions=['cas_login','cas_check','logout'])
 
     def _get_user_id(self):
        "accessor for auth.user_id"
@@ -2753,47 +2760,47 @@ class Crud(object):
         elif not db:
             raise SyntaxError, "must pass db as first or second argument"
         self.environment = current
-        self.settings = Settings()
-        self.settings.auth = None
-        self.settings.logger = None
+        settings = self.settings = Settings()
+        settings.auth = None
+        settings.logger = None
 
-        self.settings.create_next = None
-        self.settings.update_next = None
-        self.settings.controller = controller
-        self.settings.delete_next = self.url()
-        self.settings.download_url = self.url('download')
-        self.settings.create_onvalidation = StorageList()
-        self.settings.update_onvalidation = StorageList()
-        self.settings.delete_onvalidation = StorageList()
-        self.settings.create_onaccept = StorageList()
-        self.settings.update_onaccept = StorageList()
-        self.settings.update_ondelete = StorageList()
-        self.settings.delete_onaccept = StorageList()
-        self.settings.update_deletable = True
-        self.settings.showid = False
-        self.settings.keepvalues = False
-        self.settings.create_captcha = None
-        self.settings.update_captcha = None
-        self.settings.captcha = None
-        self.settings.formstyle = 'table3cols'
-        self.settings.hideerror = False
-        self.settings.detect_record_change = True
-        self.settings.hmac_key = None
-        self.settings.lock_keys = True
+        settings.create_next = None
+        settings.update_next = None
+        settings.controller = controller
+        settings.delete_next = self.url()
+        settings.download_url = self.url('download')
+        settings.create_onvalidation = StorageList()
+        settings.update_onvalidation = StorageList()
+        settings.delete_onvalidation = StorageList()
+        settings.create_onaccept = StorageList()
+        settings.update_onaccept = StorageList()
+        settings.update_ondelete = StorageList()
+        settings.delete_onaccept = StorageList()
+        settings.update_deletable = True
+        settings.showid = False
+        settings.keepvalues = False
+        settings.create_captcha = None
+        settings.update_captcha = None
+        settings.captcha = None
+        settings.formstyle = 'table3cols'
+        settings.hideerror = False
+        settings.detect_record_change = True
+        settings.hmac_key = None
+        settings.lock_keys = True
 
-        self.messages = Messages(current.T)
-        self.messages.submit_button = 'Submit'
-        self.messages.delete_label = 'Check to delete:'
-        self.messages.record_created = 'Record Created'
-        self.messages.record_updated = 'Record Updated'
-        self.messages.record_deleted = 'Record Deleted'
+        messages = self.messages = Messages(current.T)
+        messages.submit_button = 'Submit'
+        messages.delete_label = 'Check to delete:'
+        messages.record_created = 'Record Created'
+        messages.record_updated = 'Record Updated'
+        messages.record_deleted = 'Record Deleted'
 
-        self.messages.update_log = 'Record %(id)s updated'
-        self.messages.create_log = 'Record %(id)s created'
-        self.messages.read_log = 'Record %(id)s read'
-        self.messages.delete_log = 'Record %(id)s deleted'
+        messages.update_log = 'Record %(id)s updated'
+        messages.create_log = 'Record %(id)s created'
+        messages.read_log = 'Record %(id)s read'
+        messages.delete_log = 'Record %(id)s deleted'
 
-        self.messages.lock_keys = True
+        messages.lock_keys = True
 
     def __call__(self):
         args = current.request.args
