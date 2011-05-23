@@ -3,9 +3,13 @@ Usage:
 
    python web2py.py -S app -M -N -R scripts/cpdb.py -A 'sqlite://other_db.sqlite'
 
-this will copy all data from current db to other_db (sqlite or not)
+It will copy all data from current db to other_db (sqlite or not)
 
+The -A argument can be any URI string for example
+
+   'mysql://username:password@localhost/dbname'
 """
+
 import sys, os
 
 def main():
