@@ -8,6 +8,9 @@ It will copy all data from current db to other_db (sqlite or not)
 The -A argument can be any URI string for example
 
    'mysql://username:password@localhost/dbname'
+
+The new records may have a different 'id' than the original but
+it will fix all references automatically.
 """
 
 import sys, os
