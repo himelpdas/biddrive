@@ -788,7 +788,8 @@ class Auth(object):
     def url(self, f=None, args=[], vars={}):
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
-    def __init__(self, environment=None, db=None, controller='default'):
+    def __init__(self, environment=None, db=None, 
+                 controller='default'):
         """
         auth=Auth(globals(), db)
 
@@ -818,6 +819,7 @@ class Auth(object):
 
         # ## what happens after registration?
 
+        self.settings.cas = True
         self.settings.hideerror = False
         self.settings.actions_disabled = []
         self.settings.reset_password_requires_verification = False
@@ -856,6 +858,7 @@ class Auth(object):
         self.settings.table_membership_name = 'auth_membership'
         self.settings.table_permission_name = 'auth_permission'
         self.settings.table_event_name = 'auth_event'
+        self.settings.table_cas_name = 'auth_cas'
 
         # ## if none, they will be created
 
@@ -864,6 +867,7 @@ class Auth(object):
         self.settings.table_membership = None
         self.settings.table_permission = None
         self.settings.table_event = None
+        self.settings.table_cas = None
 
         # ##
 
@@ -1032,32 +1036,12 @@ class Auth(object):
             redirect(self.url(args='login',vars=request.vars))
         elif args[0] in self.settings.actions_disabled:
             raise HTTP(404)
-        if args[0] == 'login':
-            return self.login()
-        elif args[0] == 'logout':
-            return self.logout()
-        elif args[0] == 'register':
-            return self.register()
-        elif args[0] == 'verify_email':
-            return self.verify_email()
-        elif args[0] == 'retrieve_username':
-            return self.retrieve_username()
-        elif args[0] == 'retrieve_password':
-            return self.retrieve_password()
-        elif args[0] == 'reset_password':
-            return self.reset_password()
-        elif args[0] == 'request_reset_password':
-            return self.request_reset_password()
-        elif args[0] == 'change_password':
-            return self.change_password()
-        elif args[0] == 'profile':
-            return self.profile()
-        elif args[0] == 'groups':
-            return self.groups()
-        elif args[0] == 'impersonate':
-            return self.impersonate()
-        elif args[0] == 'not_authorized':
-            return self.not_authorized()
+        if args[0] in ('login','logout','register','verify_email',
+                       'retrieve_username','retrieve_password',
+                       'request_reset_password','change_password',
+                       'profile','groups','impersonate','not_authorized',
+                       'cas_login','cas_check'):
+            return getattr(self,args[0])()
         else:
             raise HTTP(404)
 
@@ -1263,8 +1247,24 @@ class Auth(object):
             table.origin.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.description.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
         self.settings.table_event = db[self.settings.table_event_name]
-        def lazy_user (auth = self): return auth.user_id
         now = current.request.now
+        if self.settings.cas:
+            if not self.settings.table_cas_name in db.tables:
+                table  = db.define_table(
+                    self.settings.table_cas_name,
+                    Field('user_id', self.settings.table_user, default=None,
+                          label=self.messages.label_user_id),
+                    Field('created_on','datetime',default=now),
+                    Field('url',requires=IS_URL()),
+                    Field('uuid'),
+                    migrate=self.__get_migrate(
+                        self.settings.table_event_name, migrate),
+                    fake_migrate=fake_migrate)
+                table.user_id.requires = IS_IN_DB(db, '%s.id' % \
+                    self.settings.table_user_name,
+                    '%(first_name)s %(last_name)s (%(id)s)')
+            self.settings.table_cas = db[self.settings.table_cas_name]
+        def lazy_user (auth = self): return auth.user_id
         self.signature = db.Table(self.db,'auth_signature',
                                   Field('is_active','boolean',default=True),
                                   Field('created_on','datetime',default=now,
@@ -1363,6 +1363,41 @@ class Auth(object):
                 self.user = user
                 return user
         return False
+
+    def cas_login(
+        self,
+        next=DEFAULT,
+        onvalidation=DEFAULT,
+        onaccept=DEFAULT,
+        log=DEFAULT,
+        ):
+        request, session = current.request, current.session
+        db, table = self.db, self.settings.table_cas
+        if self.is_logged_in():
+            row = table(url=request.vars.service,user_id=self.user.id)
+            if row:
+                row.update_record(created_on=request.now)
+                redirect(request.vars.service+"?ticket="+row.uuid)
+        session.cas_service = request.vars.service
+        def cas_onaccept(form, onaccept=onaccept):
+            if onaccept!=DEFAULT: onaccept(form)
+            db(table.url==session.cas_service).delete()
+            uuid = web2py_uuid()
+            table.insert(url=session.cas_service, uuid=uuid,
+                         user_id=self.user.id, created_on=request.now)
+            redirect(session.cas_service+"?ticket="+uuid)
+        return self.login(next,onvalidation,cas_onaccept,log)
+
+    def cas_check(self):
+        request = current.request
+        db, table = self.db, self.settings.table_cas
+        current.response.headers['Content-Type']='text'        
+        ticket = table(uuid=request.vars.ticket)
+        if ticket: # and ticket.created_on>request.now-datetime.timedelta(60):
+            user = self.settings.table_user(ticket.user_id)
+            fullname = user.first_name+' '+user.last_name
+            raise HTTP(200,'yes\n%s:%s:%s'%(user.id,user.email,fullname))
+        raise HTTP(200,'no\n')
 
     def login(
         self,
