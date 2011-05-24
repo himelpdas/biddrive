@@ -16,6 +16,7 @@ import sys
 import os
 import re
 import time
+import copy
 import smtplib
 import urllib
 import urllib2
@@ -1285,7 +1286,7 @@ class Auth(object):
 
         if self.settings.cas_provider:
             self.settings.actions_disabled = \
-                ['register','change_password','request_reset_password']
+                ['profile','register','change_password','request_reset_password']
             from gluon.contrib.login_methods.cas_auth import CasAuth            
             maps = dict((name,lambda v,n=name:v.get(n,None)) for name in \
                             self.settings.table_user.fields if name!='id' \
@@ -1320,7 +1321,8 @@ class Auth(object):
             If the user doesn't yet exist, then they are created.
         """
         table_user = self.settings.table_user
-        if 'registration_id' in table_user.fields() and 'registration_id' in keys:
+        if 'registration_id' in table_user.fields() and \
+                'registration_id' in keys:
             username = 'registration_id'
         elif 'username' in table_user.fields():
             username = 'username'
@@ -1330,19 +1332,13 @@ class Auth(object):
             raise SyntaxError, "user must have username or email"
         passfield = self.settings.password_field
         user = self.db(table_user[username] == keys[username]).select().first()
-        if user:
-            if passfield in keys and keys[passfield]:
-                user.update_record(**{passfield: keys[passfield],
-                                      'registration_key': ''})
+        keys['registration_key']=''
+        if user: 
+            user.update_record(**keys)
         else:
-            d = {username: keys[username],
-               'first_name': keys.get('first_name', keys[username]),
-               'last_name': keys.get('last_name', ''),
-               'registration_key': ''}
-            keys = dict([(k, v) for (k, v) in keys.items() \
-                           if k in table_user.fields])
-            d.update(keys)
-            user_id = table_user.insert(**d)
+            if not 'first_name' in keys and 'first_name' in table_user.fields:
+                keys['first_name']=keys[username]
+            user_id = table_user.insert(**keys)
             user =  self.user = table_user[user_id]
             if self.settings.create_user_groups:
                 group_id = self.add_group("user_%s" % user_id)
