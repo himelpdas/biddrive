@@ -89,8 +89,15 @@ class CasAuth( object ):
                                              self.cas_my_url,
                                              self.ticket )
             data=urllib.urlopen( url ).read()
-            if self.casversion == 2:
+            if data.startswith('yes') or data.startswith('no'):
+                data = data.split('\n')
+                if data[0]=='yes':
+                    a,b,c = data[1].split( ':' )+[None,None]
+                    return dict(user=a,email=b,username=c)
+                return None
+            try:
                 import xml.dom.minidom as dom
+                import xml.parsers.expat as expat
                 dxml=dom.parseString(data)
                 envelop = dxml.getElementsByTagName("cas:authenticationSuccess")
                 if len(envelop)>0:
@@ -106,12 +113,9 @@ class CasAuth( object ):
                                     res[key]=[res[key]]
                                 res[key].append(value)
                     return res
-            else:
-                data = data.split('\n')
-                if data[0]=='yes':
-                    a,b,c = data[1].split( ':' )+[None,None]
-                    return dict(user=a,email=b,username=c)
-        return None
+            except ExpatError: pass
+            return None # fallback
+
 
     def _CAS_logout( self ):
         """
