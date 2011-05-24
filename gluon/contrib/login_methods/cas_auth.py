@@ -42,12 +42,12 @@ class CasAuth( object ):
     def __init__(self, g=None, ### g for backward compatibility ###
                  urlbase = "https://web2py.com/cas/cas",
                  actions=['login','check','logout'],
-                 maps=dict(username=lambda v:v[2],
-                           email=lambda v:v[1],
-                           user_id=lambda v:v[0]),
-                           casversion = 1,
-                           casusername = 'cas:user'
-              ):
+                 maps=dict(username=lambda v:v.get('username',v['user']),
+                           email=lambda v:v.get('email',None),
+                           user_id=lambda v:v['user']),
+                 casversion = 1,
+                 casusername = 'cas:user'
+                 ):
         self.urlbase=urlbase
         self.cas_login_url="%s/%s"%(self.urlbase,actions[0])
         self.cas_check_url="%s/%s"%(self.urlbase,actions[1])
@@ -91,14 +91,26 @@ class CasAuth( object ):
             data=urllib.urlopen( url ).read()
             if self.casversion == 2:
                 import xml.dom.minidom as dom
-                dxml=dom.parseString(data)                
-                if len(dxml.getElementsByTagName("cas:authenticationSuccess"))>0:
-                    if len(dxml.getElementsByTagName(self.casusername))>0:
-                        return ['','',dxml.getElementsByTagName(self.casusername)[0].childNodes[0].nodeValue]
+                dxml=dom.parseString(data)
+                envelop = dxml.getElementsByTagName("cas:authenticationSuccess")
+                if len(envelop)>0:
+                    res = dict()
+                    for x in envelop[0].childNodes:
+                        if x.nodeName.startswith('cas:'):
+                            key = x.nodeName[4:].encode('utf8')
+                            value = x.childNodes[0].nodeValue.encode('utf8')
+                            if not key in res:
+                                res[key]=value
+                            else:
+                                if not isinstance(res[key],list):
+                                    res[key]=[res[key]]
+                                res[key].append(value)
+                    return res
             else:
                 data = data.split('\n')
                 if data[0]=='yes':
-                    return data[1].split( ':' )
+                    a,b,c = data[1].split( ':' )+[None,None]
+                    return dict(user=a,email=b,username=c)
         return None
 
     def _CAS_logout( self ):

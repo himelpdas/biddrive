@@ -814,12 +814,13 @@ class Auth(object):
             self.user = None
             session.auth = None
         settings = self.settings = Settings()
-
+        
         # ## what happens after login?
 
         # ## what happens after registration?
 
         settings.cas_domains = [request.env.http_host] 
+        settings.cas_provider = cas_provider
         settings.hideerror = False
         settings.actions_disabled = []
         settings.reset_password_requires_verification = False
@@ -1010,14 +1011,7 @@ class Auth(object):
             #)
             # sets for appropriate cookie an appropriate expiration time
             response.cookies[response.session_id_name]["expires"] = auth.expiration
-        if cas_provider:
-            settings.actions_disabled = \
-                ['register','change_password','request_reset_password']
-            from gluon.contrib.login_methods.cas_auth import CasAuth            
-            settings.login_form=CasAuth(
-                casversion = 2,
-                urlbase = cas_provider,
-                actions=['login','validate','logout'])
+        
 
     def _get_user_id(self):
        "accessor for auth.user_id"
@@ -1289,6 +1283,22 @@ class Auth(object):
                                         writable=False,readable=False))
 
 
+        if self.settings.cas_provider:
+            self.settings.actions_disabled = \
+                ['register','change_password','request_reset_password']
+            from gluon.contrib.login_methods.cas_auth import CasAuth            
+            maps = dict((name,lambda v,n=name:v.get(n,None)) for name in \
+                            self.settings.table_user.fields if name!='id' \
+                            and self.settings.table_user[name].readable)
+            maps['registration_id'] = \
+                lambda v,p=self.settings.cas_provider:'%s/%s' % (p,v['user'])
+            self.settings.login_form = CasAuth(
+                casversion = 2,
+                urlbase = self.settings.cas_provider,
+                actions=['login','validate','logout'],
+                maps=maps)
+
+
     def log_event(self, description, origin='auth'):
         """
         usage::
@@ -1400,7 +1410,6 @@ class Auth(object):
                              uuid=uuid, created_on=request.now)
             url = session._cas_service
             del session._cas_service
-            print url, uuid
             redirect(url+"?ticket="+uuid)
         if self.is_logged_in():
             allow_access()
