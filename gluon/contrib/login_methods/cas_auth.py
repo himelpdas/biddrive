@@ -21,8 +21,8 @@ class CasAuth( object ):
         from gluon.contrib.login_methods.cas_auth import CasAuth
         auth.define_tables(username=True)
         auth.settings.login_form=CasAuth(
-            urlbase = "https://[your CAS provider]/app/default/user",
-                 actions=['cas_login','cas_check','logout'])
+            urlbase = "https://[your CAS provider]/app/default/user/cas",
+                       actions=['login','validate','logout'])
 
     where urlbase is the actual CAS server url without the login,logout...
     Enjoy.
@@ -91,7 +91,7 @@ class CasAuth( object ):
             data=urllib.urlopen( url ).read()
             if self.casversion == 2:
                 import xml.dom.minidom as dom
-                dxml=dom.parseString(data)
+                dxml=dom.parseString(data)                
                 if len(dxml.getElementsByTagName("cas:authenticationSuccess"))>0:
                     if len(dxml.getElementsByTagName(self.casusername))>0:
                         return ['','',dxml.getElementsByTagName(self.casusername)[0].childNodes[0].nodeValue]

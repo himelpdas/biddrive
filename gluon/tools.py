@@ -1015,8 +1015,9 @@ class Auth(object):
                 ['register','change_password','request_reset_password']
             from gluon.contrib.login_methods.cas_auth import CasAuth            
             settings.login_form=CasAuth(
+                casversion = 2,
                 urlbase = cas_provider,
-                actions=['cas_login','cas_check','logout'])
+                actions=['login','validate','logout'])
 
     def _get_user_id(self):
        "accessor for auth.user_id"
@@ -1046,9 +1047,12 @@ class Auth(object):
         if args[0] in ('login','logout','register','verify_email',
                        'retrieve_username','retrieve_password',
                        'request_reset_password','change_password',
-                       'profile','groups','impersonate','not_authorized',
-                       'cas_login','cas_check'):
+                       'profile','groups','impersonate','not_authorized'):
             return getattr(self,args[0])()
+        elif args[0]=='cas':
+            if args(1) == 'login': return self.cas_login(version=2)
+            if args(1) == 'validate': return self.cas_validate(version=2)
+            if args(1) == 'logout': return self.logout()
         else:
             raise HTTP(404)
 
@@ -1377,6 +1381,7 @@ class Auth(object):
         onvalidation=DEFAULT,
         onaccept=DEFAULT,
         log=DEFAULT,
+        version=2,
         ):
         request, session = current.request, current.session
         db, table = self.db, self.settings.table_cas
@@ -1395,6 +1400,7 @@ class Auth(object):
                              uuid=uuid, created_on=request.now)
             url = session._cas_service
             del session._cas_service
+            print url, uuid
             redirect(url+"?ticket="+uuid)
         if self.is_logged_in():
             allow_access()
@@ -1403,16 +1409,38 @@ class Auth(object):
             allow_access()
         return self.login(next,onvalidation,cas_onaccept,log)
 
-    def cas_check(self):
+
+    def cas_validate(self,version=2):
         request = current.request
         db, table = self.db, self.settings.table_cas
         current.response.headers['Content-Type']='text'        
         ticket = table(uuid=request.vars.ticket)
+        url = request.env.path_info.rsplit('/',1)[0]
         if ticket: # and ticket.created_on>request.now-datetime.timedelta(60):
             user = self.settings.table_user(ticket.user_id)
             fullname = user.first_name+' '+user.last_name
-            raise HTTP(200,'yes\n%s:%s:%s'%(user.id,user.email,fullname))
-        raise HTTP(200,'no\n')
+            if version==1:
+                raise HTTP(200,'yes\n%s:%s:%s'%(user.id,user.email,fullname))
+            # assume version 2
+            username = user.get('username',user.email)
+            raise HTTP(200,'<?xml version="1.0" encoding="UTF-8"?>\n'+\
+                           TAG['cas:serviceResponse'](
+                    TAG['cas:authenticationSuccess'](
+                        TAG['cas:user'](username),
+                        *[TAG['cas:'+field.name](user[field.name]) \
+                              for field in self.settings.table_user \
+                              if field.readable]),
+                    **{'_xmlns:cas':'http://www.yale.edu/tp/cas'}).xml())
+        if version==1:
+            raise HTTP(200,'no\n')
+        # assume version 2
+        raise HTTP(200,'<?xml version="1.0" encoding="UTF-8"?>\n'+\
+                       TAG['cas:serviceResponse'](
+                TAG['cas:authenticationFailure'](
+                    'Ticket %s not recognized' % ticket,
+                    _code='INVALID TICKET'),
+                **{'_xmlns:cas':'http://www.yale.edu/tp/cas'}).xml())
+
 
     def login(
         self,
