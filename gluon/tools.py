@@ -1041,8 +1041,9 @@ class Auth(object):
             raise HTTP(404)
         if args[0] in ('login','logout','register','verify_email',
                        'retrieve_username','retrieve_password',
-                       'request_reset_password','change_password',
-                       'profile','groups','impersonate','not_authorized'):
+                       'reset_password','request_reset_password',
+                       'change_password','profile','groups',
+                       'impersonate','not_authorized'):
             return getattr(self,args[0])()
         elif args[0]=='cas':
             if args(1) == 'login': return self.cas_login(version=2)
@@ -1119,7 +1120,7 @@ class Auth(object):
         db = self.db
         if not self.settings.table_user_name in db.tables:
             passfield = self.settings.password_field
-            if username:
+            if username or self.settings.cas_provider:
                 table = db.define_table(
                     self.settings.table_user_name,
                     Field('first_name', length=128, default='',
@@ -1597,7 +1598,7 @@ class Auth(object):
 
             if cas_user:
                 cas_user[passfield] = None
-                user = self.get_or_create_user(cas_user)
+                user = self.get_or_create_user(table_user._filter_fields(cas_user))
             elif hasattr(cas,'login_form'):
                 return cas.login_form()
             else:
