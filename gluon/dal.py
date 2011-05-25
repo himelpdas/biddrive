@@ -143,6 +143,7 @@ import decimal
 import struct
 import urllib
 import hashlib
+import uuid
 
 CALLABLETYPES = (types.LambdaType, types.FunctionType, types.BuiltinFunctionType,
                  types.MethodType, types.BuiltinMethodType)
@@ -3241,17 +3242,11 @@ try:
 except ImportError:
     logger.debug('no couchdb driver')
 
-def uuid2int(uuid):
-     n=0
-     for c in uuid: n=n*16+'0123456789abcdef'.find(c)
-     return n
+def uuid2int(uuidv):
+    return uuid.UUID(uuidv).int
 
 def int2uuid(n):
-     uuid=''
-     while(n):
-         n,i = divmod(n,16)
-         uuid = '0123456789abcdef'[i]+uuid
-     return uuid
+    return str(uuid.UUID(int=n))
 
 class CouchDBAdapter(NoSQLAdapter):
     uploads_in_blob = True
