@@ -513,11 +513,13 @@ class BaseAdapter(ConnectionPool):
                                 foreign_key='%s (%s)'%(rtablename, rfieldname),
                                 on_delete_action=field.ondelete)
                 else:
+                    # make a guess here for circular references
+                    id_fieldname = referenced in table._db and table._db[referenced]._id.name or 'id'
                     ftype = self.types[field.type[:9]]\
                         % dict(table_name=tablename,
                                field_name=field.name,
                                constraint_name=constraint_name,
-                               foreign_key=referenced + ('(%s)' % table._db[referenced].fields[0]),
+                               foreign_key=referenced + ('(%s)' % id_fieldname),
                                on_delete_action=field.ondelete)
             elif field.type.startswith('list:reference'):
                 ftype = self.types[field.type[:14]]
@@ -550,7 +552,7 @@ class BaseAdapter(ConnectionPool):
                 # because a default value changes
                 not_null = self.NOT_NULL(field.default,field.type)
                 ftype = ftype.replace('NOT NULL',not_null)
-            sql_fields_aux[field.name] = ftype
+            sql_fields_aux[field.name] = dict(sql=ftype)
 
             fields.append('%s %s' % (field.name, ftype))
         other = ';'
@@ -670,7 +672,7 @@ class BaseAdapter(ConnectionPool):
                 sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
                          (tablename, key, 
-                          sql_fields_aux[key].replace(', ', new_add))]
+                          sql_fields_aux[key]['sql'].replace(', ', new_add))]
                 metadata_change = True
             elif self.dbengine == 'sqlite':
                 if key in sql_fields:
@@ -691,7 +693,7 @@ class BaseAdapter(ConnectionPool):
                       sql_fields_old[key].startswith('INT NOT NULL,')):
                 sql_fields_current[key] = sql_fields[key]
                 t = tablename
-                tt = sql_fields_aux[key].replace(', ', new_add)
+                tt = sql_fields_aux[key]['sql'].replace(', ', new_add)
                 if not self.dbengine in ('firebird',):
                     query = ['ALTER TABLE %s ADD %s__tmp %s;' % (t, key, tt),
                              'UPDATE %s SET %s__tmp=%s;' % (t, key, key),
@@ -1406,7 +1408,11 @@ class BaseAdapter(ConnectionPool):
                     for (referee_table, referee_name) in \
                             table._referenced_by:
                         s = db[referee_table][referee_name]
-                        colset[referee_table] = Set(db, s == id)
+                        if not referee_table in colset:
+                            # for backward compatibility
+                            colset[referee_table] = Set(db, s == id)
+                        ### add new feature?
+                        ### colset[referee_table+'_by_'+refree_name] = Set(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
@@ -3836,6 +3842,7 @@ class DAL(dict):
         self._db_codec = db_codec
         self._lastsql = ''
         self._timings = []
+        self._pending_references = {}
         if not str(attempts).isdigit() or attempts < 0:
             attempts = 5
         if uri:
@@ -4463,6 +4470,7 @@ class Table(dict):
         return errors
 
     def _create_references(self):
+        pr = self._db._pending_references
         self._referenced_by = []
         for fieldname in self.fields:
             field=self[fieldname]
@@ -4473,13 +4481,10 @@ class Table(dict):
                 refs = ref.split('.')
                 rtablename = refs[0]
                 if not rtablename in self._db:
-                    raise SyntaxError, "Table: table '%s' does not exist" % rtablename
+                    pr[rtablename] = pr.get(rtablename,[]) + [field]
+                    continue
                 rtable = self._db[rtablename]
-                if self._tablename in rtable.fields:
-                    raise SyntaxError, \
-                        'Field: table %s has same name as a field in referenced table %s' \
-                        % (self._tablename, rtablename)
-                elif len(refs)==2:
+                if len(refs)==2:
                     rfieldname = refs[1]
                     if not hasattr(rtable,'_primarykey'):
                         raise SyntaxError,\
@@ -4489,6 +4494,8 @@ class Table(dict):
                             "invalid field '%s' for referenced table '%s' in table '%s'" \
                             % (rfieldname, rtablename, self._tablename)
                 rtable._referenced_by.append((self._tablename, field.name))
+        for referee in pr.get(self._tablename,[]):
+            self._referenced_by.append((referee._tablename,referee.name))
 
     def _filter_fields(self, record, id=False):
         return dict([(k, v) for (k, v) in record.items() if k
