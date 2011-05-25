@@ -540,7 +540,7 @@ class BaseAdapter(ConnectionPool):
                     ftype += ' UNIQUE'
 
             # add to list of fields
-            sql_fields[field.name] = ftype
+            sql_fields[field.name] = dict(type=str(field.type),sql=ftype)
 
             if field.default!=None:
                 # caveat: sql_fields and sql_fields_aux differ for default values
@@ -644,10 +644,15 @@ class BaseAdapter(ConnectionPool):
         fake_migrate=False,
         ):
         tablename = table._tablename
+        def fix(item):
+            k,v=item
+            if not isinstance(v,dict):
+                v=dict(type='unkown',sql=v)
+            return k.lower(),v
         ### make sure all field names are lower case to avoid conflicts
-        sql_fields = dict((k.lower(), v) for k, v in sql_fields.items())
-        sql_fields_old = dict((k.lower(), v) for k, v in sql_fields_old.items())
-        sql_fields_aux = dict((k.lower(), v) for k, v in sql_fields_aux.items())
+        sql_fields = dict(fix(v) for v in sql_fields.items())
+        sql_fields_old = dict(fix(v) for v in sql_fields_old.items())
+        sql_fields_aux = dict(fix(v) for v in sql_fields_aux.items())
 
         keys = sql_fields.keys()
         for key in sql_fields_old:
@@ -658,22 +663,28 @@ class BaseAdapter(ConnectionPool):
         else:
             new_add = ', ADD '
 
-        fields_changed = False
+        metadata_change = False        
         sql_fields_current = copy.copy(sql_fields_old)
-        for key in keys:
+        for key in keys:            
             if not key in sql_fields_old:
                 sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
-                         (tablename, key, sql_fields_aux[key].replace(', ', new_add))]
+                         (tablename, key, 
+                          sql_fields_aux[key].replace(', ', new_add))]
+                metadata_change = True
             elif self.dbengine == 'sqlite':
+                if key in sql_fields:
+                    sql_fields_current[key] = sql_fields[key]
                 query = None
+                metadata_change = True
             elif not key in sql_fields:
                 del sql_fields_current[key]
                 if not self.dbengine in ('firebird',):
                     query = ['ALTER TABLE %s DROP COLUMN %s;' % (tablename, key)]
                 else:
                     query = ['ALTER TABLE %s DROP %s;' % (tablename, key)]
-            elif sql_fields[key] != sql_fields_old[key] \
+                metadata_change = True
+            elif sql_fields[key]['sql'] != sql_fields_old[key]['sql'] \
                   and not isinstance(table[key].type, SQLCustomType) \
                   and not (table[key].type.startswith('reference') and \
                       sql_fields[key].startswith('INT,') and \
@@ -695,11 +706,14 @@ class BaseAdapter(ConnectionPool):
                              'ALTER TABLE %s ADD %s %s;' % (t, key, tt),
                              'UPDATE %s SET %s=%s__tmp;' % (t, key, key),
                              'ALTER TABLE %s DROP %s__tmp;' % (t, key)]
+                metadata_change = True
+            elif sql_fields[key]['type'] != sql_fields_old[key]['type']:
+                sql_fields_current[key] = sql_fields[key]
+                metadata_change = True
             else:
                 query = None
-
+            
             if query:
-                fields_changed = True
                 logfile.write('timestamp: %s\n'
                                % datetime.datetime.today().isoformat())
                 table._db['_lastsql'] = '\n'.join(query)
@@ -718,8 +732,13 @@ class BaseAdapter(ConnectionPool):
                             logfile.write('success!\n')
                     else:
                         logfile.write('faked!\n')
+            elif metadata_change:
+                tfile = self.file_open(table._dbt, 'w')
+                cPickle.dump(sql_fields_current, tfile)
+                self.file_close(tfile)
 
-        if fields_changed and not self.dbengine in ['mysql','oracle','firebird']:
+        if metadata_change and \
+                not (query and self.dbengine in ('mysql','oracle','firebird')):
             table._db.commit()
             tfile = self.file_open(table._dbt, 'w')
             cPickle.dump(sql_fields_current, tfile)
