@@ -40,7 +40,7 @@ try:
 except NameError:
     BaseException = Exception
 
-ProgramName = 'web2py Enterprise Web Framework'
+ProgramName = 'web2py Web Framework'
 ProgramAuthor = 'Created by Massimo Di Pierro, Copyright 2007-2011'
 versioninfo = open('VERSION', 'r')
 ProgramVersion = versioninfo.read().strip()

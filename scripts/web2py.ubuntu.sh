@@ -20,7 +20,7 @@
 # Author: Mark Moore <mark.moore@fonjax.com>
 
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
-DESC="Enterprise Web Framework"
+DESC="Web Framework"
 NAME=web2py
 PIDDIR=/var/run/$NAME
 PIDFILE=$PIDDIR/$NAME.pid
