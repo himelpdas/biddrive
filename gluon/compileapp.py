@@ -23,7 +23,7 @@ from restricted import restricted, compile2
 from fileutils import mktree, listdir
 from myregex import regex_expose
 from languages import translator
-from sql import BaseAdapter, SQLDB, SQLField, DAL, Field
+from dal import BaseAdapter, SQLDB, SQLField, DAL, Field
 from sqlhtml import SQLFORM, SQLTABLE
 from cache import Cache
 from globals import current
