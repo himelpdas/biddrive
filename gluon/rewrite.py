@@ -44,6 +44,7 @@ def _router_default():
             languages = None,
         root_static = ['favicon.ico', 'robots.txt'],
         domains = None,
+        exclusive_domain = False,
         map_hyphen = False,
         acfe_match = r'\w+$',              # legal app/ctlr/fcn/ext
         file_match = r'(\w+[-=./]?)+$',    # legal file (path) name
@@ -78,7 +79,7 @@ routers = None
 ROUTER_KEYS = set(('default_application', 'applications', 'default_controller', 'controllers',
     'default_function', 'functions', 'default_language', 'languages',
     'domain', 'domains', 'root_static', 'path_prefix',
-    'map_hyphen', 'map_static',
+    'exclusive_domain', 'map_hyphen', 'map_static',
     'acfe_match', 'file_match', 'args_match'))
 
 ROUTER_BASE_KEYS = set(('applications', 'default_application', 'domains', 'path_prefix'))
@@ -108,7 +109,7 @@ def url_in(request, environ):
 def url_out(request, env, application, controller, function, args, other, scheme, host, port):
     "assemble and rewrite outgoing URL"
     if routers:
-        acf = map_url_out(request, application, controller, function, args)
+        acf = map_url_out(request, env, application, controller, function, args, other, scheme, host, port)
         url = '%s%s' % (acf, other)
     else:
         url = '/%s/%s/%s%s' % (application, controller, function, other)
@@ -600,12 +601,13 @@ def regex_filter_out(url, e=None):
     return url
 
 
-def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=None, domain=(None,None), env=False):
+def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=None, 
+        domain=(None,None), env=False, scheme=None, host=None, port=None):
     "doctest/unittest interface to regex_filter_in() and regex_filter_out()"
     regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]*)(?P<uri>.*)')
     match = regex_url.match(url)
-    scheme = match.group('scheme').lower()
-    host = match.group('host').lower()
+    urlscheme = match.group('scheme').lower()
+    urlhost = match.group('host').lower()
     uri = match.group('uri')
     k = uri.find('?')
     if k < 0:
@@ -615,16 +617,16 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=N
     e = {
          'REMOTE_ADDR': remote,
          'REQUEST_METHOD': method,
-         'WSGI_URL_SCHEME': scheme,
-         'HTTP_HOST': host,
+         'WSGI_URL_SCHEME': urlscheme,
+         'HTTP_HOST': urlhost,
          'REQUEST_URI': uri,
          'PATH_INFO': path_info,
          'QUERY_STRING': query_string,
          #for filter_out request.env use lowercase
          'remote_addr': remote,
          'request_method': method,
-         'wsgi_url_scheme': scheme,
-         'http_host': host
+         'wsgi_url_scheme': urlscheme,
+         'http_host': urlhost
     }
 
     request = Storage()
@@ -652,7 +654,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=N
         f = items.pop(0)
         if not routers:
             return regex_filter_out(uri, e)
-        acf = map_url_out(request, a, c, f, items)
+        acf = map_url_out(request, None, a, c, f, items, None, scheme, host, port)
         if items:
             url = '%s/%s' % (acf, '/'.join(items))
             if items[-1] == '':
@@ -722,6 +724,7 @@ class MapUrlIn(object):
         self.languages = set()
         self.default_language = None
         self.map_hyphen = False
+        self.exclusive_domain = False
 
         path = self.env['PATH_INFO']
         self.query = self.env.get('QUERY_STRING', None)
@@ -813,6 +816,7 @@ class MapUrlIn(object):
         self.languages = self.router.languages
         self.default_language = self.router.default_language
         self.map_hyphen = self.router.map_hyphen
+        self.exclusive_domain = self.router.exclusive_domain
         self._acfe_match = self.router._acfe_match
         self._file_match = self.router._file_match
         self._args_match = self.router._args_match
@@ -965,24 +969,30 @@ class MapUrlIn(object):
 class MapUrlOut(object):
     "logic for mapping outgoing URLs"
 
-    def __init__(self, application, controller, function, args, request):
+    def __init__(self, request, env, application, controller, function, args, other, scheme, host, port):
         "initialize a map-out object"
         self.default_application = routers.BASE.default_application
         if application in routers:
             self.router = routers[application]
         else:
             self.router = routers.BASE
+        self.request = request
+        self.env = env
         self.application = application
         self.controller = controller
         self.function = function
         self.args = args
-        self.request = request
+        self.other = other
+        self.scheme = scheme
+        self.host = host
+        self.port = port
 
         self.applications = routers.BASE.applications
         self.controllers = self.router.controllers
         self.functions = self.router.functions
         self.languages = self.router.languages
         self.default_language = self.router.default_language
+        self.exclusive_domain = self.router.exclusive_domain
         self.map_hyphen = self.router.map_hyphen
         self.map_static = self.router.map_static
         self.path_prefix = routers.BASE.path_prefix
@@ -990,6 +1000,9 @@ class MapUrlOut(object):
         self.domain_application = request and self.request.env.domain_application
         self.domain_controller = request and self.request.env.domain_controller
         self.default_function = self.router.default_function
+
+        if (self.router.exclusive_domain and self.domain_application and self.domain_application != self.application and not self.host):
+            raise SyntaxError, 'cross-domain conflict: must specify host'
 
         lang = request and request.uri_language
         if lang and self.languages and lang in self.languages:
@@ -1136,7 +1149,7 @@ def map_url_in(request, env, app=False):
     map.update_request()
     return (None, map.env)
 
-def map_url_out(request, application, controller, function, args):
+def map_url_out(request, env, application, controller, function, args, other, scheme, host, port):
     '''
     supply /a/c/f (or /a/lang/c/f) portion of outgoing url
 
@@ -1158,11 +1171,11 @@ def map_url_out(request, application, controller, function, args):
         /da/c/f/args  => /c/f/args
         /da/dc/f/args => /f/args
 
-    We use [applications] and [controllers] to suppress ambiguous omissions.
+    We use [applications] and [controllers] and [functions] to suppress ambiguous omissions.
 
     We assume that language names do not collide with a/c/f names.
     '''
-    map = MapUrlOut(application, controller, function, args, request)
+    map = MapUrlOut(request, env, application, controller, function, args, other, scheme, host, port)
     return map.acf()
 
 def get_effective_router(appname):

@@ -380,7 +380,7 @@ class TestRouter(unittest.TestCase):
                     "domain6.com:443" : "app6s",
                 },
             ),
-            app1 =  dict( default_controller = 'c1',  default_function = 'f1',  controllers = ['c1'], ),
+            app1 =  dict( default_controller = 'c1',  default_function = 'f1',  controllers = ['c1'], exclusive_domain=True, ),
             app2a = dict( default_controller = 'c2a', default_function = 'f2a', controllers = ['c2a'], ),
             app2b = dict( default_controller = 'c2b', default_function = 'f2b', controllers = ['c2b'], ),
             app3 =  dict( controllers = ['c3a', 'c3b'], ),
@@ -429,6 +429,15 @@ class TestRouter(unittest.TestCase):
 
         self.assertEqual(filter_url('http://domain6.com'), '/app6/c6/f6')
         self.assertEqual(filter_url('https://domain6.com'), '/app6s/c6s/f6s')
+
+        self.assertEqual(filter_url('http://domain2.com/app3/c3a/f3', domain=('app2b',None), out=True), "/app3/c3a/f3")
+        self.assertRaises(SyntaxError, filter_url, 'http://domain1.com/app1/c1/f1', domain=('app2b',None), out=True)
+        try:
+            # 2.7+ only
+            self.assertRaisesRegexp(SyntaxError, 'cross-domain conflict', filter_url, 'http://domain1.com/app1/c1/f1', domain=('app2b',None), out=True)
+        except AttributeError:
+            pass
+        self.assertEqual(filter_url('http://domain1.com/app1/c1/f1', domain=('app2b',None), host='domain2.com', out=True), "/app1")
 
     def test_router_raise(self):
         '''
@@ -716,10 +725,10 @@ class TestRouter(unittest.TestCase):
             "/init/default/f ['arg1', 'arg2']")
 
         self.assertEqual(filter_url('http://domain.com/init/default/f', out=True), "/f")
-        self.assertEqual(map_url_out(None, 'init', 'default', 'f', None), "/f")
-        self.assertEqual(map_url_out(None, 'init', 'default', 'f', []), "/f")
-        self.assertEqual(map_url_out(None, 'init', 'default', 'f', ['arg1']), "/f")
-        self.assertEqual(map_url_out(None, 'init', 'default', 'f', ['arg1', '']), "/f")
+        self.assertEqual(map_url_out(None, None, 'init', 'default', 'f', None, None, None, None, None), "/f")
+        self.assertEqual(map_url_out(None, None, 'init', 'default', 'f', [], None, None, None, None), "/f")
+        self.assertEqual(map_url_out(None, None, 'init', 'default', 'f', ['arg1'], None, None, None, None), "/f")
+        self.assertEqual(map_url_out(None, None, 'init', 'default', 'f', ['arg1', ''], None, None, None, None), "/f")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=None)), "/f")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1'])), "/f/arg1")
         self.assertEqual(str(URL(a='init', c='default', f='f', args=['arg1', ''])), "/f/arg1//")

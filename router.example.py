@@ -53,6 +53,8 @@
 #       (mapped to the default application's static/ directory)
 #       Each default (including domain-mapped) application has its own root-static files.
 #  domain: the domain that maps to this application (alternative to using domains in the BASE router)
+#  exclusive_domain: If True (default is False), an exception is raised if an attempt is made to generate
+#                    an outgoing URL with a different application without providing an explicit host.
 #  map_hyphen: If True (default is False), hyphens in incoming /a/c/f fields are converted 
 #              to underscores, and back to hyphens in outgoing URLs.
 #              Language, args and the query string are not affected.
