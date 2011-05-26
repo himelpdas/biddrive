@@ -671,7 +671,7 @@ class BaseAdapter(ConnectionPool):
         else:
             new_add = ', ADD '
 
-        metadata_change = False        
+        query = metadata_change = False        
         sql_fields_current = copy.copy(sql_fields_old)
         for key in keys:            
             if not key in sql_fields_old:
