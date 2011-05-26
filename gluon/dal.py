@@ -1028,6 +1028,7 @@ class BaseAdapter(ConnectionPool):
                 new_fields.append(item)
         fields = new_fields
         tablenames = self.tables(query)
+        query = self.filter_precinct(query,tablenames)
         if not fields:
             for table in tablenames:
                 for field in self.db[table]:
@@ -1429,6 +1430,15 @@ class BaseAdapter(ConnectionPool):
                     pass
         return rowsobj
 
+    def filter_precinct(self,query,tablenames):
+        fieldname = self.db._request_precinct
+        for tablename in tablenames:
+            table = self.db[tablename]            
+            if fieldname in table:
+                default = table[fieldname].default
+                if default!=None:
+                    query = query&(table[fieldname]==default)
+        return query
 
 ###################################################################################
 # List of all the available adapters, they all extend BaseAdapter
@@ -3126,6 +3136,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
             query = fields[0].table.id>0
         else:
             raise SyntaxError, "Unable to determine a tablename"
+        query = self.filter_precinct(query,[tablename])
         tableobj = self.db[tablename]._tableobj
         items = tableobj.all()
         filters = self.expand(query)
@@ -3841,6 +3852,8 @@ class DAL(dict):
         self._lastsql = ''
         self._timings = []
         self._pending_references = {}
+        self._request_precinct = 'request_precinct'
+        self._common_fields = []
         if not str(attempts).isdigit() or attempts < 0:
             attempts = 5
         if uri:
@@ -4177,6 +4190,11 @@ def index():
             raise SyntaxError, 'table already defined: %s' % tablename
         elif self.check_reserved:
             self.check_reserved_keyword(tablename)
+
+        if self._common_fields:
+            common_field_names = [f.name for f in self._common_fields]
+            fields = [f for f in fields if not f.name in common_field_names] \
+                + [f for f in self._common_fields]
 
         t = self[tablename] = Table(self, tablename, *fields,
                                     **dict(primarykey=primarykey,
