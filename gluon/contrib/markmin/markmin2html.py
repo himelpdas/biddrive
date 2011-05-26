@@ -235,6 +235,7 @@ As shown in Ref.!`!`mdipierro`!`!:cite
 """
 
 META = 'META'
+LATEX = '<img src="http://chart.apis.google.com/chart?cht=tx&chl=%s" align="center"/>'
 regex_newlines = re.compile('(\n\r)|(\r\n)')
 regex_dd=re.compile('\$\$(?P<latex>.*?)\$\$')
 regex_code = re.compile('('+META+')|(``(?P<t>.*?)``(:(?P<c>\w+))?)',re.S)
@@ -419,8 +420,11 @@ def render(text,extra={},allowed={},sep='p'):
                 if code[-1:]=='\n': code=code[:-1]
                 html = extra[b](code)
             elif b=='cite':
-                html = '['+','.join('<a href="#%s" class="%s">%s</a>' % (d,b,d) \
-                                        for d in cgi.escape(code).split(','))+']'
+                html = '['+','.join('<a href="#%s" class="%s">%s</a>' \
+                      % (d,b,d) \
+                      for d in cgi.escape(code).split(','))+']'
+            elif b=='latex':
+                html = LATEX % code.replace('"','\"').replace('\n',' ')
             elif code[:1]=='\n' or code[-1:]=='\n':
                 if code[:1]=='\n': code=code[1:]
                 if code[-1:]=='\n': code=code[:-1]
