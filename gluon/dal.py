@@ -144,6 +144,7 @@ import struct
 import urllib
 import hashlib
 import uuid
+import glob
 
 CALLABLETYPES = (types.LambdaType, types.FunctionType, types.BuiltinFunctionType,
                  types.MethodType, types.BuiltinMethodType)
@@ -3886,10 +3887,10 @@ class DAL(dict):
         self._migrate_enabled = migrate_enabled
         self._fake_migrate_all = fake_migrate_all
 
-    def _import_tables(self,path):
+    def import_table_definitions(self,path):
         pattern = os.path.join(path,self._uri_hash+'_*.table')
         for filename in glob.glob(pattern):
-            tfile = self.file_open(filename, 'r')
+            tfile = self._adapter.file_open(filename, 'r')
             sql_fields = cPickle.load(tfile)
             name = filename[len(pattern)-7:-6]
             mf = [(value['sortable'],Field(key,type=value['type'])) \
