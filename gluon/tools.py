@@ -798,9 +798,10 @@ class Auth(object):
         - db has to be the database where to create tables for authentication
 
         """
-        self.db = db
+        ## next two lines for backward compatibility
         if not db and environment and isinstance(environment,DAL):
-            self.db = environment
+            db = environment
+        self.db = db
         self.environment = current
         request = current.request
         session = current.session
