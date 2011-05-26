@@ -671,9 +671,10 @@ class BaseAdapter(ConnectionPool):
         else:
             new_add = ', ADD '
 
-        query = metadata_change = False        
+        metadata_change = False        
         sql_fields_current = copy.copy(sql_fields_old)
         for key in keys:            
+            query = None
             if not key in sql_fields_old:
                 sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
@@ -683,7 +684,6 @@ class BaseAdapter(ConnectionPool):
             elif self.dbengine == 'sqlite':
                 if key in sql_fields:
                     sql_fields_current[key] = sql_fields[key]
-                query = None
                 metadata_change = True
             elif not key in sql_fields:
                 del sql_fields_current[key]
@@ -718,8 +718,6 @@ class BaseAdapter(ConnectionPool):
             elif sql_fields[key]['type'] != sql_fields_old[key]['type']:
                 sql_fields_current[key] = sql_fields[key]
                 metadata_change = True
-            else:
-                query = None
             
             if query:
                 logfile.write('timestamp: %s\n'
