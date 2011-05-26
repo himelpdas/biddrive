@@ -820,9 +820,10 @@ class Auth(object):
 
         # ## what happens after registration?
 
+        settings.hideerror = False
         settings.cas_domains = [request.env.http_host] 
         settings.cas_provider = cas_provider
-        settings.hideerror = False
+        settings.extra_fields = {}
         settings.actions_disabled = []
         settings.reset_password_requires_verification = False
         settings.registration_requires_verification = False
@@ -1005,14 +1006,29 @@ class Auth(object):
         # for "remember me" option
         response = current.response
         if auth  and  auth.remember: #when user wants to be logged in for longer
-            #import time
-            #t = time.strftime(
-            #    "%a, %d-%b-%Y %H:%M:%S %Z",
-            #    time.gmtime(time.time() + auth.expiration) # one month longer
-            #)
-            # sets for appropriate cookie an appropriate expiration time
-            response.cookies[response.session_id_name]["expires"] = auth.expiration
+            response.cookies[response.session_id_name]["expires"] = \
+                auth.expiration
         
+        def lazy_user (auth = self): return auth.user_id        
+        reference_user = 'reference %s' % settings.table_user_name
+        self.signature = db.Table(self.db,'auth_signature',
+                                  Field('is_active','boolean',default=True),
+                                  Field('created_on','datetime',
+                                        default=request.now,
+                                        writable=False,readable=False),
+                                  Field('created_by',
+                                        reference_user,
+                                        default=lazy_user,
+                                        writable=False,readable=False),
+                                  Field('modified_on','datetime',
+                                        update=request.now,default=request.now,
+                                        writable=False,readable=False),
+                                  Field('modified_by',
+                                        reference_user,
+                                        default=lazy_user,update=lazy_user,
+                                        writable=False,readable=False))
+
+
 
     def _get_user_id(self):
        "accessor for auth.user_id"
@@ -1118,11 +1134,12 @@ class Auth(object):
         """
 
         db = self.db
-        if not self.settings.table_user_name in db.tables:
-            passfield = self.settings.password_field
-            if username or self.settings.cas_provider:
+        settings = self.settings
+        if not settings.table_user_name in db.tables:
+            passfield = settings.password_field
+            if username or settings.cas_provider:                
                 table = db.define_table(
-                    self.settings.table_user_name,
+                    settings.table_user_name,
                     Field('first_name', length=128, default='',
                           label=self.messages.label_first_name),
                     Field('last_name', length=128, default='',
@@ -1142,14 +1159,16 @@ class Auth(object):
                     Field('registration_id', length=512,
                           writable=False, readable=False, default='',
                           label=self.messages.label_registration_id),
-                    migrate=\
-                        self.__get_migrate(self.settings.table_user_name, migrate),
-                    fake_migrate=fake_migrate,
-                    format='%(username)s')
+                    *settings.extra_fields.get(settings.table_user_name,[]),
+                    **dict(
+                        migrate=self.__get_migrate(settings.table_user_name,
+                                                   migrate),
+                        fake_migrate=fake_migrate,
+                        format='%(username)s'))
                 table.username.requires = IS_NOT_IN_DB(db, table.username)
             else:
                 table = db.define_table(
-                    self.settings.table_user_name,
+                    settings.table_user_name,
                     Field('first_name', length=128, default='',
                           label=self.messages.label_first_name),
                     Field('last_name', length=128, default='',
@@ -1164,55 +1183,61 @@ class Auth(object):
                     Field('reset_password_key', length=512,
                           writable=False, readable=False, default='',
                           label=self.messages.label_reset_password_key),
-                    migrate=\
-                        self.__get_migrate(self.settings.table_user_name, migrate),
-                    fake_migrate=fake_migrate,
-                    format='%(first_name)s %(last_name)s (%(id)s)')
+                    *settings.extra_fields.get(settings.table_user_name,[]),
+                    **dict(
+                        migrate=self.__get_migrate(settings.table_user_name,
+                                                   migrate),
+                        fake_migrate=fake_migrate,
+                        format='%(first_name)s %(last_name)s (%(id)s)'))
             table.first_name.requires = \
                 IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.last_name.requires = \
                 IS_NOT_EMPTY(error_message=self.messages.is_empty)
-            table[passfield].requires = [CRYPT(key=self.settings.hmac_key)]
+            table[passfield].requires = [CRYPT(key=settings.hmac_key)]
             table.email.requires = \
                 [IS_EMAIL(error_message=self.messages.invalid_email),
                  IS_NOT_IN_DB(db, table.email)]
             table.registration_key.default = ''
-        self.settings.table_user = db[self.settings.table_user_name]
-        if not self.settings.table_group_name in db.tables:
+        settings.table_user = db[settings.table_user_name]
+        if not settings.table_group_name in db.tables:
             table = db.define_table(
-                self.settings.table_group_name,
+                settings.table_group_name,
                 Field('role', length=512, default='',
                         label=self.messages.label_role),
                 Field('description', 'text',
                         label=self.messages.label_description),
-                migrate=self.__get_migrate(
-                    self.settings.table_group_name, migrate),
-                fake_migrate=fake_migrate,
-                format = '%(role)s (%(id)s)')
+                *settings.extra_fields.get(settings.table_group_name,[]),
+                **dict(
+                    migrate=self.__get_migrate(
+                        settings.table_group_name, migrate),
+                    fake_migrate=fake_migrate,
+                    format = '%(role)s (%(id)s)'))
             table.role.requires = IS_NOT_IN_DB(db, '%s.role'
-                 % self.settings.table_group_name)
-        self.settings.table_group = db[self.settings.table_group_name]
-        if not self.settings.table_membership_name in db.tables:
+                 % settings.table_group_name)
+        settings.table_group = db[settings.table_group_name]
+        if not settings.table_membership_name in db.tables:
             table = db.define_table(
-                self.settings.table_membership_name,
-                Field('user_id', self.settings.table_user,
+                settings.table_membership_name,
+                Field('user_id', settings.table_user,
                         label=self.messages.label_user_id),
-                Field('group_id', self.settings.table_group,
+                Field('group_id', settings.table_group,
                         label=self.messages.label_group_id),
-                migrate=self.__get_migrate(
-                    self.settings.table_membership_name, migrate),
-                fake_migrate=fake_migrate)
+                *settings.extra_fields.get(settings.table_membership_name,[]),
+                **dict(
+                    migrate=self.__get_migrate(
+                        settings.table_membership_name, migrate),
+                    fake_migrate=fake_migrate))
             table.user_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_user_name,
+                    settings.table_user_name,
                     '%(first_name)s %(last_name)s (%(id)s)')
             table.group_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_group_name,
+                    settings.table_group_name,
                     '%(role)s (%(id)s)')
-        self.settings.table_membership = db[self.settings.table_membership_name]
-        if not self.settings.table_permission_name in db.tables:
+        settings.table_membership = db[settings.table_membership_name]
+        if not settings.table_permission_name in db.tables:
             table = db.define_table(
-                self.settings.table_permission_name,
-                Field('group_id', self.settings.table_group,
+                settings.table_permission_name,
+                Field('group_id', settings.table_group,
                         label=self.messages.label_group_id),
                 Field('name', default='default', length=512,
                         label=self.messages.label_name),
@@ -1220,83 +1245,75 @@ class Auth(object):
                         label=self.messages.label_table_name),
                 Field('record_id', 'integer',
                         label=self.messages.label_record_id),
-                migrate=self.__get_migrate(
-                    self.settings.table_permission_name, migrate),
-                fake_migrate=fake_migrate)
+                *settings.extra_fields.get(settings.table_permission_name,[]),
+                **dict(
+                    migrate=self.__get_migrate(
+                        settings.table_permission_name, migrate),
+                    fake_migrate=fake_migrate))
             table.group_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_group_name,
+                    settings.table_group_name,
                     '%(role)s (%(id)s)')
             table.name.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.table_name.requires = IS_IN_SET(self.db.tables)
             table.record_id.requires = IS_INT_IN_RANGE(0, 10 ** 9)
-        self.settings.table_permission = db[self.settings.table_permission_name]
-        if not self.settings.table_event_name in db.tables:
+        settings.table_permission = db[settings.table_permission_name]
+        if not settings.table_event_name in db.tables:
             table  = db.define_table(
-                self.settings.table_event_name,
+                settings.table_event_name,
                 Field('time_stamp', 'datetime',
                         default=current.request.now,
                         label=self.messages.label_time_stamp),
                 Field('client_ip',
                         default=current.request.client,
                         label=self.messages.label_client_ip),
-                Field('user_id', self.settings.table_user, default=None,
+                Field('user_id', settings.table_user, default=None,
                         label=self.messages.label_user_id),
                 Field('origin', default='auth', length=512,
                         label=self.messages.label_origin),
                 Field('description', 'text', default='',
                         label=self.messages.label_description),
-                migrate=self.__get_migrate(
-                    self.settings.table_event_name, migrate),
-                fake_migrate=fake_migrate)
+                *settings.extra_fields.get(settings.table_event_name,[]),
+                **dict(
+                    migrate=self.__get_migrate(
+                        settings.table_event_name, migrate),
+                    fake_migrate=fake_migrate))
             table.user_id.requires = IS_IN_DB(db, '%s.id' %
-                    self.settings.table_user_name,
+                    settings.table_user_name,
                     '%(first_name)s %(last_name)s (%(id)s)')
             table.origin.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.description.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
-        self.settings.table_event = db[self.settings.table_event_name]
+        settings.table_event = db[settings.table_event_name]
         now = current.request.now
-        if self.settings.cas_domains:
-            if not self.settings.table_cas_name in db.tables:
+        if settings.cas_domains:
+            if not settings.table_cas_name in db.tables:
                 table  = db.define_table(
-                    self.settings.table_cas_name,
-                    Field('user_id', self.settings.table_user, default=None,
+                    settings.table_cas_name,
+                    Field('user_id', settings.table_user, default=None,
                           label=self.messages.label_user_id),
                     Field('created_on','datetime',default=now),
                     Field('url',requires=IS_URL()),
                     Field('uuid'),
-                    migrate=self.__get_migrate(
-                        self.settings.table_event_name, migrate),
-                    fake_migrate=fake_migrate)
+                    *settings.extra_fields.get(settings.table_cas_name,[]),
+                    **dict(
+                        migrate=self.__get_migrate(
+                            settings.table_event_name, migrate),
+                        fake_migrate=fake_migrate))
                 table.user_id.requires = IS_IN_DB(db, '%s.id' % \
-                    self.settings.table_user_name,
+                    settings.table_user_name,
                     '%(first_name)s %(last_name)s (%(id)s)')
-            self.settings.table_cas = db[self.settings.table_cas_name]
-        def lazy_user (auth = self): return auth.user_id
-        self.signature = db.Table(self.db,'auth_signature',
-                                  Field('is_active','boolean',default=True),
-                                  Field('created_on','datetime',default=now,
-                                        writable=False,readable=False),
-                                  Field('created_by',self.settings.table_user,default=lazy_user,
-                                        writable=False,readable=False),
-                                  Field('modified_on','datetime',update=now,default=now,
-                                        writable=False,readable=False),
-                                  Field('modified_by',self.settings.table_user,
-                                        default=lazy_user,update=lazy_user,
-                                        writable=False,readable=False))
-
-
-        if self.settings.cas_provider:
-            self.settings.actions_disabled = \
+            settings.table_cas = db[settings.table_cas_name]
+        if settings.cas_provider:
+            settings.actions_disabled = \
                 ['profile','register','change_password','request_reset_password']
             from gluon.contrib.login_methods.cas_auth import CasAuth            
             maps = dict((name,lambda v,n=name:v.get(n,None)) for name in \
-                            self.settings.table_user.fields if name!='id' \
-                            and self.settings.table_user[name].readable)
+                            settings.table_user.fields if name!='id' \
+                            and settings.table_user[name].readable)
             maps['registration_id'] = \
-                lambda v,p=self.settings.cas_provider:'%s/%s' % (p,v['user'])
-            self.settings.login_form = CasAuth(
+                lambda v,p=settings.cas_provider:'%s/%s' % (p,v['user'])
+            settings.login_form = CasAuth(
                 casversion = 2,
-                urlbase = self.settings.cas_provider,
+                urlbase = settings.cas_provider,
                 actions=['login','validate','logout'],
                 maps=maps)
 
