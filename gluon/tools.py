@@ -1012,6 +1012,11 @@ class Auth(object):
 
         def lazy_user (auth = self): return auth.user_id
         reference_user = 'reference %s' % settings.table_user_name
+        def represent(id,s=settings):
+            try:
+                user = s.table_user(id)
+                return '%(first_name)s %(last_name)s' % user
+            except: return id
         self.signature = db.Table(self.db,'auth_signature',
                                   Field('is_active','boolean',default=True),
                                   Field('created_on','datetime',
@@ -1019,13 +1024,14 @@ class Auth(object):
                                         writable=False,readable=False),
                                   Field('created_by',
                                         reference_user,
-                                        default=lazy_user,
-                                        writable=False,readable=False),
+                                        default=lazy_user,represent=represent,
+                                        writable=False,readable=False,
+                                        ),
                                   Field('modified_on','datetime',
                                         update=request.now,default=request.now,
                                         writable=False,readable=False),
                                   Field('modified_by',
-                                        reference_user,
+                                        reference_user,represent=represent,
                                         default=lazy_user,update=lazy_user,
                                         writable=False,readable=False))
 

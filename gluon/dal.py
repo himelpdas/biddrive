@@ -1028,7 +1028,7 @@ class BaseAdapter(ConnectionPool):
                 new_fields.append(item)
         fields = new_fields
         tablenames = self.tables(query)
-        query = self.filter_precinct(query,tablenames)
+        query = self.filter_tenant(query,tablenames)
         if not fields:
             for table in tablenames:
                 for field in self.db[table]:
@@ -1430,8 +1430,8 @@ class BaseAdapter(ConnectionPool):
                     pass
         return rowsobj
 
-    def filter_precinct(self,query,tablenames):
-        fieldname = self.db._request_precinct
+    def filter_tenant(self,query,tablenames):
+        fieldname = self.db._request_tenant
         for tablename in tablenames:
             table = self.db[tablename]            
             if fieldname in table:
@@ -3136,7 +3136,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
             query = fields[0].table.id>0
         else:
             raise SyntaxError, "Unable to determine a tablename"
-        query = self.filter_precinct(query,[tablename])
+        query = self.filter_tenant(query,[tablename])
         tableobj = self.db[tablename]._tableobj
         items = tableobj.all()
         filters = self.expand(query)
@@ -3852,7 +3852,7 @@ class DAL(dict):
         self._lastsql = ''
         self._timings = []
         self._pending_references = {}
-        self._request_precinct = 'request_precinct'
+        self._request_tenant = 'request_tenant'
         self._common_fields = []
         if not str(attempts).isdigit() or attempts < 0:
             attempts = 5
@@ -3899,9 +3899,9 @@ class DAL(dict):
         self._migrate_enabled = migrate_enabled
         self._fake_migrate_all = fake_migrate_all
         if auto_import:
-            self._import_table_definitions(adapter.folder)
+            self.import_table_definitions(adapter.folder)
 
-    def _import_table_definitions(self,path):
+    def import_table_definitions(self,path,migrate=False,fake_migrate=False):
         pattern = os.path.join(path,self._uri_hash+'_*.table')
         for filename in glob.glob(pattern):
             tfile = self._adapter.file_open(filename, 'r')
@@ -3911,7 +3911,7 @@ class DAL(dict):
                       for key, value in sql_fields.items()]
             mf.sort()
             self.define_table(name,*[item[1] for item in mf],
-                              **dict(migrate=False))
+                              **dict(migrate=migrate,fake_migrate=fake_migrate))
 
     def check_reserved_keyword(self, name):
         """
