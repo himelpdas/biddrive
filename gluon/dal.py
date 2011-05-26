@@ -550,7 +550,7 @@ class BaseAdapter(ConnectionPool):
                                           type=str(field.type),
                                           sql=ftype)
 
-            if field.default!=None:
+            if isinstance(field.default,(str,int,float)):
                 # caveat: sql_fields and sql_fields_aux differ for default values
                 # sql_fields is used to trigger migrations and sql_fields_aux
                 # are used for create table
