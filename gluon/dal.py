@@ -374,7 +374,7 @@ class ConnectionPool(object):
 
         # Creating the folder if it does not exist
         if False and self.folder and not os.path.exists(self.folder):
-            os.mkdir(self._folder)
+            os.mkdir(self.folder)
 
     def pool_connection(self, f):
         if not self.pool_size:
@@ -3802,7 +3802,7 @@ class DAL(dict):
                  migrate=True, fake_migrate=False,
                  migrate_enabled=True, fake_migrate_all=False,
                  decode_credentials=False, driver_args=None,
-                 adapter_args={}, attempts=5):
+                 adapter_args={}, attempts=5, auto_import=False):
         """
         Creates a new Database Abstraction Layer instance.
 
@@ -3874,7 +3874,8 @@ class DAL(dict):
             args = (self,'None',0,folder,db_codec)
             self._adapter = BaseAdapter(*args)
             migrate = fake_migrate = False
-        self._uri_hash = hashlib.md5(self._adapter.uri).hexdigest()
+        adapter = self._adapter
+        self._uri_hash = hashlib.md5(adapter.uri).hexdigest()
         self.tables = SQLCallableList()
         self.check_reserved = check_reserved
         if self.check_reserved:
@@ -3884,8 +3885,10 @@ class DAL(dict):
         self._fake_migrate = fake_migrate
         self._migrate_enabled = migrate_enabled
         self._fake_migrate_all = fake_migrate_all
+        if auto_import:
+            self._import_table_definitions(adapter.folder)
 
-    def import_table_definitions(self,path):
+    def _import_table_definitions(self,path):
         pattern = os.path.join(path,self._uri_hash+'_*.table')
         for filename in glob.glob(pattern):
             tfile = self._adapter.file_open(filename, 'r')
