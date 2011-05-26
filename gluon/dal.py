@@ -485,7 +485,9 @@ class BaseAdapter(ConnectionPool):
         sql_fields_aux = {}
         TFK = {}
         tablename = table._tablename
+        sortable = 0
         for field in table:
+            sortable += 1
             k = field.name
             if isinstance(field.type,SQLCustomType):
                 ftype = field.type.native or field.type.type
@@ -543,7 +545,9 @@ class BaseAdapter(ConnectionPool):
                     ftype += ' UNIQUE'
 
             # add to list of fields
-            sql_fields[field.name] = dict(type=str(field.type),sql=ftype)
+            sql_fields[field.name] = dict(sortable=sortable,
+                                          type=str(field.type),
+                                          sql=ftype)
 
             if field.default!=None:
                 # caveat: sql_fields and sql_fields_aux differ for default values
@@ -598,7 +602,7 @@ class BaseAdapter(ConnectionPool):
             table._dbt = os.path.join(dbpath, migrate)
         else:
             table._dbt = os.path.join(dbpath, '%s_%s.table' \
-                     % (hashlib.md5(self.uri).hexdigest(), tablename))
+                                          % (table._db._uri_hash, tablename))
         if table._dbt:
             table._loggername = os.path.join(dbpath, 'sql.log')
             logfile = self.file_open(table._loggername, 'a')
@@ -3793,6 +3797,7 @@ class DAL(dict):
                 db._adapter.commit_prepared(keys[i])
         return
 
+
     def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
                  db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
@@ -3825,7 +3830,6 @@ class DAL(dict):
         :fake_migrate_all (defaults to False). If sets to True fake migrates ALL tables
         :attempts (defaults to 5). Number of times to attempt connecting
         """
-
         if not decode_credentials:
             credential_decoder = lambda cred: cred
         else:
@@ -3871,6 +3875,7 @@ class DAL(dict):
             args = (self,'None',0,folder,db_codec)
             self._adapter = BaseAdapter(*args)
             migrate = fake_migrate = False
+        self._uri_hash = hashlib.md5(self._adapter.uri).hexdigest()
         self.tables = SQLCallableList()
         self.check_reserved = check_reserved
         if self.check_reserved:
@@ -3880,6 +3885,18 @@ class DAL(dict):
         self._fake_migrate = fake_migrate
         self._migrate_enabled = migrate_enabled
         self._fake_migrate_all = fake_migrate_all
+
+    def _import_tables(self,path):
+        pattern = os.path.join(path,self._uri_hash+'_*.table')
+        for filename in glob.glob(pattern):
+            tfile = self.file_open(filename, 'r')
+            sql_fields = cPickle.load(tfile)
+            name = filename[len(pattern)-7:-6]
+            mf = [(value['sortable'],Field(key,type=value['type'])) \
+                      for key, value in sql_fields.items()]
+            mf.sort()
+            self.define_table(name,*[item[1] for item in mf],
+                              **dict(migrate=False))
 
     def check_reserved_keyword(self, name):
         """
