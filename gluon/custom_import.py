@@ -71,7 +71,7 @@ class _BaseImporter(object):
         The import method itself.
         """
 
-        return _STANDARD_PYTHON_IMPORTER(name, globals, locals, fromlist, 
+        return _STANDARD_PYTHON_IMPORTER(name, globals, locals, fromlist,
                                          level)
 
     def end(self):
@@ -94,7 +94,7 @@ class _DateTrackerImporter(_BaseImporter):
         # Avoid reloading cause by file modifications of reload:
         self._tl = threading.local()
         self._tl._modules_loaded = None
-        
+
     def begin(self):
         self._tl._modules_loaded = set()
 

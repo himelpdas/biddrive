@@ -63,7 +63,7 @@ def exec_environment(
         if os.path.isfile(pycfile):
             exec read_pyc(pycfile) in env
         else:
-            execfile(pyfile, env)            
+            execfile(pyfile, env)
     return Storage(env)
 
 

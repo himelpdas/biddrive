@@ -130,7 +130,7 @@ def URL(
     anchor='',
     extension=None,
     env=None,
-    hmac_key=None,    
+    hmac_key=None,
     hash_vars=True,
     salt=None,
     user_signature=None,
@@ -249,7 +249,7 @@ def URL(
     if hmac_key:
         # generate an hmac signature of the vars & args so can later
         # verify the user hasn't messed with anything
-        
+
         h_args = '/%s/%s/%s%s' % (application, controller, function2, other)
 
         # how many of the vars should we include in our hash?
@@ -347,7 +347,7 @@ def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=
     other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
     h_args = '/%s/%s/%s.%s%s' % (request.application,
                                  request.controller,
-                                 request.function, 
+                                 request.function,
                                  request.extension,
                                  other)
 

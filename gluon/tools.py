@@ -789,7 +789,7 @@ class Auth(object):
     def url(self, f=None, args=[], vars={}):
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
-    def __init__(self, environment=None, db=None, 
+    def __init__(self, environment=None, db=None,
                  controller='default', cas_provider = None):
         """
         auth=Auth(globals(), db)
@@ -815,13 +815,13 @@ class Auth(object):
             self.user = None
             session.auth = None
         settings = self.settings = Settings()
-        
+
         # ## what happens after login?
 
         # ## what happens after registration?
 
         settings.hideerror = False
-        settings.cas_domains = [request.env.http_host] 
+        settings.cas_domains = [request.env.http_host]
         settings.cas_provider = cas_provider
         settings.extra_fields = {}
         settings.actions_disabled = []
@@ -1008,8 +1008,8 @@ class Auth(object):
         if auth  and  auth.remember: #when user wants to be logged in for longer
             response.cookies[response.session_id_name]["expires"] = \
                 auth.expiration
-        
-        def lazy_user (auth = self): return auth.user_id        
+
+        def lazy_user (auth = self): return auth.user_id
         reference_user = 'reference %s' % settings.table_user_name
         self.signature = db.Table(self.db,'auth_signature',
                                   Field('is_active','boolean',default=True),
@@ -1137,7 +1137,7 @@ class Auth(object):
         settings = self.settings
         if not settings.table_user_name in db.tables:
             passfield = settings.password_field
-            if username or settings.cas_provider:                
+            if username or settings.cas_provider:
                 table = db.define_table(
                     settings.table_user_name,
                     Field('first_name', length=128, default='',
@@ -1305,7 +1305,7 @@ class Auth(object):
         if settings.cas_provider:
             settings.actions_disabled = \
                 ['profile','register','change_password','request_reset_password']
-            from gluon.contrib.login_methods.cas_auth import CasAuth            
+            from gluon.contrib.login_methods.cas_auth import CasAuth
             maps = dict((name,lambda v,n=name:v.get(n,None)) for name in \
                             settings.table_user.fields if name!='id' \
                             and settings.table_user[name].readable)
@@ -1351,7 +1351,7 @@ class Auth(object):
         passfield = self.settings.password_field
         user = self.db(table_user[username] == keys[username]).select().first()
         keys['registration_key']=''
-        if user: 
+        if user:
             user.update_record(**keys)
         else:
             if not 'first_name' in keys and 'first_name' in table_user.fields:
@@ -1420,7 +1420,7 @@ class Auth(object):
                 uuid = row.uuid
             else:
                 uuid = web2py_uuid()
-                table.insert(url=session._cas_service, user_id=self.user.id, 
+                table.insert(url=session._cas_service, user_id=self.user.id,
                              uuid=uuid, created_on=request.now)
             url = session._cas_service
             del session._cas_service
@@ -1436,7 +1436,7 @@ class Auth(object):
     def cas_validate(self,version=2):
         request = current.request
         db, table = self.db, self.settings.table_cas
-        current.response.headers['Content-Type']='text'        
+        current.response.headers['Content-Type']='text'
         ticket = table(uuid=request.vars.ticket)
         url = request.env.path_info.rsplit('/',1)[0]
         if ticket: # and ticket.created_on>request.now-datetime.timedelta(60):
@@ -1493,7 +1493,7 @@ class Auth(object):
             tmpvalidator = IS_EMAIL(error_message=self.messages.invalid_email)
         old_requires = table_user[username].requires
         table_user[username].requires = tmpvalidator
-        
+
         request = current.request
         response = current.response
         session = current.session
@@ -1546,12 +1546,12 @@ class Auth(object):
             if captcha:
                 addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
             accepted_form = False
-                
+
             if form.accepts(request, session,
                             formname='login', dbio=False,
                             onvalidation=onvalidation,
                             hideerror=self.settings.hideerror):
-                
+
                 accepted_form = True
                 # check for username in db
                 user = self.db(table_user[username] == form.vars[username]).select().first()

@@ -13,8 +13,7 @@ else:
 
 import unittest
 import datetime
-from sql import DAL, Field
-from sql import Table, SQLALL
+from dal import DAL, Field, Table, SQLALL
 
 ALLOWED_DATATYPES = [
     'string',

@@ -96,7 +96,7 @@ class LoadFactory(object):
                  url=None,user_signature=False):
         import globals
         target = target or 'c'+str(random.random())[2:]
-        request = self.environment['request']        
+        request = self.environment['request']
         if '.' in f:
             f, extension = f.split('.',1)
         if url or ajax:
@@ -458,7 +458,7 @@ def run_view_in(environment):
                                context=environment)
         restricted(ccode, environment, 'file stream')
     elif os.path.exists(path):
-        x = response.view.replace('/', '_')        
+        x = response.view.replace('/', '_')
         files = ['views_%s.pyc' % x]
         if allow_generic:
             files.append('views_generic.%s.pyc' % request.extension)

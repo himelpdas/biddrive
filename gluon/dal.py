@@ -671,14 +671,14 @@ class BaseAdapter(ConnectionPool):
         else:
             new_add = ', ADD '
 
-        metadata_change = False        
+        metadata_change = False
         sql_fields_current = copy.copy(sql_fields_old)
-        for key in keys:            
+        for key in keys:
             query = None
             if not key in sql_fields_old:
                 sql_fields_current[key] = sql_fields[key]
                 query = ['ALTER TABLE %s ADD %s %s;' % \
-                         (tablename, key, 
+                         (tablename, key,
                           sql_fields_aux[key]['sql'].replace(', ', new_add))]
                 metadata_change = True
             elif self.dbengine == 'sqlite':
@@ -718,10 +718,10 @@ class BaseAdapter(ConnectionPool):
             elif sql_fields[key]['type'] != sql_fields_old[key]['type']:
                 sql_fields_current[key] = sql_fields[key]
                 metadata_change = True
-            
+
             if query:
                 logfile.write('timestamp: %s\n'
-                               % datetime.datetime.today().isoformat())
+                              % datetime.datetime.today().isoformat())
                 table._db['_lastsql'] = '\n'.join(query)
                 for sub_query in query:
                     logfile.write(sub_query + '\n')
@@ -1102,7 +1102,7 @@ class BaseAdapter(ConnectionPool):
             for t in joinon:
                 sql_t += ' %s %s' % (command, str(t))
         else:
-            sql_t = ', '.join(tablenames)              
+            sql_t = ', '.join(tablenames)
         if groupby:
             if isinstance(groupby, (list, tuple)):
                 groupby = xorify(groupby)
