@@ -162,7 +162,7 @@ class Response(Storage):
         if view:
             import cStringIO
             (obody, oview) = (self.body, self.view)
-            (self.body, self.view) = (cStringIO.StringIO(), view)
+            (self.body, self.view) = (cStringIO.StringIO(), view)            
             run_view_in(self._view_environment)
             page = self.body.getvalue()
             self.body.close()
@@ -267,6 +267,24 @@ class Response(Storage):
         """
 
         return handler(request, self, methods)
+
+    def toolbar(self):
+        from html import DIV, SCRIPT, BEAUTIFY, TAG, URL
+        BUTTON = TAG.button
+        admin = URL("admin","default","design",
+                    args=current.request.application)
+        return DIV(
+            BUTTON('design',_onclick="document.location='%s'" % admin),
+            BUTTON('request',_onclick="jQuery('#request').slideToggle()"),
+            DIV(BEAUTIFY(current.request),_class="hidden",_id="request"),
+            BUTTON('session',_onclick="jQuery('#session').slideToggle()"),
+            DIV(BEAUTIFY(current.session),_class="hidden",_id="session"),
+            BUTTON('response',_onclick="jQuery('#response').slideToggle()"),
+            DIV(BEAUTIFY(current.response),_class="hidden",_id="response"),
+            #BUTTON('db stats',_onclick="jQuery('#db-stats').slideToggle()"),
+            #DIV(BEAUTIFY(dbstats),_class="hidden",_id="db-stats"),
+            SCRIPT("jQuery('.hidden').hide()")
+            )
 
 class Session(Storage):
 
@@ -487,3 +505,4 @@ class Session(Storage):
                 del response.session_file
             except:
                 pass
+            

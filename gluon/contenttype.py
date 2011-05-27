@@ -422,6 +422,7 @@ CONTENT_TYPE = {
     '.pict': 'image/x-pict',
     '.pict1': 'image/x-pict',
     '.pict2': 'image/x-pict',
+    '.pickle': 'application/python-pikcle',
     '.pk': 'application/x-tex-pk',
     '.pkipath': 'application/pkix-pkipath',
     '.pkr': 'application/pgp-keys',

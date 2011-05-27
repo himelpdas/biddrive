@@ -1,5 +1,0 @@
-{{
-import cPickle
-response.headers['Content-Type']='text'
-response.write(cPickle.dumps(response._vars),escape=False)
-}}
