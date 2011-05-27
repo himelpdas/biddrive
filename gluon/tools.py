@@ -1068,7 +1068,7 @@ class Auth(object):
                        'change_password','profile','groups',
                        'impersonate','not_authorized'):
             return getattr(self,args[0])()
-        elif args[0]=='cas':
+        elif args[0]=='cas' and not self.settings.cas_provider:
             if args(1) == 'login': return self.cas_login(version=2)
             if args(1) == 'validate': return self.cas_validate(version=2)
             if args(1) == 'logout': return self.logout()
