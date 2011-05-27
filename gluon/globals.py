@@ -274,7 +274,7 @@ class Response(Storage):
         admin = URL("admin","default","design",
                     args=current.request.application)
         from gluon.dal import thread
-        dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]/1000)) \
+        dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]*1000)) \
                                for row in i.db._timings]) \
                        for i in thread.instances]
         return DIV(
