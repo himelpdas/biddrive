@@ -434,11 +434,14 @@ class XML(XmlComponent):
             'code',
             'pre',
             'img/',
+            'h1','h2','h3','h4','h5','h6',
+            'table','tr','td','div',
             ],
         allowed_attributes = {
             'a': ['href', 'title'],
             'img': ['src', 'alt'],
-            'blockquote': ['type']
+            'blockquote': ['type'],
+            'td': ['colspan'],
             },
         ):
         """

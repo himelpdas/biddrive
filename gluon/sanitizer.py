@@ -196,22 +196,29 @@ class XssCleaner(HTMLParser):
 
 
 def sanitize(text, permitted_tags=[
-    'a',
-    'b',
-    'blockquote',
-    'br/',
-    'i',
-    'li',
-    'ol',
-    'ul',
-    'p',
-    'cite',
-    'code',
-    'pre',
-    'img/',
-    ], allowed_attributes={'a': ['href', 'title'], 'img': ['src', 'alt'
-                           ], 'blockquote': ['type']},
-    escape=True):
+        'a',
+        'b',
+        'blockquote',
+        'br/',
+        'i',
+        'li',
+        'ol',
+        'ul',
+        'p',
+        'cite',
+        'code',
+        'pre',
+        'img/',
+        'h1','h2','h3','h4','h5','h6',
+        'table','tr','td','div',
+        ],
+             allowed_attributes = {
+        'a': ['href', 'title'],
+        'img': ['src', 'alt'],
+        'blockquote': ['type'],
+        'td': ['colspan'],
+        },
+             escape=True):
     if not isinstance(text, str): return str(text)
     return XssCleaner(permitted_tags=permitted_tags,
                       allowed_attributes=allowed_attributes).strip(text, escape)
