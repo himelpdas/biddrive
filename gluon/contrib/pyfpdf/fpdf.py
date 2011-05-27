@@ -1294,7 +1294,7 @@ class FPDF:
             import urllib
             f = urllib.urlopen(name)
         else:
-            f=file(name,'rb')
+            f=open(name,'rb')
         if(not f):
             self.error("Can't open image file: "+name)
         #Check signature

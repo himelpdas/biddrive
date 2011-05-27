@@ -902,17 +902,25 @@ def create_file():
             # Handle template (html) views
             if filename.find('.')<0:
                 filename += '.html'
+            extension = filename.split('.')[-1].lower()
 
             if len(filename) == 5:
                 raise SyntaxError
 
             msg = T('This is the %(filename)s template',
-                    dict(filename=filename))
-            text = dedent("""
+                    dict(filename=filename))            
+            if extension == 'html':
+                text = dedent("""
                    {{extend 'layout.html'}}
                    <h1>%s</h1>
                    {{=BEAUTIFY(response._vars)}}""" % msg)
-
+            else:
+                generic = os.path.join(path,'generic.'+extension)
+                if os.path.exists(generic):
+                    text = open(generic,'r').read()
+                else:
+                    text = ''
+                
         elif path[-9:] == '/modules/':
             if request.vars.plugin and not filename.startswith('plugin_%s/' % request.vars.plugin):
                 filename = 'plugin_%s/%s' % (request.vars.plugin, filename)
