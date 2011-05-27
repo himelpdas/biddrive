@@ -93,7 +93,7 @@ class LoadFactory(object):
         self.environment = environment
     def __call__(self, c=None, f='index', args=[], vars={},
                  extension=None, target=None,ajax=False,ajax_trap=False,
-                 url=None,user_signature=False):
+                 url=None,user_signature=False, content='loading...'):
         import globals
         target = target or 'c'+str(random.random())[2:]
         request = self.environment['request']
@@ -105,7 +105,7 @@ class LoadFactory(object):
                                   user_signature=user_signature)
             script = html.SCRIPT('web2py_component("%s","%s")' % (url, target),
                                  _type="text/javascript")
-            return html.TAG[''](script, html.DIV('loading...', _id=target))
+            return html.TAG[''](script, html.DIV(content, _id=target))
         else:
             c = c or request.controller
             other_request = globals.Request()
