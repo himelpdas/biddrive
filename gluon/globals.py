@@ -18,7 +18,7 @@ from storage import Storage, List
 from streamer import streamer, stream_file_or_304_or_206, DEFAULT_CHUNK_SIZE
 from xmlrpc import handler
 from contenttype import contenttype
-from html import xmlescape
+from html import xmlescape, TABLE, TR, PRE
 from http import HTTP
 from fileutils import up
 from serializers import json, custom_json
@@ -273,6 +273,10 @@ class Response(Storage):
         BUTTON = TAG.button
         admin = URL("admin","default","design",
                     args=current.request.application)
+        from gluon.dal import thread
+        dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]/1000)) \
+                               for row in i.db._timings]) \
+                       for i in thread.instances]
         return DIV(
             BUTTON('design',_onclick="document.location='%s'" % admin),
             BUTTON('request',_onclick="jQuery('#request').slideToggle()"),
@@ -281,8 +285,8 @@ class Response(Storage):
             DIV(BEAUTIFY(current.session),_class="hidden",_id="session"),
             BUTTON('response',_onclick="jQuery('#response').slideToggle()"),
             DIV(BEAUTIFY(current.response),_class="hidden",_id="response"),
-            #BUTTON('db stats',_onclick="jQuery('#db-stats').slideToggle()"),
-            #DIV(BEAUTIFY(dbstats),_class="hidden",_id="db-stats"),
+            BUTTON('db stats',_onclick="jQuery('#db-stats').slideToggle()"),
+            DIV(BEAUTIFY(dbstats),_class="hidden",_id="db-stats"),
             SCRIPT("jQuery('.hidden').hide()")
             )
 
