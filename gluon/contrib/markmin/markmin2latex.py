@@ -232,7 +232,7 @@ WRAPPER = """
 """
 
 def markmin2latex(data, image_mapper=lambda x:x, extra={},
-                  wrapper='%(body)s'):
+                  wrapper=WRAPPER):
     body, title, authors = render(data, extra=extra, image_mapper=image_mapper)
     author = '\n\\and\n'.join(a.replace('\n','\\\\\n\\footnotesize ') for a in authors)
     return wrapper % dict(title=title, author=author, body=body)

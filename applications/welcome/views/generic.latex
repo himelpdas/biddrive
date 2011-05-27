@@ -4,7 +4,6 @@ html=response.render('%s/%s.html' % (request.controller,request.function))
 
 import re
 from gluon.contrib.markmin.markmin2latex import markmin2latex
-from gluon.contrib.markmin.markmin2pdf import markmin2pdf
 def markmin_serializer(text,tag=None,attr={}):
     if tag==None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
@@ -22,14 +21,8 @@ def markmin_serializer(text,tag=None,attr={}):
     if tag in ['tt','code']: return '``%s``' % text
     if tag=='a': return '[[%s %s]]' % (text,attr.get('_href',''))
     return text
-markmin=TAG(html).element('#content').flatten(markmin_serializer)
-#out,warnings,errors=markmin2pdf(markmin)
-out,warning,errors=markmin2latex(markmin),None,None
-if errors:
-   response.headers['Content-Type']='text'
-   response.write(HTML(BODY(H1('errors'),LU(*errors),H1('warnings'),LU(*warnings))))
-else:
-   response.headers['Content-Type']='text'
-   response.write(out,escape=False)
-pass
+markmin=TAG(html).element('body').flatten(markmin_serializer)
+out=markmin2latex(markmin)
+response.headers['Content-Type']='text'
+response.write(out,escape=False)
 }}
