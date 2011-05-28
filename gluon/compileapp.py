@@ -107,6 +107,8 @@ class LoadFactory(object):
                                  _type="text/javascript")
             return html.TAG[''](script, html.DIV(content, _id=target))
         else:
+            if not isinstance(args,(list,tuple)):
+                args = [args]
             c = c or request.controller
             other_request = globals.Request()
             other_request.application = request.application
