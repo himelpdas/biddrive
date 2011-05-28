@@ -4192,9 +4192,7 @@ def index():
             self.check_reserved_keyword(tablename)
 
         if self._common_fields:
-            common_field_names = [f.name for f in self._common_fields]
-            fields = [f for f in fields if not f.name in common_field_names] \
-                + [f for f in self._common_fields]
+            fields = [f for f in fields] + [f for f in self._common_fields]
 
         t = self[tablename] = Table(self, tablename, *fields,
                                     **dict(primarykey=primarykey,
