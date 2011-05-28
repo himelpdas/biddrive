@@ -1161,7 +1161,7 @@ class SQLFORM(FORM):
             if field.type == 'list:string':
                 if not isinstance(value, (tuple, list)):
                     fields[fieldname] = value and [value] or []
-            elif field.type.startswith('list:'):
+            elif isinstance(field.type,str) and field.type.startswith('list:'):
                 if not isinstance(value, list):
                     fields[fieldname] = [safe_int(x) for x in (value and [value] or [])]
             elif field.type == 'integer':
