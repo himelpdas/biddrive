@@ -93,9 +93,10 @@ class LoadFactory(object):
         self.environment = environment
     def __call__(self, c=None, f='index', args=[], vars={},
                  extension=None, target=None,ajax=False,ajax_trap=False,
-                 url=None,user_signature=False, content='loading...'):
+                 url=None,user_signature=False, content='loading...',**attr):
         import globals
         target = target or 'c'+str(random.random())[2:]
+        attr['_id']=target        
         request = self.environment['request']
         if '.' in f:
             f, extension = f.split('.',1)
@@ -105,7 +106,7 @@ class LoadFactory(object):
                                   user_signature=user_signature)
             script = html.SCRIPT('web2py_component("%s","%s")' % (url, target),
                                  _type="text/javascript")
-            return html.TAG[''](script, html.DIV(content, _id=target))
+            return html.TAG[''](script, html.DIV(content,**attr))
         else:
             if not isinstance(args,(list,tuple)):
                 args = [args]
@@ -150,7 +151,7 @@ class LoadFactory(object):
             #     if name == 'web2py-component-command':
             #         js += value
             script = js and html.SCRIPT(js,_type="text/javascript") or ''
-            return html.TAG[''](html.DIV(html.XML(page),_id=target),script)
+            return html.TAG[''](html.DIV(html.XML(page),**attr),script)
 
 
 def local_import_aux(name, force=False, app='welcome'):
