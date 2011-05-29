@@ -4423,30 +4423,35 @@ class Table(dict):
             db and db._adapter.trigger_name(tablename)
 
         primarykey = args.get('primarykey', None)
+        fieldnames,newfields=set(),[]
         if primarykey and not isinstance(primarykey,list):
             raise SyntaxError, "primarykey must be a list of fields from table '%s'" \
                 % tablename
         elif primarykey:
             self._primarykey = primarykey
-            new_fields = []
-        else:
-            new_fields = [ Field('id', 'id') ]
+        elif not [f for f in fields if hasattr(f,'type') and f.type=='id']:
+            newfields.append(Field('id', 'id'))
+            fieldnames.add('id')
         for field in fields:
-            if isinstance(field, Field):
+            if isinstance(field, Field) and not field.name in fieldnames:
                 if hasattr(field, '_db'):
                     field = copy.copy(field)
-                if field.type == 'id':
-                    # Keep this alias for the primary key.
-                    new_fields[0] = field
                 else:
-                    new_fields.append(field)
+                    newfields.append(field)
+                fieldnames.add(field.name)                
             elif isinstance(field, Table):
-                new_fields += [copy.copy(field[f]) for f in
-                               field.fields if field[f].type!='id']
-            else:
+                table = field
+                for field in table:
+                    if not field.name in fieldnames and not field.type=='id':
+                        newfields.append(copy.copy(field))
+                        fieldnames.add(field.name)
+            elif not field.name in fieldnames:
                 raise SyntaxError, \
                     'define_table argument is not a Field or Table: %s' % field
-        fields = new_fields
+            else:
+                # let's ignore new fields with duplicated names!!!
+                pass
+        fields = newfields
         self._db = db
         self._id = fields[0]
         tablename = tablename
