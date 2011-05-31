@@ -695,8 +695,8 @@ class BaseAdapter(ConnectionPool):
             elif sql_fields[key]['sql'] != sql_fields_old[key]['sql'] \
                   and not isinstance(table[key].type, SQLCustomType) \
                   and not (table[key].type.startswith('reference') and \
-                      sql_fields[key].startswith('INT,') and \
-                      sql_fields_old[key].startswith('INT NOT NULL,')):
+                      sql_fields[key]['sql'].startswith('INT,') and \
+                      sql_fields_old[key]['sql'].startswith('INT NOT NULL,')):
                 sql_fields_current[key] = sql_fields[key]
                 t = tablename
                 tt = sql_fields_aux[key]['sql'].replace(', ', new_add)
