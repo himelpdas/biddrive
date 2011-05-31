@@ -459,7 +459,7 @@ class BaseAdapter(ConnectionPool):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "None"
         self.uri = uri
@@ -566,7 +566,7 @@ class BaseAdapter(ConnectionPool):
         # backend-specific extensions to fields
         if self.dbengine == 'mysql':
             if not hasattr(table, "_primarykey"):
-                fields.append('PRIMARY KEY(%s)' % table.fields[0])
+                fields.append('PRIMARY KEY(%s)' % table._id.name)
             other = ' ENGINE=InnoDB CHARACTER SET utf8;'
 
         fields = ',\n    '.join(fields)
@@ -3133,7 +3133,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
             tablename = self.get_table(query)
         elif fields:
             tablename = fields[0].tablename
-            query = fields[0].table.id>0
+            query = fields[0].table._id>0
         else:
             raise SyntaxError, "Unable to determine a tablename"
         query = self.filter_tenant(query,[tablename])
@@ -4430,30 +4430,33 @@ class Table(dict):
         elif primarykey:
             self._primarykey = primarykey
         elif not [f for f in fields if hasattr(f,'type') and f.type=='id']:
-            newfields.append(Field('id', 'id'))
+            field = Field('id', 'id')
+            newfields.append(field)
             fieldnames.add('id')
+            self._id = field
         for field in fields:
-            if isinstance(field, Field) and not field.name in fieldnames:
+            if not isinstance(field, (Field, Table)):
+                raise SyntaxError, \
+                    'define_table argument is not a Field or Table: %s' % field
+            elif isinstance(field, Field) and not field.name in fieldnames:
                 if hasattr(field, '_db'):
                     field = copy.copy(field)
                 else:
                     newfields.append(field)
                 fieldnames.add(field.name)                
+                if field.type=='id':
+                    self._id = field
             elif isinstance(field, Table):
                 table = field
                 for field in table:
                     if not field.name in fieldnames and not field.type=='id':
                         newfields.append(copy.copy(field))
                         fieldnames.add(field.name)
-            elif not field.name in fieldnames:
-                raise SyntaxError, \
-                    'define_table argument is not a Field or Table: %s' % field
             else:
                 # let's ignore new fields with duplicated names!!!
                 pass
         fields = newfields
         self._db = db
-        self._id = fields[0]
         tablename = tablename
         self.fields = SQLCallableList()
         self.virtualfields = []

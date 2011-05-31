@@ -154,13 +154,14 @@ class TestTable(unittest.TestCase):
 
         self.assertRaises(SyntaxError, Table, None, 'test', None)
 
-        persons = Table(None, 'persons', Field('firstname',
-                           'string'), Field('lastname', 'string'))
-
+        persons = Table(None, 'persons',
+                        Field('firstname','string'), 
+                        Field('lastname', 'string'))
+        
         # Does it have the correct fields?
 
         self.assert_(set(persons.fields).issuperset(set(['firstname',
-                     'lastname'])))
+                                                         'lastname'])))
 
         # ALL is set correctly
 
