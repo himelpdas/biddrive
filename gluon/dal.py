@@ -4441,8 +4441,7 @@ class Table(dict):
             elif isinstance(field, Field) and not field.name in fieldnames:
                 if hasattr(field, '_db'):
                     field = copy.copy(field)
-                else:
-                    newfields.append(field)
+                newfields.append(field)
                 fieldnames.add(field.name)                
                 if field.type=='id':
                     self._id = field
