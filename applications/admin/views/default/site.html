@@ -67,6 +67,9 @@
         {{=button("javascript:ajax('"+URL('check_version')+"',[],'check_version')", T('check for upgrades'))}}
       {{pass}}
       </p>
+      <div class="formfield">
+	Running on {{=request.env.server_software}}
+      </div>
     </div>
     {{pass}}
     <!-- APP WIZARD -->
