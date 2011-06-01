@@ -28,7 +28,6 @@ import socket
 import tempfile
 import random
 import string
-import socket
 from fileutils import abspath
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
@@ -388,9 +387,11 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 http_host = request.env.http_host.split(':',1)[0]
-                local_hosts = (http_host, socket.gethostname(),
-                               socket.gethostbyname(http_host),
-                               '::1','127.0.0.1','::ffff:127.0.0.1')
+                
+                local_hosts = [http_host,'::1','127.0.0.1','::ffff:127.0.0.1']
+                if not global_settings.web2py_runtime_gae:
+                    local_hosts += [socket.gethostname(),
+                                    socket.gethostbyname(http_host)]
                 request.client = get_client(request.env)
                 request.folder = abspath('applications',
                                          request.application) + os.sep
