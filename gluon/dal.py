@@ -1927,7 +1927,7 @@ class MSSQLAdapter(BaseAdapter):
         }
 
     def EXTRACT(self,field,what):
-        return "DATEPART('%s' FROM %s)" % (what, self.expand(field))
+        return "DATEPART(%s,%s)" % (what, self.expand(field))
 
     def LEFT_JOIN(self):
         return 'LEFT OUTER JOIN'
