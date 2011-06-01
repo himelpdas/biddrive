@@ -1055,3 +1055,48 @@ recalled
 - efficient db(...).isempty()
 - setup-web2py-nginx-uwsgi-ubuntu.sh
 - Many bug fixes, thanks Jonathan
+
+## 1.96.1
+
+- "from gluon import *" imports in every python module a web2py environment (A, DIV,..SQLFORM, DAL, Field,...) including current.request, current.response, current.session, current.T, current.cache, thanks Jonathan.
+- conditional models in 
+  models/<controller>/a.py and models/<controller>/<function>/a.py
+- from mymodule import *, looks for mymodule in applications/thisapp/modules first and then in sys.path. No more need for local_import. Thanks Pierre.
+- usage of generic.* views is - by default - restricted to localhost for security. This can be changed in a granular way with: response.generic_patterns=['*']. This is a slight change of behavior for new app but a major security fix.
+
+- all applications have cas 2.0 provider at http://.../user/cas/login
+- all applications can delegate to login to external provider Auth(...,cas_provider='http://.../other_app/default/user/cas')
+- A(...,callback=URL(...),larget='id') does Ajax
+- URL(...,user_signature=True), LOAD(...,user_signature=True) can sign urls and @auth.requires_signature() will check the signature for any decorated action.
+
+- DAL(...,migrate_enabled=False) to disable all migrations
+- DAL(...,fake_migrate_all=True) to rebuild all corrupted metadata
+- new DAL metadata format (databases/*.table)
+- DAL(...,adapter_arg={}) allows support for alternate drivers
+- DAL now allows circular table defintions
+- DAL(..,auto_import=True) automatically imports tables from metadata without need to db.define_table(...)s.
+- new alterante syntax for inner joins: db(...).select(join=...)
+- experimental cubrid database support
+- DAL 'request_tenant' fields are special, the altomatically filer all records based on their default value.
+- db._common_fields.append(Field('owner')) allows to add fields to ALL tables
+- DAL ignores repeated fields with same names
+
+- web2py_ajax.html is more modular, thanks Anthony
+- request.is_local
+- request.is_http
+- new sessions2trash.py thanks Jim Karsten
+- corrupted cache files are automatically deleted
+- new simpler API gluon.contrib.AuthorizeNet.procss(...)
+- fixed recaptcha (as they released new API)
+- messages in validators have default internationalization
+- No more Auth(globals(),db), just Auth(db). Same for Crud and Service.
+- scripts/access.wsgi allows apache+mod_wsgi to delegate authentication of any URL to any web2py app
+- json now supports T(...) 
+- scripts/setup-web2py-nginx-uwsgi-ubuntu.sh
+- web2py HTTP responses now set: "X-Powered-By: web2py", thanks Bruno
+- mostly fixed generic.pdf. You can view any page in PDF if you have pdflatex installed or if your html follows the pyfpdf convention.
+- auth.settings.extra_fields['auth_user'].append(Field('country')) allows to extend auth_* tables without need of definiting a custom auth_* table. Must be placed before auth.define_tables()
+- {{=response.toolbar()}} to help you debug applications
+- web based shell now supports object modifications (but no redefinitions of non-serializable types)
+- jQuery 1.6.1
+- Lots of bug fixes
