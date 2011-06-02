@@ -35,7 +35,7 @@ mail = Mail()                                  # mailer
 auth = Auth(db)                                # authentication/authorization
 crud = Crud(db)                                # for CRUD helpers using auth
 service = Service()                            # for json, xml, jsonrpc, xmlrpc, amfrpc
-plugins = current.settings.plugins
+plugins = settings.plugins
 
 mail.settings.server = 'logging' or 'smtp.gmail.com:587'  # your SMTP server
 mail.settings.sender = 'you@gmail.com'         # your email

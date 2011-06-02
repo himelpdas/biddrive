@@ -161,6 +161,12 @@ class Storage(dict):
             return value[-1]
         return None
 
+def hasattr(o, a, orig_hasattr=hasattr):
+    if isinstance(o,Storage):
+        return a in o or a in dir(o)
+    return orig_hasattr(o, a)
+__builtins__['hasattr'] = hasattr
+
 class StorageList(Storage):
     """
     like Storage but missing elements default to [] instead of None
