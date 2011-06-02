@@ -54,8 +54,8 @@ def commit():
                                                    args=(app,revision))),
                               description))
     except:
-        files=[]
-        changes=[]
+        files = []
+        changes = []
     return dict(form=form,files=files,changes=changes,repo=repo)
 
 def revision():
