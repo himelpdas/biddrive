@@ -323,7 +323,7 @@ def make_table(table,fields):
         s+=",\n          label=T('%s')),\n" % \
             ' '.join(x.capitalize() for x in barename.split('_'))
     if table!='auth_user':
-        s+="    Field('active','boolean',default=True,\n"
+        s+="    Field('is_active','boolean',default=True,\n"
         s+="          label=T('Active'),writable=False,readable=False),\n"
     s+="    Field('created_on','datetime',default=request.now,\n"
     s+="          label=T('Created On'),writable=False,readable=False),\n"
@@ -417,7 +417,7 @@ def make_page(page,contents):
             s+="    form=crud.read(db.t_%s,record)\n" % t
             s+="    return dict(form=form)\n\n"
         elif items[1]=='update':
-            s+="    record = db.t_%s(request.args(0),active=True) or redirect(URL('error'))\n" % t
+            s+="    record = db.t_%s(request.args(0),is_active=True) or redirect(URL('error'))\n" % t
             s+="    form=crud.update(db.t_%s,record,next='%s_read/[id]',\n"  % (t,t)
             s+="                     ondelete=lambda form: redirect(URL('%s_select')),\n" % t
             s+="                     onaccept=crud.archive)\n"
@@ -429,10 +429,10 @@ def make_page(page,contents):
             s+="    f,v=request.args(0),request.args(1)\n"
             s+="    try: query=f and db.t_%s[f]==v or db.t_%s\n" % (t,t)
             s+="    except: redirect(URL('error'))\n"
-            s+="    rows=db(query)(db.t_%s.active==True).select()\n" % t
+            s+="    rows=db(query)(db.t_%s.is_active==True).select()\n" % t
             s+="    return dict(rows=rows)\n\n"
         elif items[1]=='search':
-            s+="    form, rows=crud.search(db.t_%s,query=db.t_%s.active==True)\n" % (t,t)
+            s+="    form, rows=crud.search(db.t_%s,query=db.t_%s.is_active==True)\n" % (t,t)
             s+="    return dict(form=form, rows=rows)\n\n"
         else:
             t=None
