@@ -73,10 +73,20 @@ class Storage(dict):
         if key in self:
             del self[key]
 
+    def __iter__(self):
+        for key,value in dict(self).items():
+            if not self.__isnull__(value):
+                yield key
+
     def __eq__(self,value):
-        if value == None:
+        if value==None and len(self)==0:
             return True
         return dict.__eq__(self,value)
+
+    def __ne__(self,value):
+        if value==None and len(self)==0:
+            return False
+        return dict.__ne__(self,value)
 
     def __repr__(self):
         return '<Storage ' + dict.__repr__(self) + '>'
@@ -160,6 +170,30 @@ class Storage(dict):
         if len(value):
             return value[-1]
         return None
+
+    def __isnull__(self,value):
+        return isinstance(value,Storage) and len(value)==0
+
+    def keys(self):
+        return [key for key in dict(self) if not self.__isnull__(self[key])]
+
+    def values(self):
+        return [value for value in dict(self).values() if not self.__isnull__(value)]
+
+    def items(self):
+        return [i for i in dict(self).items() if not self.__isnull__(i[1])]
+
+    def __contains__(self,key):
+        try:
+            return not self.__isnull__(self[key])
+        except KeyError:
+            return False
+
+    def __len__(self):
+        return len(self.keys())
+
+    def __notnull__(self):
+        return len(self.keys())>0
 
 def hasattr(o, a, orig_hasattr=hasattr):
     if isinstance(o,Storage):
