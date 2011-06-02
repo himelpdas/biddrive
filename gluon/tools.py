@@ -25,7 +25,7 @@ import cStringIO
 from email import MIMEBase, MIMEMultipart, MIMEText, Encoders, Header, message_from_string
 
 from contenttype import contenttype
-from storage import Storage, StorageList, Settings, Messages
+from storage import Storage, StorageList, Messages
 from utils import web2py_uuid
 from gluon import *
 
@@ -202,7 +202,7 @@ class Mail(object):
             mail = Mail('example.com:25', 'me@example.com', 'me:password')
         """
 
-        settings = self.settings = Settings()
+        settings = self.settings = Storage() # was Settings()
         settings.server = server
         settings.sender = sender
         settings.login = login
@@ -215,7 +215,7 @@ class Mail(object):
         settings.x509_sign_certfile = None
         settings.x509_crypt_certfiles = None
         settings.debug = False
-        settings.lock_keys = True
+        settings[':lock_keys'] = True
         self.result = {}
         self.error = None
 
@@ -815,7 +815,7 @@ class Auth(object):
         else:
             self.user = None
             session.auth = None
-        settings = self.settings = Settings()
+        settings = self.settings = Storage() # was Settings()
 
         # ## what happens after login?
 
@@ -915,7 +915,7 @@ class Auth(object):
         settings.reset_password_onvalidation = []
 
         settings.hmac_key = None
-        settings.lock_keys = True
+        settings[':lock_keys'] = True
 
 
         # ## these are messages that can be customized
@@ -1002,7 +1002,7 @@ class Auth(object):
         messages.label_remember_me = "Remember me (for 30 days)"
         messages['T'] = current.T
         messages.verify_password_comment = 'please input your password again'
-        messages.lock_keys = True
+        messages[':lock_keys'] = True
 
         # for "remember me" option
         response = current.response
@@ -2818,7 +2818,7 @@ class Crud(object):
         elif not db:
             raise SyntaxError, "must pass db as first or second argument"
         self.environment = current
-        settings = self.settings = Settings()
+        settings = self.settings = Storage() # was Settings()
         settings.auth = None
         settings.logger = None
 
@@ -2844,7 +2844,7 @@ class Crud(object):
         settings.hideerror = False
         settings.detect_record_change = True
         settings.hmac_key = None
-        settings.lock_keys = True
+        settings[':lock_keys'] = True
 
         messages = self.messages = Messages(current.T)
         messages.submit_button = 'Submit'
@@ -2858,7 +2858,7 @@ class Crud(object):
         messages.read_log = 'Record %(id)s read'
         messages.delete_log = 'Record %(id)s deleted'
 
-        messages.lock_keys = True
+        messages[':lock_keys'] = True
 
     def __call__(self):
         args = current.request.args
@@ -3972,105 +3972,14 @@ def prettydate(d,T=lambda x:x):
     else:
         return T('now')
 
-def test_thread_separation():
-    def f():
-        c=PluginManager()
-        lock1.acquire()
-        lock2.acquire()
-        c.x=7
-        lock1.release()
-        lock2.release()
-    lock1=thread.allocate_lock()
-    lock2=thread.allocate_lock()
-    lock1.acquire()
-    thread.start_new_thread(f,())
-    a=PluginManager()
-    a.x=5
-    lock1.release()
-    lock2.acquire()
-    return a.x
-
-class PluginManager(object):
-    """
-
-    Plugin Manager is similar to a storage object but it is a single level singleton
-    this means that multiple instances within the same thread share the same attributes
-    Its constructor is also special. The first argument is the name of the plugin you are defining.
-    The named arguments are parameters needed by the plugin with default values.
-    If the parameters were previous defined, the old values are used.
-
-    For example:
-
-    ### in some general configuration file:
-    >>> plugins = PluginManager()
-    >>> plugins.me.param1=3
-
-    ### within the plugin model
-    >>> _ = PluginManager('me',param1=5,param2=6,param3=7)
-
-    ### where the plugin is used
-    >>> print plugins.me.param1
-    3
-    >>> print plugins.me.param2
-    6
-    >>> plugins.me.param3 = 8
-    >>> print plugins.me.param3
-    8
-
-    Here are some tests:
-
-    >>> a=PluginManager()
-    >>> a.x=6
-    >>> b=PluginManager('check')
-    >>> print b.x
-    6
-    >>> b=PluginManager() # reset settings
-    >>> print b.x
-    <Storage {}>
-    >>> b.x=7
-    >>> print a.x
-    7
-    >>> a.y.z=8
-    >>> print b.y.z
-    8
-    >>> test_thread_separation()
-    5
-    >>> plugins=PluginManager('me',db='mydb')
-    >>> print plugins.me.db
-    mydb
-    >>> print 'me' in plugins
-    True
-    >>> print plugins.me.installed
-    True
-    """
-    instances = {}
-    def __new__(cls,*a,**b):
-        id = thread.get_ident()
-        lock = thread.allocate_lock()
-        try:
-            lock.acquire()
-            try:
-                return cls.instances[id]
-            except KeyError:
-                instance = object.__new__(cls,*a,**b)
-                cls.instances[id] = instance
-                return instance
-        finally:
-            lock.release()
-    def __init__(self,plugin=None,**defaults):
-        if not plugin:
-            self.__dict__.clear()
-        settings = self.__getattr__(plugin)
-        settings.installed = True
-        [settings.update({key:value}) for key,value in defaults.items() if not key in settings]
-    def __getattr__(self, key):
-        if not key in self.__dict__:
-            self.__dict__[key] = Storage()
-        return self.__dict__[key]
-    def keys(self):
-        return self.__dict__.keys()
-    def __contains__(self,key):
-        return key in self.__dict__
+def PluginManager(name=None,**params):
+    plugins = current.settings.plugins
+    if name:
+        plugin = getattr(plugins,name)
+        for key,value in params.items():
+            if not key in plugin:
+                setattr(plugin,key,value)
+    return plugins
 
 if __name__ == '__main__':
     import doctest
