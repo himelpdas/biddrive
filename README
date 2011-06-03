@@ -1100,3 +1100,6 @@ recalled
 - web based shell now supports object modifications (but no redefinitions of non-serializable types)
 - jQuery 1.6.1
 - Lots of bug fixes
+
+# 1.96.2
+- bug fixes
