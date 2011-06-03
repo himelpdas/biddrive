@@ -228,14 +228,12 @@ def build_environment(request, response, session):
     current.session = session
     current.T = environment['T'] = translator(request)
     current.cache = environment['cache'] = Cache(request)
-    current.settings = settings = Storage()
 
     environment['HTTP'] = HTTP
     environment['redirect'] = redirect
     environment['request'] = request
     environment['response'] = response
     environment['session'] = session
-    environment['settings'] = settings
     environment['DAL'] = DAL
     environment['Field'] = Field
     environment['SQLDB'] = SQLDB        # for backward compatibility

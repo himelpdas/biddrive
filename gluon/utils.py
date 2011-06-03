@@ -66,9 +66,13 @@ def hmac_hash(value, key, digest_alg='md5', salt=None):
 web2py_uuid_locker = thread.allocate_lock()
 node_id = uuid.getnode()
 milliseconds = int(time.time() * 1e3)
+try:
+    random_source = random.SystemRandom()
+except:
+    random_source = random
 
 def rotate(i):
-    a = random.randrange(256)
+    a = random_source.randrange(256)
     b = (node_id >> 4*i) % 256
     c = (milliseconds >> 4*i) % 256
     return (a + b + c) % 256

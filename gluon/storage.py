@@ -15,8 +15,9 @@ Provides:
 import cPickle
 import portalocker
 
-__all__ = ['List', 'Storage', 'Messages',
+__all__ = ['List', 'Storage', 'Settings', 'Messages',
            'StorageList', 'load_storage', 'save_storage']
+
 
 class List(list):
     """
@@ -53,40 +54,24 @@ class Storage(dict):
 
     """
 
-    def __getattr__(self,key):
-        if not key in self:
-            self[key] = Storage()
-        return self[key]
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            return None
 
     def __setattr__(self, key, value):
-        if not key in self:
-            if self.get(':lock_keys', None) and key != ':lock_keys':
-                raise SyntaxError, 'setting key \'%s\' does not exist' % key
-        if self.get(':lock_values', None) and key != ':lock_values':
-            raise SyntaxError, 'setting value cannot be changed: %s' % key
-        if value == None and key in self:
-            del self[key]
+        if value == None:
+            if key in self:
+                del self[key]
         else:
             self[key] = value
 
-    def __delattr__(self,key):
+    def __delattr__(self, key):
         if key in self:
             del self[key]
-
-    def __iter__(self):
-        for key,value in dict(self).items():
-            if not self.__isnull__(value):
-                yield key
-
-    def __eq__(self,value):
-        if value==None and len(self)==0:
-            return True
-        return dict.__eq__(self,value)
-
-    def __ne__(self,value):
-        if value==None and len(self)==0:
-            return False
-        return dict.__ne__(self,value)
+        else:
+            raise AttributeError, "missing key=%s" % key
 
     def __repr__(self):
         return '<Storage ' + dict.__repr__(self) + '>'
@@ -171,36 +156,6 @@ class Storage(dict):
             return value[-1]
         return None
 
-    def __isnull__(self,value):
-        return isinstance(value,Storage) and len(value)==0
-
-    def keys(self):
-        return [key for key in dict(self) if not self.__isnull__(self[key])]
-
-    def values(self):
-        return [value for value in dict(self).values() if not self.__isnull__(value)]
-
-    def items(self):
-        return [i for i in dict(self).items() if not self.__isnull__(i[1])]
-
-    def __contains__(self,key):
-        try:
-            return not self.__isnull__(self[key])
-        except KeyError:
-            return False
-
-    def __len__(self):
-        return len(self.keys())
-
-    def __notnull__(self):
-        return len(self.keys())>0
-
-def hasattr(o, a, orig_hasattr=hasattr):
-    if isinstance(o,Storage):
-        return a in o or a in dir(o)
-    return orig_hasattr(o, a)
-__builtins__['hasattr'] = hasattr
-
 class StorageList(Storage):
     """
     like Storage but missing elements default to [] instead of None
@@ -208,8 +163,9 @@ class StorageList(Storage):
     def __getattr__(self, key):
         if key in self:
             return self[key]
-        self[key] = []
-        return self[key]
+        else:
+            self[key] = []
+            return self[key]
 
 def load_storage(filename):
     fp = open(filename, 'rb')
@@ -227,16 +183,30 @@ def save_storage(storage, filename):
     portalocker.unlock(fp)
     fp.close()
 
-### here are two functions for backward compatibility, deprecated, user Storage
-Settings = Storage
+
+class Settings(Storage):
+
+    def __setattr__(self, key, value):
+        if key != 'lock_keys' and self.get('lock_keys', None)\
+             and not key in self:
+            raise SyntaxError, 'setting key \'%s\' does not exist' % key
+        if key != 'lock_values' and self.get('lock_values', None):
+            raise SyntaxError, 'setting value cannot be changed: %s' % key
+        self[key] = value
+
 
 class Messages(Storage):
 
-    def __init__(self, T=None):
-        if not T:
-            from gluon.globals import current
-            T = current.T
+    def __init__(self, T):
         self['T'] = T
+
+    def __setattr__(self, key, value):
+        if key != 'lock_keys' and self.get('lock_keys', None)\
+             and not key in self:
+            raise SyntaxError, 'setting key \'%s\' does not exist' % key
+        if key != 'lock_values' and self.get('lock_values', None):
+            raise SyntaxError, 'setting value cannot be changed: %s' % key
+        self[key] = value
 
     def __getattr__(self, key):
         value = self[key]
