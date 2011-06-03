@@ -4348,7 +4348,7 @@ class Reference(int):
         if not self._record:
             self._record = self._table[int(self)]
         if not self._record:
-            raise RuntimeError, "Using a recursive select but encountered a broken reference"
+            raise RuntimeError, "Using a recursive select but encountered a broken reference: %s %d"%(self._table, int(self))
 
     def __getattr__(self, key):
         if key == 'id':
