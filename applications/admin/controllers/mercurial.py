@@ -11,7 +11,10 @@ syntax: glob
 *.pyc
 *.pyo
 *.bak
+*.bak2
 cache/*
+private/*
+uploads/*
 databases/*
 sessions/*
 errors/*
