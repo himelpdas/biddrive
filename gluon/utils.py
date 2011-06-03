@@ -5,6 +5,8 @@
 This file is part of the web2py Web Framework
 Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
 License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
+
+This file specifically includes utilities for security.
 """
 
 import hashlib
@@ -88,7 +90,10 @@ def initialize_urandom():
             open('/dev/urandom','wb').write(''.join(chr(t) for t in ctokens))
     except NotImplementedError:
         random.seed(node_id + milliseconds)
-        logging.warn('no os.urandom(), falling back to random.random()')
+        logging.warn(
+"""Cryptographycally secure session management is not possible on your system because
+your system does not provide a cryptographically secure entropy source.
+This is not specific to web2py. Consider deploying on a different Operating System.""")
     return ctokens
 ctokens = initialize_urandom()
 
