@@ -2289,6 +2289,24 @@ class IS_UPPER(Validator):
         return (value.decode('utf8').upper().encode('utf8'), None)
 
 
+def urlify(value, maxlen=80, remove_underscores=True):
+    s = value.lower()                     # to lowercase
+    s = s.decode('utf-8')                 # to utf-8
+    s = unicodedata.normalize('NFKD', s)  # normalize eg è => e, ñ => n
+    s = s.encode('ASCII', 'ignore')       # encode as ASCII
+    s = re.sub('&\w+;', '', s)            # strip html entities
+    if remove_underscores:
+        s = re.sub('[\s_]+', '-', s)      # whitespace & underscores to hyphens
+        s = re.sub('[^a-z0-9\-]', '', s)  # strip all but alphanumeric/hyphen
+    else:
+        s = re.sub('\s+', '-', s)         # whitespace to hyphens
+        s = re.sub('[^a-z0-9\-_]', '', s) # strip all but alphanumeric/hyphen
+                                          # (already lowercase)
+    s = re.sub('[-_][-_]+', '-', s)       # collapse strings of hyphens
+    s = s.strip('-')                      # remove leading and trailing hyphens
+    return s[:maxlen]                     # enforce maximum length
+
+
 class IS_SLUG(Validator):
     """
     convert arbitrary text string to a slug
@@ -2303,6 +2321,8 @@ class IS_SLUG(Validator):
     ('abc-123', None)
     >>> IS_SLUG()('abc 123')
     ('abc-123', None)
+    >>> IS_SLUG()('abc\t_123')
+    ('abc-123', None)
     >>> IS_SLUG()('-abc-')
     ('abc', None)
     >>> IS_SLUG()('abc&amp;123')
@@ -2315,27 +2335,19 @@ class IS_SLUG(Validator):
     ('abc1', None)
     """
 
+    @staticmethod
+    def urlify(value, maxlen=80, remove_underscores=True):
+        return urlify(value, maxlen, remove_underscores)
+
     def __init__(self, maxlen=80, check=False, error_message='must be slug'):
         self.maxlen = maxlen
         self.check = check
         self.error_message = error_message
 
-    @staticmethod
-    def urlify(value, maxlen=80):
-        s = value.decode('utf-8').lower()    # to lowercase utf-8
-        s = unicodedata.normalize('NFKD', s) # normalize eg è => e, ñ => n
-        s = s.encode('ASCII', 'ignore')      # encode as ASCII
-        s = re.sub('&\w+?;', '', s)          # strip html entities
-        s = re.sub('[^a-z0-9\-\s]', '', s)   # strip all but alphanumeric/hyphen/space
-        s = s.replace(' ', '-')              # spaces to hyphens
-        s = re.sub('--+', '-', s)            # collapse strings of hyphens
-        s = s.strip('-')                     # remove leading and traling hyphens
-        return s[:maxlen].strip('-')         # enforce maximum length
-
-    def __call__(self,value):
-        if self.check and value != IS_SLUG.urlify(value,self.maxlen):
-            return (value,translate(self.error_message))
-        return (IS_SLUG.urlify(value,self.maxlen), None)
+    def __call__(self, value):
+        if self.check and value != IS_SLUG.urlify(value, self.maxlen):
+            return (value, translate(self.error_message))
+        return (urlify(value,self.maxlen), None)
 
 class IS_EMPTY_OR(Validator):
     """
