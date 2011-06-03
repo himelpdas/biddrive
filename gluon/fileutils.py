@@ -12,6 +12,7 @@ import os
 import re
 import tarfile
 import glob
+import time
 from http import HTTP
 from gzip import open as gzopen
 from settings import global_settings
@@ -285,7 +286,6 @@ def up(path):
 
 def get_session(request, other_application='admin'):
     """ checks that user is authorized to access other_application"""
-
     if request.application == other_application:
         raise KeyError
     try:
@@ -297,9 +297,8 @@ def get_session(request, other_application='admin'):
     return osession
 
 
-def check_credentials(request, other_application='admin'):
+def check_credentials(request, other_application='admin', expiration = 60*60):
     """ checks that user is authorized to access other_application"""
-
     if request.env.web2py_runtime_gae:
         from google.appengine.api import users
         if users.is_current_user_admin():
@@ -309,7 +308,9 @@ def check_credentials(request, other_application='admin'):
                 % users.create_login_url(request.env.path_info)
             raise HTTP(200, '<html><body>%s</body></html>' % login_html)
     else:
-        return get_session(request, other_application).authorized
+        dt = time.time() - expiration
+        s = get_session(request, other_application)
+        return (s.authorized and s.last_time and s.last_time > dt)
 
 
 def fix_newlines(path):

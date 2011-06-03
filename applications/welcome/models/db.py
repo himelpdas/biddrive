@@ -30,12 +30,12 @@ response.generic_patterns = ['*'] if request.is_local else []
 ## (more options discussed in gluon/tools.py)
 #########################################################################
 
-from gluon.tools import Mail, Auth, Crud, Service, prettydate
+from gluon.tools import Mail, Auth, Crud, Service, PluginManager, prettydate
 mail = Mail()                                  # mailer
 auth = Auth(db)                                # authentication/authorization
 crud = Crud(db)                                # for CRUD helpers using auth
 service = Service()                            # for json, xml, jsonrpc, xmlrpc, amfrpc
-plugins = settings.plugins
+plugins = PluginManager()                      # for configuring plugins
 
 mail.settings.server = 'logging' or 'smtp.gmail.com:587'  # your SMTP server
 mail.settings.sender = 'you@gmail.com'         # your email
