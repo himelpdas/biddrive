@@ -1172,7 +1172,8 @@ class Auth(object):
                                                    migrate),
                         fake_migrate=fake_migrate,
                         format='%(username)s'))
-                table.username.requires = IS_NOT_IN_DB(db, table.username)
+                table.username.requires = (IS_MATCH('[\w\.\-]+'),
+                                           IS_NOT_IN_DB(db, table.username))
             else:
                 table = db.define_table(
                     settings.table_user_name,
