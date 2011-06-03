@@ -13,6 +13,7 @@ import uuid
 import random
 import thread
 import time
+import os
 
 def md5_hash(text):
     """ Generate a md5 hash with the given text """
@@ -63,24 +64,46 @@ def hmac_hash(value, key, digest_alg='md5', salt=None):
         d.update(str(salt))
     return d.hexdigest()
 
-web2py_uuid_locker = thread.allocate_lock()
-node_id = uuid.getnode()
-milliseconds = int(time.time() * 1e3)
-try:
-    random_source = random.SystemRandom()
-except:
-    random_source = random
 
-def rotate(i):
-    a = random_source.randrange(256)
-    b = (node_id >> 4*i) % 256
-    c = (milliseconds >> 4*i) % 256
-    return (a + b + c) % 256
+### compute constent ctokens
+def initialize_urandom():
+    """
+    This function and the web2py_uuid follow from the following discussion:
+    http://groups.google.com/group/web2py-developers/browse_thread/thread/7fd5789a7da3f09
+
+    At startup web2py compute a unique ID that identifies the machine by adding 
+    uuid.getnode() + int(time.time() * 1e3)
+
+    This is a 48bits number. It converts the number into 16x8bits tokens.
+    It uses thie unique if to initilize the entropy source ('/dev/urandom') or to seed random.
+
+    If os.random() is not supported, it falls back to using random and issues a warning.
+    """
+    node_id = uuid.getnode()
+    milliseconds = int(time.time() * 1e3)
+    ctokens = [((node_id + milliseconds) >> ((i%6)*8)) % 256 for i in range(16)]
+    try:
+        os.urandom(1)
+        if os.path.exists('/dev/urandom'):
+            open('/dev/urandom','wb').write(''.join(chr(t) for t in ctokens))
+    except NotImplementedError:
+        random.seed(node_id + milliseconds)
+        logging.warn('no os.urandom(), falling back to random.random()')
+    return ctokens
+ctokens = initialize_urandom()
 
 def web2py_uuid():
-    web2py_uuid_locker.acquire()
+    """
+    This function follows from the following discussion:
+    http://groups.google.com/group/web2py-developers/browse_thread/thread/7fd5789a7da3f09
+    
+    It works like uuid.uuid4 exxcept that tries to use os.urandom() if possible
+    And it XORs the output with the tokens uniquely associated to this machine.
+    """
     try:
-        bytes = [chr(rotate(i)) for i in range(16)]
-        return str(uuid.UUID(bytes=bytes, version=4))
-    finally:
-        web2py_uuid_locker.release()
+        bytes = os.urandom(16) # use /dev/urandom if possible
+    except NotImplementedError:
+        bytes = [chr(random.randrange(256)) for i in range(16)]
+    ## xor bytes with contant ctokens
+    bytes = ''.join(chr(ord(c) ^ ctokens[i]) for i,c in enumerate(bytes))
+    return str(uuid.UUID(bytes=bytes, version=4))
