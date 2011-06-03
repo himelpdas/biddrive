@@ -2289,19 +2289,23 @@ class IS_UPPER(Validator):
         return (value.decode('utf8').upper().encode('utf8'), None)
 
 
-def urlify(value, maxlen=80, remove_underscores=True):
+def urlify(value, maxlen=80, keep_underscores=False):
+    """
+    Convert incoming string to a simplified ASCII subset.
+    if (keep_underscores): underscores are retained in the string
+    else: underscores are translated to hyphens (default)
+    """
     s = value.lower()                     # to lowercase
     s = s.decode('utf-8')                 # to utf-8
     s = unicodedata.normalize('NFKD', s)  # normalize eg è => e, ñ => n
     s = s.encode('ASCII', 'ignore')       # encode as ASCII
     s = re.sub('&\w+;', '', s)            # strip html entities
-    if remove_underscores:
+    if keep_underscores:
+        s = re.sub('\s+', '-', s)         # whitespace to hyphens
+        s = re.sub('[^\w\-]', '', s)      # strip all but alphanumeric/underscore/hyphen
+    else:
         s = re.sub('[\s_]+', '-', s)      # whitespace & underscores to hyphens
         s = re.sub('[^a-z0-9\-]', '', s)  # strip all but alphanumeric/hyphen
-    else:
-        s = re.sub('\s+', '-', s)         # whitespace to hyphens
-        s = re.sub('[^a-z0-9\-_]', '', s) # strip all but alphanumeric/hyphen
-                                          # (already lowercase)
     s = re.sub('[-_][-_]+', '-', s)       # collapse strings of hyphens
     s = s.strip('-')                      # remove leading and trailing hyphens
     return s[:maxlen]                     # enforce maximum length
@@ -2325,6 +2329,8 @@ class IS_SLUG(Validator):
     ('abc-123', None)
     >>> IS_SLUG()('-abc-')
     ('abc', None)
+    >>> IS_SLUG()('--a--b--_ -c--')
+    ('a-b-c', None)
     >>> IS_SLUG()('abc&amp;123')
     ('abc123', None)
     >>> IS_SLUG()('abc&amp;123&amp;def')
@@ -2333,21 +2339,36 @@ class IS_SLUG(Validator):
     ('n', None)
     >>> IS_SLUG(maxlen=4)('abc123')
     ('abc1', None)
+    >>> IS_SLUG()('abc_123')
+    ('abc-123', None)
+    >>> IS_SLUG(keep_underscores=False)('abc_123')
+    ('abc-123', None)
+    >>> IS_SLUG(keep_underscores=True)('abc_123')
+    ('abc_123', None)
+    >>> IS_SLUG(check=False)('abc')
+    ('abc', None)
+    >>> IS_SLUG(check=True)('abc')
+    ('abc', None)
+    >>> IS_SLUG(check=False)('a bc')
+    ('a-bc', None)
+    >>> IS_SLUG(check=True)('a bc')
+    ('a bc', 'must be slug')
     """
 
     @staticmethod
-    def urlify(value, maxlen=80, remove_underscores=True):
-        return urlify(value, maxlen, remove_underscores)
+    def urlify(value, maxlen=80, keep_underscores=False):
+        return urlify(value, maxlen, keep_underscores)
 
-    def __init__(self, maxlen=80, check=False, error_message='must be slug'):
+    def __init__(self, maxlen=80, check=False, error_message='must be slug', keep_underscores=False):
         self.maxlen = maxlen
         self.check = check
         self.error_message = error_message
+        self.keep_underscores = keep_underscores
 
     def __call__(self, value):
-        if self.check and value != IS_SLUG.urlify(value, self.maxlen):
+        if self.check and value != urlify(value, self.maxlen, self.keep_underscores):
             return (value, translate(self.error_message))
-        return (urlify(value,self.maxlen), None)
+        return (urlify(value,self.maxlen, self.keep_underscores), None)
 
 class IS_EMPTY_OR(Validator):
     """
