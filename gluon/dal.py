@@ -819,7 +819,8 @@ class BaseAdapter(ConnectionPool):
                 return None
             raise e
         if hasattr(table,'_primarykey'):
-            return dict( [ (k,fields[k]) for k in table._primarykey ])
+            return dict([(k[0].name, k[1]) for k in fields \
+                             if k[0].name in table._primarykey])
         id = self.lastrowid(table)
         if not isinstance(id,int):
             return id

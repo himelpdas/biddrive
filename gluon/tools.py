@@ -2327,7 +2327,7 @@ class Auth(object):
         request = current.request
         session = current.session
         auth = session.auth
-        if not self.is_logged_in() or not current.request.post_vars:
+        if not self.is_logged_in():
             raise HTTP(401, "Not Authorized")
         current_id = auth.user.id
         requested_id = user_id
