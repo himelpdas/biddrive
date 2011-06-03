@@ -144,7 +144,7 @@ class LoadFactory(object):
             if ajax_trap:
                 link = html.URL(request.application, c, f, r=request,
                                 args=args, vars=vars, extension=extension,
-                                user_signature=user_signature),
+                                user_signature=user_signature)
                 js = "web2py_trap_form('%s','%s');" % (link, target)
             # not sure about this
             # for (name,value) in other_response.headers:
