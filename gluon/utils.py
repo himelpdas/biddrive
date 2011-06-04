@@ -88,7 +88,7 @@ def initialize_urandom():
         os.urandom(1)
         if os.path.exists('/dev/urandom'):
             open('/dev/urandom','wb').write(''.join(chr(t) for t in ctokens))
-    except NotImplementedError:
+    except:
         random.seed(node_id + milliseconds)
         logging.warn(
 """Cryptographycally secure session management is not possible on your system because
