@@ -50,7 +50,8 @@ def index():
         if MULTI_USER_MODE and db(db.app.name==app)(db.app.owner!=auth.user.id).count():
             session.flash = 'App belongs already to other user'
         elif app in apps:
-            meta = os.path.join(request.folder,'..',app,'wizard.metadata')
+            meta = os.path.normpath(\
+                os.path.join(request.folder,'..',app,'wizard.metadata'))
             if os.path.exists(meta):
                 try:
                     session.app=pickle.load(open(meta,'rb'))
