@@ -86,9 +86,13 @@ def initialize_urandom():
     ctokens = [((node_id + milliseconds) >> ((i%6)*8)) % 256 for i in range(16)]
     try:
         os.urandom(1)
-        if os.path.exists('/dev/urandom'):
+        try:
+            # should add machine specific entropy 
             open('/dev/urandom','wb').write(''.join(chr(t) for t in ctokens))
-    except:
+        except IOerror:
+            # works anyway
+            pass
+    except NotImplementedError:
         random.seed(node_id + milliseconds)
         logging.warn(
 """Cryptographycally secure session management is not possible on your system because
