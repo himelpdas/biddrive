@@ -130,7 +130,7 @@ class DistributeHandler(tornado.websocket.WebSocketHandler):
         group,token,name = params.split('/')+[None,None]
         self.group = group or 'default'
         self.token = token or 'none'
-        self.name = name or 'anonymous'     
+        self.name = name or 'anonymous'
         # only authorized parties can join
         if DistributeHandler.tokens:
             if not self.token in tokens or not token[self.token]==None:

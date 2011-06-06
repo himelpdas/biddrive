@@ -74,7 +74,7 @@ def initialize_urandom():
     This function and the web2py_uuid follow from the following discussion:
     http://groups.google.com/group/web2py-developers/browse_thread/thread/7fd5789a7da3f09
 
-    At startup web2py compute a unique ID that identifies the machine by adding 
+    At startup web2py compute a unique ID that identifies the machine by adding
     uuid.getnode() + int(time.time() * 1e3)
 
     This is a 48bits number. It converts the number into 16x8bits tokens.
@@ -88,7 +88,7 @@ def initialize_urandom():
     try:
         os.urandom(1)
         try:
-            # should add machine specific entropy 
+            # should add machine specific entropy
             open('/dev/urandom','wb').write(''.join(chr(t) for t in ctokens))
         except IOError:
             # works anyway
@@ -106,7 +106,7 @@ def web2py_uuid():
     """
     This function follows from the following discussion:
     http://groups.google.com/group/web2py-developers/browse_thread/thread/7fd5789a7da3f09
-    
+
     It works like uuid.uuid4 exxcept that tries to use os.urandom() if possible
     And it XORs the output with the tokens uniquely associated to this machine.
     """

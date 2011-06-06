@@ -41,12 +41,12 @@ def pdflatex_from_html(html):
                                      LU(*warnings))).xml())
         else:
             return XML(out)
-                       
+
 def pyfpdf_from_html(html):
     request = current.request
     def image_map(path):
         if path.startswith('/%s/static/' % request.application):
-            return os.path.join(request.folder,path.split('/',2)[2])    
+            return os.path.join(request.folder,path.split('/',2)[2])
         return 'http%s://%s%s' % (request.is_https and 's' or '',request.env.http_host, path)
     class MyFPDF(FPDF, HTMLMixin): pass
     pdf=MyFPDF()

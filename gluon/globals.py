@@ -164,7 +164,7 @@ class Response(Storage):
         if view:
             import cStringIO
             (obody, oview) = (self.body, self.view)
-            (self.body, self.view) = (cStringIO.StringIO(), view)            
+            (self.body, self.view) = (cStringIO.StringIO(), view)
             run_view_in(self._view_environment)
             page = self.body.getvalue()
             self.body.close()
@@ -511,4 +511,4 @@ class Session(Storage):
                 del response.session_file
             except:
                 pass
-            
+

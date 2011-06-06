@@ -601,7 +601,7 @@ def regex_filter_out(url, e=None):
     return url
 
 
-def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=None, 
+def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=None,
         domain=(None,None), env=False, scheme=None, host=None, port=None):
     "doctest/unittest interface to regex_filter_in() and regex_filter_out()"
     regex_url = re.compile(r'^(?P<scheme>http|https|HTTP|HTTPS)\://(?P<host>[^/]*)(?P<uri>.*)')

@@ -1434,7 +1434,7 @@ class BaseAdapter(ConnectionPool):
     def filter_tenant(self,query,tablenames):
         fieldname = self.db._request_tenant
         for tablename in tablenames:
-            table = self.db[tablename]            
+            table = self.db[tablename]
             if fieldname in table:
                 default = table[fieldname].default
                 if default!=None:
@@ -4443,7 +4443,7 @@ class Table(dict):
                 if hasattr(field, '_db'):
                     field = copy.copy(field)
                 newfields.append(field)
-                fieldnames.add(field.name)                
+                fieldnames.add(field.name)
                 if field.type=='id':
                     self._id = field
             elif isinstance(field, Table):

@@ -1639,7 +1639,7 @@ class Auth(object):
             if log:
                 self.log_event(log % user)
 
-        # process authenticated users                
+        # process authenticated users
             # user wants to be logged in for longer
             session.auth = Storage(
                 user = user,
@@ -1667,7 +1667,7 @@ class Auth(object):
         elif user:
             callback(onaccept,user)
         redirect(next)
-        
+
     def logout(self, next=DEFAULT, onlogout=DEFAULT, log=DEFAULT):
         """
         logout and redirects to login

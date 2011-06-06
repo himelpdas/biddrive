@@ -387,7 +387,7 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 http_host = request.env.http_host.split(':',1)[0]
-                
+
                 local_hosts = [http_host,'::1','127.0.0.1','::ffff:127.0.0.1']
                 if not global_settings.web2py_runtime_gae:
                     local_hosts += [socket.gethostname(),

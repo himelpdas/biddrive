@@ -96,7 +96,7 @@ class LoadFactory(object):
                  url=None,user_signature=False, content='loading...',**attr):
         import globals
         target = target or 'c'+str(random.random())[2:]
-        attr['_id']=target        
+        attr['_id']=target
         request = self.environment['request']
         if '.' in f:
             f, extension = f.split('.',1)
