@@ -16,6 +16,7 @@ import random
 import thread
 import time
 import os
+import logging
 
 def md5_hash(text):
     """ Generate a md5 hash with the given text """
