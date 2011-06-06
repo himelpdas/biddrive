@@ -17,8 +17,13 @@ Contributors:
 import os
 import re
 import cStringIO
-import restricted
-
+import logging
+try:
+    from restricted import RestrictedError
+except:
+    def RestrictedError(a,b,c):
+        logging.error(str(a)+':'+str(b)+':'+str(c))
+        return RuntimeError
 
 class Node(object):
     """
@@ -406,7 +411,7 @@ class TemplateParser(object):
         """
         Raise an error using itself as the filename and textual content.
         """
-        raise restricted.RestrictedError(self.name, text or self.text, message)
+        raise RestrictedError(self.name, text or self.text, message)
 
     def _get_file_text(self, filename):
         """
@@ -809,7 +814,7 @@ def parse_template(filename,
             text = fp.read()
             fp.close()
         except IOError:
-            raise restricted.RestrictedError(filename, '', 'Unable to find the file')
+            raise RestrictedError(filename, '', 'Unable to find the file')
     else:
         text = filename.read()
 
