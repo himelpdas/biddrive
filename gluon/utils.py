@@ -90,7 +90,7 @@ def initialize_urandom():
         try:
             # should add machine specific entropy 
             open('/dev/urandom','wb').write(''.join(chr(t) for t in ctokens))
-        except IOerror:
+        except IOError:
             # works anyway
             pass
     except NotImplementedError:
