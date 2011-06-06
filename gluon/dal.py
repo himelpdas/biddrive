@@ -3631,7 +3631,7 @@ def sqlhtml_validators(field):
             if not ids:
                 return None
             refs = r._db(r._id.belongs(ids)).select(r._id)
-            return (refs and ', '.join(str(f(r,ref._id)) for ref in refs) or '')
+            return (refs and ', '.join(str(f(r,ref.id)) for ref in refs) or '')
         field.represent = field.represent or list_ref_repr
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field.db,referenced._id,
