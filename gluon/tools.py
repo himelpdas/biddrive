@@ -1636,30 +1636,21 @@ class Auth(object):
         if user:
             user = Storage(table_user._filter_fields(user, id=True))
 
-            if request.vars.has_key("remember"):
-                # user wants to be logged in for longer
-                session.auth = Storage(
-                    user = user,
-                    last_visit = request.now,
-                    expiration = self.settings.long_expiration,
-                    remember = True,
-                    hmac_key = web2py_uuid()
-                )
-            else:
-                # user doesn't want to be logged in for longer
-                session.auth = Storage(
-                    user = user,
-                    last_visit = request.now,
-                    expiration = self.settings.expiration,
-                    remember =  False,
-                    hmac_key = web2py_uuid()
+            if log:
+                self.log_event(log % user)
+
+        # process authenticated users                
+            # user wants to be logged in for longer
+            session.auth = Storage(
+                user = user,
+                last_visit = request.now,
+                expiration = self.settings.long_expiration,
+                remember = request.vars.has_key("remember"),
+                hmac_key = web2py_uuid()
                 )
 
             self.user = user
-            callback(onaccept,None)
             session.flash = self.messages.logged_in
-        if log and self.user:
-            self.log_event(log % self.user)
 
         # how to continue
         if self.settings.login_form == self:
@@ -1673,9 +1664,10 @@ class Auth(object):
                 redirect(next)
             table_user[username].requires = old_requires
             return form
-        else:
-            redirect(next)
-
+        elif user:
+            callback(onaccept,user)
+        redirect(next)
+        
     def logout(self, next=DEFAULT, onlogout=DEFAULT, log=DEFAULT):
         """
         logout and redirects to login
