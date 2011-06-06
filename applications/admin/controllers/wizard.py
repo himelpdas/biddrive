@@ -501,10 +501,14 @@ def create(options):
         redirect(URL('step6'))
 
     ### save metadata in newapp/wizard.metadata
-    meta = os.path.join(request.folder,'..',app,'wizard.metadata')
-    file=open(meta,'wb')
-    pickle.dump(session.app,file)
-    file.close()
+    try:
+        meta = os.path.join(request.folder,'..',app,'wizard.metadata')
+        file=open(meta,'wb')
+        pickle.dump(session.app,file)
+        file.close()
+    except IOError:
+        session.flash = 'Failure to write wizard metadata'
+        redirect(URL('step6'))
 
     ### apply theme
     if options.apply_layout and params['layout_theme']!='Default':
