@@ -152,7 +152,7 @@ class _DateTrackerImporter(_BaseImporter):
             reload_mod = False
             mod_to_pack = False # Module turning into a package? (special case)
             try:
-                new_date = os.stat(file).st_mtime
+                new_date = os.path.getmtime(file)
             except:
                 self._import_dates.pop(file, None)  # Clean up
                 # Handle module changing in package and
@@ -167,7 +167,7 @@ class _DateTrackerImporter(_BaseImporter):
                     file += ".py"
                     reload_mod = os.path.isfile(file)
                 if reload_mod:
-                    new_date = os.stat(file).st_mtime # Refresh file date
+                    new_date = os.path.getmtime(file) # Refresh file date
             if reload_mod or not date or new_date > date:
                 self._import_dates[file] = new_date
             if reload_mod or (date and new_date > date):
