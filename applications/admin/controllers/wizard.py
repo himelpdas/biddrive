@@ -51,7 +51,8 @@ def index():
             session.flash = 'App belongs already to other user'
         elif app in apps:
             meta = os.path.normpath(\
-                os.path.join(request.folder,'..',app,'wizard.metadata'))
+                os.path.join(os.path.normpath(request.folder),
+                             '..',app,'wizard.metadata'))
             if os.path.exists(meta):
                 try:
                     session.app=pickle.load(open(meta,'rb'))
