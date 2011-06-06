@@ -4653,9 +4653,11 @@ class Table(dict):
         new_fields_names = []
         for name in fields:
             if not name in self.fields:
-                raise SyntaxError, 'Field %s does not belong to the table' % name
-            new_fields.append((self[name],fields[name]))
-            new_fields_names.append(name)
+                if name != 'id':
+                    raise SyntaxError, 'Field %s does not belong to the table' % name
+            else:
+                new_fields.append((self[name],fields[name]))
+                new_fields_names.append(name)
         for ofield in self:
             if not ofield.name in new_fields_names:
                 if not update and ofield.default!=None:
