@@ -702,7 +702,7 @@ class SQLFORM(FORM):
         if record and isinstance(record, (int, long, str, unicode)):
             if not str(record).isdigit():
                 raise HTTP(404, "Object not found")
-            record = table._db(table.id == record).select().first()
+            record = table._db(table._id == record).select().first()
             if not record:
                 raise HTTP(404, "Object not found")
         self.record = record
@@ -1096,7 +1096,7 @@ class SQLFORM(FORM):
                     qry = reduce(lambda x, y: x & y,
                                  [self.table[k] == record_id[k] for k in self.table._primarykey])
                 else:
-                    qry = self.table.id == self.record.id
+                    qry = self.table._id == self.record.id
                 self.table._db(qry).delete()
             self.errors.clear()
             for component in self.elements('input, select, textarea'):
@@ -1200,7 +1200,7 @@ class SQLFORM(FORM):
                 if record_id:
                     self.vars.id = self.record.id
                     if fields:
-                        self.table._db(self.table.id == self.record.id).update(**fields)
+                        self.table._db(self.table._id == self.record.id).update(**fields)
                 else:
                     self.vars.id = self.table.insert(**fields)
         return ret
