@@ -3910,7 +3910,7 @@ class DAL(dict):
             name = filename[len(pattern)-7:-6]
             mf = [(value['sortable'],Field(key,type=value['type'])) \
                       for key, value in sql_fields.items()]
-            mf.sort()
+            mf.sort(lambda a,b: cmp(a[0],b[0]))
             self.define_table(name,*[item[1] for item in mf],
                               **dict(migrate=migrate,fake_migrate=fake_migrate))
 
