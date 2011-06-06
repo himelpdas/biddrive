@@ -3120,7 +3120,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
         return self.expand(first)
 
     def truncate(self,table,mode):
-        self.db(table.id > 0).delete()
+        self.db(table._id > 0).delete()
 
     def select_raw(self,query,fields=[],attributes={}):
         new_fields = []
@@ -3404,7 +3404,7 @@ class CouchDBAdapter(NoSQLAdapter):
                 return 0
         else:
             tablename = self.get_table(query)
-            rows = self.select(query,[self.db[tablename].id],{})
+            rows = self.select(query,[self.db[tablename]._id],{})
             ctable = self.connection[tablename]
             for row in rows:
                 del ctable[str(row.id)]
@@ -3427,7 +3427,7 @@ class CouchDBAdapter(NoSQLAdapter):
                 return 0
         else:
             tablename = self.get_table(query)
-            rows = self.select(query,[self.db[tablename].id],{})
+            rows = self.select(query,[self.db[tablename]._id],{})
             ctable = self.connection[tablename]
             table = self.db[tablename]
             for row in rows:
@@ -3443,7 +3443,7 @@ class CouchDBAdapter(NoSQLAdapter):
         if not isinstance(query,Query):
             raise SyntaxError, "Not Supported"
         tablename = self.get_table(query)
-        rows = self.select(query,[self.db[tablename].id],{})
+        rows = self.select(query,[self.db[tablename]._id],{})
         return len(rows)
 
 def cleanup(text):
@@ -3616,7 +3616,7 @@ def sqlhtml_validators(field):
         def repr_ref(id, r=referenced, f=ff): return f(r, id)
         field.represent = field.represent or repr_ref
         if hasattr(referenced, '_format') and referenced._format:
-            requires = validators.IS_IN_DB(field.db,referenced.id,
+            requires = validators.IS_IN_DB(field.db,referenced._id,
                                            referenced._format)
             if field.unique:
                 requires._and = validators.IS_NOT_IN_DB(field.db,field)
@@ -3630,14 +3630,14 @@ def sqlhtml_validators(field):
         def list_ref_repr(ids, r=referenced, f=ff):
             if not ids:
                 return None
-            refs = r._db(r.id.belongs(ids)).select(r.id)
-            return (refs and ', '.join(str(f(r,ref.id)) for ref in refs) or '')
+            refs = r._db(r._id.belongs(ids)).select(r._id)
+            return (refs and ', '.join(str(f(r,ref._id)) for ref in refs) or '')
         field.represent = field.represent or list_ref_repr
         if hasattr(referenced, '_format') and referenced._format:
-            requires = validators.IS_IN_DB(field.db,referenced.id,
+            requires = validators.IS_IN_DB(field.db,referenced._id,
                                            referenced._format,multiple=True)
         else:
-            requires = validators.IS_IN_DB(field.db,referenced.id,
+            requires = validators.IS_IN_DB(field.db,referenced._id,
                                            multiple=True)
         if field.unique:
             requires._and = validators.IS_NOT_IN_DB(field.db,field)
@@ -4565,7 +4565,7 @@ class Table(dict):
                 return rows[0]
             return None
         elif str(key).isdigit():
-            return self._db(self.id == key).select(limitby=(0,1)).first()
+            return self._db(self._id == key).select(limitby=(0,1)).first()
         elif key:
             return dict.__getitem__(self, str(key))
 
@@ -4576,7 +4576,7 @@ class Table(dict):
             elif not str(key).isdigit():
                 record = None
             else:
-                record = self._db(self.id == key).select(limitby=(0,1)).first()
+                record = self._db(self._id == key).select(limitby=(0,1)).first()
             if record:
                 for k,v in kwargs.items():
                     if record[k]!=v: return None
@@ -4605,7 +4605,7 @@ class Table(dict):
         elif str(key).isdigit():
             if key == 0:
                 self.insert(**self._filter_fields(value))
-            elif not self._db(self.id == key)\
+            elif not self._db(self._id == key)\
                     .update(**self._filter_fields(value)):
                 raise SyntaxError, 'No such record: %s' % key
         else:
@@ -4619,7 +4619,7 @@ class Table(dict):
             query = self._build_query(key)
             if not self._db(query).delete():
                 raise SyntaxError, 'No such record: %s' % key
-        elif not str(key).isdigit() or not self._db(self.id == key).delete():
+        elif not str(key).isdigit() or not self._db(self._id == key).delete():
             raise SyntaxError, 'No such record: %s' % key
 
     def __getattr__(self, key):
