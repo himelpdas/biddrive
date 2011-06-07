@@ -355,28 +355,26 @@ def ccache():
     locker = open(os.path.join(request.folder,
                                         'cache/cache.lock'), 'a')
     portalocker.lock(locker, portalocker.LOCK_EX)
-    disk_storage = shelve.open(
-        os.path.join(request.folder,
-                'cache/cache.shelve'))
-
-    for key, value in disk_storage.items():
-        if isinstance(value, dict):
-            disk['hits'] = value['hit_total'] - value['misses']
-            disk['misses'] = value['misses']
-            try:
-                disk['ratio'] = disk['hits'] * 100 / value['hit_total']
-            except (KeyError, ZeroDivisionError):
-                disk['ratio'] = 0
-        else:
-            if hp:
-                disk['bytes'] += hp.iso(value[1]).size
-                disk['objects'] += hp.iso(value[1]).count
-                if value[0] < disk['oldest']:
-                    disk['oldest'] = value[0]
-
-    portalocker.unlock(locker)
-    locker.close()
-    disk_storage.close()
+    disk_storage = shelve.open(os.path.join(request.folder, 'cache/cache.shelve'))
+    try:
+        for key, value in disk_storage.items():
+            if isinstance(value, dict):
+                disk['hits'] = value['hit_total'] - value['misses']
+                disk['misses'] = value['misses']
+                try:
+                    disk['ratio'] = disk['hits'] * 100 / value['hit_total']
+                except (KeyError, ZeroDivisionError):
+                    disk['ratio'] = 0
+            else:
+                if hp:
+                    disk['bytes'] += hp.iso(value[1]).size
+                    disk['objects'] += hp.iso(value[1]).count
+                    if value[0] < disk['oldest']:
+                        disk['oldest'] = value[0]
+    finally:
+        portalocker.unlock(locker)
+        locker.close()
+        disk_storage.close()
 
     total['bytes'] = ram['bytes'] + disk['bytes']
     total['objects'] = ram['objects'] + disk['objects']
