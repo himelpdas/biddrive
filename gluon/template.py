@@ -863,7 +863,37 @@ def render(content = "hello world",
     '012'
     """
     # Here to avoid circular Imports
-    import globals
+    try:
+        from globals import Response
+    except:
+        # Working standalone. Build a mock Response object.
+        import cStringIO
+        import cgi
+        class Response():
+            def __init__(self):
+                self.body = cStringIO.StringIO()
+            def write(self, data, escape=True):
+                if not escape:
+                    self.body.write(str(data))
+                elif hasattr(data,'xml') and callable(data.xml):
+                    self.body.write(data.xml())
+                else:
+                    # make it a string
+                    if not isinstance(data, (str, unicode)):
+                        data = str(data)
+                    elif isinstance(data, unicode):
+                        data = data.encode('utf8', 'xmlcharrefreplace')
+                    data = cgi.escape(data, True).replace("'","&#x27;")
+                    self.body.write(data)
+
+        # A little helper to avoid escaping.
+        class NOESCAPE():
+            def __init__(self, text):
+                self.text = text
+            def xml(self):
+                return self.text
+        # Add it to the context so we can use it.
+        context['NOESCAPE'] = NOESCAPE
 
     # If we don't have anything to render, why bother?
     if not content and not stream and not filename:
@@ -879,7 +909,7 @@ def render(content = "hello world",
             stream = cStringIO.StringIO(content)
 
     # Get a response class.
-    context['response'] = globals.Response()
+    context['response'] = Response()
 
     # Execute the template.
     code = str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers, delimiters=delimiters))
