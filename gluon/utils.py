@@ -13,10 +13,11 @@ import hashlib
 import hmac
 import uuid
 import random
-import thread
 import time
 import os
 import logging
+
+logger = logging.getLogger("web2py")
 
 def md5_hash(text):
     """ Generate a md5 hash with the given text """
@@ -68,7 +69,7 @@ def hmac_hash(value, key, digest_alg='md5', salt=None):
     return d.hexdigest()
 
 
-### compute constent ctokens
+### compute constant ctokens
 def initialize_urandom():
     """
     This function and the web2py_uuid follow from the following discussion:
@@ -77,18 +78,19 @@ def initialize_urandom():
     At startup web2py compute a unique ID that identifies the machine by adding
     uuid.getnode() + int(time.time() * 1e3)
 
-    This is a 48bits number. It converts the number into 16x8bits tokens.
-    It uses thie unique if to initilize the entropy source ('/dev/urandom') or to seed random.
+    This is a 48-bit number. It converts the number into 16 8-bit tokens.
+    It uses this value to initialize the entropy source ('/dev/urandom') and to seed random.
 
     If os.random() is not supported, it falls back to using random and issues a warning.
     """
     node_id = uuid.getnode()
-    milliseconds = int(time.time() * 1e3)
-    ctokens = [((node_id + milliseconds) >> ((i%6)*8)) % 256 for i in range(16)]
+    microseconds = int(time.time() * 1e6)
+    ctokens = [((node_id + microseconds) >> ((i%6)*8)) % 256 for i in range(16)]
+    random.seed(node_id + microseconds)
     try:
         os.urandom(1)
         try:
-            # should add machine specific entropy
+            # try to add process-specific entropy
             frandom = open('/dev/urandom','wb')
             try:
                 frandom.write(''.join(chr(t) for t in ctokens))
@@ -98,11 +100,10 @@ def initialize_urandom():
             # works anyway
             pass
     except NotImplementedError:
-        random.seed(node_id + milliseconds)
-        logging.warn(
-"""Cryptographycally secure session management is not possible on your system because
+        logger.warning(
+"""Cryptographically secure session management is not possible on your system because
 your system does not provide a cryptographically secure entropy source.
-This is not specific to web2py. Consider deploying on a different Operating System.""")
+This is not specific to web2py; consider deploying on a different operating system.""")
     return ctokens
 ctokens = initialize_urandom()
 
@@ -111,13 +112,13 @@ def web2py_uuid():
     This function follows from the following discussion:
     http://groups.google.com/group/web2py-developers/browse_thread/thread/7fd5789a7da3f09
 
-    It works like uuid.uuid4 exxcept that tries to use os.urandom() if possible
-    And it XORs the output with the tokens uniquely associated to this machine.
+    It works like uuid.uuid4 except that tries to use os.urandom() if possible
+    and it XORs the output with the tokens uniquely associated with this machine.
     """
     try:
-        bytes = os.urandom(16) # use /dev/urandom if possible
+        bytes = os.urandom(16) # use /dev/urandom if possible        
     except NotImplementedError:
         bytes = [chr(random.randrange(256)) for i in range(16)]
-    ## xor bytes with contant ctokens
+    ## xor bytes with constant ctokens
     bytes = ''.join(chr(ord(c) ^ ctokens[i]) for i,c in enumerate(bytes))
     return str(uuid.UUID(bytes=bytes, version=4))
