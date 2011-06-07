@@ -434,9 +434,7 @@ class TemplateParser(object):
         # try to read the text.
         try:
             fileobj = open(filepath, 'rb')
-
             text = fileobj.read()
-
             fileobj.close()
         except IOError:
             self._raise_error('Unable to open included view file: ' + filepath)

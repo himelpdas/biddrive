@@ -23,7 +23,7 @@ import logging
 import newcron
 import main
 
-from fileutils import w2p_pack
+from fileutils import w2p_pack, read_file, write_file
 from shell import run, test
 from settings import global_settings
 
@@ -42,9 +42,7 @@ except NameError:
 
 ProgramName = 'web2py Web Framework'
 ProgramAuthor = 'Created by Massimo Di Pierro, Copyright 2007-2011'
-versioninfo = open('VERSION', 'r')
-ProgramVersion = versioninfo.read().strip()
-versioninfo.close()
+ProgramVersion = read_file('VERSION').strip()
 
 ProgramInfo = '''%s
                  %s
@@ -752,9 +750,7 @@ def console():
     if not options.cronjob:
         # If we have the applications package or if we should upgrade
         if not os.path.exists('applications/__init__.py'):
-            fp = open('applications/__init__.py', 'w')
-            fp.write('')
-            fp.close()
+	    write_file('applications/__init__.py', '')
 
         if not os.path.exists('welcome.w2p') or os.path.exists('NEWINSTALL'):
             try:

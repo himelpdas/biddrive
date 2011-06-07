@@ -32,5 +32,6 @@ def get_content(b=None,\
         html = MARKMIN(str(T(openedfile.read())),markmin_dict)
     else:
         html = str(T(openedfile.read()))
+    openedfile.close()
 
     return html

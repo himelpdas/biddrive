@@ -44,7 +44,11 @@ def allow_access(environ,host):
     header = '%s @ %s ' % (datetime.datetime.now(),host) + '='*20
     pprint = '\n'.join('%s:%s' % item for item in environ.items())
     filename = os.path.join(os.path.dirname(__file__),'access.wsgi.log')
-    open(filename,'a').write('\n'+header+'\n'+pprint+'\n')
+    f = open(filename,'a')
+    try:
+	f.write('\n'+header+'\n'+pprint+'\n')
+    finally:
+	f.close()
     app = environ['REQUEST_URI'].split('/')[1]
     keys = [key for key in environ if key.startswith('HTTP_')]
     headers = {}

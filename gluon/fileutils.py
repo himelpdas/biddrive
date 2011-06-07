@@ -19,6 +19,9 @@ from settings import global_settings
 
 
 __all__ = [
+    'read_file',
+    'write_file',
+    'readlines_file',
     'up',
     'abspath',
     'mktree',
@@ -35,8 +38,28 @@ __all__ = [
     'w2p_pack_plugin',
     'w2p_unpack_plugin',
     'fix_newlines',
+    'make_fake_file_like_object',
     ]
 
+def read_file(filename, mode='r'):
+    "returns content from filename, making sure to close the file explicitly on exit."
+    f = open(filename, mode)
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+def write_file(filename, value, mode='w'):
+    "writes <value> to filename, making sure to close the file explicitly on exit."
+    f = open(filename, mode)
+    try:
+        return f.write(value)
+    finally:
+        f.close()
+
+def readlines_file(filename, mode='r'):
+    "applies .split('\n') to the output of read_file()"
+    return read_file(filename, mode).split('\n')
 
 def abspath(*relpath, **base):
     "convert relative path to absolute path based (by default) on applications_parent"
@@ -181,9 +204,11 @@ def tar(file, dir, expression='^.+$'):
     """
 
     tar = tarfile.TarFile(file, 'w')
-    for file in listdir(dir, expression, add_dirs=True):
-        tar.add(os.path.join(dir, file), file, False)
-    tar.close()
+    try:
+        for file in listdir(dir, expression, add_dirs=True):
+            tar.add(os.path.join(dir, file), file, False)
+    finally:
+        tar.close()
 
 def untar(file, dir):
     """
@@ -239,14 +264,16 @@ def w2p_pack_plugin(filename, path, plugin_name):
     if not filename.endswith('web2py.plugin.%s.w2p' % plugin_name):
         raise Exception, "Not a web2py plugin name"
     plugin_tarball = tarfile.open(filename, 'w:gz')
-    app_dir = path
-    while app_dir[-1]=='/':
-        app_dir = app_dir[:-1]
-    files1=glob.glob(os.path.join(app_dir,'*/plugin_%s.*' % plugin_name))
-    files2=glob.glob(os.path.join(app_dir,'*/plugin_%s/*' % plugin_name))
-    for file in files1+files2:
-        plugin_tarball.add(file, arcname=file[len(app_dir)+1:])
-    plugin_tarball.close()
+    try:
+        app_dir = path
+        while app_dir[-1]=='/':
+            app_dir = app_dir[:-1]
+        files1=glob.glob(os.path.join(app_dir,'*/plugin_%s.*' % plugin_name))
+        files2=glob.glob(os.path.join(app_dir,'*/plugin_%s/*' % plugin_name))
+        for file in files1+files2:
+            plugin_tarball.add(file, arcname=file[len(app_dir)+1:])
+    finally:
+        plugin_tarball.close()
 
 
 def w2p_unpack_plugin(filename, path, delete_tar=True):
@@ -318,15 +345,10 @@ def fix_newlines(path):
 |\r|
 )''')
     for filename in listdir(path, '.*\.(py|html)$', drop=False):
-        fp = open(filename, 'rb')
-        rdata = fp.read()
-        fp.close()
+	rdata = read_file(filename, 'rb')
         wdata = regex.sub('\n', rdata)
         if wdata != rdata:
-            fp = open(filename, 'wb')
-            fp.write(wdata)
-            fp.close()
-
+	    write_file(filename, wdata, 'wb')
 
 def copystream(
     src,
@@ -355,3 +377,10 @@ def copystream(
     return
 
 
+def make_fake_file_like_object():
+    class LogFile(object):
+	def write(self, value):
+	    pass
+	def close(self):
+	    pass
+    return LogFile()

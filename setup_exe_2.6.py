@@ -41,8 +41,7 @@ if python_version == '2.6':
         print "You MUST copy Microsoft.VC90.CRT folder into the dist directory"
         
 #read web2py version from VERSION file
-vf = open('VERSION','r')
-web2py_version_line = vf.readline()
+web2py_version_line = readlines_file('VERSION')[0]
 #use regular expression to get just the version number
 v_re = re.compile('[0-9]+\.[0-9]+\.[0-9]+')
 web2py_version = v_re.search(web2py_version_line).group(0)

@@ -1587,7 +1587,11 @@ def demo_app(environ, start_response):
         type = types.get(path.split('.')[-1],'text')
         if os.path.exists(path):
             try:
-                data = open(path,'rb').read()
+		pathfile = open(path,'rb')
+		try:
+		    data = pathfile.read()
+		finally:
+		    pathfile.close()
                 start_response('200 OK', [('Content-Type', type)])
             except IOError:
                 start_response('404 NOT FOUND', [])

@@ -55,7 +55,11 @@ class TicketStorage(Storage):
         logger.error('In FILE: %(layer)s\n\n%(traceback)s\n' % ticket_data)
 
     def _store_on_disk(self, request, ticket_id, ticket_data):
-        cPickle.dump(ticket_data, self._error_file(request, ticket_id, 'wb'))
+	ef = self._error_file(request, ticket_id, 'wb')
+	try:
+	    cPickle.dump(ticket_data, ef)
+	finally:
+	    ef.close()
 
     def _error_file(self, request, ticket_id, mode, app=None):
         root = request.folder
@@ -85,8 +89,12 @@ class TicketStorage(Storage):
         ticket_id,
         ):
         if not self.db:
-            return cPickle.load(self._error_file(request, ticket_id, 'rb', app))
-        table=self._get_table(self.db, self.tablename, app)
+	    ef = self._error_file(request, ticket_id, 'rb', app)
+	    try:
+		return cPickle.load(ef)
+	    finally:
+		ef.close()
+        table = self._get_table(self.db, self.tablename, app)
         rows = self.db(table.ticket_id == ticket_id).select()
         if rows:
             return cPickle.loads(rows[0].ticket_data)

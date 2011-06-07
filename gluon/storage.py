@@ -169,19 +169,23 @@ class StorageList(Storage):
 
 def load_storage(filename):
     fp = open(filename, 'rb')
-    portalocker.lock(fp, portalocker.LOCK_EX)
-    storage = cPickle.load(fp)
-    portalocker.unlock(fp)
-    fp.close()
+    try:
+	portalocker.lock(fp, portalocker.LOCK_EX)
+	storage = cPickle.load(fp)
+	portalocker.unlock(fp)
+    finally:
+	fp.close()
     return Storage(storage)
 
 
 def save_storage(storage, filename):
     fp = open(filename, 'wb')
-    portalocker.lock(fp, portalocker.LOCK_EX)
-    cPickle.dump(dict(storage), fp)
-    portalocker.unlock(fp)
-    fp.close()
+    try:
+	portalocker.lock(fp, portalocker.LOCK_EX)
+	cPickle.dump(dict(storage), fp)
+	portalocker.unlock(fp)
+    finally:
+	fp.close()
 
 
 class Settings(Storage):

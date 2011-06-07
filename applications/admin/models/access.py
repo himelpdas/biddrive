@@ -1,4 +1,5 @@
 from gluon.admin import apath
+from gluon.fileutils import read_file
 # ###########################################################
 # ## make sure administrator is on localhost or https
 # ###########################################################
@@ -18,7 +19,7 @@ elif not request.is_local and not DEMO_MODE:
 try:
     _config = {}
     port = int(request.env.server_port or 0)
-    restricted(open(apath('../parameters_%i.py' % port, request), 'r').read(), _config)
+    restricted(read_file(apath('../parameters_%i.py' % port, request)), _config)
 
     if not 'password' in _config or not _config['password']:
         raise HTTP(200, T('admin disabled because no admin password'))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
-from gluon.fileutils import tar,untar
+from gluon.fileutils import tar, untar, read_file, write_file
 import tarfile
 import sys
 
@@ -11,22 +11,22 @@ def tar(file, filelist, expression='^.+$'):
     """
 
     tar = tarfile.TarFile(file, 'w')
-    for element in filelist:
-        try:
-            for file in listdir(element, expression, add_dirs=True):
-                tar.add(os.path.join(element, file), file, False)
-        except:
-            tar.add(element)
-    tar.close()
-
+    try:
+        for element in filelist:
+            try:
+                for file in listdir(element, expression, add_dirs=True):
+                    tar.add(os.path.join(element, file), file, False)
+            except:
+                tar.add(element)
+    finally:
+        tar.close()
 
 def start():
     if 'sdist' in sys.argv:
         tar('gluon/env.tar',['applications','VERSION','splashlogo.gif'])
 
-
     setup(name='web2py',
-          version=open("VERSION").read().split()[1],
+          version=read_file("VERSION").split()[1],
           description="""full-stack framework for rapid development and prototyping
         of secure database-driven web-based applications, written and
         programmable in Python.""",

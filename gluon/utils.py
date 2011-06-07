@@ -89,7 +89,11 @@ def initialize_urandom():
         os.urandom(1)
         try:
             # should add machine specific entropy
-            open('/dev/urandom','wb').write(''.join(chr(t) for t in ctokens))
+            frandom = open('/dev/urandom','wb')
+            try:
+                frandom.write(''.join(chr(t) for t in ctokens))
+            finally:
+                frandom.close()
         except IOError:
             # works anyway
             pass

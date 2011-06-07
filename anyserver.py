@@ -14,6 +14,7 @@ path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(path)
 sys.path = [path]+[p for p in sys.path if not p==path]
 import gluon.main
+from gluon.fileutils import read_file, write_file
 
 class Servers:
     @staticmethod
@@ -147,7 +148,7 @@ def run(servername,ip,port,softcron=True,logging=False,profiler=None):
 def main():
     usage = "python anyserver.py -s tornado -i 127.0.0.1 -p 8000 -l -P"
     try:
-        version = open('VERSION','r').read()
+        version = read_file('VERSION')
     except IOError:
         version = ''
     parser = optparse.OptionParser(usage, None, optparse.Option, version)

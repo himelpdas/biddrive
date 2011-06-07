@@ -121,7 +121,11 @@ class AIM:
             self.results += str(urllib.urlopen(url, encoded_args).read()).split(self.delimiter)
         else:
             opener = urllib.FancyURLopener(self.proxy)
-            self.results += str(opener.open(url, encoded_args).read()).split(self.delimiter)
+            opened = opener.open(url, encoded_args)
+            try:
+                self.results += str(opened.read()).split(self.delimiter)
+            finally:
+                opened.close()
         Results = namedtuple('Results', 'ResultResponse ResponseSubcode ResponseCode ResponseText AuthCode \
                                           AVSResponse TransactionID InvoiceNumber Description Amount PaymentMethod \
                                           TransactionType CustomerID CHFirstName CHLastName Company BillingAddress \

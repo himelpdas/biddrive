@@ -442,6 +442,7 @@ class BaseAdapter(ConnectionPool):
             elif mode in ('w','wb','a'):
                 portalocker.lock(fileobj,portalocker.LOCK_EX)
             else:
+		fileobj.close()
                 raise RuntimeError, "Unsupported file_open mode"
         return fileobj
 
@@ -639,7 +640,7 @@ class BaseAdapter(ConnectionPool):
                                    sql_fields, sql_fields_old,
                                    sql_fields_aux, logfile,
                                    fake_migrate=fake_migrate)
-            self.file_close(logfile)
+	self.file_close(logfile)
         return query
 
     def migrate_table(
@@ -950,16 +951,26 @@ class BaseAdapter(ConnectionPool):
         return ['TRUNCATE TABLE %s %s;' % (tablename, mode or '')]
 
     def truncate(self,table,mode= ' '):
+	# Prepare functions "write_to_logfile" and "close_logfile"
         if table._dbt:
             logfile = self.file_open(table._loggername, 'a')
-        queries = table._db._adapter._truncate(table, mode)
-        for query in queries:
-            if table._dbt:
-                logfile.write(query + '\n')
-            self.execute(query)
-        table._db.commit()
-        if table._dbt:
-            logfile.write('success!\n')
+	else:
+	    class Logfile(object):
+		def write(self, value):
+		    pass
+		def close(self):
+		    pass
+	    logfile = Logfile()
+
+	try:
+	    queries = table._db._adapter._truncate(table, mode)
+	    for query in queries:
+		logfile.write(query + '\n')
+		self.execute(query)
+	    table._db.commit()
+	    logfile.write('success!\n')
+	finally:
+	    logfile.close()
 
     def _update(self,tablename,query,fields):
         if query:
@@ -2686,7 +2697,11 @@ class DatabaseStoredFile:
             if rows:
                 self.data = rows[0][0]
             elif os.path.exists(filename):
-                self.data = open(filename,'r').read()
+		datafile = open(filename, 'r')
+		try:
+		    self.data = datafile.read()
+		finally:
+		    datafile.close()
             elif mode in ('r','rw'):
                 raise RuntimeError, "File %s does not exist" % filename
 
@@ -3903,16 +3918,19 @@ class DAL(dict):
             self.import_table_definitions(adapter.folder)
 
     def import_table_definitions(self,path,migrate=False,fake_migrate=False):
-        pattern = os.path.join(path,self._uri_hash+'_*.table')
+        pattern = os.path.join(path,self._uri_hash+'_*.table')        
         for filename in glob.glob(pattern):
             tfile = self._adapter.file_open(filename, 'r')
-            sql_fields = cPickle.load(tfile)
-            name = filename[len(pattern)-7:-6]
-            mf = [(value['sortable'],Field(key,type=value['type'])) \
-                      for key, value in sql_fields.items()]
-            mf.sort(lambda a,b: cmp(a[0],b[0]))
-            self.define_table(name,*[item[1] for item in mf],
-                              **dict(migrate=migrate,fake_migrate=fake_migrate))
+            try:
+                sql_fields = cPickle.load(tfile)
+                name = filename[len(pattern)-7:-6]
+                mf = [(value['sortable'],Field(key,type=value['type'])) \
+                          for key, value in sql_fields.items()]
+                mf.sort(lambda a,b: cmp(a[0],b[0]))
+                self.define_table(name,*[item[1] for item in mf],
+                                  **dict(migrate=migrate,fake_migrate=fake_migrate))
+            finally:
+                self._adapter.file_close(tfile)
 
     def check_reserved_keyword(self, name):
         """
@@ -5168,8 +5186,10 @@ class Field(Expression):
                 os.makedirs(path)
             pathfilename = os.path.join(path, newfilename)
             dest_file = open(pathfilename, 'wb')
-            shutil.copyfileobj(file, dest_file)
-            dest_file.close()
+	    try:
+		shutil.copyfileobj(file, dest_file)
+	    finally:
+		dest_file.close()
         return newfilename
 
     def retrieve(self, name, path=None):

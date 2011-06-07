@@ -1,5 +1,5 @@
 import os
-from gluon.settings import global_settings
+from gluon.settings import global_settings, read_file
 #
 
 def index():
@@ -19,9 +19,11 @@ def profiler():
         else:
             size = 0
         if os.path.exists(filename):
-            data = open('profiler.log','rb').read()
-            if size<len(data): data = data[size:]
-            else: size=0
+            data = read_file('profiler.log','rb')
+            if size<len(data): 
+                data = data[size:]
+            else: 
+                size=0
             size += len(data)
             response.cookies[KEY] = size
     return data

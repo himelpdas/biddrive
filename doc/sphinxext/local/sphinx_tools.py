@@ -12,11 +12,13 @@ def write_changelog_bzr(repo_path, output_dir,
 
     bzr_logfile_path = os.path.join(output_dir, output_file)
     bzr_logfile = codecs.open(bzr_logfile_path, 'w', encoding=target_encoding)
-    p_log = subprocess.Popen(('bzr log --short'), 
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
-    (stdout, stderr) = p_log.communicate()
-    bzr_logfile.write(stdout)
-    bzr_logfile.close()
+    try:
+        p_log = subprocess.Popen(('bzr log --short'), 
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
+        (stdout, stderr) = p_log.communicate()
+        bzr_logfile.write(stdout)
+    finally:
+        bzr_logfile.close()
     #UnicodeDecodeError: 'ascii' codec can't decode byte 0x81 in position 2871: ordinal not in range(128)
     
     # like bzr version-info --format python > vers_test.py

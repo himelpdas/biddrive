@@ -528,7 +528,12 @@ class AppFrame(wx.Frame):
         
         self.do_new()
         tmp = []
-        for lno, linea in enumerate(open(self.filename).readlines()):
+	f = open(self.filename)
+	try:
+	    filedata = f.readlines()
+	finally:
+	    f.close()
+        for lno, linea in enumerate(filedata):
             if DEBUG: print "processing line", lno, linea
             args = []
             for i,v in enumerate(linea.split(";")):
@@ -567,20 +572,22 @@ class AppFrame(wx.Frame):
                 return repr(v)
         
         f = open(self.filename, "w")
-        for element in sorted(self.elements, key=lambda e:e.name):
-            if element.static:
-                continue
-            d = element.as_dict()
-            l = [d['name'], d['type'],
-                 d['x1'], d['y1'], d['x2'], d['y2'],
-                 d['font'], d['size'],
-                 d['bold'], d['italic'], d['underline'], 
-                 d['foreground'], d['background'],
-                 d['align'], d['text'], d['priority'], 
-                ]
-            f.write(";".join([csv_repr(v) for v in l]))
-            f.write("\n")
-        f.close()
+	try:
+	    for element in sorted(self.elements, key=lambda e:e.name):
+		if element.static:
+		    continue
+		d = element.as_dict()
+		l = [d['name'], d['type'],
+		     d['x1'], d['y1'], d['x2'], d['y2'],
+		     d['font'], d['size'],
+		     d['bold'], d['italic'], d['underline'], 
+		     d['foreground'], d['background'],
+		     d['align'], d['text'], d['priority'], 
+		    ]
+		f.write(";".join([csv_repr(v) for v in l]))
+		f.write("\n")
+	finally:
+	    f.close()
         
     def do_print(self, evt):
         # genero el renderizador con propiedades del PDF

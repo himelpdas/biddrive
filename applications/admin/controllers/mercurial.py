@@ -1,3 +1,5 @@
+from gluon.fileutils import read_file, write_file
+
 if DEMO_MODE or MULTI_USER_MODE:
     session.flash = T('disabled in demo mode')
     redirect(URL('default','site'))
@@ -32,7 +34,7 @@ def hg_repo(path):
         repo = hg.repository(ui=uio, path=path, create=True)
     hgignore = os.path.join(path, '.hgignore')
     if not os.path.exists(hgignore):
-        open(hgignore, 'w').write(_hgignore_content)
+        write_file(hgignore, _hgignore_content)
     return repo
 
 def commit():

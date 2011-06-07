@@ -13,6 +13,7 @@ Adapted from http://bazaar.launchpad.net/~flavour/sahana-eden/trunk/view/head:/s
 from distutils.core import setup
 import py2exe
 from gluon.import_all import base_modules, contributed_modules
+from gluon.fileutils import readlines_file
 from glob import glob
 import fnmatch
 import os
@@ -21,15 +22,11 @@ import sys
 import re
 import zipfile
 
-
 #read web2py version from VERSION file
-vf = open('VERSION','r')
-web2py_version_line = vf.readline()
+web2py_version_line = readlines_file('VERSION')[0]
 #use regular expression to get just the version number
 v_re = re.compile('[0-9]+\.[0-9]+\.[0-9]+')
 web2py_version = v_re.search(web2py_version_line).group(0)
-
-
 
 #pull in preferences from config file
 import ConfigParser

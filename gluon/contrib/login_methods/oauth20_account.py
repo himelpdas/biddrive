@@ -116,20 +116,20 @@ class OAuthAccount(object):
                 del self.session.code # throw it away
 
             if open_url:
-                tokendata = cgi.parse_qs(open_url.read())
-                self.session.token = dict([(k,v[-1]) for k,v in tokendata.items()])
-                # set expiration absolute time try to avoid broken
-                # implementations where "expires_in" becomes "expires"
-                if self.session.token.has_key('expires_in'):
-                    exps = 'expires_in'
-                else:
-                    exps = 'expires'
-                self.session.token['expires'] = int(self.session.token[exps]) + \
-                    time.time()
-
+                try:
+                    tokendata = cgi.parse_qs(open_url.read())
+                    self.session.token = dict([(k,v[-1]) for k,v in tokendata.items()])
+                    # set expiration absolute time try to avoid broken
+                    # implementations where "expires_in" becomes "expires"
+                    if self.session.token.has_key('expires_in'):
+                        exps = 'expires_in'
+                    else:
+                        exps = 'expires'
+                    self.session.token['expires'] = int(self.session.token[exps]) + \
+                        time.time()
+                finally:
+                    opener.close()
                 return self.session.token['access_token']
-
-
 
         self.session.token = None
         return None

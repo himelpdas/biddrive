@@ -7,6 +7,7 @@ try:
     import signal
     import os
     import shutil
+    from gluon.fileutils import read_file, write_file    
 except:
     session.flash='sorry, only on Unix systems'
     redirect(URL(request.application,'default','site'))
@@ -52,10 +53,10 @@ def deploy():
         if not os.path.exists(yaml):
             example = apath('../app.example.yaml', r=request)
             shutil.copyfile(example,yaml)            
-        data=open(yaml,'r').read()
+        data = read_file(yaml)
         data = re.sub('application:.*','application: %s' % form.vars.google_application_id,data)
         data = regex.sub('(applications/(%s)/.*)|' % '|'.join(ignore_apps),data)
-        open(yaml,'w').write(data)
+        write_file(yaml, data)
 
         path = request.env.applications_parent
         cmd = '%s --email=%s --passin update %s' % \

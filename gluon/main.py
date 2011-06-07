@@ -28,7 +28,7 @@ import socket
 import tempfile
 import random
 import string
-from fileutils import abspath
+from fileutils import abspath, write_file
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
 from globals import current
@@ -688,7 +688,7 @@ def appfactory(wsgiapp=wsgibase,
             if not logfilename:
                 sys.stdout.write(line)
             elif isinstance(logfilename, str):
-                open(logfilename, 'a').write(line)
+		write_file(logfilename, line, 'a')
             else:
                 logfilename.write(line)
         except:
@@ -789,9 +789,7 @@ class HttpServer(object):
             signal.signal(signal.SIGINT, lambda a, b, s=self: s.stop())
         except:
             pass
-        fp = open(self.pid_filename, 'w')
-        fp.write(str(os.getpid()))
-        fp.close()
+	write_file(self.pid_filename, str(os.getpid()))
         self.server.start()
 
     def stop(self, stoplogging=False):

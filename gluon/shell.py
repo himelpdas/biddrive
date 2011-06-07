@@ -174,13 +174,9 @@ def run(
                     os.mkdir(subpath)
             db = os.path.join(adir,'models/db.py')
             if os.path.exists(db):
-                fp = open(db,'r')
-                data = fp.read()
-                fp.close()
+		data = fileutils.read_file(db)
                 data = data.replace('<your secret key>','sha512:'+web2py_uuid())
-                fp = open(db,'w')
-                fp.write(data)
-                fp.close()
+		fileutils.write_file(db, data)
 
     if c:
         import_models = True

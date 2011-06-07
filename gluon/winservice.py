@@ -86,7 +86,10 @@ class Web2pyService(Service):
             h = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
                                 r'SYSTEM\CurrentControlSet\Services\%s'
                                  % self._svc_name_)
-            cls = _winreg.QueryValue(h, 'PythonClass')
+            try:
+                cls = _winreg.QueryValue(h, 'PythonClass')
+            finally:
+                _winreg.CloseKey(h)
             dir = os.path.dirname(cls)
             os.chdir(dir)
             return True

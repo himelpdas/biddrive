@@ -23,9 +23,17 @@ def main():
         # uncomment to erase all previous records
         # other_db[table._tablename].truncate()
     print 'exporting data...'
-    db.export_to_csv_file(open('tmp.sql','wb'))
+    tmpfile = open('tmp.sql','wb')
+    try:
+	db.export_to_csv_file(tmpfile)
+    finally:
+	tmpfile.close()
     print 'importing data...'
-    other_db.import_from_csv_file(open('tmp.sql','rb'))
+    tmpfile = open('tmp.sql','rb')
+    try:                                     
+	other_db.import_from_csv_file(tmpfile)
+    finally:
+	tmpfile.close()
     other_db.commit()
     print 'done!'
     print 'Attention: do not run this program again or you end up with duplicate records'

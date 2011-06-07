@@ -28,6 +28,7 @@ from contenttype import contenttype
 from storage import Storage, StorageList, Settings, Messages
 from utils import web2py_uuid
 from gluon import *
+from fileutils import read_file
 
 import serializers
 import contrib.simplejson as simplejson
@@ -128,9 +129,7 @@ class Mail(object):
             if isinstance(payload, str):
                 if filename == None:
                     filename = os.path.basename(payload)
-                handle = open(payload, 'rb')
-                payload = handle.read()
-                handle.close()
+		payload = read_file(payload, 'rb')
             else:
                 if filename == None:
                     raise Exception('Missing attachment name')

@@ -568,7 +568,11 @@ if __name__=="__main__":
     
     if '--wsfe' in sys.argv:
         # Demo & Test (AFIP Electronic Invoice):
-        ta_string=open("TA.xml").read()   # read access ticket (wsaa.py)
+	ta_file = open("TA.xml")
+	try:
+	    ta_string = ta_file.read()   # read access ticket (wsaa.py)
+	finally:
+	    ta_file.close()
         ta = SimpleXMLElement(ta_string)
         token = str(ta.credentials.token)
         sign = str(ta.credentials.sign)
@@ -623,7 +627,11 @@ if __name__=="__main__":
         print results['FEXDummyResult']['AppServer']
         print results['FEXDummyResult']['DbServer']
         print results['FEXDummyResult']['AuthServer']
-        ta_string=open("TA.xml").read()   # read access ticket (wsaa.py)
+	ta_file = open("TA.xml")
+	try:
+	    ta_string = ta_file.read()   # read access ticket (wsaa.py)
+	finally:
+	    ta_file.close()
         ta = SimpleXMLElement(ta_string)
         token = str(ta.credentials.token)
         sign = str(ta.credentials.sign)
@@ -647,7 +655,11 @@ if __name__=="__main__":
         print results['DummyResponse']['appserver']
         print results['DummyResponse']['dbserver']
         print results['DummyResponse']['authserver']
-        ta_string=open("TA.xml").read()   # read access ticket (wsaa.py)
+	ta_file = open("TA.xml")
+	try:
+	    ta_string = ta_file.read()   # read access ticket (wsaa.py)
+	finally:
+	    ta_file.close()
         ta = SimpleXMLElement(ta_string)
         token = str(ta.credentials.token)
         sign = str(ta.credentials.sign)

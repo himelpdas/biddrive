@@ -40,7 +40,11 @@ domain3.com /app3/defcon3
 '''
 if not config.strip():
     try:
-        config = open('routes.conf','r').read()
+	config_file = open('routes.conf','r')
+	try:
+	    config = config_file.read()
+	finally:
+	    config_file.close()
     except:
         config=''
 

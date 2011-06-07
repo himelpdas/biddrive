@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from gluon.fileutils import read_file
+
 response.title = T('web2py Web Framework')
 response.keywords = T('web2py, Python, Web Framework')
 response.description = T('web2py Web Framework')
@@ -51,7 +53,7 @@ def api():
 def license():
     import os
     filename = os.path.join(request.env.gluon_parent, 'LICENSE')
-    return response.render(dict(license=MARKMIN(open(filename,'r').read())))
+    return response.render(dict(license=MARKMIN(read_file(filename))))
 
 def version():
     return request.env.web2py_version
@@ -64,4 +66,4 @@ def examples():
 def changelog():
     import os
     filename = os.path.join(request.env.gluon_parent, 'README')
-    return response.render(dict(changelog=MARKMIN(open(filename,'r').read())))
+    return response.render(dict(changelog=MARKMIN(read_file(filename))))

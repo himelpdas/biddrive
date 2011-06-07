@@ -65,24 +65,34 @@ def latex2pdf(latex, pdflatex='pdflatex', passes=3):
     for i in range(0, passes):
         logfd,logname = mkstemp()
         outfile=os.fdopen(logfd)
-        ret = subprocess.call([pdflatex,
-                               '-interaction=nonstopmode',
-                               '-output-format', 'pdf',
-                               '-output-directory', tmpdir,
-                               texfile],
-                              cwd=os.path.dirname(texfile), stdout=outfile,
-                              stderr=subprocess.PIPE)
-        outfile.close()
+	try:
+	    ret = subprocess.call([pdflatex,
+				   '-interaction=nonstopmode',
+				   '-output-format', 'pdf',
+				   '-output-directory', tmpdir,
+				   texfile],
+				  cwd=os.path.dirname(texfile), stdout=outfile,
+				  stderr=subprocess.PIPE)
+	finally:
+	    outfile.close()
         re_errors=re.compile('^\!(.*)$',re.M)
         re_warnings=re.compile('^LaTeX Warning\:(.*)$',re.M)
-        loglines=open(logname).read()
+	flog = open(logname)
+	try:
+	    loglines = flog.read()
+	finally:
+	    flog.close()
         errors=re_errors.findall(loglines)
         warnings=re_warnings.findall(loglines)
         os.unlink(logname)
 
     pdffile=texfile.rsplit('.',1)[0]+'.pdf'
     if os.path.isfile(pdffile):
-        data = open(pdffile,'rb').read()
+	fpdf = open(pdffile, 'rb')
+	try:
+	    data = fpdf.read()
+	finally:
+	    fpdf.close()
     else:
         data = None
     removeall(tmpdir)
@@ -105,7 +115,11 @@ if __name__ == '__main__':
         else:
             print data
     elif len(sys.argv)>1:
-        data, warnings, errors = markmin2pdf(open(sys.argv[1],'rb').read())
+	fargv = open(sys.argv[1],'rb')
+	try:
+	    data, warnings, errors = markmin2pdf(fargv.read())
+	finally:
+	    fargv.close()
         if errors:
             print 'ERRORS:'+'\n'.join(errors)
             print 'WARNGINS:'+'\n'.join(warnings)

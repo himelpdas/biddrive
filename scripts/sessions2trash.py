@@ -102,9 +102,11 @@ def trash_session_files(expiration, force=False, verbose=False):
         if expiration > 0:
             try:
                 f = open(filename, 'rb+')
-                session = Storage()
-                session.update(cPickle.load(f))
-                f.close()
+		try:
+		    session = Storage()
+		    session.update(cPickle.load(f))
+		finally:
+		    f.close()
 
                 if session.auth:
                     if session.auth.expiration and not force:

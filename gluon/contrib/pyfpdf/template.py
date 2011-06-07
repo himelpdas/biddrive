@@ -34,20 +34,23 @@ class Template:
             'bold','italic','underline','foreground','background',
             'align','text','priority')
         self.elements = {}
-        for row in csv.reader(open(infile, 'rb'), delimiter=delimiter):
-            kargs = {}
-            for i,v in enumerate(row):
-                if not v.startswith("'") and decimal_sep!=".": 
-                    v = v.replace(decimal_sep,".")
-                else:
-                    v = v
-                if v=='':
-                    v = None
-                else:
-                    v = eval(v.strip())
-                kargs[keys[i]] = v
-            self.elements[kargs['name'].lower()] = kargs
-
+	f = open(infile, 'rb')
+	try:
+	    for row in csv.reader(f, delimiter=delimiter):
+		kargs = {}
+		for i,v in enumerate(row):
+		    if not v.startswith("'") and decimal_sep!=".": 
+			v = v.replace(decimal_sep,".")
+		    else:
+			v = v
+		    if v=='':
+			v = None
+		    else:
+			v = eval(v.strip())
+		    kargs[keys[i]] = v
+		self.elements[kargs['name'].lower()] = kargs
+	finally:
+	    f.close()
 
     def add_page(self):
         self.pg_no += 1

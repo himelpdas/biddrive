@@ -1,3 +1,4 @@
+from gluon.fileutils import read_file
 
 response.menu = [['Register User', False, URL(r=request,
                  f='register_user')], ['Register Dog', False,
@@ -146,7 +147,6 @@ def download():
     filename = request.args[0]
     response.headers['Content-Type'] = \
         gluon.contenttype.contenttype(filename)
-    return open('applications/%s/uploads/%s' % (app, filename), 'rb'
-                ).read()
+    return read_file('applications/%s/uploads/%s' % (app, filename), 'rb')
 
 

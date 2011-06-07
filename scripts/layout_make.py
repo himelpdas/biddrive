@@ -44,9 +44,12 @@ div.error {
 def content():
     return """<div class="flash">{{=response.flash or ''}}</div>{{include}}"""
 
-
 def process(folder):
-    soup = BS(open(os.path.join(folder,'index.html'),'rb').read())
+    indexfile = open(os.path.join(folder,'index.html'),'rb')
+    try:
+	soup = BS(indexfile.read())
+    finally:
+	indexfile.close()
     styles = [x['href'] for x in soup.findAll('link')]
     soup.find('head').contents=BS(head(styles))
     try:

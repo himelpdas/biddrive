@@ -79,7 +79,7 @@ class Token(object):
     def __init__(self,path):
         self.path = os.path.join(path, 'cron.master')
         if not os.path.exists(self.path):
-            open(self.path,'wb').close()
+	    fileutils.write_file(self.path, '', 'wb')
         self.master = None
         self.now = time.time()
 
@@ -253,8 +253,7 @@ def crondance(applications_parent, ctype='soft', startup=False):
         if not os.path.exists(crontab):
             continue
         try:
-            f = open(crontab, 'rt')
-            cronlines = f.readlines()
+	    cronlines = fileutils.readlines_file(crontab, 'rt')
             lines = [x.strip() for x in cronlines if x.strip() and not x.strip().startswith('#')]
             tasks = [parsecronline(cline) for cline in lines]
         except Exception, e:

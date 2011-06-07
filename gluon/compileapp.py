@@ -20,7 +20,7 @@ import random
 from storage import Storage, List
 from template import parse_template
 from restricted import restricted, compile2
-from fileutils import mktree, listdir
+from fileutils import mktree, listdir, read_file, write_file
 from myregex import regex_expose
 from languages import translator
 from dal import BaseAdapter, SQLDB, SQLField, DAL, Field
@@ -263,9 +263,7 @@ def read_pyc(filename):
 
     :returns: a code object
     """
-    fp = open(filename, 'rb')
-    data = fp.read()
-    fp.close()
+    data = read_file(filename, 'rb')
     if not is_gae and data[:4] != imp.get_magic():
         raise SystemError, 'compiled code is incompatible'
     return marshal.loads(data[8:])
@@ -281,9 +279,7 @@ def compile_views(folder):
         data = parse_template(file, path)
         filename = ('views/%s.py' % file).replace('/', '_').replace('\\', '_')
         filename = os.path.join(folder, 'compiled', filename)
-        fp = open(filename, 'w')
-        fp.write(data)
-        fp.close()
+	write_file(filename, data)
         save_pyc(filename)
         os.unlink(filename)
 
@@ -295,14 +291,10 @@ def compile_models(folder):
 
     path = os.path.join(folder, 'models')
     for file in listdir(path, '.+\.py$'):
-        fp = open(os.path.join(path, file), 'r')
-        data = fp.read()
-        fp.close()
+	data = read_file(os.path.join(path, file))
         filename = os.path.join(folder, 'compiled','models',file)
         mktree(filename)
-        fp = open(filename, 'w')
-        fp.write(data)
-        fp.close()
+	write_file(filename, data)
         save_pyc(filename)
         os.unlink(filename)
 
@@ -315,9 +307,7 @@ def compile_controllers(folder):
     path = os.path.join(folder, 'controllers')
     for file in listdir(path, '.+\.py$'):
         ### why is this here? save_pyc(os.path.join(path, file))
-        fp = open(os.path.join(path,file), 'r')
-        data = fp.read()
-        fp.close()
+	data = read_file(os.path.join(path,file))
         exposed = regex_expose.findall(data)
         for function in exposed:
             command = data + "\nresponse._vars=response._caller(%s)\n" % \
@@ -325,9 +315,7 @@ def compile_controllers(folder):
             filename = os.path.join(folder, 'compiled', ('controllers/'
                                      + file[:-3]).replace('/', '_')
                                      + '_' + function + '.py')
-            fp = open(filename, 'w')
-            fp.write(command)
-            fp.close()
+	    write_file(filename, command)
             save_pyc(filename)
             os.unlink(filename)
 
@@ -360,7 +348,7 @@ def run_models_in(environment):
             code = read_pyc(model)
         elif is_gae:
             code = getcfs(model, model,
-                          lambda: compile2(open(model, 'r').read(),model))
+                          lambda: compile2(read_file(model), model))
         else:
             code = getcfs(model, model, None)
         restricted(code, environment, layer=model)
@@ -402,9 +390,7 @@ def run_controller_in(controller, function, environment):
                        rewrite.thread.routes.error_message % badc,
                        web2py_error=badc)
         environment['__symbols__'] = environment.keys()
-        fp = open(filename, 'r')
-        code = fp.read()
-        fp.close()
+	code = read_file(filename)
         code += TEST_CODE
         restricted(code, environment, layer=filename)
     else:
@@ -414,9 +400,7 @@ def run_controller_in(controller, function, environment):
             raise HTTP(404,
                        rewrite.thread.routes.error_message % badc,
                        web2py_error=badc)
-        fp = open(filename, 'r')
-        code = fp.read()
-        fp.close()
+	code = read_file(filename)
         exposed = regex_expose.findall(code)
         if not function in exposed:
             raise HTTP(404,

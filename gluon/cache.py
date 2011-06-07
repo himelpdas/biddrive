@@ -242,13 +242,15 @@ class CacheOnDisk(CacheAbstract):
                 portalocker.lock(locker, portalocker.LOCK_EX)
                 locker_locked = True
                 storage = shelve.open(self.shelve_name)
-
-                if not storage.has_key(CacheAbstract.cache_stats_name):
-                    storage[CacheAbstract.cache_stats_name] = {
-                        'hit_total': 0,
-                        'misses': 0,
-                        }
-                    storage.sync()
+                try:
+                    if not storage.has_key(CacheAbstract.cache_stats_name):
+                        storage[CacheAbstract.cache_stats_name] = {
+                            'hit_total': 0,
+                            'misses': 0,
+                            }
+                        storage.sync()
+                finally:
+                    storage.close()
                 self.speedup_checks.add(speedup_key)
             except ImportError:
                 pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
@@ -265,16 +267,19 @@ class CacheOnDisk(CacheAbstract):
         locker = open(self.locker_name,'a')
         portalocker.lock(locker, portalocker.LOCK_EX)
         storage = shelve.open(self.shelve_name)
-        if regex == None:
-            storage.clear()
-        else:
-            self._clear(storage, regex)
-        if not CacheAbstract.cache_stats_name in storage.keys():
-            storage[CacheAbstract.cache_stats_name] = {
-                'hit_total': 0,
-                'misses': 0,
-            }
-        storage.sync()
+        try:
+            if regex == None:
+                storage.clear()
+            else:
+                self._clear(storage, regex)
+            if not CacheAbstract.cache_stats_name in storage.keys():
+                storage[CacheAbstract.cache_stats_name] = {
+                    'hit_total': 0,
+                    'misses': 0,
+                }
+            storage.sync()
+        finally:
+            storage.close()
         portalocker.unlock(locker)
         locker.close()
 
@@ -284,7 +289,6 @@ class CacheOnDisk(CacheAbstract):
 
         locker = open(self.locker_name,'a')
         portalocker.lock(locker, portalocker.LOCK_EX)
-
         storage = shelve.open(self.shelve_name)
 
         item = storage.get(key, None)
@@ -309,7 +313,6 @@ class CacheOnDisk(CacheAbstract):
 
         locker = open(self.locker_name,'a')
         portalocker.lock(locker, portalocker.LOCK_EX)
-
         storage[key] = (time.time(), value)
 
         storage[CacheAbstract.cache_stats_name] = {
@@ -319,6 +322,7 @@ class CacheOnDisk(CacheAbstract):
 
         storage.sync()
 
+        storage.close()
         portalocker.unlock(locker)
         locker.close()
 
@@ -333,12 +337,10 @@ class CacheOnDisk(CacheAbstract):
                 value = storage[key][1] + value
             storage[key] = (time.time(), value)
             storage.sync()
-        except BaseException, e:
+        finally:
+            storage.close()
             portalocker.unlock(locker)
             locker.close()
-            raise e
-        portalocker.unlock(locker)
-        locker.close()
         return value
 
 

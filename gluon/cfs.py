@@ -15,6 +15,7 @@ FOR INTERNAL USE ONLY
 import os
 import stat
 import thread
+from fileutils import read_file
 
 cfs = {}  # for speed-up
 cfs_lock = thread.allocate_lock()  # and thread safety
@@ -40,9 +41,7 @@ def getcfs(key, filename, filter=None):
     if item and item[0] == t:
         return item[1]
     if not filter:
-        fp = open(filename, 'r')
-        data = fp.read()
-        fp.close()
+	data = read_file(filename)
     else:
         data = filter()
     cfs_lock.acquire()

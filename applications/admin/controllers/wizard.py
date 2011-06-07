@@ -2,7 +2,7 @@
 
 import os, uuid, re, pickle, urllib, glob
 from gluon.admin import app_create, plugin_install
-from gluon.fileutils import abspath
+from gluon.fileutils import abspath, read_file, write_file
 
 def reset(session):
     session.app={
@@ -55,7 +55,11 @@ def index():
                              '..',app,'wizard.metadata'))
             if os.path.exists(meta):
                 try:
-                    session.app=pickle.load(open(meta,'rb'))
+                    metafile = open(meta,'rb')
+                    try:
+                        session.app = pickle.load(metafile)
+                    finally:
+                        metafile.close()
                     session.flash = "The app exists, was created by wizard, continue to overwrite!"
                 except:
                     session.flash = "The app exists, was NOT created by wizard, continue to overwrite!"
@@ -70,7 +74,7 @@ def step1():
         url=LAYOUTS_APP+'/default/layouts.json'
         try:
             data = urllib.urlopen(url).read()
-            session.themes = ['Default']+loads(data)['layouts']
+            session.themes = ['Default'] + loads(data)['layouts']
         except:
             session.themes = ['Default']
     themes = session.themes
@@ -363,15 +367,15 @@ db.auth_user.email.requires = (IS_EMAIL(error_message=auth.messages.invalid_emai
 
 
 def fix_db(filename):
-    params=dict(session.app['params'])
-    content=open(filename,'rb').read()
+    params = dict(session.app['params'])
+    content = read_file(filename,'rb')
     if 'auth_user' in session.app['tables']:
         auth_user = make_table('auth_user',session.app['table_auth_user'])
-        content=content.replace('sqlite://storage.sqlite',
+        content = content.replace('sqlite://storage.sqlite',
                                 params['database_uri'])
-        content=content.replace('auth.define_tables()',\
-            auth_user+'auth.define_tables(migrate=settings.migrate)')
-    content+="""
+        content = content.replace('auth.define_tables()',\
+            auth_user+'auth.define_tables(migrate = settings.migrate)')
+    content+ = """
 mail.settings.server = settings.email_server
 mail.settings.sender = settings.email_sender
 mail.settings.login = settings.email_login
@@ -385,7 +389,7 @@ auth.settings.login_form = RPXAccount(request,
     domain = settings.login_config.split(':')[0],
     url = "http://%s/%s/default/user/login" % (request.env.http_host,request.application))
 """
-    open(filename,'wb').write(content)
+    write_file(filename, content, 'wb')
 
 def make_menu(pages):
     s="""
@@ -518,7 +522,8 @@ def create(options):
             fn = 'web2py.plugin.layout_%s.w2p' % params['layout_theme']
             theme = urllib.urlopen(LAYOUTS_APP+'/static/plugin_layouts/plugins/'+fn)
             plugin_install(app, theme, request, fn)
-        except: session.flash = T("unable to download layout")
+        except: 
+            session.flash = T("unable to download layout")
 
     ### apply plugins
     for plugin in params['plugins']:
@@ -531,20 +536,24 @@ def create(options):
                     
     ### write configuration file into newapp/models/0.py
     model = os.path.join(request.folder,'..',app,'models','0.py')
-    file = open(model,'wb')
-    file.write("from gluon.storage import Storage\n")
-    file.write("settings = Storage()\n\n")
-    file.write("settings.migrate = True\n")
-    for key,value in session.app['params']:
-        file.write("settings.%s = %s\n" % (key,repr(value)))
-    file.close()
+    file = open(model, 'wb')
+    try:
+        file.write("from gluon.storage import Storage\n")
+        file.write("settings = Storage()\n\n")
+        file.write("settings.migrate = True\n")
+        for key,value in session.app['params']:
+            file.write("settings.%s = %s\n" % (key,repr(value)))
+    finally:
+        file.close()
 
     ### write configuration file into newapp/models/menu.py
     if options.generate_menu:
         model = os.path.join(request.folder,'..',app,'models','menu.py')
         file = open(model,'wb')
-        file.write(make_menu(session.app['pages']))
-        file.close()
+        try:
+            file.write(make_menu(session.app['pages']))
+        finally:
+            file.close()
 
     ### customize the auth_user table
     model = os.path.join(request.folder,'..',app,'models','db.py')
@@ -554,26 +563,31 @@ def create(options):
     if options.generate_model:
         model = os.path.join(request.folder,'..',app,'models','db_wizard.py')
         file = open(model,'wb')
-        file.write('### we prepend t_ to tablenames and f_ to fieldnames for disambiguity\n\n')
-        tables=sort_tables(session.app['tables'])
-        for table in tables:
-            if table=='auth_user': continue
-            file.write(make_table(table,session.app['table_'+table]))
-        file.close()
+        try:
+            file.write('### we prepend t_ to tablenames and f_ to fieldnames for disambiguity\n\n')
+            tables = sort_tables(session.app['tables'])
+            for table in tables:
+                if table=='auth_user': continue
+                file.write(make_table(table,session.app['table_'+table]))
+        finally:
+            file.close()
 
     model = os.path.join(request.folder,'..',app,
                          'models','db_wizard_populate.py')
     if os.path.exists(model): os.unlink(model)
     if options.populate_database:
         file = open(model,'wb')
-        file.write(populate(session.app['tables']))
-        file.close()
+        try:
+            file.write(populate(session.app['tables']))
+        finally:
+            file.close()
 
     ### create newapp/controllers/default.py
     if options.generate_controller:
         controller = os.path.join(request.folder,'..',app,'controllers','default.py')
         file = open(controller,'wb')
-        file.write("""# -*- coding: utf-8 -*-
+        try:
+            file.write("""# -*- coding: utf-8 -*-
 ### required - do no delete
 def user(): return dict(form=auth())
 def download(): return response.download(request,db)
@@ -582,20 +596,22 @@ def call():
     return service()
 ### end requires
 """)
-        for page in session.app['pages']:
-            file.write(make_page(page,session.app.get('page_'+page,'')))
-        file.close()
+            for page in session.app['pages']:
+                file.write(make_page(page,session.app.get('page_'+page,'')))
+        finally:
+            file.close()
 
     ### create newapp/views/default/*.html
     if options.generate_views:
         for page in session.app['pages']:
             view = os.path.join(request.folder,'..',app,'views','default',page+'.html')
             file = open(view,'wb')
-            file.write(make_view(page,session.app.get('page_'+page,'')))
-            file.close()
+            try:
+                file.write(make_view(page,session.app.get('page_'+page,'')))
+            finally:
+                file.close()
 
     if options.erase_database:
         path = os.path.join(request.folder,'..',app,'databases','*')
-        for file in glob.glob(path): os.unlink(file)
-
-
+        for file in glob.glob(path): 
+            os.unlink(file)

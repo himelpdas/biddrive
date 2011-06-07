@@ -24,7 +24,7 @@ import threading
 import urllib
 from storage import Storage, List
 from http import HTTP
-from fileutils import abspath
+from fileutils import abspath, read_file
 from settings import global_settings
 
 logger = logging.getLogger('web2py.rewrite')
@@ -192,9 +192,7 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                 path = abspath('applications', app, routes)
             if not os.path.exists(path):
                 return
-            routesfp = open(path, 'r')
-            data = routesfp.read().replace('\r\n','\n')
-            routesfp.close()
+	    data = read_file(path).replace('\r\n','\n')
 
         symbols = {}
         try:

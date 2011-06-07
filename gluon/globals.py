@@ -339,16 +339,18 @@ class Session(Storage):
                 try:
                     response.session_file = \
                         open(response.session_filename, 'rb+')
-                    portalocker.lock(response.session_file,
-                            portalocker.LOCK_EX)
-                    response.session_locked = True
-                    self.update(cPickle.load(response.session_file))
-                    response.session_file.seek(0)
-                    oc = response.session_filename.split('/')[-1].split('-')[0]
-                    if check_client and client!=oc:
-                        raise Exception, "cookie attack"
+		    try:
+			portalocker.lock(response.session_file,
+				portalocker.LOCK_EX)
+			response.session_locked = True
+			self.update(cPickle.load(response.session_file))
+			response.session_file.seek(0)
+			oc = response.session_filename.split('/')[-1].split('-')[0]
+			if check_client and client!=oc:
+			    raise Exception, "cookie attack"
+		    finally:
+			self._close(response)
                 except:
-                    self._close(response)
                     response.session_id = None
             if not response.session_id:
                 uuid = web2py_uuid()
