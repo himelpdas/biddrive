@@ -115,10 +115,12 @@ def web2py_uuid():
     It works like uuid.uuid4 except that tries to use os.urandom() if possible
     and it XORs the output with the tokens uniquely associated with this machine.
     """
+    bytes = [chr(random.randrange(256)) for i in range(16)]
     try:
-        bytes = os.urandom(16) # use /dev/urandom if possible
+        ubytes = os.urandom(16) # use /dev/urandom if possible
+        bytes = [bytes[i] ^ ubytes[i] for i in range(16)]
     except NotImplementedError:
-        bytes = [chr(random.randrange(256)) for i in range(16)]
+        pass
     ## xor bytes with constant ctokens
     bytes = ''.join(chr(ord(c) ^ ctokens[i]) for i,c in enumerate(bytes))
     return str(uuid.UUID(bytes=bytes, version=4))
