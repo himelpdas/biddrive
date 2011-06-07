@@ -129,7 +129,7 @@ class Mail(object):
             if isinstance(payload, str):
                 if filename == None:
                     filename = os.path.basename(payload)
-		payload = read_file(payload, 'rb')
+                payload = read_file(payload, 'rb')
             else:
                 if filename == None:
                     raise Exception('Missing attachment name')
@@ -4067,3 +4067,4 @@ class PluginManager(object):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+

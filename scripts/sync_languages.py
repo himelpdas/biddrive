@@ -20,9 +20,9 @@ for app in apps:
     findT(path, file)
     langfile = open(os.path.join(path, 'languages', '%s.py' % file))
     try:
-	data = eval(langfile.read())
+        data = eval(langfile.read())
     finally:
-	langfile.close()
+        langfile.close()
     d.update(data)
 
 path = 'applications/%s/' % apps[-1]
@@ -34,7 +34,7 @@ try:
     keys = d.keys()
     keys.sort()
     for key in keys:
-	f.write('%s:%s,\n' % (repr(key), repr(str(d[key]))))
+        f.write('%s:%s,\n' % (repr(key), repr(str(d[key]))))
     f.write('}\n')
 finally:
     f.close()
@@ -44,3 +44,4 @@ for app in oapps:
     path2 = 'applications/%s/' % app
     file2 = os.path.join(path2, 'languages', '%s.py' % file)
     shutil.copyfile(file1, file2)
+

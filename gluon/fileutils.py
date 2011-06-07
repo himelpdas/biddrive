@@ -345,10 +345,10 @@ def fix_newlines(path):
 |\r|
 )''')
     for filename in listdir(path, '.*\.(py|html)$', drop=False):
-	rdata = read_file(filename, 'rb')
+        rdata = read_file(filename, 'rb')
         wdata = regex.sub('\n', rdata)
         if wdata != rdata:
-	    write_file(filename, wdata, 'wb')
+            write_file(filename, wdata, 'wb')
 
 def copystream(
     src,
@@ -379,8 +379,9 @@ def copystream(
 
 def make_fake_file_like_object():
     class LogFile(object):
-	def write(self, value):
-	    pass
-	def close(self):
-	    pass
+        def write(self, value):
+            pass
+        def close(self):
+            pass
     return LogFile()
+

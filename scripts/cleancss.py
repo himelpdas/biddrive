@@ -17,3 +17,4 @@ data = re.compile('\s*}\s*').sub(' }\n', data)
 data = re.compile('[ ]+').sub(' ', data)
 
 print data
+

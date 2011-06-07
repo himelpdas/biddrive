@@ -29,11 +29,11 @@ while 1:
         filename = os.path.join(path, file)
 
         if not ALLOW_DUPLICATES:
-	    fileobj = open(filename, 'r')
-	    try:
-		file_data = fileobj.read()
-	    finally:
-		fileobj.close()
+            fileobj = open(filename, 'r')
+            try:
+                file_data = fileobj.read()
+            finally:
+                fileobj.close()
             key = md5_hash(file_data)
 
             if key in hashes:
@@ -45,6 +45,7 @@ while 1:
         error.load(request, request.application, filename)
 
         mail.send(to=administrator_email, subject='new web2py ticket', message=error.traceback)
-        
+
         os.unlink(filename)
     time.sleep(SLEEP_MINUTES * 60)
+

@@ -59,11 +59,11 @@ if __name__ == '__main__':
     sys.stdout.write('Checking contenttype.py database version:')
     sys.stdout.flush()
     try:
-	pathfile = open(path)
-	try:
-	    current = pathfile.read()
-	finally:
-	    pathfile.close()
+        pathfile = open(path)
+        try:
+            current = pathfile.read()
+        finally:
+            pathfile.close()
         cversion = re.search(vregex, current).group('version')
         sys.stdout.write('\t[OK] version %s\n' % cversion)
     except Exception, e:
@@ -129,3 +129,4 @@ if __name__ == '__main__':
         sys.stdout.write('\t\t\t[OK] done\n')
     except Exception, e:
         sys.stdout.write('\t\t\t[ERROR] %s\n' % e)
+

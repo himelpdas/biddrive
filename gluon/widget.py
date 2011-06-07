@@ -750,7 +750,7 @@ def console():
     if not options.cronjob:
         # If we have the applications package or if we should upgrade
         if not os.path.exists('applications/__init__.py'):
-	    write_file('applications/__init__.py', '')
+            write_file('applications/__init__.py', '')
 
         if not os.path.exists('welcome.w2p') or os.path.exists('NEWINSTALL'):
             try:
@@ -918,3 +918,4 @@ def start(cron=True):
     except KeyboardInterrupt:
         server.stop()
     logging.shutdown()
+

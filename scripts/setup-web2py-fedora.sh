@@ -98,10 +98,10 @@ if [ ! ${version_major} -ge 2 -o ! ${version_minor} -ge 5 ]; then
 
     # Create links for Python 2.6
     # even if it was previously installed just to be sure
-    ln -s /opt/python2.6/lib/libpython2.6.so /usr/lib 
+    ln -s /opt/python2.6/lib/libpython2.6.so /usr/lib
     ln -s /opt/python2.6/lib/libpython2.6.so.1.0 /usr/lib
     ln -s /opt/python2.6/bin/python /usr/local/bin/python
-    ln -s /opt/python2.6/bin/python /usr/bin/python2.6 
+    ln -s /opt/python2.6/bin/python /usr/bin/python2.6
     ln -s /opt/python2.6/lib/python2.6.so /opt/python2.6/lib/python2.6/config/
 
     # Update linker for new libraries
@@ -198,7 +198,7 @@ EOF
 
 fi
 
-# Setup the overall web2py SELinux context 
+# Setup the overall web2py SELinux context
 cd /opt
 chcon -R -t httpd_user_content_t web-apps/
 

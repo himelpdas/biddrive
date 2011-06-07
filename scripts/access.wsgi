@@ -25,10 +25,10 @@
 #
 # start web2py as deamon
 #
-# nohup python web2py.py -a '' -p 8002 
+# nohup python web2py.py -a '' -p 8002
 #
 # now try visit:
-#  
+#
 #    http://domain/myapp/whatever/myfile
 #
 # and you will have access ONLY if you are logged into myapp
@@ -62,3 +62,4 @@ def allow_access(environ,host):
 	if response.startswith('true'): return True
     except: pass
     return False
+

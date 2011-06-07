@@ -170,22 +170,22 @@ class StorageList(Storage):
 def load_storage(filename):
     fp = open(filename, 'rb')
     try:
-	portalocker.lock(fp, portalocker.LOCK_EX)
-	storage = cPickle.load(fp)
-	portalocker.unlock(fp)
+        portalocker.lock(fp, portalocker.LOCK_EX)
+        storage = cPickle.load(fp)
+        portalocker.unlock(fp)
     finally:
-	fp.close()
+        fp.close()
     return Storage(storage)
 
 
 def save_storage(storage, filename):
     fp = open(filename, 'wb')
     try:
-	portalocker.lock(fp, portalocker.LOCK_EX)
-	cPickle.dump(dict(storage), fp)
-	portalocker.unlock(fp)
+        portalocker.lock(fp, portalocker.LOCK_EX)
+        cPickle.dump(dict(storage), fp)
+        portalocker.unlock(fp)
     finally:
-	fp.close()
+        fp.close()
 
 
 class Settings(Storage):
@@ -221,3 +221,4 @@ class Messages(Storage):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+

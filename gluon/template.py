@@ -16,6 +16,7 @@ Contributors:
 
 import os
 import re
+import cgi
 import cStringIO
 import logging
 try:
@@ -867,8 +868,6 @@ def render(content = "hello world",
         from globals import Response
     except:
         # Working standalone. Build a mock Response object.
-        import cStringIO
-        import cgi
         class Response():
             def __init__(self):
                 self.body = cStringIO.StringIO()
@@ -929,3 +928,4 @@ def render(content = "hello world",
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+

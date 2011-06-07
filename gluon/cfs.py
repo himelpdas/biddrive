@@ -41,10 +41,11 @@ def getcfs(key, filename, filter=None):
     if item and item[0] == t:
         return item[1]
     if not filter:
-	data = read_file(filename)
+        data = read_file(filename)
     else:
         data = filter()
     cfs_lock.acquire()
     cfs[key] = (t, data)
     cfs_lock.release()
     return data
+

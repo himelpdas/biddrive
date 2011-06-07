@@ -442,7 +442,7 @@ class BaseAdapter(ConnectionPool):
             elif mode in ('w','wb','a'):
                 portalocker.lock(fileobj,portalocker.LOCK_EX)
             else:
-		fileobj.close()
+                fileobj.close()
                 raise RuntimeError, "Unsupported file_open mode"
         return fileobj
 
@@ -640,7 +640,7 @@ class BaseAdapter(ConnectionPool):
                                    sql_fields, sql_fields_old,
                                    sql_fields_aux, logfile,
                                    fake_migrate=fake_migrate)
-	self.file_close(logfile)
+        self.file_close(logfile)
         return query
 
     def migrate_table(
@@ -951,26 +951,26 @@ class BaseAdapter(ConnectionPool):
         return ['TRUNCATE TABLE %s %s;' % (tablename, mode or '')]
 
     def truncate(self,table,mode= ' '):
-	# Prepare functions "write_to_logfile" and "close_logfile"
+        # Prepare functions "write_to_logfile" and "close_logfile"
         if table._dbt:
             logfile = self.file_open(table._loggername, 'a')
-	else:
-	    class Logfile(object):
-		def write(self, value):
-		    pass
-		def close(self):
-		    pass
-	    logfile = Logfile()
+        else:
+            class Logfile(object):
+                def write(self, value):
+                    pass
+                def close(self):
+                    pass
+            logfile = Logfile()
 
-	try:
-	    queries = table._db._adapter._truncate(table, mode)
-	    for query in queries:
-		logfile.write(query + '\n')
-		self.execute(query)
-	    table._db.commit()
-	    logfile.write('success!\n')
-	finally:
-	    logfile.close()
+        try:
+            queries = table._db._adapter._truncate(table, mode)
+            for query in queries:
+                logfile.write(query + '\n')
+                self.execute(query)
+            table._db.commit()
+            logfile.write('success!\n')
+        finally:
+            logfile.close()
 
     def _update(self,tablename,query,fields):
         if query:
@@ -2697,11 +2697,11 @@ class DatabaseStoredFile:
             if rows:
                 self.data = rows[0][0]
             elif os.path.exists(filename):
-		datafile = open(filename, 'r')
-		try:
-		    self.data = datafile.read()
-		finally:
-		    datafile.close()
+                datafile = open(filename, 'r')
+                try:
+                    self.data = datafile.read()
+                finally:
+                    datafile.close()
             elif mode in ('r','rw'):
                 raise RuntimeError, "File %s does not exist" % filename
 
@@ -2779,7 +2779,7 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
         if not migrate:
             driver_args['database'] = db
         def connect(driver_args=driver_args):
-	    return rdbms.connect(**driver_args)
+            return rdbms.connect(**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         if migrate:
@@ -3918,7 +3918,7 @@ class DAL(dict):
             self.import_table_definitions(adapter.folder)
 
     def import_table_definitions(self,path,migrate=False,fake_migrate=False):
-        pattern = os.path.join(path,self._uri_hash+'_*.table')        
+        pattern = os.path.join(path,self._uri_hash+'_*.table')
         for filename in glob.glob(pattern):
             tfile = self._adapter.file_open(filename, 'r')
             try:
@@ -5186,10 +5186,10 @@ class Field(Expression):
                 os.makedirs(path)
             pathfilename = os.path.join(path, newfilename)
             dest_file = open(pathfilename, 'wb')
-	    try:
-		shutil.copyfileobj(file, dest_file)
-	    finally:
-		dest_file.close()
+            try:
+                shutil.copyfileobj(file, dest_file)
+            finally:
+                dest_file.close()
         return newfilename
 
     def retrieve(self, name, path=None):
@@ -5941,5 +5941,6 @@ DAL.Table = Table  # was necessary in gluon/globals.py session.connect
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
 
 

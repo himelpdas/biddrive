@@ -379,11 +379,11 @@ if __name__=="__main__":
 
         wsdl=dispatcher.wsdl()
         print wsdl
-	testfile = open("C:/test.wsdl","w")
-	try:
-	    testfile.write(wsdl)
-	finally:
-	    testfile.close()
+        testfile = open("C:/test.wsdl","w")
+        try:
+            testfile.write(wsdl)
+        finally:
+            testfile.close()
         # dummy local test (clasic soap dialect)
         xml = """<?xml version="1.0" encoding="UTF-8"?> 
     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">

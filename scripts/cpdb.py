@@ -25,18 +25,19 @@ def main():
     print 'exporting data...'
     tmpfile = open('tmp.sql','wb')
     try:
-	db.export_to_csv_file(tmpfile)
+        db.export_to_csv_file(tmpfile)
     finally:
-	tmpfile.close()
+        tmpfile.close()
     print 'importing data...'
     tmpfile = open('tmp.sql','rb')
-    try:                                     
-	other_db.import_from_csv_file(tmpfile)
+    try:
+        other_db.import_from_csv_file(tmpfile)
     finally:
-	tmpfile.close()
+        tmpfile.close()
     other_db.commit()
     print 'done!'
     print 'Attention: do not run this program again or you end up with duplicate records'
 
 if __name__=='__main__': main()
-    
+
+

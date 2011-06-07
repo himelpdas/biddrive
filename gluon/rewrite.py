@@ -192,7 +192,7 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                 path = abspath('applications', app, routes)
             if not os.path.exists(path):
                 return
-	    data = read_file(path).replace('\r\n','\n')
+            data = read_file(path).replace('\r\n','\n')
 
         symbols = {}
         try:
@@ -1181,3 +1181,4 @@ def get_effective_router(appname):
     if not routers or appname not in routers:
         return None
     return Storage(routers[appname])  # return a copy
+

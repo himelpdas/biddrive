@@ -450,3 +450,4 @@ def create_missing_app_folders(request):
                 if not os.path.exists(path):
                     os.mkdir(path)
             global_settings.app_folders.add(request.folder)
+

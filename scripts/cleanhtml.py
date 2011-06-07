@@ -49,12 +49,13 @@ def cleanhtml(text):
 def read_file(filename):
     f = open(filename, 'r')
     try:
-	return f.read()
+        return f.read()
     finally:
-	f.close()
+        f.close()
 
 file=sys.argv[1]
 if file[-4:]=='.css':
     print cleancss(read_file(file))
 if file[-5:]=='.html':
     print cleanhtml(read_file(file))
+

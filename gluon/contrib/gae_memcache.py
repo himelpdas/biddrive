@@ -46,3 +46,4 @@ class MemcacheClient(Client):
             value = obj[1] + value
         self.set((time.time(), value))
         return value
+

@@ -124,3 +124,4 @@ def redirect(location, how=303):
     raise HTTP(how,
                'You are being redirected <a href="%s">here</a>' % location,
                Location=location)
+

@@ -688,7 +688,7 @@ def appfactory(wsgiapp=wsgibase,
             if not logfilename:
                 sys.stdout.write(line)
             elif isinstance(logfilename, str):
-		write_file(logfilename, line, 'a')
+                write_file(logfilename, line, 'a')
             else:
                 logfilename.write(line)
         except:
@@ -789,7 +789,7 @@ class HttpServer(object):
             signal.signal(signal.SIGINT, lambda a, b, s=self: s.stop())
         except:
             pass
-	write_file(self.pid_filename, str(os.getpid()))
+        write_file(self.pid_filename, str(os.getpid()))
         self.server.start()
 
     def stop(self, stoplogging=False):
@@ -802,3 +802,4 @@ class HttpServer(object):
             os.unlink(self.pid_filename)
         except:
             pass
+

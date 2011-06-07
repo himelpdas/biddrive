@@ -40,11 +40,11 @@ domain3.com /app3/defcon3
 '''
 if not config.strip():
     try:
-	config_file = open('routes.conf','r')
-	try:
-	    config = config_file.read()
-	finally:
-	    config_file.close()
+        config_file = open('routes.conf','r')
+        try:
+            config = config_file.read()
+        finally:
+            config_file.close()
     except:
         config=''
 
@@ -62,7 +62,7 @@ def auto_in(apps):
             ('.*:https?://(.*\.)?%s:$method /' % domain,'%s' % path),
             ('.*:https?://(.*\.)?%s:$method /static/$anything' % domain,'/%s/static/$anything' % app),
             ('.*:https?://(.*\.)?%s:$method /appadmin/$anything' % domain,'/%s/appadmin/$anything' % app),
-            ('.*:https?://(.*\.)?%s:$method /$anything' % domain,'%s/$anything' % path), 
+            ('.*:https?://(.*\.)?%s:$method /$anything' % domain,'%s/$anything' % path),
             ]
     return routes
 
@@ -85,16 +85,16 @@ routes_out = auto_out(config)
 def __routes_doctest():
     '''
     Dummy function for doctesting autoroutes.py.
-    
+
     Use filter_url() to test incoming or outgoing routes;
     filter_err() for error redirection.
-    
+
     filter_url() accepts overrides for method and remote host:
         filter_url(url, method='get', remote='0.0.0.0', out=False)
 
     filter_err() accepts overrides for application and ticket:
         filter_err(status, application='app', ticket='tkt')
-    
+
     >>> filter_url('http://domain1.com/favicon.ico')
     'http://domain1.com/welcome/static/favicon.ico'
     >>> filter_url('https://domain2.com/robots.txt')
@@ -138,3 +138,4 @@ if __name__ == '__main__':
 
     import doctest
     doctest.testmod()
+

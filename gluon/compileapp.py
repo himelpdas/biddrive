@@ -279,7 +279,7 @@ def compile_views(folder):
         data = parse_template(file, path)
         filename = ('views/%s.py' % file).replace('/', '_').replace('\\', '_')
         filename = os.path.join(folder, 'compiled', filename)
-	write_file(filename, data)
+        write_file(filename, data)
         save_pyc(filename)
         os.unlink(filename)
 
@@ -291,10 +291,10 @@ def compile_models(folder):
 
     path = os.path.join(folder, 'models')
     for file in listdir(path, '.+\.py$'):
-	data = read_file(os.path.join(path, file))
+        data = read_file(os.path.join(path, file))
         filename = os.path.join(folder, 'compiled','models',file)
         mktree(filename)
-	write_file(filename, data)
+        write_file(filename, data)
         save_pyc(filename)
         os.unlink(filename)
 
@@ -307,7 +307,7 @@ def compile_controllers(folder):
     path = os.path.join(folder, 'controllers')
     for file in listdir(path, '.+\.py$'):
         ### why is this here? save_pyc(os.path.join(path, file))
-	data = read_file(os.path.join(path,file))
+        data = read_file(os.path.join(path,file))
         exposed = regex_expose.findall(data)
         for function in exposed:
             command = data + "\nresponse._vars=response._caller(%s)\n" % \
@@ -315,7 +315,7 @@ def compile_controllers(folder):
             filename = os.path.join(folder, 'compiled', ('controllers/'
                                      + file[:-3]).replace('/', '_')
                                      + '_' + function + '.py')
-	    write_file(filename, command)
+            write_file(filename, command)
             save_pyc(filename)
             os.unlink(filename)
 
@@ -390,7 +390,7 @@ def run_controller_in(controller, function, environment):
                        rewrite.thread.routes.error_message % badc,
                        web2py_error=badc)
         environment['__symbols__'] = environment.keys()
-	code = read_file(filename)
+        code = read_file(filename)
         code += TEST_CODE
         restricted(code, environment, layer=filename)
     else:
@@ -400,7 +400,7 @@ def run_controller_in(controller, function, environment):
             raise HTTP(404,
                        rewrite.thread.routes.error_message % badc,
                        web2py_error=badc)
-	code = read_file(filename)
+        code = read_file(filename)
         exposed = regex_expose.findall(code)
         if not function in exposed:
             raise HTTP(404,
@@ -530,3 +530,4 @@ def test():
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+

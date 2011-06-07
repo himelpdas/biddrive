@@ -715,3 +715,4 @@ def contenttype(filename, default='text/plain'):
     if default.startswith('text/'):
         default += '; charset=utf-8'
     return default
+

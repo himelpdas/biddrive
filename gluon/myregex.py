@@ -26,3 +26,4 @@ regex_include = re.compile(\
 
 regex_extend = re.compile(\
     '^\s*(?P<all>\{\{\s*extend\s+[\'"](?P<name>[^\'"]+)[\'"]\s*\}\})',re.MULTILINE)
+

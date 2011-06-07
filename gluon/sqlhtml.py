@@ -1401,3 +1401,4 @@ class SQLTABLE(TABLE):
 
 form_factory = SQLFORM.factory # for backward compatibility, deprecated
 
+

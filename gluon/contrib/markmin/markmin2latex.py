@@ -258,23 +258,23 @@ if __name__ == '__main__':
         doctest.testmod()
     else:
         if options.wrapper:
-	    fwrapper = open(options.wrapper,'rb')
-	    try:
-		wrapper = fwrapper.read()
-	    finally:
-		fwrapper.close()
+            fwrapper = open(options.wrapper,'rb')
+            try:
+                wrapper = fwrapper.read()
+            finally:
+                fwrapper.close()
         elif options.no_wrapper:
             wrapper  = '%(body)s'
         else:
             wrapper = WRAPPER
-	for f in args:
-	    fargs = open(f,'r')
-	    content_data = []
-	    try:
-		content_data.append(fargs.read())
-	    finally:
-		fargs.close()
-	content = '\n'.join(content_data)
+        for f in args:
+            fargs = open(f,'r')
+            content_data = []
+            try:
+                content_data.append(fargs.read())
+            finally:
+                fargs.close()
+        content = '\n'.join(content_data)
         output= markmin2latex(content,wrapper=wrapper)
         if options.one:
             output=output.replace(r'\section*{',r'\chapter*{')

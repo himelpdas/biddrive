@@ -45,7 +45,7 @@ soap_namespaces = dict(
 )
 
 class SoapClient(object):
-    "Simple SOAP Client (símil PHP)"
+    "Simple SOAP Client (sï¿½mil PHP)"
     def __init__(self, location = None, action = None, namespace = None,
                  cert = None, trace = False, exceptions = True, proxy = None, ns=False, 
                  soap_ns=None, wsdl = None, cache = False):
@@ -568,11 +568,11 @@ if __name__=="__main__":
     
     if '--wsfe' in sys.argv:
         # Demo & Test (AFIP Electronic Invoice):
-	ta_file = open("TA.xml")
-	try:
-	    ta_string = ta_file.read()   # read access ticket (wsaa.py)
-	finally:
-	    ta_file.close()
+        ta_file = open("TA.xml")
+        try:
+            ta_string = ta_file.read()   # read access ticket (wsaa.py)
+        finally:
+            ta_file.close()
         ta = SimpleXMLElement(ta_string)
         token = str(ta.credentials.token)
         sign = str(ta.credentials.sign)
@@ -627,11 +627,11 @@ if __name__=="__main__":
         print results['FEXDummyResult']['AppServer']
         print results['FEXDummyResult']['DbServer']
         print results['FEXDummyResult']['AuthServer']
-	ta_file = open("TA.xml")
-	try:
-	    ta_string = ta_file.read()   # read access ticket (wsaa.py)
-	finally:
-	    ta_file.close()
+        ta_file = open("TA.xml")
+        try:
+            ta_string = ta_file.read()   # read access ticket (wsaa.py)
+        finally:
+            ta_file.close()
         ta = SimpleXMLElement(ta_string)
         token = str(ta.credentials.token)
         sign = str(ta.credentials.sign)
@@ -655,11 +655,11 @@ if __name__=="__main__":
         print results['DummyResponse']['appserver']
         print results['DummyResponse']['dbserver']
         print results['DummyResponse']['authserver']
-	ta_file = open("TA.xml")
-	try:
-	    ta_string = ta_file.read()   # read access ticket (wsaa.py)
-	finally:
-	    ta_file.close()
+        ta_file = open("TA.xml")
+        try:
+            ta_string = ta_file.read()   # read access ticket (wsaa.py)
+        finally:
+            ta_file.close()
         ta = SimpleXMLElement(ta_string)
         token = str(ta.credentials.token)
         sign = str(ta.credentials.sign)

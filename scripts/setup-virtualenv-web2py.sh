@@ -33,7 +33,7 @@
 # Change to reflect version changes etc.
 #
 # name for your virtual environment
-ENV=VIRTUAL_ENV	
+ENV=VIRTUAL_ENV
 # version to install
 APP_NAME=virtualenv
 VER=1.5.1
@@ -94,6 +94,7 @@ read -p "Press any key to start web2py…"
 echo 'starting web2py'
 echo '==============='
 ../bin/python2.5  web2py.py
+
 
 
 

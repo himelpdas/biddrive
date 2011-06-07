@@ -86,10 +86,10 @@ def stream_file_or_304_or_206(
                 raise HTTP(403)
             else:
                 raise HTTP(404)
-	stream.seek(part[0])
-	headers['Content-Range'] = 'bytes %i-%i/%i' % part
-	headers['Content-Length'] = '%i' % bytes
-	status = 206
+        stream.seek(part[0])
+        headers['Content-Range'] = 'bytes %i-%i/%i' % part
+        headers['Content-Length'] = '%i' % bytes
+        status = 206
     else:
         try:
             stream = open(static_file, 'rb')
@@ -106,3 +106,4 @@ def stream_file_or_304_or_206(
     else:
         wrapped = streamer(stream, chunk_size=chunk_size, bytes=bytes)
     raise HTTP(status, wrapped, **headers)
+

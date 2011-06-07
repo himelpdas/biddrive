@@ -79,7 +79,7 @@ class Token(object):
     def __init__(self,path):
         self.path = os.path.join(path, 'cron.master')
         if not os.path.exists(self.path):
-	    fileutils.write_file(self.path, '', 'wb')
+            fileutils.write_file(self.path, '', 'wb')
         self.master = None
         self.now = time.time()
 
@@ -253,7 +253,7 @@ def crondance(applications_parent, ctype='soft', startup=False):
         if not os.path.exists(crontab):
             continue
         try:
-	    cronlines = fileutils.readlines_file(crontab, 'rt')
+            cronlines = fileutils.readlines_file(crontab, 'rt')
             lines = [x.strip() for x in cronlines if x.strip() and not x.strip().startswith('#')]
             tasks = [parsecronline(cline) for cline in lines]
         except Exception, e:
@@ -310,3 +310,4 @@ def crondance(applications_parent, ctype='soft', startup=False):
                     'WEB2PY CRON: Execution error for %s: %s' \
                         % (task.get('cmd'), e))
     token.release()
+

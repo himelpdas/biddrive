@@ -264,3 +264,4 @@ def run(history, statement, env={}):
 if __name__=='__main__':
     history=History()
     while True: print run(history, raw_input('>>> ')).rstrip()
+

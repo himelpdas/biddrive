@@ -174,9 +174,9 @@ def run(
                     os.mkdir(subpath)
             db = os.path.join(adir,'models/db.py')
             if os.path.exists(db):
-		data = fileutils.read_file(db)
+                data = fileutils.read_file(db)
                 data = data.replace('<your secret key>','sha512:'+web2py_uuid())
-		fileutils.write_file(db, data)
+                fileutils.write_file(db, data)
 
     if c:
         import_models = True
@@ -393,3 +393,4 @@ def execute_from_command_line(argv=None):
 
 if __name__ == '__main__':
     execute_from_command_line()
+

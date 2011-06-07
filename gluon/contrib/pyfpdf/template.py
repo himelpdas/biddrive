@@ -17,7 +17,7 @@ class Template:
                  title='', author='', subject='', creator='', keywords=''):
         if elements:
             self.elements = dict([(v['name'].lower(),v) for v in elements])
-        self.handlers = {'T': self.text, 'L': self.line, 'I': self.image, 
+        self.handlers = {'T': self.text, 'L': self.line, 'I': self.image,
                          'B': self.rect, 'BC': self.barcode, }
         self.pg_no = 0
         self.texts = {}
@@ -34,28 +34,28 @@ class Template:
             'bold','italic','underline','foreground','background',
             'align','text','priority')
         self.elements = {}
-	f = open(infile, 'rb')
-	try:
-	    for row in csv.reader(f, delimiter=delimiter):
-		kargs = {}
-		for i,v in enumerate(row):
-		    if not v.startswith("'") and decimal_sep!=".": 
-			v = v.replace(decimal_sep,".")
-		    else:
-			v = v
-		    if v=='':
-			v = None
-		    else:
-			v = eval(v.strip())
-		    kargs[keys[i]] = v
-		self.elements[kargs['name'].lower()] = kargs
-	finally:
-	    f.close()
+        f = open(infile, 'rb')
+        try:
+            for row in csv.reader(f, delimiter=delimiter):
+                kargs = {}
+                for i,v in enumerate(row):
+                    if not v.startswith("'") and decimal_sep!=".":
+                        v = v.replace(decimal_sep,".")
+                    else:
+                        v = v
+                    if v=='':
+                        v = None
+                    else:
+                        v = eval(v.strip())
+                    kargs[keys[i]] = v
+                self.elements[kargs['name'].lower()] = kargs
+        finally:
+            f.close()
 
     def add_page(self):
         self.pg_no += 1
         self.texts[self.pg_no] = {}
-        
+
     def __setitem__(self, name, value):
         if name.lower() in self.elements:
             if isinstance(value,unicode):
@@ -88,7 +88,7 @@ class Template:
         return pdf.multi_cell(w=element['x2']-element['x1'],
                              h=element['y2']-element['y1'],
                              txt=text,align=align,split_only=True)
-        
+
     def render(self, outfile, dest="F"):
         pdf = self.pdf
         for pg in range(1, self.pg_no+1):
@@ -105,11 +105,11 @@ class Template:
                 self.handlers[element['type'].upper()](pdf, **element)
                 if 'rotate' in element:
                     pdf.rotate(0)
-                    
+
         return pdf.output(outfile, dest)
-        
-    def text(self, pdf, x1=0, y1=0, x2=0, y2=0, text='', font="arial", size=10, 
-             bold=False, italic=False, underline=False, align="", 
+
+    def text(self, pdf, x1=0, y1=0, x2=0, y2=0, text='', font="arial", size=10,
+             bold=False, italic=False, underline=False, align="",
              foreground=0, backgroud=65535,
              *args, **kwargs):
         if text:
@@ -176,7 +176,7 @@ if __name__ == "__main__":
              title="Sample Invoice", author="Sample Company",
              subject="Sample Customer", keywords="Electronic TAX Invoice")
     f.parse_csv(infile="invoice.csv", delimiter=";", decimal_sep=",")
-    
+
     detail = "Lorem ipsum dolor sit amet, consectetur. " * 30
     items = []
     for i in range(1, 30):
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         price = round(random.random()*100,3)
         code = "%s%s%02d" % (chr(random.randint(65,90)), chr(random.randint(65,90)),i)
         items.append(dict(code=code, unit='u',
-                          qty=qty, price=price, 
+                          qty=qty, price=price,
                           amount=qty*price,
                           ds="%s: %s" % (i,ds)))
 
@@ -228,7 +228,7 @@ if __name__ == "__main__":
         f["company_name"] = "Sample Company"
         f["company_logo"] = "tutorial/logo.png"
         f["company_header1"] = "Some Address - somewhere -"
-        f["company_header2"] = "http://www.example.com"        
+        f["company_header2"] = "http://www.example.com"
         f["company_footer1"] = "Tax Code ..."
         f["company_footer2"] = "Tax/VAT ID ..."
         f['number'] = '0001-00001234'
@@ -236,9 +236,9 @@ if __name__ == "__main__":
         f['due_date'] = '2099-09-10'
         f['customer_name'] = "Sample Client"
         f['customer_address'] = "Siempreviva 1234"
-       
+
         # print line item...
-        li = 0 
+        li = 0
         k = 0
         total = Decimal("0.00")
         for it in li_items:
@@ -268,9 +268,10 @@ if __name__ == "__main__":
         else:
             f['total_label'] = 'SubTotal:'
         f['total'] = "%0.2f" % total
-            
+
     f.render("./invoice.pdf")
     if sys.platform.startswith("linux"):
         os.system("evince ./invoice.pdf")
     else:
         os.system("./invoice.pdf")
+
