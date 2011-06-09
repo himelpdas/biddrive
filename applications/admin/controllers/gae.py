@@ -36,7 +36,8 @@ def deploy():
         Field('appcfg',default=GAE_APPCFG,label='Path to appcfg.py',
               requires=EXISTS(error_message=T('file not found'))),
         Field('google_application_id',requires=IS_ALPHANUMERIC()),
-        Field('applications',requires=IS_IN_SET(apps,multiple=True),
+        Field('applications','list:string',
+              requires=IS_IN_SET(apps,multiple=True),
               label=T('web2py apps to deploy')),
         Field('email',requires=IS_EMAIL(),label=T('GAE Email')),
         Field('password','password',requires=IS_NOT_EMPTY(),label=T('GAE Password')))
@@ -46,8 +47,8 @@ def deploy():
             kill()
         except:
             pass
-        ignore_apps = [item[1] for item in apps \
-                           if not item[1] in request.vars.applications]
+        ignore_apps = [item for item in apps \
+                           if not item in form.vars.applications]
         regex = re.compile('\(applications/\(.*')
         yaml = apath('../app.yaml', r=request)
         if not os.path.exists(yaml):
