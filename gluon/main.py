@@ -37,9 +37,6 @@ from globals import current
 from custom_import import custom_import_install
 from contrib.simplejson import dumps
 
-if platform.system=='Windows':
-    os.environ["PYTHONCASEOK"]="1"
-
 #  Remarks:
 #  calling script has inserted path to script directory into sys.path
 #  applications_parent (path to applications/, site-packages/ etc)
