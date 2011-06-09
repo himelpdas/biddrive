@@ -3961,7 +3961,7 @@ db.define_table('pet',Field('person',db.person),Field('name'),Field('info'))
 
 @request.restful()
 def index():
-    def GET(*args,**vars):
+    def GET(*kargs,**kvars):
         patterns = [
             "/persons[person]",
             "/{person.name.startswith}",
@@ -3970,16 +3970,16 @@ def index():
             "/{person.name}/pet[pet.person]/{pet.name}",
             "/{person.name}/pet[pet.person]/{pet.name}/:field"
             ]
-        parser = db.parse_as_rest(patterns,args,vars)
+        parser = db.parse_as_rest(patterns,kargs,kvars)
         if parser.status == 200:
             return dict(content=parser.response)
         else:
             raise HTTP(parser.status,parser.error)
-    def POST(table_name,**vars):
+    def POST(table_name,**kvars):
         if table_name == 'person':
-            return db.person.validate_and_insert(**vars)
+            return db.person.validate_and_insert(**kvars)
         elif table_name == 'pet':
-            return db.pet.validate_and_insert(**vars)
+            return db.pet.validate_and_insert(**kvars)
         else:
             raise HTTP(400)
     return locals()
