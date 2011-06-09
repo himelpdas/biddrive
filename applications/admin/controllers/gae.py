@@ -39,7 +39,7 @@ def deploy():
         Field('applications',requires=IS_IN_SET(apps,multiple=True),
               label=T('web2py apps to deploy')),
         Field('email',requires=IS_EMAIL(),label=T('GAE Email')),
-        Field('password',requires=IS_NOT_EMPTY(),label=T('GAE Password')))
+        Field('password','password',requires=IS_NOT_EMPTY(),label=T('GAE Password')))
     cmd = output = errors= ""
     if form.accepts(request,session):
         try:
