@@ -129,7 +129,7 @@ routers = dict(
 # ErrorMessageTicket takes a string format dictionary containing (only) the
 # "ticket" key.
 
-# error_message = '<html><body><h1>Invalid request</h1></body></html>'
+# error_message = '<html><body><h1>%s</h1></body></html>'
 # error_message_ticket = '<html><body><h1>Internal error</h1>Ticket issued: <a href="/admin/default/ticket/%(ticket)s" target="_blank">%(ticket)s</a></body></html>'
 
 def __routes_doctest():
