@@ -1189,8 +1189,11 @@ def twitter():
     import gluon.tools
     import gluon.contrib.simplejson as sj
     try:
-        page = gluon.tools.fetch('http://twitter.com/web2py?format=json')
-        return sj.loads(page)['#timeline']
+        if TWITTER_HASH:
+            page = gluon.tools.fetch('http://twitter.com/%s?format=json'%TWITTER_HASH)
+            return sj.loads(page)['#timeline']
+        else:
+            return 'disabled'
     except Exception, e:
         return DIV(T('Unable to download because:'),BR(),str(e))
 

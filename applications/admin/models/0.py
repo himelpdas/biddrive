@@ -48,6 +48,9 @@ GAE_APPCFG = os.path.abspath(os.path.join('/usr/local/bin/appcfg.py'))
 # To use web2py as a teaching tool, set MULTI_USER_MODE to True
 MULTI_USER_MODE = False
 
+# configurable twitterbox, set to None/False to suppress
+TWITTER_HASH = "web2py"
+
 # parameter for downloading LAYOUTS
 LAYOUTS_APP = 'http://web2py.com/layouts'
 #LAYOUTS_APP = 'http://127.0.0.1:8000/layouts'

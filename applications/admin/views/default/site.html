@@ -143,13 +143,14 @@
       <h3>{{=T("Deploy on Google App Engine")}}</h3>
       <p>{{=button(URL('gae','deploy'), T('deploy'))}}</p>
     </div><br/>
-
+    {{if TWITTER_HASH:}}	
     <div class="box">
-      <h3>{{=T("web2py Recent Tweets")}}</h3>
+      <h3>{{=T("%s Recent Tweets"%TWITTER_HASH)}}</h3>
       <div id="tweets">{{=T('loading...')}}</div>
       <script>
         jQuery(document).ready(function(){jQuery('#tweets').load('{{=URL('twitter')}}')});
       </script>
     </div>
+    {{pass}}
   </div>
 </div>
