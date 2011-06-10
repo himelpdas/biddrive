@@ -1663,8 +1663,8 @@ class Auth(object):
                 redirect(next)
             table_user[username].requires = old_requires
             return form
-        # elif user:
-        #     callback(onaccept,user)
+        elif user:
+            callback(onaccept,None)
         redirect(next)
 
     def logout(self, next=DEFAULT, onlogout=DEFAULT, log=DEFAULT):
