@@ -375,7 +375,7 @@ def fix_db(filename):
                                 params['database_uri'])
         content = content.replace('auth.define_tables()',\
             auth_user+'auth.define_tables(migrate = settings.migrate)')
-    content+ = """
+    content += """
 mail.settings.server = settings.email_server
 mail.settings.sender = settings.email_sender
 mail.settings.login = settings.email_login
