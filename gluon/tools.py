@@ -3768,8 +3768,7 @@ class Service(object):
             base_gateway = pyamf.remoting.gateway.BaseGateway(services)
             context = pyamf.get_context(pyamf.AMF0)
             pyamf_request = pyamf.remoting.decode(request.body, context)
-        pyamf_response = pyamf.remoting.Envelope(pyamf_request.amfVersion,
-                                                 pyamf_request.clientType)
+        pyamf_response = pyamf.remoting.Envelope(pyamf_request.amfVersion)
         for name, message in pyamf_request:
             pyamf_response[name] = base_gateway.getProcessor(message)(message)
         response.headers['Content-Type'] = pyamf.remoting.CONTENT_TYPE
