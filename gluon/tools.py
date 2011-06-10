@@ -919,6 +919,11 @@ class Auth(object):
 
         # ## these are messages that can be customized
         messages = self.messages = Messages(current.T)
+        messages.login_button = 'Login'
+        messages.register_button = 'Register'
+        messages.password_reset_button = 'Request reset password'
+        messages.password_change_button = 'Change password'
+        messages.profile_save_button = 'Save profile'
         messages.submit_button = 'Submit'
         messages.verify_password = 'Verify Password'
         messages.delete_label = 'Check to delete:'
@@ -1526,7 +1531,7 @@ class Auth(object):
                 fields=[username, passfield],
                 hidden=dict(_next=next),
                 showid=self.settings.showid,
-                submit_button=self.messages.submit_button,
+                submit_button=self.messages.login_button,
                 delete_label=self.messages.delete_label,
                 formstyle=self.settings.formstyle
                 )
@@ -1736,7 +1741,7 @@ class Auth(object):
                        fields = self.settings.register_fields,
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
-                       submit_button=self.messages.submit_button,
+                       submit_button=self.messages.register_button,
                        delete_label=self.messages.delete_label,
                        formstyle=formstyle
                        )
@@ -2067,7 +2072,7 @@ class Auth(object):
                   label=self.messages.verify_password,
                   requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                                     self.messages.mismatched_password)]),
-            submit_button=self.messages.submit_button,
+            submit_button=self.messages.password_reset_button,
             formstyle=self.settings.formstyle,
         )
         if form.accepts(request,session,hideerror=self.settings.hideerror):
@@ -2123,7 +2128,7 @@ class Auth(object):
                        fields=['email'],
                        hidden=dict(_next=next),
                        showid=self.settings.showid,
-                       submit_button=self.messages.submit_button,
+                       submit_button=self.messages.password_reset_button,
                        delete_label=self.messages.delete_label,
                        formstyle=self.settings.formstyle
                        )
@@ -2223,7 +2228,7 @@ class Auth(object):
                 label=self.messages.verify_password,
                 requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                               self.messages.mismatched_password)]),
-            submit_button=self.messages.submit_button,
+            submit_button=self.messages.password_change_button,
             formstyle = self.settings.formstyle
         )
         if form.accepts(request, session,
@@ -2283,7 +2288,7 @@ class Auth(object):
             fields = self.settings.profile_fields,
             hidden = dict(_next=next),
             showid = self.settings.showid,
-            submit_button = self.messages.submit_button,
+            submit_button = self.messages.profile_save_button,
             delete_label = self.messages.delete_label,
             upload = self.settings.download_url,
             formstyle = self.settings.formstyle
