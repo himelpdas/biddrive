@@ -529,7 +529,7 @@ class BaseAdapter(ConnectionPool):
             elif field.type.startswith('list:reference'):
                 ftype = self.types[field.type[:14]]
             elif field.type.startswith('decimal'):
-                precision, scale = [int(x) for x in field.type[8:-1].split(',')]
+                precision, scale = map(int,field.type[8:-1].split(','))
                 ftype = self.types[field.type[:7]] % \
                     dict(precision=precision,scale=scale)
             elif not field.type in self.types:
@@ -659,9 +659,9 @@ class BaseAdapter(ConnectionPool):
                 v=dict(type='unkown',sql=v)
             return k.lower(),v
         ### make sure all field names are lower case to avoid conflicts
-        sql_fields = dict(fix(v) for v in sql_fields.items())
-        sql_fields_old = dict(fix(v) for v in sql_fields_old.items())
-        sql_fields_aux = dict(fix(v) for v in sql_fields_aux.items())
+        sql_fields = dict(map(fix,sql_fields.items()))
+        sql_fields_old = dict(map(fix,sql_fields_old.items()))
+        sql_fields_aux = dict(map(fix,sql_fields_aux.items()))
 
         keys = sql_fields.keys()
         for key in sql_fields_old:
@@ -1055,7 +1055,7 @@ class BaseAdapter(ConnectionPool):
                         tablenames.append(tablename)
         if len(tablenames) < 1:
             raise SyntaxError, 'Set: no tables selected'
-        sql_f = ', '.join([self.expand(f) for f in fields])
+        sql_f = ', '.join(map(self.expand,fields))
         self._colnames = [c.strip() for c in sql_f.split(', ')]
         if query:
             sql_w = ' WHERE ' + self.expand(query)
@@ -1369,13 +1369,11 @@ class BaseAdapter(ConnectionPool):
                 elif field_type == 'date' \
                         and (not isinstance(value, datetime.date)\
                                  or isinstance(value, datetime.datetime)):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
+                    (y, m, d) = map(int, str(value)[:10].strip().split('-'))
                     colset[fieldname] = datetime.date(y, m, d)
                 elif field_type == 'time' \
                         and not isinstance(value, datetime.time):
-                    time_items = [int(x) for x in
-                                  str(value)[:8].strip().split(':')[:3]]
+                    time_items = map(int,str(value)[:8].strip().split(':')[:3])
                     if len(time_items) == 3:
                         (h, mi, s) = time_items
                     else:
@@ -1383,10 +1381,8 @@ class BaseAdapter(ConnectionPool):
                     colset[fieldname] = datetime.time(h, mi, s)
                 elif field_type == 'datetime'\
                         and not isinstance(value, datetime.datetime):
-                    (y, m, d) = [int(x) for x in
-                                 str(value)[:10].strip().split('-')]
-                    time_items = [int(x) for x in
-                                  str(value)[11:19].strip().split(':')[:3]]
+                    (y, m, d) = map(int,str(value)[:10].strip().split('-'))
+                    time_items = map(int,str(value)[11:19].strip().split(':')[:3])
                     if len(time_items) == 3:
                         (h, mi, s) = time_items
                     else:
@@ -1395,7 +1391,7 @@ class BaseAdapter(ConnectionPool):
                 elif field_type == 'blob' and blob_decode:
                     colset[fieldname] = base64.b64decode(str(value))
                 elif field_type.startswith('decimal'):
-                    decimals = [int(x) for x in field_type[8:-1].split(',')][-1]
+                    decimals = int(field_type[8:-1].split(',')[-1])
                     if self.dbengine == 'sqlite':
                         value = ('%.' + str(decimals) + 'f') % value
                     if not isinstance(value, decimal.Decimal):
@@ -2791,6 +2787,14 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
 
 class NoSQLAdapter(BaseAdapter):
 
+    @staticmethod
+    def to_unicode(obj):
+        if isinstance(obj, str):
+            return obj.decode('utf8')
+        elif not isinstance(obj, unicode):
+            return unicode(obj)
+        return obj
+
     def represent(self, obj, fieldtype):
         if isinstance(obj,CALLABLETYPES):
             obj = obj()
@@ -2826,14 +2830,14 @@ class NoSQLAdapter(BaseAdapter):
                     obj = False
             elif fieldtype == 'date':
                 if not isinstance(obj, datetime.date):
-                    (y, m, d) = [int(x) for x in str(obj).strip().split('-')]
+                    (y, m, d) = map(int,str(obj).strip().split('-'))
                     obj = datetime.date(y, m, d)
                 elif isinstance(obj,datetime.datetime):
                     (y, m, d) = (obj.year, obj.month, obj.day)
                     obj = datetime.date(y, m, d)
             elif fieldtype == 'time':
                 if not isinstance(obj, datetime.time):
-                    time_items = [int(x) for x in str(obj).strip().split(':')[:3]]
+                    time_items = map(int,str(obj).strip().split(':')[:3])
                     if len(time_items) == 3:
                         (h, mi, s) = time_items
                     else:
@@ -2841,8 +2845,8 @@ class NoSQLAdapter(BaseAdapter):
                     obj = datetime.time(h, mi, s)
             elif fieldtype == 'datetime':
                 if not isinstance(obj, datetime.datetime):
-                    (y, m, d) = [int(x) for x in str(obj)[:10].strip().split('-')]
-                    time_items = [int(x) for x in str(obj)[11:].strip().split(':')[:3]]
+                    (y, m, d) = map(int,str(obj)[:10].strip().split('-'))
+                    time_items = map(int,str(obj)[11:].strip().split(':')[:3])
                     while len(time_items)<3:
                         time_items.append(0)
                     (h, mi, s) = time_items
@@ -2850,17 +2854,11 @@ class NoSQLAdapter(BaseAdapter):
             elif fieldtype == 'blob':
                 pass
             elif fieldtype.startswith('list:string'):
-                if obj!=None and not isinstance(obj,(list,tuple)):
-                    obj=[obj]
-                return [str(x) for x in obj]
+                return map(self.to_unicode,obj)
             elif fieldtype.startswith('list:'):
-                if obj!=None and not isinstance(obj,(list,tuple)):
-                    obj=[obj]
-                return [int(x) for x in obj]
-            elif isinstance(obj, str):
-                obj = obj.decode('utf8')
-            elif not isinstance(obj, unicode):
-                obj = unicode(obj)
+                return map(int,obj)
+            else:
+                obj = self.to_unicode(obj)
         return obj
 
     def _insert(self,table,fields):
