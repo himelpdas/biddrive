@@ -200,98 +200,103 @@ regex_python_keywords = re.compile('^(and|del|from|not|while|as|elif|global|or|w
 drivers = []
 
 try:
-    from pysqlite2 import dbapi2 as sqlite3
-    drivers.append('pysqlite2')
-except ImportError:
-    try:
-        from sqlite3 import dbapi2 as sqlite3
-        drivers.append('SQLite3')
-    except ImportError:
-        logger.debug('no sqlite3 or pysqlite2.dbapi2 driver')
-
-try:
-    import contrib.pymysql as pymysql
-    drivers.append('pymysql')
-except ImportError:
-    logger.debug('no pymysql driver')
-
-try:
-    import psycopg2
-    drivers.append('PostgreSQL')
-except ImportError:
-    logger.debug('no psycopg2 driver')
-
-try:
-    import cx_Oracle
-    drivers.append('Oracle')
-except ImportError:
-    logger.debug('no cx_Oracle driver')
-
-try:
-    import pyodbc
-    drivers.append('MSSQL/DB2')
-except ImportError:
-    logger.debug('no MSSQL/DB2 driver')
-
-try:
-    import kinterbasdb
-    drivers.append('Interbase')
-except ImportError:
-    logger.debug('no kinterbasdb driver')
-
-try:
-    import firebirdsql
-    drivers.append('Firebird')
-except ImportError:
-    logger.debug('no Firebird driver')
-
-try:
-    import informixdb
-    drivers.append('Informix')
-    logger.warning('Informix support is experimental')
-except ImportError:
-    logger.debug('no informixdb driver')
-
-try:
-    import sapdb
-    drivers.append('SAPDB')
-    logger.warning('SAPDB support is experimental')
-except ImportError:
-    logger.debug('no sapdb driver')
-
-try:
-    import cubriddb
-    drivers.append('Cubrid')
-    logger.warning('Cubrid support is experimental')
-except ImportError:
-    logger.debug('no cubriddb driver')
-
-try:
-    from com.ziclix.python.sql import zxJDBC
-    import java.sql
-    from org.sqlite import JDBC # required later by java.sql; ensure we have it
-    drivers.append('zxJDBC')
-    logger.warning('zxJDBC support is experimental')
-    is_jdbc = True
-except ImportError:
-    logger.debug('no zxJDBC driver')
-    is_jdbc = False
-
-try:
-    import ingresdbi
-    drivers.append('Ingres')
-except ImportError:
-    logger.debug('no Ingres driver')
-    # NOTE could try JDBC.......
-
-try:
     from new import classobj
     from google.appengine.ext import db as gae
     from google.appengine.api import namespace_manager, rdbms
     from google.appengine.api.datastore_types import Key  ### needed for belongs on ID
     from google.appengine.ext.db.polymodel import PolyModel
-
     drivers.append('google')
+except ImportError:
+    pass
+
+if not 'google' in drivers:
+
+    try:
+        from pysqlite2 import dbapi2 as sqlite3
+        drivers.append('pysqlite2')
+    except ImportError:
+        try:
+            from sqlite3 import dbapi2 as sqlite3
+            drivers.append('SQLite3')
+        except ImportError:
+            logger.debug('no sqlite3 or pysqlite2.dbapi2 driver')
+
+    try:
+        import contrib.pymysql as pymysql
+        drivers.append('pymysql')
+    except ImportError:
+        logger.debug('no pymysql driver')
+
+    try:
+        import psycopg2
+        drivers.append('PostgreSQL')
+    except ImportError:
+        logger.debug('no psycopg2 driver')
+
+    try:
+        import cx_Oracle
+        drivers.append('Oracle')
+    except ImportError:
+        logger.debug('no cx_Oracle driver')
+
+    try:
+        import pyodbc
+        drivers.append('MSSQL/DB2')
+    except ImportError:
+        logger.debug('no MSSQL/DB2 driver')
+
+    try:
+        import kinterbasdb
+        drivers.append('Interbase')
+    except ImportError:
+        logger.debug('no kinterbasdb driver')
+
+    try:
+        import firebirdsql
+        drivers.append('Firebird')
+    except ImportError:
+        logger.debug('no Firebird driver')
+
+    try:
+        import informixdb
+        drivers.append('Informix')
+        logger.warning('Informix support is experimental')
+    except ImportError:
+        logger.debug('no informixdb driver')
+        
+    try:
+        import sapdb
+        drivers.append('SAPDB')
+        logger.warning('SAPDB support is experimental')
+    except ImportError:
+        logger.debug('no sapdb driver')
+
+    try:
+        import cubriddb
+        drivers.append('Cubrid')
+        logger.warning('Cubrid support is experimental')
+    except ImportError:
+        logger.debug('no cubriddb driver')
+
+    try:
+        from com.ziclix.python.sql import zxJDBC
+        import java.sql
+        from org.sqlite import JDBC # required by java.sql; ensure we have it
+        drivers.append('zxJDBC')
+        logger.warning('zxJDBC support is experimental')
+        is_jdbc = True
+    except ImportError:
+        logger.debug('no zxJDBC driver')
+        is_jdbc = False
+
+    try:
+        import ingresdbi
+        drivers.append('Ingres')
+    except ImportError:
+        logger.debug('no Ingres driver')
+    # NOTE could try JDBC.......
+
+if 'google' in drivers:
 
     class GAEDecimalProperty(gae.Property):
         """
@@ -326,9 +331,6 @@ try:
             elif isinstance(value, basestring):
                 return decimal.Decimal(value)
             raise gae.BadValueError("Property %s must be a Decimal or string." % self.name)
-
-except ImportError:
-    pass
 
 ###################################################################################
 # class that handles connection pooling (all adapters derived form this one)
