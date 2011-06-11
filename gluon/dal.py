@@ -4762,8 +4762,16 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
-            elif field.type in ('double','integer'):
-                value = None
+            elif field.type=='double':
+                if not value.strip():
+                    value = None
+                else:
+                    value = float(value)
+            elif field.type=='integer':
+                if not value.strip():
+                    value = None
+                else:
+                    value = int(value)
             elif field.type.startswith('list:string'):
                 value = bar_decode_string(value)
             elif field.type.startswith('list:reference'):
