@@ -39,6 +39,7 @@ __all__ = [
     'BEAUTIFY',
     'BODY',
     'BR',
+    'BUTTON',
     'CENTER',
     'CODE',
     'DIV',
@@ -1268,6 +1269,11 @@ class A(DIV):
             self['_onclick']='web2py_component("%s","%s");return false;' % \
                 (self['_href'],self['cid'])
         return DIV.xml(self)
+
+
+class BUTTON(DIV):
+    
+    tag = 'button'
 
 
 class EM(DIV):
