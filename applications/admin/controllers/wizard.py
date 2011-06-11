@@ -575,7 +575,7 @@ def create(options):
     model = os.path.join(request.folder,'..',app,
                          'models','db_wizard_populate.py')
     if os.path.exists(model): os.unlink(model)
-    if options.populate_database:
+    if options.populate_database and session.app['tables']:
         file = open(model,'wb')
         try:
             file.write(populate(session.app['tables']))
