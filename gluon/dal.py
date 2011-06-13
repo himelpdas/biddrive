@@ -296,6 +296,19 @@ if not 'google' in drivers:
         logger.debug('no Ingres driver')
     # NOTE could try JDBC.......
 
+    try:
+        import couchdb
+        drivers.append('CouchDB')
+    except ImportError:
+        logger.debug('no couchdb driver')
+
+    try:
+        import pymongo
+        drivers.append('mongoDB')
+    except:
+        logger.debug('no mongoDB driver')
+
+
 if 'google' in drivers:
 
     class GAEDecimalProperty(gae.Property):
@@ -3266,11 +3279,6 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
         gae.put(parsed_items)
         return True
 
-try:
-    import couchdb
-    drivers.append('CouchDB')
-except ImportError:
-    logger.debug('no couchdb driver')
 
 def uuid2int(uuidv):
     return uuid.UUID(uuidv).int
@@ -3472,12 +3480,6 @@ def cleanup(text):
             % text
     return text
 
-
-try:
-    import pymongo
-    drivers.append('mongoDB')
-except:
-    logger.debug('no mongoDB driver')
 
 class MongoDBAdapter(NoSQLAdapter):
     uploads_in_blob = True
