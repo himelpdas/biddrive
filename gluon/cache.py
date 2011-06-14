@@ -255,9 +255,12 @@ class CacheOnDisk(CacheAbstract):
             except ImportError:
                 pass # no module _bsddb, ignoring exception now so it makes a ticket only if used
             except:
-                logger.error('corrupted file %s, deleting it!' \
+                logger.error('corrupted file %s, will try delete it!' \
                                  % self.shelve_name)
-                os.unlink(self.shelve_name)
+                try:
+                    os.unlink(self.shelve_name)
+                except IOError:
+                    logger.error('unable to delete corrupted file %s' % self.shelve_name)
             if locker_locked:
                 portalocker.unlock(locker)
             if locker:
