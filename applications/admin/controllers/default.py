@@ -948,12 +948,7 @@ def create_file():
             text = dedent("""
                    #!/usr/bin/env python
                    # coding: utf8
-                   from gluon.html import *
-                   from gluon.http import *
-                   from gluon.validators import *
-                   from gluon.sqlhtml import *
-                   # request, response, session, cache, T, db(s)
-                   # must be passed and cannot be imported!""")
+                   from gluon import *\n""")
 
         elif path[-8:] == '/static/':
             if request.vars.plugin and not filename.startswith('plugin_%s/' % request.vars.plugin):
