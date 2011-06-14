@@ -3219,6 +3219,8 @@ class Crud(object):
         if not current.request.extension in ('html','load'):
             return rows.as_list()
         if not headers:
+            if isinstance(table,str):
+                table = self.db[table]
             headers = dict((str(k),k.label) for k in table)
         return SQLTABLE(rows,headers=headers,**attr)
 
