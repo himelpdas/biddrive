@@ -41,7 +41,7 @@ def safe_write(a, value, b='w'):
 
 def get_app(name=None):
     app = name or request.args(0)
-    if not MULTI_USER_MODE or db(db.app.name==app)(db.app.owner==auth.user.id).count():
+    if app and (not MULTI_USER_MODE or db(db.app.name==app)(db.app.owner==auth.user.id).count()):
         return app
     session.flash = 'App does not exist or your are not authorized'
     redirect(URL('site'))
@@ -656,11 +656,12 @@ def about():
 def design():
     """ Application design handler """
     app = get_app()
+
     if not response.flash and app == request.application:
         msg = T('ATTENTION: you cannot edit the running application!')
         response.flash = msg
 
-    if request.vars.pluginfile!=None:
+    if request.vars.pluginfile!=None and not isinstance(request.vars.pluginfile,str):
         filename=os.path.basename(request.vars.pluginfile.filename)
         if plugin_install(app, request.vars.pluginfile.file,
                           request, filename):
@@ -669,6 +670,9 @@ def design():
         else:
             session.flash = \
                 T('unable to create application "%s"', request.vars.filename)
+        redirect(URL(r=request))
+    elif isinstance(request.vars.pluginfile,str):
+        session.flash = T('plugin not specified')
         redirect(URL(r=request))
 
 
@@ -983,6 +987,7 @@ def upload_file():
     """ File uploading handler """
 
     try:
+        filename = None
         app = get_app(name=request.vars.location.split('/')[0])
         path = apath(request.vars.location, r=request)
 
@@ -1016,8 +1021,11 @@ def upload_file():
         session.flash = T('file "%(filename)s" uploaded',
                           dict(filename=filename[len(path):]))
     except Exception:
-        session.flash = T('cannot upload file "%(filename)s"',
-                          dict(filename[len(path):]))
+        if filename:
+            d = dict(filename = filename[len(path):])
+        else:
+            d = dict(filename = 'unkown')
+        session.flash = T('cannot upload file "%(filename)s"', d)
 
     redirect(request.vars.sender)
 
