@@ -17,6 +17,7 @@ import fnmatch
 import os
 import copy
 import random
+import __builtin__
 from storage import Storage, List
 from template import parse_template
 from restricted import restricted, compile2
@@ -229,6 +230,8 @@ def build_environment(request, response, session):
     current.T = environment['T'] = translator(request)
     current.cache = environment['cache'] = Cache(request)
 
+    __builtins__['__import__'] = __builtin__.__import__
+    environment['__builtins__'] = __builtins__
     environment['HTTP'] = HTTP
     environment['redirect'] = redirect
     environment['request'] = request
