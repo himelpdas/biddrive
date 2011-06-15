@@ -357,7 +357,7 @@ class CheckboxesWidget(OptionsWidget):
         for r_index in range(rows):
             tds = []
             for k, v in options[r_index*cols:(r_index+1)*cols]:
-                if str(k).isdigit() and k in values:
+                if k in values:
                     r_value = k
                 else:
                     r_value = []
