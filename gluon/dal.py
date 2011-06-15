@@ -311,6 +311,8 @@ if not 'google' in drivers:
 
 if 'google' in drivers:
 
+    is_jdbc = False
+
     class GAEDecimalProperty(gae.Property):
         """
         GAE decimal implementation
