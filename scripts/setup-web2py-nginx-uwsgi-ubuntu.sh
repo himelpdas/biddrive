@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo 'setup-web2py-nginx-uwsgi-ubuntu.sh'
 echo 'Requires Ubuntu 10.04 (LTS) and installs Nginx + uWSGI + Web2py'
 
 # Get Web2py Admin Password
@@ -71,8 +72,7 @@ wget http://web2py.com/examples/static/web2py_src.zip
 unzip web2py_src.zip
 rm web2py_src.zip
 chown -R www-data:www-data web2py
-cd /var/web2py
+cd /home/www-data/web2py
 sudo -u www-data python -c "from gluon.main import save_password; save_password('$PW',443)"
 /etc/init.d/uwsgi-python restart
 /etc/init.d/nginx restart
-
