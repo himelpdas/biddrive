@@ -33,6 +33,8 @@ import hashlib
 
 regex_crlf = re.compile('\r|\n')
 
+join = ''.join
+
 __all__ = [
     'A',
     'B',
@@ -278,7 +280,7 @@ def URL(
     if extension:
         function += '.' + extension
 
-    if regex_crlf.search(''.join([application, controller, function, other])):
+    if regex_crlf.search(join([application, controller, function, other])):
         raise SyntaxError, 'CRLF Injection Detected'
     url = rewrite.url_out(r, env, application, controller, function,
                           args, other, scheme, host, port)
@@ -777,7 +779,7 @@ class DIV(XmlComponent):
             fa += ' %s="%s"' % (name, xmlescape(value, True))
 
         # get the xml for the inner components
-        co = ''.join([xmlescape(component) for component in
+        co = join([xmlescape(component) for component in
                      self.components])
 
         return (fa, co)
@@ -1337,7 +1339,7 @@ class CODE(DIV):
         highlight_line = self.attributes.get('highlight_line', None)
         styles = self['styles'] or {}
         return highlight(
-            ''.join(self.components),
+            join(self.components),
             language=language,
             link=link,
             counter=counter,
