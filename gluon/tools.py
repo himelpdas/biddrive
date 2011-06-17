@@ -3399,11 +3399,33 @@ def geocode(address):
 def universal_caller(f, *a, **b):
     c = f.func_code.co_argcount
     n = f.func_code.co_varnames[:c]
-    b = dict([(k, v) for k, v in b.items() if k in n])
-    if len(b) == c:
-        return f(**b)
-    elif len(a) >= c:
-        return f(*a[:c])
+
+    defaults = f.func_defaults
+    pos_args = n[0:-len(defaults)]
+    named_args = n[-len(defaults):]
+
+    arg_dict = {}
+
+    # Fill the arg_dict with name and value for the submitted, positional values
+    for pos_index, pos_val in enumerate(a[:c]):
+        arg_dict[n[pos_index]] = pos_val    # n[pos_index] is the name of the argument
+
+    # There might be pos_args left, that are sent as named_values. Gather them as well.
+    # If a argument already is populated with values we simply replaces them.
+    for arg_name in pos_args[len(arg_dict):]:
+        if b.has_key(arg_name):
+            arg_dict[arg_name] = b[arg_name]
+
+    if len(arg_dict) >= len(pos_args):
+        # All the positional arguments is found. The function may now be called.
+        # However, we need to update the arg_dict with the values from the named arguments as well.
+        for arg_name in named_args:
+            if b.has_key(arg_name):
+                arg_dict[arg_name] = b[arg_name]
+
+        return f(**arg_dict)
+
+    # Raise an error, the function cannot be called.
     raise HTTP(404, "Object does not exist")
 
 
