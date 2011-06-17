@@ -251,8 +251,8 @@ class _Web2pyImporter(_BaseImporter):
         self.begin()
         #try:
         # if not relative and not from applications:
-        if not name.startswith(".") and level <= 0 \
-                and not name.startswith("applications."):
+        if not name.startswith(".") and level <= 0 and globals != None and
+                and not name.startswith("applications."):		
             # Get the name of the file do the import
             caller_file_name = os.path.join(self.web2py_path, \
                                             globals.get("__file__", ""))
