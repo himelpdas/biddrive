@@ -347,7 +347,7 @@ def run_models_in(environment):
         compiled=False
     paths = (path, os.path.join(path,c), os.path.join(path,c,f))
     for model in models:
-        if not os.path.split(model)[0] in paths:
+        if not os.path.split(model)[0] in paths and c!='appadmin':
             continue
         elif compiled:
             code = read_pyc(model)

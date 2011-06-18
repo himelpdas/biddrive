@@ -90,8 +90,8 @@ def listdir(
     like os.listdir() but you can specify a regex pattern to filter files.
     if add_dirs is True, the returned items will have the full path.
     """
-    if path[-1:] != '/':
-        path = path + '/'
+    if path[-1:] != os.path.sep:
+        path = path + os.path.sep
     if drop:
         n = len(path)
     else:
