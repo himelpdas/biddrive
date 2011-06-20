@@ -1,3 +1,4 @@
+
 import os,sys
 from collections import deque                                                      
 import string                                                      
@@ -9,11 +10,10 @@ import math
 import re
 import cmd
 import readline
-
-try:
+try:    
     from gluon import DAL
-except ImportError:
-    global DAL
+except ImportError as err:
+    print('gluon path not found')    
 
 class refTable(object):
     def __init__(self):
@@ -452,7 +452,8 @@ class setCopyDB():
     def _getDal(self):
         mDal=None
         if self.dalPath is not None:
-            sys.path.append(os.path.abspath(self.dalPath))            
+            global DAL
+            sys.path.append(self.dalPath)            
             mDal=__import__('dal',globals={},locals={},fromlist=['DAL'],level=0)
             DAL=mDal.DAL
             return mDal            
@@ -590,7 +591,7 @@ informix://username:password@test\n\
                             ,action='store_true'\
                             ,help='run in interactive mode')    
     miscGroup.add_argument('-d','--dal'\
-                         ,required=True\
+                         ,required=False\
                          ,help='path to dal.py')
     miscGroup.add_argument('-t','--truncate'\
                          ,choices=['True','False']\
@@ -620,9 +621,11 @@ informix://username:password@test\n\
         print('EXCEPTION: {0}'.format(err))
 
     if args.dal:
-        try:
+        try:            
             autoImport=True
             if args.autoimport:autoImport=args.autoimport
+            #sif not DAL in globals:
+            #if not sys.path.__contains__():
             oCopy.dalPath=args.dal
             mDal=oCopy._getDal()
             db=oCopy.instDB(args.sourceFolder,args.sourceConnectionString,autoImport)         
@@ -661,14 +664,14 @@ target model: {1}\n\
             oCopy.sourceFolder=os.path.abspath(args.sourceFolder)
             oCopy.createfolderPath(oCopy.sourceFolder)
         except Exception, err:
-            print('EXCEPTION: could create folder path\n{0}'.format(err))        
+            print('EXCEPTION: could not create folder path\n{0}'.format(err))        
     else:oCopy.dbStorageFolder=os.path.abspath(os.getcwd())
     if args.targetFolder:
         try:
             oCopy.targetFolder=os.path.abspath(args.targetFolder)
             oCopy.createfolderPath(oCopy.targetFolder)
         except Exception, err:
-            print('EXCEPTION: could create folder path\n{0}'.format(err))  
+            print('EXCEPTION: could not create folder path\n{0}'.format(err))  
     if not args.interactive:
         try:    
             oCopy.copyDB()
