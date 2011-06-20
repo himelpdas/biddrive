@@ -1427,6 +1427,16 @@ class TFOOT(DIV):
         self._wrap_components(TR, TR)
 
 
+class COL(DIV):
+
+    tag = 'col'
+
+
+class COLGROUP(DIV):
+
+    tag = 'colgroup'
+
+
 class TABLE(DIV):
     """
     TABLE Component.
@@ -1440,7 +1450,7 @@ class TABLE(DIV):
     tag = 'table'
 
     def _fixup(self):
-        self._wrap_components((TR, TBODY, THEAD, TFOOT), TR)
+        self._wrap_components((TR, TBODY, THEAD, TFOOT, COL, COLGROUP), TR)
 
 class I(DIV):
 
