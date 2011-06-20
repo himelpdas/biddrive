@@ -5405,6 +5405,20 @@ class Set(object):
             raise SyntaxError, "No fields to update"
         self.delete_uploaded_files(update_fields)
         return self.db._adapter.update(tablename,self.query,fields)
+    
+    def validate_and_update(self, **update_fields):
+        tablename = self.db._adapter.get_table(self.query)
+        response = Row()
+        response.errors = self.db[tablename]._validate(**update_fields) 
+        fields = self.db[tablename]._listify(update_fields,update=True)
+        if not fields:
+            raise SyntaxError, "No fields to update"
+        self.delete_uploaded_files(update_fields)
+        if not response.errors:
+            response.updated = self.db._adapter.update(tablename,self.query,fields)
+        else:
+            response.updated = None
+        return response
 
     def delete_uploaded_files(self, upload_fields=None):
         table = self.db[self.db._adapter.tables(self.query)[0]]
