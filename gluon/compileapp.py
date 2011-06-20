@@ -127,7 +127,7 @@ class LoadFactory(object):
             other_response = globals.Response()
             other_request.env.http_web2py_component_location = \
                 request.env.path_info
-            other_request.env.http_web2py_component_element = target
+            other_request.env.http_web2py_component_element = other_request.cid = target
             other_response.view = '%s/%s.%s' % (c,f, other_request.extension)
 
             other_environment = copy.copy(self.environment)
