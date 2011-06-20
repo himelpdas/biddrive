@@ -99,7 +99,7 @@ class OAuthAccount(object):
 
 
             resp, content = client.request(self.access_token_url, "POST")
-            if resp['status'] != '200':
+            if str(resp['status']) != '200':
                 self.session.request_token = None
                 self.globals['redirect'](self.globals['URL'](f='user',args='logout'))
 
