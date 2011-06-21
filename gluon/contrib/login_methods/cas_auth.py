@@ -57,7 +57,12 @@ class CasAuth( object ):
         self.casusername = casusername
         http_host=current.request.env.http_x_forwarded_for
         if not http_host: http_host=current.request.env.http_host
-        self.cas_my_url='http://%s%s'%( http_host, current.request.env.path_info )
+        if current.request.env.wsgi_url_scheme in [ 'https', 'HTTPS' ]: 
+            scheme = 'https' 
+        else: 
+            scheme = 'http' 
+        self.cas_my_url='%s://%s%s'%( scheme, http_host, current.request.env.path_info ) 
+    
     def login_url( self, next = "/" ):
         current.session.token=self._CAS_login()
         return next
@@ -95,15 +100,15 @@ class CasAuth( object ):
                     a,b,c = data[1].split( ':' )+[None,None]
                     return dict(user=a,email=b,username=c)
                 return None
+            import xml.dom.minidom as dom
+            import xml.parsers.expat as expat
             try:
-                import xml.dom.minidom as dom
-                import xml.parsers.expat as expat
                 dxml=dom.parseString(data)
                 envelop = dxml.getElementsByTagName("cas:authenticationSuccess")
                 if len(envelop)>0:
                     res = dict()
                     for x in envelop[0].childNodes:
-                        if x.nodeName.startswith('cas:'):
+                        if x.nodeName.startswith('cas:') and len(x.childNodes):
                             key = x.nodeName[4:].encode('utf8')
                             value = x.childNodes[0].nodeValue.encode('utf8')
                             if not key in res:
@@ -113,7 +118,7 @@ class CasAuth( object ):
                                     res[key]=[res[key]]
                                 res[key].append(value)
                     return res
-            except ExpatError: pass
+            except expat.ExpatError: pass
             return None # fallback
 
 
