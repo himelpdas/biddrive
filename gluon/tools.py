@@ -1364,11 +1364,11 @@ class Auth(object):
         user = self.db(table_user[username] == keys[username]).select().first()
         keys['registration_key']=''
         if user:
-            user.update_record(**keys)
+            user.update_record(**table_user._filter_fields(keys))
         else:
             if not 'first_name' in keys and 'first_name' in table_user.fields:
-                keys['first_name']=keys[username]
-            user_id = table_user.insert(**keys)
+                keys['first_name'] = keys[username]
+            user_id = table_user.insert(**table_user._filter_fields(keys))
             user =  self.user = table_user[user_id]
             if self.settings.create_user_groups:
                 group_id = self.add_group("user_%s" % user_id)
