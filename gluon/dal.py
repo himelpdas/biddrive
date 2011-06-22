@@ -5490,11 +5490,7 @@ class Rows(object):
             return self
         for row in self.records:
             for (tablename,virtualfields) in keyed_virtualfields.items():
-                if type(virtualfields) == types.InstanceType:
-                    virtualfield = virtualfields
-                else:
-                    virtualfield = virtualfields()
-                attributes = dir(virtualfield)
+                attributes = dir(virtualfields)
                 virtualfields.__dict__.update(row)
                 if not tablename in row:
                     box = row[tablename] = Row()
@@ -5502,7 +5498,7 @@ class Rows(object):
                     box = row[tablename]
                 for attribute in attributes:
                     if attribute[0] != '_':
-                        method = getattr(virtualfield,attribute)
+                        method = getattr(virtualfields,attribute)
                         if hasattr(method,'im_func') and method.im_func.func_code.co_argcount:
                             box[attribute]=method()
         return self
