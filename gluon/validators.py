@@ -787,8 +787,8 @@ class IS_DECIMAL_IN_RANGE(Validator):
 
     def __call__(self, value):
         try:
-            if self.dot=='.':
-                v = decimal.Decimal(str(value))
+            if isinstance(value,decimal.Decimal):
+                v = value
             else:
                 v = decimal.Decimal(str(value).replace(self.dot,'.'))
             if self.minimum is None:
@@ -2080,6 +2080,8 @@ class IS_DATE(Validator):
         self.error_message = str(error_message)
 
     def __call__(self, value):
+        if isinstance(value,datetime.date):
+            return (value,None)
         try:
             (y, m, d, hh, mm, ss, t0, t1, t2) = \
                 time.strptime(value, str(self.format))
@@ -2134,6 +2136,8 @@ class IS_DATETIME(Validator):
         self.error_message = str(error_message)
 
     def __call__(self, value):
+        if isinstance(value,datetime.datetime):
+            return (value,None)
         try:
             (y, m, d, hh, mm, ss, t0, t1, t2) = \
                 time.strptime(value, str(self.format))
@@ -2165,6 +2169,12 @@ class IS_DATE_IN_RANGE(IS_DATE):
         (datetime.date(2008, 3, 3), None)
 
         >>> v('03/03/2010')
+        (datetime.date(2010, 3, 3), 'oops')
+
+        >>> v(datetime.date(2008,3,3))
+        (datetime.date(2008, 3, 3), None)
+
+        >>> v(datetime.date(2010,3,3))
         (datetime.date(2010, 3, 3), 'oops')
 
     """
@@ -2211,6 +2221,12 @@ class IS_DATETIME_IN_RANGE(IS_DATETIME):
 
         >>> v('03/03/2010 10:34')
         (datetime.datetime(2010, 3, 3, 10, 34), 'oops')
+
+        >>> v(datetime.datetime(2008,3,3,0,0))
+        (datetime.datetime(2008, 3, 3, 0, 0), None)
+
+        >>> v(datetime.datetime(2010,3,3,0,0))
+        (datetime.datetime(2010, 3, 3, 0, 0), 'oops')
     """
     def __init__(self,
                  minimum = None,
