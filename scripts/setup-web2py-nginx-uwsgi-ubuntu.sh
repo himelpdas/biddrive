@@ -27,6 +27,8 @@ echo 'server {
          location / {
                 uwsgi_pass      127.0.0.1:9001;
                 include         uwsgi_params;
+                uwsgi_param     UWSGI_SCHEME $scheme;
+                uwsgi_param     SERVER_SOFTWARE    nginx/$nginx_version;
         }
 }
 
@@ -40,6 +42,7 @@ server {
                 uwsgi_pass      127.0.0.1:9001;
                 include         uwsgi_params;
                 uwsgi_param     UWSGI_SCHEME $scheme;
+                uwsgi_param     SERVER_SOFTWARE    nginx/$nginx_version;
         }
 
 }' >/etc/nginx/sites-available/web2py
