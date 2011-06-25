@@ -278,17 +278,18 @@ class Response(Storage):
         from gluon.dal import thread
         dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]*1000)) \
                                for row in i.db._timings]) \
-                       for i in thread.instances]
+                       for i in thread.instances]        
+        u = web2py_uuid() 
         return DIV(
             BUTTON('design',_onclick="document.location='%s'" % admin),
-            BUTTON('request',_onclick="jQuery('#request').slideToggle()"),
-            DIV(BEAUTIFY(current.request),_class="hidden",_id="request"),
-            BUTTON('session',_onclick="jQuery('#session').slideToggle()"),
-            DIV(BEAUTIFY(current.session),_class="hidden",_id="session"),
-            BUTTON('response',_onclick="jQuery('#response').slideToggle()"),
-            DIV(BEAUTIFY(current.response),_class="hidden",_id="response"),
-            BUTTON('db stats',_onclick="jQuery('#db-stats').slideToggle()"),
-            DIV(BEAUTIFY(dbstats),_class="hidden",_id="db-stats"),
+            BUTTON('request',_onclick="jQuery('#request-%s').slideToggle()"%u),
+            DIV(BEAUTIFY(current.request),_class="hidden",_id="request-%s"%u),
+            BUTTON('session',_onclick="jQuery('#session-%s').slideToggle()"%u),
+            DIV(BEAUTIFY(current.session),_class="hidden",_id="session-%s"%u),
+            BUTTON('response',_onclick="jQuery('#response-%s').slideToggle()"%u),
+            DIV(BEAUTIFY(current.response),_class="hidden",_id="response-%s"%u),
+            BUTTON('db stats',_onclick="jQuery('#db-stats-%s').slideToggle()"%u),
+            DIV(BEAUTIFY(dbstats),_class="hidden",_id="db-stats-%s"%u),
             SCRIPT("jQuery('.hidden').hide()")
             )
 
