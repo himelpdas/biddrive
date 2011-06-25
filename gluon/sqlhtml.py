@@ -1268,6 +1268,36 @@ class SQLTABLE(TABLE):
 
     This will link rows[id] to
         current_app/current_controlle/current_function/value_of_id
+        
+    New Implements: 24 June 2011:
+    -----------------------------
+    
+    :param selectid: The id you want to select
+    :param renderstyle: Boolean render the style with the table
+    
+    :param extracolums = [{'label':A('Extra',_href='#'),
+                    'class': '', #class name of the header
+                    'width':'', #width in pixels or %
+                    'content':lambda row, rc: A('Edit',_href='edit/%s'%row.id),                     
+                    'selected': False #agregate class selected to this column
+                    }]
+                    
+                    
+    :param headers = {'table.id':{'label':'Id',
+                           'class':'', #class name of the header
+                           'width':'', #width in pixels or %
+                           'truncate': 16, #truncate the content to...
+                           'selected': False #agregate class selected to this column
+                           }, 
+               'table.myfield':{'label':'My field',
+                                'class':'', #class name of the header
+                                'width':'', #width in pixels or %
+                                'truncate': 16, #truncate the content to...
+                                'selected': False #agregate class selected to this column
+                                },
+               }
+               
+    table = SQLTABLE(rows, headers=headers, extracolums=extracolums)
 
 
     """
@@ -1280,8 +1310,11 @@ class SQLTABLE(TABLE):
         orderby=None,
         headers={},
         truncate=16,
-        columns=None,
+        columns=None,        
         th_link='',
+        extracolumns=None,
+        selectid=None,
+        renderstyle=False,
         **attributes
         ):
 
@@ -1304,15 +1337,33 @@ class SQLTABLE(TABLE):
                 (t,f) = c.split('.')
                 field = sqlrows.db[t][f]
                 headers[c] = field.label
-
         if headers!=None:
-            for c in columns:
-                if orderby:
+            for c in columns:#new implement dict
+                if isinstance(headers.get(c, c), dict):
+                    coldict = headers.get(c, c)
+                    attrcol = dict()
+                    if coldict['width']!="":
+                        attrcol.update(_width=coldict['width'])
+                    if coldict['class']!="":
+                        attrcol.update(_class=coldict['class'])
+                    row.append(TH(coldict['label'],**attrcol))
+                elif orderby:
                     row.append(TH(A(headers.get(c, c),
                                     _href=th_link+'?orderby=' + c)))
                 else:
                     row.append(TH(headers.get(c, c)))
+                    
+            if extracolumns:#new implement dict
+                for c in extracolumns:
+                    attrcol = dict()
+                    if c['width']!="":
+                        attrcol.update(_width=c['width'])
+                    if c['class']!="":
+                        attrcol.update(_class=c['class'])
+                    row.append(TH(c['label'],**attrcol))
+                    
             components.append(THEAD(TR(*row)))
+        
 
         tbody = []
         for (rc, record) in enumerate(sqlrows):
@@ -1321,6 +1372,11 @@ class SQLTABLE(TABLE):
                 _class = 'even'
             else:
                 _class = 'odd'
+                
+            if selectid!=None:#new implement
+                if record.id==selectid:
+                    _class += ' rowselected'
+                    
             for colname in columns:
                 if not table_field.match(colname):
                     if "_extra" in record and colname in record._extra:
@@ -1392,12 +1448,65 @@ class SQLTABLE(TABLE):
                         r = ''
                 elif field.type in ['string','text']:
                     r = str(field.formatter(r))
-                    ur = unicode(r, 'utf8')
-                    if truncate!=None and len(ur) > truncate:
+                    ur = unicode(r, 'utf8')                    
+                    if headers!={}: #new implement dict
+                        if isinstance(headers[colname],dict):
+                            if isinstance(headers[colname]['truncate'], int):
+                                r = ur[:headers[colname]['truncate'] - 3].encode('utf8') + '...'
+                    elif truncate!=None and len(ur) > truncate:
                         r = ur[:truncate - 3].encode('utf8') + '...'
-                row.append(TD(r))
+                        
+                attrcol = dict()#new implement dict
+                if headers!={}:
+                    if isinstance(headers[colname],dict):
+                        colclass=headers[colname]['class']
+                        if headers[colname]['selected']:
+                            colclass= str(headers[colname]['class'] + " colselected").strip()
+                        if colclass!="":
+                            attrcol.update(_class=colclass)
+                        
+                row.append(TD(r,**attrcol))
+                
+            if extracolumns:#new implement dict
+                for c in extracolumns:
+                    attrcol = dict()
+                    colclass=c['class']
+                    if c['selected']:
+                        colclass= str(c['class'] + " colselected").strip()
+                    if colclass!="":
+                        attrcol.update(_class=colclass)
+                    contentfunc = c['content']
+                    row.append(TD(contentfunc(record, rc),**attrcol))
+                    
             tbody.append(TR(_class=_class, *row))
+            
+        if renderstyle:
+            components.append(STYLE(self.style()))
+        
         components.append(TBODY(*tbody))
+        
+    
+    def style(self):
+        
+        css = '''
+        table tbody tr.odd {
+            background-color: #DFD;
+        }
+        table tbody tr.even {
+            background-color: #EFE;
+        }
+        table tbody tr.rowselected {
+            background-color: #FDD;
+        }
+        table tbody tr td.colselected {
+            background-color: #FDD;
+        }
+        table tbody tr:hover {
+            background: #DDF;
+        }
+        '''
+        
+        return css
 
 form_factory = SQLFORM.factory # for backward compatibility, deprecated
 
