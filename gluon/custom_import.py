@@ -70,7 +70,6 @@ class _BaseImporter(object):
         """
         The import method itself.
         """
-
         return _STANDARD_PYTHON_IMPORTER(name, globals, locals, fromlist,
                                          level)
 
@@ -107,7 +106,7 @@ class _DateTrackerImporter(_BaseImporter):
         if call_begin_end:
             self.begin()
 
-        try:
+	try:
             self._tl.globals = globals
             self._tl.locals = locals
             self._tl.level = level
@@ -251,9 +250,9 @@ class _Web2pyImporter(_BaseImporter):
         self.begin()
         #try:
         # if not relative and not from applications:
-	if not name.startswith(".") and level <= 0 \
-		    and not name.startswith("applications.") \
-		    and isinstance(globals, dict):
+        if not name.startswith(".") and level <= 0 \
+                    and not name.startswith("applications.") \
+                    and isinstance(globals, dict):
             # Get the name of the file do the import
             caller_file_name = os.path.join(self.web2py_path, \
                                             globals.get("__file__", ""))

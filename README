@@ -1101,5 +1101,24 @@ recalled
 - jQuery 1.6.1
 - Lots of bug fixes
 
-# 1.96.2-1.96.3
+# 1.96.2-1.96.4
 - bug fixes
+
+# 1.97.1
+= validate_and_update, thanks Bruno
+- fixed problem with new custom import, thanks Mart
+- fixed pyamf 0.6, thanks Alexei and Nickd
+- fixed "+ =" bug in wizard
+- fixed problem with allowed_patterns
+- fixed problems with LOAD and vars and ajax
+- closed lots of google code tickets
+- checkboxes should now work with list:string
+- web2py works on Android, thanks Corne Dickens
+- new cpdb.py, thanks Mart
+- improved translation (frech in particuler), thanks Pierre
+- improved cas_auth.py, thanks Sergio
+- IS_DATE and IS_DATETIME validators now work with native types
+- better description of --shell, thanks Anthony
+- extra SQLTABLE columns, thanks Martin
+- fixed toolbar conflics, thanks Simon
+- GAE password shows with ****
