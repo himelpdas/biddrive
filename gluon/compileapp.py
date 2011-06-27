@@ -121,8 +121,8 @@ class LoadFactory(object):
             other_request.args = List(args)
             other_request.folder = request.folder
             other_request.env = request.env
-            other_request.vars = vars
-            other_request.get_vars = vars
+            other_request.vars = Stoarge(vars)
+            other_request.get_vars = Storage(vars)
             other_request.post_vars = Storage()
             other_response = globals.Response()
             other_request.env.http_web2py_component_location = \
