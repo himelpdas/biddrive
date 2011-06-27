@@ -2082,12 +2082,12 @@ class MSSQL2Adapter(MSSQLAdapter):
 
     def represent(self, obj, fieldtype):
         value = BaseAdapter.represent(self, obj, fieldtype)
-        if fieldtype == 'string' or fieldtype == 'text' and value[:1]=="'":
+        if (fieldtype == 'string' or fieldtype == 'text') and value[:1]=="'":
             value = 'N'+value
         return value
 
     def execute(self,a):
-        return self.log_execute(a,'utf8')
+        return self.log_execute(a.decode('utf8'))
 
 
 class FireBirdAdapter(BaseAdapter):
