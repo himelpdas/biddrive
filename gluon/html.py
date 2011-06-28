@@ -2077,7 +2077,7 @@ def markdown_serializer(text,tag=None,attr={}):
     return text
 
 def markmin_serializer(text,tag=None,attr={}):
-    if tag is None: return re.sub('\s+',' ',text)
+    # if tag is None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '# '+text+'\n\n'
     if tag=='h2': return '#'*2+' '+text+'\n\n'
@@ -2090,7 +2090,8 @@ def markmin_serializer(text,tag=None,attr={}):
     if tag in ['td','th']: return ' | '+text
     if tag in ['b','strong','label']: return '**%s**' % text
     if tag in ['em','i']: return "''%s''" % text
-    if tag in ['tt','code']: return '``%s``' % text
+    if tag in ['tt']: return '``%s``' % text.strip()
+    if tag in ['code']: return '``\n%s``' % text
     if tag=='a': return '[[%s %s]]' % (text,attr.get('_href',''))
     if tag=='img': return '[[%s %s left]]' % (attr.get('_alt','no title'),attr.get('_src',''))
     return text

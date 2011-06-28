@@ -113,7 +113,7 @@ class LoadFactory(object):
                 args = [args]
             c = c or request.controller
 
-            other_request = globals.Request()
+            other_request = copy.copy(request)           
             other_request.application = request.application
             other_request.controller = c
             other_request.function = f
