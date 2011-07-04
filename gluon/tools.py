@@ -3400,7 +3400,7 @@ def universal_caller(f, *a, **b):
     c = f.func_code.co_argcount
     n = f.func_code.co_varnames[:c]
 
-    defaults = f.func_defaults
+    defaults = f.func_defaults or []
     pos_args = n[0:-len(defaults)]
     named_args = n[-len(defaults):]
 
