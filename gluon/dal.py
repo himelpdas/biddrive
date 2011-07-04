@@ -107,6 +107,7 @@ Supported DAL URI strings:
 'informixu://user:password@server:3050/database' # unicode informix
 'google:datastore' # for google app engine datastore
 'google:sql' # for google app engine with sql (mysql compatible)
+'teradata://DSN=dsn;UID=user;PWD=pass' # experimental 
 
 For more info:
 help(DAL)
@@ -2443,6 +2444,47 @@ class DB2Adapter(BaseAdapter):
         return rows[minimum:maximum]
 
 
+class TeradataAdapter(DB2Adapter):
+    types = {
+        'boolean': 'CHAR(1)',
+        'string': 'VARCHAR(%(length)s)',
+        'text': 'CLOB',
+        'password': 'VARCHAR(%(length)s)',
+        'blob': 'BLOB',
+        'upload': 'VARCHAR(%(length)s)',
+        'integer': 'INT',
+        'double': 'DOUBLE',
+        'decimal': 'NUMERIC(%(precision)s,%(scale)s)',
+        'date': 'DATE',
+        'time': 'TIME',
+        'datetime': 'TIMESTAMP',
+        'id': 'INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL',
+        'reference': 'INT, FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'reference FK': ', CONSTRAINT FK_%(constraint_name)s FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_key)s ON DELETE %(on_delete_action)s',
+        'reference TFK': ' CONSTRAINT FK_%(foreign_table)s_PK FOREIGN KEY (%(field_name)s) REFERENCES %(foreign_table)s (%(foreign_key)s) ON DELETE %(on_delete_action)s',
+        'list:integer': 'CLOB',
+        'list:string': 'CLOB',
+        'list:reference': 'CLOB',
+        }
+
+
+    def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
+                 credential_decoder=lambda x:x, driver_args={},
+                    adapter_args={}):
+        self.db = db
+        self.dbengine = "teradata"
+        self.uri = uri
+        self.pool_size = pool_size
+        self.folder = folder
+        self.db_codec = db_codec
+        self.find_or_make_work_folder()
+        cnxn = uri.split('://', 1)[1]
+        def connect(cnxn=cnxn,driver_args=driver_args):
+            return pyodbc.connect(cnxn,**driver_args)
+        self.pool_connection(connect)
+        self.cursor = self.connection.cursor()
+
+
 INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name
                                        # (ANSI-SQL wants this form of name
                                        # to be a delimited identifier)
@@ -3564,6 +3606,7 @@ ADAPTERS = {
     'mssql': MSSQLAdapter,
     'mssql2': MSSQL2Adapter,
     'db2': DB2Adapter,
+    'teradata': TeradataAdapter,
     'informix': InformixAdapter,
     'firebird': FireBirdAdapter,
     'firebird_embedded': FireBirdAdapter,
