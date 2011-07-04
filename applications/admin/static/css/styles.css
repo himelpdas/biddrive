@@ -1062,3 +1062,4 @@ ul#snapshot > li {
 .untranslated { background-color: #FFCC00; }
 .translated { background-color: white; }
 .ui-multiselect { border: 1px solid #ccc; width:400px;}
+#editor_area textarea { height: 400px; width: 100% }
