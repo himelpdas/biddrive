@@ -2,6 +2,8 @@
 ## This scaffolding model makes your app work on Google App Engine too
 #########################################################################
 
+if request.controller.endswith('_example'): response.generic_patterns.append('*')
+
 from gluon.settings import settings
 
 # if running on Google App Engine
