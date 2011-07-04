@@ -113,7 +113,9 @@ class LoadFactory(object):
                 args = [args]
             c = c or request.controller
 
-            other_request = copy.copy(request)           
+            other_request = Storage()
+            for key, value in request.items():
+                other_request[key] = value
             other_request.application = request.application
             other_request.controller = c
             other_request.function = f
@@ -127,9 +129,9 @@ class LoadFactory(object):
             other_response = globals.Response()
             other_request.env.http_web2py_component_location = \
                 request.env.path_info
-            other_request.env.http_web2py_component_element = other_request.cid = target
+            other_request.cid = target
+            other_request.env.http_web2py_component_element = target
             other_response.view = '%s/%s.%s' % (c,f, other_request.extension)
-
             other_environment = copy.copy(self.environment)
             other_response._view_environment = other_environment
             other_environment['request'] = other_request
