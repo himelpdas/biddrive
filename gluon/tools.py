@@ -3281,7 +3281,7 @@ class Crud(object):
                                queries = ['equals', 'not equal', 'contains'],
                                query_labels={'equals':'Equals',
                                              'not equal':'Not equal'},
-                               fields = [db.test.id, db.test.children],
+                               fields = ['id','children'],
                                field_labels = {'id':'ID','children':'Children'},
                                zero='Please choose',
                                query = (db.test.id > 0)&(db.test.id != 3) )
