@@ -86,8 +86,9 @@ class Servers:
     @staticmethod
     def gevent(app,address, **options):
         from gevent import monkey; monkey.patch_all()
-        from gevent import wsgi
-        wsgi.WSGIServer(address, app).serve_forever()
+        from gevent import pywsgi
+        from gevent.pool import Pool
+        pywsgi.WSGIServer(address, app, spawn = 'workers' in options and Pool(int(option.workers)) or 'default').serve_forever()
 
     @staticmethod
     def bjoern(app,address, **options):
@@ -179,6 +180,11 @@ def main():
                       default='8000',
                       dest='port',
                       help='port number')
+    parser.add_option('-w',
+                      '--workers',
+                      default='',
+                      dest='workers',
+                      help='number of workers number')
     (options, args) = parser.parse_args()
     print 'starting %s on %s:%s...' % (options.server,options.ip,options.port)
     run(options.server,options.ip,options.port,logging=options.logging,profiler=options.profiler)
