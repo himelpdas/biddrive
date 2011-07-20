@@ -4811,6 +4811,8 @@ class Table(dict):
         def fix(field, value, id_map):
             if value == null:
                 value = None
+            elif field.type=='blob':
+                value = base64.b64decode(value)
             elif field.type=='double':
                 if not value.strip():
                     value = None
@@ -5733,11 +5735,14 @@ class Rows(object):
                 else:
                     (t, f) = col.split('.')
                     field = self.db[t][f]
-                    if isinstance(record.get(t, None), (Row,dict)):
-                        value = record[t][f]
+                    if field.type=='blob' and value!=None:
+                        value = base64.b64encode(value)
                     else:
-                        value = record[f]
-                    if represent and field.represent:
+                        if isinstance(record.get(t, None), (Row,dict)):
+                            value = record[t][f]
+                        else:
+                            value = record[f]
+                        if represent and field.represent:
                             value = field.represent(value)
                     row.append(none_exception(value))
             writer.writerow(row)
