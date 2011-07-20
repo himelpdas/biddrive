@@ -862,7 +862,7 @@ class BaseAdapter(ConnectionPool):
     def BELONGS(self,first,second):
         if isinstance(second,str):
             return '(%s IN (%s))' % (self.expand(first),second[:-1])
-        elif second==[] or second==(,):
+        elif second==[] or second==():
             return '(0)'
         items =','.join(self.expand(item,first.type) for item in second)
         return '(%s IN (%s))' % (self.expand(first),items)
