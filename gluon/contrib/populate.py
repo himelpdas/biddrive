@@ -93,10 +93,10 @@ def populate(table, n, default=True):
             elif field.type == 'upload':
                 record[fieldname] = None
             elif field.type=='integer' and hasattr(field.requires,'options'):
-                options=field.requires.options()
+                options=field.requires.options(zero=False)
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
             elif field.type=='list:integer' and hasattr(field.requires,'options'):
-                options=field.requires.options()
+                options=field.requires.options(zero=False)
                 if len(options) > 0:
                     vals = []
                     for i in range(0, random.randint(0,len(options)-1)/2):
@@ -135,14 +135,14 @@ def populate(table, n, default=True):
                 else:
                     record[fieldname] = 0
             elif field.type=='list:string' and hasattr(field.requires,'options'):
-                options=field.requires.options()
+                options=field.requires.options(zero=False)
                 if len(options) > 0:
                     vals = []
                     for i in range(0, random.randint(0,len(options)-1)/2):
                         vals.append(options[random.randint(0,len(options)-1)][0])
                     record[fieldname] = vals
             elif field.type=='string' and hasattr(field.requires,'options'):
-                options=field.requires.options()
+                options=field.requires.options(zero=False)
                 record[fieldname] = options[random.randint(0,len(options)-1)][0]
             elif field.type=='string' and fieldname.find('url')>=0:
                 record[fieldname] = 'http://%s.example.com' % da_du_ma(4)
