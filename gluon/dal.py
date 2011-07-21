@@ -5159,6 +5159,7 @@ class Field(Expression):
         compute=None,
         custom_store=None,
         custom_retrieve=None,
+        custom_delete=None,
         ):
         self.db = None
         self.op = None
@@ -5206,6 +5207,7 @@ class Field(Expression):
         self.isattachment = True
         self.custom_store = custom_store
         self.custom_retrieve = custom_retrieve
+        self.custom_delete = custom_delete
         if self.label is None:
             self.label = ' '.join([x.capitalize() for x in
                                   fieldname.split('_')])
@@ -5490,18 +5492,20 @@ class Set(object):
                     continue
                 if upload_fields and oldname == upload_fields[fieldname]:
                     continue
-                uploadfolder = field.uploadfolder
-                if not uploadfolder:
-                    uploadfolder = os.path.join(self.db._adapter.folder, '..', 'uploads')
-                if field.uploadseparate:
-                    items = oldname.split('.')
-                    uploadfolder = os.path.join(uploadfolder,
-                                                "%s.%s" % (items[0], items[1]),
-                                                items[2][:2])
-                oldpath = os.path.join(uploadfolder, oldname)
-                if os.path.exists(oldpath):
-                    os.unlink(oldpath)
-
+                if field.custom_delete:
+                    field.custom_delete(oldname)
+                else:
+                    uploadfolder = field.uploadfolder
+                    if not uploadfolder:
+                        uploadfolder = os.path.join(self.db._adapter.folder, '..', 'uploads')
+                    if field.uploadseparate:
+                        items = oldname.split('.')
+                        uploadfolder = os.path.join(uploadfolder,
+                                                    "%s.%s" % (items[0], items[1]),
+                                                    items[2][:2])                
+                    oldpath = os.path.join(uploadfolder, oldname)
+                    if os.path.exists(oldpath):
+                        os.unlink(oldpath)
 
 def update_record(pack, a={}):
     (colset, table, id) = pack
