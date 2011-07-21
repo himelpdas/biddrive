@@ -120,7 +120,7 @@ help(Field)
 
 __all__ = ['DAL', 'Field']
 MAXCHARLENGTH = 512
-INFINITY = 32768 # not quite but reasonable default max varchar length
+INFINITY = 2**15 # not quite but reasonable default max char length
 
 import re
 import sys
@@ -3661,7 +3661,7 @@ def sqlhtml_validators(field):
     if field_type == 'string':
         requires.append(validators.IS_LENGTH(field_length))
     elif field_type == 'text':
-        requires.append(validators.IS_LENGTH(2 ** 16))
+        requires.append(validators.IS_LENGTH(field_length))
     elif field_type == 'password':
         requires.append(validators.IS_LENGTH(field_length))
     elif field_type == 'double':
@@ -4556,7 +4556,9 @@ class Table(dict):
             field.tablename = field._tablename = tablename
             field.table = field._table = self
             field.db = field._db = self._db
-            field.length = min(field.length,self._db and self._db._adapter.maxcharlength or INFINITY)
+            if self._db and field.type!='text' and \
+                    self._db._adapter.maxcharlength < field.length:
+                field.length = self._db._adapter.maxcharlength
             if field.requires == DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
