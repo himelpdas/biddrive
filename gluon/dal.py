@@ -963,7 +963,7 @@ class BaseAdapter(ConnectionPool):
             other[fieldname]._tablename = alias
             other[fieldname].tablename = alias
             other[fieldname].table = other
-        table._db[alias] = table
+        table._db[alias] = other
         return other
 
     def _truncate(self,table,mode = ''):
@@ -1116,18 +1116,21 @@ class BaseAdapter(ConnectionPool):
             [tables_to_merge.pop(t) for t in joinont if t in tables_to_merge]
             important_tablenames = joint + joinont + tables_to_merge.keys()
             excluded = [t for t in tablenames if not t in important_tablenames ]
+        def alias(t):
+            return str(self.db[t])
         if inner_join and not left:
-            sql_t = ', '.join(iexcluded)
+            sql_t = ', '.join(alias(t) for t in iexcluded)
             for t in ijoinon:
                 sql_t += ' %s %s' % (icommand, str(t))
         elif not inner_join and left:
-            sql_t = ', '.join([ t for t in excluded + tables_to_merge.keys()])
+            sql_t = ', '.join([alias(t) for t in excluded + tables_to_merge.keys()])
             if joint:
                 sql_t += ' %s %s' % (command, ','.join([t for t in joint]))
             for t in joinon:
                 sql_t += ' %s %s' % (command, str(t))
         elif inner_join and left:
-            sql_t = ','.join([ t for t in excluded +  tables_to_merge.keys() if t in iexcluded ])
+            sql_t = ','.join([alias(t) for t in excluded + \
+                                  tables_to_merge.keys() if t in iexcluded ])
             for t in ijoinon:
                 sql_t += ' %s %s' % (icommand, str(t))
             if joint:
@@ -1135,7 +1138,7 @@ class BaseAdapter(ConnectionPool):
             for t in joinon:
                 sql_t += ' %s %s' % (command, str(t))
         else:
-            sql_t = ', '.join(tablenames)
+            sql_t = ', '.join(alias(t) for t in tablenames)
         if groupby:
             if isinstance(groupby, (list, tuple)):
                 groupby = xorify(groupby)
