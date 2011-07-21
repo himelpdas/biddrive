@@ -1840,7 +1840,7 @@ class Auth(object):
         table_user = self.settings.table_user
         user = self.db(table_user.registration_key == key).select().first()
         if not user:
-            raise HTTP(404)
+            redirect(self.settings.login_url)
         if self.settings.registration_requires_approval:
             user.update_record(registration_key = 'pending')
             current.session.flash = self.messages.registration_pending
