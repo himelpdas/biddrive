@@ -60,6 +60,7 @@ def index():
     elif request.vars.password:
         if verify_password(request.vars.password):
             session.authorized = True
+            login_record(True)
 
             if CHECK_VERSION:
                 session.check_version = True
@@ -72,8 +73,15 @@ def index():
 
             redirect(send)
         else:
-            response.flash = T('invalid password')
-
+            times_denied = login_record(False)
+            if times_denied >= allowed_number_of_attempts:
+                response.flash = \
+                    T('admin disabled because too many invalid login attempts')
+            elif times_denied == allowed_number_of_attempts - 1:
+                response.flash = \
+                    T('You have one more login attempt before you are locked out')
+            else:
+                response.flash = T('invalid password.')
     return dict(send=send)
 
 
