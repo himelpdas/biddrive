@@ -570,11 +570,11 @@ class Mail(object):
                                             subject=subject, body=text, **xcc)
             else:
                 server = smtplib.SMTP(*self.settings.server.split(':'))
+                if self.settings.tls:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
                 if self.settings.login != None:
-                    if self.settings.tls:
-                        server.ehlo()
-                        server.starttls()
-                        server.ehlo()
                     server.login(*self.settings.login.split(':',1))
                 result = server.sendmail(self.settings.sender, to, payload.as_string())
                 server.quit()
