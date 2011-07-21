@@ -1180,10 +1180,16 @@ class SQLFORM(FORM):
                  in request_vars:
                 fields[fieldname] = self.vars[fieldname]
 
-        if dbio:
+        if dbio:            
             if 'delete_this_record' in fields:
                 # this should never happen but seems to happen to some
                 del fields['delete_this_record']
+            for field in self.table:
+                if not field.name in fields and field.writable==False:
+                    if record_id:
+                        fields[field.name] = self.record[field.name]
+                    elif self.table[field.name].default!=None:
+                        fields[field.name] = self.table[field.name].default
             if keyed:
                 if reduce(lambda x, y: x and y, record_id.values()): # if record_id
                     if fields:
