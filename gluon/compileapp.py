@@ -254,6 +254,7 @@ def build_environment(request, response, session):
     if is_jython:
         __builtins__ = mybuiltin()
     else:
+        global __builtins__
         __builtins__['__import__'] = __builtin__.__import__
     environment['__builtins__'] = __builtins__
     environment['HTTP'] = HTTP

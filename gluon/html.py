@@ -1804,6 +1804,95 @@ class FORM(DIV):
             newform.append(hidden_fields)
         return DIV.xml(newform)
 
+    def validate(self, 
+                 values=None,
+                 session=None, 
+                 formname='default',
+                 keepvalues=False,
+                 onvalidation=None,
+                 hideerror=False,
+                 onsuccess='flash',
+                 onfailure='flash',
+                 message_onsuccess=None, 
+                 message_onfailure=None, 
+                 ):
+        """
+        This function validates the form, 
+        you can use it instead of directly form.accepts.
+
+        Usage:
+        In controller
+
+        def action():
+            form=FORM(INPUT(_name=\"test\", requires=IS_NOT_EMPTY()))
+            form.validate() #you can pass some args here - see below
+            return dict(form=form)
+
+        This can receive a bunch of arguments        
+
+        onsuccess = 'flash' - will show message_onsuccess in response.flash
+                    None - will do nothing
+                    can be a function (lambda form: pass)
+        onfailure = 'flash' - will show message_onfailure in response.flash
+                    None - will do nothing
+                    can be a function (lambda form: pass)
+
+        values = values to test the validation - dictionary, response.vars, session or other - Default to (request.vars, session)
+        message_onsuccess
+        message_onfailure
+        """
+        from gluon import current
+        if not session: session = current.session
+        if not values: values = current.request.post_vars
+         
+        message_onsuccess = message_onsuccess or current.T("Success!")
+        message_onfailure = message_onfailure or \
+            current.T("Errors in form, please check it out.")
+
+        if self.accepts(values, session):
+            if onsuccess == 'flash':
+                current.response.flash = message_onsuccess
+            elif callable(onsuccess):
+                onsuccess(self)
+            return True
+        elif self.errors:
+            if onfailure == 'flash':
+                current.response.flash = message_onfailure
+            elif callable(onfailure):
+                onfailure(self)
+            return False
+
+    def process(self, values=None, session=None, **args):
+        """
+        Perform the .validate() method but returns the form
+
+        Usage in controllers:
+        # directly on return
+        def action():
+            #some code here
+            return dict(form=FORM(...).process(...))
+
+        You can use it with FORM, SQLFORM or FORM based plugins
+
+        Examples:
+        #response.flash messages
+        def action():
+            form = SQLFORM(db.table).process(message_onsuccess='Sucess!')
+            retutn dict(form=form)
+
+        # callback function
+        # callback receives True or False as first arg, and a list of args.
+        def my_callback(status, msg):
+           response.flash = "Success! "+msg if status else "Errors occured"
+
+        # after argument can be 'flash' to response.flash messages
+        # or a function name to use as callback or None to do nothing.
+        def action():
+            return dict(form=SQLFORM(db.table).process(onsuccess=my_callback)
+        """ 
+        self.validate(values=values, session=session, **args)
+        return self
+
 
 class BEAUTIFY(DIV):
 
