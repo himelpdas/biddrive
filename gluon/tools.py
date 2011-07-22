@@ -1016,7 +1016,7 @@ class Auth(object):
 
         def lazy_user (auth = self): return auth.user_id
         reference_user = 'reference %s' % settings.table_user_name
-        def represent(id,s=settings):
+        def represent(id,record=None,s=settings):
             try:
                 user = s.table_user(id)
                 return '%(first_name)s %(last_name)s' % user

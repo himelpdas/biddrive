@@ -32,6 +32,18 @@ import cStringIO
 table_field = re.compile('[\w_]+\.[\w_]+')
 widget_class = re.compile('^\w*')
 
+def represent(field,value,record):
+    f = field.represent
+    if not callable(f):
+        return str(value)
+    n = f.func_code.co_argcount-len(f.func_defaults or [])
+    if n==1:
+        return f(value)
+    elif n==2:
+        return f(value,record)
+    else:
+        raise RuntimeError, "field representation must take 1 or 2 args"
+
 def safe_int(x):
     try:
         return int(x)
@@ -790,7 +802,7 @@ class SQLFORM(FORM):
                 # ## format everything else
 
                 if field.represent:
-                    inp = field.represent(default)
+                    inp = represent(field,default,record)
                 elif field.type in ['blob']:
                     continue
                 elif field.type == 'upload':
@@ -1424,12 +1436,9 @@ class SQLTABLE(TABLE):
                                 tref,fref = ref.split('.')
                                 if hasattr(sqlrows.db[tref],'_primarykey'):
                                     href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:r}))
-                        if field.represent:
-                            r = A(field.represent(r), _href=str(href))
-                        else:
-                            r = A(str(r), _href=str(href))
+                        r = A(represent(field,r,record), _href=str(href))
                     elif field.represent:
-                        r = field.represent(r)
+                        r = represent(field,r,record)
                 elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
                     key = urllib.urlencode(dict( [ \
@@ -1440,9 +1449,9 @@ class SQLTABLE(TABLE):
                                     for k in field._table._primarykey ] ))
                     r = A(r, _href='%s/%s?%s' % (linkto, tablename, key))
                 elif field.type.startswith('list:'):
-                    r = field.represent(r or [])
+                    r = represent(field,r or [],record)
                 elif field.represent:
-                    r = field.represent(r)
+                    r = represent(field,r,record)
                 elif field.type == 'blob' and r:
                     r = 'DATA'
                 elif field.type == 'upload':
