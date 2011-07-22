@@ -520,7 +520,7 @@ def wsgibase(environ, responder):
 
                     if response.flash and not 'web2py-component-flash' in http_response.headers:
                         http_response.headers['web2py-component-flash'] = \
-                            dumps(str(response.flash).replace('\n',''))
+                            str(response.flash).replace('\n','')
                     if response.js and not 'web2py-component-command' in http_response.headers:
                         http_response.headers['web2py-component-command'] = \
                             response.js.replace('\n','')
