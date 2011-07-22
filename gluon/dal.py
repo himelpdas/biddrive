@@ -1368,7 +1368,8 @@ class BaseAdapter(ConnectionPool):
                     value = value.encode('utf-8')
                 if not tablename in new_row:
                     colset = new_row[tablename] = Row()
-                    virtualtables.append(tablename)
+                    if tablename not in virtualtables:
+                        virtualtables.append(tablename)
                 else:
                     colset = new_row[tablename]
 
