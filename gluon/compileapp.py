@@ -251,10 +251,10 @@ def build_environment(request, response, session):
     current.T = environment['T'] = translator(request)
     current.cache = environment['cache'] = Cache(request)
 
-    if is_jython:
+    global __builtins__
+    if is_jython: # jython hack
         __builtins__ = mybuiltin()
     else:
-        global __builtins__
         __builtins__['__import__'] = __builtin__.__import__
     environment['__builtins__'] = __builtins__
     environment['HTTP'] = HTTP

@@ -420,6 +420,7 @@ class ConnectionPool(object):
 
 class BaseAdapter(ConnectionPool):
 
+    driver = None
     maxcharlength = INFINITY
     commit_on_alter_table = False
     support_distributed_transaction = False
@@ -443,6 +444,9 @@ class BaseAdapter(ConnectionPool):
         'list:string': 'TEXT',
         'list:reference': 'TEXT',
         }
+
+    def integrity_error(self):
+        return self.driver.IntegrityError
 
     def file_exists(self, filename):
         """
@@ -1479,6 +1483,8 @@ class BaseAdapter(ConnectionPool):
 
 class SQLiteAdapter(BaseAdapter):
 
+    driver = globals().get('sqlite3',None)
+
     def EXTRACT(self,field,what):
         return "web2py_extract('%s',%s)" % (what,self.expand(field))
 
@@ -1518,7 +1524,7 @@ class SQLiteAdapter(BaseAdapter):
         if not 'check_same_thread' in driver_args:
             driver_args['check_same_thread'] = False
         def connect(dbpath=dbpath, driver_args=driver_args):
-            return sqlite3.Connection(dbpath, **driver_args)
+            return self.driver.Connection(dbpath, **driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
@@ -1533,6 +1539,8 @@ class SQLiteAdapter(BaseAdapter):
 
 
 class JDBCSQLiteAdapter(SQLiteAdapter):
+
+    driver = globals().get('zxJDBC',None)
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
@@ -1552,7 +1560,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
             if dbpath[0] != '/':
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         def connect(dbpath=dbpath,driver_args=driver_args):
-            return zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath),**driver_args)
+            return self.driver.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath),**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         # FIXME http://www.zentus.com/sqlitejdbc/custom_functions.html for UDFs
@@ -1663,6 +1671,8 @@ class MySQLAdapter(BaseAdapter):
 
 class PostgreSQLAdapter(BaseAdapter):
 
+    driver = globals().get('psycopg2',None)
+
     support_distributed_transaction = True
     types = {
         'boolean': 'CHAR(1)',
@@ -1746,7 +1756,7 @@ class PostgreSQLAdapter(BaseAdapter):
                    "port=%s password='%s'") \
                    % (db, user, host, port, password)
         def connect(msg=msg,driver_args=driver_args):
-            return psycopg2.connect(msg,**driver_args)
+            return self.driver.connect(msg,**driver_args)
         self.pool_connection(connect)
         self.connection.set_client_encoding('UTF8')
         self.cursor = self.connection.cursor()
@@ -1805,7 +1815,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
         port = m.group('port') or '5432'
         msg = ('jdbc:postgresql://%s:%s/%s' % (host, port, db), user, password)
         def connect(msg=msg,driver_args=driver_args):
-            return zxJDBC.connect(*msg,**driver_args)
+            return self.driver.connect(*msg,**driver_args)
         self.pool_connection(connect)
         self.connection.set_client_encoding('UTF8')
         self.cursor = self.connection.cursor()
@@ -1814,6 +1824,9 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
 
 class OracleAdapter(BaseAdapter):
+
+    driver = globals().get('cx_Oracle',None)
+
     commit_on_alter_table = False
     types = {
         'boolean': 'CHAR(1)',
@@ -1904,7 +1917,7 @@ class OracleAdapter(BaseAdapter):
         if not 'threaded' in driver_args:
             driver_args['threaded']=True
         def connect(uri=uri,driver_args=driver_args):
-            return cx_Oracle.connect(uri,**driver_args)
+            return self.driver.connect(uri,**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
         self.execute("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';")
@@ -1938,6 +1951,9 @@ class OracleAdapter(BaseAdapter):
 
 
 class MSSQLAdapter(BaseAdapter):
+
+    driver = globals().get('pyodbc',None)
+
     types = {
         'boolean': 'BIT',
         'string': 'VARCHAR(%(length)s)',
@@ -2047,7 +2063,7 @@ class MSSQLAdapter(BaseAdapter):
             cnxn = 'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
                 % (host, port, db, user, password, urlargs)
         def connect(cnxn=cnxn,driver_args=driver_args):
-            return pyodbc.connect(cnxn,**driver_args)
+            return self.driver.connect(cnxn,**driver_args)
         if not fake_connect:
             self.pool_connection(connect)
             self.cursor = self.connection.cursor()
@@ -2100,6 +2116,8 @@ class MSSQL2Adapter(MSSQLAdapter):
 
 
 class FireBirdAdapter(BaseAdapter):
+
+    driver = globals().get('pyodbc',None)
 
     commit_on_alter_table = False
     support_distributed_transaction = True
@@ -2184,19 +2202,16 @@ class FireBirdAdapter(BaseAdapter):
                                    user = credential_decoder(user),
                                    password = credential_decoder(password),
                                    charset = charset))
-        def connect(driver_args=driver_args, adapter_args=adapter_args):
-            if adapter_args.has_key('driver_name'):
-                if adapter_args['driver_name'] == 'kinterbasdb':
-                    conn = kinterbasdb.connect(**driver_args)
-                elif adapter_args['driver_name'] == 'firebirdsql':
-                    conn = firebirdsql.connect(**driver_args)
-            else:
-                conn = kinterbasdb.connect(**driver_args)
-
-            return conn
-
+        if adapter_args.has_key('driver_name'):
+            if adapter_args['driver_name'] == 'kinterbasdb':
+                self.driver = kinterbasdb
+            elif adapter_args['driver_name'] == 'firebirdsql':
+                self.driver = firebirdsql
+        else:
+            self.driver = kinterbasdb        
+        def connect(driver_args=driver_args):
+            return self.driver.connect(**driver_args)
         self.pool_connection(connect)
-
         self.cursor = self.connection.cursor()
 
     def create_sequence_and_triggers(self, query, table, **args):
@@ -2251,23 +2266,23 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
                                    charset=charset))
         #def connect(driver_args=driver_args):
         #    return kinterbasdb.connect(**driver_args)
-        def connect(driver_args=driver_args, adapter_args=adapter_args):
-            if adapter_args.has_key('driver_name'):
-                if adapter_args['driver_name'] == 'kinterbasdb':
-                    conn = kinterbasdb.connect(**driver_args)
-                elif adapter_args['driver_name'] == 'firebirdsql':
-                    conn = firebirdsql.connect(**driver_args)
-            else:
-                conn = kinterbasdb.connect(**driver_args)
-
-            return conn
-
+        if adapter_args.has_key('driver_name'):
+            if adapter_args['driver_name'] == 'kinterbasdb':
+                self.driver = kinterbasdb
+            elif adapter_args['driver_name'] == 'firebirdsql':
+                self.driver = firebirdsql
+        else:
+            self.driver = kinterbasdb        
+        def connect(driver_args=driver_args):
+            return self.driver.connect(**driver_args)
         self.pool_connection(connect)
-
         self.cursor = self.connection.cursor()
 
 
 class InformixAdapter(BaseAdapter):
+
+    driver = globals().get('informixdb',None)
+
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -2358,7 +2373,7 @@ class InformixAdapter(BaseAdapter):
         dsn = '%s@%s' % (db,host)
         driver_args.update(dict(user=user,password=password,autocommit=True))
         def connect(dsn=dsn,driver_args=driver_args):
-            return informixdb.connect(dsn,**driver_args)
+            return self.driver.connect(dsn,**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
@@ -2375,6 +2390,9 @@ class InformixAdapter(BaseAdapter):
 
 
 class DB2Adapter(BaseAdapter):
+
+    driver = globals().get('pyodbc',None)
+
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -2433,7 +2451,7 @@ class DB2Adapter(BaseAdapter):
         self.find_or_make_work_folder()
         cnxn = uri.split('://', 1)[1]
         def connect(cnxn=cnxn,driver_args=driver_args):
-            return pyodbc.connect(cnxn,**driver_args)
+            return self.driver.connect(cnxn,**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
@@ -2453,6 +2471,9 @@ class DB2Adapter(BaseAdapter):
 
 
 class TeradataAdapter(DB2Adapter):
+
+    driver = globals().get('pyodbc',None)
+
     types = {
         'boolean': 'CHAR(1)',
         'string': 'VARCHAR(%(length)s)',
@@ -2488,7 +2509,7 @@ class TeradataAdapter(DB2Adapter):
         self.find_or_make_work_folder()
         cnxn = uri.split('://', 1)[1]
         def connect(cnxn=cnxn,driver_args=driver_args):
-            return pyodbc.connect(cnxn,**driver_args)
+            return self.driver.connect(cnxn,**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
@@ -2498,6 +2519,8 @@ INGRES_SEQNAME='ii***lineitemsequence' # NOTE invalid database object name
                                        # to be a delimited identifier)
 
 class IngresAdapter(BaseAdapter):
+
+    driver = globals().get('ingresdbi',None)
 
     types = {
         'boolean': 'CHAR(1)',
@@ -2562,7 +2585,7 @@ class IngresAdapter(BaseAdapter):
                                    servertype=servertype,
                                    trace=trace))
         def connect(driver_args=driver_args):
-            return ingresdbi.connect(**driver_args)
+            return self.driver.connect(**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
 
@@ -2617,6 +2640,7 @@ class IngresUnicodeAdapter(IngresAdapter):
 
 class SAPDBAdapter(BaseAdapter):
 
+    driver = globals().get('sapdb',None)
     support_distributed_transaction = False
     types = {
         'boolean': 'CHAR(1)',
@@ -2684,8 +2708,10 @@ class SAPDBAdapter(BaseAdapter):
         db = m.group('db')
         if not db:
             raise SyntaxError, 'Database name required'
-        def connect(user=user,password=password,database=db,host=host,driver_args=driver_args):
-            return sapdb.Connection(user,password,database,host,**driver_args)
+        def connect(user=user,password=password,database=db,
+                    host=host,driver_args=driver_args):
+            return self.driver.Connection(user,password,database,
+                                          host,**driver_args)
         self.pool_connection(connect)
         # self.connection.set_client_encoding('UTF8')
         self.cursor = self.connection.cursor()
