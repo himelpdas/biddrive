@@ -13,6 +13,7 @@ FOR INTERNAL USE ONLY
 """
 
 import re
+import sys
 import fnmatch
 import os
 import copy
@@ -46,6 +47,7 @@ except:
     logger.warning('unable to import py_compile')
 
 is_gae = settings.global_settings.web2py_runtime_gae
+is_jython = settings.global_settings.is_jython = 'java' in sys.platform.lower() or hasattr(sys, 'JYTHON_JAR') or str(copyright).find('Jython') > 0
 
 TEST_CODE = \
     r"""
@@ -85,6 +87,20 @@ def _TEST():
     sys.stdout = stdout
 _TEST()
 """
+
+class mybuiltin(object):
+    """
+    NOTE could simple use a dict and populate it, 
+    NOTE not sure if this changes things though if monkey patching import.....
+    """
+    #__builtins__
+    def __getitem__(self, key):
+        try:
+            return getattr(__builtin__, key)
+        except AttributeError:
+            raise KeyError, key            
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
 class LoadFactory(object):
     """
@@ -235,7 +251,10 @@ def build_environment(request, response, session):
     current.T = environment['T'] = translator(request)
     current.cache = environment['cache'] = Cache(request)
 
-    __builtins__['__import__'] = __builtin__.__import__
+    if is_jython:
+        __builtins__ = mybuiltin()
+    else:
+        __builtins__['__import__'] = __builtin__.__import__
     environment['__builtins__'] = __builtins__
     environment['HTTP'] = HTTP
     environment['redirect'] = redirect

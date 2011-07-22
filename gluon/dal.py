@@ -282,6 +282,7 @@ if not 'google' in drivers:
     try:
         from com.ziclix.python.sql import zxJDBC
         import java.sql
+        # Try sqlite jdbc driver from http://www.zentus.com/sqlitejdbc/
         from org.sqlite import JDBC # required by java.sql; ensure we have it
         drivers.append('zxJDBC')
         logger.warning('zxJDBC support is experimental')
@@ -1553,7 +1554,8 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
             return zxJDBC.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath),**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
-        self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
+        # FIXME http://www.zentus.com/sqlitejdbc/custom_functions.html for UDFs
+        # self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
     def execute(self,a):
         return self.log_execute(a[:-1])
@@ -3944,7 +3946,7 @@ class DAL(dict):
                     except SyntaxError:
                         raise
                     except Exception, error:
-                        pass
+                        sys.stderr.write('DEBUG_c: Exception %r' % ((Exception, error,),))
                 if connected:
                     break
                 else:

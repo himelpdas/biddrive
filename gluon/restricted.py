@@ -192,7 +192,7 @@ def restricted(code, environment={}, layer='Unknown'):
         exec ccode in environment
     except HTTP:
         raise
-    except Exception:
+    except Exception, error:
         # XXX Show exception in Wing IDE if running in debugger
         if __debug__ and 'WINGDB_ACTIVE' in os.environ:
             etype, evalue, tb = sys.exc_info()
