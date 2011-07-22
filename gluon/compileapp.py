@@ -115,7 +115,7 @@ class LoadFactory(object):
 
             other_request = Storage()
             for key, value in request.items():
-                other_request[key] = value
+                other_request[key] = copy.deepcopy(value)
             other_request.application = request.application
             other_request.controller = c
             other_request.function = f
@@ -134,6 +134,7 @@ class LoadFactory(object):
             other_response.view = '%s/%s.%s' % (c,f, other_request.extension)
             other_environment = copy.copy(self.environment)
             other_response._view_environment = other_environment
+            other_response.generic_patterns = current.response.generic_patterns
             other_environment['request'] = other_request
             other_environment['response'] = other_response
 
