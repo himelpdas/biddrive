@@ -148,6 +148,7 @@ class LoadFactory(object):
             other_response = globals.Response()
             other_request.env.path_info = '/' + \
                 '/'.join([request.application,c,f] + other_request.args)
+            other_request.env.query_string = '' # not quite!
             other_request.env.http_web2py_component_location = \
                 request.env.path_info            
             other_request.cid = target
