@@ -206,6 +206,7 @@ class Mail(object):
         settings.sender = sender
         settings.login = login
         settings.tls = tls
+        settings.ssl = False
         settings.cipher_type = None
         settings.sign = True
         settings.sign_passphrase = None
@@ -569,8 +570,12 @@ class Mail(object):
                     result = mail.send_mail(sender=self.settings.sender, to=origTo,
                                             subject=subject, body=text, **xcc)
             else:
-                server = smtplib.SMTP(*self.settings.server.split(':'))
-                if self.settings.tls:
+                smtp_args = self.settings.server.split(':')
+                if self.settings.ssl: 
+                    server = smtplib.SMTP_SSL(*smtp_args)
+                else: 
+                    server = smtplib.SMTP(*smtp_args)
+                if self.settings.tls and not self.settings.ssl:                
                     server.ehlo()
                     server.starttls()
                     server.ehlo()
