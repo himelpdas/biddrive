@@ -131,7 +131,10 @@ class LoadFactory(object):
 
             other_request = Storage()
             for key, value in request.items():
-                other_request[key] = copy.deepcopy(value)
+                other_request[key] = value
+            other_request['env'] = Storage()
+            for key, value in request.env.items():
+                other_request.env['key'] = value 
             other_request.application = request.application
             other_request.controller = c
             other_request.function = f
@@ -143,14 +146,17 @@ class LoadFactory(object):
             other_request.get_vars = Storage(vars)
             other_request.post_vars = Storage()
             other_response = globals.Response()
+            other_request.env.path_info = '/' + \
+                '/'.join([request.application,c,f] + other_request.args)
             other_request.env.http_web2py_component_location = \
-                request.env.path_info
+                request.env.path_info            
             other_request.cid = target
             other_request.env.http_web2py_component_element = target
             other_response.view = '%s/%s.%s' % (c,f, other_request.extension)
             other_environment = copy.copy(self.environment)
             other_response._view_environment = other_environment
-            other_response.generic_patterns = current.response.generic_patterns
+            other_response.generic_patterns = \
+                copy.copy(current.response.generic_patterns)
             other_environment['request'] = other_request
             other_environment['response'] = other_response
 
