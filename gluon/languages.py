@@ -199,6 +199,7 @@ class translator(object):
     """
 
     def __init__(self, request):
+        self.request = request
         self.folder = request.folder
         self.current_languages = ['en']
         self.accepted_language = None
@@ -206,6 +207,7 @@ class translator(object):
         self.http_accept_language = request.env.http_accept_language
         self.requested_languages = self.force(self.http_accept_language)
         self.lazy = True
+        self.otherTs = {}
 
     def get_possible_languages(self):
         possible_languages = self.current_languages
@@ -248,11 +250,19 @@ class translator(object):
         self.t = {}  # ## no language by default
         return languages
 
-    def __call__(self, message, symbols={}):
-        if self.lazy:
-            return lazyT(message, symbols, self)
+    def __call__(self, message, symbols={},language=None):
+        if not language:
+            if self.lazy:
+                return lazyT(message, symbols, self)
+            else:
+                return self.translate(message, symbols)
         else:
-            return self.translate(message, symbols)
+            try:
+                otherT = self.otherTs[language]
+            except KeyError:
+                otherT = self.otherTs[language] = translator(self.request)
+                otherT.force(language)
+            return otherT(message,symbols)
 
     def translate(self, message, symbols):
         """
