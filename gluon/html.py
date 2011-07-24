@@ -19,6 +19,7 @@ import rewrite
 import itertools
 import decoder
 import copy_reg
+import cPickle
 import marshal
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
@@ -996,6 +997,15 @@ class DIV(XmlComponent):
             return None
         return sibs[0]
 
+def TAG_unpickler(data):
+    return cPickle.loads(data)
+
+def TAG_pickler(data):
+    d = DIV()
+    d.__dict__ = data.__dict__
+    marshal_dump = cPickle.dumps(d)
+    return (TAG_unpickler, (marshal_dump,))
+
 class __TAG__(XmlComponent):
 
     """
@@ -1016,7 +1026,7 @@ class __TAG__(XmlComponent):
             name = name.encode('utf-8')
         class __tag__(DIV):
             tag = name
-
+        copy_reg.pickle(__tag__, TAG_pickler, TAG_unpickler)
         return lambda *a, **b: __tag__(*a, **b)
 
     def __call__(self,html):
