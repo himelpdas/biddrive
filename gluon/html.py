@@ -196,7 +196,7 @@ def URL(
     """
 
     if args in (None,[]): args = []
-    vars = copy.copy(vars) or {}
+    vars = vars or {}
     application = None
     controller = None
     function = None
@@ -271,10 +271,9 @@ def URL(
 
         sig = hmac_hash(message,hmac_key,salt=salt)
         # add the signature into vars
-        vars['_signature'] = sig
         list_vars.append(('_signature', sig))
 
-    if vars:
+    if list_vars:
         other += '?%s' % urllib.urlencode(list_vars)
     if anchor:
         other += '#' + urllib.quote(str(anchor))
