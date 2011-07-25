@@ -860,7 +860,6 @@ class SQLFORM(FORM):
                     rfld = table._db[rtable][rfield]
                     query = urllib.quote('%s.%s==%s' % (db,rfld,record[rfld.type[10:].split('.')[1]]))
                 else:
-#                 <block>
                     query = urllib.quote('%s.%s==%s' % (db,table._db[rtable][rfield],record.id))
                 lname = olname = '%s.%s' % (rtable, rfield)
                 if ofields and not olname in ofields:
