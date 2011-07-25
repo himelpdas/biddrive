@@ -195,8 +195,8 @@ def URL(
     :raises SyntaxError: when a CRLF is found in the generated url
     """
 
-    args = args or []
-    vars = vars or {}
+    if args == None: args = []
+    vars = copy.copy(vars) or {}
     application = None
     controller = None
     function = None
