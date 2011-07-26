@@ -524,7 +524,8 @@ def wsgibase(environ, responder):
                     if response.js and not 'web2py-component-command' in http_response.headers:
                         http_response.headers['web2py-component-command'] = \
                             response.js.replace('\n','')
-                if session._forget:
+                if session._forget and \
+                        response.session_id_name in response.cookies:
                     del response.cookies[response.session_id_name]
                 elif session._secure:
                     response.cookies[response.session_id_name]['secure'] = True
