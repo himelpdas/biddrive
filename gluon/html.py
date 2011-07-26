@@ -44,6 +44,7 @@ __all__ = [
     'BR',
     'BUTTON',
     'CENTER',
+    'CAT',
     'CODE',
     'DIV',
     'EM',
@@ -995,6 +996,10 @@ class DIV(XmlComponent):
         if not sibs:
             return None
         return sibs[0]
+
+class CAT(DIV):
+    
+    tag = ''
 
 def TAG_unpickler(data):
     return cPickle.loads(data)
