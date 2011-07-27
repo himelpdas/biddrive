@@ -1105,7 +1105,7 @@ recalled
 - bug fixes
 
 # 1.97.1
-= validate_and_update, thanks Bruno
+- validate_and_update, thanks Bruno
 - fixed problem with new custom import, thanks Mart
 - fixed pyamf 0.6, thanks Alexei and Nickd
 - fixed "+ =" bug in wizard
@@ -1122,3 +1122,22 @@ recalled
 - extra SQLTABLE columns, thanks Martin
 - fixed toolbar conflics, thanks Simon
 - GAE password shows with ****
+
+# 1.98.1
+- fixed some problems with LOAD(ajax=False), thanks Anthony
+- jquery 1.6.2
+- gevent.pywsgi adds ssl support, thanks Vasile
+- import/export of blobs are base64 encoded
+- max number of login attemts in admin, thanks Ross
+- fixed joins with alias tables
+- new field.custom_delete attribute
+- removed resctions on large 'text fields, thanks Martin
+- field.represent = lambda value,record: .... (record is optional)
+- FORM.validate() and FORM.process(), thanks Bruno
+- faster visrtualfields, thanks Howsec
+- mail has ssl support separate from tls, thanks Eric
+- TAG objects are now pickable
+- new CAT tag for no tags
+- request.user_agent(), thanks Ross
+- fixed fawps support
+
