@@ -74,7 +74,7 @@ class Servers:
     def fapws(app,address, **options):
         import fapws._evwsgi as evwsgi
         from fapws import base
-        evwsgi.start(*address)
+        evwsgi.start(address[0],str(address[1]))
         evwsgi.set_base_module(base)
         def app(environ, start_response):
             environ['wsgi.multiprocess'] = False
