@@ -585,11 +585,14 @@ def wsgibase(environ, responder):
 #             gluon.debug.stop_trace()
 
     session._unlock(response)
-    http_response = rewrite.try_redirect_on_error(http_response,request,ticket)
+    http_response, new_environ = rewrite.try_rewrite_on_error(
+        http_response, request, environ, ticket)
+    if not http_response:
+        return wsgibase(new_environ,responder)
     if global_settings.web2py_crontype == 'soft':
         newcron.softcron(global_settings.applications_parent).start()
     return http_response.to(responder)
-
+    
 
 def save_password(password, port):
     """

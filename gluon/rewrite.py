@@ -137,6 +137,42 @@ def url_out(request, env, application, controller, function, args, other, scheme
         url = '%s://%s%s%s' % (scheme, host, port, url)
     return url
 
+def try_rewrite_on_error(http_response, request, environ, ticket=None):
+    """
+    called from main.wsgibase to rewrite the http response.
+    """
+    status = int(str(http_response.status).split()[0])
+    if status>=399 and thread.routes.routes_onerror:
+        keys=set(('%s/%s' % (request.application, status),
+                  '%s/*' % (request.application),
+                  '*/%s' % (status),
+                  '*/*'))
+        for (key,uri) in thread.routes.routes_onerror:
+            if key in keys:
+                if uri == '!':
+                    # do nothing!
+                    return http_response, environ
+                elif '?' in uri:
+                    path_info, query_string = uri.split('?',1)
+                    query_string += '&'
+                else:
+                    path_info, query_string = uri, ''
+                query_string += \
+                    'code=%s&ticket=%s&requested_uri=%s&request_url=%s' % \
+                    (status,ticket,request.env.request_uri,request.url)
+                if uri.startswith('http://') or uri.startswith('https://'):
+                    # make up a response
+                    url = path_info+'?'+query_string
+                    message = 'You are being redirected <a href="%s">here</a>'
+                    return HTTP(303, message % url, Location=url), environ
+                elif path_info!=environ['PATH_INFO']:
+                    # rewrite request, call wsgibase recursively, avoid loop
+                    environ['PATH_INFO'] = path_info
+                    environ['QUERY_STRING'] = query_string
+                    return None, environ
+    # do nothing!
+    return http_response, environ
+
 def try_redirect_on_error(http_object, request, ticket=None):
     "called from main.wsgibase to rewrite the http response"
     status = int(str(http_object.status).split()[0])
