@@ -4569,12 +4569,16 @@ class Table(dict):
                     fields.append(self._db.Field(tmp, 'blob', default=''))
 
         lower_fieldnames = set()
+        reserved = dir(Table) + ['fields'] 
         for field in fields:
             if db and db.check_reserved:
                 db.check_reserved_keyword(field.name)
+            elif field.name in reserved:
+                raise SyntaxError, "field name %s not allowed" % field.name
 
             if field.name.lower() in lower_fieldnames:
-                raise SyntaxError, "duplicate field %s in table %s" % (field.name, tablename)
+                raise SyntaxError, "duplicate field %s in table %s" \
+                    % (field.name, tablename)
             else:
                 lower_fieldnames.add(field.name.lower())
 
