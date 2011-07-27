@@ -88,6 +88,13 @@ class Request(Storage):
             web2py_uuid())
         return self.uuid
 
+    def user_agent(self):
+        from gluon.contrib import user_agent_parser
+        session = current.session
+        session._user_agent = session._user_agent or \
+            user_agent_parser.detect(self.env.http_user_agent)
+        return session._user_agent
+
     def restful(self):
         def wrapper(action,self=self):
             def f(_action=action,_self=self,*a,**b):
