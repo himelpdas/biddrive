@@ -679,6 +679,7 @@ class SQLFORM(FORM):
         record_id = None,
         formstyle = 'table3cols',
         buttons = ['submit'],
+        separator = ': ',
         **attributes
         ):
         """
@@ -736,6 +737,8 @@ class SQLFORM(FORM):
         self.custom.widget = Storage()
         self.custom.linkto = Storage()
 
+        sep = separator or ''
+        
         for fieldname in self.fields:
             if fieldname.find('.') >= 0:
                 continue
@@ -751,15 +754,13 @@ class SQLFORM(FORM):
 
             if labels != None and fieldname in labels:
                 label = labels[fieldname]
-                colon = ''
             else:
                 label = field.label
-                colon = ': '
             self.custom.label[fieldname] = label
 
             field_id = '%s_%s' % (table._tablename, fieldname)
 
-            label = LABEL(label, colon, _for=field_id,
+            label = LABEL(label, sep, _for=field_id,
                           _id=field_id+SQLFORM.ID_LABEL_SUFFIX)
 
             row_id = field_id+SQLFORM.ID_ROW_SUFFIX
