@@ -8,7 +8,7 @@
         {{include 'web2py_ajax.html'}}
         <script>jQuery.noConflict();</script>
     </head>
-    <body class="{{=T('direction: ltr') == 'direction: rtl' and 'RTLbody' or ''}}{{block sectionclass}}home{{end}}">
+    <body class="{{=T('direction: ltr') == 'direction: rtl' and 'RTLbody' or ''}} {{block sectionclass}}home{{end}}">
         <div id="header">
           <h1 id="start">
             <a href="{{=URL('default', 'index')}}" class="button"><span>web2py&trade; {{=T('administrative interface')}}</span></a>
