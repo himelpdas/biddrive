@@ -857,6 +857,7 @@ class Auth(object):
         settings.on_failed_authentication = lambda x: redirect(x)
 
         settings.formstyle = 'table3cols'
+        settings.label_separator = ': '
 
         # ## table names to be used
 
@@ -1538,7 +1539,8 @@ class Auth(object):
                 showid=self.settings.showid,
                 submit_button=self.messages.login_button,
                 delete_label=self.messages.delete_label,
-                formstyle=self.settings.formstyle
+                formstyle=self.settings.formstyle,
+                separator=self.settings.label_separator
                 )
 
             if self.settings.remember_me_form:
@@ -1748,7 +1750,8 @@ class Auth(object):
                        showid=self.settings.showid,
                        submit_button=self.messages.register_button,
                        delete_label=self.messages.delete_label,
-                       formstyle=formstyle
+                       formstyle=formstyle,
+                       separator=self.settings.label_separator
                        )
         for i, row in enumerate(form[0].components):
             item = row.element('input',_name=passfield)
@@ -1909,7 +1912,8 @@ class Auth(object):
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label,
-                       formstyle=self.settings.formstyle
+                       formstyle=self.settings.formstyle,
+                       separator=self.settings.label_separator
                        )
         if captcha:
             addrow(form, captcha.label, captcha, captcha.comment,self.settings.formstyle, 'captcha__row')
@@ -1994,7 +1998,8 @@ class Auth(object):
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label,
-                       formstyle=self.settings.formstyle
+                       formstyle=self.settings.formstyle,
+                       separator=self.settings.label_separator
                        )
         if form.accepts(request, session,
                         formname='retrieve_password', dbio=False,
@@ -2079,6 +2084,7 @@ class Auth(object):
                                     self.messages.mismatched_password)]),
             submit_button=self.messages.password_reset_button,
             formstyle=self.settings.formstyle,
+            separator=self.settings.label_separator
         )
         if form.accepts(request,session,hideerror=self.settings.hideerror):
             user.update_record(**{passfield:form.vars.new_password,
@@ -2135,7 +2141,8 @@ class Auth(object):
                        showid=self.settings.showid,
                        submit_button=self.messages.password_reset_button,
                        delete_label=self.messages.delete_label,
-                       formstyle=self.settings.formstyle
+                       formstyle=self.settings.formstyle,
+                       separator=self.settings.label_separator
                        )
         if captcha:
             addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
@@ -2234,7 +2241,8 @@ class Auth(object):
                 requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                               self.messages.mismatched_password)]),
             submit_button=self.messages.password_change_button,
-            formstyle = self.settings.formstyle
+            formstyle = self.settings.formstyle,
+            separator=self.settings.label_separator
         )
         if form.accepts(request, session,
                         formname='change_password',
@@ -2296,7 +2304,8 @@ class Auth(object):
             submit_button = self.messages.profile_save_button,
             delete_label = self.messages.delete_label,
             upload = self.settings.download_url,
-            formstyle = self.settings.formstyle
+            formstyle = self.settings.formstyle,
+            separator=self.settings.label_separator
             )
         if form.accepts(request, session,
                         formname='profile',
@@ -2843,6 +2852,7 @@ class Crud(object):
         settings.update_captcha = None
         settings.captcha = None
         settings.formstyle = 'table3cols'
+        settings.label_separator = ': '
         settings.hideerror = False
         settings.detect_record_change = True
         settings.hmac_key = None
@@ -3034,7 +3044,8 @@ class Crud(object):
             delete_label=self.messages.delete_label,
             deletable=deletable,
             upload=self.settings.download_url,
-            formstyle=self.settings.formstyle
+            formstyle=self.settings.formstyle,
+            separator=self.settings.label_separator
             )
         self.accepted = False
         self.deleted = False
@@ -3140,7 +3151,8 @@ class Crud(object):
             comments=False,
             upload=self.settings.download_url,
             showid=self.settings.showid,
-            formstyle=self.settings.formstyle
+            formstyle=self.settings.formstyle,
+            separator=self.settings.label_separator
             )
         if not current.request.extension in ('html','load'):
             return table._filter_fields(form.record, id=True)
