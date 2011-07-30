@@ -2,6 +2,7 @@ import sys
 import logging
 try:
     import ldap
+    ldap.set_option(ldap.OPT_REFERRALS, 0)
 except Exception, e:
     logging.error('missing ldap, try "easy_install python-ldap"')
     raise e

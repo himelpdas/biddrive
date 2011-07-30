@@ -1466,8 +1466,10 @@ class SQLTABLE(TABLE):
                     ur = unicode(r, 'utf8')                    
                     if headers!={}: #new implement dict
                         if isinstance(headers[colname],dict):
-                            if isinstance(headers[colname]['truncate'], int):
-                                r = ur[:headers[colname]['truncate'] - 3].encode('utf8') + '...'
+                            if isinstance(headers[colname]['truncate'], int) \
+                                    and len(ur)>headers[colname]['truncate']:
+                                r = ur[:headers[colname]['truncate'] - 3]
+                                r = r.encode('utf8') + '...'
                     elif truncate!=None and len(ur) > truncate:
                         r = ur[:truncate - 3].encode('utf8') + '...'
                         
