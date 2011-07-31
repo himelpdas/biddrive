@@ -3357,7 +3357,6 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
         gae.put(parsed_items)
         return True
 
-
 def uuid2int(uuidv):
     return uuid.UUID(uuidv).int
 

@@ -1140,4 +1140,5 @@ recalled
 - new CAT tag for no tags
 - request.user_agent(), thanks Ross
 - fixed fawps support
-
+- SQLFORM(...,separator=': ') now customizable
+- many small bug fixes
