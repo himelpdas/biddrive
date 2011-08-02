@@ -4528,9 +4528,8 @@ class Table(dict):
                 raise SyntaxError, \
                     "primarykey must be a list of fields from table '%s'" \
                     % tablename
-            self._primarykey = primarykey
-            
-        elif not [f for f in fields if hasattr(f,'type') and f.type=='id']:
+            self._primarykey = primarykey            
+        elif not [f for f in fields if isinstance(f,Field) and f.type=='id']:
             field = Field('id', 'id')
             newfields.append(field)
             fieldnames.add('id')
