@@ -4523,11 +4523,13 @@ class Table(dict):
 
         primarykey = args.get('primarykey', None)
         fieldnames,newfields=set(),[]
-        if primarykey and not isinstance(primarykey,list):
-            raise SyntaxError, "primarykey must be a list of fields from table '%s'" \
-                % tablename
-        elif primarykey:
+        if primarykey:
+            if not isinstance(primarykey,list):
+                raise SyntaxError, \
+                    "primarykey must be a list of fields from table '%s'" \
+                    % tablename
             self._primarykey = primarykey
+            
         elif not [f for f in fields if hasattr(f,'type') and f.type=='id']:
             field = Field('id', 'id')
             newfields.append(field)
