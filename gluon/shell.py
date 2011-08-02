@@ -32,9 +32,9 @@ logger = logging.getLogger("web2py")
 
 def exec_environment(
     pyfile='',
-    request=Request(),
-    response=Response(),
-    session=Session(),
+    request=None,
+    response=None,
+    session=None,
     ):
     """
     .. function:: gluon.shell.exec_environment([pyfile=''[, request=Request()
@@ -50,6 +50,10 @@ def exec_environment(
 
     """
 
+    if request==None: request = Request()
+    if response==None: response = Response()
+    if session==None: session = Session()
+
     if request.folder is None:
         mo = re.match(r'(|.*/)applications/(?P<appname>[^/]+)', pyfile)
         if mo:
@@ -57,7 +61,7 @@ def exec_environment(
             request.folder = os.path.join('applications', appname)
         else:
             request.folder = ''
-    env = build_environment(request, response, session)
+    env = build_environment(request, response, session, store_current=False)
     if pyfile:
         pycfile = pyfile + 'c'
         if os.path.isfile(pycfile):

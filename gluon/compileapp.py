@@ -238,7 +238,7 @@ OLD IMPLEMENTATION:
     return module
 """
 
-def build_environment(request, response, session):
+def build_environment(request, response, session, store_current=True):
     """
     Build the environment dictionary into which web2py files are executed.
     """
@@ -251,11 +251,14 @@ def build_environment(request, response, session):
     if not request.env:
         request.env = Storage()
 
-    current.request = request
-    current.response = response
-    current.session = session
-    current.T = environment['T'] = translator(request)
-    current.cache = environment['cache'] = Cache(request)
+    t = environment['T'] = translator(request)
+    c = environment['cache'] = Cache(request)
+    if store_current:
+        current.request = request
+        current.response = response
+        current.session = session
+        current.T = t
+        current.cache = c
 
     global __builtins__
     if is_jython: # jython hack
