@@ -115,6 +115,8 @@ class LoadFactory(object):
         target = target or 'c'+str(random.random())[2:]
         attr['_id']=target
         request = self.environment['request']
+        if not isinstance(vars,Storage):
+            vars = Storage(vars)
         if '.' in f:
             f, extension = f.split('.',1)
         if url or ajax:
@@ -139,8 +141,8 @@ class LoadFactory(object):
             other_request.function = f
             other_request.extension = extension or request.extension
             other_request.args = List(args)
-            other_request.vars = Storage(vars)
-            other_request.get_vars = Storage(vars)
+            other_request.vars = vars
+            other_request.get_vars = vars
             other_request.post_vars = Storage()
             other_response = globals.Response()
             other_request.env.path_info = '/' + \
