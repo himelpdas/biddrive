@@ -47,7 +47,7 @@ except:
     logger.warning('unable to import py_compile')
 
 is_gae = settings.global_settings.web2py_runtime_gae
-is_jython = settings.global_settings.is_jython = 'java' in sys.platform.lower() or hasattr(sys, 'JYTHON_JAR') or str(copyright).find('Jython') > 0
+is_jython = settings.global_settings.is_jython = 'java' in sys.platform.lower() or hasattr(sys, 'JYTHON_JAR') or str(sys.copyright).find('Jython') > 0
 
 TEST_CODE = \
     r"""
