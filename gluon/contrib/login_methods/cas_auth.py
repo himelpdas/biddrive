@@ -55,7 +55,7 @@ class CasAuth( object ):
         self.maps=maps
         self.casversion = casversion
         self.casusername = casusername
-        http_host=current.request.env.http_x_forwarded_for
+        http_host=current.request.env.http_x_forwarded_host
         if not http_host: http_host=current.request.env.http_host
         if current.request.env.wsgi_url_scheme in [ 'https', 'HTTPS' ]: 
             scheme = 'https' 
