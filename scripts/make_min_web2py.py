@@ -9,6 +9,7 @@ it will mkdir minweb2py and build a minimal web2py installation
 - more modules could be dropped but minimal difference
 """
 
+# files to include from top level folder (default.py will be rebuilt)
 REQUIRED = """
 VERSION
 web2py.py
@@ -20,6 +21,7 @@ applications/__init__.py
 applications/welcome/controllers/default.py
 """
 
+# files and folders to exclude from gluon folder
 IGNORE = """
 gluon/contrib/comet_messaging.py
 gluon/contrib/feedparser.py
@@ -42,8 +44,12 @@ import sys, os, shutil, glob
 def main():
     if len(sys.argv)<2:
         print USAGE
+    
+    # make target folder
     target = sys.argv[1]
     os.mkdir(target)
+
+    # make a list of all files to include
     files = [x.strip() for x in REQUIRED.split('\n') \
                  if x and not x[0]=='#']
     ignore = [x.strip() for x in IGNORE.split('\n') \
@@ -59,6 +65,8 @@ def main():
         if not newfiles: break
         files += newfiles
         pattern = pattern[:-3]+'/*.py'
+
+    # copy all files, make missing folder, build default.py
     files.sort()
     for f in files:
         dirs = f.split(os.path.sep)
