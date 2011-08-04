@@ -51,7 +51,6 @@ gluon/contrib/login_methods/rpx_account.py
 gluon/contrib/markmin/
 gluon/contrib/markmin/__init__.py
 gluon/contrib/markmin/markmin.html
-gluon/contrib/markmin/markmin.pdf
 gluon/contrib/markmin/markmin2html.py
 gluon/contrib/markmin/markmin2latex.py
 gluon/contrib/markmin/markmin2pdf.py
@@ -66,7 +65,6 @@ gluon/contrib/simplejson/
 gluon/contrib/simplejson/__init__.py
 gluon/contrib/simplejson/decoder.py
 gluon/contrib/simplejson/encoder.py
-gluon/contrib/simplejson/LICENSE.txt
 gluon/contrib/simplejson/ordered_dict.py
 gluon/contrib/simplejson/scanner.py
 gluon/contrib/simplejson/tool.py
@@ -118,11 +116,13 @@ def main():
         print USAGE
     target = sys.argv[1]
     os.mkdir(target)
-    files_and_folders = sorted(x for x in REQUIRED.split('\n') \
+    files_and_folders = sorted(x.strip() for x in REQUIRED.split('\n') \
                                    if x and not x[0]=='#')
     for f in files_and_folders:
         if f.endswith('/'):
             os.mkdir(target+'/'+f)
+        elif f=='applications/welcome/controllers/default.py':
+            open(target+'/'+f,'w').write('def index(): return "hello"\n')
         else:
             shutil.copyfile(f,target+'/'+f)
 
