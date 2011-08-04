@@ -229,7 +229,7 @@ class cronlauncher(threading.Thread):
 
 def crondance(applications_parent, ctype='soft', startup=False):
     apppath = os.path.join(applications_parent,'applications')
-    cron_path = os.path.join(apppath,'admin','cron')
+    cron_path = os.path.join(applications_parent)
     token = Token(cron_path)
     cronmaster = token.acquire(startup=startup)
     if not cronmaster:

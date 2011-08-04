@@ -112,11 +112,13 @@ def presentation(root):
     canvas.pack()
     root.update()
 
-    img = Tkinter.PhotoImage(file='splashlogo.gif')
-    pnl = Tkinter.Label(canvas, image=img, background='white', bd=0)
-    pnl.pack(side='top', fill='both', expand='yes')
-    # Prevent garbage collection of img
-    pnl.image=img
+    logo = 'splashlogo.gif'
+    if os.path.exists(logo):
+        img = Tkinter.PhotoImage(file=logo)
+        pnl = Tkinter.Label(canvas, image=img, background='white', bd=0)
+        pnl.pack(side='top', fill='both', expand='yes')
+        # Prevent garbage collection of img
+        pnl.image=img
 
     def add_label(text='Change Me', font_size=12, foreground='#195866', height=1):
         return Tkinter.Label(
