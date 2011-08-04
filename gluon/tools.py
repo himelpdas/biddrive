@@ -3314,6 +3314,13 @@ class Crud(object):
             if key in args: attributes[key]=args[key]
         tbl = TABLE()
         selected = []; refsearch = []; results = []
+        showall = args.get('showall', False)
+        if showall: 
+            selected = fields
+        chkall = args.get('chkall', False)
+        if chkall:
+            for f in fields:
+                request.vars['chk%s'%f] = 'on'
         ops = args.get('queries', [])
         zero = args.get('zero', '')
         if not ops:
