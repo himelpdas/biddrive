@@ -10,120 +10,64 @@ it will mkdir minweb2py and build a minimal web2py installation
 """
 
 REQUIRED = """
-anyserver.py
-applications/
-applications/__init__.py
-applications/welcome/
-applications/welcome/controllers/
-applications/welcome/controllers/default.py
-fcgihandler.py
-gaehandler.py
-gluon/
-gluon/__init__.py
-gluon/admin.py
-gluon/cache.py
-gluon/cfs.py
-gluon/compileapp.py
-gluon/contenttype.py
-gluon/contrib/
-gluon/contrib/__init__.py
-gluon/contrib/AuthorizeNet.py
-gluon/contrib/gae_memcache.py
-gluon/contrib/gae_retry.py
-gluon/contrib/gateways/
-gluon/contrib/gateways/__init__.py
-gluon/contrib/gateways/fcgi.py
-gluon/contrib/login_methods/
-gluon/contrib/login_methods/__init__.py
-gluon/contrib/login_methods/basic_auth.py
-gluon/contrib/login_methods/cas_auth.py
-gluon/contrib/login_methods/email_auth.py
-gluon/contrib/login_methods/extended_login_form.py
-gluon/contrib/login_methods/gae_google_account.py
-gluon/contrib/login_methods/ldap_auth.py
-gluon/contrib/login_methods/linkedin_account.py
-gluon/contrib/login_methods/loginza.py
-gluon/contrib/login_methods/oauth10a_account.py
-gluon/contrib/login_methods/oauth20_account.py
-gluon/contrib/login_methods/openid_auth.py
-gluon/contrib/login_methods/pam_auth.py
-gluon/contrib/login_methods/rpx_account.py
-gluon/contrib/markmin/
-gluon/contrib/markmin/__init__.py
-gluon/contrib/markmin/markmin.html
-gluon/contrib/markmin/markmin2html.py
-gluon/contrib/markmin/markmin2latex.py
-gluon/contrib/markmin/markmin2pdf.py
-gluon/contrib/memcache/
-gluon/contrib/memcache/__init__.py
-gluon/contrib/memcache/memcache.py
-gluon/contrib/memdb.py
-gluon/contrib/pam.py
-gluon/contrib/rss2.py
-gluon/contrib/shell.py
-gluon/contrib/simplejson/
-gluon/contrib/simplejson/__init__.py
-gluon/contrib/simplejson/decoder.py
-gluon/contrib/simplejson/encoder.py
-gluon/contrib/simplejson/ordered_dict.py
-gluon/contrib/simplejson/scanner.py
-gluon/contrib/simplejson/tool.py
-gluon/contrib/taskbar_widget.py
-gluon/contrib/user_agent_parser.py
-gluon/custom_import.py
-gluon/dal.py
-gluon/debug.py
-gluon/decoder.py
-gluon/fileutils.py
-gluon/globals.py
-gluon/highlight.py
-gluon/html.py
-gluon/http.py
-gluon/import_all.py
-gluon/languages.py
-gluon/main.py
-gluon/myregex.py
-gluon/newcron.py
-gluon/portalocker.py
-gluon/reserved_sql_keywords.py
-gluon/restricted.py
-gluon/rewrite.py
-gluon/rocket.py
-gluon/sanitizer.py
-gluon/serializers.py
-gluon/settings.py
-gluon/shell.py
-gluon/sql.py
-gluon/sqlhtml.py
-gluon/storage.py
-gluon/streamer.py
-gluon/template.py
-gluon/tools.py
-gluon/utils.py
-gluon/validators.py
-gluon/widget.py
-gluon/winservice.py
-gluon/xmlrpc.py
 VERSION
 web2py.py
+fcgihandler.py
+gaehandler.py
 wsgihandler.py
+anyserver.py
+applications/__init__.py
+applications/welcome/controllers/default.py
 """
 
-import sys, os, shutil
+IGNORE = """
+gluon/contrib/comet_messaging.py
+gluon/contrib/feedparser.py
+gluon/contrib/generics.py
+gluon/contrib/gql.py
+gluon/contrib/populate.py
+gluon/contrib/sms_utils.py
+gluon/contrib/spreadsheet.py
+gluon/tests/
+gluon/contrib/markdown/
+gluon/contrib/markdown/
+gluon/contrib/pyfpdf/
+gluon/contrib/pymysql/
+gluon/contrib/pyrtf/
+gluon/contrib/pysimplesoap/
+"""
+
+import sys, os, shutil, glob
 
 def main():
     if len(sys.argv)<2:
         print USAGE
     target = sys.argv[1]
     os.mkdir(target)
-    files_and_folders = sorted(x.strip() for x in REQUIRED.split('\n') \
-                                   if x and not x[0]=='#')
-    for f in files_and_folders:
-        if f.endswith('/'):
-            os.mkdir(target+'/'+f)
-        elif f=='applications/welcome/controllers/default.py':
+    files = [x.strip() for x in REQUIRED.split('\n') \
+                 if x and not x[0]=='#']
+    ignore = [x.strip() for x in IGNORE.split('\n') \
+                   if x and not x[0]=='#']
+    def accept(filename):
+        for p in ignore:
+            if filename.startswith(p):
+                return False
+        return True
+    pattern = 'gluon/*.py'
+    while True:
+        newfiles = [x for x in glob.glob(pattern) if accept(x)]
+        if not newfiles: break
+        files += newfiles
+        pattern = pattern[:-3]+'/*.py'
+    files.sort()
+    for f in files:
+        dirs = f.split(os.path.sep)
+        for i in range(1,len(dirs)):
+            try: os.mkdir(target+'/'+os.path.join(*dirs[:i]))
+            except OSError: pass
+        if f=='applications/welcome/controllers/default.py':
             open(target+'/'+f,'w').write('def index(): return "hello"\n')
         else:
             shutil.copyfile(f,target+'/'+f)
-
+        
 if __name__=='__main__': main()
