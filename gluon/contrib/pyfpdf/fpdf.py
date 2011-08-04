@@ -1098,7 +1098,7 @@ class FPDF:
                 self._out('/Filter /'+info['f'])
             if 'parms' in info:
                 self._out(info['parms'])
-            if('trns' in info and type([])==info['trns']):
+            if('trns' in info and isinstance(info['trns'],list)):
                 trns=''
                 for i in xrange(0,len(info['trns'])):
                     trns+=str(info['trns'][i])+' '+str(info['trns'][i])+' '
