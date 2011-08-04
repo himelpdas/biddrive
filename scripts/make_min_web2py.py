@@ -21,8 +21,8 @@ applications/__init__.py
 applications/welcome/controllers/default.py
 """
 
-# files and folders to exclude from gluon folder
-IGNORE = """
+# files and folders to exclude from gluon folder (comment with # if needed)
+IGNORED = """
 gluon/contrib/comet_messaging.py
 gluon/contrib/feedparser.py
 gluon/contrib/generics.py
@@ -31,7 +31,6 @@ gluon/contrib/populate.py
 gluon/contrib/sms_utils.py
 gluon/contrib/spreadsheet.py
 gluon/tests/
-gluon/contrib/markdown/
 gluon/contrib/markdown/
 gluon/contrib/pyfpdf/
 gluon/contrib/pymysql/
@@ -52,7 +51,7 @@ def main():
     # make a list of all files to include
     files = [x.strip() for x in REQUIRED.split('\n') \
                  if x and not x[0]=='#']
-    ignore = [x.strip() for x in IGNORE.split('\n') \
+    ignore = [x.strip() for x in IGNORED.split('\n') \
                    if x and not x[0]=='#']
     def accept(filename):
         for p in ignore:
@@ -65,7 +64,6 @@ def main():
         if not newfiles: break
         files += newfiles
         pattern = pattern[:-3]+'/*.py'
-
     # copy all files, make missing folder, build default.py
     files.sort()
     for f in files:
