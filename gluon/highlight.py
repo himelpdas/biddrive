@@ -23,13 +23,13 @@ class Highlighter(object):
         self,
         mode,
         link=None,
-        styles={},
+        styles=None,
         ):
         """
         Initialise highlighter:
             mode = language (PYTHON, WEB2PY,C, CPP, HTML, HTML_PLAIN)
         """
-
+        styles = styles or {}
         mode = mode.upper()
         if link and link[-1] != '/':
             link = link + '/'
@@ -253,10 +253,12 @@ def highlight(
     language,
     link='/examples/globals/vars/',
     counter=1,
-    styles={},
+    styles=None,
     highlight_line=None,
-    attributes={},
+    attributes=None,
     ):
+    styles = styles or {}
+    attributes = attributes or {}
     if not 'CODE' in styles:
         code_style = """
         font-size: 11px;

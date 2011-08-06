@@ -790,7 +790,9 @@ class Auth(object):
     """
 
 
-    def url(self, f=None, args=[], vars={}):
+    def url(self, f=None, args=None, vars=None):
+        if args==None: args=[]
+        if vars==None: vars={}
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
     def __init__(self, environment=None, db=None,
@@ -2815,11 +2817,13 @@ class Auth(object):
 
 class Crud(object):
 
-    def url(self, f=None, args=[], vars={}):
+    def url(self, f=None, args=None, vars=None):
         """
         this should point to the controller that exposes
         download and crud
         """
+        if args==None: args=[]
+        if vars==None: vars={}
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
     def __init__(self, environment, db=None, controller='default'):
@@ -3225,9 +3229,10 @@ class Crud(object):
         fields=None,
         orderby=None,
         limitby=None,
-        headers={},
+        headers=None,
         **attr
         ):
+        headers = headers or {}
         rows = self.rows(table,query,fields,orderby,limitby)
         if not rows:
             return None # Nicer than an empty table.
@@ -3376,11 +3381,12 @@ class Crud(object):
 
 urllib2.install_opener(urllib2.build_opener(urllib2.HTTPCookieProcessor()))
 
-def fetch(url, data=None, headers={},
+def fetch(url, data=None, headers=None,
           cookie=Cookie.SimpleCookie(),
           user_agent='Mozilla/5.0'):
+    headers = headers or {}
     if data != None:
-        data = urllib.urlencode(data)
+        data = urllib.urlencode(data)        
     if user_agent: headers['User-agent'] = user_agent
     headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
     try:

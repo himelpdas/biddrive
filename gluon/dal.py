@@ -1506,7 +1506,7 @@ class SQLiteAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "sqlite"
         self.uri = uri
@@ -1544,7 +1544,7 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "sqlite"
         self.uri = uri
@@ -1624,7 +1624,7 @@ class MySQLAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "mysql"
         self.uri = uri
@@ -1667,7 +1667,6 @@ class MySQLAdapter(BaseAdapter):
     def lastrowid(self,table):
         self.execute('select last_insert_id();')
         return int(self.cursor.fetchone()[0])
-
 
 class PostgreSQLAdapter(BaseAdapter):
 
@@ -1721,7 +1720,7 @@ class PostgreSQLAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "postgres"
         self.uri = uri
@@ -1788,7 +1787,7 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "postgres"
         self.uri = uri
@@ -1905,7 +1904,7 @@ class OracleAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "oracle"
         self.uri = uri
@@ -2172,7 +2171,7 @@ class FireBirdAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "firebird"
         self.uri = uri
@@ -2233,7 +2232,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "firebird"
         self.uri = uri
@@ -2343,7 +2342,7 @@ class InformixAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "informix"
         self.uri = uri
@@ -2441,7 +2440,7 @@ class DB2Adapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "db2"
         self.uri = uri
@@ -2499,7 +2498,7 @@ class TeradataAdapter(DB2Adapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "teradata"
         self.uri = uri
@@ -2563,7 +2562,7 @@ class IngresAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "ingres"
         self.uri = uri
@@ -2684,7 +2683,7 @@ class SAPDBAdapter(BaseAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.dbengine = "sapdb"
         self.uri = uri
@@ -2845,11 +2844,10 @@ class UseDatabaseStoredFile:
 
 class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
 
-    def __init__(self, db, uri='google:sql://realm:domain/database', pool_size=0,
-                 folder=None, db_codec='UTF-8', check_reserved=None,
-                 migrate=True, fake_migrate=False,
+    def __init__(self, db, uri='google:sql://realm:domain/database',
+                 pool_size=0, folder=None, db_codec='UTF-8',
                  credential_decoder = lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
 
         self.db = db
         self.dbengine = "mysql"
@@ -2865,13 +2863,14 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
         instance = credential_decoder(m.group('instance'))
         db = credential_decoder(m.group('db'))
         driver_args['instance'] = instance
-        if not migrate:
+        createdb = adapter_args.get('createdb',True)
+        if not createdb:
             driver_args['database'] = db
         def connect(driver_args=driver_args):
             return rdbms.connect(**driver_args)
         self.pool_connection(connect)
         self.cursor = self.connection.cursor()
-        if migrate:
+        if createdb:
             # self.execute('DROP DATABASE %s' % db)
             self.execute('CREATE DATABASE IF NOT EXISTS %s' % db)
             self.execute('USE %s' % db)
@@ -3046,7 +3045,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.types.update({
                 'boolean': gae.BooleanProperty,
                 'string': (lambda: gae.StringProperty(multiline=True)),
@@ -3228,7 +3227,9 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
     def truncate(self,table,mode):
         self.db(table._id > 0).delete()
 
-    def select_raw(self,query,fields=[],attributes={}):
+    def select_raw(self,query,fields=None,attributes=None):
+        fields = fields or []
+        attributes = attributes or {}
         new_fields = []
         for item in fields:
             if isinstance(item,SQLALL):
@@ -3422,7 +3423,7 @@ class CouchDBAdapter(NoSQLAdapter):
     def __init__(self,db,uri='couchdb://127.0.0.1:5984',
                  pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.uri = uri
         self.dbengine = 'couchdb'
@@ -3582,7 +3583,7 @@ class MongoDBAdapter(NoSQLAdapter):
     def __init__(self,db,uri='mongodb://127.0.0.1:5984/db',
                  pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
-                    adapter_args={}):
+                 adapter_args={}):
         self.db = db
         self.uri = uri
         self.dbengine = 'mongodb'
@@ -3904,12 +3905,13 @@ class DAL(dict):
         return
 
 
-    def __init__(self, uri='sqlite://dummy.db', pool_size=0, folder=None,
+    def __init__(self, uri='sqlite://dummy.db',
+                 pool_size=0, folder=None,
                  db_codec='UTF-8', check_reserved=None,
                  migrate=True, fake_migrate=False,
                  migrate_enabled=True, fake_migrate_all=False,
                  decode_credentials=False, driver_args=None,
-                 adapter_args={}, attempts=5, auto_import=False):
+                 adapter_args=None, attempts=5, auto_import=False):
         """
         Creates a new Database Abstraction Layer instance.
 
@@ -3964,8 +3966,11 @@ class DAL(dict):
                         self._dbname = regex_dbname.match(uri).group()
                         if not self._dbname in ADAPTERS:
                             raise SyntaxError, "Error in URI '%s' or database not supported" % self._dbname
-                        # notice that driver args or {} else driver_args defaults to {} global, not correct
-                        args = (self,uri,pool_size,folder,db_codec,credential_decoder,driver_args or {}, adapter_args)
+                        # notice that driver args or {} else driver_args 
+                        # defaults to {} global, not correct
+                        args = (self,uri,pool_size,folder,
+                                db_codec, credential_decoder,
+                                driver_args or {}, adapter_args or {})
                         self._adapter = ADAPTERS[self._dbname](*args)
                         connected = True
                         break
@@ -4409,8 +4414,9 @@ def index():
             ofile.write('\r\n\r\n')
         ofile.write('END')
 
-    def import_from_csv_file(self, ifile, id_map={}, null='<NULL>',
+    def import_from_csv_file(self, ifile, id_map=None, null='<NULL>',
                              unique='uuid', *args, **kwargs):
+        id_map = id_map or {}
         for line in ifile:
             line = line.strip()
             if not line:
@@ -5542,7 +5548,7 @@ class Set(object):
                     if os.path.exists(oldpath):
                         os.unlink(oldpath)
 
-def update_record(pack, a={}):
+def update_record(pack, a=None):
     (colset, table, id) = pack
     b = a or dict(colset)
     c = dict([(k,v) for (k,v) in b.items() if k in table.fields and table[k].type!='id'])

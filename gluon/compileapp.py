@@ -108,15 +108,15 @@ class LoadFactory(object):
     """
     def __init__(self,environment):
         self.environment = environment
-    def __call__(self, c=None, f='index', args=[], vars={},
+    def __call__(self, c=None, f='index', args=None, vars=None,
                  extension=None, target=None,ajax=False,ajax_trap=False,
                  url=None,user_signature=False, content='loading...',**attr):
+        if args==None: args = []
+        vars = Storage(vars or {})
         import globals
         target = target or 'c'+str(random.random())[2:]
         attr['_id']=target
         request = self.environment['request']
-        if not isinstance(vars,Storage):
-            vars = Storage(vars)
         if '.' in f:
             f, extension = f.split('.',1)
         if url or ajax:

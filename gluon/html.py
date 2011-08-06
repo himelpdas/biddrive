@@ -130,8 +130,8 @@ def URL(
     c=None,
     f=None,
     r=None,
-    args=[],
-    vars={},
+    args=None,
+    vars=None,
     anchor='',
     extension=None,
     env=None,
@@ -195,7 +195,7 @@ def URL(
         available
     :raises SyntaxError: when a CRLF is found in the generated url
     """
-
+    
     if args in (None,[]): args = []
     vars = vars or {}
     application = None
@@ -2164,7 +2164,8 @@ class web2pyHTMLParser(HTMLParser):
                 raise RuntimeError, "unable to balance tag %s" % tagname
             if parent_tagname[:len(tagname)]==tagname: break
 
-def markdown_serializer(text,tag=None,attr={}):
+def markdown_serializer(text,tag=None,attr=None):
+    attr = attr or {} 
     if tag is None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '#'+text+'\n\n'
@@ -2179,7 +2180,8 @@ def markdown_serializer(text,tag=None,attr={}):
     if tag=='img': return '![%s](%s)' % (attr.get('_alt',''),attr.get('_src',''))
     return text
 
-def markmin_serializer(text,tag=None,attr={}):
+def markmin_serializer(text,tag=None,attr=None):
+    attr = attr or {}
     # if tag is None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '# '+text+'\n\n'
@@ -2204,10 +2206,10 @@ class MARKMIN(XmlComponent):
     """
     For documentation: http://web2py.com/examples/static/markmin.html
     """
-    def __init__(self, text, extra={}, allowed={}, sep='p'):
+    def __init__(self, text, extra=None, allowed=None, sep='p'):
         self.text = text
-        self.extra = extra
-        self.allowed = allowed
+        self.extra = extra or {}
+        self.allowed = allowed or {}
         self.sep = sep
 
     def xml(self):

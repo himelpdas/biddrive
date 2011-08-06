@@ -1344,7 +1344,7 @@ class SQLTABLE(TABLE):
         if not sqlrows:
             return
         if not columns:
-            columns = sqlrows.colnames
+            columns = sqlrows.colnames    
         if headers=='fieldname:capitalize':
             headers = {}
             for c in columns:
