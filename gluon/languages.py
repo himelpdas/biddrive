@@ -117,11 +117,11 @@ class lazyT(object):
     def __init__(
         self,
         message,
-        symbols = None,
+        symbols = {},
         T = None,
         ):
         self.m = message
-        self.s = symbols or {}
+        self.s = symbols
         self.T = T
 
     def __repr__(self):
@@ -250,8 +250,7 @@ class translator(object):
         self.t = {}  # ## no language by default
         return languages
 
-    def __call__(self, message, symbols=None,language=None):
-        symbols = symbols or {}
+    def __call__(self, message, symbols={}, language=None):
         if not language:
             if self.lazy:
                 return lazyT(message, symbols, self)

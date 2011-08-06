@@ -4416,7 +4416,7 @@ def index():
 
     def import_from_csv_file(self, ifile, id_map=None, null='<NULL>',
                              unique='uuid', *args, **kwargs):
-        id_map = id_map or {}
+        if id_map==None: id_map={}
         for line in ifile:
             line = line.strip()
             if not line:

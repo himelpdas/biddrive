@@ -1337,6 +1337,7 @@ class SQLTABLE(TABLE):
         ):
 
         TABLE.__init__(self, **attributes)
+
         self.components = []
         self.attributes = attributes
         self.sqlrows = sqlrows

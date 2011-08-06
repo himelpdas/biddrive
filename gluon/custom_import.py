@@ -72,9 +72,9 @@ class _BaseImporter(object):
         The import method itself.
         """
         return _STANDARD_PYTHON_IMPORTER(name, 
-					 globals or {},
-					 locals or {},
-					 fromlist or [],
+					 globals,
+					 locals,
+					 fromlist,
                                          level)
 
     def end(self):
