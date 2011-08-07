@@ -3592,9 +3592,9 @@ class MongoDBAdapter(NoSQLAdapter):
         self.db_codec = 'UTF-8'
         self.pool_size = pool_size
 
-        m = re.compile('^(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(self._uri[10:])
+        m = re.compile('^(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(self.uri[10:])        
         if not m:
-            raise SyntaxError, "Invalid URI string in DAL: %s" % self._uri
+            raise SyntaxError, "Invalid URI string in DAL: %s" % self.uri
         host = m.group('host')
         if not host:
             raise SyntaxError, 'mongodb: host name required'
