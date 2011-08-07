@@ -1277,9 +1277,13 @@ class A(DIV):
     tag = 'a'
 
     def xml(self):
+        if self['delete']:
+            d = "jQuery(this).closest('%s').remove();" % self['delete']
+        else:
+            d = ''
         if self['callback']:
-            self['_onclick']="ajax('%s',[],'%s');return false;" % \
-                (self['callback'],self['target'] or '')
+            self['_onclick']="ajax('%s',[],'%s');%sreturn false;" % \
+                (self['callback'],self['target'] or '',d)
             self['_href'] = self['_href'] or '#null'
         elif self['cid']:
             self['_onclick']='web2py_component("%s","%s");return false;' % \
