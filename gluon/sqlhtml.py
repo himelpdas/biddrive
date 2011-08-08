@@ -318,10 +318,11 @@ class RadioWidget(OptionsWidget):
         for r_index in range(rows):
             tds = []
             for k, v in options[r_index*cols:(r_index+1)*cols]:
+                checked='checked' if k==value else ''
                 tds.append(TD(INPUT(_type='radio', _name=field.name,
-                         requires=attr.get('requires',None),
-                         hideerror=True, _value=k,
-                         value=value), v))
+                                    requires=attr.get('requires',None),
+                                    hideerror=True, _value=k,_checked=checked,
+                                    value=value), v))
             opts.append(TR(tds))
 
         if opts:
