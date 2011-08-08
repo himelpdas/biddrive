@@ -132,7 +132,12 @@ class Scheduler(object):
             Field('output','text'),
             Field('result','text'),
             Field('traceback','text'),
-            Field('worker',default=current.request.env.http_host),
+            Field('worker_name',default=current.request.env.http_host),
+            migrate=migrate)
+        db.define_table(
+            'worker_heartbeat',
+            Field('name'),
+            Field('last_heartbeat','datetime'),
             migrate=migrate)
     def form(self,id,**args):
         return SQLFORM(self.db.task_schedule,id,**args)
@@ -178,6 +183,14 @@ class Scheduler(object):
         else:
             return False
 
+    def log_heartbeat(self):
+        db = self.db
+        now = datetime.now()
+        host = current.request.env.http_host
+        if not db(db.worker_heartbeat.name==host).update(last_heartbeat=now):
+            db.worker_heartbeat.insert(name=host,last_heartbeat=now)
+        db.commit()
+
     def fix_failures(self):
         """find all tasks that have been running than they should and set OVERDUE"""
         db = self.db
@@ -196,6 +209,7 @@ class Scheduler(object):
             if 'main' in group_names: 
                 self.fix_failures()
             logging.info('checking for tasks...')
+            self.log_heartbeat()
             while self.run_next_task(group_names=group_names):
                 pass            
             time.sleep(pause)
