@@ -49,11 +49,13 @@ import logging
 import time
 import sys
 import cStringIO
+import threading
 from datetime import datetime, timedelta
 from gluon import *
 from gluon.contrib.simplejson import loads,dumps
 
-STATUSES = QUEUED, RUNNING, DONE, FAILED = ('queued','running','done','failed')
+STATUSES = QUEUED, RUNNING, COMPLETED, FAILED, TIMEOUT, OVERDUE = \
+    ('queued','running','completed','failed', 'timeout', 'overdue')
 
 class TYPE(object):
     def __init__(self,myclass=list,parse=False):
@@ -73,93 +75,129 @@ class TYPE(object):
             else:
                 return (value,current.T('Not of type: %s') % self.myclass)
 
+class TimeoutException(Exception): pass
+
+def timeout_run(func, args=(), kwargs={}, timeout_duration=1):
+    """http://code.activestate.com/recipes/473878-timeout-function-using-threading/"""
+    class InterruptableThread(threading.Thread):
+        def __init__(self):
+            threading.Thread.__init__(self)            
+            self.result = self.output = self.traceback = None
+        def run(self):
+            try:
+                stdout, sys.stdout = sys.stdout, cStringIO.StringIO()
+                self.result = func(*args, **kwargs)
+                self.status = COMPLETED
+            except:
+                self.status = FAILED
+                self.result = None
+                self.traceback = traceback.format_exc()
+            sys.stdout, self.output = stdout, sys.stdout.getvalue()
+    it = InterruptableThread()
+    it.start()
+    it.join(timeout_duration)
+    if it.isAlive():
+        return TIMEOUT, it.result, it.output, it.traceback
+    else:
+        return it.status, it.result, it.output, it.traceback
+
 class Scheduler(object):
-    def __init__(self,db,tasks):
+    def __init__(self,db,tasks,migrate=True):
         self.db = db
         self.tasks = tasks
         now = current.request.now
         db.define_table(
             'task_scheduled',
             Field('name',requires=IS_NOT_IN_DB(db,'task_scheduled.name')),
+            Field('group_name',default='main',writable=False),
             Field('status',requires=IS_IN_SET(STATUSES),default=QUEUED,writable=False),
             Field('func',requires=IS_IN_SET(sorted(self.tasks.keys()))),
             Field('args','text',default='[]',requires=TYPE(list)),
             Field('vars','text',default='{}',requires=TYPE(dict)),
             Field('enabled','boolean',default=True),
             Field('start_time','datetime',default=now),
+            Field('next_run_time','datetime',default=now),
             Field('stop_time','datetime',default=now+timedelta(days=1)),
             Field('repeats','integer',default=1),
-            Field('period','integer',default=60), # seconds
+            Field('period','integer',default=60,comment='seconds'),
+            Field('timeout','integer',default=60,comment='seconds'),
             Field('times_run','integer',default=0,writable=False),
             Field('last_run_time','datetime',writable=False,readable=False),
-            Field('next_run_time','datetime',writable=False,readable=False,default=now))
+            migrate=migrate,format='%(name)s')
         db.define_table(
             'task_run',
             Field('task_scheduled','reference task_scheduled'),
-            Field('status',requires=IS_IN_SET((RUNNING,DONE,FAILED))),
+            Field('status',requires=IS_IN_SET((RUNNING,COMPLETED,FAILED))),
             Field('start_time','datetime'),
             Field('output','text'),
             Field('result','text'),
             Field('traceback','text'),
-            Field('worker',default=current.request.env.http_host))
+            Field('worker',default=current.request.env.http_host),
+            migrate=migrate)
     def form(self,id,**args):
-        db.task_scheduled.next_run_time.compute = lambda row: row.start_time
         return SQLFORM(self.db.task_schedule,id,**args)
-    def next_task(self):
+    def next_task(self,group_names=['main']):
+        """find next task that needs to be executed"""
         from datetime import datetime
         db = self.db
         query = (db.task_scheduled.enabled==True)
         query &= (db.task_scheduled.status==QUEUED)
+        query &= (db.task_scheduled.group_name.belongs(group_names))
         query &= (db.task_scheduled.next_run_time<datetime.now())
         return db(query).select(orderby=db.task_scheduled.next_run_time).first()
-    def run_next_task(self):
+    def run_next_task(self,group_names=['main']):
+        """get and execute next task"""
         db = self.db
         now = datetime.now()
-        task = self.next_task()
+        task = self.next_task(group_names=group_names)
         if task:
             logging.info('running task %s' % task.name)
             task.update_record(status=RUNNING,last_run_time=now)
             task_id = db.task_run.insert(task_scheduled=task.id,status=RUNNING,
                                          start_time=now)
             db.commit()
-            times_run = task.times_run + 1
-            try:
-                func = self.tasks[task.func]
-                args = loads(task.args)
-                vars = loads(task.vars)
-                stdout, sys.stdout = sys.stdout, cStringIO.StringIO()
-                result = func(*args,**vars)                
-            except:
-                sys.stdout, output = stdout, sys.stdout.getvalue()
-                logging.warn('task %s failed' % task.name)
-                db(db.task_run.id==task_id).update(status=FAILED,output=output,
-                                                   traceback=traceback.format_exc())
-                task.update_record(status=FAILED, next_run_time=now,
-                                   times_run=times_run)
-            else:
-                sys.stdout, output = stdout, sys.stdout.getvalue()
-                logging.info('task %s done' % task.name)
-                next_run_time = now + timedelta(seconds=task.period)
-                db(db.task_run.id==task_id).update(status=DONE, output=output,
-                                                   result=dumps(result))
+            times_run = task.times_run
+            next_run_time = task.last_run_time + timedelta(seconds=task.period)
+            func = self.tasks[task.func]
+            args = loads(task.args)
+            vars = loads(task.vars)
+            status, result, output, tb = \
+                timeout_run(func,args,vars,timeout_duration=task.timeout)
+            status_repeat = status
+            if status==COMPLETED:
+                times_run += 1
                 if times_run<task.repeats and next_run_time<task.stop_time:
-                    status = QUEUED
-                else:
-                    status = DONE
-                task.update_record(status=status, next_run_time=next_run_time,
-                                   times_run=times_run)
+                    status_repeat = QUEUED
+            logging.warn('task %s %s' % (task.name,status))            
+            db(db.task_run.id==task_id).update(status=status, output=output,
+                                               traceback=tb, result=dumps(result))
+            task.update_record(status=status_repeat, next_run_time=next_run_time,
+                               times_run=times_run)
             db.commit()
             return True
         else:
             return False
 
-    def worker_loop(self,logger_level='DEBUG',pause=10):
+    def fix_failures(self):
+        """find all tasks that have been running than they should and set OVERDUE"""
+        db = self.db
+        tasks = db(db.task_scheduled.status==RUNNING).select()
+        ids = [task.id for task in tasks if \
+                   task.last_run_time+timedelta(seconds=task.timeout)<datetime.now()]
+        db(db.task_scheduled.id.belongs(ids)).update(status=OVERDUE)        
+        db.commit()
+
+    def worker_loop(self,logger_level='INFO',pause=10,group_names=['main']):
+        """loop and log everything"""
         level = getattr(logging,logger_level)
         logging.basicConfig(format="%(asctime)-15s %(levename)-8s: %(message)s")
         logging.getLogger().setLevel(level)
         while True:
+            if 'main' in group_names: 
+                self.fix_failures()
             logging.info('checking for tasks...')
-            while self.run_next_task(): pass
+            while self.run_next_task(group_names=group_names):
+                pass            
             time.sleep(pause)
 
     
