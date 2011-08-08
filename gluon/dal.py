@@ -798,6 +798,10 @@ class BaseAdapter(ConnectionPool):
     def NOT_NULL(self,default,field_type):
         return 'NOT NULL DEFAULT %s' % self.represent(default,field_type)
 
+    def COALESCE(self,first,second):
+        expressions = [self.expand(first)]+[self.expand(e) for e in second]
+        return 'COALESCE(%s)' % ','.join(expressions)
+
     def COALESCE_ZERO(self,first):
         return 'COALESCE(%s,0)' % self.expand(first)
 
@@ -4982,8 +4986,11 @@ class Expression(object):
     def minutes(self):
         return Expression(self.db, self.db._adapter.EXTRACT, self, 'minute', 'integer')
 
+    def coalesce(self,*others):
+        return Expression(self.db, self.db._adapter.COALESCE, self, others, self.type)
+
     def coalesce_zero(self):
-            return Expression(self.db, self.db._adapter.COALESCE_ZERO, self, None, self.type)
+        return Expression(self.db, self.db._adapter.COALESCE_ZERO, self, None, self.type)
 
     def seconds(self):
         return Expression(self.db, self.db._adapter.EXTRACT, self, 'second', 'integer')
