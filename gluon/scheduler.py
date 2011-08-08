@@ -1,3 +1,49 @@
+"""
+## Example
+
+For any existing app
+
+Create File: app/models/scheduler.py ======
+from gluon.scheduler import Scheduler
+
+def demo1(*args,**vars):
+    print 'you passed args=%s and vars=%s' % (args, vars)
+    return 'done!'
+
+def demo2():
+    1/0
+
+scheduler = Scheduler(db,dict(demo1=demo1,demo2=demo2))
+=====================================
+
+Create File: app/modules/scheduler.py ======
+scheduler.worker_loop()
+=====================================
+
+## run worker nodes with:
+python web2py.py -S app -M -N -R applications/app/modules/scheduler.py
+
+## schedule jobs using
+http://127.0.0.1:8000/scheduler/appadmin/insert/db/task_scheduled
+
+## monitor scheduled jobs
+http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_scheduled.id%3E0
+
+## view completed jobs
+http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_run.id%3E0
+
+Works very much like celery & django-celery in web2py with some differences:
+- it has no dependendecies but web2py
+- it is much simpler to use and runs everywhere web2py runs 
+  as long as you can at last one backrgound task
+- it uses a database (via DAL) instead of rabbitMQ for message passing
+  (this is not really a limitation for ~10 worker nodes)
+- it does not allow stopping of running tasks
+- it does not allow managed starting and stopping of worker nodes
+- it does not allow mapping and filtering of tasks to workers
+- it does not allow tasksets (but it does allow a task to submit another task)
+"""
+
 import traceback
 import logging
 import time
