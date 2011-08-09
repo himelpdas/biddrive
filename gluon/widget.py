@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/-usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -19,7 +19,6 @@ import socket
 import signal
 import math
 import logging
-
 import newcron
 import main
 
@@ -622,6 +621,15 @@ def console():
                       default='',
                       help=msg)
 
+    msg = 'run scheduled tasks for the specified apps'
+    msg += '-K app1,app2,app3'
+    msg += 'requires a scheduler defined in the models'
+    parser.add_option('-K',
+                      '--scheduler',
+                      dest='scheduler',
+                      default=None,
+                      help=msg)
+
     msg = 'run doctests in web2py environment; ' +\
         'TEST_PATH like a/c/f (c,f optional)'
     parser.add_option('-T',
@@ -765,6 +773,23 @@ def console():
 
     return (options, args)
 
+def start_schedulers(options):
+    apps = [app.strip() for app in options.scheduler.split(',')]
+    try:
+        from multiprocessing import Process
+    except:
+        sys.stderr.write('Sorry, -K only supported for python 2.6-2.7\n')
+        return
+    processes = []
+    h = 20*len(apps)
+    code = "from gluon import current; current._scheduler.worker_loop(heartbeat=%i)" % h
+    for app in apps:
+        print 'starting %s scheduler...' % app
+        args = (app,True,True,None,False,code)
+        p = Process(target=run, args=args)
+        processes.append(p)
+        p.start()
+    return processes
 
 def start(cron=True):
     """ Start server  """
@@ -802,6 +827,10 @@ def start(cron=True):
     if hasattr(options,'test') and options.test:
         test(options.test, verbose=options.verbose)
         return
+
+    # ## if -K 
+    if options.scheduler:
+        start_schedulers(options)
 
     # ## if -S start interactive shell (also no cron)
     if options.shell:

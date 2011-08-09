@@ -189,6 +189,10 @@ class Scheduler(object):
             Field('name'),
             Field('last_heartbeat','datetime'),
             migrate=migrate)
+        try:
+            current._scheduler = self
+        except:
+            pass
  
     def form(self,id,**args):
         """
@@ -307,18 +311,21 @@ class Scheduler(object):
         this implements a worker process and should only run as worker
         it loops and logs (almost) everything
         """
-        level = getattr(logging,logger_level)
-        logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
-        logging.getLogger().setLevel(level)
-        while True:
-            if 'main' in group_names: 
-                self.fix_failures()
-            logging.info('checking for tasks...')
-            self.log_heartbeat()
-            while self.run_next_task(group_names=group_names):
-                pass            
-            time.sleep(heartbeat)
-    
+        try:
+            level = getattr(logging,logger_level)
+            logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
+            logging.getLogger().setLevel(level)
+            while True:
+                if 'main' in group_names: 
+                    self.fix_failures()
+                logging.info('checking for tasks...')
+                self.log_heartbeat()
+                while self.run_next_task(group_names=group_names):
+                    pass            
+                time.sleep(heartbeat)
+        except KeyboardInterrupt:
+            logging.info('[ctrl]+C')
+
 def main():
     """
     allows to run worker without python web2py.py .... by simply python this.py
