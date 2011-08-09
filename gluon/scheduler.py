@@ -22,6 +22,8 @@ scheduler.worker_loop()
 
 ## run worker nodes with:
 python web2py.py -S app -M -N -R applications/app/modules/scheduler.py
+or without web2py (-h for info)
+python scheduler.py -h
 
 ## schedule jobs using
 http://127.0.0.1:8000/scheduler/appadmin/insert/db/task_scheduled
@@ -44,6 +46,10 @@ Works very much like celery & django-celery in web2py with some differences:
 - it does not allow tasksets (but it does allow a task to submit another task)
 """
 
+import optparse
+import os
+import uuid
+import socket
 import traceback
 import logging
 import time
@@ -51,16 +57,26 @@ import sys
 import cStringIO
 import threading
 from datetime import datetime, timedelta
-from gluon import *
+
+if 'WEB2PY_PATH' in os.environ:
+    sys.path.append(os.environ['WEB2PY_PATH'])
+
+from gluon import * # needs DAL, Field, current.T and validators
 from gluon.contrib.simplejson import loads,dumps
 
-STATUSES = QUEUED, RUNNING, COMPLETED, FAILED, TIMEOUT, OVERDUE = \
-    ('queued','running','completed','failed', 'timeout', 'overdue')
+    
+STATUSES = QUEUED, RUNNING, COMPLETED, FAILED, TIMEOUT, OVERDUE, STOPPED = \
+    ('queued','running','completed','failed', 'timeout', 'overdue', 'stopped')
 
-class TYPE(object):
+class TYPE(object): 
+    """
+    validator that check whether field is valid json and validate its type
+    """
+
     def __init__(self,myclass=list,parse=False):
         self.myclass = myclass
         self.parse=parse
+
     def __call__(self,value):
         try:
             obj = loads(value)
@@ -75,19 +91,29 @@ class TYPE(object):
             else:
                 return (value,current.T('Not of type: %s') % self.myclass)
 
+
 class TimeoutException(Exception): pass
+class StoppedException(Exception): pass
 
 def timeout_run(func, args=(), kwargs={}, timeout_duration=1):
-    """http://code.activestate.com/recipes/473878-timeout-function-using-threading/"""
+    """
+    runs ret=fun(*args,**kwargs) and returns (status, ret, caputured_output, traceback)
+    status can be COMPLETED, FAILED, TIMEOUT, or  STOPPED
+    http://code.activestate.com/recipes/473878-timeout-function-using-threading/
+    """
     class InterruptableThread(threading.Thread):
+
         def __init__(self):
             threading.Thread.__init__(self)            
             self.result = self.output = self.traceback = None
+
         def run(self):
             try:
                 stdout, sys.stdout = sys.stdout, cStringIO.StringIO()
                 self.result = func(*args, **kwargs)
                 self.status = COMPLETED
+            except StoppedException:
+                self.status = STOPPED                
             except:
                 self.status = FAILED
                 self.result = None
@@ -102,10 +128,17 @@ def timeout_run(func, args=(), kwargs={}, timeout_duration=1):
         return it.status, it.result, it.output, it.traceback
 
 class Scheduler(object):
-    def __init__(self,db,tasks,migrate=True):
+    """
+    this is the main scheduler class, it also implement the worker_loop!
+    """
+
+    def __init__(self,db,tasks,worker_name=None,migrate=True):        
+        if not worker_name:
+            worker_name = self.guess_worker_name()
         self.db = db
         self.tasks = tasks
-        now = current.request.now
+        self.worker_name = worker_name
+        now = datetime.now()
         db.define_table(
             'task_scheduled',
             Field('name',requires=IS_NOT_IN_DB(db,'task_scheduled.name')),
@@ -132,17 +165,24 @@ class Scheduler(object):
             Field('output','text'),
             Field('result','text'),
             Field('traceback','text'),
-            Field('worker_name',default=current.request.env.http_host),
+            Field('worker_name',default=worker_name),
             migrate=migrate)
         db.define_table(
             'worker_heartbeat',
             Field('name'),
             Field('last_heartbeat','datetime'),
             migrate=migrate)
+ 
     def form(self,id,**args):
+        """
+        generates an entry form to submit a new task, for debugging
+        """
         return SQLFORM(self.db.task_schedule,id,**args)
+
     def next_task(self,group_names=['main']):
-        """find next task that needs to be executed"""
+        """
+        find next task that needs to be executed
+        """
         from datetime import datetime
         db = self.db
         query = (db.task_scheduled.enabled==True)
@@ -151,7 +191,9 @@ class Scheduler(object):
         query &= (db.task_scheduled.next_run_time<datetime.now())
         return db(query).select(orderby=db.task_scheduled.next_run_time).first()
     def run_next_task(self,group_names=['main']):
-        """get and execute next task"""
+        """
+        get and execute next task
+        """
         db = self.db
         now = datetime.now()
         task = self.next_task(group_names=group_names)
@@ -173,7 +215,7 @@ class Scheduler(object):
                 times_run += 1
                 if times_run<task.repeats and next_run_time<task.stop_time:
                     status_repeat = QUEUED
-            logging.warn('task %s %s' % (task.name,status))            
+            logging.info('task %s %s' % (task.name,status))            
             db(db.task_run.id==task_id).update(status=status, output=output,
                                                traceback=tb, result=dumps(result))
             task.update_record(status=status_repeat, next_run_time=next_run_time,
@@ -184,26 +226,72 @@ class Scheduler(object):
             return False
 
     def log_heartbeat(self):
+        """
+        logs a worker heartbeat
+        """
         db = self.db
         now = datetime.now()
-        host = current.request.env.http_host
+        host = self.worker_name
         if not db(db.worker_heartbeat.name==host).update(last_heartbeat=now):
             db.worker_heartbeat.insert(name=host,last_heartbeat=now)
         db.commit()
 
     def fix_failures(self):
-        """find all tasks that have been running than they should and set OVERDUE"""
+        """
+        find all tasks that have been running than they should and sets them to OVERDUE
+        """
         db = self.db
-        tasks = db(db.task_scheduled.status==RUNNING).select()
+        tasks = db(db.task_scheduled.status==RUNNING).select()        
         ids = [task.id for task in tasks if \
-                   task.last_run_time+timedelta(seconds=task.timeout)<datetime.now()]
+                   task.last_run_time+timedelta(seconds=task.timeout) \
+                   <datetime.now()]
         db(db.task_scheduled.id.belongs(ids)).update(status=OVERDUE)        
         db.commit()
 
-    def worker_loop(self,logger_level='INFO',pause=10,group_names=['main']):
-        """loop and log everything"""
+    def cleanup_scheduled(self, statuses=[COMPLETED],expiration=24*3600):
+        """
+        delete task_scheduled that were completed long ago
+        can be run as a task by adding:
+            tasks['scheduler.cleanup_scheduled']=scheduler.cleanup_scheduled
+        """
+        db = self.db
+        now = datetime.now()
+        db(db.task_scheduled.status.belongs(statuses))\
+            (db.task_scheduled.last_run_time+expiration<now).delete()
+        db.commit()
+
+    def cleanup_run(self, statuses=[COMPLETED],expiration=24*3600):
+        """
+        delete task_run that were completed long ago
+        can be run as a task by adding:
+            tasks['scheduler.cleanup_run']=scheduler.cleanup_run
+        """
+        db = self.db
+        now = datetime.now()
+        db(db.task_run.status.belongs(statuses))\
+            (db.task_run.last_run_time+expiration<now).delete()
+        db.commit()
+
+    @staticmethod
+    def guess_worker_name():
+        """
+        some times we may not know the name of a worker so we make one up
+        """
+        try:
+            return current.request.env.http_host
+        except:
+            return socket.gethostname()+':'+str(uuid.uuid4())
+
+    def worker_loop(self,
+                    logger_level='INFO',
+                    heartbeat=10,
+                    group_names=['main']):
+        """
+        this implements a worker process and should only run as worker
+        it loops and logs (almost) everything
+        """
         level = getattr(logging,logger_level)
-        logging.basicConfig(format="%(asctime)-15s %(levename)-8s: %(message)s")
+        logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
         logging.getLogger().setLevel(level)
         while True:
             if 'main' in group_names: 
@@ -212,8 +300,58 @@ class Scheduler(object):
             self.log_heartbeat()
             while self.run_next_task(group_names=group_names):
                 pass            
-            time.sleep(pause)
-
+            time.sleep(heartbeat)
     
-            
+def main():
+    """
+    allows to run worker without python web2py.py .... by simply python this.py
+    """
+    USAGE = """ work in progress, try -h """
+    parser = optparse.OptionParser()
+    parser.add_option("-w", "--worker_name", dest="worker_name", default=None,
+                      help="start a worker with name")
+    parser.add_option("-b", "--heartbeat",dest="heartbeat", default = 10,
+                      help="heartbeat time in seconds (default 10)")
+    parser.add_option("-L", "--logger_level",dest="logger_level", 
+                      default = 'INFO',
+                      help="level of logging (DEBUG, INFO, WARNING, ERROR)")
+    parser.add_option("-g", "--group_names",dest="group_names", 
+                      default = 'main',
+                      help="comma separated list of groups to be picked by the worker")
+    parser.add_option("-f", "--db_folder",dest="db_folder", 
+                      default = None,
+                      help="location of the dal database folder")
+    parser.add_option("-u", "--db_uri",dest="db_uri", 
+                      default = None,
+                      help="database URI string (web2py DAL syntax)")
+    parser.add_option("-m", "--db_migrate",dest="db_migrate", 
+                      action = "store_true", default=False,
+                      help="create tables if missing")
+    parser.add_option("-t", "--tasks",dest="tasks",default=None, 
+                      help="file containing task files, must define tasks = {'task_name':(lambda: 'output')} or similar set of tasks")
+    (options, args) = parser.parse_args()
+    if not options.tasks or not options.db_uri:
+        print USAGE
+    path,filename = os.path.split(options.tasks)
+    if filename.endswith('.py'):
+        filename = filename[:-3]
+    sys.path.append(path)
+    print 'importing tasks...'
+    tasks = __import__(filename, globals(), locals(), [], -1).tasks
+    print 'tasks found: '+', '.join(tasks.keys())
+    group_names = [x.strip() for x in options.group_names.split(',')]
+    print 'groups for this worker: '+', '.join(group_names)
+    print 'connecting to database in folder: ' + options.db_folder or './'
+    print 'using URI: '+options.db_uri
+    db = DAL(options.db_uri,folder=options.db_folder)    
+    print 'instantiating scheduler...'
+    scheduler=Scheduler(db = db,
+                        worker_name = options.worker_name,
+                        tasks = tasks,
+                        migrate = options.db_migrate)
+    print 'starting main worker loop...'
+    scheduler.worker_loop(logger_level = options.logger_level,
+                          heartbeat = options.heartbeat,
+                          group_names = group_names)
 
+if __name__=='__main__': main()
