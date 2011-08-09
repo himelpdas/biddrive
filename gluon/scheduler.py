@@ -82,8 +82,19 @@ from gluon import * # needs DAL, Field, current.T and validators
 from gluon.contrib.simplejson import loads,dumps
 
     
-STATUSES = QUEUED, RUNNING, COMPLETED, FAILED, TIMEOUT, OVERDUE, STOPPED = \
-    ('queued','running','completed','failed', 'timeout', 'overdue', 'stopped')
+STATUSES = (QUEUED, 
+            RUNNING,
+            COMPLETED,
+            FAILED,
+            TIMEOUT,
+            OVERDUE,
+            STOPPED) = ('queued',
+                        'running',
+                        'completed',
+                        'failed',
+                        'timeout',
+                        'overdue',
+                        'stopped')
 
 class TYPE(object): 
     """
@@ -168,7 +179,7 @@ class Scheduler(object):
             Field('start_time','datetime',default=now),
             Field('next_run_time','datetime',default=now),
             Field('stop_time','datetime',default=now+timedelta(days=1)),
-            Field('repeats','integer',default=1),
+            Field('repeats','integer',default=1,comment="0=unlimted"),
             Field('period','integer',default=60,comment='seconds'),
             Field('timeout','integer',default=60,comment='seconds'),
             Field('times_run','integer',default=0,writable=False),
@@ -225,7 +236,6 @@ class Scheduler(object):
                                          start_time=now)
             db.commit()
             times_run = task.times_run+1
-            next_run_time = task.last_run_time + timedelta(seconds=task.period)
             try:
                 func = self.tasks[task.func]
                 args = loads(task.args)
@@ -234,15 +244,18 @@ class Scheduler(object):
                     timeout_run(func,args,vars,timeout_duration=task.timeout)
             except:
                 status, result, output = FAILED, None, None
-                tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()            
+                tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()
+            next_run_time = task.last_run_time + timedelta(seconds=task.period)
             status_repeat = status
             if status==COMPLETED:
-                if times_run<task.repeats and next_run_time<task.stop_time:
+                if (not task.repeats or times_run<task.repeats) and \
+                        (not next_run_time or next_run_time<task.stop_time):
                     status_repeat = QUEUED
                     logging.info('task %s %s' % (task.name,status))            
             db(db.task_run.id==task_id).update(status=status, output=output,
                                                traceback=tb, result=dumps(result))
-            task.update_record(status=status_repeat, next_run_time=next_run_time,
+            task.update_record(status=status_repeat,
+                               next_run_time=next_run_time,
                                times_run=times_run)
             db.commit()
             return True
