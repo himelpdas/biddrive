@@ -789,7 +789,8 @@ def start_schedulers(options):
         p = Process(target=run, args=args)
         processes.append(p)
         p.start()
-    return processes
+    for p in processes:
+        p.join()
 
 def start(cron=True):
     """ Start server  """
@@ -830,7 +831,11 @@ def start(cron=True):
 
     # ## if -K 
     if options.scheduler:
-        start_schedulers(options)
+        try:
+            start_schedulers(options)
+        except KeyboardInterrupt:
+            pass
+        return
 
     # ## if -S start interactive shell (also no cron)
     if options.shell:
