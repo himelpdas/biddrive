@@ -1,4 +1,4 @@
-"""
+USAGE = """
 ## Example
 
 For any existing app
@@ -21,28 +21,45 @@ scheduler.worker_loop()
 =====================================
 
 ## run worker nodes with:
-python web2py.py -S app -M -N -R applications/app/modules/scheduler.py
-or without web2py (-h for info)
+
+   python web2py.py -S app -M -N -R applications/app/modules/scheduler.py
+
+or without web2py 
+
+   python gluon/scheduler.py -u sqlite://storage.sqlite \
+                             -f applications/myapp/databases/ \
+                             -t mytasks.py 
+(-h for info)
 python scheduler.py -h
 
 ## schedule jobs using
 http://127.0.0.1:8000/scheduler/appadmin/insert/db/task_scheduled
 
 ## monitor scheduled jobs
-http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_scheduled.id%3E0
+http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_scheduled.id>0
 
 ## view completed jobs
-http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_run.id%3E0
+http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_run.id>0
+
+## API
+You can schedule, update and delete jobs programmatically via
+ 
+   id = scheduler.db.tast_scheduler.insert(....)
+   scheduler.db(query).update(...)
+   scheduler.db(query).delete(...)
+
+(using normal DAL syntax)
+
+## Comments
 
 Works very much like celery & django-celery in web2py with some differences:
-- it has no dependendecies but web2py
+- it has no dependendecies but web2py (a small subset of it actually)
 - it is much simpler to use and runs everywhere web2py runs 
   as long as you can at last one backrgound task
 - it uses a database (via DAL) instead of rabbitMQ for message passing
   (this is not really a limitation for ~10 worker nodes)
 - it does not allow stopping of running tasks
 - it does not allow managed starting and stopping of worker nodes
-- it does not allow mapping and filtering of tasks to workers
 - it does not allow tasksets (but it does allow a task to submit another task)
 """
 
@@ -306,7 +323,6 @@ def main():
     """
     allows to run worker without python web2py.py .... by simply python this.py
     """
-    USAGE = """ work in progress, try -h """
     parser = optparse.OptionParser()
     parser.add_option("-w", "--worker_name", dest="worker_name", default=None,
                       help="start a worker with name")
