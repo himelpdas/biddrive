@@ -226,16 +226,20 @@ class Scheduler(object):
             db.commit()
             times_run = task.times_run+1
             next_run_time = task.last_run_time + timedelta(seconds=task.period)
-            func = self.tasks[task.func]
-            args = loads(task.args)
-            vars = loads(task.vars)
-            status, result, output, tb = \
-                timeout_run(func,args,vars,timeout_duration=task.timeout)
+            try:
+                func = self.tasks[task.func]
+                args = loads(task.args)
+                vars = loads(task.vars)
+                status, result, output, tb = \
+                    timeout_run(func,args,vars,timeout_duration=task.timeout)
+            except:
+                status, result, output = FAILED, None, None
+                tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()            
             status_repeat = status
             if status==COMPLETED:
                 if times_run<task.repeats and next_run_time<task.stop_time:
                     status_repeat = QUEUED
-            logging.info('task %s %s' % (task.name,status))            
+                    logging.info('task %s %s' % (task.name,status))            
             db(db.task_run.id==task_id).update(status=status, output=output,
                                                traceback=tb, result=dumps(result))
             task.update_record(status=status_repeat, next_run_time=next_run_time,
