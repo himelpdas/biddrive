@@ -224,7 +224,7 @@ class Scheduler(object):
             task_id = db.task_run.insert(task_scheduled=task.id,status=RUNNING,
                                          start_time=now)
             db.commit()
-            times_run = task.times_run
+            times_run = task.times_run+1
             next_run_time = task.last_run_time + timedelta(seconds=task.period)
             func = self.tasks[task.func]
             args = loads(task.args)
@@ -233,7 +233,6 @@ class Scheduler(object):
                 timeout_run(func,args,vars,timeout_duration=task.timeout)
             status_repeat = status
             if status==COMPLETED:
-                times_run += 1
                 if times_run<task.repeats and next_run_time<task.stop_time:
                     status_repeat = QUEUED
             logging.info('task %s %s' % (task.name,status))            
