@@ -151,7 +151,7 @@ def run(
     import_models=False,
     startfile=None,
     bpython=False,
-    code=False
+    pyhton_code=False
     ):
     """
     Start interactive shell or run Python script (startfile) in web2py
@@ -205,10 +205,10 @@ def run(
             execfile(startfile, _env)
         except RestrictedError, e:
             print e.traceback
-    elif code:
+    elif python_code:
         exec_pythonrc()
         try:
-            exec(code, _env)
+            exec(python_code, _env)
         except RestrictedError, e:
             print e.traceback
     else:
