@@ -104,6 +104,10 @@ win:
 	cp applications/__init__.py ../web2py_win/web2py/applications
 	cd ../web2py_win; zip -r web2py_win.zip web2py
 	mv ../web2py_win/web2py_win.zip .
+pip:
+	# create Web2py distribution for upload to Pypi
+	# after upload clean Web2py sources with rm -R ./dist
+	python setup.py sdist
 run:
 	python2.5 web2py.py -a hello
 push:
