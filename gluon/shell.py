@@ -151,7 +151,7 @@ def run(
     import_models=False,
     startfile=None,
     bpython=False,
-    pyhton_code=False
+    python_code=False
     ):
     """
     Start interactive shell or run Python script (startfile) in web2py
