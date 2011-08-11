@@ -960,7 +960,7 @@ class BaseAdapter(ConnectionPool):
             elif not isinstance(expression.op,str):
                 return expression.op()
             else:
-                return expression.op
+                return '(%s)' % expression.op
         elif field_type:
             return self.represent(expression,field_type)
         elif isinstance(expression,(list,tuple)):
