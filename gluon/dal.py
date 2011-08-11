@@ -810,6 +810,9 @@ class BaseAdapter(ConnectionPool):
     def COALESCE_ZERO(self,first):
         return 'COALESCE(%s,0)' % self.expand(first)
 
+    def RAW(self,first):
+        return first
+
     def ALLOW_NULL(self):
         return ''
 
@@ -954,8 +957,10 @@ class BaseAdapter(ConnectionPool):
                 return expression.op(expression.first, expression.second)
             elif not expression.first is None:
                 return expression.op(expression.first)
-            else:
+            elif not isinstance(expression.op,str):
                 return expression.op()
+            else:
+                return expression.op
         elif field_type:
             return self.represent(expression,field_type)
         elif isinstance(expression,(list,tuple)):
@@ -5389,6 +5394,8 @@ class Field(Expression):
             return '<no table>.%s' % self.name
 
 
+def raw(s): return Expression(None,s)
+
 class Query(object):
 
     """
@@ -5467,6 +5474,8 @@ class Set(object):
     def __call__(self, query):
         if isinstance(query,Table):
             query = query._id>0
+        elif isinstance(query,str):
+            query = raw(query)
         elif isinstance(query,Field):
             query = query!=None
         if self.query:
