@@ -119,8 +119,13 @@ help(Field)
 ###################################################################################
 
 __all__ = ['DAL', 'Field']
-MAXCHARLENGTH = 512
-INFINITY = 2**15 # not quite but reasonable default max char length
+
+MAXCHARLENGTH = 2**15 # not quite but reasonable default max char length
+DEFAULTLENGTH = {'string':512,
+                 'password':512,
+                 'upload':512,
+                 'text':2**15,
+                 'blob':2**31}
 
 import re
 import sys
@@ -421,7 +426,7 @@ class ConnectionPool(object):
 class BaseAdapter(ConnectionPool):
 
     driver = None
-    maxcharlength = INFINITY
+    maxcharlength = MAXCHARLENGTH
     commit_on_alter_table = False
     support_distributed_transaction = False
     uploads_in_blob = False
@@ -4599,7 +4604,7 @@ class Table(dict):
             field.tablename = field._tablename = tablename
             field.table = field._table = self
             field.db = field._db = self._db
-            if self._db and field.type!='text' and \
+            if self._db and not field.type in ('text','blob') and \
                     self._db._adapter.maxcharlength < field.length:
                 field.length = self._db._adapter.maxcharlength
             if field.requires == DEFAULT:
@@ -5228,7 +5233,7 @@ class Field(Expression):
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
         self.type = type  # 'string', 'integer'
-        self.length = (length is None) and MAXCHARLENGTH or length
+        self.length = (length is None) and DEFAULTLENGTH.get(type,512) or length
         if default==DEFAULT:
             self.default = update or None
         else:
