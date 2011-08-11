@@ -111,7 +111,7 @@ class StringWidget(FormWidget):
 
         default = dict(
             _type = 'text',
-            value = (value!=None and str(value)) or '',
+            value = (not value is None and str(value)) or '',
             )
         attr = StringWidget._attributes(field, default, **attributes)
 
@@ -547,7 +547,7 @@ class AutocompleteWidget(object):
     def __call__(self,field,value,**attributes):
         default = dict(
             _type = 'text',
-            value = (value!=None and str(value)) or '',
+            value = (not value is None and str(value)) or '',
             )
         attr = StringWidget._attributes(field, default, **attributes)
         div_id = self.keyword+'_div'
@@ -700,7 +700,7 @@ class SQLFORM(FORM):
 
         # if no fields are provided, build it from the provided table
         # will only use writable or readable fields, unless forced to ignore
-        if fields == None:
+        if fields is None:
             fields = [f.name for f in table if (ignore_rw or f.writable or f.readable) and not f.compute]
         self.fields = fields
 
@@ -749,11 +749,11 @@ class SQLFORM(FORM):
 
             if comments:
                 comment = col3.get(fieldname, field.comment)
-            if comment == None:
+            if comment is None:
                 comment = ''
             self.custom.comment[fieldname] = comment
 
-            if labels != None and fieldname in labels:
+            if not labels is None and fieldname in labels:
                 label = labels[fieldname]
             else:
                 label = field.label
@@ -1124,7 +1124,7 @@ class SQLFORM(FORM):
                 ### this happens because FORM has no knowledge of writable
                 ### and thinks that a missing boolean field is a None
                 if self.table[fieldname].type == 'boolean' and \
-                    self.vars.get(fieldname, True) == None:
+                    self.vars.get(fieldname, True) is None:
                     del self.vars[fieldname]
                 continue
 
@@ -1143,7 +1143,7 @@ class SQLFORM(FORM):
             elif field.type == 'upload':
                 f = self.vars[fieldname]
                 fd = '%s__delete' % fieldname
-                if f == '' or f == None:
+                if f == '' or f is None:
                     if self.vars.get(fd, False) or not self.record:
                         fields[fieldname] = ''
                     else:
@@ -1167,7 +1167,7 @@ class SQLFORM(FORM):
                 continue
             elif fieldname in self.vars:
                 fields[fieldname] = self.vars[fieldname]
-            elif field.default == None and field.type != 'blob':
+            elif field.default is None and field.type != 'blob':
                 self.errors[fieldname] = 'no data'
                 return False
             value = fields.get(fieldname,None)
@@ -1178,13 +1178,13 @@ class SQLFORM(FORM):
                 if not isinstance(value, list):
                     fields[fieldname] = [safe_int(x) for x in (value and [value] or [])]
             elif field.type == 'integer':
-                if value != None:
+                if not value is None:
                     fields[fieldname] = safe_int(value)
             elif field.type.startswith('reference'):
-                if value != None and isinstance(self.table, Table) and not keyed:
+                if not value is None and isinstance(self.table, Table) and not keyed:
                     fields[fieldname] = safe_int(value)
             elif field.type == 'double':
-                if value != None:
+                if not value is None:
                     fields[fieldname] = safe_float(value)
 
         for fieldname in self.vars:
@@ -1201,7 +1201,7 @@ class SQLFORM(FORM):
                 if not field.name in fields and field.writable==False:
                     if record_id:
                         fields[field.name] = self.record[field.name]
-                    elif self.table[field.name].default!=None:
+                    elif not self.table[field.name].default is None:
                         fields[field.name] = self.table[field.name].default
             if keyed:
                 if reduce(lambda x, y: x and y, record_id.values()): # if record_id
@@ -1357,7 +1357,7 @@ class SQLTABLE(TABLE):
                 (t,f) = c.split('.')
                 field = sqlrows.db[t][f]
                 headers[c] = field.label
-        if headers!=None:
+        if not headers is None:
             for c in columns:#new implement dict
                 if isinstance(headers.get(c, c), dict):
                     coldict = headers.get(c, c)
@@ -1393,7 +1393,7 @@ class SQLTABLE(TABLE):
             else:
                 _class = 'odd'
                 
-            if selectid!=None:#new implement
+            if not selectid is None: #new implement
                 if record.id==selectid:
                     _class += ' rowselected'
                     
@@ -1472,7 +1472,7 @@ class SQLTABLE(TABLE):
                                     and len(ur)>headers[colname]['truncate']:
                                 r = ur[:headers[colname]['truncate'] - 3]
                                 r = r.encode('utf8') + '...'
-                    elif truncate!=None and len(ur) > truncate:
+                    elif not truncate is None and len(ur) > truncate:
                         r = ur[:truncate - 3].encode('utf8') + '...'
                         
                 attrcol = dict()#new implement dict

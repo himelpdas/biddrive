@@ -1219,9 +1219,9 @@ class BaseAdapter(ConnectionPool):
         if isinstance(query, Field):
             tables.add(query.tablename)
         elif isinstance(query, (Expression, Query)):
-            if query.first!=None:
+            if not query.first is None:
                 tables = tables.union(self.tables(query.first))
-            if query.second!=None:
+            if not query.second is None:
                 tables = tables.union(self.tables(query.second))
         return list(tables)
 
@@ -1284,7 +1284,7 @@ class BaseAdapter(ConnectionPool):
         if obj == '' and not fieldtype[:2] in ['st', 'te', 'pa', 'up']:
             return 'NULL'
         r = self.represent_exceptions(obj,fieldtype)
-        if r != None:
+        if not r is None:
             return r
         if fieldtype == 'boolean':
             if obj and not str(obj)[:1].upper() in ['F', '0']:
@@ -1477,7 +1477,7 @@ class BaseAdapter(ConnectionPool):
             table = self.db[tablename]
             if fieldname in table:
                 default = table[fieldname].default
-                if default!=None:
+                if not default is None:
                     query = query&(table[fieldname]==default)
         return query
 
@@ -2908,7 +2908,7 @@ class NoSQLAdapter(BaseAdapter):
                 obj = [obj]
         if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
             return None
-        if obj != None:
+        if not obj is None:
             if isinstance(obj, list) and not fieldtype.startswith('list'):
                 obj = [self.represent(o, fieldtype) for o in obj]
             elif fieldtype in ('integer','id'):
@@ -4420,7 +4420,7 @@ def index():
 
     def import_from_csv_file(self, ifile, id_map=None, null='<NULL>',
                              unique='uuid', *args, **kwargs):
-        if id_map==None: id_map={}
+        if id_map is None: id_map={}
         for line in ifile:
             line = line.strip()
             if not line:
@@ -4775,9 +4775,9 @@ class Table(dict):
                 new_fields_names.append(name)
         for ofield in self:
             if not ofield.name in new_fields_names:
-                if not update and ofield.default!=None:
+                if not update and not ofield.default is None:
                     new_fields.append((ofield,ofield.default))
-                elif update and ofield.update!=None:
+                elif update and not ofield.update is None:
                     new_fields.append((ofield,ofield.update))
         for ofield in self:
             if not ofield.name in new_fields_names and ofield.compute:
@@ -5794,7 +5794,7 @@ class Rows(object):
                         value = record[t][f]
                     else:
                         value = record[f]
-                    if field.type=='blob' and value!=None:
+                    if field.type=='blob' and not value is None:
                         value = base64.b64encode(value)
                     elif represent and field.represent:
                         value = field.represent(value)

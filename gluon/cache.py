@@ -144,7 +144,7 @@ class CacheInRam(CacheAbstract):
     def clear(self, regex=None):
         self.locker.acquire()
         storage = self.storage
-        if regex == None:
+        if regex is None:
             storage.clear()
         else:
             self._clear(storage, regex)
@@ -172,14 +172,14 @@ class CacheInRam(CacheAbstract):
 
         self.locker.acquire()
         item = self.storage.get(key, None)
-        if item and f == None:
+        if item and f is None:
             del self.storage[key]
         self.storage[CacheAbstract.cache_stats_name]['hit_total'] += 1
         self.locker.release()
 
         if f is None:
             return None
-        if item and (dt == None or item[0] > time.time() - dt):
+        if item and (dt is None or item[0] > time.time() - dt):
             return item[1]
         value = f()
 
@@ -271,7 +271,7 @@ class CacheOnDisk(CacheAbstract):
         portalocker.lock(locker, portalocker.LOCK_EX)
         storage = shelve.open(self.shelve_name)
         try:
-            if regex == None:
+            if regex is None:
                 storage.clear()
             else:
                 self._clear(storage, regex)
@@ -295,7 +295,7 @@ class CacheOnDisk(CacheAbstract):
         storage = shelve.open(self.shelve_name)
 
         item = storage.get(key, None)
-        if item and f == None:
+        if item and f is None:
             del storage[key]
 
         storage[CacheAbstract.cache_stats_name] = {
@@ -310,7 +310,7 @@ class CacheOnDisk(CacheAbstract):
 
         if f is None:
             return None
-        if item and (dt == None or item[0] > time.time() - dt):
+        if item and (dt is None or item[0] > time.time() - dt):
             return item[1]
         value = f()
 

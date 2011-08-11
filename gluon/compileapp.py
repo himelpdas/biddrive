@@ -111,7 +111,7 @@ class LoadFactory(object):
     def __call__(self, c=None, f='index', args=None, vars=None,
                  extension=None, target=None,ajax=False,ajax_trap=False,
                  url=None,user_signature=False, content='loading...',**attr):
-        if args==None: args = []
+        if args is None: args = []
         vars = Storage(vars or {})
         import globals
         target = target or 'c'+str(random.random())[2:]

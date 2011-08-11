@@ -118,7 +118,7 @@ class RestrictedError(Exception):
         layer here is some description of where in the system the exception
         occurred.
         """
-        if environment == None: environment = {}
+        if environment is None: environment = {}
         self.layer = layer
         self.code = code
         self.output = output
@@ -184,7 +184,7 @@ def restricted(code, environment=None, layer='Unknown'):
     in code it raises a RestrictedError containing the traceback. layer is
     passed to RestrictedError to identify where the error occurred.
     """
-    if environment == None: environment = {}
+    if environment is None: environment = {}
     environment['__file__'] = layer
     try:
         if type(code) == types.CodeType:

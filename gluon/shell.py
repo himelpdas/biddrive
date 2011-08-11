@@ -50,9 +50,9 @@ def exec_environment(
 
     """
 
-    if request==None: request = Request()
-    if response==None: response = Response()
-    if session==None: session = Session()
+    if request is None: request = Request()
+    if response is None: response = Response()
+    if session is None: session = Session()
 
     if request.folder is None:
         mo = re.match(r'(|.*/)applications/(?P<appname>[^/]+)', pyfile)

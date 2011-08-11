@@ -1544,7 +1544,7 @@ class INPUT(DIV):
                 requires = [requires]
             for validator in requires:
                 (value, errors) = validator(value)
-                if errors != None:
+                if not errors is None:
                     self.vars[name] = value
                     self.errors[name] = errors
                     break
@@ -1559,7 +1559,7 @@ class INPUT(DIV):
             t = self['_type'] = 'text'
         t = t.lower()
         value = self['value']
-        if self['_value'] == None:
+        if self['_value'] is None:
             _value = None
         else:
             _value = str(self['_value'])
@@ -1579,10 +1579,10 @@ class INPUT(DIV):
             else:
                 self['_checked'] = None
         elif t == 'text' or t == 'hidden':
-            if value != None:
-                self['_value'] = value
-            else:
+            if value is None:
                 self['value'] = _value
+            else:
+                self['_value'] = value
 
     def xml(self):
         name = self.attributes.get('_name', None)
@@ -1612,7 +1612,7 @@ class TEXTAREA(INPUT):
             self['_rows'] = 10
         if not '_cols' in self.attributes:
             self['_cols'] = 40
-        if self['value'] != None:
+        if not self['value'] is None:
             self.components = [self['value']]
         elif self.components:
             self['value'] = self.components[0]
@@ -1678,7 +1678,7 @@ class SELECT(INPUT):
         options = itertools.chain(*component_list)
 
         value = self['value']
-        if value != None:
+        if not value is None:
             if not self['_multiple']:
                 for c in options: # my patch
                     if value and str(c['_value'])==str(value):
@@ -1787,7 +1787,7 @@ class FORM(DIV):
                     onvalidation(self)
         if self.errors:
             status = False
-        if session != None:
+        if not session is None:
             if hasattr(self,'record_hash'):
                 formkey = self.record_hash
             else:

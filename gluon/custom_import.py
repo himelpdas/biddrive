@@ -111,7 +111,7 @@ class _DateTrackerImporter(_BaseImporter):
 	locals = locals or {}
 	fromlist = fromlist or []
 
-        call_begin_end = self._tl._modules_loaded == None
+        call_begin_end = self._tl._modules_loaded is None
         if call_begin_end:
             self.begin()
 

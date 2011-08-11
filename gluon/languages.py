@@ -224,7 +224,7 @@ class translator(object):
         self.force(self.http_accept_language)
 
     def force(self, *languages):
-        if not languages or languages[0] == None:
+        if not languages or languages[0] is None:
             languages = []
         if len(languages) == 1 and isinstance(languages[0], (str, unicode)):
             languages = languages[0]
@@ -286,7 +286,7 @@ class translator(object):
             tokens[0] = tokens[0].strip()
             message = tokens[0] + '##' + tokens[1].strip()
         mt = self.t.get(message, None)
-        if mt == None:
+        if mt is None:
             self.t[message] = mt = tokens[0]
             if self.language_file and not is_gae:
                 write_dict(self.language_file, self.t)

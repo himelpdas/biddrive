@@ -127,22 +127,22 @@ class Mail(object):
             content_type=None,
             encoding='utf-8'):
             if isinstance(payload, str):
-                if filename == None:
+                if filename is None:
                     filename = os.path.basename(payload)
                 payload = read_file(payload, 'rb')
             else:
-                if filename == None:
+                if filename is None:
                     raise Exception('Missing attachment name')
                 payload = payload.read()
             filename = filename.encode(encoding)
-            if content_type == None:
+            if content_type is None:
                 content_type = contenttype(filename)
             self.my_filename = filename
             self.my_payload = payload
             MIMEBase.MIMEBase.__init__(self, *content_type.split('/', 1))
             self.set_payload(payload)
             self['Content-Disposition'] = 'attachment; filename="%s"' % filename
-            if content_id != None:
+            if not content_id is None:
                 self['Content-Id'] = '<%s>' % content_id.encode(encoding)
             Encoders.encode_base64(self)
 
@@ -321,7 +321,7 @@ class Mail(object):
         if bcc:
             if not isinstance(bcc, (list, tuple)):
                 bcc = [bcc]
-        if message == None:
+        if message is None:
             text = html = None
         elif isinstance(message, (list, tuple)):
             text, html = message
@@ -331,22 +331,22 @@ class Mail(object):
         else:
             text = message
             html = None
-        if text != None or html != None:
+        if not text is None or not html is None:
             attachment = MIMEMultipart.MIMEMultipart('alternative')
-            if text != None:
+            if not text is None:
                 if isinstance(text, basestring):
                     text = text.decode(encoding).encode('utf-8')
                 else:
                     text = text.read().decode(encoding).encode('utf-8')
                 attachment.attach(MIMEText.MIMEText(text,_charset='utf-8'))
-            if html != None:
+            if not html is None:
                 if isinstance(html, basestring):
                     html = html.decode(encoding).encode('utf-8')
                 else:
                     html = html.read().decode(encoding).encode('utf-8')
                 attachment.attach(MIMEText.MIMEText(html, 'html',_charset='utf-8'))
             payload_in.attach(attachment)
-        if attachments == None:
+        if attachments is None:
             pass
         elif isinstance(attachments, (list, tuple)):
             for attachment in attachments:
@@ -433,7 +433,7 @@ class Mail(object):
                 for addr in rec:
                     c.op_keylist_start(addr,0)
                     r = c.op_keylist_next()
-                    if r == None:
+                    if r is None:
                         self.error='No key for [%s]' % addr
                         return False
                     recipients.append(r)
@@ -579,7 +579,7 @@ class Mail(object):
                     server.ehlo()
                     server.starttls()
                     server.ehlo()
-                if self.settings.login != None:
+                if not self.settings.login is None:
                     server.login(*self.settings.login.split(':',1))
                 result = server.sendmail(self.settings.sender, to, payload.as_string())
                 server.quit()
@@ -791,8 +791,8 @@ class Auth(object):
 
 
     def url(self, f=None, args=None, vars=None):
-        if args==None: args=[]
-        if vars==None: vars={}
+        if args is None: args=[]
+        if vars is None: vars={}
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
     def __init__(self, environment=None, db=None,
@@ -1585,7 +1585,7 @@ class Auth(object):
                     elif temp_user.registration_key in ('disabled','blocked'):
                         response.flash = self.messages.login_disabled
                         return form
-                    elif temp_user.registration_key!=None and \
+                    elif not temp_user.registration_key is None and \
                             temp_user.registration_key.strip():
                         response.flash = \
                             self.messages.registration_verifying
@@ -2658,7 +2658,7 @@ class Auth(object):
     def add_membership(self, group_id=None, user_id=None, role=None):
         """
         gives user_id membership of group_id or role
-        if user_id==None than user_id is that of current logged in user
+        if user is None than user_id is that of current logged in user
         """
 
         group_id = group_id or self.id_group(role)
@@ -2683,7 +2683,7 @@ class Auth(object):
     def del_membership(self, group_id, user_id=None, role=None):
         """
         revokes membership from group_id to user_id
-        if user_id==None than user_id is that of current logged in user
+        if user_id is None than user_id is that of current logged in user
         """
 
         group_id = group_id or self.id_group(role)
@@ -2822,8 +2822,8 @@ class Crud(object):
         this should point to the controller that exposes
         download and crud
         """
-        if args==None: args=[]
-        if vars==None: vars={}
+        if args is None: args=[]
+        if vars is None: vars={}
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
     def __init__(self, environment, db=None, controller='default'):
@@ -3385,7 +3385,7 @@ def fetch(url, data=None, headers=None,
           cookie=Cookie.SimpleCookie(),
           user_agent='Mozilla/5.0'):
     headers = headers or {}
-    if data != None:
+    if not data is None:
         data = urllib.urlencode(data)        
     if user_agent: headers['User-agent'] = user_agent
     headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
@@ -3395,7 +3395,7 @@ def fetch(url, data=None, headers=None,
         req = urllib2.Request(url, data, headers)
         html = urllib2.urlopen(req).read()
     else:
-        method = ((data==None) and urlfetch.GET) or urlfetch.POST
+        method = ((data is None) and urlfetch.GET) or urlfetch.POST
         while url is not None:
             response = urlfetch.fetch(url=url, payload=data,
                                       method=method, headers=headers,
@@ -3702,7 +3702,7 @@ class Service(object):
                 return value.encode('utf8')
             if hasattr(value, 'isoformat'):
                 return value.isoformat()[:19].replace('T', ' ')
-            if value == None:
+            if value is None:
                 return '<NULL>'
             return value
         if args and args[0] in self.run_procedures:

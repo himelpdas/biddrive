@@ -95,7 +95,7 @@ class Token(object):
         if a cron job started before 60 seconds and did not stop,
         a warning is issue "Stale cron.master detected"
         """
-        if portalocker.LOCK_EX == None:
+        if portalocker.LOCK_EX is None:
             logger.warning('WEB2PY CRON: Disabled because no file locking')
             return None
         self.master = open(self.path,'rb+')

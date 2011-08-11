@@ -318,7 +318,7 @@ class IS_IN_SET(Validator):
             items = [(k, self.labels[i]) for (i, k) in enumerate(self.theset)]
         if self.sort:
             items.sort(options_sorter)
-        if zero and self.zero != None and not self.multiple:
+        if zero and not self.zero is None and not self.multiple:
             items.insert(0,('',self.zero))
         return items
 
@@ -335,7 +335,7 @@ class IS_IN_SET(Validator):
             values = [value]
         failures = [x for x in values if not x in self.theset]
         if failures and self.theset:
-            if self.multiple and (value == None or value == ''):
+            if self.multiple and (value is None or value == ''):
                 return ([], None)
             return (value, translate(self.error_message))
         if self.multiple:
@@ -439,7 +439,7 @@ class IS_IN_DB(Validator):
         items = [(k, self.labels[i]) for (i, k) in enumerate(self.theset)]
         if self.sort:
             items.sort(options_sorter)
-        if zero and self.zero != None and not self.multiple:
+        if zero and not self.zero is None and not self.multiple:
             items.insert(0,('',self.zero))
         return items
 
@@ -812,7 +812,7 @@ def is_empty(value, empty_regex=None):
         value = value.strip()
         if empty_regex is not None and empty_regex.match(value):
             value = ''
-    if value == None or value == '' or value == []:
+    if value is None or value == '' or value == []:
         return (value, True)
     return (value, False)
 
@@ -1346,7 +1346,7 @@ class IS_GENERIC_URL(Validator):
         """
 
         self.error_message = error_message
-        if allowed_schemes == None:
+        if allowed_schemes is None:
             self.allowed_schemes = all_url_schemes
         else:
             self.allowed_schemes = allowed_schemes
@@ -1375,7 +1375,7 @@ class IS_GENERIC_URL(Validator):
                     # the scheme
                     scheme = url_split_regex.match(value).group(2)
                     # Clean up the scheme before we check it
-                    if scheme != None:
+                    if not scheme is None:
                         scheme = urllib.unquote(scheme).lower()
                     # If the scheme really exists
                     if scheme in self.allowed_schemes:
@@ -1392,7 +1392,7 @@ class IS_GENERIC_URL(Validator):
                             prependTest = self.__call__(schemeToUse
                                      + '://' + value)
                             # if the prepend test succeeded
-                            if prependTest[1] == None:
+                            if prependTest[1] is None:
                                 # if prepending in the output is enabled
                                 if self.prepend_scheme:
                                     return prependTest
@@ -1761,7 +1761,7 @@ class IS_HTTP_URL(Validator):
         """
 
         self.error_message = error_message
-        if allowed_schemes == None:
+        if allowed_schemes is None:
             self.allowed_schemes = http_schemes
         else:
             self.allowed_schemes = allowed_schemes
@@ -1791,7 +1791,7 @@ class IS_HTTP_URL(Validator):
             x = IS_GENERIC_URL(error_message=self.error_message,
                                allowed_schemes=self.allowed_schemes,
                                prepend_scheme=self.prepend_scheme)
-            if x(value)[1] == None:
+            if x(value)[1] is None:
                 componentsMatch = url_split_regex.match(value)
                 authority = componentsMatch.group(4)
                 # if there is an authority component
@@ -1830,7 +1830,7 @@ class IS_HTTP_URL(Validator):
                             prependTest = self.__call__(schemeToUse
                                      + '://' + value)
                             # if the prepend test succeeded
-                            if prependTest[1] == None:
+                            if prependTest[1] is None:
                                 # if prepending in the output is enabled
                                 if self.prepend_scheme:
                                     return prependTest
@@ -1986,7 +1986,7 @@ class IS_URL(Validator):
 
             methodResult = subMethod(asciiValue)
             #if the validation of the US-ASCII version of the value failed
-            if methodResult[1] != None:
+            if not methodResult[1] is None:
                 # then return the original input value, not the US-ASCII version
                 return (value, methodResult[1])
             else:
@@ -2046,9 +2046,9 @@ class IS_TIME(Validator):
             ivalue = value
             value = regex_time.match(value.lower())
             (h, m, s) = (int(value.group('h')), 0, 0)
-            if value.group('m') != None:
+            if not value.group('m') is None:
                 m = int(value.group('m'))
-            if value.group('s') != None:
+            if not value.group('s') is None:
                 s = int(value.group('s'))
             if value.group('d') == 'pm' and 0 < h < 12:
                 h = h + 12
@@ -2915,13 +2915,13 @@ class IS_IPV4(Validator):
             for bottom, top in zip(self.minip, self.maxip):
                 if self.invert != (bottom <= number <= top):
                     ok = True
-            if not (self.is_localhost == None or self.is_localhost == \
+            if not (self.is_localhost is None or self.is_localhost == \
                 (number == self.localhost)):
                     ok = False
-            if not (self.is_private == None or self.is_private == \
+            if not (self.is_private is None or self.is_private == \
                 (sum([number[0] <= number <= number[1] for number in self.private]) > 0)):
                     ok = False
-            if not (self.is_automatic == None or self.is_automatic == \
+            if not (self.is_automatic is None or self.is_automatic == \
                 (self.automatic[0] <= number <= self.automatic[1])):
                     ok = False
             if ok:

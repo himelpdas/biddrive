@@ -839,7 +839,7 @@ def start(cron=True):
 
     # ## if -S start interactive shell (also no cron)
     if options.shell:
-        if options.args!=None:
+        if not options.args is None:
             sys.argv[:] = options.args
         run(options.shell, plain=options.plain, bpython=options.bpython,
             import_models=options.import_models, startfile=options.run)
