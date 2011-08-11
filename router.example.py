@@ -36,13 +36,13 @@
 #       or "DEFAULT" to use all controllers in the selected app plus 'static'
 #       or None to disable controller-name removal.
 #      Names in controllers are always treated as controller names when they appear in an incoming URL after
-#      the (optional) application and language names. 
+#      the (optional) application and language names.
 #  functions: list of valid functions in the default controller (default None)
 #      If present, the default function name will be omitted when the controller is the default controller
 #      and the first arg does not create an ambiguity.
 #  languages: list of all supported languages
 #      Names in languages are always treated as language names when they appear in an incoming URL after
-#      the (optional) application name. 
+#      the (optional) application name.
 #  default_language
 #       The language code (for example: en, it-it) optionally appears in the URL following
 #       the application (which may be omitted). For incoming URLs, the code is copied to
@@ -55,15 +55,15 @@
 #  domain: the domain that maps to this application (alternative to using domains in the BASE router)
 #  exclusive_domain: If True (default is False), an exception is raised if an attempt is made to generate
 #                    an outgoing URL with a different application without providing an explicit host.
-#  map_hyphen: If True (default is False), hyphens in incoming /a/c/f fields are converted 
+#  map_hyphen: If True (default is False), hyphens in incoming /a/c/f fields are converted
 #              to underscores, and back to hyphens in outgoing URLs.
 #              Language, args and the query string are not affected.
-#  map_static: By default, the default application is not stripped from static URLs. 
+#  map_static: By default, the default application is not stripped from static URLs.
 #       Set map_static=True to override this policy.
 #  acfe_match: regex for valid application, controller, function, extension /a/c/f.e
 #  file_match: regex for valid file (used for static file names)
 #  args_match: regex for valid args
-#       This validation provides a measure of security. 
+#       This validation provides a measure of security.
 #       If it is changed, the application perform its own validation.
 #
 #
@@ -183,7 +183,7 @@ def __routes_doctest():
     '/fcn#anchor'
     >>> filter_url('http://domain.com/welcome/default/fcn?query#anchor', out=True)
     '/fcn?query#anchor'
-    
+
     >>> filter_err(200)
     200
     >>> filter_err(399)
@@ -196,3 +196,4 @@ def __routes_doctest():
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+

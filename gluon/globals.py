@@ -286,8 +286,8 @@ class Response(Storage):
         from gluon.dal import thread
         dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]*1000)) \
                                for row in i.db._timings]) \
-                       for i in thread.instances]        
-        u = web2py_uuid() 
+                       for i in thread.instances]
+        u = web2py_uuid()
         return DIV(
             BUTTON('design',_onclick="document.location='%s'" % admin),
             BUTTON('request',_onclick="jQuery('#request-%s').slideToggle()"%u),
@@ -524,5 +524,6 @@ class Session(Storage):
                 del response.session_file
             except:
                 pass
+
 
 

@@ -334,3 +334,4 @@ if __name__ == '__main__':
     print '<html><body>' + highlight(data, sys.argv[2])\
          + '</body></html>'
 
+

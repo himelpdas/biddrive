@@ -107,7 +107,7 @@ Supported DAL URI strings:
 'informixu://user:password@server:3050/database' # unicode informix
 'google:datastore' # for google app engine datastore
 'google:sql' # for google app engine with sql (mysql compatible)
-'teradata://DSN=dsn;UID=user;PWD=pass' # experimental 
+'teradata://DSN=dsn;UID=user;PWD=pass' # experimental
 
 For more info:
 help(DAL)
@@ -269,7 +269,7 @@ if not 'google' in drivers:
         logger.warning('Informix support is experimental')
     except ImportError:
         logger.debug('no informixdb driver')
-        
+
     try:
         import sapdb
         drivers.append('SAPDB')
@@ -2216,7 +2216,7 @@ class FireBirdAdapter(BaseAdapter):
             elif adapter_args['driver_name'] == 'firebirdsql':
                 self.driver = firebirdsql
         else:
-            self.driver = kinterbasdb        
+            self.driver = kinterbasdb
         def connect(driver_args=driver_args):
             return self.driver.connect(**driver_args)
         self.pool_connection(connect)
@@ -2280,7 +2280,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
             elif adapter_args['driver_name'] == 'firebirdsql':
                 self.driver = firebirdsql
         else:
-            self.driver = kinterbasdb        
+            self.driver = kinterbasdb
         def connect(driver_args=driver_args):
             return self.driver.connect(**driver_args)
         self.pool_connection(connect)
@@ -3601,7 +3601,7 @@ class MongoDBAdapter(NoSQLAdapter):
         self.db_codec = 'UTF-8'
         self.pool_size = pool_size
 
-        m = re.compile('^(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(self.uri[10:])        
+        m = re.compile('^(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(self.uri[10:])
         if not m:
             raise SyntaxError, "Invalid URI string in DAL: %s" % self.uri
         host = m.group('host')
@@ -3975,7 +3975,7 @@ class DAL(dict):
                         self._dbname = regex_dbname.match(uri).group()
                         if not self._dbname in ADAPTERS:
                             raise SyntaxError, "Error in URI '%s' or database not supported" % self._dbname
-                        # notice that driver args or {} else driver_args 
+                        # notice that driver args or {} else driver_args
                         # defaults to {} global, not correct
                         args = (self,uri,pool_size,folder,
                                 db_codec, credential_decoder,
@@ -4543,7 +4543,7 @@ class Table(dict):
                 raise SyntaxError, \
                     "primarykey must be a list of fields from table '%s'" \
                     % tablename
-            self._primarykey = primarykey            
+            self._primarykey = primarykey
         elif not [f for f in fields if isinstance(f,Field) and f.type=='id']:
             field = Field('id', 'id')
             newfields.append(field)
@@ -4584,7 +4584,7 @@ class Table(dict):
                     fields.append(self._db.Field(tmp, 'blob', default=''))
 
         lower_fieldnames = set()
-        reserved = dir(Table) + ['fields'] 
+        reserved = dir(Table) + ['fields']
         for field in fields:
             if db and db.check_reserved:
                 db.check_reserved_keyword(field.name)
@@ -5510,11 +5510,11 @@ class Set(object):
             raise SyntaxError, "No fields to update"
         self.delete_uploaded_files(update_fields)
         return self.db._adapter.update(tablename,self.query,fields)
-    
+
     def validate_and_update(self, **update_fields):
         tablename = self.db._adapter.get_table(self.query)
         response = Row()
-        response.errors = self.db[tablename]._validate(**update_fields) 
+        response.errors = self.db[tablename]._validate(**update_fields)
         fields = self.db[tablename]._listify(update_fields,update=True)
         if not fields:
             raise SyntaxError, "No fields to update"
@@ -5555,7 +5555,7 @@ class Set(object):
                         items = oldname.split('.')
                         uploadfolder = os.path.join(uploadfolder,
                                                     "%s.%s" % (items[0], items[1]),
-                                                    items[2][:2])                
+                                                    items[2][:2])
                     oldpath = os.path.join(uploadfolder, oldname)
                     if os.path.exists(oldpath):
                         os.unlink(oldpath)
@@ -6076,6 +6076,7 @@ DAL.Table = Table  # was necessary in gluon/globals.py session.connect
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
 
 
 

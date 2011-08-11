@@ -6,7 +6,7 @@ Aim is
     * very easy to extend
     * reliable enough for practical purposes
     * and assist python web apps to detect clients.
-    
+
 Taken from http://pypi.python.org/pypi/httpagentparser (MIT license)
 Modified my Ross Peoples for web2py to better support iPhone and iPad.
 """
@@ -163,12 +163,12 @@ class Safari(Browser):
             return agent.split('Version/')[-1].split(' ')[0].strip()
         else:
             # Mobile Safari
-            return agent.split('Safari ')[-1].split(' ')[0].strip() 
+            return agent.split('Safari ')[-1].split(' ')[0].strip()
 
 
 class Linux(OS):
     look_for = 'Linux'
-    prefs = Storage(browser=["Firefox"], 
+    prefs = Storage(browser=["Firefox"],
                     dist=["Ubuntu", "Android"], flavor=None)
 
     def getVersion(self, agent):
@@ -250,7 +250,7 @@ class iPhone(Dist):
                 version = 'iOS ' + part.split(c)[0].strip()
                 break
         return version.replace('_', '.')
-        
+
 class iPad(Dist):
     look_for = 'iPad'
 
@@ -365,7 +365,7 @@ if __name__ == '__main__':
          ("Windows NT 5.1", "Netscape 8.1"),
          {'os': {'name': 'Windows', 'version': 'NT 5.1'}, 'browser': {'name': 'Netscape', 'version': '8.1'}},),
         )
-    
+
     class TestHAP(unittest.TestCase):
         def setUp(self):
             self.harass_repeat = 1000
@@ -391,4 +391,5 @@ if __name__ == '__main__':
                 time_taken / (len(self.data) * self.harass_repeat)
 
     unittest.main()
+
 

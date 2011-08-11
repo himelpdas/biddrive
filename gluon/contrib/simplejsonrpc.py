@@ -21,7 +21,7 @@ __version__ = "0.01"
 import urllib2
 import sys
 try:
-    import gluon.contrib.simplejson as json     # try web2py json serializer 
+    import gluon.contrib.simplejson as json     # try web2py json serializer
 except ImportError:
     try:
         import json                             # try stdlib (py2.6)
@@ -36,7 +36,7 @@ class JSONRPCError(RuntimeError):
     def __unicode__(self):
         return u"%s: %s" % (self.code, self.message)
     def __str__(self):
-        return self.__unicode__().encode("ascii","ignore")        
+        return self.__unicode__().encode("ascii","ignore")
 
 
 class JSONRPCClient(object):
@@ -51,7 +51,7 @@ class JSONRPCClient(object):
     def __getattr__(self, attr):
         "pseudo method that can be called"
         return lambda *args: self.call(attr, *args)
-    
+
     def call(self, method, *args):
         "JSON RPC communication (method invocation)"
 
@@ -79,15 +79,15 @@ class JSONRPCClient(object):
         else:
             f = urllib2.urlopen(req)
         content = f.read()
-        
+
         # store plain request and response for further debugging
         self.json_request = body
         self.json_response = content
 
-        if self.trace: 
+        if self.trace:
             print '\n', f.info(), '\n', content, '\n', "="*80
 
-        # parse json data coming from service 
+        # parse json data coming from service
         # {'version': '1.1', 'id': id, 'result': result, 'error': None}
         response = json.loads(content)
 
@@ -95,7 +95,7 @@ class JSONRPCClient(object):
         if self.error and self.exceptions:
             # {'name': 'JSONRPCError', 'code': code, 'message': message}
             raise JSONRPCError(self.error['code'], self.error['message'])
-            
+
         return response.get('result')
 
 
@@ -106,4 +106,5 @@ if __name__ == "__main__":
                 exceptions=True, trace=True,
                 )
     print client.add(1, 2)
+
 

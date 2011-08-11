@@ -195,7 +195,7 @@ def URL(
         available
     :raises SyntaxError: when a CRLF is found in the generated url
     """
-    
+
     if args in (None,[]): args = []
     vars = vars or {}
     application = None
@@ -998,7 +998,7 @@ class DIV(XmlComponent):
         return sibs[0]
 
 class CAT(DIV):
-    
+
     tag = ''
 
 def TAG_unpickler(data):
@@ -1296,7 +1296,7 @@ class A(DIV):
 
 
 class BUTTON(DIV):
-    
+
     tag = 'button'
 
 
@@ -1826,20 +1826,20 @@ class FORM(DIV):
             newform.append(hidden_fields)
         return DIV.xml(newform)
 
-    def validate(self, 
+    def validate(self,
                  values=None,
-                 session=None, 
+                 session=None,
                  formname='default',
                  keepvalues=False,
                  onvalidation=None,
                  hideerror=False,
                  onsuccess='flash',
                  onfailure='flash',
-                 message_onsuccess=None, 
-                 message_onfailure=None, 
+                 message_onsuccess=None,
+                 message_onfailure=None,
                  ):
         """
-        This function validates the form, 
+        This function validates the form,
         you can use it instead of directly form.accepts.
 
         Usage:
@@ -1850,7 +1850,7 @@ class FORM(DIV):
             form.validate() #you can pass some args here - see below
             return dict(form=form)
 
-        This can receive a bunch of arguments        
+        This can receive a bunch of arguments
 
         onsuccess = 'flash' - will show message_onsuccess in response.flash
                     None - will do nothing
@@ -1866,7 +1866,7 @@ class FORM(DIV):
         from gluon import current
         if not session: session = current.session
         if not values: values = current.request.post_vars
-         
+
         message_onsuccess = message_onsuccess or current.T("Success!")
         message_onfailure = message_onfailure or \
             current.T("Errors in form, please check it out.")
@@ -1911,7 +1911,7 @@ class FORM(DIV):
         # or a function name to use as callback or None to do nothing.
         def action():
             return dict(form=SQLFORM(db.table).process(onsuccess=my_callback)
-        """ 
+        """
         self.validate(values=values, session=session, **args)
         return self
 
@@ -2173,7 +2173,7 @@ class web2pyHTMLParser(HTMLParser):
             if parent_tagname[:len(tagname)]==tagname: break
 
 def markdown_serializer(text,tag=None,attr=None):
-    attr = attr or {} 
+    attr = attr or {}
     if tag is None: return re.sub('\s+',' ',text)
     if tag=='br': return '\n\n'
     if tag=='h1': return '#'+text+'\n\n'
@@ -2246,4 +2246,5 @@ class MARKMIN(XmlComponent):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
 

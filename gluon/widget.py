@@ -829,7 +829,7 @@ def start(cron=True):
         test(options.test, verbose=options.verbose)
         return
 
-    # ## if -K 
+    # ## if -K
     if options.scheduler:
         try:
             start_schedulers(options)
@@ -955,4 +955,5 @@ def start(cron=True):
     except KeyboardInterrupt:
         server.stop()
     logging.shutdown()
+
 

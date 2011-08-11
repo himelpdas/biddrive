@@ -739,7 +739,7 @@ class SQLFORM(FORM):
         self.custom.linkto = Storage()
 
         sep = separator or ''
-        
+
         for fieldname in self.fields:
             if fieldname.find('.') >= 0:
                 continue
@@ -1193,7 +1193,7 @@ class SQLFORM(FORM):
                  in request_vars:
                 fields[fieldname] = self.vars[fieldname]
 
-        if dbio:            
+        if dbio:
             if 'delete_this_record' in fields:
                 # this should never happen but seems to happen to some
                 del fields['delete_this_record']
@@ -1287,27 +1287,27 @@ class SQLTABLE(TABLE):
 
     This will link rows[id] to
         current_app/current_controlle/current_function/value_of_id
-        
+
     New Implements: 24 June 2011:
     -----------------------------
-    
+
     :param selectid: The id you want to select
     :param renderstyle: Boolean render the style with the table
-    
+
     :param extracolums = [{'label':A('Extra',_href='#'),
                     'class': '', #class name of the header
                     'width':'', #width in pixels or %
-                    'content':lambda row, rc: A('Edit',_href='edit/%s'%row.id),                     
+                    'content':lambda row, rc: A('Edit',_href='edit/%s'%row.id),
                     'selected': False #agregate class selected to this column
                     }]
-                    
-                    
+
+
     :param headers = {'table.id':{'label':'Id',
                            'class':'', #class name of the header
                            'width':'', #width in pixels or %
                            'truncate': 16, #truncate the content to...
                            'selected': False #agregate class selected to this column
-                           }, 
+                           },
                'table.myfield':{'label':'My field',
                                 'class':'', #class name of the header
                                 'width':'', #width in pixels or %
@@ -1315,7 +1315,7 @@ class SQLTABLE(TABLE):
                                 'selected': False #agregate class selected to this column
                                 },
                }
-               
+
     table = SQLTABLE(rows, headers=headers, extracolums=extracolums)
 
 
@@ -1329,7 +1329,7 @@ class SQLTABLE(TABLE):
         orderby=None,
         headers={},
         truncate=16,
-        columns=None,        
+        columns=None,
         th_link='',
         extracolumns=None,
         selectid=None,
@@ -1346,7 +1346,7 @@ class SQLTABLE(TABLE):
         if not sqlrows:
             return
         if not columns:
-            columns = sqlrows.colnames    
+            columns = sqlrows.colnames
         if headers=='fieldname:capitalize':
             headers = {}
             for c in columns:
@@ -1372,7 +1372,7 @@ class SQLTABLE(TABLE):
                                     _href=th_link+'?orderby=' + c)))
                 else:
                     row.append(TH(headers.get(c, c)))
-                    
+
             if extracolumns:#new implement dict
                 for c in extracolumns:
                     attrcol = dict()
@@ -1381,9 +1381,9 @@ class SQLTABLE(TABLE):
                     if c['class']!="":
                         attrcol.update(_class=c['class'])
                     row.append(TH(c['label'],**attrcol))
-                    
+
             components.append(THEAD(TR(*row)))
-        
+
 
         tbody = []
         for (rc, record) in enumerate(sqlrows):
@@ -1392,11 +1392,11 @@ class SQLTABLE(TABLE):
                 _class = 'even'
             else:
                 _class = 'odd'
-                
+
             if not selectid is None: #new implement
                 if record.id==selectid:
                     _class += ' rowselected'
-                    
+
             for colname in columns:
                 if not table_field.match(colname):
                     if "_extra" in record and colname in record._extra:
@@ -1465,7 +1465,7 @@ class SQLTABLE(TABLE):
                         r = ''
                 elif field.type in ['string','text']:
                     r = str(field.formatter(r))
-                    ur = unicode(r, 'utf8')                    
+                    ur = unicode(r, 'utf8')
                     if headers!={}: #new implement dict
                         if isinstance(headers[colname],dict):
                             if isinstance(headers[colname]['truncate'], int) \
@@ -1474,7 +1474,7 @@ class SQLTABLE(TABLE):
                                 r = r.encode('utf8') + '...'
                     elif not truncate is None and len(ur) > truncate:
                         r = ur[:truncate - 3].encode('utf8') + '...'
-                        
+
                 attrcol = dict()#new implement dict
                 if headers!={}:
                     if isinstance(headers[colname],dict):
@@ -1483,9 +1483,9 @@ class SQLTABLE(TABLE):
                             colclass= str(headers[colname]['class'] + " colselected").strip()
                         if colclass!="":
                             attrcol.update(_class=colclass)
-                        
+
                 row.append(TD(r,**attrcol))
-                
+
             if extracolumns:#new implement dict
                 for c in extracolumns:
                     attrcol = dict()
@@ -1496,17 +1496,17 @@ class SQLTABLE(TABLE):
                         attrcol.update(_class=colclass)
                     contentfunc = c['content']
                     row.append(TD(contentfunc(record, rc),**attrcol))
-                    
+
             tbody.append(TR(_class=_class, *row))
-            
+
         if renderstyle:
             components.append(STYLE(self.style()))
-        
+
         components.append(TBODY(*tbody))
-        
-    
+
+
     def style(self):
-        
+
         css = '''
         table tbody tr.odd {
             background-color: #DFD;
@@ -1524,9 +1524,10 @@ class SQLTABLE(TABLE):
             background: #DDF;
         }
         '''
-        
+
         return css
 
 form_factory = SQLFORM.factory # for backward compatibility, deprecated
+
 
 

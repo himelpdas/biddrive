@@ -20,3 +20,4 @@ def handler(request, response, methods):
     dispatch = getattr(dispatcher, '_dispatch', None)
     return dispatcher._marshaled_dispatch(request.body.read(), dispatch)
 
+

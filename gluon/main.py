@@ -592,7 +592,7 @@ def wsgibase(environ, responder):
     if global_settings.web2py_crontype == 'soft':
         newcron.softcron(global_settings.applications_parent).start()
     return http_response.to(responder)
-    
+
 
 def save_password(password, port):
     """
@@ -807,4 +807,5 @@ class HttpServer(object):
             os.unlink(self.pid_filename)
         except:
             pass
+
 

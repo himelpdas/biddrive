@@ -86,3 +86,4 @@ class _MemcacheClient(Client):
     def __keyFormat__(self, key):
         return '%s/%s' % (self.request.application, key.replace(' ', '_'))
 
+

@@ -29,7 +29,7 @@ def start():
     # Web2py versioning layout causes some glitches when creating distributions
     # in some situations setting the version here and not in the setup function
     # seems to help. The problem occured sometimes when manually setting a string
-    # like '1.98.2' in the setup functions but never when using a string like 
+    # like '1.98.2' in the setup functions but never when using a string like
     # '1.1.1' for some reason... undetermined cause
     # everything seems to go fine until you attempt to install the package with
     # pip at which point it hangs and gives a message about PKG_INFO in a tmp dir
@@ -97,7 +97,7 @@ def usage_prompt():
 
 if __name__ == '__main__':
     # asking for user input here breaks distribution packaging
-    # during pip install package_name for some reason so 
+    # during pip install package_name for some reason so
     # please test this well aspect before releasing.
     start()
     usage_prompt()

@@ -240,7 +240,7 @@ else:
             if match is not None:
                 # Returning a new object in the calling thread's context
                 # resolves a thread-safety.
-                return EndBracketMatch(match) 
+                return EndBracketMatch(match)
             return None
     class EndBracketMatch:
         def __init__(self, match):
@@ -3905,3 +3905,4 @@ def parse(url_file_stream_or_string, etag=None, modified=None, agent=None, refer
     result['version'] = result['version'] or feedparser.version
     result['namespaces'] = feedparser.namespacesInUse
     return result
+

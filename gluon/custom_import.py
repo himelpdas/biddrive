@@ -66,12 +66,12 @@ class _BaseImporter(object):
         help the management of this aspect.
         """
 
-    def __call__(self, name, globals=None, locals=None, 
+    def __call__(self, name, globals=None, locals=None,
 		 fromlist=None, level=-1):
         """
         The import method itself.
         """
-        return _STANDARD_PYTHON_IMPORTER(name, 
+        return _STANDARD_PYTHON_IMPORTER(name,
 					 globals,
 					 locals,
 					 fromlist,
@@ -322,4 +322,5 @@ class _Web2pyDateTrackerImporter(_Web2pyImporter, _DateTrackerImporter):
     """
     Like _Web2pyImporter but using a _DateTrackerImporter.
     """
+
 

@@ -90,7 +90,7 @@ _TEST()
 
 class mybuiltin(object):
     """
-    NOTE could simple use a dict and populate it, 
+    NOTE could simple use a dict and populate it,
     NOTE not sure if this changes things though if monkey patching import.....
     """
     #__builtins__
@@ -98,7 +98,7 @@ class mybuiltin(object):
         try:
             return getattr(__builtin__, key)
         except AttributeError:
-            raise KeyError, key            
+            raise KeyError, key
     def __setitem__(self, key, value):
         setattr(self, key, value)
 
@@ -136,7 +136,7 @@ class LoadFactory(object):
                 other_request[key] = value
             other_request['env'] = Storage()
             for key, value in request.env.items():
-                other_request.env['key'] = value 
+                other_request.env['key'] = value
             other_request.controller = c
             other_request.function = f
             other_request.extension = extension or request.extension
@@ -151,7 +151,7 @@ class LoadFactory(object):
             other_request.env.query_string = \
                 vars and html.URL(vars=vars).split('?')[1] or ''
             other_request.env.http_web2py_component_location = \
-                request.env.path_info            
+                request.env.path_info
             other_request.cid = target
             other_request.env.http_web2py_component_element = target
             other_response.view = '%s/%s.%s' % (c,f, other_request.extension)
@@ -568,4 +568,5 @@ def test():
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
 

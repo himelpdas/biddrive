@@ -50,3 +50,4 @@ class MemcacheClient(Client):
     def clear(self, key):
         key = '%s/%s' % (self.request.application, key)
         self.delete(key)
+

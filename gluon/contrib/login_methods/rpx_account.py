@@ -111,3 +111,4 @@ class RPXAccount(object):
                                  "RPXNOW.show();",
                                  _type="text/javascript"))
         return rpxform
+

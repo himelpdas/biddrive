@@ -1123,7 +1123,7 @@ recalled
 - fixed toolbar conflics, thanks Simon
 - GAE password shows with ****
 
-# 1.98.1
+# 1.98.1-1.98.2
 - fixed some problems with LOAD(ajax=False), thanks Anthony
 - jquery 1.6.2
 - gevent.pywsgi adds ssl support, thanks Vasile
@@ -1142,3 +1142,18 @@ recalled
 - fixed fawps support
 - SQLFORM(...,separator=': ') now customizable
 - many small bug fixes
+
+1.99.1
+- experimental gluon/scheduler.py
+- scripts/make_min_web2py.py
+- crud.search has more options, thanks Denes
+- cleanup of code
+- support for A(name,callback=url,target='id',delete='tr')
+- support for A(name,component=url,target='id',delete='tr')
+- dal expression.coalesce(*options)
+- new pip installer, thanks Chris Steel
+- gluon/contrib/simplejsonrpc.py, thanks Mariano
+- expire_sessions.py respects expiration time, thanks iceberg
+- fixed problem with max text length
+- addressed this issue: http://fuelyourcoding.com/jquery-events-stop-misusing-return-false/
+- other minor bug fixes

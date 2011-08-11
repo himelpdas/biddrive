@@ -571,11 +571,11 @@ class Mail(object):
                                             subject=subject, body=text, **xcc)
             else:
                 smtp_args = self.settings.server.split(':')
-                if self.settings.ssl: 
+                if self.settings.ssl:
                     server = smtplib.SMTP_SSL(*smtp_args)
-                else: 
+                else:
                     server = smtplib.SMTP(*smtp_args)
-                if self.settings.tls and not self.settings.ssl:                
+                if self.settings.tls and not self.settings.ssl:
                     server.ehlo()
                     server.starttls()
                     server.ehlo()
@@ -3320,7 +3320,7 @@ class Crud(object):
         tbl = TABLE()
         selected = []; refsearch = []; results = []
         showall = args.get('showall', False)
-        if showall: 
+        if showall:
             selected = fields
         chkall = args.get('chkall', False)
         if chkall:
@@ -3386,7 +3386,7 @@ def fetch(url, data=None, headers=None,
           user_agent='Mozilla/5.0'):
     headers = headers or {}
     if not data is None:
-        data = urllib.urlencode(data)        
+        data = urllib.urlencode(data)
     if user_agent: headers['User-agent'] = user_agent
     headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
     try:
@@ -4125,4 +4125,5 @@ class PluginManager(object):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
 

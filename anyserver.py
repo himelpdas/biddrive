@@ -160,7 +160,7 @@ def main():
                       dest='logging',
                       help='log into httpserver.log')
     parser.add_option('-P',
-                      '--profiler',                      
+                      '--profiler',
                       default=False,
                       dest='profiler',
                       help='profiler filename')
@@ -191,3 +191,4 @@ def main():
 
 if __name__=='__main__':
     main()
+
