@@ -28,5 +28,8 @@ else:
     response.menu.append((T('logout'), False,
                           URL(_a,'default',f='logout')))
 
-response.menu.append((T('help'), False, URL('examples','default','index')))
+if os.path.exists('applications/examples'):
+    response.menu.append((T('help'), False, URL('examples','default','index')))
+else:
+    response.menu.append((T('help'), False, 'http://web2py.com/examples'))
 
