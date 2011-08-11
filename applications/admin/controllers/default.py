@@ -588,8 +588,8 @@ def resolve():
             return 'minus'
 
     if request.vars:
-        c = ''.join([item[2:] for (i, item) in enumerate(d) if item[0] \
-                     == ' ' or 'line%i' % i in request.vars])
+        c = '\n'.join([item[2:].rstrip() for (i, item) in enumerate(d) if item[0] \
+                           == ' ' or 'line%i' % i in request.vars])
         safe_write(path, c)
         session.flash = 'files merged'
         redirect(URL('edit', args=request.args))
