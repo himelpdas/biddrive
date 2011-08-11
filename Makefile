@@ -22,6 +22,9 @@ epydoc:
 	cp applications/examples/static/title.png applications/examples/static/epydoc
 tests:
 	cd gluon/tests; ./test.sh 1>tests.log 2>&1 
+update:
+	wget -O gluon/contrib/feedparser.py http://feedparser.googlecode.com/svn/trunk/feedparser/feedparser.py
+	wget -O gluon/contrib/simplejsonrpc.py http://rad2py.googlecode.com/hg/ide2py/simplejsonrpc.py
 src:
 	echo 'Version 1.98.2 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files
