@@ -169,7 +169,7 @@ class Scheduler(object):
         now = datetime.now()
         db.define_table(
             'task_scheduled',
-            Field('name',requires=IS_NOT_IN_DB(db,'task_scheduled.name')),
+            Field('name',requires=IS_NOT_EMPTY()),
             Field('group_name',default='main',writable=False),
             Field('status',requires=IS_IN_SET(STATUSES),default=QUEUED,writable=False),
             Field('func',requires=IS_IN_SET(sorted(self.tasks.keys()))),
