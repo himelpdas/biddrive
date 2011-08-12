@@ -184,6 +184,7 @@ class Scheduler(object):
             Field('timeout','integer',default=60,comment='seconds'),
             Field('times_run','integer',default=0,writable=False),
             Field('last_run_time','datetime',writable=False,readable=False),
+            Field('assigned_worker_name',default='',writable=False),
             migrate=migrate,format='%(name)s')
         db.define_table(
             'task_run',
@@ -211,29 +212,41 @@ class Scheduler(object):
         """
         return SQLFORM(self.db.task_schedule,id,**args)
 
-    def next_task(self,group_names=['main']):
+    def assign_next_task(self,group_names=['main']):
         """
         find next task that needs to be executed
-        """
+        """        
         from datetime import datetime
         db = self.db
         query = (db.task_scheduled.enabled==True)
         query &= (db.task_scheduled.status==QUEUED)
         query &= (db.task_scheduled.group_name.belongs(group_names))
-        query &= (db.task_scheduled.next_run_time<datetime.now())
-        return db(query).select(orderby=db.task_scheduled.next_run_time).first()
+        query &= (db.task_scheduled.next_run_time<datetime.now())         
+        query &= (db.task_scheduled.assigned_worker_name=='')|\
+            (db.task_scheduled.assigned_worker_name==None)|\
+            (db.task_scheduled.assigned_worker_name==self.worker_name)
+        subselect = db(query)._select(
+            db.task_scheduled.id,limitby=(0,1),
+            orderby=db.task_scheduled.next_run_time)
+        db(db.task_scheduled.id.belongs(subselect)).update(
+            status=RUNNING,
+            assigned_worker_name=self.worker_name,
+            last_run_time=datetime.now)
+        row = db(db.task_scheduled.assigned_worker_name==self.worker_name).select().first()
+        db.commit()
+        return row
+
     def run_next_task(self,group_names=['main']):
         """
         get and execute next task
         """
         db = self.db
-        now = datetime.now()
-        task = self.next_task(group_names=group_names)
+        task = self.assign_next_task(group_names=group_names)
         if task:
             logging.info('running task %s' % task.name)
-            task.update_record(status=RUNNING,last_run_time=now)
-            task_id = db.task_run.insert(task_scheduled=task.id,status=RUNNING,
-                                         start_time=now)
+            task_id = db.task_run.insert(
+                task_scheduled=task.id,status=RUNNING,
+                start_time=task.last_run_time)
             db.commit()
             times_run = task.times_run+1
             try:
@@ -252,11 +265,14 @@ class Scheduler(object):
                         (not next_run_time or next_run_time<task.stop_time):
                     status_repeat = QUEUED
                     logging.info('task %s %s' % (task.name,status))
-            db(db.task_run.id==task_id).update(status=status, output=output,
-                                               traceback=tb, result=dumps(result))
+            db(db.task_run.id==task_id).update(status=status,
+                                               output=output,
+                                               traceback=tb,
+                                               result=dumps(result))
             task.update_record(status=status_repeat,
                                next_run_time=next_run_time,
-                               times_run=times_run)
+                               times_run=times_run,
+                               assigned_worker_name=None)
             db.commit()
             return True
         else:
@@ -336,8 +352,7 @@ class Scheduler(object):
                     self.fix_failures()
                 logging.info('checking for tasks...')
                 self.log_heartbeat()
-                while self.run_next_task(group_names=group_names):
-                    pass
+                while self.run_next_task(group_names=group_names): pass
                 time.sleep(heartbeat)
         except KeyboardInterrupt:
             logging.info('[ctrl]+C')
