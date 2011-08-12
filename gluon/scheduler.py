@@ -331,9 +331,11 @@ class Scheduler(object):
         some times we may not know the name of a worker so we make one up
         """
         try:
-            return current.request.env.http_host
+            worker_name = current.request.env.http_host
         except:
-            return socket.gethostname()+':'+str(uuid.uuid4())
+            worker_name = socket.gethostname()
+        worker_name += '#'+str(uuid.uuid4())
+        return worker_name
 
     def worker_loop(self,
                     logger_level='INFO',
@@ -347,6 +349,7 @@ class Scheduler(object):
             level = getattr(logging,logger_level)
             logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
             logging.getLogger().setLevel(level)
+            logging.info('worker_name = %s' % self.worker_name)
             while True:
                 if 'main' in group_names:
                     self.fix_failures()
