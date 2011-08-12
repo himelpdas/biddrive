@@ -322,7 +322,7 @@ class Scheduler(object):
         db = self.db
         now = datetime.now()
         db(db.task_run.status.belongs(statuses))\
-            (db.task_run.last_run_time+expiration<now).delete()
+            (db.task_run.start_time+expiration<now).delete()
         db.commit()
 
     @staticmethod
