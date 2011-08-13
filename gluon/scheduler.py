@@ -265,16 +265,20 @@ class Scheduler(object):
                         (not next_run_time or next_run_time<task.stop_time):
                     status_repeat = QUEUED
                     logging.info('task %s %s' % (task.name,status))
-            db(db.task_run.id==task_id).update(status=status,
-                                               output=output,
-                                               traceback=tb,
-                                               result=dumps(result))
-            task.update_record(status=status_repeat,
-                               next_run_time=next_run_time,
-                               times_run=times_run,
-                               assigned_worker_name=None)
-            db.commit()
-            return True
+            while True:
+                db(db.task_run.id==task_id).update(status=status,
+                                                   output=output,
+                                                   traceback=tb,
+                                                   result=dumps(result))
+                task.update_record(status=status_repeat,
+                                   next_run_time=next_run_time,
+                                   times_run=times_run,
+                                   assigned_worker_name=None)
+                db.commit()
+                return True
+            except:
+                db.rollback()
+                # keep looping until you can log task!
         else:
             return False
 
@@ -360,6 +364,7 @@ class Scheduler(object):
                     time.sleep(heartbeat)
                 except:
                     db.rollback()
+                    # whatever happened, try again
         except KeyboardInterrupt:
             logging.info('[ctrl]+C')
 
