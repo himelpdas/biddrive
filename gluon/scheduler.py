@@ -351,12 +351,15 @@ class Scheduler(object):
             logging.getLogger().setLevel(level)
             logging.info('worker_name = %s' % self.worker_name)
             while True:
-                if 'main' in group_names:
-                    self.fix_failures()
-                logging.info('checking for tasks...')
-                self.log_heartbeat()
-                while self.run_next_task(group_names=group_names): pass
-                time.sleep(heartbeat)
+                try:
+                    if 'main' in group_names:
+                        self.fix_failures()
+                    logging.info('checking for tasks...')
+                    self.log_heartbeat()
+                    while self.run_next_task(group_names=group_names): pass
+                    time.sleep(heartbeat)
+                except:
+                    db.rollback()
         except KeyboardInterrupt:
             logging.info('[ctrl]+C')
 
