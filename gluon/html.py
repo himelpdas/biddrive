@@ -1827,8 +1827,8 @@ class FORM(DIV):
         return DIV.xml(newform)
 
     def validate(self,
-                 values=None,
-                 session=None,
+                 values='request.post_vars',
+                 session='session',
                  formname='default',
                  keepvalues=False,
                  onvalidation=None,
@@ -1864,8 +1864,10 @@ class FORM(DIV):
         message_onfailure
         """
         from gluon import current
-        if not session: session = current.session
-        if not values: values = current.request.post_vars
+        if session == 'session':
+            session = current.session
+        if values == 'request.post_vars':
+            values = current.request.post_vars
 
         message_onsuccess = message_onsuccess or current.T("Success!")
         message_onfailure = message_onfailure or \
@@ -1884,7 +1886,7 @@ class FORM(DIV):
                 onfailure(self)
             return False
 
-    def process(self, values=None, session=None, **args):
+    def process(self, values='request.post_vars', session='session', **args):
         """
         Perform the .validate() method but returns the form
 
@@ -1912,6 +1914,7 @@ class FORM(DIV):
         def action():
             return dict(form=SQLFORM(db.table).process(onsuccess=my_callback)
         """
+        
         self.validate(values=values, session=session, **args)
         return self
 
