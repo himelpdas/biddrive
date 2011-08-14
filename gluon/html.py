@@ -1738,18 +1738,22 @@ class FORM(DIV):
 
     def accepts(
         self,
-        vars,
+        request_vars,
         session=None,
         formname='default',
         keepvalues=False,
         onvalidation=None,
         hideerror=False,
+        **kwargs
         ):
-        if vars.__class__.__name__ == 'Request':
-            vars=vars.post_vars
+        """
+        kwargs is not used but allows to specify the same interface for FROM and SQLFORM
+        """
+        if request_vars.__class__.__name__ == 'Request':
+            request_vars=request_vars.post_vars
         self.errors.clear()
         self.request_vars = Storage()
-        self.request_vars.update(vars)
+        self.request_vars.update(request_vars)
         self.session = session
         self.formname = formname
         self.keepvalues = keepvalues
@@ -1777,7 +1781,7 @@ class FORM(DIV):
                 onfailure = onvalidation.get('onfailure', None)
                 if onsuccess and status:
                     onsuccess(self)
-                if onfailure and vars and not status:
+                if onfailure and request_vars and not status:
                     onfailure(self)
                     status = len(self.errors) == 0
             elif status:
@@ -1795,6 +1799,7 @@ class FORM(DIV):
             self.formkey = session['_formkey[%s]' % formname] = formkey
         if status and not keepvalues:
             self._traverse(False,hideerror)
+        self.accepted = status
         return status
 
     def _postprocessing(self):
@@ -1826,18 +1831,7 @@ class FORM(DIV):
             newform.append(hidden_fields)
         return DIV.xml(newform)
 
-    def validate(self,
-                 values='request.post_vars',
-                 session='session',
-                 formname='default',
-                 keepvalues=False,
-                 onvalidation=None,
-                 hideerror=False,
-                 onsuccess='flash',
-                 onfailure='flash',
-                 message_onsuccess=None,
-                 message_onfailure=None,
-                 ):
+    def validate(self,**kwargs):
         """
         This function validates the form,
         you can use it instead of directly form.accepts.
@@ -1858,26 +1852,39 @@ class FORM(DIV):
         onfailure = 'flash' - will show message_onfailure in response.flash
                     None - will do nothing
                     can be a function (lambda form: pass)
-
-        values = values to test the validation - dictionary, response.vars, session or other - Default to (request.vars, session)
         message_onsuccess
         message_onfailure
+        next      = where to redirect in case of success
+        any other kwargs will be passed for form.accepts(...)
         """
-        from gluon import current
-        if session == 'session':
-            session = current.session
-        if values == 'request.post_vars':
-            values = current.request.post_vars
+        from gluon import current, redirect
+        kwargs['request_vars'] = kwargs.get('request_vars',current.request.post_vars)
+        kwargs['session'] = kwargs.get('session',current.session)
+        kwargs['dbio'] = kwargs.get('dbio',False) # necessary for SQLHTML forms 
 
-        message_onsuccess = message_onsuccess or current.T("Success!")
-        message_onfailure = message_onfailure or \
-            current.T("Errors in form, please check it out.")
+        onsuccess = kwargs.get('onsuccess','flash')
+        onfailure = kwargs.get('onfailure','flash')
+        message_onsuccess = kwargs.get('message_onsuccess',
+                                       current.T("Success!"))
+        message_onfailure = kwargs.get('message_onfailure',
+                                       current.T("Errors in form, please check it out."))
+        next = kwargs.get('next',None)
+        for key in ('message_onsuccess','message_onfailure','onaccept','onfailure','next'):
+            if key in kwargs:
+                del kwargs[key]      
 
-        if self.accepts(values, session):
+        if self.accepts(**kwargs):
             if onsuccess == 'flash':
-                current.response.flash = message_onsuccess
+                if next:
+                    current.session.flash = message_onsuccess
+                else:
+                    current.response.flash = message_onsuccess
             elif callable(onsuccess):
                 onsuccess(self)
+            if next:
+                if self.vars.id:
+                    next = next.replace('[id]',str(self.vars.id))
+                redirect(next)
             return True
         elif self.errors:
             if onfailure == 'flash':
@@ -1886,7 +1893,7 @@ class FORM(DIV):
                 onfailure(self)
             return False
 
-    def process(self, values='request.post_vars', session='session', **args):
+    def process(self, **kwargs):
         """
         Perform the .validate() method but returns the form
 
@@ -1914,8 +1921,8 @@ class FORM(DIV):
         def action():
             return dict(form=SQLFORM(db.table).process(onsuccess=my_callback)
         """
-        
-        self.validate(values=values, session=session, **args)
+        kwargs['dbio'] = kwargs.get('dbio',True) # necessary for SQLHTML forms
+        self.validate(**kwargs)
         return self
 
 

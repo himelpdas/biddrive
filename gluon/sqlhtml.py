@@ -1091,6 +1091,7 @@ class SQLFORM(FORM):
                     if not field.type.startswith('list:'):
                         self.field_parent[row_id]._traverse(False, hideerror)
                     self.custom.widget[ fieldname ] = widget
+            self.accpted = ret
             return ret
 
         if record_id and str(record_id) != str(self.record_id):
@@ -1114,6 +1115,7 @@ class SQLFORM(FORM):
             self.errors.clear()
             for component in self.elements('input, select, textarea'):
                 component['_disabled'] = True
+            self.accepted = True
             return True
 
         for fieldname in self.fields:
@@ -1169,6 +1171,7 @@ class SQLFORM(FORM):
                 fields[fieldname] = self.vars[fieldname]
             elif field.default is None and field.type != 'blob':
                 self.errors[fieldname] = 'no data'
+                self.accepted = False
                 return False
             value = fields.get(fieldname,None)
             if field.type == 'list:string':
@@ -1222,6 +1225,7 @@ class SQLFORM(FORM):
                         self.table._db(self.table._id == self.record.id).update(**fields)
                 else:
                     self.vars.id = self.table.insert(**fields)
+        self.accepted = ret
         return ret
 
     @staticmethod
