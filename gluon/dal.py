@@ -4474,6 +4474,9 @@ class Reference(int):
         self.__allocate()
         return self._record.get(key, None)
 
+    def get(self, key): 
+        return self.__getattr__(key) 
+        
     def __setattr__(self, key, value):
         if key.startswith('_'):
             int.__setattr__(self, key, value)
