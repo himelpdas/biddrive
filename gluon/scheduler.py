@@ -83,12 +83,14 @@ from gluon.contrib.simplejson import loads,dumps
 
 
 STATUSES = (QUEUED,
-            RUNNING,
+            ALLOCATED,
+            RUNNING,            
             COMPLETED,
             FAILED,
             TIMEOUT,
             OVERDUE,
             STOPPED) = ('queued',
+                        'allocated',
                         'running',
                         'completed',
                         'failed',
@@ -184,7 +186,7 @@ class Scheduler(object):
             Field('timeout','integer',default=60,comment='seconds'),
             Field('times_run','integer',default=0,writable=False),
             Field('last_run_time','datetime',writable=False,readable=False),
-            Field('assigned_worker_name',default='',writable=False),
+            Field('assigned_worker_name',default=None,writable=False),
             migrate=migrate,format='%(name)s')
         db.define_table(
             'task_run',
@@ -218,22 +220,30 @@ class Scheduler(object):
         """        
         from datetime import datetime
         db = self.db
-        query = (db.task_scheduled.enabled==True)
-        query &= (db.task_scheduled.status==QUEUED)
-        query &= (db.task_scheduled.group_name.belongs(group_names))
-        query &= (db.task_scheduled.next_run_time<datetime.now())         
-        query &= (db.task_scheduled.assigned_worker_name=='')|\
-            (db.task_scheduled.assigned_worker_name==None)|\
-            (db.task_scheduled.assigned_worker_name==self.worker_name)
-        subselect = db(query)._select(
-            db.task_scheduled.id,limitby=(0,1),
-            orderby=db.task_scheduled.next_run_time)
-        db(db.task_scheduled.id.belongs(subselect)).update(
-            status=RUNNING,
-            assigned_worker_name=self.worker_name,
-            last_run_time=datetime.now)
-        row = db(db.task_scheduled.assigned_worker_name==self.worker_name).select().first()
+        queued = (db.task_scheduled.status==QUEUED)
+        allocated = (db.task_scheduled.status==ALLOCATED)
+        due = (db.task_scheduled.enabled==True)
+        due &= (db.task_scheduled.group_name.belongs(group_names))
+        due &= (db.task_scheduled.next_run_time<datetime.now())         
+        assigned_to_me = (db.task_scheduled.assigned_worker_name==self.worker_name)
+        not_assigned = (db.task_scheduled.assigned_worker_name=='')|\
+            (db.task_scheduled.assigned_worker_name==None)        
+        # grab all queue tasks
+        counter = db(queued & due & (not_assigned|assigned_to_me)).update(
+            assigned_worker_name=self.worker_name,status=ALLOCATED)
         db.commit()
+        if counter:
+            # pick the first
+            row = db(allocated & due & assigned_to_me).select(                
+                orderby=db.task_scheduled.next_run_time,limitby=(0,1)).first()
+            # release others if any
+            if row:
+                row.update_record(status=RUNNING,last_run_time=datetime.now())
+                db(allocated & due & assigned_to_me).update(
+                    assigned_worker_name=None,status=QUEUED)
+                db.commit()
+        else:
+            row = None
         return row
 
     def run_next_task(self,group_names=['main']):
@@ -266,19 +276,20 @@ class Scheduler(object):
                     status_repeat = QUEUED
                     logging.info('task %s %s' % (task.name,status))
             while True:
-                db(db.task_run.id==task_id).update(status=status,
-                                                   output=output,
-                                                   traceback=tb,
-                                                   result=dumps(result))
-                task.update_record(status=status_repeat,
-                                   next_run_time=next_run_time,
-                                   times_run=times_run,
-                                   assigned_worker_name=None)
-                db.commit()
-                return True
-            except:
-                db.rollback()
-                # keep looping until you can log task!
+                try:
+                    db(db.task_run.id==task_id).update(status=status,
+                                                       output=output,
+                                                       traceback=tb,
+                                                       result=dumps(result))
+                    task.update_record(status=status_repeat,
+                                       next_run_time=next_run_time,
+                                       times_run=times_run,
+                                       assigned_worker_name=None)
+                    db.commit()
+                    return True
+                except db._adapter.driver.OperationalError:
+                    db.rollback()
+                    # keep looping until you can log task!
         else:
             return False
 
@@ -303,6 +314,7 @@ class Scheduler(object):
                    task.last_run_time+timedelta(seconds=task.timeout) \
                    <datetime.now()]
         db(db.task_scheduled.id.belongs(ids)).update(status=OVERDUE)
+        db(db.task_scheduled.status==QUEUED).update(assigned_worker_name=None)
         db.commit()
 
     def cleanup_scheduled(self, statuses=[COMPLETED],expiration=24*3600):
@@ -349,6 +361,7 @@ class Scheduler(object):
         this implements a worker process and should only run as worker
         it loops and logs (almost) everything
         """
+        db = self.db
         try:
             level = getattr(logging,logger_level)
             logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
@@ -362,7 +375,7 @@ class Scheduler(object):
                     self.log_heartbeat()
                     while self.run_next_task(group_names=group_names): pass
                     time.sleep(heartbeat)
-                except:
+                except db._adapter.driver.OperationalError:
                     db.rollback()
                     # whatever happened, try again
         except KeyboardInterrupt:
