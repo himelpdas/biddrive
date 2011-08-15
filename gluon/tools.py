@@ -1114,7 +1114,7 @@ class Auth(object):
                             _href=action+'/retrieve_username')
             lost_password=A(T('lost password?'),
                             _href=action+'/request_reset_password')
-            bar = SPAN('[ ',login,' ]',_class='auth_navbar')
+            bar = SPAN(' [ ',login,' ]',_class='auth_navbar')
 
             if not 'register' in self.settings.actions_disabled:
                 bar.insert(2, ' | ')
