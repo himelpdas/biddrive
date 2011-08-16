@@ -1192,7 +1192,7 @@ def update_languages():
     app = get_app()
     update_all_languages(apath(app, r=request))
     session.flash = T('Language files (static strings) updated')
-    redirect(URL('design',args=app))
+    redirect(URL('design',args=app,anchor='languages'))
 
 def twitter():
     session.forget()
