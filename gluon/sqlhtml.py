@@ -1098,11 +1098,8 @@ class SQLFORM(FORM):
             raise SyntaxError, 'user is tampering with form\'s record_id: ' \
                 '%s != %s' % (record_id, self.record_id)
 
-        if record_id and dbio:
-            if keyed:
-                self.vars.update(record_id)
-            else:
-                self.vars.id = self.record.id
+        if record_id and dbio and not keyed:
+            self.vars.id = self.record.id
 
         if requested_delete and self.custom.deletable:
             if dbio:
