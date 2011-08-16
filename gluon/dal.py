@@ -1464,10 +1464,10 @@ class BaseAdapter(ConnectionPool):
                     for (referee_table, referee_name) in \
                             table._referenced_by:
                         s = db[referee_table][referee_name]
-                        rn = db._referee_name % dict(table=referee_table,field=referee_name)
-                        if not rn in colset:
-                            # for backward compatibility
-                            colset[rn] = Set(db, s == id)
+                        referee_link = db._referee_name and \
+                            db._referee_name % dict(table=referee_table,field=referee_name)
+                        if referee_link and not referee_link in colset:
+                            colset[referee_link] = Set(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
