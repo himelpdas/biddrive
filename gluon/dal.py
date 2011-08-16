@@ -1464,11 +1464,10 @@ class BaseAdapter(ConnectionPool):
                     for (referee_table, referee_name) in \
                             table._referenced_by:
                         s = db[referee_table][referee_name]
-                        if not referee_table in colset:
+                        rn = db._referee_name % dict(table=referee_table,field=referee_name)
+                        if not rn in colset:
                             # for backward compatibility
-                            colset[referee_table] = Set(db, s == id)
-                        ### add new feature?
-                        ### colset[referee_table+'_by_'+refree_name] = Set(db, s == id)
+                            colset[rn] = Set(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
@@ -3966,6 +3965,7 @@ class DAL(dict):
         self._pending_references = {}
         self._request_tenant = 'request_tenant'
         self._common_fields = []
+        self._referee_name = '%(table)s'
         if not str(attempts).isdigit() or attempts < 0:
             attempts = 5
         if uri:
