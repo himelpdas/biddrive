@@ -64,11 +64,11 @@ class _MemcacheClient(Client):
 
     def increment(self, key, value=1, time_expire=300):
         newKey = self.__keyFormat__(key)
-        obj = self.get(newKey)
+        obj = Client.get(self, newKey)
         if obj:
             return Client.incr(self, newKey, value)
         else:
-            self.set(newKey, value, time_expire)
+            Client.set(self, newKey, value, time_expire)
             return value
 
     def set(self, key, value, time_expire=300):
