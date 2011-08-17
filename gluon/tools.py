@@ -2802,7 +2802,7 @@ class Auth(object):
 
         """
         if not user_id:
-            user_id = self.user.id
+            user_id = self.user_id
         if self.has_permission(name, table, 0, user_id):
             return table.id > 0
         db = self.db
