@@ -5838,14 +5838,16 @@ class Rows(object):
             (t, f) = col.split('.')
             res = None
             if not table_field.match(col):
+                key = col
                 res = record._extra[col]
             else:
+                key = f
                 if isinstance(record.get(t, None), Row):
                     res = record[t][f]
                 else:
                     res = record[f]
             if mode == 'object':
-                return (f, res)
+                return (key, res)
             else:
                 return res
 
