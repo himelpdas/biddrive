@@ -193,7 +193,7 @@ thread = threading.local()
 #  <table>.<field>, tables and fields may only be [a-zA-Z0-0_]
 
 regex_dbname = re.compile('^(\w+)(\:\w+)*')
-table_field = re.compile('^[\w_]+\.[\w_]+$')
+table_field = re.compile('^([\w_]+)\.([\w_]+)$')
 regex_content = re.compile('(?P<table>[\w\-]+)\.(?P<field>[\w\-]+)\.(?P<uuidkey>[\w\-]+)\.(?P<name>\w+)\.\w+$')
 regex_cleanup_fn = re.compile('[\'"\s;]+')
 string_unpack=re.compile('(?<!\|)\|(?!\|)')
@@ -3786,8 +3786,14 @@ class Row(dict):
 
     def __getitem__(self, key):
         key=str(key)
+        m = table_field.match(key)
         if key in self.get('_extra',{}):
             return self._extra[key]
+        elif m:
+            try:
+                return dict.__getitem__(self, m.group(1))[m.group(2)]
+            except KeyError:
+                key = m.group(2)
         return dict.__getitem__(self, key)
 
     def __call__(self,key):
