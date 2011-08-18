@@ -1246,26 +1246,26 @@ class SQLFORM(FORM):
         return SQLFORM(DAL(None).define_table(table_name, *fields), **attributes)
 
     @staticmethod
-    def smart(table,
-              query=None,
-              fields=None,
-              headers={},
-              orderby=None,
-              searchable=True,
-              sortable=True,
-              paginate=20,
-              deletable=True,
-              editable=True,
-              details=True,
-              selectable=None,
-              create=True,
-              links=None,
-              upload = None,
-              args=[],
-              maxtextlengths={},	
-              maxtextlength=20,
-              _class="web2py_smarttable",
-              formname='smarttable'):
+    def grid(table,
+             query=None,
+             fields=None,
+             headers={},
+             orderby=None,
+             searchable=True,
+             sortable=True,
+             paginate=20,
+             deletable=True,
+             editable=True,
+             details=True,
+             selectable=None,
+             create=True,
+             links=None,
+             upload = None,
+             args=[],
+             maxtextlengths={},	
+             maxtextlength=20,
+             _class="web2py_smarttable",
+             formname='smarttable'):
 
         from gluon import current
         db = table._db
