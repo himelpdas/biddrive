@@ -1278,20 +1278,20 @@ class SQLFORM(FORM):
             return URL(**b)
 
         back = A(T('back'),_href=session._referrer,_class='hspace')
-        if request.args and request.args[-1]=='create':
+        if create and request.args and request.args[-1]=='create':
             form = SQLFORM(table).process(next=session._referrer,formname=formname)
             return DIV(back,form,_class=_class)
-        if len(request.args)>1 and request.args[-2]=='view':
+        elif details and len(request.args)>1 and request.args[-2]=='view':
             record = table(request.args[-1]) or redirect(URL('error'))
             edit = A(T('edit'),_href=url(args=['edit',request.args[-1]]))
             form = SQLFORM(table,record,upload=upload,readonly=True)
             return DIV(back,edit,form,_class=_class)
-        if len(request.args)>1 and request.args[-2]=='edit':
+        elif editable and len(request.args)>1 and request.args[-2]=='edit':
             record = table(request.args[-1]) or redirect(URL('error'))
             form = SQLFORM(table,record,upload=upload,deletable=deletable)
             form.process(formname=formname,next=session._referrer)
             return DIV(back,form,_class=_class)
-        if len(request.args)>1 and request.args[-2]=='del':
+        elif deletable and len(request.args)>1 and request.args[-2]=='del':
             return db(table.id==request.args[-1]).delete()
         elif request.vars.records and not isinstance(request.vars.records,list):
             request.vars.records=[request.vars.records]
