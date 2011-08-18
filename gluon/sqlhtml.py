@@ -18,7 +18,7 @@ from http import HTTP
 from html import XML, SPAN, TAG, A, DIV, UL, LI, TEXTAREA, BR, IMG, SCRIPT
 from html import FORM, INPUT, LABEL, OPTION, SELECT
 from html import TABLE, THEAD, TBODY, TR, TD, TH
-from html import URL as Url
+from html import URL
 from dal import DAL, Table, Row, CALLABLETYPES
 from storage import Storage
 from utils import md5_hash
@@ -518,7 +518,7 @@ class AutocompleteWidget(object):
         else:
             self.is_reference = False
         if hasattr(request,'application'):
-            self.url = Url(r=request, args=request.args)
+            self.url = URL(args=request.args)
             self.callback()
         else:
             self.url = request
@@ -688,7 +688,7 @@ class SQLFORM(FORM):
                record=None,
                fields=['name'],
                labels={'name': 'Your name'},
-               linkto=URL(r=request, f='table/db/')
+               linkto=URL(f='table/db/')
         """
 
         self.ignore_rw = ignore_rw
@@ -1245,6 +1245,189 @@ class SQLFORM(FORM):
 
         return SQLFORM(DAL(None).define_table(table_name, *fields), **attributes)
 
+    @staticmethod
+    def smart(table,
+              query=None,
+              fields=None,
+              headers={},
+              orderby=None,
+              searchable=True,
+              sortable=True,
+              paginate=20,
+              deletable=True,
+              editable=True,
+              details=True,
+              selectable=None,
+              create=True,
+              links=None,
+              args=[],
+              maxtextlengths={},	
+              maxtextlength=20,
+              _class="web2py_smarttable",
+              formname='smarttable'):
+
+        from gluon import current
+        db = table._db
+        T = current.T
+        request = current.request
+        session = current.session
+        def url(**b):       
+            b['args'] = args+b.get('args',[])
+            # b['user_signature'] = True
+            return URL(**b)
+
+        back = A(T('back'),_href=session._referrer,_class='hspace')
+        if request.args and request.args[-1]=='create':
+            return DIV(back,
+                       SQLFORM(table).process(next=session._referrer,
+                                              formname=formname),_class=_class)
+        if len(request.args)>1 and request.args[-2]=='view':
+            edit = A(T('edit'),_href=url(args=['edit',request.args[-1]]))
+            return DIV(back,edit,
+                       SQLFORM(table,request.args[-1],readonly=True),_class=_class)
+        if len(request.args)>1 and request.args[-2]=='edit':
+            return DIV(back,
+                       SQLFORM(table,request.args[-1]).process(formname=formname,
+                                                               next=session._referrer),
+                       _class=_class)
+        if len(request.args)>1 and request.args[-2]=='del':
+            return db(table.id==request.args[-1]).delete()
+        elif request.vars.records and not isinstance(request.vars.records,list):
+            request.vars.records=[request.vars.records]
+        elif not request.vars.records:
+            request.vars.records=[]
+        session._referrer = URL(args=request.args,vars=request.vars)
+        def OR(a,b): return a|b
+        def AND(a,b): return a&b
+        dbset = db(table)
+
+        if query:
+            dbset = dbset(query)
+
+        if not fields:
+            fields = [field for field in table]
+
+        console = DIV(_class='web2py_console')
+        if searchable:
+            form = FORM(INPUT(_name='keywords',_value=request.vars.keywords),
+                        INPUT(_type='submit',_value=T('Search'),_class='hspace'),
+                        _method="GET")   
+            console.append(form)
+            key = request.vars.get('keywords','').strip()
+            subquery = reduce(OR,[field.contains(key) for field in fields \
+                                      if field.type in ('string','text')])
+            dbset = dbset(subquery)
+        else:
+            console.append(SPAN())
+        nrows = dbset.count()
+        console.append(SPAN(T('%(nrows)s records found' % dict(nrows=nrows)),
+                            _class='web2py_counter hspace'))
+        if create:
+            console.append(SPAN(A(T('create'),_href=url(args=['create'])),
+                                _class='web2py_create_link hspace'))
+        
+        order = request.vars.order or ''
+        if sortable:
+            if order and not order=='None':
+                if order[:1]=='~':
+                    sign, rorder = '~', order[1:] 
+                else:
+                    sign, rorder = '', order
+                tablename,fieldname = rorder.split('.',1)
+                if sign=='~':
+                    orderby=~db[tablename][fieldname]
+                else:
+                    orderby=db[tablename][fieldname]
+            
+        head = TR()
+        if selectable:
+            head.append(TH())
+        for field in fields:
+            key = str(field)
+            header = headers.get(str(field),hasattr(field,'label') and field.label or key)
+            if sortable:            
+                if key == order:
+                    key, marker = '~'+order, '[^]'
+                elif key == order[1:]:
+                    marker = '[v]'
+                else:
+                    marker = ''
+                header = A(header+marker,_href=url(vars=dict(
+                            keywords=request.vars.keywords or '',
+                            order=key)))
+            head.append(TH(header))
+        for i in (links or []) + [x for x in [deletable,editable,details] if x]:
+            head.append(TH())	
+
+        paginator = DIV(_class="web2py_paginator")
+        if paginate and paginate<nrows:
+            npages,reminder = divmod(nrows,paginate)
+            if reminder: npages+=1
+            try: page = int(request.vars.page or 1)-1
+            except ValueError: page = 0
+            limitby = (paginate*page,paginate*(page+1))            
+            def self_link(name,p):
+                d = dict(page=p+1)
+                if order: d['order']=order
+                if request.vars.keywords: d['keywords']=request.vars.keywords
+                return A(name,_href=url(vars=d),_class='hspace')
+            if page>0:
+                paginator.append(self_link('<<',0))
+            if page>1:
+                paginator.append(self_link('<',page-1))
+            pages = range(max(0,page-5),min(page+5,npages-1))
+            for p in pages:
+                if p == page:
+                    paginator.append(A(p+1,_onclick='return false',_class='hspace'))
+                else:
+                    paginator.append(self_link(p+1,p))
+            if page<npages-2:
+                paginator.append(self_link('>',page+1))
+            if page<npages-1:
+                paginator.append(self_link('>>',npages-1))
+        else:
+            limitby = None
+        rows = dbset.select(orderby=orderby,limitby=limitby,*fields)	    
+        if not searchable and not rows: return DIV(T('no data'))
+        if rows:
+            htmltable = TABLE(head)
+            for row in rows:
+                id = row['%s.id' % table]
+                tr = TR()
+                if selectable:
+                    tr.append(INPUT(_type="checkbox",_name="records",_value=id,
+                                    value=request.vars.records))
+                for field in fields:
+                    value = row[field]
+                    if field.represent:
+                        value=field.represent(value,row)
+                    if isinstance(value,str) and len(value)>maxtextlength:
+                        value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
+                    tr.append(TD(value))
+                if details:
+                    tr.append(TD(A(T('view'),_href=url(args=['view',id]))))
+                if editable:
+                    tr.append(TD(A(T('edit'),_href=url(args=['edit',id]))))
+                if deletable:
+                    tr.append(TD(A(T('del'),callback=url(args=['del',id]),delete='tr')))
+                for link in links or []:
+                    tr.append(TD(A(link[0],_href=link[1] % row)))
+                htmltable.append(tr)
+            if selectable:
+                htmltable = FORM(htmltable,INPUT(_type="submit"))
+                if htmltable.process(formname=formname).accepted:        
+                    records = [int(r) for r in htmltable.vars.records or []]
+                    selectable(records)
+                    redirect(session._referrer)
+        elif searchable:
+            htmltable=''
+        else:
+            htmltable=DIV('no data')
+        htmltable2=DIV(htmltable,_style='overflow-x: scroll')
+        res = DIV(console,htmltable,paginator,_class=_class)
+        return res
+                
+
 
 class SQLTABLE(TABLE):
 
@@ -1281,7 +1464,7 @@ class SQLTABLE(TABLE):
     More advanced linkto example::
 
         def mylink(field, type, ref):
-            return URL(r=request, args=[field])
+            return URL(args=[field])
 
         rows = db.select(db.sometable.ALL)
         table = SQLTABLE(rows, linkto=mylink)
@@ -1528,6 +1711,7 @@ class SQLTABLE(TABLE):
 
         return css
 
+            
 form_factory = SQLFORM.factory # for backward compatibility, deprecated
 
 

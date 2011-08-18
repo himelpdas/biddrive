@@ -312,7 +312,7 @@ select[multiple=multiple] {
     height: 90px;  
 }
 
-input[type=submit], input[type=button], button {
+input[type=submit], input[type=button], button, web2py_smarttable a {
     margin: 0px;
     /*width: 85px;*/
     height: 22px;    
@@ -554,3 +554,10 @@ a.button:hover span.icon.user { background-position: 0 -869px }
   h2, h3{ page-break-after: avoid; }
 }
 
+.hspace { padding: 0 5px 0 0; }
+.web2py_smarttable td { white-space:nowrap; }
+.web2py_smarttable a { text-decoration:none; background-color:#EAEAEA; padding:1px 5px 1px 5px;}
+.web2py_smarttable th { background-color:#EAEAEA; }
+.web2py_smarttable table { width:100%}
+.web2py_console {width:100%; text-align:center; background-color:#EAEAEA;}
+.web2py_paginator {width:100%; text-align:center; background-color:#EAEAEA;}
