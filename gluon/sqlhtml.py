@@ -28,7 +28,6 @@ import urllib
 import re
 import cStringIO
 
-
 table_field = re.compile('[\w_]+\.[\w_]+')
 widget_class = re.compile('^\w*')
 
@@ -1246,9 +1245,10 @@ class SQLFORM(FORM):
         return SQLFORM(DAL(None).define_table(table_name, *fields), **attributes)
 
     @staticmethod
-    def grid(table,
-             query=None,
+    def grid(query,
              fields=None,
+             field_id=None,
+             left=None,
              headers={},
              orderby=None,
              searchable=True,
@@ -1268,7 +1268,7 @@ class SQLFORM(FORM):
              formname='smarttable'):
 
         from gluon import current
-        db = table._db
+        db = query._db
         T = current.T
         request = current.request
         session = current.session
@@ -1276,6 +1276,14 @@ class SQLFORM(FORM):
             b['args'] = args+b.get('args',[])
             # b['user_signature'] = True
             return URL(**b)
+
+        dbset = db(query)
+        tables = [db[tablename] for tablename in db._adapter.tables(dbset.query)]        
+        if not fields:
+            fields = reduce(lambda a,b:a+b,[[field for field in table] for table in tables])
+        if not field_id:
+            field_id = tables[0]._id
+        table = field_id.table
 
         back = A(T('back'),_href=session._referrer,_class='hspace')
         if create and request.args and request.args[-1]=='create':
@@ -1300,13 +1308,6 @@ class SQLFORM(FORM):
         session._referrer = URL(args=request.args,vars=request.vars)
         def OR(a,b): return a|b
         def AND(a,b): return a&b
-        dbset = db(table)
-
-        if query:
-            dbset = dbset(query)
-
-        if not fields:
-            fields = [field for field in table]
 
         console = DIV(_class='web2py_console')
         if searchable:
@@ -1323,7 +1324,10 @@ class SQLFORM(FORM):
             dbset = dbset(subquery)
         else:
             console.append(SPAN())
-        nrows = dbset.count()
+        if left:
+            nrows = dbset.select('count(*)',left=left).first()['count(*)']
+        else:
+            nrows = dbset.count()
         console.append(SPAN(T('%(nrows)s records found' % dict(nrows=nrows)),
                             _class='web2py_counter hspace'))
         if create:
@@ -1391,12 +1395,16 @@ class SQLFORM(FORM):
                 paginator.append(self_link('>>',npages-1))
         else:
             limitby = None
-        rows = dbset.select(orderby=orderby,limitby=limitby,*fields)	    
+        rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)	    
         if not searchable and not rows: return DIV(T('no data'))
         if rows:
             htmltable = TABLE(head)
             for row in rows:
-                id = row['%s.id' % table]
+                id = row[field_id]
+                if len(tables)>1 or row.get('_extra',None):
+                    rrow = row[field._tablename]
+                else:
+                    rrow = row
                 tr = TR()
                 if selectable:
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
@@ -1405,7 +1413,10 @@ class SQLFORM(FORM):
                     if field.type=='blob': continue
                     value = row[field]
                     if field.represent:
-                        value=field.represent(value,row)
+                        try:
+                            value=field.represent(value,rrow)
+                        except KeyError:
+                            pass
                     elif field.type=='boolean':
                         value = value and '1' or '0'
                     elif field.type=='upload' and upload:
@@ -1420,7 +1431,7 @@ class SQLFORM(FORM):
                 if deletable:
                     tr.append(TD(A(T('del'),callback=url(args=['del',id]),delete='tr')))
                 for link in links or []:
-                    tr.append(TD(A(link[0],_href=link[1] % row)))
+                    tr.append(TD(link(row)))
                 htmltable.append(tr)
             if selectable:
                 htmltable = FORM(htmltable,INPUT(_type="submit"))

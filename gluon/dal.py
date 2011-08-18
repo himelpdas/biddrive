@@ -5434,7 +5434,7 @@ class Query(object):
         first=None,
         second=None,
         ):
-        self.db = db
+        self.db = self._db = db
         self.op = op
         self.first = first
         self.second = second

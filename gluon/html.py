@@ -1286,8 +1286,11 @@ class A(DIV):
                 (self['component'],self['target'] or '',d)
             self['_href'] = self['_href'] or '#null'
         elif self['callback']:
-            self['_onclick']="ajax('%s',[],'%s');%sreturn false;" % \
-                (self['callback'],self['target'] or '',d)
+            if d:
+                self['_onclick']="if(confirm(w2p_ajax_confirm_message||'Are you sure you want o delete this object?')){ajax('%s',[],'%s');%s};return false;" % (self['callback'],self['target'] or '',d)
+            else:
+                self['_onclick']="ajax('%s',[],'%s');%sreturn false;" % \
+                    (self['callback'],self['target'] or '',d)
             self['_href'] = self['_href'] or '#null'
         elif self['cid']:
             self['_onclick']='web2py_component("%s","%s");return false;' % \
