@@ -1262,19 +1262,20 @@ class SQLFORM(FORM):
              links=None,
              upload = None,
              args=[],
+             user_signature = True,
              maxtextlengths={},	
              maxtextlength=20,
              _class="web2py_smarttable",
              formname='smarttable'):
 
-        from gluon import current
+        from gluon import current, redirect
         db = query._db
         T = current.T
         request = current.request
         session = current.session
         def url(**b):       
             b['args'] = args+b.get('args',[])
-            # b['user_signature'] = True
+            b['user_signature'] = user_signature
             return URL(**b)
 
         dbset = db(query)
@@ -1284,22 +1285,36 @@ class SQLFORM(FORM):
         if not field_id:
             field_id = tables[0]._id
         table = field_id.table
+        tablename = table._tablename
 
         back = A(T('back'),_href=session._referrer,_class='hspace')
-        if create and request.args and request.args[-1]=='create':
+
+        def check_authorization():
+            if not URL.verify(request,user_signature=user_signature):
+                session.flash = T('not authorized')
+                redirect(session._referrer)        
+        if create and len(request.args)>1 and request.args and request.args[-1]=='create':
+            check_authorization()
+            table = db[request.args[-2]]
             form = SQLFORM(table).process(next=session._referrer,formname=formname)
             return DIV(back,form,_class=_class)
-        elif details and len(request.args)>1 and request.args[-2]=='view':
+        elif details and len(request.args)>2 and request.args[-3]=='view':
+            check_authorization()
+            table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
-            edit = A(T('edit'),_href=url(args=['edit',request.args[-1]]))
+            edit = A(T('edit'),_href=url(args=['edit',table._tablename,request.args[-1]]))
             form = SQLFORM(table,record,upload=upload,readonly=True)
             return DIV(back,edit,form,_class=_class)
-        elif editable and len(request.args)>1 and request.args[-2]=='edit':
+        elif editable and len(request.args)>2 and request.args[-3]=='edit':
+            check_authorization()
+            table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             form = SQLFORM(table,record,upload=upload,deletable=deletable)
             form.process(formname=formname,next=session._referrer)
             return DIV(back,form,_class=_class)
-        elif deletable and len(request.args)>1 and request.args[-2]=='del':
+        elif deletable and len(request.args)>2 and request.args[-3]=='del':
+            check_authorization()
+            table = db[request.args[-2]]
             return db(table.id==request.args[-1]).delete()
         elif request.vars.records and not isinstance(request.vars.records,list):
             request.vars.records=[request.vars.records]
@@ -1331,7 +1346,7 @@ class SQLFORM(FORM):
         console.append(SPAN(T('%(nrows)s records found' % dict(nrows=nrows)),
                             _class='web2py_counter hspace'))
         if create:
-            console.append(SPAN(A(T('create'),_href=url(args=['create'])),
+            console.append(SPAN(A(T('create'),_href=url(args=['create',tablename])),
                                 _class='web2py_create_link hspace'))
         
         order = request.vars.order or ''
@@ -1425,11 +1440,12 @@ class SQLFORM(FORM):
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
                     tr.append(TD(value))
                 if details:
-                    tr.append(TD(A(T('view'),_href=url(args=['view',id]))))
+                    tr.append(TD(A(T('view'),_href=url(args=['view',tablename,id]))))
                 if editable:
-                    tr.append(TD(A(T('edit'),_href=url(args=['edit',id]))))
+                    tr.append(TD(A(T('edit'),_href=url(args=['edit',tablename,id]))))
                 if deletable:
-                    tr.append(TD(A(T('del'),callback=url(args=['del',id]),delete='tr')))
+                    tr.append(TD(A(T('del'),callback=url(args=['del',tablename,id]),
+                                   delete='tr')))
                 for link in links or []:
                     tr.append(TD(link(row)))
                 htmltable.append(tr)
