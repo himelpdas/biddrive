@@ -1260,6 +1260,7 @@ class SQLFORM(FORM):
               selectable=None,
               create=True,
               links=None,
+              upload = None,
               args=[],
               maxtextlengths={},	
               maxtextlength=20,
@@ -1278,18 +1279,18 @@ class SQLFORM(FORM):
 
         back = A(T('back'),_href=session._referrer,_class='hspace')
         if request.args and request.args[-1]=='create':
-            return DIV(back,
-                       SQLFORM(table).process(next=session._referrer,
-                                              formname=formname),_class=_class)
+            form = SQLFORM(table).process(next=session._referrer,formname=formname)
+            return DIV(back,form,_class=_class)
         if len(request.args)>1 and request.args[-2]=='view':
+            record = table(request.args[-1]) or redirect(URL('error'))
             edit = A(T('edit'),_href=url(args=['edit',request.args[-1]]))
-            return DIV(back,edit,
-                       SQLFORM(table,request.args[-1],readonly=True),_class=_class)
+            form = SQLFORM(table,record,upload=upload,readonly=True)
+            return DIV(back,edit,form,_class=_class)
         if len(request.args)>1 and request.args[-2]=='edit':
-            return DIV(back,
-                       SQLFORM(table,request.args[-1]).process(formname=formname,
-                                                               next=session._referrer),
-                       _class=_class)
+            record = table(request.args[-1]) or redirect(URL('error'))
+            form = SQLFORM(table,record,upload=upload,deletable=deletable)
+            form.process(formname=formname,next=session._referrer)
+            return DIV(back,form,_class=_class)
         if len(request.args)>1 and request.args[-2]=='del':
             return db(table.id==request.args[-1]).delete()
         elif request.vars.records and not isinstance(request.vars.records,list):
@@ -1398,9 +1399,14 @@ class SQLFORM(FORM):
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
                                     value=request.vars.records))
                 for field in fields:
+                    if field.type=='blob': continue
                     value = row[field]
                     if field.represent:
                         value=field.represent(value,row)
+                    elif field.type=='boolean':
+                        value = value and '1' or '0'
+                    elif field.type=='upload' and upload:
+                        value = A('file', _href='%s/%s' % (upload, value))
                     if isinstance(value,str) and len(value)>maxtextlength:
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
                     tr.append(TD(value))
