@@ -3294,7 +3294,6 @@ class Crud(object):
         except:
             return None
 
-
     def search(self, *tables, **args):
         """
         Creates a search form and its results for a table

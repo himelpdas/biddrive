@@ -315,6 +315,11 @@ if not 'google' in drivers:
     except:
         logger.debug('no mongoDB driver')
 
+def OR(a,b):
+    return a|b
+
+def AND(a,b):
+    return a&b
 
 if 'google' in drivers:
 
@@ -5097,8 +5102,11 @@ class Expression(object):
         if not self.type in ('string', 'text'):
             raise SyntaxError, "endswith used with incompatible field type"
         return Query(self.db, self.db._adapter.ENDSWITH, self, value)
-
-    def contains(self, value):
+    
+    def contains(self, value, all=False):
+        if isinstance(value,(list,tuple)):
+            subqueries = [self.contains(str(v).strip()) for v in value if str(v).strip()]
+            return reduce(all and AND or OR, subqueries)
         if not self.type in ('string', 'text') and not self.type.startswith('list:'):
             raise SyntaxError, "contains used with incompatible field type"
         return Query(self.db, self.db._adapter.CONTAINS, self, value)
