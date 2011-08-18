@@ -1310,8 +1310,11 @@ class SQLFORM(FORM):
 
         console = DIV(_class='web2py_console')
         if searchable:
-            form = FORM(INPUT(_name='keywords',_value=request.vars.keywords),
+            form = FORM(INPUT(_name='keywords',_value=request.vars.keywords,
+                              _id='web2py_keywords'),
                         INPUT(_type='submit',_value=T('Search'),_class='hspace'),
+                        TAG.button(T('clear'),
+                                   _onclick="jQuery('#web2py_keywords').val('')"),
                         _method="GET")   
             console.append(form)
             key = request.vars.get('keywords','').strip()
