@@ -223,10 +223,20 @@ def run(
                         'import bpython error; trying ipython...')
             else:
                 try:
-                    from IPython.frontend.terminal.embed import InteractiveShellEmbed 
-                    shell = InteractiveShellEmbed(user_ns=_env)
-                    shell() 
-                    return
+                    import IPython 
+                    if IPython.__version__ >= '0.11':
+                        from IPython.frontend.terminal.embed import InteractiveShellEmbed 
+                        shell = InteractiveShellEmbed(user_ns=_env) 
+                        shell() 
+                        return 
+                    else: 
+                        # following 2 lines fix a problem with 
+                        # IPython; thanks Michael Toomim 
+                        if '__builtins__' in _env: 
+                            del _env['__builtins__'] 
+                        shell = IPython.Shell.IPShell(argv=[],user_ns=_env) 
+                        shell.mainloop() 
+                        return 
                 except:
                     logger.warning(
                         'import IPython error; use default python shell')
