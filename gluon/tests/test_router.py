@@ -340,7 +340,7 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain1.com/abc', app=True), 'app1')
         self.assertEqual(filter_url('http://www.domain1.com/abc', app=True), 'app1')
         self.assertEqual(filter_url('http://domain2.com/abc', app=True), 'app2')
-        self.assertEqual(filter_url('http://domain2.com/admin', app=True), 'admin')
+        self.assertEqual(filter_url('http://domain2.com/admin', app=True), 'app2')
 
         self.assertEqual(filter_url('http://domain.com/goodapp', app=True), 'goodapp')
         self.assertRaises(HTTP, filter_url, 'http://domain.com/bad!app', app=True)
@@ -396,6 +396,7 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(filter_url('http://domain1.com/abc.html'), '/app1/c1/abc')
         self.assertEqual(filter_url('http://domain1.com/abc.css'), '/app1/c1/abc.css')
         self.assertEqual(filter_url('http://domain1.com/index/abc'), "/app1/c1/index ['abc']")
+        self.assertEqual(filter_url('http://domain2.com/app1'), "/app2a/c2a/app1")
         
         self.assertEqual(filter_url('https://domain1.com/app1/ctr/fcn', domain=('app1',None), out=True), "/ctr/fcn")
         self.assertEqual(filter_url('https://www.domain1.com/app1/ctr/fcn', domain=('app1',None), out=True), "/ctr/fcn")

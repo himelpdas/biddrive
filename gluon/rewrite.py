@@ -811,9 +811,7 @@ class MapUrlIn(object):
         self.domain_application = None
         self.domain_controller = None
         arg0 = self.harg0
-        if base.applications and arg0 in base.applications:
-            self.application = arg0
-        elif (self.host, self.port) in base.domains:
+        if (self.host, self.port) in base.domains:
             (self.application, self.domain_controller) = base.domains[(self.host, self.port)]
             self.env['domain_application'] = self.application
             self.env['domain_controller'] = self.domain_controller
@@ -821,6 +819,8 @@ class MapUrlIn(object):
             (self.application, self.domain_controller) = base.domains[(self.host, None)]
             self.env['domain_application'] = self.application
             self.env['domain_controller'] = self.domain_controller
+        elif base.applications and arg0 in base.applications:
+            self.application = arg0
         elif arg0 and not base.applications:
             self.application = arg0
         else:
