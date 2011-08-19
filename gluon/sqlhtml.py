@@ -1508,16 +1508,41 @@ class SQLFORM(FORM):
         return res
               
     @staticmethod
-    def demo(table, constraints=None, links=None, linked_tables=None, user_signature=True, titles=None):
+    def demo(table, constraints=None, links=None,
+             linked_tables=None, user_signature=True):
+        """
+        @auth.requires_login()
+        def index():
+            db.define_table('person',Field('name'),format='%(name)s')
+            db.define_table('dog',Field('name'),Field('owner',db.person),format='%(name)s')
+            db.define_table('comment',Field('body'),Field('dog',db.dog))
+            if db(db.person).isempty():
+                from gluon.contrib.populate import populate
+                populate(db.person,300)
+                populate(db.dog,300)
+                populate(db.comment,1000)
+                db.commit()
+        form=SQLFORM.demo(db[request.args(0) or 'person']) #***
+        return dict(form=form)
+        
+        *** builds a complete interface to navigate all tables linke to the request.args(0)
+            table: pagination, search, view, edit, delete, children, parent, etc.
+            
+        constraints is a dict {'table',query} that limits which records can be accessible 
+        links is a list of lambda row: A(....) that will add buttons
+        linked_tables is a optional list of tablenames of tables to be linked
+
+        """
         from gluon import current, A, URL, DIV, H3, redirect
         request, T = current.request, current.T        
         db = table._db
         if links is None: links = []
-        if titles is None: titles = {}
         if constraints is None: constraints = {}
         breadcrumbs = []
+        if request.args(0) != table._tablename:
+            request.args=[table._tablename]
         try:
-            args = 0
+            args = 1
             previous_tablename,previous_fieldname,previous_id = table._tablename,None,None
             while len(request.args)>args:
                 key = request.args(args)
@@ -1551,15 +1576,15 @@ class SQLFORM(FORM):
                     args+=2
                 else:
                     break
-            if args>0:    
+            if args>1:    
                 query = (field == id)
                 if linked_tables is None or referee in linked_tables:
                     field.represent = lambda id,r=None,referee=referee,rep=field.represent:\
                         A(rep(id),_href=URL(args=request.args[:args]+['view',referee,id],
                                             user_signature=user_signature))
         except (KeyError,ValueError,TypeError):
-            redirect(URL())
-        if args==0:
+            redirect(URL(args=table._tablename))
+        if args==1:
             query = table.id>0
         if table._tablename in constraints:
             query = query&constraints[table._tablename]
