@@ -1294,7 +1294,7 @@ class SQLFORM(FORM):
             field_id = tables[0]._id
         table = field_id.table
         tablename = table._tablename
-        referrer = url()
+        referrer = session._grid_referrer or url()
         def check_authorization():
             if not URL.verify(request,user_signature=user_signature):
                 session.flash = T('not authorized')
@@ -1354,6 +1354,8 @@ class SQLFORM(FORM):
             request.vars.records=[]
         def OR(a,b): return a|b
         def AND(a,b): return a&b
+
+        session._grid_referrer = URL(args=request.args,vars=request.vars)
 
         console = DIV(_class='web2py_console')
         if searchable:
@@ -1495,7 +1497,7 @@ class SQLFORM(FORM):
                 if htmltable.process(formname=formname).accepted:        
                     records = [int(r) for r in htmltable.vars.records or []]
                     selectable(records)
-                    redirect(session._referrer)
+                    redirect(referrer)
         elif searchable:
             htmltable=''
         else:
