@@ -1365,11 +1365,14 @@ class SQLFORM(FORM):
                         INPUT(_type='submit',_value=T('Search')),
                         TAG.button(T('clear'),
                                    _onclick="jQuery('#web2py_keywords').val('')"),
-                        _method="GET",_action=url())   
+                        _method="GET",_action=url())
             console.append(form)
             key = request.vars.get('keywords','').strip()
-            subquery = reduce(OR,[field.contains(key) for field in fields \
-                                      if field.type in ('string','text')])
+            if searchable==True:
+                subquery = reduce(OR,[field.contains(key) for field in fields \
+                                          if field.type in ('string','text')])
+            else:
+                subquery = searchable(key,fields)
             dbset = dbset(subquery)
         else:
             console.append(SPAN())
