@@ -1508,12 +1508,13 @@ class SQLFORM(FORM):
         return res
               
     @staticmethod
-    def demo(table, links=None, linked_tables=None, user_signature=True, titles=None):
+    def demo(table, constraints=None, links=None, linked_tables=None, user_signature=True, titles=None):
         from gluon import current, A, URL, DIV, H3, redirect
-        request, T = current.request, current.T
+        request, T = current.request, current.T        
         db = table._db
         if links is None: links = []
         if titles is None: titles = {}
+        if constraints is None: constraints = {}
         breadcrumbs = []
         try:
             args = 0
@@ -1529,7 +1530,11 @@ class SQLFORM(FORM):
                     referee = field.type[10:]
                     if referee!=previous_tablename:                        
                         raise HTTP(400)
-                    record = db[referee](id)
+                    cond = constraints.get(referee,None)
+                    if cond: 
+                        record = db(db[referee].id==id)(cond).select().first()
+                    else:
+                        record = db[referee](id)
                     if previous_id:
                         if record[previous_fieldname] != int(previous_id):
                             raise HTTP(400)
@@ -1555,7 +1560,9 @@ class SQLFORM(FORM):
         except (KeyError,ValueError,TypeError):
             redirect(URL())
         if args==0:
-            query = table        
+            query = table.id>0
+        if table._tablename in constraints:
+            query = query&constraints[table._tablename]
         for tablename,fieldname in table._referenced_by:
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
