@@ -1295,8 +1295,6 @@ class SQLFORM(FORM):
         table = field_id.table
         tablename = table._tablename
         referrer = url()
-        back = A(T('back'),_href=referrer,_class='hspace')
-
         def check_authorization():
             if not URL.verify(request,user_signature=user_signature):
                 session.flash = T('not authorized')
@@ -1307,25 +1305,38 @@ class SQLFORM(FORM):
                 check_authorization()
                 stream = response.download(request,db)
                 raise HTTP(200,stream,**response.headers)
+        
+        def buttons(edit=False,view=False,record=None):
+            buttons = DIV(A(T('back'),_href=referrer))
+            if edit:
+                args = ['edit',table._tablename,request.args[-1]]
+                buttons.append(A(T('edit'),_href=url(args=args)))
+            if view:
+                args = ['view',table._tablename,request.args[-1]]
+                buttons.append(A(T('view'),_href=url(args=args)))
+            if record and links:
+                for link in links:
+                    buttons.append(link(record))
+            return buttons
+
         if create and len(request.args)>1 and request.args[-1]=='create':
             check_authorization()
             table = db[request.args[-2]]
             form = SQLFORM(table).process(next=referrer,formname=formname)
-            return DIV(back,form,_class=_class)
+            return DIV(buttons(),form,_class=_class)
         elif details and len(request.args)>2 and request.args[-3]=='view':
             check_authorization()
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
-            edit = A(T('edit'),_href=url(args=['edit',table._tablename,request.args[-1]]))
             form = SQLFORM(table,record,upload=upload,readonly=True)
-            return DIV(back,edit,form,_class=_class)
+            return DIV(buttons(edit=True,record=record),form,_class=_class)
         elif editable and len(request.args)>2 and request.args[-3]=='edit':
             check_authorization()
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             form = SQLFORM(table,record,upload=upload,deletable=deletable)
             form.process(formname=formname,next=referrer)
-            return DIV(back,form,_class=_class)
+            return DIV(buttons(view=True,record=record),form,_class=_class)
         elif deletable and len(request.args)>2 and request.args[-3]=='del':
             check_authorization()
             table = db[request.args[-2]]
@@ -1348,7 +1359,7 @@ class SQLFORM(FORM):
         if searchable:
             form = FORM(INPUT(_name='keywords',_value=request.vars.keywords,
                               _id='web2py_keywords'),
-                        INPUT(_type='submit',_value=T('Search'),_class='hspace'),
+                        INPUT(_type='submit',_value=T('Search')),
                         TAG.button(T('clear'),
                                    _onclick="jQuery('#web2py_keywords').val('')"),
                         _method="GET")   
@@ -1495,7 +1506,7 @@ class SQLFORM(FORM):
               
     @staticmethod
     def demo(table, links=None, linked_tables=None, user_signature=True, titles=None):
-        from gluon import current, A, URL, DIV, H3
+        from gluon import current, A, URL, DIV, H3, redirect
         request = current.request
         db = table._db
         if links is None: links = []
@@ -1523,8 +1534,8 @@ class SQLFORM(FORM):
                                                        user_signature=user_signature)))
                 tablename = table._tablename
                 nargs = 1
-        except IOError:
-            redirect(URL(args=key))
+        except KeyError:
+            redirect(URL(args=table._tablename))
         tablename = titles.get(tablename,
                                ' '.join(w.capitalize() for w in tablename.split('_')))
         grid=SQLFORM.grid(query,args=request.args[:nargs],links=links,
