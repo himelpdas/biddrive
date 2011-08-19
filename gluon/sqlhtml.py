@@ -1319,9 +1319,9 @@ class SQLFORM(FORM):
                     buttons.append(link(record))
             return buttons
 
-        if create and len(request.args)>1 and request.args[-1]=='create':
+        if create and len(request.args)>1 and request.args[-2]=='new':
             check_authorization()
-            table = db[request.args[-2]]
+            table = db[request.args[-1]]
             form = SQLFORM(table).process(next=referrer,formname=formname)
             return DIV(buttons(),form,_class=_class)
         elif details and len(request.args)>2 and request.args[-3]=='view':
@@ -1337,7 +1337,7 @@ class SQLFORM(FORM):
             form = SQLFORM(table,record,upload=upload,deletable=deletable)
             form.process(formname=formname,next=referrer)
             return DIV(buttons(view=True,record=record),form,_class=_class)
-        elif deletable and len(request.args)>2 and request.args[-3]=='del':
+        elif deletable and len(request.args)>2 and request.args[-3]=='delete':
             check_authorization()
             table = db[request.args[-2]]
             return db(table.id==request.args[-1]).delete()
@@ -1379,7 +1379,7 @@ class SQLFORM(FORM):
         console.append(SPAN(T('%(nrows)s records found' % dict(nrows=nrows)),
                             _class='web2py_counter hspace'))
         if create:
-            console.append(SPAN(A(T('create'),_href=url(args=['create',tablename])),
+            console.append(SPAN(A(T('new'),_href=url(args=['new',tablename])),
                                 _class='web2py_create_link hspace'))
         
         order = request.vars.order or ''
@@ -1487,7 +1487,7 @@ class SQLFORM(FORM):
                 if editable:
                     tr.append(TD(A(T('edit'),_href=url(args=['edit',tablename,id]))))
                 if deletable:
-                    tr.append(TD(A(T('del'),callback=url(args=['del',tablename,id]),
+                    tr.append(TD(A(T('del'),callback=url(args=['delete',tablename,id]),
                                    delete='tr')))
                 for link in links or []:
                     tr.append(TD(link(row)))
@@ -1509,40 +1509,55 @@ class SQLFORM(FORM):
     @staticmethod
     def demo(table, links=None, linked_tables=None, user_signature=True, titles=None):
         from gluon import current, A, URL, DIV, H3, redirect
-        request = current.request
+        request, T = current.request, current.T
         db = table._db
         if links is None: links = []
         if titles is None: titles = {}
-        key = request.args(0) or table._tablename
+        breadcrumbs = []
         try:
-            if '.' in key:        
-                tablename,fieldname = key.split('.',1)
-                table = db[tablename]
-                field = table[fieldname]
-                referee = field.type[10:]
-                query = (field == request.args(1))
-                nargs = 2
+            args=0
+            while len(request.args)>args:
+                key = request.args(args)
+                if '.' in key:        
+                    id = request.args(args+1)
+                    tablename,fieldname = key.split('.',1)
+                    table = db[tablename]
+                    field = table[fieldname]
+                    field.default = id
+                    referee = field.type[10:]
+                    record = db[referee](id)
+                    try:
+                        name = db[referee]._format % record
+                    except TypeError:
+                        name = id
+                    breadcrumbs += [A(T(referee),_href=URL(args=request.args[:args])),' ',
+                                    A(name,
+                                      _href=URL(args=request.args[:args]+['view',referee,id],
+                                                user_signature=True)),' > ']
+                    args+=2
+                else:
+                    break
+            if args>0:    
+                query = (field == id)
                 if linked_tables is None or referee in linked_tables:
                     field.represent = lambda id,r=None,referee=referee,rep=field.represent:\
-                        A(rep(id),_href=URL(args=(referee,'view',referee,id),
+                        A(rep(id),_href=URL(args=request.args[:args]+['view',referee,id],
                                             user_signature=user_signature))
-            else:
-                query = table = db[key]        
-                for tablename,fieldname in table._referenced_by:
-                    if linked_tables is None or tablename in linked_tables:
-                        args0 = tablename+'.'+fieldname
-                        links.append(lambda row,t=tablename:\
-                                         A(t,_href=URL(args=(args0,row.id),
-                                                       user_signature=user_signature)))
-                tablename = table._tablename
-                nargs = 1
-        except KeyError:
-            redirect(URL(args=table._tablename))
-        tablename = titles.get(tablename,
-                               ' '.join(w.capitalize() for w in tablename.split('_')))
-        grid=SQLFORM.grid(query,args=request.args[:nargs],links=links,
+        except:
+            redirect(URL())
+        if args==0:
+            query = table        
+        for tablename,fieldname in table._referenced_by:
+            if linked_tables is None or tablename in linked_tables:
+                args0 = tablename+'.'+fieldname
+                links.append(lambda row,t=tablename:\
+                                 A(t,_href=URL(args=request.args[:args]+[args0,row.id],
+                                               user_signature=user_signature)))
+        breadcrumbs.append(T(table._tablename))
+        print request.args[:args]
+        grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature)
-        return DIV(H3(tablename),grid)
+        return DIV(H3(*breadcrumbs),grid)
 
 
 class SQLTABLE(TABLE):
@@ -1826,7 +1841,6 @@ class SQLTABLE(TABLE):
         '''
 
         return css
-
             
 form_factory = SQLFORM.factory # for backward compatibility, deprecated
 
