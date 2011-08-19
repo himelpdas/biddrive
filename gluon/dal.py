@@ -5594,6 +5594,12 @@ def update_record(pack, a=None):
     for (k, v) in c.items():
         colset[k] = v
 
+class VirtualCommand(object):
+    def __init__(self,method,row):
+        self.method=method
+        self.row=row
+    def __call__(self,*args,**kwargs):
+        return self.method(self.row,*args,**kwargs)
 
 class Rows(object):
 
@@ -5619,21 +5625,41 @@ class Rows(object):
         self.response = rawrows
 
     def setvirtualfields(self,**keyed_virtualfields):
+        """
+        db.define_table('x',Field('number','integer'))
+        if db(db.x).isempty(): [db.x.insert(number=i) for i in range(10)]
+
+        class MyVirtualFields(object):
+            # normal virtual field
+            def normal_shift(self): return self.x.number+1
+            # lazy virtual field (because of @staticmethod)
+            @staticmethod
+            def lazy_shift(self,delta=4): return self.x.number+delta
+        db.x.virtualfields.append(MyVirtualFields())
+
+        for row in db(db.x).select():
+            print row.number, row.normal_shift, row.lazy_shift(delta=7)
+        """
         if not keyed_virtualfields:
             return self
         for row in self.records:
             for (tablename,virtualfields) in keyed_virtualfields.items():
                 attributes = dir(virtualfields)
-                virtualfields.__dict__.update(row)
                 if not tablename in row:
                     box = row[tablename] = Row()
                 else:
                     box = row[tablename]
+                updated = False
                 for attribute in attributes:
                     if attribute[0] != '_':
                         method = getattr(virtualfields,attribute)
-                        if hasattr(method,'im_func') and method.im_func.func_code.co_argcount:
+                        if type(method)==types.MethodType:
+                            if not updated:
+                                virtualfields.__dict__.update(row)
+                                updated = True
                             box[attribute]=method()
+                        elif type(method)==types.FunctionType:
+                            box[attribute]=VirtualCommand(method,row)
         return self
 
     def __and__(self,other):
