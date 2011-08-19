@@ -1355,7 +1355,8 @@ class SQLFORM(FORM):
         def OR(a,b): return a|b
         def AND(a,b): return a&b
 
-        session._grid_referrer = URL(args=request.args,vars=request.vars)
+        session._grid_referrer = URL(args=request.args,vars=request.vars,
+                                     user_signature=user_signature)
 
         console = DIV(_class='web2py_console')
         if searchable:
@@ -1515,6 +1516,8 @@ class SQLFORM(FORM):
         if titles is None: titles = {}
         breadcrumbs = []
         try:
+            if request.args and not URL.verify(request,user_signature=user_signature):
+                raise
             args=0
             while len(request.args)>args:
                 key = request.args(args)
@@ -1553,8 +1556,7 @@ class SQLFORM(FORM):
                 links.append(lambda row,t=tablename:\
                                  A(t,_href=URL(args=request.args[:args]+[args0,row.id],
                                                user_signature=user_signature)))
-        breadcrumbs.append(T(table._tablename))
-        print request.args[:args]
+        breadcrumbs.append(T(table._tablename))        
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature)
         return DIV(H3(*breadcrumbs),grid)
