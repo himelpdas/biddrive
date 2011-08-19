@@ -1281,7 +1281,7 @@ class SQLFORM(FORM):
         request = current.request
         session = current.session
         response = current.response
-        def url(**b):       
+        def url(**b):
             b['args'] = args+b.get('args',[])
             b['user_signature'] = user_signature
             return URL(**b)
@@ -1294,13 +1294,13 @@ class SQLFORM(FORM):
             field_id = tables[0]._id
         table = field_id.table
         tablename = table._tablename
-
-        back = A(T('back'),_href=session._referrer,_class='hspace')
+        referrer = url()
+        back = A(T('back'),_href=referrer,_class='hspace')
 
         def check_authorization():
             if not URL.verify(request,user_signature=user_signature):
                 session.flash = T('not authorized')
-                redirect(session._referrer)
+                redirect(referrer)
         if upload=='<default>':
             upload = lambda filename: url(args=['download',filename])
             if len(request.args)>1 and request.args[-2]=='download':
@@ -1310,7 +1310,7 @@ class SQLFORM(FORM):
         if create and len(request.args)>1 and request.args[-1]=='create':
             check_authorization()
             table = db[request.args[-2]]
-            form = SQLFORM(table).process(next=session._referrer,formname=formname)
+            form = SQLFORM(table).process(next=referrer,formname=formname)
             return DIV(back,form,_class=_class)
         elif details and len(request.args)>2 and request.args[-3]=='view':
             check_authorization()
@@ -1324,7 +1324,7 @@ class SQLFORM(FORM):
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             form = SQLFORM(table,record,upload=upload,deletable=deletable)
-            form.process(formname=formname,next=session._referrer)
+            form.process(formname=formname,next=referrer)
             return DIV(back,form,_class=_class)
         elif deletable and len(request.args)>2 and request.args[-3]=='del':
             check_authorization()
@@ -1341,7 +1341,6 @@ class SQLFORM(FORM):
             request.vars.records=[request.vars.records]
         elif not request.vars.records:
             request.vars.records=[]
-        session._referrer = URL(args=request.args,vars=request.vars)
         def OR(a,b): return a|b
         def AND(a,b): return a&b
 
@@ -1387,6 +1386,7 @@ class SQLFORM(FORM):
         if selectable:
             head.append(TH())
         for field in fields:
+            if not field.readable: continue
             key = str(field)
             header = headers.get(str(field),hasattr(field,'label') and field.label or key)
             if sortable:            
@@ -1448,6 +1448,7 @@ class SQLFORM(FORM):
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
                                     value=request.vars.records))
                 for field in fields:
+                    if not field.readable: continue
                     if field.type=='blob': continue
                     value = row[field]
                     if field.represent:
@@ -1458,10 +1459,13 @@ class SQLFORM(FORM):
                     elif field.type=='boolean':
                         value = value and '1' or '0'
                     elif field.type=='upload':
-                        if callable(upload):
-                            value = A('file', _href=upload(value))
-                        elif upload:
-                            value = A('file', _href='%s/%s' % (upload, value))
+                        if value:
+                            if callable(upload):
+                                value = A('file', _href=upload(value))
+                            elif upload:
+                                value = A('file', _href='%s/%s' % (upload, value))
+                        else:
+                            value = ''
                     if isinstance(value,str) and len(value)>maxtextlength:
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
                     tr.append(TD(value))
@@ -1488,7 +1492,44 @@ class SQLFORM(FORM):
         htmltable2=DIV(htmltable,_style='overflow-x: scroll')
         res = DIV(console,htmltable,paginator,_class=_class)
         return res
-                
+              
+    @staticmethod
+    def demo(table, links=None, linked_tables=None, user_signature=True, titles=None):
+        from gluon import current, A, URL, DIV, H3
+        request = current.request
+        db = table._db
+        if links is None: links = []
+        if titles is None: titles = {}
+        key = request.args(0) or table._tablename
+        try:
+            if '.' in key:        
+                tablename,fieldname = key.split('.',1)
+                table = db[tablename]
+                field = table[fieldname]
+                referee = field.type[10:]
+                query = (field == request.args(1))
+                nargs = 2
+                if linked_tables is None or referee in linked_tables:
+                    field.represent = lambda id,r=None,referee=referee:\
+                        A(id,_href=URL(args=(referee,'view',referee,id),
+                                       user_signature=user_signature))
+            else:
+                query = table = db[key]        
+                for tablename,fieldname in table._referenced_by:
+                    if linked_tables is None or tablename in linked_tables:
+                        args0 = tablename+'.'+fieldname
+                        links.append(lambda row,t=tablename:\
+                                         A(t,_href=URL(args=(args0,row.id),
+                                                       user_signature=user_signature)))
+                tablename = table._tablename
+                nargs = 1
+        except IOError:
+            redirect(URL(args=key))
+        tablename = titles.get(tablename,
+                               ' '.join(w.capitalize() for w in tablename.split('_')))
+        grid=SQLFORM.grid(query,args=request.args[:nargs],links=links,
+                          user_signature=user_signature)
+        return DIV(H3(tablename),grid)
 
 
 class SQLTABLE(TABLE):
