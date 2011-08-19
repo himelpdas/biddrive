@@ -1523,9 +1523,9 @@ class SQLFORM(FORM):
                 query = (field == request.args(1))
                 nargs = 2
                 if linked_tables is None or referee in linked_tables:
-                    field.represent = lambda id,r=None,referee=referee:\
-                        A(id,_href=URL(args=(referee,'view',referee,id),
-                                       user_signature=user_signature))
+                    field.represent = lambda id,r=None,referee=referee,rep=field.represent:\
+                        A(rep(id),_href=URL(args=(referee,'view',referee,id),
+                                            user_signature=user_signature))
             else:
                 query = table = db[key]        
                 for tablename,fieldname in table._referenced_by:
