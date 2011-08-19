@@ -1217,6 +1217,7 @@ def user():
         return dict(form=T("Disabled"))
 
 def reload_routes():
-   """ Reload routes.py """
-   gluon.rewrite.load()
-   redirect(URL('site'))
+    """ Reload routes.py """
+    import gluon.rewrite
+    gluon.rewrite.load()
+    redirect(URL('site'))
