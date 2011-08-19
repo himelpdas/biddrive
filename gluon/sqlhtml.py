@@ -1365,7 +1365,7 @@ class SQLFORM(FORM):
                         INPUT(_type='submit',_value=T('Search')),
                         TAG.button(T('clear'),
                                    _onclick="jQuery('#web2py_keywords').val('')"),
-                        _method="GET")   
+                        _method="GET",_action=url())   
             console.append(form)
             key = request.vars.get('keywords','').strip()
             subquery = reduce(OR,[field.contains(key) for field in fields \
@@ -1516,9 +1516,8 @@ class SQLFORM(FORM):
         if titles is None: titles = {}
         breadcrumbs = []
         try:
-            if request.args and not URL.verify(request,user_signature=user_signature):
-                raise
-            args=0
+            args = 0
+            previous_tablename,previous_fieldname,previous_id = table._tablename,None,None
             while len(request.args)>args:
                 key = request.args(args)
                 if '.' in key:        
@@ -1528,7 +1527,14 @@ class SQLFORM(FORM):
                     field = table[fieldname]
                     field.default = id
                     referee = field.type[10:]
+                    if referee!=previous_tablename:                        
+                        raise HTTP(400)
                     record = db[referee](id)
+                    if previous_id:
+                        if record[previous_fieldname] != int(previous_id):
+                            raise HTTP(400)
+                    previous_tablename,previous_fieldname,previous_id = \
+                        tablename,fieldname,id 
                     try:
                         name = db[referee]._format % record
                     except TypeError:
@@ -1546,7 +1552,7 @@ class SQLFORM(FORM):
                     field.represent = lambda id,r=None,referee=referee,rep=field.represent:\
                         A(rep(id),_href=URL(args=request.args[:args]+['view',referee,id],
                                             user_signature=user_signature))
-        except:
+        except IOError:
             redirect(URL())
         if args==0:
             query = table        
@@ -1554,8 +1560,7 @@ class SQLFORM(FORM):
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
                 links.append(lambda row,t=tablename:\
-                                 A(t,_href=URL(args=request.args[:args]+[args0,row.id],
-                                               user_signature=user_signature)))
+                                 A(t,_href=URL(args=request.args[:args]+[args0,row.id])))
         breadcrumbs.append(T(table._tablename))        
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature)
