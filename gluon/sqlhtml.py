@@ -1552,7 +1552,7 @@ class SQLFORM(FORM):
                     field.represent = lambda id,r=None,referee=referee,rep=field.represent:\
                         A(rep(id),_href=URL(args=request.args[:args]+['view',referee,id],
                                             user_signature=user_signature))
-        except IOError:
+        except (KeyError,ValueError,TypeError):
             redirect(URL())
         if args==0:
             query = table        
