@@ -436,7 +436,10 @@ class UploadWidget(FormWidget):
         inp = INPUT(**attr)
 
         if download_url and value:
-            url = download_url + '/' + value
+            if callable(download_url): 
+                url = download_url(value)
+            else:
+                url = download_url + '/' + value
             (br, image) = ('', '')
             if UploadWidget.is_image(value):
                 br = BR()
@@ -474,7 +477,10 @@ class UploadWidget(FormWidget):
         inp = UploadWidget.GENERIC_DESCRIPTION
 
         if download_url and value:
-            url = download_url + '/' + value
+            if callable(download_url):
+                url = download_url(value)
+            else:
+                url = download_url + '/' + value
             if UploadWidget.is_image(value):
                 inp = IMG(_src = url, _width = UploadWidget.DEFAULT_WIDTH)
             inp = A(inp, _href = url)
@@ -1259,8 +1265,9 @@ class SQLFORM(FORM):
              details=True,
              selectable=None,
              create=True,
+             csv=True,
              links=None,
-             upload = None,
+             upload = '<default>',
              args=[],
              user_signature = True,
              maxtextlengths={},	
@@ -1273,6 +1280,7 @@ class SQLFORM(FORM):
         T = current.T
         request = current.request
         session = current.session
+        response = current.response
         def url(**b):       
             b['args'] = args+b.get('args',[])
             b['user_signature'] = user_signature
@@ -1292,8 +1300,14 @@ class SQLFORM(FORM):
         def check_authorization():
             if not URL.verify(request,user_signature=user_signature):
                 session.flash = T('not authorized')
-                redirect(session._referrer)        
-        if create and len(request.args)>1 and request.args and request.args[-1]=='create':
+                redirect(session._referrer)
+        if upload=='<default>':
+            upload = lambda filename: url(args=['download',filename])
+            if len(request.args)>1 and request.args[-2]=='download':
+                check_authorization()
+                stream = response.download(request,db)
+                raise HTTP(200,stream,**response.headers)
+        if create and len(request.args)>1 and request.args[-1]=='create':
             check_authorization()
             table = db[request.args[-2]]
             form = SQLFORM(table).process(next=session._referrer,formname=formname)
@@ -1316,6 +1330,13 @@ class SQLFORM(FORM):
             check_authorization()
             table = db[request.args[-2]]
             return db(table.id==request.args[-1]).delete()
+        elif csv and len(request.args)>0 and request.args[-1]=='csv':
+            check_authorization()
+            response.headers['Content-Type'] = 'text/csv'
+            response.headers['Content-Disposition']='attachment;filename=rows.csv;'
+            raise HTTP(200,str(dbset.select()),
+                       **{'Content-Type':'text/csv',
+                          'Content-Disposition':'attachment;filename=rows.csv;'})
         elif request.vars.records and not isinstance(request.vars.records,list):
             request.vars.records=[request.vars.records]
         elif not request.vars.records:
@@ -1410,6 +1431,8 @@ class SQLFORM(FORM):
                 paginator.append(self_link('>>',npages-1))
         else:
             limitby = None
+        if csv:
+            paginator.append(A('export',_href=url(args=['csv'])))
         rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)	    
         if not searchable and not rows: return DIV(T('no data'))
         if rows:
@@ -1434,8 +1457,11 @@ class SQLFORM(FORM):
                             pass
                     elif field.type=='boolean':
                         value = value and '1' or '0'
-                    elif field.type=='upload' and upload:
-                        value = A('file', _href='%s/%s' % (upload, value))
+                    elif field.type=='upload':
+                        if callable(upload):
+                            value = A('file', _href=upload(value))
+                        elif upload:
+                            value = A('file', _href='%s/%s' % (upload, value))
                     if isinstance(value,str) and len(value)>maxtextlength:
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
                     tr.append(TD(value))
