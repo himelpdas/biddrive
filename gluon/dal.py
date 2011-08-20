@@ -1475,7 +1475,24 @@ class BaseAdapter(ConnectionPool):
                             colset[referee_link] = Set(db, s == id)
                     colset['id'] = id
             new_rows.append(new_row)
+
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
+
+        ### new style virtual fields
+        vf = []
+        for tablename in virtualtables:
+            table = db[tablename]
+            fields_virtual = [(f,v) for (f,v) in table.items() if isinstance(v,FieldVirtual)]
+            fields_lazy = [(f,v) for (f,v) in table.items() if isinstance(v,FieldLazy)]
+            if fields_virtual or fields_lazy:
+                for row in rowsobj.records:
+                    box = row[tablename] 
+                    for f,v in fields_virtual:                    
+                        box[f] = v.f(row)
+                    for f,v in fields_lazy:                    
+                        box[f] = VirtualCommand(v.f,row)
+
+        ### old style virtual fields
         for tablename in virtualtables:
             for item in db[tablename].virtualfields:
                 try:
@@ -5172,8 +5189,19 @@ class SQLCustomType(object):
     def __str__(self):
         return self._class
 
+class FieldVirtual(object):
+    def __init__(self,f):
+        self.f = f
+
+class FieldLazy(object):
+    def __init__(self,f):
+        self.f = f
+        
 
 class Field(Expression):
+
+    Virtual = FieldVirtual
+    Lazy = FieldLazy
 
     """
     an instance of this class represents a database field
