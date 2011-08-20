@@ -1485,13 +1485,13 @@ class BaseAdapter(ConnectionPool):
             fields_lazy = [(f,v) for (f,v) in table.items() if isinstance(v,FieldLazy)]
             if fields_virtual or fields_lazy:
                 for row in rowsobj.records:
-                    box = row[tablename] 
-                    for f,v in fields_virtual:                    
+                    box = row[tablename]
+                    for f,v in fields_virtual:
                         box[f] = v.f(row)
-                    for f,v in fields_lazy:                    
+                    for f,v in fields_lazy:
                         box[f] = VirtualCommand(v.f,row)
 
-            ### old style virtual fields        
+            ### old style virtual fields
             for item in table.virtualfields:
                 try:
                     rowsobj = rowsobj.setvirtualfields(**{tablename:item})
@@ -4500,9 +4500,9 @@ class Reference(int):
         self.__allocate()
         return self._record.get(key, None)
 
-    def get(self, key): 
-        return self.__getattr__(key) 
-        
+    def get(self, key):
+        return self.__getattr__(key)
+
     def __setattr__(self, key, value):
         if key.startswith('_'):
             int.__setattr__(self, key, value)
@@ -5117,7 +5117,7 @@ class Expression(object):
         if not self.type in ('string', 'text'):
             raise SyntaxError, "endswith used with incompatible field type"
         return Query(self.db, self.db._adapter.ENDSWITH, self, value)
-    
+
     def contains(self, value, all=False):
         if isinstance(value,(list,tuple)):
             subqueries = [self.contains(str(v).strip()) for v in value if str(v).strip()]
@@ -5194,7 +5194,7 @@ class FieldVirtual(object):
 class FieldLazy(object):
     def __init__(self,f):
         self.f = f
-        
+
 
 class Field(Expression):
 
@@ -6163,6 +6163,7 @@ DAL.Table = Table  # was necessary in gluon/globals.py session.connect
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
 
 
 

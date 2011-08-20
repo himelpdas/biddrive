@@ -452,3 +452,4 @@ def create_missing_app_folders(request):
             global_settings.app_folders.add(request.folder)
 
 
+

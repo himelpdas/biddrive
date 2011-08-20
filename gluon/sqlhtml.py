@@ -436,7 +436,7 @@ class UploadWidget(FormWidget):
         inp = INPUT(**attr)
 
         if download_url and value:
-            if callable(download_url): 
+            if callable(download_url):
                 url = download_url(value)
             else:
                 url = download_url + '/' + value
@@ -1270,7 +1270,7 @@ class SQLFORM(FORM):
              upload = '<default>',
              args=[],
              user_signature = True,
-             maxtextlengths={},	
+             maxtextlengths={},
              maxtextlength=20,
              _class="web2py_smarttable",
              formname='smarttable'):
@@ -1287,7 +1287,7 @@ class SQLFORM(FORM):
             return URL(**b)
 
         dbset = db(query)
-        tables = [db[tablename] for tablename in db._adapter.tables(dbset.query)]        
+        tables = [db[tablename] for tablename in db._adapter.tables(dbset.query)]
         if not fields:
             fields = reduce(lambda a,b:a+b,[[field for field in table] for table in tables])
         if not field_id:
@@ -1305,7 +1305,7 @@ class SQLFORM(FORM):
                 check_authorization()
                 stream = response.download(request,db)
                 raise HTTP(200,stream,**response.headers)
-        
+
         def buttons(edit=False,view=False,record=None):
             buttons = DIV(A(T('back'),_href=referrer))
             if edit:
@@ -1385,12 +1385,12 @@ class SQLFORM(FORM):
         if create:
             console.append(SPAN(A(T('new'),_href=url(args=['new',tablename])),
                                 _class='web2py_create_link hspace'))
-        
+
         order = request.vars.order or ''
         if sortable:
             if order and not order=='None':
                 if order[:1]=='~':
-                    sign, rorder = '~', order[1:] 
+                    sign, rorder = '~', order[1:]
                 else:
                     sign, rorder = '', order
                 tablename,fieldname = rorder.split('.',1)
@@ -1398,7 +1398,7 @@ class SQLFORM(FORM):
                     orderby=~db[tablename][fieldname]
                 else:
                     orderby=db[tablename][fieldname]
-            
+
         head = TR()
         if selectable:
             head.append(TH())
@@ -1406,7 +1406,7 @@ class SQLFORM(FORM):
             if not field.readable: continue
             key = str(field)
             header = headers.get(str(field),hasattr(field,'label') and field.label or key)
-            if sortable:            
+            if sortable:
                 if key == order:
                     key, marker = '~'+order, '[^]'
                 elif key == order[1:]:
@@ -1417,8 +1417,7 @@ class SQLFORM(FORM):
                             keywords=request.vars.keywords or '',
                             order=key)))
             head.append(TH(header))
-        for i in (links or []) + [x for x in [deletable,editable,details] if x]:
-            head.append(TH())	
+        head.append(TH())
 
         paginator = DIV(_class="web2py_paginator")
         if paginate and paginate<nrows:
@@ -1426,7 +1425,7 @@ class SQLFORM(FORM):
             if reminder: npages+=1
             try: page = int(request.vars.page or 1)-1
             except ValueError: page = 0
-            limitby = (paginate*page,paginate*(page+1))            
+            limitby = (paginate*page,paginate*(page+1))
             def self_link(name,p):
                 d = dict(page=p+1)
                 if order: d['order']=order
@@ -1450,7 +1449,7 @@ class SQLFORM(FORM):
             limitby = None
         if csv:
             paginator.append(A('export',_href=url(args=['csv'])))
-        rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)	    
+        rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)
         if not searchable and not rows: return DIV(T('no data'))
         if rows:
             htmltable = TABLE(head)
@@ -1486,19 +1485,21 @@ class SQLFORM(FORM):
                     if isinstance(value,str) and len(value)>maxtextlength:
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
                     tr.append(TD(value))
-                if details:
-                    tr.append(TD(A(T('view'),_href=url(args=['view',tablename,id]))))
-                if editable:
-                    tr.append(TD(A(T('edit'),_href=url(args=['edit',tablename,id]))))
-                if deletable:
-                    tr.append(TD(A(T('del'),callback=url(args=['delete',tablename,id]),
-                                   delete='tr')))
+                row_buttons = TD()
                 for link in links or []:
-                    tr.append(TD(link(row)))
+                    row_buttons.append(link(row))
+                if details:
+                    row_buttons.append(A(T('view'),_href=url(args=['view',tablename,id])))
+                if editable:
+                    row_buttons.append(A(T('edit'),_href=url(args=['edit',tablename,id])))
+                if deletable:
+                    row_buttons.append(A(T('del'),callback=url(args=['delete',tablename,id]),
+                                   delete='tr'))
+                tr.append(row_buttons)
                 htmltable.append(tr)
             if selectable:
                 htmltable = FORM(htmltable,INPUT(_type="submit"))
-                if htmltable.process(formname=formname).accepted:        
+                if htmltable.process(formname=formname).accepted:
                     records = [int(r) for r in htmltable.vars.records or []]
                     selectable(records)
                     redirect(referrer)
@@ -1509,10 +1510,11 @@ class SQLFORM(FORM):
         htmltable2=DIV(htmltable,_style='overflow-x: scroll')
         res = DIV(console,htmltable,paginator,_class=_class)
         return res
-              
+
     @staticmethod
     def demo(table, constraints=None, links=None,
-             linked_tables=None, user_signature=True):
+             linked_tables=None, user_signature=True,
+             **kwargs):
         """
         @auth.requires_login()
         def index():
@@ -1525,19 +1527,19 @@ class SQLFORM(FORM):
                 populate(db.dog,300)
                 populate(db.comment,1000)
                 db.commit()
-        form=SQLFORM.demo(db[request.args(0) or 'person']) #***
+        form=SQLFORM.smartgrid(db[request.args(0) or 'person']) #***
         return dict(form=form)
-        
+
         *** builds a complete interface to navigate all tables linke to the request.args(0)
             table: pagination, search, view, edit, delete, children, parent, etc.
-            
-        constraints is a dict {'table',query} that limits which records can be accessible 
+
+        constraints is a dict {'table',query} that limits which records can be accessible
         links is a list of lambda row: A(....) that will add buttons
         linked_tables is a optional list of tablenames of tables to be linked
 
         """
         from gluon import current, A, URL, DIV, H3, redirect
-        request, T = current.request, current.T        
+        request, T = current.request, current.T
         db = table._db
         if links is None: links = []
         if constraints is None: constraints = {}
@@ -1549,17 +1551,17 @@ class SQLFORM(FORM):
             previous_tablename,previous_fieldname,previous_id = table._tablename,None,None
             while len(request.args)>args:
                 key = request.args(args)
-                if '.' in key:        
+                if '.' in key:
                     id = request.args(args+1)
                     tablename,fieldname = key.split('.',1)
                     table = db[tablename]
                     field = table[fieldname]
                     field.default = id
                     referee = field.type[10:]
-                    if referee!=previous_tablename:                        
+                    if referee!=previous_tablename:
                         raise HTTP(400)
                     cond = constraints.get(referee,None)
-                    if cond: 
+                    if cond:
                         record = db(db[referee].id==id)(cond).select().first()
                     else:
                         record = db[referee](id)
@@ -1567,7 +1569,7 @@ class SQLFORM(FORM):
                         if record[previous_fieldname] != int(previous_id):
                             raise HTTP(400)
                     previous_tablename,previous_fieldname,previous_id = \
-                        tablename,fieldname,id 
+                        tablename,fieldname,id
                     try:
                         name = db[referee]._format % record
                     except TypeError:
@@ -1579,7 +1581,7 @@ class SQLFORM(FORM):
                     args+=2
                 else:
                     break
-            if args>1:    
+            if args>1:
                 query = (field == id)
                 if linked_tables is None or referee in linked_tables:
                     field.represent = lambda id,r=None,referee=referee,rep=field.represent:\
@@ -1596,10 +1598,11 @@ class SQLFORM(FORM):
                 args0 = tablename+'.'+fieldname
                 links.append(lambda row,t=tablename:\
                                  A(t,_href=URL(args=request.args[:args]+[args0,row.id])))
-        breadcrumbs.append(T(table._tablename))        
+        breadcrumbs.append(A(T(table._tablename),_href=URL(args=request.args[:args])))
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
-                          user_signature=user_signature)
-        return DIV(H3(*breadcrumbs),grid)
+                          user_signature=user_signature,**kwargs)
+        grid.insert(0,H3(*breadcrumbs))
+        return grid
 
 
 class SQLTABLE(TABLE):
@@ -1883,8 +1886,9 @@ class SQLTABLE(TABLE):
         '''
 
         return css
-            
+
 form_factory = SQLFORM.factory # for backward compatibility, deprecated
+
 
 
 

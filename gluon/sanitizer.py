@@ -224,3 +224,4 @@ def sanitize(text, permitted_tags=[
                       allowed_attributes=allowed_attributes).strip(text, escape)
 
 
+

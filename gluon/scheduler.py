@@ -84,7 +84,7 @@ from gluon.contrib.simplejson import loads,dumps
 
 STATUSES = (QUEUED,
             ALLOCATED,
-            RUNNING,            
+            RUNNING,
             COMPLETED,
             FAILED,
             TIMEOUT,
@@ -217,24 +217,24 @@ class Scheduler(object):
     def assign_next_task(self,group_names=['main']):
         """
         find next task that needs to be executed
-        """        
+        """
         from datetime import datetime
         db = self.db
         queued = (db.task_scheduled.status==QUEUED)
         allocated = (db.task_scheduled.status==ALLOCATED)
         due = (db.task_scheduled.enabled==True)
         due &= (db.task_scheduled.group_name.belongs(group_names))
-        due &= (db.task_scheduled.next_run_time<datetime.now())         
+        due &= (db.task_scheduled.next_run_time<datetime.now())
         assigned_to_me = (db.task_scheduled.assigned_worker_name==self.worker_name)
         not_assigned = (db.task_scheduled.assigned_worker_name=='')|\
-            (db.task_scheduled.assigned_worker_name==None)        
+            (db.task_scheduled.assigned_worker_name==None)
         # grab all queue tasks
         counter = db(queued & due & (not_assigned|assigned_to_me)).update(
             assigned_worker_name=self.worker_name,status=ALLOCATED)
         db.commit()
         if counter:
             # pick the first
-            row = db(allocated & due & assigned_to_me).select(                
+            row = db(allocated & due & assigned_to_me).select(
                 orderby=db.task_scheduled.next_run_time,limitby=(0,1)).first()
             # release others if any
             if row:
@@ -433,4 +433,5 @@ def main():
                           group_names = group_names)
 
 if __name__=='__main__': main()
+
 

@@ -1863,7 +1863,7 @@ class FORM(DIV):
         from gluon import current, redirect
         kwargs['request_vars'] = kwargs.get('request_vars',current.request.post_vars)
         kwargs['session'] = kwargs.get('session',current.session)
-        kwargs['dbio'] = kwargs.get('dbio',False) # necessary for SQLHTML forms 
+        kwargs['dbio'] = kwargs.get('dbio',False) # necessary for SQLHTML forms
 
         onsuccess = kwargs.get('onsuccess','flash')
         onfailure = kwargs.get('onfailure','flash')
@@ -1874,7 +1874,7 @@ class FORM(DIV):
         next = kwargs.get('next',None)
         for key in ('message_onsuccess','message_onfailure','onaccept','onfailure','next'):
             if key in kwargs:
-                del kwargs[key]      
+                del kwargs[key]
 
         if self.accepts(**kwargs):
             if onsuccess == 'flash':
@@ -2259,5 +2259,6 @@ class MARKMIN(XmlComponent):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
 
 
