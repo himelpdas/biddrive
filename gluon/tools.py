@@ -835,6 +835,7 @@ class Auth(object):
         settings.reset_password_requires_verification = False
         settings.registration_requires_verification = False
         settings.registration_requires_approval = False
+        settings.login_after_registration = False
         settings.alternate_requires_registration = False
         settings.create_user_groups = True
 
@@ -1792,11 +1793,13 @@ class Auth(object):
                     response.flash = self.messages.unable_send_email
                     return form
                 session.flash = self.messages.email_sent
-            elif self.settings.registration_requires_approval:
+            if self.settings.registration_requires_approval:
                 table_user[form.vars.id] = dict(registration_key='pending')
                 session.flash = self.messages.registration_pending
-            else:
-                table_user[form.vars.id] = dict(registration_key='')
+            elif (not self.settings.registration_requires_verification or \
+                      self.settings.login_after_registration):
+                if not self.settings.registration_requires_verification:
+                    table_user[form.vars.id] = dict(registration_key='')
                 session.flash = self.messages.registration_successful
                 table_user = self.settings.table_user
                 if 'username' in table_user.fields:

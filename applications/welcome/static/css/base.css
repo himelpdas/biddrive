@@ -556,7 +556,11 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 
 .hspace { padding: 0 5px 0 0; }
 .web2py_smarttable td { white-space:nowrap; }
-.web2py_smarttable a { text-decoration:none; background-color:#EAEAEA; padding:1px 5px 1px 5px;}
+.web2py_smarttable a { text-decoration:none; background-color:#EAEAEA; padding:1px 5px 1px 5px; margin: 0 5px 0 0; 
+-moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+}
 .web2py_smarttable th { background-color:#EAEAEA; }
 .web2py_smarttable table { width:100%}
 .web2py_console {width:100%; text-align:center; background-color:#EAEAEA;}
