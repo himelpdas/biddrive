@@ -5595,11 +5595,12 @@ def update_record(pack, a=None):
         colset[k] = v
 
 class VirtualCommand(object):
-    def __init__(self,method,row):
+    def __init__(self,method,instance,row):
         self.method=method
+        self.instance=instance
         self.row=row
     def __call__(self,*args,**kwargs):
-        return self.method(self.row,*args,**kwargs)
+        return self.method(self.instance,self.row,*args,**kwargs)
 
 class Rows(object):
 
@@ -5630,11 +5631,11 @@ class Rows(object):
         if db(db.x).isempty(): [db.x.insert(number=i) for i in range(10)]
 
         class MyVirtualFields(object):
-            # normal virtual field
+            # normal virtual field (backward compatible, discouraged)
             def normal_shift(self): return self.x.number+1
             # lazy virtual field (because of @staticmethod)
             @staticmethod
-            def lazy_shift(self,delta=4): return self.x.number+delta
+            def lazy_shift(instance,row,delta=4): return row.x.number+delta
         db.x.virtualfields.append(MyVirtualFields())
 
         for row in db(db.x).select():
@@ -5659,7 +5660,7 @@ class Rows(object):
                                 updated = True
                             box[attribute]=method()
                         elif type(method)==types.FunctionType:
-                            box[attribute]=VirtualCommand(method,row)
+                            box[attribute]=VirtualCommand(method,virtualfields,row)
         return self
 
     def __and__(self,other):
