@@ -5595,12 +5595,16 @@ def update_record(pack, a=None):
         colset[k] = v
 
 class VirtualCommand(object):
-    def __init__(self,method,instance,row):
+    def __init__(self,method,row):
         self.method=method
-        self.instance=instance
+        #self.instance=instance
         self.row=row
     def __call__(self,*args,**kwargs):
-        return self.method(self.instance,self.row,*args,**kwargs)
+        return self.method(self.row,*args,**kwargs)
+
+def lazy_virtualfield(f):
+    f.__lazy__ = True
+    return f
 
 class Rows(object):
 
@@ -5630,11 +5634,13 @@ class Rows(object):
         db.define_table('x',Field('number','integer'))
         if db(db.x).isempty(): [db.x.insert(number=i) for i in range(10)]
 
+        from gluon.dal import lazy_virtualfield
+
         class MyVirtualFields(object):
             # normal virtual field (backward compatible, discouraged)
             def normal_shift(self): return self.x.number+1
             # lazy virtual field (because of @staticmethod)
-            @staticmethod
+            @lazy_virtualfield
             def lazy_shift(instance,row,delta=4): return row.x.number+delta
         db.x.virtualfields.append(MyVirtualFields())
 
@@ -5654,13 +5660,13 @@ class Rows(object):
                 for attribute in attributes:
                     if attribute[0] != '_':
                         method = getattr(virtualfields,attribute)
-                        if type(method)==types.MethodType:
+                        if hasattr(method,'__lazy__'):
+                            box[attribute]=VirtualCommand(method,row)
+                        elif type(method)==types.MethodType:
                             if not updated:
                                 virtualfields.__dict__.update(row)
                                 updated = True
                             box[attribute]=method()
-                        elif type(method)==types.FunctionType:
-                            box[attribute]=VirtualCommand(method,virtualfields,row)
         return self
 
     def __and__(self,other):
