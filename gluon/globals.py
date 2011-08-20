@@ -76,6 +76,7 @@ class Request(Storage):
         self.args = List()
         self.extension = None
         self.now = datetime.datetime.now()
+        self.utcnow = datetime.datetime.utcnow()
         self.is_restful = False
         self.is_https = False
         self.is_local = False
