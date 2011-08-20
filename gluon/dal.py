@@ -1478,9 +1478,8 @@ class BaseAdapter(ConnectionPool):
 
         rowsobj = Rows(db, new_rows, colnames, rawrows=rows)
 
-        ### new style virtual fields
-        vf = []
         for tablename in virtualtables:
+            ### new style virtual fields
             table = db[tablename]
             fields_virtual = [(f,v) for (f,v) in table.items() if isinstance(v,FieldVirtual)]
             fields_lazy = [(f,v) for (f,v) in table.items() if isinstance(v,FieldLazy)]
@@ -1492,9 +1491,8 @@ class BaseAdapter(ConnectionPool):
                     for f,v in fields_lazy:                    
                         box[f] = VirtualCommand(v.f,row)
 
-        ### old style virtual fields
-        for tablename in virtualtables:
-            for item in db[tablename].virtualfields:
+            ### old style virtual fields        
+            for item in table.virtualfields:
                 try:
                     rowsobj = rowsobj.setvirtualfields(**{tablename:item})
                 except KeyError:
