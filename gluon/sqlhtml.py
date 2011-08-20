@@ -1512,9 +1512,9 @@ class SQLFORM(FORM):
         return res
 
     @staticmethod
-    def demo(table, constraints=None, links=None,
-             linked_tables=None, user_signature=True,
-             **kwargs):
+    def smartgrid(table, constraints=None, links=None,
+                  linked_tables=None, user_signature=True,
+                  **kwargs):
         """
         @auth.requires_login()
         def index():
