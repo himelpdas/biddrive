@@ -19,7 +19,7 @@ import struct
 import decimal
 import unicodedata
 from cStringIO import StringIO
-from utils import simple_hash, hmac_hash
+from utils import simple_hash, hmac_hash, web2py_uuid
 
 __all__ = [
     'CLEANUP',
@@ -2480,13 +2480,25 @@ class CRYPT(object):
     If the digest_alg is specified this is used to replace the
     MD5 with, for example, SHA512. The digest_alg can be
     the name of a hashlib algorithm as a string or the algorithm itself.
+    
+    min_length is the minimal password length (default 4) - IS_STRONG for serious security
+    error_message is the message if password is too short
+    
+    Notice that an empty password is accepted but invalid. It will not allow login back.
+    Stores junk as hashed password.
     """
 
-    def __init__(self, key=None, digest_alg='md5'):
+    def __init__(self, key=None, digest_alg='md5', min_length=4, error_message='too short'):
         self.key = key
         self.digest_alg = digest_alg
+        self.min_length = min_length
+        self.error_message = error_message
 
     def __call__(self, value):
+        if not value:
+            value = web2py_uuid()
+        elif len(value)<self.min_length:
+            return ('',translate(self.error_message))
         if self.key:
             return (hmac_hash(value, self.key, self.digest_alg), None)
         else:
