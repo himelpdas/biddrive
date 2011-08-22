@@ -2817,6 +2817,73 @@ class Auth(object):
                            (permission.table_name == table)\
                            ._select(permission.record_id))
 
+    @staticmethod
+    def archive(form,archive_table=None,current_record='current_record'):
+        """
+        If you have a table (db.mytable) that needs full revision history you can just do::
+
+            form=crud.update(db.mytable,myrecord,onaccept=auth.archive)
+            
+        or
+
+            form=SQLFORM(db.mytable,myrecord).process(onaccept=auth.archive)
+
+        crud.archive will define a new table "mytable_archive" and store the
+        previous record in the newly created table including a reference
+        to the current record.
+
+        If you want to access such table you need to define it yourself in a model::
+
+            db.define_table('mytable_archive',
+                Field('current_record',db.mytable),
+                db.mytable)
+
+        Notice such table includes all fields of db.mytable plus one: current_record.
+        crud.archive does not timestamp the stored record unless your original table
+        has a fields like::
+
+            db.define_table(...,
+                Field('saved_on','datetime',
+                     default=request.now,update=request.now,writable=False),
+                Field('saved_by',auth.user,
+                     default=auth.user_id,update=auth.user_id,writable=False),
+
+        there is nothing special about these fields since they are filled before
+        the record is archived.
+
+        If you want to change the archive table name and the name of the reference field
+        you can do, for example::
+
+            db.define_table('myhistory',
+                Field('parent_record',db.mytable),
+                db.mytable)
+
+        and use it as::
+
+            form=crud.update(db.mytable,myrecord,
+                             onaccept=lambda form:crud.archive(form,
+                             archive_table=db.myhistory,
+                             current_record='parent_record'))
+
+        """
+        old_record = form.record
+        if not old_record:
+            return None
+        table = form.table
+        if not archive_table:
+            archive_table_name = '%s_archive' % table
+            if archive_table_name in table._db:
+                archive_table = table._db[archive_table_name]
+            else:
+                archive_table = table._db.define_table(archive_table_name,
+                                                       Field(current_record,table),
+                                                       table)
+        new_record = {current_record:old_record.id}
+        for fieldname in archive_table.fields:
+            if not fieldname in ['id',current_record] and fieldname in old_record:
+                new_record[fieldname]=old_record[fieldname]
+        id = archive_table.insert(**new_record)
+        return id
 
 class Crud(object):
 
@@ -2922,70 +2989,10 @@ class Crud(object):
                             _href=self.url(args=('select',name)))) \
                            for name in self.db.tables])
 
-
     @staticmethod
     def archive(form,archive_table=None,current_record='current_record'):
-        """
-        If you have a table (db.mytable) that needs full revision history you can just do::
-
-            form=crud.update(db.mytable,myrecord,onaccept=crud.archive)
-
-        crud.archive will define a new table "mytable_archive" and store the
-        previous record in the newly created table including a reference
-        to the current record.
-
-        If you want to access such table you need to define it yourself in a model::
-
-            db.define_table('mytable_archive',
-                Field('current_record',db.mytable),
-                db.mytable)
-
-        Notice such table includes all fields of db.mytable plus one: current_record.
-        crud.archive does not timestamp the stored record unless your original table
-        has a fields like::
-
-            db.define_table(...,
-                Field('saved_on','datetime',
-                     default=request.now,update=request.now,writable=False),
-                Field('saved_by',auth.user,
-                     default=auth.user_id,update=auth.user_id,writable=False),
-
-        there is nothing special about these fields since they are filled before
-        the record is archived.
-
-        If you want to change the archive table name and the name of the reference field
-        you can do, for example::
-
-            db.define_table('myhistory',
-                Field('parent_record',db.mytable),
-                db.mytable)
-
-        and use it as::
-
-            form=crud.update(db.mytable,myrecord,
-                             onaccept=lambda form:crud.archive(form,
-                             archive_table=db.myhistory,
-                             current_record='parent_record'))
-
-        """
-        old_record = form.record
-        if not old_record:
-            return None
-        table = form.table
-        if not archive_table:
-            archive_table_name = '%s_archive' % table
-            if archive_table_name in table._db:
-                archive_table = table._db[archive_table_name]
-            else:
-                archive_table = table._db.define_table(archive_table_name,
-                                                       Field(current_record,table),
-                                                       table)
-        new_record = {current_record:old_record.id}
-        for fieldname in archive_table.fields:
-            if not fieldname in ['id',current_record] and fieldname in old_record:
-                new_record[fieldname]=old_record[fieldname]
-        id = archive_table.insert(**new_record)
-        return id
+        return Auch.archive(form,archive_table=archive_table,
+                            current_record=current_record)
 
     def update(
         self,

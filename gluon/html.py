@@ -1872,7 +1872,8 @@ class FORM(DIV):
         message_onfailure = kwargs.get('message_onfailure',
                                        current.T("Errors in form, please check it out."))
         next = kwargs.get('next',None)
-        for key in ('message_onsuccess','message_onfailure','onaccept','onfailure','next'):
+        for key in ('message_onsuccess','message_onfailure','onsuccess',
+                    'onfailure','next'):
             if key in kwargs:
                 del kwargs[key]
 

@@ -1272,6 +1272,10 @@ class SQLFORM(FORM):
              user_signature = True,
              maxtextlengths={},
              maxtextlength=20,
+             onvalidation=None,
+             oncreate=None,
+             onupdate=None, 
+             ondelete=None,
              _class="web2py_grid",             
              formname='web2py_grid'):
 
@@ -1322,7 +1326,10 @@ class SQLFORM(FORM):
         if create and len(request.args)>1 and request.args[-2]=='new':
             check_authorization()
             table = db[request.args[-1]]
-            form = SQLFORM(table).process(next=referrer,formname=formname)
+            form = SQLFORM(table).process(next=referrer,
+                                          onvalidation=onvalidation,
+                                          onsuccess=oncreate,
+                                          formname=formname)
             return DIV(buttons(),form,_class=_class)
         elif details and len(request.args)>2 and request.args[-3]=='view':
             check_authorization()
@@ -1335,12 +1342,18 @@ class SQLFORM(FORM):
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             form = SQLFORM(table,record,upload=upload,deletable=deletable)
-            form.process(formname=formname,next=referrer)
+            form.process(formname=formname,
+                         onvalidation=onvalidation,
+                         onsuccess=onupdate,
+                         next=referrer)
             return DIV(buttons(view=True,record=record),form,_class=_class)
         elif deletable and len(request.args)>2 and request.args[-3]=='delete':
             check_authorization()
             table = db[request.args[-2]]
-            return db(table.id==request.args[-1]).delete()
+            ret = db(table.id==request.args[-1]).delete()
+            if ondelete:
+                return ondelete(table,request.args[-2],ret)
+            return ret
         elif csv and len(request.args)>0 and request.args[-1]=='csv':
             check_authorization()
             response.headers['Content-Type'] = 'text/csv'
@@ -1587,10 +1600,12 @@ class SQLFORM(FORM):
                         name = db[referee]._format % record
                     except TypeError:
                         name = id
-                    breadcrumbs += [A(T(referee),_href=URL(args=request.args[:args])),' ',
+                    breadcrumbs += [A(T(referee),
+                                      _href=URL(args=request.args[:args])),' ',
                                     A(name,
-                                      _href=URL(args=request.args[:args]+['view',referee,id],
-                                                user_signature=True)),' > ']
+                                      _href=URL(args=request.args[:args]+[
+                                    'view',referee,id],user_signature=True)),
+                                    ' > ']
                     args+=2
                 else:
                     break
@@ -1609,12 +1624,14 @@ class SQLFORM(FORM):
         for tablename,fieldname in table._referenced_by:
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
-                links.append(lambda row,t=tablename:\
-                                 A(t,_href=URL(args=request.args[:args]+[args0,row.id])))
-        breadcrumbs.append(A(T(table._tablename),_href=URL(args=request.args[:args])))
+                links.append(lambda row,t=T(tablename),args=args,args0=args0:\
+                                 A(t,_href=URL(args=request.args[:args]+[args0,row.id])))        
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
-        grid.insert(0,DIV(H3(*breadcrumbs),_class='web2py_breadcrumbs'))
+        if isinstance(grid,DIV):
+            breadcrumbs.append(A(T(table._tablename),
+                                 _href=URL(args=request.args[:args])))
+            grid.insert(0,DIV(H3(*breadcrumbs),_class='web2py_breadcrumbs'))
         return grid
 
 
