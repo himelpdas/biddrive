@@ -39,18 +39,18 @@ License: This file is released under BSD and MIT
 
 */
 
-/*     
-  credit is left where credit is due.
-  additionally, much inspiration was taken from these projects:
+/*
+    credit is left where credit is due.
+    additionally, much inspiration was taken from these projects:
     yui.yahooapis.com/2.8.1/build/base/base.css
     camendesign.com/design/
     praegnanz.de/weblog/htmlcssjs-kickstart
 */
 
-/* 
-  html5doctor.com Reset Stylesheet (Eric Meyer's Reset Reloaded + HTML5 baseline)
-  v1.4 2009-07-27 | Authors: Eric Meyer & Richard Clark
-  html5doctor.com/html-5-reset-stylesheet/
+/*
+    html5doctor.com Reset Stylesheet (Eric Meyer's Reset Reloaded + HTML5 baseline)
+    v1.4 2009-07-27 | Authors: Eric Meyer & Richard Clark
+    html5doctor.com/html-5-reset-stylesheet/
 */
 
 html, body, div, span, object, iframe,
@@ -62,20 +62,20 @@ b, i,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, figcaption, figure, 
+article, aside, canvas, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section, summary,
 time, mark, audio, video {
-  margin:0;
-  padding:0;
-  border:0;
-  outline:0;
-  font-size:100%;
-  vertical-align:baseline;
-  background:transparent;
-}                  
+    margin:0;
+    padding:0;
+    border:0;
+    outline:0;
+    font-size:100%;
+    vertical-align:baseline;
+    background:transparent;
+}
 
 article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section { 
+footer, header, hgroup, menu, nav, section {
     display:block;
 }
 
@@ -108,12 +108,12 @@ input, select { vertical-align:middle; }
 
 /*
 fonts.css from the YUI Library: developer.yahoo.com/yui/
-          Please refer to developer.yahoo.com/yui/fonts/ for font sizing percentages
+    Please refer to developer.yahoo.com/yui/fonts/ for font sizing percentages
 
 There are three custom edits:
- * remove arial, helvetica from explicit font stack
- * make the line-height relative and unit-less
- * remove the pre, code styles
+    * remove arial, helvetica from explicit font stack
+    * make the line-height relative and unit-less
+    * remove the pre, code styles
 */
 body { font:13px/1.231 sans-serif; *font-size:small; } /* hack retained to preserve specificity */
 
@@ -122,27 +122,27 @@ body { font:13px/1.231 sans-serif; *font-size:small; } /* hack retained to prese
 select, input, textarea, button { font:99% sans-serif; }
 
 
-/* normalize monospace sizing 
- * en.wikipedia.org/wiki/MediaWiki_talk:Common.css/Archive_11#Teletype_style_fix_for_Chrome
- */
+/* normalize monospace sizing
+    * en.wikipedia.org/wiki/MediaWiki_talk:Common.css/Archive_11#Teletype_style_fix_for_Chrome
+    */
 pre, code, kbd, samp { font-family: monospace, sans-serif; }
 
-/* 
- * minimal base styles 
- */
+/*
+    * minimal base styles
+    */
 
-/* #444 looks better than black: twitter.com/H_FJ/statuses/11800719859 */ 
+/* #444 looks better than black: twitter.com/H_FJ/statuses/11800719859 */
 body, select, input, textarea { color:#444; }
 
 /* Headers (h1,h2,etc) have no default font-size or margin,
-   you'll want to define those yourself. */ 
- 
-/* www.aestheticallyloyal.com/public/optimize-legibility/ */ 
+    you'll want to define those yourself. */
+
+/* www.aestheticallyloyal.com/public/optimize-legibility/ */
 h1,h2,h3,h4,h5,h6 { font-weight: bold; }
 
-/* always force a scrollbar in non-IE */ 
+/* always force a scrollbar in non-IE */
 html { overflow-y: scroll; }
- 
+
 /* Accessible focus treatment: people.opera.com/patrickl/experiments/keyboard/test */
 a:hover, a:active { outline: none; }
 
@@ -153,24 +153,24 @@ ul, ol { margin-left: 1.8em; }
 ol { list-style-type: decimal; }
 
 /* Remove margins for navigation lists */
-nav ul, nav li { margin: 0; } 
+nav ul, nav li { margin: 0; }
 
 small { font-size:85%; }
 strong, th { font-weight: bold; }
 
-td, td img { vertical-align:top; } 
+td, td img { vertical-align:top; }
 
 sub { vertical-align: sub; font-size: smaller; }
 sup { vertical-align: super; font-size: smaller; }
 
-pre { 
-  padding: 15px; 
-  
-  /* www.pathf.com/blogs/2008/05/formatting-quoted-code-in-blog-posts-css21-white-space-pre-wrap/ */
-  white-space: pre; /* CSS2 */
-  white-space: pre-wrap; /* CSS 2.1 */
-  white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
-  word-wrap: break-word; /* IE */
+pre {
+    padding: 15px;
+
+    /* www.pathf.com/blogs/2008/05/formatting-quoted-code-in-blog-posts-css21-white-space-pre-wrap/ */
+    white-space: pre; /* CSS2 */
+    white-space: pre-wrap; /* CSS 2.1 */
+    white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
+    word-wrap: break-word; /* IE */
 }
 
 textarea { overflow: auto; } /* thnx ivannikolic! www.sitepoint.com/blogs/2010/08/20/ie-remove-textarea-scrollbars/ */
@@ -178,7 +178,7 @@ textarea { overflow: auto; } /* thnx ivannikolic! www.sitepoint.com/blogs/2010/0
 .ie6 legend, .ie7 legend { margin-left: -7px; } /* thnx ivannikolic! */
 
 /* align checkboxes, radios, text inputs with their label
-   by: Thierry Koblentz tjkdesign.com/ez-css/css/base.css  */
+    by: Thierry Koblentz tjkdesign.com/ez-css/css/base.css  */
 input[type="radio"] { vertical-align: text-bottom; }
 input[type="checkbox"] { vertical-align: bottom; }
 .ie7 input[type="checkbox"] { vertical-align: baseline; }
@@ -187,64 +187,64 @@ input[type="checkbox"] { vertical-align: bottom; }
 /* hand cursor on clickable input elements */
 label, input[type=button], input[type=submit], button { cursor: pointer; }
 
-/* webkit browsers add a 2px margin outside the chrome of form elements */  
+/* webkit browsers add a 2px margin outside the chrome of form elements */
 button, input, select, textarea { margin: 0; }
 
 /* colors for form validity */
 input:valid, textarea:valid   {  }
-input:invalid, textarea:invalid { 
-      border-radius: 1px;
-    -moz-box-shadow: 0px 0px 5px red; 
- -webkit-box-shadow: 0px 0px 5px red; 
-         box-shadow: 0px 0px 5px red;
+input:invalid, textarea:invalid {
+    border-radius: 1px;
+    -moz-box-shadow: 0px 0px 5px red;
+    -webkit-box-shadow: 0px 0px 5px red;
+    box-shadow: 0px 0px 5px red;
 }
-.no-boxshadow input:invalid, 
+.no-boxshadow input:invalid,
 .no-boxshadow textarea:invalid { background-color: #f0dddd; }
 
 
 /* These selection declarations have to be separate.
-   No text-shadow: twitter.com/miketaylr/status/12228805301 
-   Also: hot pink. */
+    No text-shadow: twitter.com/miketaylr/status/12228805301
+    Also: hot pink. */
 ::-moz-selection{ background: #555; color:#fff; text-shadow: none; }
-::selection { background:#555; color:#fff; text-shadow: none; } 
+::selection { background:#555; color:#fff; text-shadow: none; }
 
 /*  j.mp/webkit-tap-highlight-color */
-a:link { -webkit-tap-highlight-color: #555; } 
+a:link { -webkit-tap-highlight-color: #555; }
 
 
-/* make buttons play nice in IE:    
-   www.viget.com/inspire/styling-the-button-element-in-internet-explorer/ */
+/* make buttons play nice in IE:
+    www.viget.com/inspire/styling-the-button-element-in-internet-explorer/ */
 button {  width: auto; overflow: visible; }
- 
-/* bicubic resizing for non-native sized IMG: 
-   code.flickr.com/blog/2008/11/12/on-ui-quality-the-little-things-client-side-image-resizing/ */
+
+/* bicubic resizing for non-native sized IMG:
+    code.flickr.com/blog/2008/11/12/on-ui-quality-the-little-things-client-side-image-resizing/ */
 .ie7 img { -ms-interpolation-mode: bicubic; }
 
-/* 
- * Non-semantic helper classes 
- */
+/*
+    * Non-semantic helper classes
+    */
 
 /* for image replacement */
 .ir { display:block; text-indent:-999em; overflow:hidden; background-repeat: no-repeat; }
 
 /* Hide for both screenreaders and browsers
-   css-discuss.incutio.com/wiki/Screenreader_Visibility */
-.hidden { display:none; } 
+    css-discuss.incutio.com/wiki/Screenreader_Visibility */
+.hidden { display:none; }
 
-/* Hide only visually, but have it available for screenreaders 
-   www.webaim.org/techniques/css/invisiblecontent/ 
-   Solution from: j.mp/visuallyhidden - Thanks Jonathan Neal! */
-.visuallyhidden { position:absolute !important;    
-  clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
-  clip: rect(1px, 1px, 1px, 1px); }
+/* Hide only visually, but have it available for screenreaders
+    www.webaim.org/techniques/css/invisiblecontent/
+    Solution from: j.mp/visuallyhidden - Thanks Jonathan Neal! */
+.visuallyhidden { position:absolute !important;
+    clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+    clip: rect(1px, 1px, 1px, 1px); }
 
 /* Hide visually and from screenreaders, but maintain layout */
 .invisible { visibility: hidden; }
 
 /* >> The Magnificent CLEARFIX: Updated to prevent margin-collapsing on child elements << j.mp/bestclearfix */
 .clearfix:before, .clearfix:after {
-  content: "\0020"; display: block; height: 0; visibility: hidden;    
-} 
+    content: "\0020"; display: block; height: 0; visibility: hidden;
+}
 
 .clearfix:after { clear: both; }
 /* Fix clearfix: blueprintcss.lighthouseapp.com/projects/15318/tickets/5-extra-margin-padding-bottom-of-page */
@@ -253,8 +253,8 @@ button {  width: auto; overflow: visible; }
 
 /*********** layout info (ez.css) ***********/
 /* 2009 -2010 (c) | ez-css.org
- * ez-plug-min.css :: version 1.1 :: 01182010
- */
+    * ez-plug-min.css :: version 1.1 :: 01182010
+    */
 .ez-wr:after,.ez-box:after{content:".";display:block;height:0;clear:both;visibility:hidden}.ez-wr,.ez-box,.ez-last{display:inline-block;min-height:0}/* \*/ * html .ez-wr,* html .ez-box,* html .ez-last{height:1%}.ez-wr,.ez-box,.ez-last{display:block}/* */.ez-oh{overflow:hidden}* html .ez-oh{overflow:visible}.ez-oa{overflow:auto}.ez-dt{display:table}.ez-it{display:inline-table}.ez-tc{display:table-cell}.ez-ib{display:inline-block}.ez-fl{float:left}* html .ez-fl{margin-right:-3px}.ez-fr{float:right}* html .ez-fr{margin-left:-3px}.ez-25{width:25%}.ez-33{width:33.33%}.ez-50{width:50%}.ez-66{width:66.66%}.ez-75{width:75%}.ez-negmr{margin-right:-1px}* html .ez-negmr{margin-right:-4px}.ez-negmx{margin-right:-1px}.ez-negml{margin-left:-1px}* html .ez-negml{margin-left:-4px}
 
 
@@ -274,54 +274,54 @@ thead th {
 }
 /*********** forms and table padding ***********/
 form, table {
-   padding: 5px 10px 5px 10px;
+    padding: 5px 10px 5px 10px;
 }
 
 /*********** code blocks ***********/
 code {
-   padding: 3px 5px;
-   font-family: Andale Mono, monospace;
-   font-size: 0.9em;
+    padding: 3px 5px;
+    font-family: Andale Mono, monospace;
+    font-size: 0.9em;
 }
 
 /*********** left and right padding to quoted text ***********/
 blockquote {
-   background: #cccccc;
-   border-left: 30px transparent;
-   border-right: 30px transparent;
-   /*padding: 5px;*/
+    background: #cccccc;
+    border-left: 30px transparent;
+    border-right: 30px transparent;
+    /*padding: 5px;*/
 }
 
 input[type=text], input[type=password], textarea, select {
     margin: 2px 15px 2px 5px;
-    width: 280px;      
+    width: 280px;
     background: #fff;
     color: #555;
-    border: 1px solid #dedede; 
+    border: 1px solid #dedede;
     -moz-border-radius: 2px;
     -webkit-border-radius: 2px;
-    border-radius: 2px;       
+    border-radius: 2px;
     font-size: 12px;
 }
 
 input[type=text], input[type=password] {
-    height: 16px;  
+    height: 16px;
 }
 
 select[multiple=multiple] {
-    height: 90px;  
+    height: 90px;
 }
 
 input[type=submit], input[type=button], button {
     margin: 0px;
     /*width: 85px;*/
-    height: 22px;    
+    height: 22px;
     background: #eaeaea;
     color: #555;
     border: 1px solid #dedede;
     -moz-border-radius: 2px;
     -webkit-border-radius: 2px;
-    border-radius: 2px;    
+    border-radius: 2px;
 }
 
 fieldset { border: 1px solid #dedede; padding: 6px; }
@@ -331,7 +331,7 @@ input:focus, textarea:focus { background: #fafafa; }
 
 p {text-indent:30px;}
 
-p, blockquote {    
+p, blockquote {
     margin-bottom: 10px;
 }
 
@@ -352,16 +352,16 @@ h6 {font-size: 0.8em;}
     margin: 0 auto;
     padding: 0;
 }
-#wrapper {margin: 0 auto;} 
-#wrapper {background-color: #fff; padding: 5px;} 
+#wrapper {margin: 0 auto;}
+#wrapper {background-color: #fff; padding: 5px;}
 #statusbar { margin: 5px 0px 20px 0px;}
-#footer {    
-    margin-top: 30px;    
-    padding: 5px;    
+#footer {
+    margin-top: 30px;
+    padding: 5px;
 }
-#statusbar, #footer {    
-    background: #eaeaea; 
-    border-top: 1px #aaa solid;    
+#statusbar, #footer {
+    background: #eaeaea;
+    border-top: 1px #aaa solid;
 }
 #logo {
     width: 68px;
@@ -375,25 +375,25 @@ h6 {font-size: 0.8em;}
 #right_sidebar { width: 160px; float:right; display: none; }
 #left_sidebar { width: 160px; float:left; display: none; }
 #content { float: left; /*width: 740px;*//*width: 63%;*/ /*width: 640px; float:left;*/ } /* uncomment this if you are going to use sidebars */
- 
+
 .auth_navbar {
-   top: 0px;
-   float: right;
-   padding: 3px 10px 3px 10px; 
+    top: 0px;
+    float: right;
+    padding: 3px 10px 3px 10px;
 }
 
 /*********** web2py specific ***********/
 div.flash {
     font-weight: bold;
     display: none;
-    position: fixed;    
+    position: fixed;
     padding: 10px;
     top: 40px;
     right: 10px;
     min-width: 280px;
     opacity: 0.85;
-    margin: 0px 0px 10px 10px;    
-    color: #fff;    
+    margin: 0px 0px 10px 10px;
+    color: #fff;
     vertical-align: middle;
     cursor: pointer;
     background: #000;
@@ -409,12 +409,12 @@ div.error {
 }
 
 /***************************
- * CSS 3 Buttons
- * http://github.com/michenriksen/css3buttons
- * created by Michael Henriksen
- * License: Unlicense 
- * 
- * *******************/
+    * CSS 3 Buttons
+    * http://github.com/michenriksen/css3buttons
+    * created by Michael Henriksen
+    * License: Unlicense
+    *
+    * *******************/
 
 a.button { display: inline-block; padding: 3px 5px 3px 5px; font-family: 'lucida grande', tahoma, verdana, arial, sans-serif; font-size: 12px; color: #3C3C3D; text-shadow: 1px 1px 0 #FFFFFF; background: #ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat; white-space: nowrap; overflow: visible; cursor: pointer; text-decoration: none; border: 1px solid #CACACA; -webkit-border-radius: 2px; -moz-border-radius: 2px; -webkit-background-clip: padding-box; border-radius: 2px; outline: none; position: relative; zoom: 1; *display: inline; }
 a.button.primary { font-weight: bold }
@@ -496,110 +496,133 @@ a.button:hover span.icon.uparrow { background-position: 0 -839px }
 a.button span.icon.user { background-position: 0 -854px }
 a.button:hover span.icon.user { background-position: 0 -869px }
 
-
-
-
-
-
 /*****************************************************
- *  HERE YOU CAN START TO WRITE YOUR OWN DIVS
- */
+    *  HERE YOU CAN START TO WRITE YOUR OWN DIVS
+    */
+
+/*
+    * Media queries for responsive design
+    */
+
+@media all and (orientation:portrait) {
+    /* Style adjustments for portrait mode goes here */
+
+}
+
+@media all and (orientation:landscape) {
+    /* Style adjustments for landscape mode goes here */
+
+}
+
+/* Grade-A Mobile Browsers (Opera Mobile, iPhone Safari, Android Chrome)
+    Consider this: www.cloudfour.com/css-media-query-for-mobile-is-fools-gold/ */
+@media screen and (max-device-width: 480px) {
 
 
-
-
-
+    /* Uncomment if you don't want iOS and WinMobile to mobile-optimize the text for you
+    j.mp/textsizeadjust
+    html { -webkit-text-size-adjust:none; -ms-text-size-adjust:none; } */
+}
 
 
 /*
- * Media queries for responsive design
- */
-
-@media all and (orientation:portrait) { 
-  /* Style adjustments for portrait mode goes here */
-  
-}
-
-@media all and (orientation:landscape) { 
-  /* Style adjustments for landscape mode goes here */
-  
-}
-
-/* Grade-A Mobile Browsers (Opera Mobile, iPhone Safari, Android Chrome)  
-   Consider this: www.cloudfour.com/css-media-query-for-mobile-is-fools-gold/ */
-@media screen and (max-device-width: 480px) {
-  
-  
-  /* Uncomment if you don't want iOS and WinMobile to mobile-optimize the text for you
-     j.mp/textsizeadjust 
-  html { -webkit-text-size-adjust:none; -ms-text-size-adjust:none; } */
-}
-
-
-/* 
- * print styles
- * inlined to avoid required HTTP connection www.phpied.com/delay-loading-your-print-css/ 
- */
+    * print styles
+    * inlined to avoid required HTTP connection www.phpied.com/delay-loading-your-print-css/
+    */
 @media print {
-  * { background: transparent !important; color: #444 !important; text-shadow: none !important; }
-  a, a:visited { color: #444 !important; text-decoration: underline; }
-  a:after { content: " (" attr(href) ")"; } 
-  abbr:after { content: " (" attr(title) ")"; }
-  .ir a:after { content: ""; }  /* Don't show links for images */
-  pre, blockquote { border: 1px solid #999; page-break-inside: avoid; }
-  thead { display: table-header-group; } /* css-discuss.incutio.com/wiki/Printing_Tables */ 
-  tr, img { page-break-inside: avoid; }
-  @page { margin: 0.5cm; }
-  p, h2, h3 { orphans: 3; widows: 3; }
-  h2, h3{ page-break-after: avoid; }
+    * { background: transparent !important; color: #444 !important; text-shadow: none !important; }
+    a, a:visited { color: #444 !important; text-decoration: underline; }
+    a:after { content: " (" attr(href) ")"; }
+    abbr:after { content: " (" attr(title) ")"; }
+    .ir a:after { content: ""; }  /* Don't show links for images */
+    pre, blockquote { border: 1px solid #999; page-break-inside: avoid; }
+    thead { display: table-header-group; } /* css-discuss.incutio.com/wiki/Printing_Tables */
+    tr, img { page-break-inside: avoid; }
+    @page { margin: 0.5cm; }
+    p, h2, h3 { orphans: 3; widows: 3; }
+    h2, h3{ page-break-after: avoid; }
 }
 
 /* Grid */
+.web2py_grid a { text-decoration:none;}
+.web2py_grid table { width: 100% }
 .web2py_grid td { white-space:nowrap; }
 .web2py_grid th { background-color:#EAEAEA; }
-.web2py_grid a { text-decoration:none;}
-.web2py_search_actions { }
-.web2py_counter{ margin-top: 5px; }
-.web2py_grid table th {
-	padding-top: 9px;
-	font-weight: bold;
-	border-bottom-width: 2px;
+.web2py_grid ybody th,
+.web2py_grid tbody td {
+    padding: 5px 10px 5px;
+    line-height: 13.5px;
+    vertical-align: middle;
 }
-.web2py_grid table th, 
-.web2py_grid table td {
-	padding: 10px 10px 9px;
-	line-height: 13.5px;
-	vertical-align: middle;
-	border-bottom: 1px solid #DDD;
+.web2py_grid thead th {
+    padding-top: 9px;
+    font-weight: bold;
+    border-bottom: 1px solid #DDD;
 }
+.web2py_grid tr.odd {background-color: #F9F9F9;}
+.web2py_grid tr:hover {background-color: #F5F5F5; }
 
-.web2py_grid table { width: 100% }
-.web2py_grid table tr.odd {background-color: #F9F9F9;}
-.web2py_console { background-color: #EAEAEA; padding: 5px; border-bottom: 1px solid #DDD; }
-
-.web2py_grid table tr:hover{background-color: #F5F5F5;}
 .web2py_breadcrumbs a {
-   line-height: 20px; margin-right: 5px; display: inline-block; padding: 3px 5px 3px 5px; font-family: 'lucida grande', tahoma, verdana, arial, sans-serif; color: #3C3C3D; text-shadow: 1px 1px 0 #FFFFFF; background: #ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat; white-space: nowrap; overflow: visible; cursor: pointer; text-decoration: none; border: 1px solid #CACACA; -webkit-border-radius: 2px; -moz-border-radius: 2px; -webkit-background-clip: padding-box; border-radius: 2px; outline: none; position: relative; zoom: 1; *display: inline; 
+    line-height: 20px; margin-right: 5px; display: inline-block;
+    padding: 3px 5px 3px 5px;
+    font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
+    color: #3C3C3D;
+    text-shadow: 1px 1px 0 #FFFFFF;
+    background:#ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat;
+    white-space: nowrap; overflow: visible; cursor: pointer;
+    text-decoration: none; border: 1px solid #CACACA;
+    -webkit-border-radius: 2px; -moz-border-radius: 2px;
+    -webkit-background-clip: padding-box; border-radius: 2px;
+    outline: none; position: relative; zoom: 1; *display: inline;
 }
-.web2py_search_actions a, .row_buttons a, .web2py_paginator ul li a, .web2py_console input[type=submit], .web2py_console input[type=button], .web2py_console button {
-   line-height: 13.5px; margin-right: 5px; display: inline-block; padding: 3px 5px 3px 5px; font-family: 'lucida grande', tahoma, verdana, arial, sans-serif; font-size: 12px; color: #3C3C3D; text-shadow: 1px 1px 0 #FFFFFF; background: #ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat; white-space: nowrap; overflow: visible; cursor: pointer; text-decoration: none; border: 1px solid #CACACA; -webkit-border-radius: 2px; -moz-border-radius: 2px; -webkit-background-clip: padding-box; border-radius: 2px; outline: none; position: relative; zoom: 1; *display: inline; 
+
+.web2py_console {
+    background-color: #EAEAEA; padding: 5px; border-bottom: 1px solid #DDD; 
+    margin-bottom: 5px;
 }
-.web2py_search_actions a:hover, .row_buttons a:hover, .web2py_paginator ul li a:hover {
-   color: #FFFFFF; border-color: #388AD4; text-decoration: none; text-shadow: -1px -1px 0 rgba(0,0,0,0.3); background-position: 0 -40px; background-color: #2D7DC5; 
+
+.web2py_grid .row_buttons a,
+.web2py_paginator ul li a,
+.web2py_search_actions a,
+.web2py_console input[type=submit],
+.web2py_console input[type=button],
+.web2py_console button {
+    line-height: 13.5px; margin-right: 5px; display: inline-block;
+    padding: 3px 5px 3px 5px;
+    font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
+    font-size: 12px;
+    color: #3C3C3D;
+    text-shadow: 1px 1px 0 #FFFFFF;
+    background:#ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat;
+    white-space: nowrap; overflow: visible;
+    cursor: pointer; text-decoration: none;
+    border: 1px solid #CACACA;
+    -webkit-border-radius: 2px; -moz-border-radius: 2px;
+    -webkit-background-clip: padding-box; border-radius: 2px;
+    outline: none; position: relative; zoom: 1; *display: inline;
 }
-.web2py_console {margin-bottom: 5px;}
+.web2py_grid .row_buttons a:hover,
+.web2py_search_actions a:hover,
+.web2py_paginator ul li a:hover {
+    color: #FFFFFF; border-color: #388AD4; text-decoration: none;
+    text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+    background-position: 0 -40px; background-color: #2D7DC5;
+}
+.web2py_counter {
+    margin-top: 5px; 
+}
 .web2py_paginator {
-	padding: 5px;
-	color: #333;	
-	}
+    padding: 5px;
+    color: #333;
+}
 .web2py_paginator ul {
-	list-style-type: none;
-	margin: 0px;
-	padding: 0px;	
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px;
 }
 .web2py_paginator ul li {
-	display: inline;	
+    display: inline;
 }
-.web2py_paginator .current {		
-	font-weight: bold;
+.web2py_paginator .current {
+    font-weight: bold;
 }
