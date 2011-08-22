@@ -345,16 +345,21 @@ h6 {font-size: 0.8em;}
 
 /*********** page layout alignment, width and padding ***********/
 /*body {background-color: #000;}*/
+#header {
+    /* background: url('../static/images/logo.png') no-repeat; */
+}
+#header h1 {  padding: 10px; }
 #container, #header, #page, #content, #statusbar,
-#footer, #wrapper { display:block; line-height: 170%; }
+#footer, #wrapper { display:block; line-height: 170%}
 #wrapper {width: 900px;}
 #container {
     margin: 0 auto;
     padding: 0;
 }
+#page { padding: 10px; }
 #wrapper {margin: 0 auto;}
-#wrapper {background-color: #fff; padding: 5px;}
-#statusbar { margin: 5px 0px 20px 0px;}
+#wrapper {background-color: #fff; padding: 0}
+#statusbar { margin: 0 }
 #footer {
     margin-top: 30px;
     padding: 5px;
@@ -379,7 +384,14 @@ h6 {font-size: 0.8em;}
 .auth_navbar {
     top: 0px;
     float: right;
-    padding: 3px 10px 3px 10px;
+    width: 100%;
+    /* background-color: black;
+    opacity: 0.5; 
+    color: white; */
+    text-align: right;
+}
+.auth_navbar a {
+    /* color: white; */
 }
 
 /*********** web2py specific ***********/
@@ -626,3 +638,4 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator .current {
     font-weight: bold;
 }
+
