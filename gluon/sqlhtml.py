@@ -1272,8 +1272,8 @@ class SQLFORM(FORM):
              user_signature = True,
              maxtextlengths={},
              maxtextlength=20,
-             _class="web2py_smarttable",
-             formname='smarttable'):
+             _class="web2py_grid",             
+             formname='web2py_grid'):
 
         from gluon import current, redirect
         db = query._db
@@ -1294,7 +1294,7 @@ class SQLFORM(FORM):
             field_id = tables[0]._id
         table = field_id.table
         tablename = table._tablename
-        referrer = session._grid_referrer or url()
+        referrer = session.get('_web2py_grid_referrer_'+formname, url())
         def check_authorization():
             if not URL.verify(request,user_signature=user_signature):
                 session.flash = T('not authorized')
@@ -1307,13 +1307,13 @@ class SQLFORM(FORM):
                 raise HTTP(200,stream,**response.headers)
 
         def buttons(edit=False,view=False,record=None):
-            buttons = DIV(A(T('back'),_href=referrer))
+            buttons = DIV(A(T('Back'),_href=referrer),_class='row_buttons')
             if edit:
                 args = ['edit',table._tablename,request.args[-1]]
-                buttons.append(A(T('edit'),_href=url(args=args)))
+                buttons.append(A(T('Edit'),_href=url(args=args)))
             if view:
                 args = ['view',table._tablename,request.args[-1]]
-                buttons.append(A(T('view'),_href=url(args=args)))
+                buttons.append(A(T('View'),_href=url(args=args)))
             if record and links:
                 for link in links:
                     buttons.append(link(record))
@@ -1355,16 +1355,15 @@ class SQLFORM(FORM):
         def OR(a,b): return a|b
         def AND(a,b): return a&b
 
-        session._grid_referrer = URL(args=request.args,vars=request.vars,
-                                     user_signature=user_signature)
-
+        session['_web2py_grid_referrer_'+formname] = \
+            URL(args=request.args,vars=request.vars,user_signature=user_signature)
         console = DIV(_class='web2py_console')
         if searchable:
             form = FORM(INPUT(_name='keywords',_value=request.vars.keywords,
                               _id='web2py_keywords'),
                         INPUT(_type='submit',_value=T('Search')),
-                        TAG.button(T('clear'),
-                                   _onclick="jQuery('#web2py_keywords').val('')"),
+                        INPUT(_type='submit',_value=T('clear'),
+                              _onclick="jQuery('#web2py_keywords').val('')"),
                         _method="GET",_action=url())
             console.append(form)
             key = request.vars.get('keywords','').strip()
@@ -1373,18 +1372,22 @@ class SQLFORM(FORM):
                                           if field.type in ('string','text')])
             else:
                 subquery = searchable(key,fields)
-            dbset = dbset(subquery)
-        else:
-            console.append(SPAN())
+            dbset = dbset(subquery)        
         if left:
             nrows = dbset.select('count(*)',left=left).first()['count(*)']
         else:
             nrows = dbset.count()
-        console.append(SPAN(T('%(nrows)s records found' % dict(nrows=nrows)),
-                            _class='web2py_counter hspace'))
+                
+        search_actions = DIV(_class='web2py_search_actions')
         if create:
-            console.append(SPAN(A(T('new'),_href=url(args=['new',tablename])),
-                                _class='web2py_create_link hspace'))
+            search_actions.append(A(T('Add'),_href=url(args=['new',tablename])))
+        if csv:
+            search_actions.append(A(T('Export'),_href=url(args=['csv'])))
+
+        console.append(search_actions)
+        
+        console.append(DIV(T('%(nrows)s records found' % dict(nrows=nrows)),
+                            _class='web2py_counter'))
 
         order = request.vars.order or ''
         if sortable:
@@ -1418,8 +1421,8 @@ class SQLFORM(FORM):
                             order=key)))
             head.append(TH(header))
         head.append(TH())
-
-        paginator = DIV(_class="web2py_paginator")
+        
+        paginator = UL()
         if paginate and paginate<nrows:
             npages,reminder = divmod(nrows,paginate)
             if reminder: npages+=1
@@ -1430,36 +1433,42 @@ class SQLFORM(FORM):
                 d = dict(page=p+1)
                 if order: d['order']=order
                 if request.vars.keywords: d['keywords']=request.vars.keywords
-                return A(name,_href=url(vars=d),_class='hspace')
+                return A(name,_href=url(vars=d))
             if page>0:
-                paginator.append(self_link('<<',0))
+                paginator.append(LI(self_link('<<',0)))
             if page>1:
-                paginator.append(self_link('<',page-1))
+                paginator.append(LI(self_link('<',page-1)))
             pages = range(max(0,page-5),min(page+5,npages-1))
             for p in pages:
                 if p == page:
-                    paginator.append(A(p+1,_onclick='return false',_class='hspace'))
+                    paginator.append(LI(A(p+1,_onclick='return false'),_class='current'))
                 else:
-                    paginator.append(self_link(p+1,p))
+                    paginator.append(LI(self_link(p+1,p)))
             if page<npages-2:
-                paginator.append(self_link('>',page+1))
+                paginator.append(LI(self_link('>',page+1)))
             if page<npages-1:
-                paginator.append(self_link('>>',npages-1))
+                paginator.append(LI(self_link('>>',npages-1)))
         else:
             limitby = None
-        if csv:
-            paginator.append(A('export',_href=url(args=['csv'])))
+        
         rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)
         if not searchable and not rows: return DIV(T('no data'))
         if rows:
-            htmltable = TABLE(head)
+            htmltable = TABLE(THEAD(head))
+            tbody = TBODY()
+            numrec=0
             for row in rows:
+                if numrec % 2 == 0:
+                    classtr = 'even'
+                else:
+                    classtr = 'odd'
+                numrec+=1
                 id = row[field_id]
                 if len(tables)>1 or row.get('_extra',None):
                     rrow = row[field._tablename]
                 else:
                     rrow = row
-                tr = TR()
+                tr = TR(_class=classtr)
                 if selectable:
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
                                     value=request.vars.records))
@@ -1477,15 +1486,15 @@ class SQLFORM(FORM):
                     elif field.type=='upload':
                         if value:
                             if callable(upload):
-                                value = A('file', _href=upload(value))
+                                value = A('File', _href=upload(value))
                             elif upload:
-                                value = A('file', _href='%s/%s' % (upload, value))
+                                value = A('File', _href='%s/%s' % (upload, value))
                         else:
                             value = ''
                     if isinstance(value,str) and len(value)>maxtextlength:
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
                     tr.append(TD(value))
-                row_buttons = TD()
+                row_buttons = TD(_class='row_buttons')
                 for link in links or []:
                     row_buttons.append(link(row))
                 if details:
@@ -1493,10 +1502,11 @@ class SQLFORM(FORM):
                 if editable:
                     row_buttons.append(A(T('edit'),_href=url(args=['edit',tablename,id])))
                 if deletable:
-                    row_buttons.append(A(T('del'),callback=url(args=['delete',tablename,id]),
+                    row_buttons.append(A(T('remove'),callback=url(args=['delete',tablename,id]),
                                    delete='tr'))
                 tr.append(row_buttons)
-                htmltable.append(tr)
+                tbody.append(tr)
+            htmltable.append(tbody)
             if selectable:
                 htmltable = FORM(htmltable,INPUT(_type="submit"))
                 if htmltable.process(formname=formname).accepted:
@@ -1507,8 +1517,11 @@ class SQLFORM(FORM):
             htmltable=''
         else:
             htmltable=DIV('no data')
-        htmltable2=DIV(htmltable,_style='overflow-x: scroll')
-        res = DIV(console,htmltable,paginator,_class=_class)
+        
+        res = DIV(console,
+                  DIV(htmltable,_class="web2py_table"),
+                  DIV(paginator,_class="web2py_paginator"),
+                  _class=_class)
         return res
 
     @staticmethod
@@ -1601,7 +1614,7 @@ class SQLFORM(FORM):
         breadcrumbs.append(A(T(table._tablename),_href=URL(args=request.args[:args])))
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
-        grid.insert(0,H3(*breadcrumbs))
+        grid.insert(0,DIV(H3(*breadcrumbs),_class='web2py_breadcrumbs'))
         return grid
 
 

@@ -312,7 +312,7 @@ select[multiple=multiple] {
     height: 90px;  
 }
 
-input[type=submit], input[type=button], button, web2py_smarttable a {
+input[type=submit], input[type=button], button {
     margin: 0px;
     /*width: 85px;*/
     height: 22px;    
@@ -554,14 +554,52 @@ a.button:hover span.icon.user { background-position: 0 -869px }
   h2, h3{ page-break-after: avoid; }
 }
 
-.hspace { padding: 0 5px 0 0; }
-.web2py_smarttable td { white-space:nowrap; }
-.web2py_smarttable a { text-decoration:none; background-color:#EAEAEA; padding:1px 5px 1px 5px; margin: 0 5px 0 0; 
--moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
+/* Grid */
+.web2py_grid td { white-space:nowrap; }
+.web2py_grid th { background-color:#EAEAEA; }
+.web2py_grid a { text-decoration:none;}
+.web2py_search_actions { }
+.web2py_counter{ margin-top: 5px; }
+.web2py_grid table th {
+	padding-top: 9px;
+	font-weight: bold;
+	border-bottom-width: 2px;
 }
-.web2py_smarttable th { background-color:#EAEAEA; }
-.web2py_smarttable table { width:100%}
-.web2py_console {width:100%; text-align:center; background-color:#EAEAEA;}
-.web2py_paginator {width:100%; text-align:center; background-color:#EAEAEA;}
+.web2py_grid table th, 
+.web2py_grid table td {
+	padding: 10px 10px 9px;
+	line-height: 13.5px;
+	vertical-align: middle;
+	border-bottom: 1px solid #DDD;
+}
+
+.web2py_grid table { width: 100% }
+.web2py_grid table tr.odd {background-color: #F9F9F9;}
+.web2py_console { background-color: #EAEAEA; padding: 5px; border-bottom: 1px solid #DDD; }
+
+.web2py_grid table tr:hover{background-color: #F5F5F5;}
+.web2py_breadcrumbs a {
+   line-height: 20px; margin-right: 5px; display: inline-block; padding: 3px 5px 3px 5px; font-family: 'lucida grande', tahoma, verdana, arial, sans-serif; color: #3C3C3D; text-shadow: 1px 1px 0 #FFFFFF; background: #ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat; white-space: nowrap; overflow: visible; cursor: pointer; text-decoration: none; border: 1px solid #CACACA; -webkit-border-radius: 2px; -moz-border-radius: 2px; -webkit-background-clip: padding-box; border-radius: 2px; outline: none; position: relative; zoom: 1; *display: inline; 
+}
+.web2py_search_actions a, .row_buttons a, .web2py_paginator ul li a, .web2py_console input[type=submit], .web2py_console input[type=button], .web2py_console button {
+   line-height: 13.5px; margin-right: 5px; display: inline-block; padding: 3px 5px 3px 5px; font-family: 'lucida grande', tahoma, verdana, arial, sans-serif; font-size: 12px; color: #3C3C3D; text-shadow: 1px 1px 0 #FFFFFF; background: #ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat; white-space: nowrap; overflow: visible; cursor: pointer; text-decoration: none; border: 1px solid #CACACA; -webkit-border-radius: 2px; -moz-border-radius: 2px; -webkit-background-clip: padding-box; border-radius: 2px; outline: none; position: relative; zoom: 1; *display: inline; 
+}
+.web2py_search_actions a:hover, .row_buttons a:hover, .web2py_paginator ul li a:hover {
+   color: #FFFFFF; border-color: #388AD4; text-decoration: none; text-shadow: -1px -1px 0 rgba(0,0,0,0.3); background-position: 0 -40px; background-color: #2D7DC5; 
+}
+.web2py_console {margin-bottom: 5px;}
+.web2py_paginator {
+	padding: 5px;
+	color: #333;	
+	}
+.web2py_paginator ul {
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;	
+}
+.web2py_paginator ul li {
+	display: inline;	
+}
+.web2py_paginator .current {		
+	font-weight: bold;
+}
