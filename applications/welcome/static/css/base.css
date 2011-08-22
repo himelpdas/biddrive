@@ -146,8 +146,7 @@ html { overflow-y: scroll; }
 /* Accessible focus treatment: people.opera.com/patrickl/experiments/keyboard/test */
 a:hover, a:active { outline: none; }
 
-a, a:active, a:visited { color:#607890; }
-a:hover { color:#036; }
+a, a:active, a:visited { color: #275b90 }
 
 ul, ol { margin-left: 1.8em; }
 ol { list-style-type: decimal; }
@@ -210,7 +209,8 @@ input:invalid, textarea:invalid {
 
 /*  j.mp/webkit-tap-highlight-color */
 a:link { -webkit-tap-highlight-color: #555; }
-
+a { text-decoration: none}
+a:hover {text-decoration: underline}
 
 /* make buttons play nice in IE:
     www.viget.com/inspire/styling-the-button-element-in-internet-explorer/ */
@@ -356,12 +356,11 @@ h6 {font-size: 0.8em;}
     margin: 0 auto;
     padding: 0;
 }
-#page { padding: 10px; }
+#page { padding: 20px 10px 30px 10px; }
 #wrapper {margin: 0 auto;}
 #wrapper {background-color: #fff; padding: 0}
 #statusbar { margin: 0 }
 #footer {
-    margin-top: 30px;
     padding: 5px;
 }
 #statusbar, #footer {
@@ -385,13 +384,13 @@ h6 {font-size: 0.8em;}
     top: 0px;
     float: right;
     width: 100%;
-    /* background-color: black;
-    opacity: 0.5; 
-    color: white; */
+    background-color: #666666;
+    opacity: 0.75; 
     text-align: right;
+    color: white;
 }
 .auth_navbar a {
-    /* color: white; */
+    color: white;
 }
 
 /*********** web2py specific ***********/
