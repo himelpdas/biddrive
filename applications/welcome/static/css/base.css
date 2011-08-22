@@ -1,8 +1,26 @@
 @charset "UTF-8";
 
-/* This file is contains the following sections:
+/* 
+Quick tips
+==========
 
-Update: Revision: 20101102 by Martin Mulone
+Add a background header, append to this file:
+
+    #header {background: url('../static/images/logo.png') no-repeat; height:100px}
+
+Change theme color, append to this file
+
+    a { color: green }
+    body { background-color: yellow }
+
+Change page width, append to this file
+
+    #wrapper {width: 900px;}
+
+What's in this file?
+====================
+
+This file is contains the following sections:
 
 - The new revision contains:
 - Html5, good practice and normalization support.
@@ -30,26 +48,35 @@ Update: Revision: 20101102 by Martin Mulone
 - backrgound images and colors (change this for colors)
 - web2py specific (.flash, .error)
 
-Notice:
-- even if you usec a different layout/css you may need classes .flash and .error
+Notice
+======
+- even if you use a different layout/css you may need classes .flash and .error
 - this is all color neutral except for links #275b90
 
-License: This file is released under BSD and MIT
+License
+=======
 
+This file is released under BSD and MIT
+
+Version
+=======
+
+Based on Revision: 20101102 by Martin Mulone, modified on 20110822
+
+Credits
+=======
+
+credit is left where credit is due.
+additionally, much inspiration was taken from these projects:
+yui.yahooapis.com/2.8.1/build/base/base.css
+camendesign.com/design/
+praegnanz.de/weblog/htmlcssjs-kickstart
 */
 
 /*
-    credit is left where credit is due.
-    additionally, much inspiration was taken from these projects:
-    yui.yahooapis.com/2.8.1/build/base/base.css
-    camendesign.com/design/
-    praegnanz.de/weblog/htmlcssjs-kickstart
-*/
-
-/*
-    html5doctor.com Reset Stylesheet (Eric Meyer's Reset Reloaded + HTML5 baseline)
-    v1.4 2009-07-27 | Authors: Eric Meyer & Richard Clark
-    html5doctor.com/html-5-reset-stylesheet/
+html5doctor.com Reset Stylesheet (Eric Meyer's Reset Reloaded + HTML5 baseline)
+v1.4 2009-07-27 | Authors: Eric Meyer & Richard Clark
+html5doctor.com/html-5-reset-stylesheet/
 */
 
 html, body, div, span, object, iframe,
@@ -145,7 +172,7 @@ html { overflow-y: scroll; }
 /* Accessible focus treatment: people.opera.com/patrickl/experiments/keyboard/test */
 a:hover, a:active { outline: none; }
 
-a, a:active, a:visited { color: #275b90 }
+a { color: #275b90 }
 
 ul, ol { margin-left: 1.8em; }
 ol { list-style-type: decimal; }
@@ -349,9 +376,6 @@ h6 {font-size: 0.8em;}
 
 /*********** page layout alignment, width and padding ***********/
 /*body {background-color: #000;}*/
-#header {
-    /* background: url('../static/images/logo.png') no-repeat; */
-}
 #header h1 {  padding: 1.33em 0.66em 0.66em 0.66em; }
 #container, #header, #page, #content, #statusbar,
 #footer, #wrapper { display:block; line-height: 170%}
@@ -642,4 +666,3 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator .current {
     font-weight: bold;
 }
-
