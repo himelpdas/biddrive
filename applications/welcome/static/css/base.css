@@ -31,9 +31,8 @@ Update: Revision: 20101102 by Martin Mulone
 - web2py specific (.flash, .error)
 
 Notice:
-- even if you use a different layout/css you may need classes .flash and .error
-- this is all color neutral except for #349C01 (header, links, lines)
-- there are two backrgound images: images/background.png and images/header.png
+- even if you usec a different layout/css you may need classes .flash and .error
+- this is all color neutral except for links #275b90
 
 License: This file is released under BSD and MIT
 
@@ -157,7 +156,8 @@ nav ul, nav li { margin: 0; }
 small { font-size:85%; }
 strong, th { font-weight: bold; }
 
-td, td img { vertical-align:top; }
+td, td img { vertical-align: top;}
+td { text-align: left }
 
 sub { vertical-align: sub; font-size: smaller; }
 sup { vertical-align: super; font-size: smaller; }
@@ -272,6 +272,10 @@ thead th {
     text-align: center;
     border-bottom: 1px solid #444;
 }
+.right {
+    text-align:right;
+}
+
 /*********** forms and table padding ***********/
 form, table {
     padding: 5px 10px 5px 10px;
@@ -335,7 +339,7 @@ p, blockquote {
     margin-bottom: 10px;
 }
 
-h1,h2,h3,h4,h5,h6 { line-height: 170%; }
+h1,h2,h3,h4,h5,h6 { padding-top: 0.5em; padding-bottom: 0.33em; }
 h1 {font-size: 2.0em;}
 h2 {font-size: 1.8em;}
 h3 {font-size: 1.4em;}
@@ -348,7 +352,7 @@ h6 {font-size: 0.8em;}
 #header {
     /* background: url('../static/images/logo.png') no-repeat; */
 }
-#header h1 {  padding: 10px; }
+#header h1 {  padding: 1.33em 0.66em 0.66em 0.66em; }
 #container, #header, #page, #content, #statusbar,
 #footer, #wrapper { display:block; line-height: 170%}
 #wrapper {width: 900px;}
@@ -388,6 +392,7 @@ h6 {font-size: 0.8em;}
     opacity: 0.75; 
     text-align: right;
     color: white;
+    line-height: 1.4em;
 }
 .auth_navbar a {
     color: white;
