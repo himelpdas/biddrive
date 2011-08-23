@@ -11,9 +11,10 @@
    services with web2py
 """
 
+import os
 import re
 import urllib
-from gluon.html import *
+from gluon import *
 from gluon.tools import fetch
 from gluon.storage import Storage
 import gluon.contrib.simplejson as json
@@ -112,3 +113,13 @@ class RPXAccount(object):
                                  _type="text/javascript"))
         return rpxform
 
+def use_janrain(auth,filename='private/janrain.key'):
+    path = os.path.join(current.request.folder,filename)
+    if os.path.exists(path):
+        domain,key = open(path,'r').read().strip().split(':')
+        host = current.request.env.http_host
+        auth.settings.actions_disabled = \
+            ['register','change_password','request_reset_password']
+        auth.settings.login_form = RPXAccount(
+            request, api_key=key,domain=domain,
+            url = "http://%s/%s/default/user/login" % (host,request.application))

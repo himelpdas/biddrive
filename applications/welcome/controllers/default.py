@@ -58,7 +58,7 @@ def data():
     http://..../[app]/default/data/create/[table]
     http://..../[app]/default/data/read/[table]/[id]
     http://..../[app]/default/data/update/[table]/[id]
-    http://..../[app]/default/data/delete/[table]/[id[
+    http://..../[app]/default/data/delete/[table]/[id]
     http://..../[app]/default/data/select/[table]
     http://..../[app]/default/data/search/[table]
     but URLs bust be signed, i.e. linked with

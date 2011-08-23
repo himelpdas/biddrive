@@ -27,8 +27,8 @@ from email import MIMEBase, MIMEMultipart, MIMEText, Encoders, Header, message_f
 from contenttype import contenttype
 from storage import Storage, StorageList, Settings, Messages
 from utils import web2py_uuid
-from gluon import *
 from fileutils import read_file
+from gluon import *
 
 import serializers
 import contrib.simplejson as simplejson
@@ -789,14 +789,25 @@ class Auth(object):
         ...
     """
 
+    @staticmethod
+    def get_or_create_key(filename=None):
+        request = current.request
+        if not filename:
+            filename = os.path.join(request.folder,'private','auth.key')
+        if os.path.exists(filename):
+            key = open(filename,'r').read().strip()
+        else:
+            key = web2py_uuid()
+            open(filename,'w').write(key)
+        return key
 
     def url(self, f=None, args=None, vars=None):
         if args is None: args=[]
         if vars is None: vars={}
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
-    def __init__(self, environment=None, db=None,
-                 controller='default', cas_provider = None):
+    def __init__(self, environment=None, db=None, mailer=True,
+                 hmac_key = None, controller='default', cas_provider = None):
         """
         auth=Auth(globals(), db)
 
@@ -843,7 +854,7 @@ class Auth(object):
         settings.login_url = self.url('user', args='login')
         settings.logged_url = self.url('user', args='profile')
         settings.download_url = self.url('download')
-        settings.mailer = None
+        settings.mailer = (mailer==True) and Mail() or mailer
         settings.login_captcha = None
         settings.register_captcha = None
         settings.retrieve_username_captcha = None
@@ -922,9 +933,8 @@ class Auth(object):
         settings.retrieve_password_onvalidation = []
         settings.reset_password_onvalidation = []
 
-        settings.hmac_key = None
+        settings.hmac_key = hmac_key
         settings.lock_keys = True
-
 
         # ## these are messages that can be customized
         messages = self.messages = Messages(current.T)
@@ -955,7 +965,9 @@ class Auth(object):
         messages.is_empty = "Cannot be empty"
         messages.mismatched_password = "Password fields don't match"
         messages.verify_email = \
-            'Click on the link http://...verify_email/%(key)s to verify your email'
+            'Click on the link http://' + current.request.env.http_host + \
+            URL('default','user',args=['verify_email']) + \
+            '/%(key)s to verify your email'
         messages.verify_email_subject = 'Email verification'
         messages.username_sent = 'Your username was emailed to you'
         messages.new_password_sent = 'A new password was emailed to you'
@@ -965,7 +977,9 @@ class Auth(object):
         messages.retrieve_password = 'Your password is: %(password)s'
         messages.retrieve_password_subject = 'Password retrieve'
         messages.reset_password = \
-            'Click on the link http://...reset_password/%(key)s to reset your password'
+            'Click on the link http://' + current.request.env.http_host + \
+            URL('default','user',args=['reset_password']) + \
+            '/%(key)s to reset your password'
         messages.reset_password_subject = 'Password reset'
         messages.invalid_reset_password = 'Invalid reset password'
         messages.profile_updated = 'Profile updated'
