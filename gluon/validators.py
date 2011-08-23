@@ -2488,14 +2488,14 @@ class CRYPT(object):
     Stores junk as hashed password.
     """
 
-    def __init__(self, key=None, digest_alg='md5', min_length=4, error_message='too short'):
+    def __init__(self, key=None, digest_alg='md5', min_length=0, error_message='too short'):
         self.key = key
         self.digest_alg = digest_alg
         self.min_length = min_length
         self.error_message = error_message
 
     def __call__(self, value):
-        if not value:
+        if not value and self.min_length>0:
             value = web2py_uuid()
         elif len(value)<self.min_length:
             return ('',translate(self.error_message))

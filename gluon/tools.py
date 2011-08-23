@@ -839,6 +839,7 @@ class Auth(object):
         # ## what happens after registration?
 
         settings.hideerror = False
+        settings.password_min_length = 4
         settings.cas_domains = [request.env.http_host]
         settings.cas_provider = cas_provider
         settings.extra_fields = {}
@@ -1228,7 +1229,9 @@ class Auth(object):
                 IS_NOT_EMPTY(error_message=self.messages.is_empty)
             table.last_name.requires = \
                 IS_NOT_EMPTY(error_message=self.messages.is_empty)
-            table[passfield].requires = [CRYPT(key=settings.hmac_key)]
+            table[passfield].requires = [
+                CRYPT(key=settings.hmac_key,
+                      min_length=self.settings.password_min_length)]
             table.email.requires = \
                 [IS_EMAIL(error_message=self.messages.invalid_email),
                  IS_NOT_IN_DB(db, table.email)]
@@ -1534,6 +1537,8 @@ class Auth(object):
         session = current.session
 
         passfield = self.settings.password_field
+        try: table_user[passfield].requires[-1].min_length = 0
+        except: pass
         if next == DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
@@ -1759,8 +1764,8 @@ class Auth(object):
         if log == DEFAULT:
             log = self.messages.register_log
 
-        passfield = self.settings.password_field
-        formstyle = self.settings.formstyle
+        passfield = self.settings.password_field        
+        formstyle = self.settings.formstyle        
         form = SQLFORM(table_user,
                        fields = self.settings.register_fields,
                        hidden=dict(_next=next),
