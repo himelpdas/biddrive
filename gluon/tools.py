@@ -914,7 +914,7 @@ class Auth(object):
         settings.register_onvalidation = []
         settings.register_onaccept = []
         settings.register_fields = None
-        settings.login_verify_password = True
+        settings.register_verify_password = True
 
         settings.verify_email_next = self.url('user', args='login')
         settings.verify_email_onaccept = []
@@ -1776,7 +1776,7 @@ class Auth(object):
                        formstyle=formstyle,
                        separator=self.settings.label_separator
                        )
-        if settings.login_verify_password:
+        if settings.register_verify_password:
             for i, row in enumerate(form[0].components):
                 item = row.element('input',_name=passfield)
                 if item:
