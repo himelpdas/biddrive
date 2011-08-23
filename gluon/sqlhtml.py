@@ -1096,7 +1096,7 @@ class SQLFORM(FORM):
                     if not field.type.startswith('list:'):
                         self.field_parent[row_id]._traverse(False, hideerror)
                     self.custom.widget[ fieldname ] = widget
-            self.accpted = ret
+            self.accepted = ret
             return ret
 
         if record_id and str(record_id) != str(self.record_id):
