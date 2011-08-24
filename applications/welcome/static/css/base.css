@@ -617,7 +617,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
     border-bottom: 1px solid #DDD;
 }
 .web2py_grid tr.odd {background-color: #f2f2f2;}
-.web2py_grid tr:hover {background-color: #F5F5F5; }
+.web2py_grid tr:hover {background-color: #FFD649; }
 
 .web2py_breadcrumbs a {
     line-height: 20px; margin-right: 5px; display: inline-block;
@@ -649,7 +649,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_grid .row_buttons{
     min-height:25px;
 }
-.web2py_grid>.row_buttons a{
+.web2py_grid>.row_buttons a {
     margin:10px;
 }
 
@@ -681,7 +681,8 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator ul li a:hover {
     color: #FFFFFF; border-color: #388AD4; text-decoration: none;
     text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
-    background-position: 0 -40px; background-color: #2D7DC5;
+    background-position: 0 -40px;
+    background-color: #e5e4e4;
     font-weight:normal !important;
 }
 .web2py_counter {
