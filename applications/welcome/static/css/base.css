@@ -6,7 +6,7 @@ Quick tips
 
 Add a background header, append to this file:
 
-    #header {background: url('../static/images/logo.png') no-repeat; height:100px}
+    #header {background: url('../images/logo.png') no-repeat; height:100px}
 
 Change theme color, append to this file
 
@@ -412,14 +412,11 @@ h6 {font-size: 0.8em;}
     top: 0px;
     float: right;
     width: 100%;
-    background-color: #666666;
-    opacity: 0.75; 
+    background-color: white;
+    opacity: 0.80; 
     text-align: right;
-    color: white;
+    color: black;
     line-height: 1.4em;
-}
-.auth_navbar a {
-    color: white;
 }
 
 /*********** web2py specific ***********/
@@ -722,7 +719,3 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator .current {
     font-weight: bold;
 }
-
-/* 
-* Grid 
-*/

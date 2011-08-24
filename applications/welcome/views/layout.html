@@ -70,16 +70,16 @@
   <!--[if (gt IE 9)|!(IE)]><!--> <body> <!--<![endif]-->
     
     <div class="flash">{{=response.flash or ''}}</div> <!-- notification div -->
-    
+
+    {{try:}}{{=auth.navbar(action=URL('default','user'))}}{{except:pass}}    
+
     <div id="container">	      		      	
       
       <div id="wrapper">		
 	
 	<div id="header"> <!-- header and login nav -->
 	  {{block header}} <!-- this is default header -->
-	  <div id="topbar">
-	    {{try:}}{{=auth.navbar(action=URL('default','user'))}}{{except:pass}}
-	  </div>
+	  
 	  <h1>
 	    <span id="appname">{{=request.application.capitalize()}}</span>App
 	  </h1>
