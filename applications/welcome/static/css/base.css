@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-/* 
+/*
 Quick tips
 ==========
 
@@ -413,7 +413,7 @@ h6 {font-size: 0.8em;}
     float: right;
     width: 100%;
     background-color: #666666;
-    opacity: 0.75; 
+    opacity: 0.75;
     text-align: right;
     color: white;
     line-height: 1.4em;
@@ -584,7 +584,14 @@ a.button:hover span.icon.user { background-position: 0 -869px }
     h2, h3{ page-break-after: avoid; }
 }
 
-/* Grid */
++/*
+*Grid
+*
+* The default style for SQLFORM.grid even using jquery-iu
+* or another ui framework will look better with the declarations below
+* if needed to remove base.css consider keeping these following lines
+* in some css file.
+*/
 .web2py_grid a { text-decoration:none;}
 .web2py_grid table { width: 100% }
 .web2py_grid td { white-space:nowrap; }
@@ -595,6 +602,15 @@ a.button:hover span.icon.user { background-position: 0 -869px }
     line-height: 13.5px;
     vertical-align: middle;
 }
+.web2py_grid input:focus,
+.web2py_grid textarea:focus,
+.web2py_grid select:focus {
+    border: 1px solid #ffffff;
+    -webkit-box-shadow: 0px 0px 6px #007eff;
+    -moz-box-shadow: 0px 0px 5px #007eff;
+    box-shadow: 0px 0px 5px #007eff;
+}
+
 .web2py_grid thead th {
     padding-top: 9px;
     font-weight: bold;
@@ -618,7 +634,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 }
 
 .web2py_console {
-    background-color: #f2f2f2; padding: 5px; border-bottom: 1px solid #DDD; 
+    background-color: #f2f2f2; padding: 5px; border-bottom: 1px solid #DDD;
     min-height: 60px;
     text-align:center;
 }
@@ -669,7 +685,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
     font-weight:normal !important;
 }
 .web2py_counter {
-    margin-top: 5px; 
+    margin-top: 5px;
     margin-right:5px;
     width:35%;
     float:right;
@@ -677,7 +693,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 }
 
 .web2py_table, .web2py_form {
-    
+
     border-left: 1px solid #CCC;
     border-right: 1px solid #CCC;
 }
@@ -685,7 +701,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator {
     padding: 5px;
     color: #333;
-   
+
 }
 .web2py_paginator ul {
     list-style-type: none;
@@ -698,3 +714,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator .current {
     font-weight: bold;
 }
+
+/*
+* Grid
+*/
