@@ -408,7 +408,7 @@ h6 {font-size: 0.8em;}
 #left_sidebar { width: 160px; float:left; display: none; }
 #content { float: left; /*width: 740px;*//*width: 63%;*/ /*width: 640px; float:left;*/ } /* uncomment this if you are going to use sidebars */
 
-.auth_navbar {
+#topbar {
     top: 0px;
     float: right;
     width: 100%;
@@ -418,7 +418,8 @@ h6 {font-size: 0.8em;}
     color: white;
     line-height: 1.4em;
 }
-.auth_navbar a {
+
+#topbar a {
     color: white;
 }
 

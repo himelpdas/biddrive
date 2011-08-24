@@ -1776,7 +1776,7 @@ class Auth(object):
                        formstyle=formstyle,
                        separator=self.settings.label_separator
                        )
-        if settings.register_verify_password:
+        if self.settings.register_verify_password:
             for i, row in enumerate(form[0].components):
                 item = row.element('input',_name=passfield)
                 if item:
