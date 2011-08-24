@@ -1277,8 +1277,24 @@ class SQLFORM(FORM):
              oncreate=None,
              onupdate=None, 
              ondelete=None,
+             sorter_icons=('[^]','[v]'),
+             ui = 'jquery-ui',
              _class="web2py_grid",             
-             formname='web2py_grid'):
+             formname='web2py_grid',
+            ):
+
+        # jQuery UI ThemeRoller classes (empty if ui is disabled)
+        if ui == 'jquery-ui':
+            ui = dict(widget='ui-widget',                      
+                      header='ui-widget-header',
+                      content='ui-widget-content',
+                      default='ui-state-default',
+                      cornerall='ui-corner-all',
+                      cornertop='ui-corner-top',
+                      cornerbottom='ui-corner-bottom',
+                      )
+        elif not isinstance(ui,dict):
+            raise RuntimeError,'SQLFORM.grid ui argument must be a dictionary'
 
         from gluon import current, redirect
         db = query._db
@@ -1312,7 +1328,7 @@ class SQLFORM(FORM):
                 raise HTTP(200,stream,**response.headers)
 
         def buttons(edit=False,view=False,record=None):
-            buttons = DIV(A(T('Back'),_href=referrer),_class='row_buttons')
+            buttons = DIV(A(T('Back'),_href=referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
             if edit:
                 args = ['edit',table._tablename,request.args[-1]]
                 buttons.append(A(T('Edit'),_href=url(args=args)))
@@ -1323,31 +1339,33 @@ class SQLFORM(FORM):
                 for link in links:
                     buttons.append(link(record))
             return buttons
+        
+        formfooter = DIV(_class='form_footer row_buttons %(header)s %(cornerbottom)s' % ui)
 
         if create and len(request.args)>1 and request.args[-2]=='new':
             check_authorization()
             table = db[request.args[-1]]
-            form = SQLFORM(table).process(next=referrer,
+            form = SQLFORM(table,_class='web2py_form').process(next=referrer,
                                           onvalidation=onvalidation,
                                           onsuccess=oncreate,
                                           formname=formname)
-            return DIV(buttons(),form,_class=_class)
+            return DIV(buttons(),form,formfooter,_class=_class)
         elif details and len(request.args)>2 and request.args[-3]=='view':
             check_authorization()
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
-            form = SQLFORM(table,record,upload=upload,readonly=True)
-            return DIV(buttons(edit=True,record=record),form,_class=_class)
+            form = SQLFORM(table,record,upload=upload,readonly=True,_class='web2py_form')
+            return DIV(buttons(edit=True,record=record),form,formfooter,_class=_class)
         elif editable and len(request.args)>2 and request.args[-3]=='edit':
             check_authorization()
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
-            form = SQLFORM(table,record,upload=upload,deletable=deletable)
+            form = SQLFORM(table,record,upload=upload,deletable=deletable,_class='web2py_form')
             form.process(formname=formname,
                          onvalidation=onvalidation,
                          onsuccess=onupdate,
                          next=referrer)
-            return DIV(buttons(view=True,record=record),form,_class=_class)
+            return DIV(buttons(view=True,record=record),form,formfooter,_class=_class)
         elif deletable and len(request.args)>2 and request.args[-3]=='delete':
             check_authorization()
             table = db[request.args[-2]]
@@ -1371,13 +1389,13 @@ class SQLFORM(FORM):
 
         session['_web2py_grid_referrer_'+formname] = \
             URL(args=request.args,vars=request.vars,user_signature=user_signature)
-        console = DIV(_class='web2py_console')
+        console = DIV(_class='web2py_console %(header)s %(cornertop)s' % ui)
         if searchable:
             form = FORM(INPUT(_name='keywords',_value=request.vars.keywords,
                               _id='web2py_keywords'),
                         INPUT(_type='submit',_value=T('Search')),
                         INPUT(_type='submit',_value=T('clear'),
-                              _onclick="jQuery('#web2py_keywords').val('')"),
+                              _onclick="jQuery('#web2py_keywords').val('');"),
                         _method="GET",_action=url())
             console.append(form)
             key = request.vars.get('keywords','').strip()
@@ -1416,25 +1434,25 @@ class SQLFORM(FORM):
                 else:
                     orderby=db[tablename][fieldname]
 
-        head = TR()
+        head = TR(_class=ui.get('header',''))
         if selectable:
-            head.append(TH())
+            head.append(TH(_class=ui.get('default','')))
         for field in fields:
             if not field.readable: continue
             key = str(field)
             header = headers.get(str(field),hasattr(field,'label') and field.label or key)
             if sortable:
                 if key == order:
-                    key, marker = '~'+order, '[^]'
+                    key, marker = '~'+order, sorter_icons[0]
                 elif key == order[1:]:
-                    marker = '[v]'
+                    marker = sorter_icons[1]
                 else:
                     marker = ''
-                header = A(header+marker,_href=url(vars=dict(
+                header = A(header,marker,_href=url(vars=dict(
                             keywords=request.vars.keywords or '',
                             order=key)))
-            head.append(TH(header))
-        head.append(TH())
+            head.append(TH(header, _class=ui.get('default','')))
+        head.append(TH(_class=ui.get('default','')))
         
         paginator = UL()
         if paginate and paginate<nrows:
@@ -1533,9 +1551,9 @@ class SQLFORM(FORM):
             htmltable=DIV('no data')
         
         res = DIV(console,
-                  DIV(htmltable,_class="web2py_table"),
-                  DIV(paginator,_class="web2py_paginator"),
-                  _class=_class)
+                  DIV(htmltable,_class="web2py_table"), # '%(content)s" % ui (cool, but breaks darker themes) 
+                  DIV(paginator,_class="web2py_paginator %(header)s %(cornerbottom)s" % ui),
+                  _class='%s %s' % (_class, ui.get('widget','')))
         return res
 
     @staticmethod

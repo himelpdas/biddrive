@@ -589,7 +589,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_grid table { width: 100% }
 .web2py_grid td { white-space:nowrap; }
 .web2py_grid th { background-color:#EAEAEA; }
-.web2py_grid ybody th,
+.web2py_grid tbody th,
 .web2py_grid tbody td {
     padding: 5px 10px 5px;
     line-height: 13.5px;
@@ -600,7 +600,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
     font-weight: bold;
     border-bottom: 1px solid #DDD;
 }
-.web2py_grid tr.odd {background-color: #F9F9F9;}
+.web2py_grid tr.odd {background-color: #f2f2f2;}
 .web2py_grid tr:hover {background-color: #F5F5F5; }
 
 .web2py_breadcrumbs a {
@@ -618,8 +618,23 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 }
 
 .web2py_console {
-    background-color: #EAEAEA; padding: 5px; border-bottom: 1px solid #DDD; 
-    margin-bottom: 5px;
+    background-color: #f2f2f2; padding: 5px; border-bottom: 1px solid #DDD; 
+    min-height: 60px;
+    text-align:center;
+}
+
+
+.web2py_search_actions{
+    width:40%;
+    float:left;
+    text-align:left;
+
+}
+.web2py_grid .row_buttons{
+    min-height:25px;
+}
+.web2py_grid>.row_buttons a{
+    margin:10px;
 }
 
 .web2py_grid .row_buttons a,
@@ -632,7 +647,8 @@ a.button:hover span.icon.user { background-position: 0 -869px }
     padding: 3px 5px 3px 5px;
     font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
     font-size: 12px;
-    color: #3C3C3D;
+    color: #3C3C3D !important;
+    font-weight:normal !important;
     text-shadow: 1px 1px 0 #FFFFFF;
     background:#ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat;
     white-space: nowrap; overflow: visible;
@@ -644,17 +660,32 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 }
 .web2py_grid .row_buttons a:hover,
 .web2py_search_actions a:hover,
+.web2py_console input[type=submit]:hover,
+.web2py_console input[type=button]:hover,
 .web2py_paginator ul li a:hover {
     color: #FFFFFF; border-color: #388AD4; text-decoration: none;
     text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
     background-position: 0 -40px; background-color: #2D7DC5;
+    font-weight:normal !important;
 }
 .web2py_counter {
     margin-top: 5px; 
+    margin-right:5px;
+    width:35%;
+    float:right;
+    text-align:right;
 }
+
+.web2py_table, .web2py_form {
+    
+    border-left: 1px solid #CCC;
+    border-right: 1px solid #CCC;
+}
+
 .web2py_paginator {
     padding: 5px;
     color: #333;
+   
 }
 .web2py_paginator ul {
     list-style-type: none;
