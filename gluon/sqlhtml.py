@@ -1334,10 +1334,10 @@ class SQLFORM(FORM):
         def buttons(edit=False,view=False,record=None):
             buttons = DIV(A(T('Back'),_href=referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
             if edit:
-                args = ['edit',table._tablename,request.args[-1]]
+                args = ['Edit',table._tablename,request.args[-1]]
                 buttons.append(A(T('Edit'),_href=url(args=args)))
             if view:
-                args = ['view',table._tablename,request.args[-1]]
+                args = ['View',table._tablename,request.args[-1]]
                 buttons.append(A(T('View'),_href=url(args=args)))
             if record and links:
                 for link in links:
@@ -1534,11 +1534,11 @@ class SQLFORM(FORM):
                 for link in links or []:
                     row_buttons.append(link(row))
                 if details:
-                    row_buttons.append(A(T('view'),_href=url(args=['view',tablename,id])))
+                    row_buttons.append(A(T('View'),_href=url(args=['view',tablename,id])))
                 if editable:
-                    row_buttons.append(A(T('edit'),_href=url(args=['edit',tablename,id])))
+                    row_buttons.append(A(T('Edit'),_href=url(args=['edit',tablename,id])))
                 if deletable:
-                    row_buttons.append(A(T('delete'),callback=url(args=['delete',tablename,id]),
+                    row_buttons.append(A(T('Delete'),callback=url(args=['delete',tablename,id]),
                                    delete='tr'))
                 tr.append(row_buttons)
                 tbody.append(tr)
