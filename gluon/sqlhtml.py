@@ -15,7 +15,7 @@ Holds:
 """
 
 from http import HTTP
-from html import XML, SPAN, TAG, A, DIV, UL, LI, TEXTAREA, BR, IMG, SCRIPT
+from html import XML, SPAN, TAG, A, DIV, CAT, UL, LI, TEXTAREA, BR, IMG, SCRIPT
 from html import FORM, INPUT, LABEL, OPTION, SELECT
 from html import TABLE, THEAD, TBODY, TR, TD, TH
 from html import URL
@@ -293,7 +293,8 @@ class RadioWidget(OptionsWidget):
         see also: :meth:`FormWidget.widget`
         """
 
-        attr = OptionsWidget._attributes(field, {}, **attributes)
+        attr = RadioWidget._attributes(field, {}, **attributes)
+        attr['_class'] = attr.get('_class','web2py_radiowidget')
 
         requires = field.requires
         if not isinstance(requires, (list, tuple)):
@@ -304,7 +305,6 @@ class RadioWidget(OptionsWidget):
             else:
                 raise SyntaxError, 'widget cannot determine options of %s' \
                     % field
-
         options = [(k, v) for k, v in options if str(v)]
         opts = []
         cols = attributes.get('cols',1)
@@ -314,21 +314,31 @@ class RadioWidget(OptionsWidget):
         if mods:
             rows += 1
 
+        #widget style
+        wrappers = dict(
+            table=(TABLE,TR,TD),
+            ul=(DIV,UL,LI),
+            divs=(CAT,DIV,DIV)
+            )
+        parent, child, inner = wrappers[attributes.get('style','table')]
+
         for r_index in range(rows):
             tds = []
             for k, v in options[r_index*cols:(r_index+1)*cols]:
                 checked='checked' if k==value else ''
-                tds.append(TD(INPUT(_type='radio', _name=field.name,
-                                    requires=attr.get('requires',None),
-                                    hideerror=True, _value=k,_checked=checked,
-                                    value=value), 
-                              SPAN(v,_class='web2py_radio_option',
-                                   _onclick = 'jQuery(this).prev().click()')))
-            opts.append(TR(tds))
+                tds.append(inner(INPUT(_type='radio',
+                                       _id='%s%s' % (field.name,k), 
+                                       _name=field.name,
+                                       requires=attr.get('requires',None),
+                                       hideerror=True, _value=k,
+                                       _checked=checked,
+                                       value=value), 
+                                       LABEL(v,_for='%s%s' % (field.name,k))))
+            opts.append(child(tds))
 
         if opts:
             opts[-1][0][0]['hideerror'] = False
-        return TABLE(*opts, **attr)
+        return parent(*opts, **attr)
 
 
 class CheckboxesWidget(OptionsWidget):
@@ -347,7 +357,8 @@ class CheckboxesWidget(OptionsWidget):
         else:
             values = [str(value)]
 
-        attr = OptionsWidget._attributes(field, {}, **attributes)
+        attr = CheckboxesWidget._attributes(field, {}, **attributes)
+        attr['_class'] = attr.get('_class','web2py_checkboxeswidget')
 
         requires = field.requires
         if not isinstance(requires, (list, tuple)):
@@ -368,6 +379,14 @@ class CheckboxesWidget(OptionsWidget):
         if mods:
             rows += 1
 
+        #widget style
+        wrappers = dict(
+            table=(TABLE,TR,TD),
+            ul=(DIV,UL,LI),
+            divs=(CAT,DIV,DIV)
+            )
+        parent, child, inner = wrappers[attributes.get('style','table')]
+
         for r_index in range(rows):
             tds = []
             for k, v in options[r_index*cols:(r_index+1)*cols]:
@@ -375,17 +394,18 @@ class CheckboxesWidget(OptionsWidget):
                     r_value = k
                 else:
                     r_value = []
-                tds.append(TD(INPUT(_type='checkbox', _name=field.name,
-                                    requires=attr.get('requires', None),
-                                    hideerror=True, _value=k,
-                                    value=r_value), 
-                              SPAN(v,_class='web2py_checkbox_option',
-                                   _onclick = 'jQuery(this).prev().click()')))
-            opts.append(TR(tds))
+                tds.append(inner(INPUT(_type='checkbox', 
+                                       _id='%s%s' % (field.name,k),
+                                       _name=field.name,
+                                       requires=attr.get('requires', None),
+                                       hideerror=True, _value=k,
+                                       value=r_value), 
+                                       LABEL(v,_for='%s%s' % (field.name,k))))
+            opts.append(child(tds))
 
         if opts:
             opts[-1][0][0]['hideerror'] = False
-        return TABLE(*opts, **attr)
+        return parent(*opts, **attr)
 
 
 class PasswordWidget(FormWidget):
@@ -455,9 +475,11 @@ class UploadWidget(FormWidget):
                           A(UploadWidget.GENERIC_DESCRIPTION, _href = url),
                           '|',
                           INPUT(_type='checkbox',
-                                _name=field.name + UploadWidget.ID_DELETE_SUFFIX),
-                          UploadWidget.DELETE_FILE,
-                          ']', br, image)
+                                _name=field.name + UploadWidget.ID_DELETE_SUFFIX,
+                                _id=field.name + UploadWidget.ID_DELETE_SUFFIX),
+                                LABEL(UploadWidget.DELETE_FILE,
+                                     _for=field.name + UploadWidget.ID_DELETE_SUFFIX),
+                                ']', br, image)
             else:
                 inp = DIV(inp, '[',
                           A(UploadWidget.GENERIC_DESCRIPTION, _href = url),
