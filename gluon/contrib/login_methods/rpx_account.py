@@ -113,13 +113,13 @@ class RPXAccount(object):
                                  _type="text/javascript"))
         return rpxform
 
-def use_janrain(auth,filename='private/janrain.key'):
+def use_janrain(auth,filename='private/janrain.key',**kwargs):
     path = os.path.join(current.request.folder,filename)
     if os.path.exists(path):
         domain,key = open(path,'r').read().strip().split(':')
         host = current.request.env.http_host
+        url = "http://%s/%s/default/user/login" % (host,request.application)
         auth.settings.actions_disabled = \
             ['register','change_password','request_reset_password']
         auth.settings.login_form = RPXAccount(
-            request, api_key=key,domain=domain,
-            url = "http://%s/%s/default/user/login" % (host,request.application))
+            request, api_key=key,domain=domain, url = url,**kwargs)
