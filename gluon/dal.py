@@ -4896,6 +4896,7 @@ class Table(dict):
             id_map_self = id_map[self._tablename]
 
         def fix(field, value, id_map):
+            list_reference_s='list:reference'
             if value == null:
                 value = None
             elif field.type=='blob':
@@ -4912,8 +4913,8 @@ class Table(dict):
                     value = int(value)
             elif field.type.startswith('list:string'):
                 value = bar_decode_string(value)
-            elif field.type.startswith('list:reference'):
-                ref_table = field.type[10:].strip()
+            elif field.type.startswith(list_reference_s):
+                ref_table = field.type[len(list_reference_s)].strip()
                 value = [id_map[ref_table][int(v)] \
                              for v in bar_decode_string(value)]
             elif field.type.startswith('list:'):
