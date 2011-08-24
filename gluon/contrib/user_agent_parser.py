@@ -81,7 +81,7 @@ class DetectorBase(object):
         for w in self.skip_if_found:
             if w in agent:
                 return False
-        if self.look_for:
+        if self.look_for in agent:
             return True
         return False
 
@@ -291,6 +291,8 @@ class Result(Storage):
     def __missing__(self, k):
         return ""
 
+"""
+THIS VERSION OF DETECT CAUSES IndexErrors.
 
 def detect(agent):
     result = Result()
@@ -305,7 +307,7 @@ def detect(agent):
                     detector._suggested_detectors = _suggested_detectors
                     break
     return result
-
+"""
 
 def simple_detect(agent):
     """
@@ -318,9 +320,9 @@ def simple_detect(agent):
     if 'os' in result: os_list.append(result['os']['name'])
 
     os = os_list and " ".join(os_list) or "Unknown OS"
-    os_version = os_list and (result['flavor'] and result['flavor'].get(
-            'version')) or (result['dist'] and result['dist'].get('version')) \
-            or (result['os'] and result['os'].get('version')) or ""
+    os_version = os_list and ('flavor' in result and result['flavor'] and result['flavor'].get(
+            'version')) or ('dist' in result and result['dist'] and result['dist'].get('version')) \
+            or ('os' in result and result['os'] and result['os'].get('version')) or ""
     browser = 'browser' in result and result['browser']['name'] \
         or 'Unknown Browser'
     browser_version = 'browser' in result \
