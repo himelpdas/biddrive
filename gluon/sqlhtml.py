@@ -1534,7 +1534,7 @@ class SQLFORM(FORM):
                 if editable:
                     row_buttons.append(A(T('edit'),_href=url(args=['edit',tablename,id])))
                 if deletable:
-                    row_buttons.append(A(T('remove'),callback=url(args=['delete',tablename,id]),
+                    row_buttons.append(A(T('delete'),callback=url(args=['delete',tablename,id]),
                                    delete='tr'))
                 tr.append(row_buttons)
                 tbody.append(tr)
