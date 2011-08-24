@@ -321,7 +321,9 @@ class RadioWidget(OptionsWidget):
                 tds.append(TD(INPUT(_type='radio', _name=field.name,
                                     requires=attr.get('requires',None),
                                     hideerror=True, _value=k,_checked=checked,
-                                    value=value), v))
+                                    value=value), 
+                              SPAN(v,_class='web2py_radio_option',
+                                   _onclick = 'jQuery(this).prev().click()')))
             opts.append(TR(tds))
 
         if opts:
@@ -374,9 +376,11 @@ class CheckboxesWidget(OptionsWidget):
                 else:
                     r_value = []
                 tds.append(TD(INPUT(_type='checkbox', _name=field.name,
-                         requires=attr.get('requires', None),
-                         hideerror=True, _value=k,
-                         value=r_value), v))
+                                    requires=attr.get('requires', None),
+                                    hideerror=True, _value=k,
+                                    value=r_value), 
+                              SPAN(v,_class='web2py_checkbox_option',
+                                   _onclick = 'jQuery(this).prev().click()')))
             opts.append(TR(tds))
 
         if opts:
