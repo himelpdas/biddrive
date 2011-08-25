@@ -1541,8 +1541,7 @@ class Auth(object):
         try: table_user[passfield].requires[-1].min_length = 0
         except: pass
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next:
+            next = request.get_vars._next or request.post_vars._next
             if not next or not next.startswith('/'):
                 next = self.settings.login_next
         if onvalidation == DEFAULT:
