@@ -792,7 +792,7 @@ class SQLFORM(FORM):
 
             field_id = '%s_%s' % (table._tablename, fieldname)
 
-            label = LABEL(label, sep, _for=field_id,
+            label = LABEL(label, label and sep, _for=field_id,
                           _id=field_id+SQLFORM.ID_LABEL_SUFFIX)
 
             row_id = field_id+SQLFORM.ID_ROW_SUFFIX

@@ -5248,7 +5248,7 @@ class Field(Expression):
         unique=False,
         uploadfield=True,
         widget=None,
-        label=None,
+        label=DEFAULT,
         comment=None,
         writable=True,
         readable=True,
@@ -5295,7 +5295,10 @@ class Field(Expression):
         self.uploadfolder = uploadfolder
         self.uploadseparate = uploadseparate
         self.widget = widget
-        self.label = label or ' '.join(item.capitalize() for item in fieldname.split('_'))
+        if label == DEFAULT:
+            self.label = ' '.join(i.capitalize() for i in fieldname.split('_'))
+        else:
+            self.label = label or ''
         self.comment = comment
         self.writable = writable
         self.readable = readable
