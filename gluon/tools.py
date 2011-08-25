@@ -1542,8 +1542,9 @@ class Auth(object):
         except: pass
         if next == DEFAULT:
             next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.login_next
+                or request.post_vars._next:
+            if not next or not next.startswith('/'):
+                next = self.settings.login_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.login_onvalidation
         if onaccept == DEFAULT:
