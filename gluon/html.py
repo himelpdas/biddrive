@@ -46,6 +46,8 @@ __all__ = [
     'CENTER',
     'CAT',
     'CODE',
+    'COL',
+    'COLGROUP',
     'DIV',
     'EM',
     'EMBED',
