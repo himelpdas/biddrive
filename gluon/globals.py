@@ -76,7 +76,6 @@ class Request(Storage):
         self.args = List()
         self.extension = None
         self.now = datetime.datetime.now()
-        self.utcnow = datetime.datetime.utcnow()
         self.is_restful = False
         self.is_https = False
         self.is_local = False
@@ -183,6 +182,23 @@ class Response(Storage):
             page = self.body.getvalue()
         return page
 
+    def include_meta(self):
+        s = ''
+        for key,value in (self.meta or {}).items():
+            s += '<meta name="%s" content="%s" />' % (key,xmlescape(value))
+        self.write(s,escape=False)
+
+    def include_files(self):
+        s = ''
+        for k,f in enumerate(self.files or []):
+            if not f in self.files[:k]:
+                filename = f.lower().split('?')[0]
+                if filename.endswith('.css'):
+                    s += '<link href="%s" rel="stylesheet" type="text/css" />' % f
+                elif filename.endswith('.js'):
+                    s += '<script src="%s" type="text/javascript"></script>' % f
+        self.write(s,escape=False)
+    
     def stream(
         self,
         stream,
@@ -287,8 +303,8 @@ class Response(Storage):
         from gluon.dal import thread
         dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]*1000)) \
                                for row in i.db._timings]) \
-                       for i in thread.instances]
-        u = web2py_uuid()
+                       for i in thread.instances]        
+        u = web2py_uuid() 
         return DIV(
             BUTTON('design',_onclick="document.location='%s'" % admin),
             BUTTON('request',_onclick="jQuery('#request-%s').slideToggle()"%u),
@@ -525,7 +541,5 @@ class Session(Storage):
                 del response.session_file
             except:
                 pass
-
-
 
 
