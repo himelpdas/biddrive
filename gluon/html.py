@@ -236,7 +236,11 @@ def URL(
 
     if not isinstance(args, (list, tuple)):
         args = [args]
-    other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
+    if args:
+        other = '/' + '/'.join([urllib.quote(str(x), '') for x in args])
+    else:
+        other = ''
+
     if other.endswith('/'):
         other += '/'    # add trailing slash to make last trailing empty arg explicit
 
