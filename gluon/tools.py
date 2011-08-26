@@ -1900,6 +1900,9 @@ class Auth(object):
         else:
             user.update_record(registration_key = '')
             current.session.flash = self.messages.email_verified
+        # make sure session has same user.registrato_key as db record
+        if current.session.auth and current.session.auth.user:
+            current.session.auth.user.registration_key = user.registration_key
         if log == DEFAULT:
             log = self.messages.verify_email_log
         if next == DEFAULT:
