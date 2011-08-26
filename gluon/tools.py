@@ -807,7 +807,8 @@ class Auth(object):
         return URL(c=self.settings.controller,f=f,args=args,vars=vars)
 
     def __init__(self, environment=None, db=None, mailer=True,
-                 hmac_key = None, controller='default', cas_provider = None):
+                 hmac_key = None, controller='default', cas_provider = None,
+                 auto_redirect = False):
         """
         auth=Auth(globals(), db)
 
@@ -835,6 +836,17 @@ class Auth(object):
         settings = self.settings = Settings()
 
         # ## what happens after login?
+
+        if URL() in auto_redirect:
+            if not self.user:
+                if not session._auth_next:
+                    session._auth_next = URL(args=request.args,
+                                             vars=request.get_vars)
+        if auto_redirect and not URL() in auto_redirect and \
+                self.user and session._auth_next:
+            next = session._auth_next
+            session._auth_next = None
+            redirect(next)
 
         # ## what happens after registration?
 
