@@ -724,7 +724,7 @@ class Auth(object):
         mail.settings.server='smtp.gmail.com:587'
         mail.settings.sender='you@somewhere.com'
         mail.settings.login='username:password'
-        auth=Auth(globals(), db)
+        auth=Auth(db)
         auth.settings.mailer=mail
         # auth.settings....=...
         auth.define_tables()
@@ -810,10 +810,16 @@ class Auth(object):
                  hmac_key = None, controller='default', cas_provider = None,
                  auto_redirect = False):
         """
-        auth=Auth(globals(), db)
+        auth=Auth(db)
 
         - environment is there for legacy but unused (awful)
         - db has to be the database where to create tables for authentication
+        - mailer=Mail(...) or None (no mailed) or True (make a mailer)
+        - hmac_key can be a hmac_key or hmac_key=Auth.get_or_create_key()
+        - controller (where is the user action?)
+        - cas_provider (delegate authentication to the URL, CAS2)
+        - auto_redirect = [..] a list of URL(...)s that can be 
+          linked from outsize and it is safe to redirect to after login.
 
         """
         ## next two lines for backward compatibility
@@ -837,7 +843,7 @@ class Auth(object):
 
         # ## what happens after login?
 
-        if URL() in auto_redirect:
+        if auto_redirect and URL() in auto_redirect:
             if not self.user:
                 if not session._auth_next:
                     session._auth_next = URL(args=request.args,
@@ -3520,7 +3526,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.run
             def myfunction(a, b):
                 return a + b
@@ -3539,7 +3545,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.csv
             def myfunction(a, b):
                 return a + b
@@ -3558,7 +3564,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.xml
             def myfunction(a, b):
                 return a + b
@@ -3577,7 +3583,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.rss
             def myfunction():
                 return dict(title=..., link=..., description=...,
@@ -3598,7 +3604,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.json
             def myfunction(a, b):
                 return [{a: b}]
@@ -3617,7 +3623,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.jsonrpc
             def myfunction(a, b):
                 return a + b
@@ -3636,7 +3642,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.xmlrpc
             def myfunction(a, b):
                 return a + b
@@ -3655,7 +3661,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.amfrpc
             def myfunction(a, b):
                 return a + b
@@ -3674,7 +3680,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.amfrpc3('domain')
             def myfunction(a, b):
                 return a + b
@@ -3701,7 +3707,7 @@ class Service(object):
         """
         example::
 
-            service = Service(globals())
+            service = Service()
             @service.soap('MyFunction',returns={'result':int},args={'a':int,'b':int,})
             def myfunction(a, b):
                 return a + b
@@ -3949,7 +3955,7 @@ class Service(object):
     def __call__(self):
         """
         register services with:
-        service = Service(globals())
+        service = Service()
         @service.run
         @service.rss
         @service.json
