@@ -30,4 +30,4 @@ open(TMPFILENAME,'wb').write(urllib.urlopen(version).read())
 new_version = zipfile.ZipFile(TMPFILENAME).read('web2py/VERSION').strip()
 if new_version>old_version:
     os.system('sudo -u %s unzip -o %s' % (USER,TMPFILENAME))
-    os.system('apachectl restart')
+    os.system('apachectl restart | apache2ctl restart')
