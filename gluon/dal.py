@@ -1221,8 +1221,8 @@ class BaseAdapter(ConnectionPool):
             if isinstance(distinct,(list,tuple)):
                 distinct = xorify(distinct)
             sql_d = self.expand(distinct)
-            return 'SELECT count(DISTINCT %s) FROM %s%s' % (sql_d, sql_t, sql_w)
-        return 'SELECT count(*) FROM %s%s' % (sql_t, sql_w)
+            return 'SELECT count(DISTINCT %s) FROM %s%s;' % (sql_d, sql_t, sql_w)
+        return 'SELECT count(*) FROM %s%s;' % (sql_t, sql_w)
 
     def count(self,query,distinct=None):
         self.execute(self._count(query,distinct))
