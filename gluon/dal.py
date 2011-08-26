@@ -1599,8 +1599,8 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
         # FIXME http://www.zentus.com/sqlitejdbc/custom_functions.html for UDFs
         # self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
-    def execute(self,a):
-        return self.log_execute(a[:-1])
+    def execute(self,a):        
+        return self.log_execute(a)
 
 
 class MySQLAdapter(BaseAdapter):
@@ -1966,7 +1966,9 @@ class OracleAdapter(BaseAdapter):
             command = command[:m.start('clob')] + str(i) + command[m.end('clob'):]
             args.append(m.group('clob')[6:-2].replace("''", "'"))
             i += 1
-        return self.log_execute(command[:-1], args)
+        if command[-1:]==';':
+            command = command[:-1]
+        return self.log_execute(command, args)
 
     def create_sequence_and_triggers(self, query, table, **args):
         tablename = table._tablename
