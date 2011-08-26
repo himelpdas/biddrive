@@ -71,11 +71,12 @@
     
     <div class="flash">{{=response.flash or ''}}</div> <!-- notification div -->
 
-    {{try:}}{{=auth.navbar(action=URL('default','user'))}}{{except:pass}}    
+        
 
     <div id="container">	      		      	
       
       <div id="wrapper">		
+      {{try:}}{{=auth.navbar(action=URL('default','user'))}}{{except:pass}}
 	
 	<div id="header"> <!-- header and login nav -->
 	  {{block header}} <!-- this is default header -->
