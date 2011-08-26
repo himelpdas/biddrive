@@ -59,6 +59,7 @@ class DetectorBase(object):
     look_for = "string to look for"
     skip_if_found = [] # strings if present stop processin
     can_register = False
+    is_mobile = False
     prefs = Storage() # dict(info_type = [name1, name2], ..)
     version_splitters = ["/", " "]
     _suggested_detectors = None
@@ -71,9 +72,14 @@ class DetectorBase(object):
     def detect(self, agent, result):
         if agent and self.checkWords(agent):
             result[self.info_type] = Storage(name=self.name)
+            result[self.info_type].is_mobile = self.is_mobile
+            if not result.is_mobile:
+                result.is_mobile = result[self.info_type].is_mobile
+                
             version = self.getVersion(agent)
             if version:
                 result[self.info_type].version = version
+            
             return True
         return False
 
@@ -234,6 +240,7 @@ class ChromeOS(OS):
 
 class Android(Dist):
     look_for = 'Android'
+    is_mobile = True
 
     def getVersion(self, agent):
         return agent.split('Android')[-1].split(';')[0].strip()
@@ -241,6 +248,7 @@ class Android(Dist):
 
 class iPhone(Dist):
     look_for = 'iPhone'
+    is_mobile = True
 
     def getVersion(self, agent):
         version_end_chars = ['like', ';', ')']
@@ -253,6 +261,7 @@ class iPhone(Dist):
 
 class iPad(Dist):
     look_for = 'iPad'
+    is_mobile = True
 
     def getVersion(self, agent):
         version_end_chars = ['like', ';', ')']
@@ -279,7 +288,7 @@ def detect(agent):
         else:
             detectors = _suggested_detectors
         for detector in detectors:
-            print "detector name: ", detector.name
+            # print "detector name: ", detector.name
             if detector.detect(agent, result):
                 prefs = detector.prefs
                 _suggested_detectors = detector._suggested_detectors
@@ -311,7 +320,7 @@ def detect(agent):
 
 def simple_detect(agent):
     """
-    -> (os, browser) # tuple of strings
+    -> (os, browser, is_mobile) # tuple of strings
     """
     result = detect(agent)
     os_list = []
@@ -331,7 +340,8 @@ def simple_detect(agent):
         browser = " ".join((browser, browser_version))
     if os_version:
         os = " ".join((os, os_version))
-    return os, browser
+    #is_mobile = ('dist' in result and result.dist.is_mobile) or ('os' in result and result.os.is_mobile) or False
+    return os, browser, result.is_mobile
 
 
 if __name__ == '__main__':
