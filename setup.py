@@ -22,22 +22,11 @@ def tar(file, filelist, expression='^.+$'):
         tar.close()
 
 def start():
-    """
-    Version number is setup automatically. See the comments in code for
-    potential testing and gotchas that have not been fully investigated.
-    """
-    # Web2py versioning layout causes some glitches when creating distributions
-    # in some situations setting the version here and not in the setup function
-    # seems to help. The problem occured sometimes when manually setting a string
-    # like '1.98.2' in the setup functions but never when using a string like
-    # '1.1.1' for some reason... undetermined cause
-    # everything seems to go fine until you attempt to install the package with
-    # pip at which point it hangs and gives a message about PKG_INFO in a tmp dir
-    version=read_file("VERSION").split()[1]
     if 'sdist' in sys.argv:
         tar('gluon/env.tar',['applications','VERSION','splashlogo.gif'])
+
     setup(name='web2py',
-        version=version,
+          version=read_file("VERSION").split()[1],
           description="""full-stack framework for rapid development and prototyping
         of secure database-driven web-based applications, written and
         programmable in Python.""",
@@ -59,7 +48,7 @@ def start():
           license = 'http://web2py.com/examples/default/license',
           classifiers = ["Development Status :: 5 - Production/Stable"],
           url='http://web2py.com',
-          platforms ='Windows, Linux, Mac, Unix, Windows Mobile',
+          platforms ='Windows, Linux, Mac, Unix,Windows Mobile',
           packages=['gluon',
                     'gluon/contrib',
                     'gluon/contrib/gateways',
@@ -75,29 +64,17 @@ def start():
                     'gluon/tests',
                     ],
           package_data = {'gluon':['env.tar']},
-          scripts = ['mkweb2pyenv','runweb2py','web2py_clone'],
+          scripts = ['w2p_apps','w2p_run','w2p_clone'],
           )
-
-def usage_prompt():
-    print "##########################################"
-    print "after installing via pip you can create a"
-    print "local clone of Web2py by doing taking the"
-    print "following steps:"
-    print ""
-    print "* install mercurial to your virtualenv"
-    print "    pip install mercural"
-    print ""
-    print "* run the web2py_clone command"
-    print "    web2py_clone"
-    print ""
-    print "* Start web2py as usual by running"
-    print "    python web2py.py"
-    print "from the web2py directory"
-    print "##########################################"
-
+    
 if __name__ == '__main__':
-    # asking for user input here breaks distribution packaging
-    # during pip install package_name for some reason so
-    # please test this well aspect before releasing.
+    #print "web2py does not require installation and"
+    #print "you should just start it with:"
+    #print 
+    #print "$ python web2py.py"
+    #print 
+    #print "are you sure you want to install it anyway (y/n)?"
+    #s = raw_input('>')
+    #if s.lower()[:1]=='y':
     start()
-    usage_prompt()
+        

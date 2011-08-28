@@ -418,13 +418,14 @@ def wsgibase(environ, responder):
                         request.application = 'welcome'
                         redirect(Url(r=request))
                     elif rewrite.thread.routes.error_handler:
-                        redirect(Url(rewrite.thread.routes.error_handler['application'],
-                                     rewrite.thread.routes.error_handler['controller'],
-                                     rewrite.thread.routes.error_handler['function'],
+                        _handler = rewrite.thread.routes.error_handler
+                        redirect(Url(_handler['application'],
+                                     _handler['controller'],
+                                     _handler['function'],
                                      args=request.application))
                     else:
-                        raise HTTP(404,
-                                   rewrite.thread.routes.error_message % 'invalid request',
+                        raise HTTP(404, rewrite.thread.routes.error_message \
+                                       % 'invalid request',
                                    web2py_error='invalid application')
                 request.url = Url(r=request, args=request.args,
                                        extension=request.raw_extension)
@@ -446,10 +447,12 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 request.wsgi.environ = environ_aux(environ,request)
-                request.wsgi.start_response = lambda status='200', headers=[], \
+                request.wsgi.start_response = \
+                    lambda status='200', headers=[], \
                     exec_info=None, response=response: \
                     start_response_aux(status, headers, exec_info, response)
-                request.wsgi.middleware = lambda *a: middleware_aux(request,response,*a)
+                request.wsgi.middleware = \
+                    lambda *a: middleware_aux(request,response,*a)
 
                 # ##################################################
                 # load cookies
@@ -471,7 +474,8 @@ def wsgibase(environ, responder):
                 # set no-cache headers
                 # ##################################################
 
-                response.headers['Content-Type'] = contenttype('.'+request.extension)
+                response.headers['Content-Type'] = \
+                    contenttype('.'+request.extension)
                 response.headers['Cache-Control'] = \
                     'no-store, no-cache, must-revalidate, post-check=0, pre-check=0'
                 response.headers['Expires'] = \
@@ -550,8 +554,8 @@ def wsgibase(environ, responder):
                     BaseAdapter.close_all_instances('rollback')
 
                 http_response = \
-                    HTTP(500,
-                         rewrite.thread.routes.error_message_ticket % dict(ticket=ticket),
+                    HTTP(500, rewrite.thread.routes.error_message_ticket % \
+                             dict(ticket=ticket),
                          web2py_error='ticket %s' % ticket)
 
         except:
@@ -573,12 +577,13 @@ def wsgibase(environ, responder):
             e = RestrictedError('Framework', '', '', locals())
             ticket = e.log(request) or 'unrecoverable'
             http_response = \
-                HTTP(500,
-                     rewrite.thread.routes.error_message_ticket % dict(ticket=ticket),
+                HTTP(500, rewrite.thread.routes.error_message_ticket \
+                         % dict(ticket=ticket),
                      web2py_error='ticket %s' % ticket)
 
     finally:
-        if response and hasattr(response, 'session_file') and response.session_file:
+        if response and hasattr(response, 'session_file') \
+                and response.session_file:
             response.session_file.close()
 #         if global_settings.debugging:
 #             import gluon.debug
