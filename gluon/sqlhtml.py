@@ -1510,7 +1510,7 @@ class SQLFORM(FORM):
             limitby = None
         
         rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)
-        if not searchable and not rows: return DIV(T('no data'))
+        if not searchable and not rows: return DIV(T('No records found'))
         if rows:
             htmltable = TABLE(THEAD(head))
             tbody = TBODY()
@@ -1571,14 +1571,12 @@ class SQLFORM(FORM):
                     records = [int(r) for r in htmltable.vars.records or []]
                     selectable(records)
                     redirect(referrer)
-        elif searchable:
-            htmltable=''
         else:
-            htmltable=DIV('no data')
-        
+            htmltable = DIV(T('No records found'))
         res = DIV(console,
-                  DIV(htmltable,_class="web2py_table"), # '%(content)s" % ui (cool, but breaks darker themes) 
-                  DIV(paginator,_class="web2py_paginator %(header)s %(cornerbottom)s" % ui),
+                  DIV(htmltable,_class="web2py_table"),
+                  DIV(paginator,_class=\
+                          "web2py_paginator %(header)s %(cornerbottom)s" % ui),
                   _class='%s %s' % (_class, ui.get('widget','')))
         return res
 
