@@ -4964,7 +4964,7 @@ class Table(dict):
                     else:
                         new_id = self.insert(**dict(items))
                 if id_map and cid != []:
-                    id_map_self[line[cid]] = new_id
+                    id_map_self[int(line[cid])] = new_id
 
     def with_alias(self, alias):
         return self._db._adapter.alias(self,alias)
