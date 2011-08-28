@@ -277,6 +277,9 @@ class translator(object):
         the ## notation is ignored in multiline strings and strings that
         start with ##. this is to allow markmin syntax to be translated
         """
+        #for some reason languages.py gets executed before gaehandler.py
+        # is able to set web2py_runtime_gae, so re-check here
+        is_gae = settings.global_settings.web2py_runtime_gae
         if not message.startswith('#') and not '\n' in message:
             tokens = message.rsplit('##', 1)
         else:
