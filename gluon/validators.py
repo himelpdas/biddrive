@@ -478,7 +478,7 @@ class IS_IN_DB(Validator):
             if not [x for x in values if not x in self.theset]:
                 return (values, None)
         elif self.theset:
-            if value in self.theset:
+            if str(value) in self.theset:
                 if self._and:
                     return self._and(value)
                 else:
