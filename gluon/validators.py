@@ -122,19 +122,40 @@ class IS_MATCH(Validator):
         >>> IS_MATCH('.+')('hello')
         ('hello', None)
 
+        >>> IS_MATCH('hell')('hello')
+        ('hello', 'invalid expression')
+
+        >>> IS_MATCH('hell.*', strict=False)('hello')
+        ('hello', None)
+
+        >>> IS_MATCH('hello')('shello')
+        ('shello', 'invalid expression')
+
+        >>> IS_MATCH('hello', search=True)('shello')
+        ('hello', None)
+
+        >>> IS_MATCH('hello', search=True, strict=False)('shellox')
+        ('hello', None)
+
+        >>> IS_MATCH('.*hello.*', search=True, strict=False)('shellox')
+        ('shellox', None)
+
         >>> IS_MATCH('.+')('')
         ('', 'invalid expression')
     """
 
-    def __init__(self, expression, error_message='invalid expression', strict=True):
+    def __init__(self, expression, error_message='invalid expression', strict=True, search=False):
         if strict:
             if not expression.endswith('$'):
                 expression = '(%s)$' % expression
+        if not search:
+            if not expression.startswith('^'):
+                expression = '^(%s)' % expression
         self.regex = re.compile(expression)
         self.error_message = error_message
 
     def __call__(self, value):
-        match = self.regex.match(value)
+        match = self.regex.search(value)
         if match:
             return (match.group(), None)
         return (value, translate(self.error_message))
