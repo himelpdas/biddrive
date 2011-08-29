@@ -228,10 +228,14 @@ class Scheduler(object):
         assigned_to_me = (db.task_scheduled.assigned_worker_name==self.worker_name)
         not_assigned = (db.task_scheduled.assigned_worker_name=='')|\
             (db.task_scheduled.assigned_worker_name==None)
-        # grab all queue tasks
-        counter = db(queued & due & (not_assigned|assigned_to_me)).update(
-            assigned_worker_name=self.worker_name,status=ALLOCATED)
-        db.commit()
+        # grab all queued tasks
+        try:
+            counter = db(queued & due & (not_assigned|assigned_to_me)).update(
+                assigned_worker_name=self.worker_name,status=ALLOCATED)
+            db.commit()
+        except:
+            db.rollback()
+            counter = 0
         if counter:
             # pick the first
             row = db(allocated & due & assigned_to_me).select(
