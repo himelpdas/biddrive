@@ -1278,6 +1278,101 @@ class SQLFORM(FORM):
         return SQLFORM(DAL(None).define_table(table_name, *fields), **attributes)
 
     @staticmethod
+    def build_search_query(fields,text):
+        field_map = {}
+        for field in fields:
+            n = field.name.lower()
+            if not n in field_map: 
+                field_map[n] = field
+            n = str(field).lower()
+            if not n in field_map:
+                field_map[n] = field
+        re_constants = re.compile('(\"[^\"]*?\")|(\'[^\']*?\')')
+        constants = {}
+        i = 0 
+        while True:
+            m = re_constants.search(text)
+            if not m: break
+            text = text[:m.start()]+('#%i' % i)+text[m.end():] 
+            constants[str(i)] = m.group()[1:-1]
+            i+=1
+        text = re.sub('\s+',' ',text).lower()
+        for a,b in [('&','and'),
+                    ('|','or'),
+                    ('~','not'),
+                    ('==','=='),
+                    ('<','<'),
+                    ('>','>'),
+                    ('<=','<='),
+                    ('>=','>='),
+                    ('<>','!='),
+                    ('=<','<='),
+                    ('=>','>='),
+                    ('=','=='),
+                    (' less or equal than ','<='),
+                    (' greater or equal than ','>='),
+                    (' equal or less than ','<='),
+                    (' equal or greater than ','>='),
+                    (' less or equal ','<='),
+                    (' greater or equal ','>='),
+                    (' equal or less ','<='),
+                    (' equal or greater ','>='),
+                    (' not equal to ','!='),
+                    (' not equal ','!='),
+                    (' equal to ','=='),
+                    (' equal ','=='),
+                    (' equals ','!='),
+                    (' less than ','<'),
+                    (' greater than ','>'),
+                    (' starts with ','startswith'),
+                    (' ends with ','endswith'),
+                    (' is ','==')]:            
+            if a[0]==' ':
+                text = text.replace(' is'+a,' %s ' % b)
+            text = text.replace(a,' %s ' % b)
+        text = re.sub('\s+',' ',text).lower()
+        query = field = neg = op = logic = None
+        for item in text.split():
+            if field is None:
+                if item == 'not':
+                    neg = True
+                elif not neg and not logic and item in ('and','or'):
+                    logic = item
+                elif item in field_map:
+                    field = field_map[item]                
+                else:
+                    raise RuntimeError, "Invalid syntax"
+            elif not field is None and op is None:
+                op = item
+            elif not op is None:
+                if item.startswith('#'):
+                    if not item[1:] in constants:
+                        raise RuntimeError, "Invalid syntax"
+                    value = constants[item[1:]]
+                else:
+                    value = item
+                    if op == '==': op = 'like'
+                if op == '==': new_query = field==value
+                elif op == '<': new_query = field<value
+                elif op == '>': new_query = field>value                
+                elif op == '<=': new_query = field<=value
+                elif op == '>=': new_query = field>=value                
+                elif op == 'contains': new_query = field.contains(value)
+                elif op == 'like': new_query = field.like(value)
+                elif op == 'startswith': new_query = field.startswith(value)
+                elif op == 'endswith': new_query = field.endswith(value)
+                else: raise RuntimeError, "Invalid operation"
+                if neg: new_query = ~new_query                
+                if query is None:
+                    query = new_query
+                elif logic == 'and':
+                    query &= new_query
+                elif logic == 'or':
+                    query |= new_query                
+                field = op = neg = logic = None
+        return query
+
+    @staticmethod
     def grid(query,
              fields=None,
              field_id=None,
@@ -1416,6 +1511,7 @@ class SQLFORM(FORM):
         session['_web2py_grid_referrer_'+formname] = \
             URL(args=request.args,vars=request.vars,user_signature=user_signature)
         console = DIV(_class='web2py_console %(header)s %(cornertop)s' % ui)
+        error = None
         if searchable:
             form = FORM(INPUT(_name='keywords',_value=request.vars.keywords,
                               _id='web2py_keywords'),
@@ -1426,15 +1522,28 @@ class SQLFORM(FORM):
             console.append(form)
             key = request.vars.get('keywords','').strip()
             if searchable==True:
-                subquery = reduce(OR,[field.contains(key) for field in fields \
-                                          if field.type in ('string','text')])
+                subquery = None
+                if key and not ' ' in key:
+                    subquery = reduce(OR,[field.contains(key) for field in fields \
+                                              if field.type in ('string','text')])
+                else:
+                    try:
+                        subquery = SQLFORM.build_search_query(fields,key)
+                    except RuntimeError:
+                        subquery = None
+                        error = T('Invalid query')
             else:
                 subquery = searchable(key,fields)
-            dbset = dbset(subquery)        
-        if left:
-            nrows = dbset.select('count(*)',left=left).first()['count(*)']
-        else:
-            nrows = dbset.count()
+            if subquery:
+                dbset = dbset(subquery)   
+        try:
+            if left:
+                nrows = dbset.select('count(*)',left=left).first()['count(*)']
+            else:
+                nrows = dbset.count()
+        except:
+            nrows = 0
+            error = T('Unsupported query')
                 
         search_actions = DIV(_class='web2py_search_actions')
         if create:
@@ -1443,9 +1552,10 @@ class SQLFORM(FORM):
             search_actions.append(A(T('Export'),_href=url(args=['csv'])))
 
         console.append(search_actions)
-        
-        console.append(DIV(T('%(nrows)s records found' % dict(nrows=nrows)),
-                            _class='web2py_counter'))
+
+        message = error or T('%(nrows)s records found' % dict(nrows=nrows))
+
+        console.append(DIV(message,_class='web2py_counter'))
 
         order = request.vars.order or ''
         if sortable:
