@@ -144,6 +144,7 @@ def URL(
     scheme=None,
     host=None,
     port=None,
+    encode_embedded_slash=False,
     ):
     """
     generate a URL
@@ -167,7 +168,13 @@ def URL(
 
         >>> str(URL(a='a', c='c', f='f', args=['x', 'y', 'z'],
         ...     vars={'p':(1,3), 'q':2}, anchor='1', hmac_key='key'))
-        '/a/c/f/x/y/z?p=1&p=3&q=2&_signature=5d06bb8a4a6093dd325da2ee591c35c61afbd3c6#1'
+        '/a/c/f/x/y/z?p=1&p=3&q=2&_signature=a32530f0d0caa80964bb92aad2bedf8a4486a31f#1'
+
+        >>> str(URL(a='a', c='c', f='f', args=['w/x', 'y/z']))
+        '/a/c/f/w/x/y/z'
+
+        >>> str(URL(a='a', c='c', f='f', args=['w/x', 'y/z'], encode_embedded_slash=True))
+        '/a/c/f/w%2Fx/y%2Fz'
 
     generates a url '/a/c/f' corresponding to application a, controller c
     and function f. If r=request is passed, a, c, f are set, respectively,
@@ -236,12 +243,14 @@ def URL(
 
     if not isinstance(args, (list, tuple)):
         args = [args]
-    other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
 
-    # if args:
-    #     other = '/' + '/'.join([urllib.quote(str(x), '') for x in args])
-    # else:
-    #     other = ''
+    if args:
+        if encode_embedded_slash:
+            other = '/' + '/'.join([urllib.quote(str(x), '') for x in args])
+        else:
+            other = args and urllib.quote('/' + '/'.join([str(x) for x in args]))
+    else:
+        other = ''
 
     if other.endswith('/'):
         other += '/'    # add trailing slash to make last trailing empty arg explicit
@@ -278,7 +287,7 @@ def URL(
         # re-assembling the same way during hash authentication
         message = h_args + '?' + urllib.urlencode(sorted(h_vars))
 
-        sig = hmac_hash(message,hmac_key,salt=salt)
+        sig = hmac_hash(message, hmac_key, digest_alg='sha1', salt=salt)
         # add the signature into vars
         list_vars.append(('_signature', sig))
 
@@ -315,8 +324,8 @@ def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=
     the key has to match the one used to generate the URL.
 
         >>> r = Storage()
-        >>> gv = Storage(p=(1,3),q=2,_signature='5d06bb8a4a6093dd325da2ee591c35c61afbd3c6')
-        >>> r.update(dict(application='a', controller='c', function='f'))
+        >>> gv = Storage(p=(1,3),q=2,_signature='a32530f0d0caa80964bb92aad2bedf8a4486a31f')
+        >>> r.update(dict(application='a', controller='c', function='f', extension='html'))
         >>> r['args'] = ['x', 'y', 'z']
         >>> r['get_vars'] = gv
         >>> verifyURL(r, 'key')
@@ -391,7 +400,7 @@ def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=
     message = h_args + '?' + urllib.urlencode(sorted(h_vars))
 
     # hash with the hmac_key provided
-    sig = hmac_hash(message,str(hmac_key),salt=salt)
+    sig = hmac_hash(message, str(hmac_key), digest_alg='sha1', salt=salt)
 
     # put _signature back in get_vars just in case a second call to URL.verify is performed
     # (otherwise it'll immediately return false)
