@@ -72,7 +72,7 @@ import logging
 import time
 import sys
 import cStringIO
-import threading
+import multiprocessing
 from datetime import datetime, timedelta
 
 if 'WEB2PY_PATH' in os.environ:
@@ -122,40 +122,54 @@ class TYPE(object):
                 return (value,current.T('Not of type: %s') % self.myclass)
 
 
-class TimeoutException(Exception): pass
-class StoppedException(Exception): pass
+class TimeoutException(Exception):
+    pass
 
-def timeout_run(func, args=(), kwargs={}, timeout_duration=1):
+class RunableProcessing(multiprocessing.Process):
     """
-    runs ret=fun(*args,**kwargs) and returns (status, ret, caputured_output, traceback)
-    status can be COMPLETED, FAILED, TIMEOUT, or  STOPPED
-    http://code.activestate.com/recipes/473878-timeout-function-using-threading/
+    http://code.activestate.com/recipes/577853-timeout-decorator-with-multiprocessing/
+    but modified
     """
-    class InterruptableThread(threading.Thread):
+    def __init__(self, func, *args, **kwargs):
+        self.queue = multiprocessing.Queue(maxsize=1)
+        args = (func,) + args
+        multiprocessing.Process.__init__(self, target=self.run_func, args=args, kwargs=kwargs)
 
-        def __init__(self):
-            threading.Thread.__init__(self)
-            self.result = self.output = self.traceback = None
+    def run_func(self, func, *args, **kwargs):
+        output, sys.stdout = sys.stdout, cStringIO.StringIO() 
+        try:
+            result = func(*args, **kwargs)
+            self.queue.put((True, result, sys.stdout.getvalue()))
+        except Exception, e:
+            self.queue.put((False, e, None))
+        sys.stdout = output
 
-        def run(self):
-            try:
-                stdout, sys.stdout = sys.stdout, cStringIO.StringIO()
-                self.result = func(*args, **kwargs)
-                self.status = COMPLETED
-            except StoppedException:
-                self.status = STOPPED
-            except:
-                self.status = FAILED
-                self.result = None
-                self.traceback = traceback.format_exc()
-            sys.stdout, self.output = stdout, sys.stdout.getvalue()
-    it = InterruptableThread()
-    it.start()
-    it.join(timeout_duration)
-    if it.isAlive():
-        return TIMEOUT, it.result, it.output, it.traceback
-    else:
-        return it.status, it.result, it.output, it.traceback
+    def done(self):
+        return self.queue.full()
+
+    def result(self):
+        return self.queue.get()
+
+def timeout(seconds, force_kill=True):
+    def wrapper(function):
+        def inner(*args, **kwargs):
+            now = time.time()
+            proc = RunableProcessing(function, *args, **kwargs)
+            proc.start()
+            proc.join(seconds)
+            if proc.is_alive():
+                if force_kill:
+                    proc.terminate()
+                runtime = int(time.time() - now)
+                raise TimeoutException('timed out after %s seconds' % runtime)
+            assert proc.done()
+            success, result, output = proc.result()
+            if success:
+                return dict(result=result, output=output)
+            else:
+                raise result
+        return inner
+    return wrapper
 
 class Scheduler(object):
     """
@@ -284,8 +298,11 @@ class Scheduler(object):
                 func = self.tasks[task.func]
                 args = loads(task.args)
                 vars = loads(task.vars)
+                d = timeout(task.timeout)(func)(*args,**vars)
                 status, result, output, tb = \
-                    timeout_run(func,args,vars,timeout_duration=task.timeout)
+                    COMPLETED, d['result'], d['output'], None
+            except TimeoutException:
+                status, result, output, tb = TIMEOUT, None, None, None
             except:
                 status, result, output = FAILED, None, None
                 tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()
@@ -327,7 +344,8 @@ class Scheduler(object):
 
     def fix_failures(self):
         """
-        find all tasks that have been running than they should and sets them to OVERDUE
+        find all tasks that have been running than they should and 
+        sets them to OVERDUE
         """
         db = self.db
         ts = db.task_scheduled
