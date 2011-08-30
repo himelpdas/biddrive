@@ -261,7 +261,7 @@ class Scheduler(object):
                 row.update_record(status=RUNNING,last_run_time=datetime.now())
                 db(allocated & due & assigned_to_me).update(
                     assigned_worker_name=None,status=QUEUED)
-                db.commit()
+            db.commit()
         else:
             row = None
         return row
