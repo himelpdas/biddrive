@@ -214,22 +214,38 @@ class Scheduler(object):
         """
         return SQLFORM(self.db.task_schedule,id,**args)
 
+    def sleep(self,heartbeat):
+        db = self.db
+        now = datetime.now()
+        future = (db.task_scheduled.enabled==True)
+        future &= (db.task_scheduled.next_run_time>now)
+        assigned_to_me = (db.task_scheduled.assigned_worker_name==self.worker_name)
+        not_assigned = (db.task_scheduled.assigned_worker_name=='')|\
+            (db.task_scheduled.assigned_worker_name==None)
+        row = db(future & (assigned_to_me|not_assigned)).select(
+            limitby=(0,1),orderby=db.task_scheduled.next_run_time).first()
+        if row and row.next_run_time:
+            dt = min((row.next_run_time - now).seconds+1,heartbeat)
+        else:
+            dt = heartbeat
+        time.sleep(dt)
+
     def assign_next_task(self,group_names=['main']):
         """
         find next task that needs to be executed
         """
-        from datetime import datetime
+        now = datetime.now()
         db = self.db
         queued = (db.task_scheduled.status==QUEUED)
         allocated = (db.task_scheduled.status==ALLOCATED)
         due = (db.task_scheduled.enabled==True)
         due &= (db.task_scheduled.group_name.belongs(group_names))
-        due &= (db.task_scheduled.next_run_time<datetime.now())
+        due &= (db.task_scheduled.next_run_time<=now)
         assigned_to_me = (db.task_scheduled.assigned_worker_name==self.worker_name)
         not_assigned = (db.task_scheduled.assigned_worker_name=='')|\
             (db.task_scheduled.assigned_worker_name==None)
         # grab all queued tasks
-        try:
+        try:            
             counter = db(queued & due & (not_assigned|assigned_to_me)).update(
                 assigned_worker_name=self.worker_name,status=ALLOCATED)
             db.commit()
@@ -255,6 +271,7 @@ class Scheduler(object):
         get and execute next task
         """
         db = self.db
+        now = datetime.now()
         task = self.assign_next_task(group_names=group_names)
         if task:
             logging.info('running task %s' % task.name)
@@ -313,12 +330,13 @@ class Scheduler(object):
         find all tasks that have been running than they should and sets them to OVERDUE
         """
         db = self.db
-        tasks = db(db.task_scheduled.status==RUNNING).select()
-        ids = [task.id for task in tasks if \
-                   task.last_run_time+timedelta(seconds=task.timeout) \
-                   <datetime.now()]
-        db(db.task_scheduled.id.belongs(ids)).update(status=OVERDUE)
-        db(db.task_scheduled.status==QUEUED).update(assigned_worker_name=None)
+        ts = db.task_scheduled
+        tasks = db(ts.status==RUNNING).select()
+        ids = [task.id for task in tasks if task.last_run_time \
+                   < (datetime.now() - timedelta(seconds=task.timeout))]
+        if ids:
+            db(ts.status==RUNNING)(ts.id.belongs(ids)).update(status=OVERDUE)
+        db(ts.status==QUEUED).update(assigned_worker_name=None)
         db.commit()
 
     def cleanup_scheduled(self, statuses=[COMPLETED],expiration=24*3600):
@@ -328,9 +346,10 @@ class Scheduler(object):
             tasks['scheduler.cleanup_scheduled']=scheduler.cleanup_scheduled
         """
         db = self.db
+        ts = db.task_scheduled
         now = datetime.now()
-        db(db.task_scheduled.status.belongs(statuses))\
-            (db.task_scheduled.last_run_time+expiration<now).delete()
+        db(ts.status.belongs(statuses))\
+            (ts.last_run_time+expiration<now).delete()
         db.commit()
 
     def cleanup_run(self, statuses=[COMPLETED],expiration=24*3600):
@@ -359,7 +378,7 @@ class Scheduler(object):
 
     def worker_loop(self,
                     logger_level='INFO',
-                    heartbeat=10,
+                    heartbeat=20,
                     group_names=['main']):
         """
         this implements a worker process and should only run as worker
@@ -375,10 +394,10 @@ class Scheduler(object):
                 try:
                     if 'main' in group_names:
                         self.fix_failures()
-                    logging.info('checking for tasks...')
                     self.log_heartbeat()
+                    logging.info('checking for tasks...')
                     while self.run_next_task(group_names=group_names): pass
-                    time.sleep(heartbeat)
+                    self.sleep(heartbeat)
                 except db._adapter.driver.OperationalError:
                     db.rollback()
                     # whatever happened, try again
