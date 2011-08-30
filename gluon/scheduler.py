@@ -379,15 +379,15 @@ class Scheduler(object):
     def worker_loop(self,
                     logger_level='INFO',
                     heartbeat=20,
-                    group_names=['main']):
-                    logging=True):
+                    group_names=['main'],
+                    setup_logging=True):
         """
         this implements a worker process and should only run as worker
         it loops and logs (almost) everything
         """
         db = self.db
         try:
-            if logging:
+            if setup_logging:
                 level = getattr(logging,logger_level)
                 logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
                 logging.getLogger().setLevel(level)
