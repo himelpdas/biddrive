@@ -406,12 +406,14 @@ if __name__ == '__main__':
 
 
 class mobilize(object): 
+
     def __init__(self, func): 
         self.func = func 
-    def __call__(self): 
+
+    def __call__(self):
         from gluon import current 
-        if current.session._user_agent: 
-            if current.session._user_agent.is_mobile: 
-                current.response.view = \ 
-                    current.response.view.split(".")[0] + ".mobi" 
+        if current.session._user_agent and current.session._user_agent.is_mobile: 
+            items = current.response.view.split('.')
+            items.insert(-1,'mobile')
+            current.response.view = '.'.join(items)
         return self.func() 
