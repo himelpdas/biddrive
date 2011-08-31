@@ -1413,6 +1413,29 @@ class SQLFORM(FORM):
                       cornerall='ui-corner-all',
                       cornertop='ui-corner-top',
                       cornerbottom='ui-corner-bottom',
+                      buttonadd='ui-icon ui-icon-plusthick',
+                      buttonback='ui-icon ui-icon-arrowreturnthick-1-w',
+                      buttonexport='ui-icon ui-icon-folder-open',
+                      buttondelete='ui-icon ui-icon-trash',
+                      buttonedit='ui-icon ui-icon-pencil',
+                      buttontable='ui-icon ui-icon-extlink',
+                      buttonview='ui-icon ui-icon-search'                      
+                      )
+        elif ui == 'basic':
+            ui = dict(widget='',
+                      header='',
+                      content='',
+                      default='',
+                      cornerall='',
+                      cornertop='',
+                      cornerbottom='',
+                      buttonadd='icon add',
+                      buttonback='icon back',
+                      buttonexport='icon export',
+                      buttondelete='icon delete',
+                      buttonedit='icon edit',
+                      buttontable='icon table',
+                      buttonview='icon view'
                       )
         elif not isinstance(ui,dict):
             raise RuntimeError,'SQLFORM.grid ui argument must be a dictionary'
@@ -1449,13 +1472,13 @@ class SQLFORM(FORM):
                 raise HTTP(200,stream,**response.headers)
 
         def buttons(edit=False,view=False,record=None):
-            buttons = DIV(A(T('Back'),_href=referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
+            buttons = DIV(A(SPAN(T('Back'),_class=ui.get('buttonback','')),_href=referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
             if edit:
                 args = ['Edit',table._tablename,request.args[-1]]
-                buttons.append(A(T('Edit'),_href=url(args=args)))
+                buttons.append(A(SPAN(T('Edit'),_class=ui.get('buttonedit','')),_href=url(args=args)))
             if view:
                 args = ['View',table._tablename,request.args[-1]]
-                buttons.append(A(T('View'),_href=url(args=args)))
+                buttons.append(A(SPAN(T('View'),_class=ui.get('buttonview','')),_href=url(args=args)))
             if record and links:
                 for link in links:
                     buttons.append(link(record))
@@ -1547,9 +1570,9 @@ class SQLFORM(FORM):
                 
         search_actions = DIV(_class='web2py_search_actions')
         if create:
-            search_actions.append(A(T('Add'),_href=url(args=['new',tablename])))
+            search_actions.append(A(SPAN(T('Add'),_class=ui.get('buttonadd','')),_href=url(args=['new',tablename])))
         if csv:
-            search_actions.append(A(T('Export'),_href=url(args=['csv'])))
+            search_actions.append(A(SPAN(T('Export'),_class=ui.get('buttonexport','')),_href=url(args=['csv'])))
 
         console.append(search_actions)
 
@@ -1666,11 +1689,11 @@ class SQLFORM(FORM):
                 for link in links or []:
                     row_buttons.append(link(row))
                 if details:
-                    row_buttons.append(A(T('View'),_href=url(args=['view',tablename,id])))
+                    row_buttons.append(A(SPAN(T('View'),_class=ui.get('buttonview','')),_href=url(args=['view',tablename,id])))
                 if editable:
-                    row_buttons.append(A(T('Edit'),_href=url(args=['edit',tablename,id])))
+                    row_buttons.append(A(SPAN(T('Edit'),_class=ui.get('buttonedit','')),_href=url(args=['edit',tablename,id])))
                 if deletable:
-                    row_buttons.append(A(T('Delete'),callback=url(args=['delete',tablename,id]),
+                    row_buttons.append(A(SPAN(T('Delete'),_class=ui.get('buttondelete','')),callback=url(args=['delete',tablename,id]),
                                    delete='tr'))
                 tr.append(row_buttons)
                 tbody.append(tr)
@@ -1778,7 +1801,7 @@ class SQLFORM(FORM):
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
                 links.append(lambda row,t=T(tablename),args=args,args0=args0:\
-                                 A(t,_href=URL(args=request.args[:args]+[args0,row.id])))        
+                                 A(SPAN(t,_class='icon table'),_href=URL(args=request.args[:args]+[args0,row.id])))                
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):

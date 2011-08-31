@@ -154,7 +154,7 @@ class RunableProcessing(multiprocessing.Process):
 def timeout(seconds, function, args, vars):
     now = time.time()
     proc = RunableProcessing(function, *args, **vars)
-    proc.start()
+    proc.start()    
     proc.join(seconds)
     if proc.is_alive():        
         proc.terminate()
@@ -163,10 +163,9 @@ def timeout(seconds, function, args, vars):
                                    % runtime)
     assert proc.done()
     success, result, output = proc.result()
-    if success:
-        return dict(result=result, output=output)
-    else:
+    if not success:
         raise result
+    return dict(result=result, output=output)
     
 class Scheduler(object):
     """

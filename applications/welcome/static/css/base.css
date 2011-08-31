@@ -719,3 +719,33 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator .current {
     font-weight: bold;
 }
+/* Icons buttons */
+.web2py_grid span.icon { 
+    height: 16px; 
+    text-indent:20px;
+    display:block;
+    vertical-align: middle;
+    line-height:18px;
+    background-image: url('../images/btnicons.png'); background-repeat: no-repeat;
+}
+.web2py_grid span.add {
+    background-position: 0 0;
+}
+.web2py_grid span.back {
+    background-position: 0 -16px;
+}
+.web2py_grid span.export {
+    background-position: 0 -32px;
+}
+.web2py_grid span.delete {
+    background-position: 0 -48px;
+}
+.web2py_grid span.edit {
+    background-position: 0 -64px;
+}
+.web2py_grid span.table {
+    background-position: 0 -80px;
+}
+.web2py_grid span.view {
+    background-position: 0 -96px;
+}
