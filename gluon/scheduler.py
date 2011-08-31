@@ -122,7 +122,6 @@ class TYPE(object):
             else:
                 return (value,current.T('Not of type: %s') % self.myclass)
 
-
 class TimeoutException(Exception):
     pass
 
@@ -282,76 +281,71 @@ class Scheduler(object):
         """
         get and execute next task
         """
-        if True:
-            db = self.db
-            now = datetime.now()
-            task = self.assign_next_task(group_names=group_names)
-            if task:
-                logging.info('running task %s' % task.name)
-                task_id = db.task_run.insert(
-                    task_scheduled=task.id,status=RUNNING,
-                    start_time=task.last_run_time)
+        db = self.db
+        now = datetime.now()
+        task = self.assign_next_task(group_names=group_names)
+        if not task: return False
+        logging.info('running task %s' % task.name)
+        task_id = db.task_run.insert(
+            task_scheduled=task.id,status=RUNNING,
+            start_time=task.last_run_time)
+        db.commit()
+        times_run = task.times_run+1
+        try:
+            func = self.tasks[task.func]
+            args = loads(task.args)
+            vars = loads(task.vars)
+            d = timeout(task.timeout,func,args,vars)
+            status, result, output, tb = \
+                COMPLETED, d['result'], d['output'], None
+        except KeyboardInterrupt:
+            status, result, output, tb = STOPPED, None, None, None
+        except TimeoutException:
+            status, result, output, tb = TIMEOUT, None, None, None
+        except:
+            status, result, output = FAILED, None, None
+            tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()
+        next_run_time = task.last_run_time + timedelta(seconds=task.period)
+        status_repeat = status
+        if status==COMPLETED:
+            if (not task.repeats or times_run<task.repeats) and \
+                    (not next_run_time or next_run_time<task.stop_time):
+                status_repeat = QUEUED
+                logging.info('task %s %s' % (task.name,status))
+        while True:                
+            try:                        
+                db(db.task_run.id==task_id).update(
+                    status=status,
+                    output=output,
+                    traceback=tb,
+                    result=dumps(result))
+                if status==STOPPED:
+                    task.update_record(
+                        status=status,
+                        assigned_worker_name=None)
+                else:
+                    task.update_record(
+                        status=status_repeat,
+                        next_run_time=next_run_time,
+                        times_run=times_run,
+                        assigned_worker_name=None)
                 db.commit()
-                times_run = task.times_run+1
-                try:
-                    func = self.tasks[task.func]
-                    args = loads(task.args)
-                    vars = loads(task.vars)
-                    d = timeout(task.timeout,func,args,vars)
-                    status, result, output, tb = \
-                        COMPLETED, d['result'], d['output'], None
-                except KeyboardInterrupt:
-                    status, result, output, tb = STOPPED, None, None, None
-                except SIGTERMException, e:
-                    raise e
-                except TimeoutException:
-                    status, result, output, tb = TIMEOUT, None, None, None
-                except:
-                    status, result, output = FAILED, None, None
-                    tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()
-                next_run_time = task.last_run_time + timedelta(seconds=task.period)
-                status_repeat = status
-                if status==COMPLETED:
-                    if (not task.repeats or times_run<task.repeats) and \
-                            (not next_run_time or next_run_time<task.stop_time):
-                        status_repeat = QUEUED
-                        logging.info('task %s %s' % (task.name,status))
-                while True:                
-                    try:                        
-                        db(db.task_run.id==task_id).update(
-                            status=status,
-                            output=output,
-                            traceback=tb,
-                            result=dumps(result))
-                        if status==STOPPED:
-                            task.update_record(
-                                status=status,
-                                assigned_worker_name=None)
-                        else:
-                            task.update_record(
-                                status=status_repeat,
-                                next_run_time=next_run_time,
-                                times_run=times_run,
-                                assigned_worker_name=None)
-                        db.commit()
-                        return True
-                    except db._adapter.driver.OperationalError:
-                        db.rollback()
-                    # keep looping until you can log task!
-                    if status==STOPPED:
-                        raise KeyboardInterrupt
-            else:
-                return False
-
+                if status==STOPPED:
+                    raise KeyboardInterrupt
+                return True
+            except db._adapter.driver.OperationalError:
+                db.rollback()                
+            # keep looping until you can log task!
+ 
     def log_heartbeat(self):
         """
         logs a worker heartbeat
         """
         db = self.db
         now = datetime.now()
-        host = self.worker_name
-        if not db(db.worker_heartbeat.name==host).update(last_heartbeat=now):
-            db.worker_heartbeat.insert(name=host,last_heartbeat=now)
+        me = self.worker_name
+        if not db(db.worker_heartbeat.name==me).update(last_heartbeat=now):
+            db.worker_heartbeat.insert(name=me,last_heartbeat=now)
         db.commit()
 
     def fix_failures(self):
