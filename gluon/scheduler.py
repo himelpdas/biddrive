@@ -73,6 +73,7 @@ import time
 import sys
 import cStringIO
 import multiprocessing
+import signal
 from datetime import datetime, timedelta
 
 if 'WEB2PY_PATH' in os.environ:
@@ -127,20 +128,21 @@ class TimeoutException(Exception):
 
 class RunableProcessing(multiprocessing.Process):
     """
+    based on
     http://code.activestate.com/recipes/577853-timeout-decorator-with-multiprocessing/
-    but modified
     """
     def __init__(self, func, *args, **kwargs):
         self.queue = multiprocessing.Queue(maxsize=1)
         args = (func,) + args
-        multiprocessing.Process.__init__(self, target=self.run_func, args=args, kwargs=kwargs)
+        multiprocessing.Process.__init__(self, target=self.run_func, 
+                                         args=args, kwargs=kwargs)
 
     def run_func(self, func, *args, **kwargs):
         output, sys.stdout = sys.stdout, cStringIO.StringIO() 
         try:
             result = func(*args, **kwargs)
             self.queue.put((True, result, sys.stdout.getvalue()))
-        except Exception, e:
+        except BaseException, e:
             self.queue.put((False, e, None))
         sys.stdout = output
 
@@ -150,27 +152,23 @@ class RunableProcessing(multiprocessing.Process):
     def result(self):
         return self.queue.get()
 
-def timeout(seconds, force_kill=True):
-    def wrapper(function):
-        def inner(*args, **kwargs):
-            now = time.time()
-            proc = RunableProcessing(function, *args, **kwargs)
-            proc.start()
-            proc.join(seconds)
-            if proc.is_alive():
-                if force_kill:
-                    proc.terminate()
-                runtime = int(time.time() - now)
-                raise TimeoutException('timed out after %s seconds' % runtime)
-            assert proc.done()
-            success, result, output = proc.result()
-            if success:
-                return dict(result=result, output=output)
-            else:
-                raise result
-        return inner
-    return wrapper
-
+def timeout(seconds, function, args, vars):
+    now = time.time()
+    proc = RunableProcessing(function, *args, **vars)
+    proc.start()
+    proc.join(seconds)
+    if proc.is_alive():        
+        proc.terminate()
+        runtime = int(time.time() - now)
+        raise TimeoutException('timed out after %s seconds' \
+                                   % runtime)
+    assert proc.done()
+    success, result, output = proc.result()
+    if success:
+        return dict(result=result, output=output)
+    else:
+        raise result
+    
 class Scheduler(object):
     """
     this is the main scheduler class, it also implement the worker_loop!
@@ -284,52 +282,66 @@ class Scheduler(object):
         """
         get and execute next task
         """
-        db = self.db
-        now = datetime.now()
-        task = self.assign_next_task(group_names=group_names)
-        if task:
-            logging.info('running task %s' % task.name)
-            task_id = db.task_run.insert(
-                task_scheduled=task.id,status=RUNNING,
-                start_time=task.last_run_time)
-            db.commit()
-            times_run = task.times_run+1
-            try:
-                func = self.tasks[task.func]
-                args = loads(task.args)
-                vars = loads(task.vars)
-                d = timeout(task.timeout)(func)(*args,**vars)
-                status, result, output, tb = \
-                    COMPLETED, d['result'], d['output'], None
-            except TimeoutException:
-                status, result, output, tb = TIMEOUT, None, None, None
-            except:
-                status, result, output = FAILED, None, None
-                tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()
-            next_run_time = task.last_run_time + timedelta(seconds=task.period)
-            status_repeat = status
-            if status==COMPLETED:
-                if (not task.repeats or times_run<task.repeats) and \
-                        (not next_run_time or next_run_time<task.stop_time):
-                    status_repeat = QUEUED
-                    logging.info('task %s %s' % (task.name,status))
-            while True:
+        if True:
+            db = self.db
+            now = datetime.now()
+            task = self.assign_next_task(group_names=group_names)
+            if task:
+                logging.info('running task %s' % task.name)
+                task_id = db.task_run.insert(
+                    task_scheduled=task.id,status=RUNNING,
+                    start_time=task.last_run_time)
+                db.commit()
+                times_run = task.times_run+1
                 try:
-                    db(db.task_run.id==task_id).update(status=status,
-                                                       output=output,
-                                                       traceback=tb,
-                                                       result=dumps(result))
-                    task.update_record(status=status_repeat,
-                                       next_run_time=next_run_time,
-                                       times_run=times_run,
-                                       assigned_worker_name=None)
-                    db.commit()
-                    return True
-                except db._adapter.driver.OperationalError:
-                    db.rollback()
+                    func = self.tasks[task.func]
+                    args = loads(task.args)
+                    vars = loads(task.vars)
+                    d = timeout(task.timeout,func,args,vars)
+                    status, result, output, tb = \
+                        COMPLETED, d['result'], d['output'], None
+                except KeyboardInterrupt:
+                    status, result, output, tb = STOPPED, None, None, None
+                except SIGTERMException, e:
+                    raise e
+                except TimeoutException:
+                    status, result, output, tb = TIMEOUT, None, None, None
+                except:
+                    status, result, output = FAILED, None, None
+                    tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()
+                next_run_time = task.last_run_time + timedelta(seconds=task.period)
+                status_repeat = status
+                if status==COMPLETED:
+                    if (not task.repeats or times_run<task.repeats) and \
+                            (not next_run_time or next_run_time<task.stop_time):
+                        status_repeat = QUEUED
+                        logging.info('task %s %s' % (task.name,status))
+                while True:                
+                    try:                        
+                        db(db.task_run.id==task_id).update(
+                            status=status,
+                            output=output,
+                            traceback=tb,
+                            result=dumps(result))
+                        if status==STOPPED:
+                            task.update_record(
+                                status=status,
+                                assigned_worker_name=None)
+                        else:
+                            task.update_record(
+                                status=status_repeat,
+                                next_run_time=next_run_time,
+                                times_run=times_run,
+                                assigned_worker_name=None)
+                        db.commit()
+                        return True
+                    except db._adapter.driver.OperationalError:
+                        db.rollback()
                     # keep looping until you can log task!
-        else:
-            return False
+                    if status==STOPPED:
+                        raise KeyboardInterrupt
+            else:
+                return False
 
     def log_heartbeat(self):
         """
@@ -354,7 +366,7 @@ class Scheduler(object):
                    < (datetime.now() - timedelta(seconds=task.timeout))]
         if ids:
             db(ts.status==RUNNING)(ts.id.belongs(ids)).update(status=OVERDUE)
-        db(ts.status==QUEUED).update(assigned_worker_name=None)
+        db(ts.status==QUEUED).update(assigned_worker_name=None) 
         db.commit()
 
     def cleanup_scheduled(self, statuses=[COMPLETED],expiration=24*3600):

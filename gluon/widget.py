@@ -790,7 +790,12 @@ def start_schedulers(options):
         processes.append(p)
         p.start()
     for p in processes:
-        p.join()
+        try:
+            p.join()
+        except KeyboardInterrupt:
+            p.terminate()
+            p.join()
+            
 
 def start(cron=True):
     """ Start server  """
