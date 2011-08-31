@@ -472,65 +472,65 @@ a.button.right:active { top: 0px }
 a.button.big { font-size: 16px; padding-left: 17px; padding-right: 17px; }
 a.button span.icon { display: inline-block; width: 14px; height: 12px; margin: auto 7px auto auto; position: relative; top: 2px; background-image: url('../images/css3buttons_icons.png'); background-repeat: no-repeat; }
 a.big.button span.icon { top: 0px }
-a.button span.icon.book { background-position: 0 0 }
+a.button span.icon.book, .ui-icon-document { background-position: 0 0 }
 a.button:hover span.icon.book { background-position: 0 -15px }
 a.button span.icon.calendar { background-position: 0 -30px }
 a.button:hover span.icon.calendar { background-position: 0 -45px }
-a.button span.icon.chat { background-position: 0 -60px }
+a.button span.icon.chat, .ui-icon-person { background-position: 0 -60px }
 a.button:hover span.icon.chat { background-position: 0 -75px }
-a.button span.icon.check { background-position: 0 -90px }
+a.button span.icon.check, .ui-icon-check { background-position: 0 -90px }
 a.button:hover span.icon.check { background-position: 0 -103px }
-a.button span.icon.clock { background-position: 0 -116px }
+a.button span.icon.clock, .ui-icon-clock { background-position: 0 -116px }
 a.button:hover span.icon.clock { background-position: 0 -131px }
 a.button span.icon.cog { background-position: 0 -146px }
 a.button:hover span.icon.cog { background-position: 0 -161px }
-a.button span.icon.comment { background-position: 0 -176px }
+a.button span.icon.comment, .ui-icon-comment { background-position: 0 -176px }
 a.button:hover span.icon.comment { background-position: 0 -190px }
-a.button span.icon.cross { background-position: 0 -204px }
+a.button span.icon.cross, .ui-icon-cancel { background-position: 0 -204px }
 a.button:hover span.icon.cross { background-position: 0 -219px }
-a.button span.icon.downarrow { background-position: 0 -234px }
+a.button span.icon.downarrow, .ui-icon-triangle-1-s { background-position: 0 -234px }
 a.button:hover span.icon.downarrow { background-position: 0 -249px }
 a.button span.icon.fork { background-position: 0 -264px }
 a.button:hover span.icon.fork { background-position: 0 -279px }
-a.button span.icon.heart { background-position: 0 -294px }
+a.button span.icon.heart, .ui-icon-heart { background-position: 0 -294px }
 a.button:hover span.icon.heart { background-position: 0 -308px }
-a.button span.icon.home { background-position: 0 -322px }
+a.button span.icon.home, .ui-icon-home { background-position: 0 -322px }
 a.button:hover span.icon.home { background-position: 0 -337px }
-a.button span.icon.key { background-position: 0 -352px }
+a.button span.icon.key, .ui-icon-key { background-position: 0 -352px }
 a.button:hover span.icon.key { background-position: 0 -367px }
-a.button span.icon.leftarrow { background-position: 0 -382px }
+a.button span.icon.leftarrow, .ui-icon-triangle-1-w { background-position: 0 -382px }
 a.button:hover span.icon.leftarrow { background-position: 0 -397px }
-a.button span.icon.lock { background-position: 0 -412px }
+a.button span.icon.lock, .ui-icon-locked { background-position: 0 -412px }
 a.button:hover span.icon.lock { background-position: 0 -427px }
 a.button span.icon.loop { background-position: 0 -442px }
 a.button:hover span.icon.loop { background-position: 0 -457px }
-a.button span.icon.magnifier { background-position: 0 -472px }
+a.button span.icon.magnifier, .ui-icon-zoomin { background-position: 0 -472px }
 a.button:hover span.icon.magnifier { background-position: 0 -487px }
-a.button span.icon.mail { background-position: 0 -502px }
+a.button span.icon.mail, .ui-icon-mail-closed { background-position: 0 -502px }
 a.button:hover span.icon.mail { background-position: 0 -514px }
 a.button span.icon.move { background-position: 0 -526px }
 a.button:hover span.icon.move { background-position: 0 -541px }
-a.button span.icon.pen { background-position: 0 -556px }
+a.button span.icon.pen, .ui-icon-pencil { background-position: 0 -556px }
 a.button:hover span.icon.pen { background-position: 0 -571px }
-a.button span.icon.pin { background-position: 0 -586px }
+a.button span.icon.pin, .ui-icon-pin-w { background-position: 0 -586px }
 a.button:hover span.icon.pin { background-position: 0 -601px }
-a.button span.icon.plus { background-position: 0 -616px }
+a.button span.icon.plus, .ui-icon-plusthick { background-position: 0 -616px }
 a.button:hover span.icon.plus { background-position: 0 -631px }
 a.button span.icon.reload { background-position: 0 -646px }
 a.button:hover span.icon.reload { background-position: 0 -660px }
-a.button span.icon.rightarrow { background-position: 0 -674px }
+a.button span.icon.rightarrow, .ui-icon-triangle-1-e { background-position: 0 -674px }
 a.button:hover span.icon.rightarrow { background-position: 0 -689px }
 a.button span.icon.rss { background-position: 0 -704px }
 a.button:hover span.icon.rss { background-position: 0 -719px }
 a.button span.icon.tag { background-position: 0 -734px }
 a.button:hover span.icon.tag { background-position: 0 -749px }
-a.button span.icon.trash { background-position: 0 -764px }
-a.button:hover span.icon.trash { background-position: 0 -779px }
-a.button span.icon.unlock { background-position: 0 -794px }
+a.button span.icon.trash, .ui-icon-trash { background-position: 0 -764px }
+a.button:hover span.icon.trash, { background-position: 0 -779px }
+a.button span.icon.unlock, .ui-icon-unlocked { background-position: 0 -794px }
 a.button:hover span.icon.unlock { background-position: 0 -809px }
-a.button span.icon.uparrow { background-position: 0 -824px }
+a.button span.icon.uparrow, .ui-icon-triangle-1-n { background-position: 0 -824px }
 a.button:hover span.icon.uparrow { background-position: 0 -839px }
-a.button span.icon.user { background-position: 0 -854px }
+a.button span.icon.user, ui-icon-person { background-position: 0 -854px }
 a.button:hover span.icon.user { background-position: 0 -869px }
 
 /*****************************************************
@@ -583,7 +583,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 /* 
 *Grid 
 *
-* The default style for SQLFORM.grid even using jquery-iu or another ui framework
+* The default style for SQLFORM.grid even using jquery-ui or another ui framework
 * will look better with the declarations below
 * if needed to remove base.css consider keeping these following lines in some css file.
 */
@@ -719,33 +719,13 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator .current {
     font-weight: bold;
 }
-/* Icons buttons */
-.web2py_grid span.icon { 
-    height: 16px; 
-    text-indent:20px;
-    display:block;
-    vertical-align: middle;
-    line-height:18px;
-    background-image: url('../images/btnicons.png'); background-repeat: no-repeat;
+
+/* Icons ---------------------------------- */
+.ui-icon-text {    
+    width: 14px; 
+    height: 12px;
+    padding-left: 2em;
+    background-image: url('../images/css3buttons_icons.png');
+    background-repeat: no-repeat;
 }
-.web2py_grid span.add {
-    background-position: 0 0;
-}
-.web2py_grid span.back {
-    background-position: 0 -16px;
-}
-.web2py_grid span.export {
-    background-position: 0 -32px;
-}
-.web2py_grid span.delete {
-    background-position: 0 -48px;
-}
-.web2py_grid span.edit {
-    background-position: 0 -64px;
-}
-.web2py_grid span.table {
-    background-position: 0 -80px;
-}
-.web2py_grid span.view {
-    background-position: 0 -96px;
-}
+

@@ -1413,29 +1413,13 @@ class SQLFORM(FORM):
                       cornerall='ui-corner-all',
                       cornertop='ui-corner-top',
                       cornerbottom='ui-corner-bottom',
-                      buttonadd='ui-icon ui-icon-plusthick',
-                      buttonback='ui-icon ui-icon-arrowreturnthick-1-w',
-                      buttonexport='ui-icon ui-icon-folder-open',
-                      buttondelete='ui-icon ui-icon-trash',
-                      buttonedit='ui-icon ui-icon-pencil',
-                      buttontable='ui-icon ui-icon-extlink',
-                      buttonview='ui-icon ui-icon-search'                      
-                      )
-        elif ui == 'basic':
-            ui = dict(widget='',
-                      header='',
-                      content='',
-                      default='',
-                      cornerall='',
-                      cornertop='',
-                      cornerbottom='',
-                      buttonadd='icon add',
-                      buttonback='icon back',
-                      buttonexport='icon export',
-                      buttondelete='icon delete',
-                      buttonedit='icon edit',
-                      buttontable='icon table',
-                      buttonview='icon view'
+                      buttonadd='ui-icon-text ui-icon-plusthick',
+                      buttonback='ui-icon-text ui-icon-arrowreturnthick-1-w',
+                      buttonexport='ui-icon-text ui-icon-triangle-1-s',
+                      buttondelete='ui-icon-text ui-icon-trash',
+                      buttonedit='ui-icon-text ui-icon-pencil',
+                      buttontable='ui-icon-text ui-icon-triangle-1-e',
+                      buttonview='ui-icon-text ui-icon-zoomin'
                       )
         elif not isinstance(ui,dict):
             raise RuntimeError,'SQLFORM.grid ui argument must be a dictionary'
