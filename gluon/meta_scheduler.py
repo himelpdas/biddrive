@@ -76,7 +76,7 @@ class MetaScheduler(threading.Thread):
         print 'task started'
         output, sys.stdout = sys.stdout, cStringIO.StringIO()
         try:
-            result = task.function(*task.args,**task.vars)
+            result = eval(task.function)(*task.args,**task.vars)
             queue.put(TaskReport('success',result,sys.stdout.getvalue()))
         except BaseException,e:
             queue.put(TaskReport('failed',tb=traceback.format_exc()))
@@ -107,7 +107,7 @@ class MetaScheduler(threading.Thread):
             
     def pop_task(self):
         return Task(
-            function = f,
+            function = 'f',
             timeout = 7,
             args = [5],
             vars = {},
