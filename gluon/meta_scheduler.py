@@ -35,6 +35,17 @@ def f(*argv,**kwargs):
         time.sleep(1)    
     return 'done'
 
+
+def executor(queue,task):
+    """ the background process """
+    print 'task started'
+    output, sys.stdout = sys.stdout, cStringIO.StringIO()
+    try:
+        result = eval(task.function)(*task.args,**task.vars)
+        queue.put(TaskReport('success',result,sys.stdout.getvalue()))
+    except BaseException,e:
+        queue.put(TaskReport('failed',tb=traceback.format_exc()))
+
 class MetaScheduler(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -49,7 +60,7 @@ class MetaScheduler(threading.Thread):
         ('terminated',None,None)
         """
         queue = multiprocessing.Queue(maxsize=1)
-        p = multiprocessing.Process(target=self.executor,args=(queue,task))
+        p = multiprocessing.Process(target=executor,args=(queue,task))
         self.process = p
         print 'starting task'
         p.start()
@@ -69,17 +80,6 @@ class MetaScheduler(threading.Thread):
             return TaskReport('terminated')
         else:
             return queue.get()
-
-    @staticmethod
-    def executor(queue,task):
-        """ the background process """
-        print 'task started'
-        output, sys.stdout = sys.stdout, cStringIO.StringIO()
-        try:
-            result = eval(task.function)(*task.args,**task.vars)
-            queue.put(TaskReport('success',result,sys.stdout.getvalue()))
-        except BaseException,e:
-            queue.put(TaskReport('failed',tb=traceback.format_exc()))
 
     def die(self):
         print 'die now'
