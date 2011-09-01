@@ -4318,10 +4318,15 @@ def index():
                     'format',
                     'trigger_name',
                     'sequence_name',
-                    'polymodel']:
-                raise SyntaxError, 'invalid table "%s" attribute: %s' % (tablename, key)
-        migrate = self._migrate_enabled and args.get('migrate',self._migrate)
-        fake_migrate = self._fake_migrate_all or args.get('fake_migrate',self._fake_migrate)
+                    'polymodel',
+                    'table_class']:
+                raise SyntaxError, 'invalid table "%s" attribute: %s' \
+                    % (tablename, key)
+        migrate = self._migrate_enabled and args.get('migrate',
+                                                     self._migrate)
+        fake_migrate = self._fake_migrate_all or args.get('fake_migrate',
+                                                          self._fake_migrate)
+        table_class = args.get('table_class',Table)
         format = args.get('format',None)
         trigger_name = args.get('trigger_name', None)
         sequence_name = args.get('sequence_name', None)
@@ -4343,10 +4348,10 @@ def index():
         if self._common_fields:
             fields = [f for f in fields] + [f for f in self._common_fields]
 
-        t = self[tablename] = Table(self, tablename, *fields,
-                                    **dict(primarykey=primarykey,
-                                    trigger_name=trigger_name,
-                                    sequence_name=sequence_name))
+        t = self[tablename] = table_class(self, tablename, *fields,
+                                          **dict(primarykey=primarykey,
+                                                 trigger_name=trigger_name,
+                                                 sequence_name=sequence_name))
         # db magic
         if self._uri in (None,'None'):
             return t
