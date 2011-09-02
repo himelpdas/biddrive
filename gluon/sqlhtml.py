@@ -1459,10 +1459,10 @@ class SQLFORM(FORM):
         def buttons(edit=False,view=False,record=None):
             buttons = DIV(A(SPAN(T('Back'),_class=ui.get('buttonback','')),_href=referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
             if edit:
-                args = ['Edit',table._tablename,request.args[-1]]
+                args = ['edit',table._tablename,request.args[-1]]
                 buttons.append(A(SPAN(T('Edit'),_class=ui.get('buttonedit','')),_href=url(args=args)))
             if view:
-                args = ['View',table._tablename,request.args[-1]]
+                args = ['view',table._tablename,request.args[-1]]
                 buttons.append(A(SPAN(T('View'),_class=ui.get('buttonview','')),_href=url(args=args)))
             if record and links:
                 for link in links:
