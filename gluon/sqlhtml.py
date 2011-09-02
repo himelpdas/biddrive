@@ -1378,6 +1378,7 @@ class SQLFORM(FORM):
              field_id=None,
              left=None,
              headers={},
+             columns=None,
              orderby=None,
              searchable=True,
              sortable=True,
@@ -1582,6 +1583,7 @@ class SQLFORM(FORM):
         if selectable:
             head.append(TH(_class=ui.get('default','')))
         for field in fields:
+            if not columns is None and not field in columns: continue
             if not field.readable: continue
             key = str(field)
             header = headers.get(str(field),hasattr(field,'label') and field.label or key)
