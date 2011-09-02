@@ -17,7 +17,7 @@ import types
 import re
 import optparse
 import glob
-
+import traceback
 import fileutils
 import settings
 from utils import web2py_uuid
@@ -205,16 +205,16 @@ def run(
         try:
             execfile(startfile, _env)
             if import_models: BaseAdapter.close_all_instances('commit')
-        except RestrictedError, e:
-            print e.traceback
+        except Exception, e:
+            print traceback.format_exc()
             if import_models: BaseAdapter.close_all_instances('rollback')
     elif python_code:
         exec_pythonrc()
         try:
             exec(python_code, _env)
             if import_models: BaseAdapter.close_all_instances('commit')
-        except RestrictedError, e:
-            print e.traceback
+        except Exception, e:
+            print traceback.format_exc()
             if import_models: BaseAdapter.close_all_instances('rollback')
     else:
         if not plain:
