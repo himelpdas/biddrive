@@ -1475,10 +1475,13 @@ class SQLFORM(FORM):
         if create and len(request.args)>1 and request.args[-2]=='new':
             check_authorization()
             table = db[request.args[-1]]
-            form = SQLFORM(table,_class='web2py_form').process(next=referrer,
-                                          onvalidation=onvalidation,
-                                          onsuccess=oncreate,
-                                          formname=formname)
+            form = SQLFORM(
+                table,
+                _class='web2py_form'
+                ).process(next=referrer,
+                          onvalidation=onvalidation,
+                          onsuccess=oncreate,
+                          formname=formname)
             return DIV(buttons(),form,formfooter,_class=_class)
         elif details and len(request.args)>2 and request.args[-3]=='view':
             check_authorization()
@@ -1651,6 +1654,7 @@ class SQLFORM(FORM):
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
                                     value=request.vars.records))
                 for field in fields:
+                    if not columns is None and not field in columns: continue
                     if not field.readable: continue
                     if field.type=='blob': continue
                     value = row[field]
