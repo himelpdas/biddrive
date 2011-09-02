@@ -1748,7 +1748,7 @@ class PostgreSQLAdapter(BaseAdapter):
         }
 
     def adapt(self,obj):
-        return psycopg2_adapt(obj)
+        return psycopg2_adapt(obj).getquoted()
 
     def sequence_name(self,table):
         return '%s_id_Seq' % table
