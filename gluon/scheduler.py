@@ -1,103 +1,199 @@
-USAGE = """
-## Example
+#### WORK IN PROGRESS... NOT SUPPOSED TO WORK YET
 
-For any existing app
-
-Create File: app/models/scheduler.py ======
-from gluon.scheduler import Scheduler
-
-def demo1(*args,**vars):
-    print 'you passed args=%s and vars=%s' % (args, vars)
-    return 'done!'
-
-def demo2():
-    1/0
-
-scheduler = Scheduler(db,dict(demo1=demo1,demo2=demo2))
-=====================================
-
-Create File: app/modules/scheduler.py ======
-scheduler.worker_loop()
-=====================================
-
-## run worker nodes with:
-
-   python web2py.py -S app -M -N -R applications/app/modules/scheduler.py
-
-or without web2py
-
-   python gluon/scheduler.py -u sqlite://storage.sqlite \
-                             -f applications/myapp/databases/ \
-                             -t mytasks.py
-(-h for info)
-python scheduler.py -h
-
-## schedule jobs using
-http://127.0.0.1:8000/scheduler/appadmin/insert/db/task_scheduled
-
-## monitor scheduled jobs
-http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_scheduled.id>0
-
-## view completed jobs
-http://127.0.0.1:8000/scheduler/appadmin/select/db?query=db.task_run.id>0
-
-## API
-You can schedule, update and delete jobs programmatically via
-
-   id = scheduler.db.tast_scheduler.insert(....)
-   scheduler.db(query).update(...)
-   scheduler.db(query).delete(...)
-
-(using normal DAL syntax)
-
-## Comments
-
-Works very much like celery & django-celery in web2py with some differences:
-- it has no dependendecies but web2py (a small subset of it actually)
-- it is much simpler to use and runs everywhere web2py runs
-  as long as you can at last one backrgound task
-- it uses a database (via DAL) instead of rabbitMQ for message passing
-  (this is not really a limitation for ~10 worker nodes)
-- it does not allow stopping of running tasks
-- it does not allow managed starting and stopping of worker nodes
-- it does not allow tasksets (but it does allow a task to submit another task)
-"""
-
-import optparse
 import os
-import uuid
-import socket
-import traceback
-import logging
 import time
+import multiprocessing
 import sys
 import cStringIO
-import multiprocessing
+import threading
+import traceback
 import signal
-from datetime import datetime, timedelta
+import socket
+import datetime
+import logging
+
+try:
+    from gluon.contrib.simplejson import loads, dumps
+except:
+    from simplejson import loads, dumps
 
 if 'WEB2PY_PATH' in os.environ:
     sys.path.append(os.environ['WEB2PY_PATH'])
 
-from gluon import * # needs DAL, Field, current.T and validators
-from gluon.contrib.simplejson import loads,dumps
+from gluon import DAL, Field, IS_NOT_EMPTY, IS_IN_SET
+from gluon.utils import web2py_uuid
+
+QUEUED = 'QUEUED'
+ASSIGNED = 'ASSIGNED'
+RUNNING = 'RUNNING'
+COMPLETED = 'COMPLETED'
+FAILED = 'FAILED'
+TIMEOUT = 'TIMEOUT'
+STOPPED = 'STOPPED'
+ACTIVE = 'ACTIVE'
+INACTIVE = 'INACTIVE'
+DISABLED = 'DISABLED'
+SECONDS = 1
+HEARTBEAT = 3*SECONDS
+
+class Task(object):
+    def __init__(self,app,function,timeout,args='[]',vars='{}',**kwargs):
+        logging.debug('new task allocated: %s.%s' % (app,function))
+        self.app = app
+        self.function = function
+        self.timeout = timeout
+        self.args = args # json
+        self.vars = vars # json
+        self.__dict__.update(kwargs)
+    def __str__(self):
+        return '<Task: %s>' % self.function
+
+class TaskReport(object):
+    def __init__(self,status,result=None,output=None,tb=None):
+        logging.debug('new task report: %s' % status)
+        if tb:
+            logging.debug('traceback: %s' % tb)
+        else:
+            logging.debug('result: %s' % result)
+        self.status = status
+        self.result = result
+        self.output = output
+        self.tb = tb
+    def __str__(self):
+        return '<TaskReport: %s>' % self.status
+
+def demo_function(*argv,**kwargs):
+    """ test function """
+    for i in range(argv[0]):
+        print 'click',i
+        time.sleep(1)    
+    return 'done'
+
+def executor(queue,task):
+    """ the background process """
+    logging.debug('task started')
+    stdout, sys.stdout = sys.stdout, cStringIO.StringIO()
+    try:        
+        if task.app:
+            os.chdir(os.environ['WEB2PY_PATH'])
+            from gluon.shell import env
+            from gluon.dal import BaseAdapter
+            from gluon import current
+            logging.getLogger().setLevel(logging.WARN)
+            _env = env(task.app,import_models=True)
+            logging.getLogger().setLevel(logging.DEBUG)
+            scheduler = current._scheduler
+            scheduler_tasks = current._scheduler.tasks            
+            _function = scheduler_tasks[task.function]
+            globals().update(_env)            
+            result = dumps(_function(*loads(task.args),**loads(task.vars)))
+        else:
+            ### for testing purpose only
+            result = eval(task.function)(*loads(task.args),**loads(task.vars))
+        stdout, sys.stdout = sys.stdout, stdout
+        queue.put(TaskReport(COMPLETED, result,stdout.getvalue()))
+    except BaseException,e:
+        sys.stdout = stdout
+        tb = traceback.format_exc()
+        queue.put(TaskReport(FAILED,tb=tb))
+
+class MetaScheduler(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.process = None     # the backround process
+        self.heartbeat = True   # set to False to kill
+    def async(self,task):
+        """
+        starts the background process and returns:
+        ('ok',result,output)
+        ('error',exception,None)
+        ('timeout',None,None)
+        ('terminated',None,None)
+        """
+        queue = multiprocessing.Queue(maxsize=1)
+        p = multiprocessing.Process(target=executor,args=(queue,task))        
+        self.process = p
+        logging.debug('task starting')
+        p.start()
+        try:
+            p.join(task.timeout)
+        except:
+            p.terminate()
+            p.join()
+            self.heartbeat = False
+            logging.debug('task stopped')
+            return TaskReport(STOPPED)
+        if p.is_alive():
+            p.terminate()
+            p.join()            
+            logging.debug('task timeout')
+            return TaskReport(TIMEOUT)
+        elif queue.empty():
+            self.heartbeat = False
+            logging.debug('task stopped')
+            return TaskReport(STOPPED)
+        else:
+            logging.debug('task completed or failed')
+            return queue.get()
+
+    def die(self):
+        logging.debug('die!')
+        self.heartbeat = False
+        self.terminate_process()
+        
+    def terminate_process(self):
+        try:
+            self.process.terminate()
+        except:
+            pass # no process to terminate
+
+    def run(self):
+        """ the thread that sends heartbeat """
+        counter = 0
+        while self.heartbeat:            
+            self.send_heartbeat(counter)
+            counter += 1
+
+    def start_heartbeats(self):
+        self.start()
+        
+    def send_heartbeat(self,counter):
+        print 'thum'
+        time.sleep(1)
+            
+    def pop_task(self):
+        return Task(
+            app = None,
+            function = 'demo_function',
+            timeout = 7,
+            args = '[2]',
+            vars = '{}')
+
+    def report_task(self,task,task_report):
+        print 'reporting task'
+        pass
+    
+    def sleep(self):
+        pass
+
+    def loop(self):
+        try:
+            self.start_heartbeats()
+            while True and self.heartbeat:
+                logging.debug('looping')
+                task = self.pop_task()
+                if task:
+                    self.report_task(task,self.async(task))
+                else:
+                    logging.debug('sleeping...')
+                    self.sleep()
+        except KeyboardInterrupt:
+            self.die()
 
 
-STATUSES = (QUEUED,
-            ALLOCATED,
-            RUNNING,
-            COMPLETED,
-            FAILED,
-            TIMEOUT,
-            OVERDUE,
-            STOPPED) = ('queued',
-                        'allocated',
-                        'running',
-                        'completed',
-                        'failed',
-                        'timeout',
-                        'overdue',
-                        'stopped')
+TASK_STATUS = (QUEUED, RUNNING, COMPLETED, FAILED, TIMEOUT, STOPPED)
+RUN_STATUS = (RUNNING, COMPLETED, FAILED, TIMEOUT, STOPPED)
+WORKER_STATUS = (ACTIVE,INACTIVE,DISABLED)
 
 class TYPE(object):
     """
@@ -122,364 +218,192 @@ class TYPE(object):
             else:
                 return (value,current.T('Not of type: %s') % self.myclass)
 
-class TimeoutException(Exception):
-    pass
+class Scheduler(MetaScheduler):
+    def __init__(self,db,tasks={},migrate=False):
 
-class RunableProcessing(multiprocessing.Process):
-    """
-    based on
-    http://code.activestate.com/recipes/577853-timeout-decorator-with-multiprocessing/
-    """
-    def __init__(self, func, *args, **kwargs):
-        self.queue = multiprocessing.Queue(maxsize=1)
-        args = (func,) + args
-        multiprocessing.Process.__init__(self, target=self.run_func, 
-                                         args=args, kwargs=kwargs)
+        MetaScheduler.__init__(self)
 
-    def run_func(self, func, *args, **kwargs):
-        output, sys.stdout = sys.stdout, cStringIO.StringIO() 
-        try:
-            result = func(*args, **kwargs)
-            self.queue.put((True, result, sys.stdout.getvalue()))
-        except BaseException, e:
-            self.queue.put((False, e, None))
-        sys.stdout = output
-
-    def done(self):
-        return self.queue.full()
-
-    def result(self):
-        return self.queue.get()
-
-def timeout(seconds, function, args, vars):
-    now = time.time()
-    proc = RunableProcessing(function, *args, **vars)
-    proc.start()    
-    proc.join(seconds)
-    if proc.is_alive():        
-        proc.terminate()
-        runtime = int(time.time() - now)
-        raise TimeoutException('timed out after %s seconds' \
-                                   % runtime)
-    assert proc.done()
-    success, result, output = proc.result()
-    if not success:
-        raise result
-    return dict(result=result, output=output)
-    
-class Scheduler(object):
-    """
-    this is the main scheduler class, it also implement the worker_loop!
-    """
-
-    def __init__(self,db,tasks,worker_name=None,migrate=True):
-        if not worker_name:
-            worker_name = self.guess_worker_name()
         self.db = db
+        self.db_thread = None
         self.tasks = tasks
-        self.worker_name = worker_name
-        now = datetime.now()
+        self.worker_name = socket.gethostname()+'#'+str(web2py_uuid())
+
+        from gluon import current
+        current._scheduler = self        
+
+        self.define_tables(db,migrate=migrate)
+
+    def define_tables(self,db,migrate):
+        logging.debug('defining tables (migrate=%s)' % migrate)
+        now = datetime.datetime.now()
         db.define_table(
-            'task_scheduled',
-            Field('name',requires=IS_NOT_EMPTY()),
+            'scheduler_task',
+            Field('application_name',requires=IS_NOT_EMPTY()),
+            Field('task_name',requires=IS_NOT_EMPTY()),
             Field('group_name',default='main',writable=False),
-            Field('status',requires=IS_IN_SET(STATUSES),default=QUEUED,writable=False),
-            Field('func',requires=IS_IN_SET(sorted(self.tasks.keys()))),
+            Field('status',requires=IS_IN_SET(TASK_STATUS),
+                  default=QUEUED,writable=False),
+            Field('function_name',
+                  requires=IS_IN_SET(sorted(self.tasks.keys()))),
             Field('args','text',default='[]',requires=TYPE(list)),
             Field('vars','text',default='{}',requires=TYPE(dict)),
             Field('enabled','boolean',default=True),
             Field('start_time','datetime',default=now),
             Field('next_run_time','datetime',default=now),
-            Field('stop_time','datetime',default=now+timedelta(days=1)),
+            Field('stop_time','datetime',default=now+datetime.timedelta(days=1)),
             Field('repeats','integer',default=1,comment="0=unlimted"),
             Field('period','integer',default=60,comment='seconds'),
             Field('timeout','integer',default=60,comment='seconds'),
             Field('times_run','integer',default=0,writable=False),
             Field('last_run_time','datetime',writable=False,readable=False),
-            Field('assigned_worker_name',default=None,writable=False),
-            migrate=migrate,format='%(name)s')
+            Field('assigned_worker_name',default='',writable=False),
+            migrate=migrate,format='%(task_name)s')
+
         db.define_table(
-            'task_run',
-            Field('task_scheduled','reference task_scheduled'),
-            Field('status',requires=IS_IN_SET((RUNNING,COMPLETED,FAILED))),
+            'scheduler_run',
+            Field('scheduler_task','reference scheduler_task'),
+            Field('status',requires=IS_IN_SET(RUN_STATUS)),
             Field('start_time','datetime'),
+            Field('stop_time','datetime'),
             Field('output','text'),
             Field('result','text'),
             Field('traceback','text'),
-            Field('worker_name',default=worker_name),
+            Field('worker_name',default=self.worker_name),
             migrate=migrate)
+
         db.define_table(
-            'worker_heartbeat',
-            Field('name'),
+            'scheduler_worker',
+            Field('worker_name'),
+            Field('first_heartbeat','datetime'),
             Field('last_heartbeat','datetime'),
+            Field('status',requires=IS_IN_SET(WORKER_STATUS)),
             migrate=migrate)
+        db.commit()
+
+    def loop(self,worker_name=None):
+        MetaScheduler.loop(self)
+
+    def pop_task(self):
+        now = datetime.datetime.now()
+        db, ts = self.db, self.db.scheduler_task        
         try:
-            current._scheduler = self
-        except:
-            pass
-
-    def form(self,id,**args):
-        """
-        generates an entry form to submit a new task, for debugging
-        """
-        return SQLFORM(self.db.task_schedule,id,**args)
-
-    def sleep(self,heartbeat):
-        db = self.db
-        now = datetime.now()
-        future = (db.task_scheduled.enabled==True)
-        future &= (db.task_scheduled.next_run_time>now)
-        assigned_to_me = (db.task_scheduled.assigned_worker_name==self.worker_name)
-        not_assigned = (db.task_scheduled.assigned_worker_name=='')|\
-            (db.task_scheduled.assigned_worker_name==None)
-        row = db(future & (assigned_to_me|not_assigned)).select(
-            limitby=(0,1),orderby=db.task_scheduled.next_run_time).first()
-        if row and row.next_run_time:
-            dt = min((row.next_run_time - now).seconds+1,heartbeat)
-        else:
-            dt = heartbeat
-        time.sleep(dt)
-
-    def assign_next_task(self,group_names=['main']):
-        """
-        find next task that needs to be executed
-        """
-        now = datetime.now()
-        db = self.db
-        queued = (db.task_scheduled.status==QUEUED)
-        allocated = (db.task_scheduled.status==ALLOCATED)
-        due = (db.task_scheduled.enabled==True)
-        due &= (db.task_scheduled.group_name.belongs(group_names))
-        due &= (db.task_scheduled.next_run_time<=now)
-        assigned_to_me = (db.task_scheduled.assigned_worker_name==self.worker_name)
-        not_assigned = (db.task_scheduled.assigned_worker_name=='')|\
-            (db.task_scheduled.assigned_worker_name==None)
-        # grab all queued tasks
-        try:            
-            counter = db(queued & due & (not_assigned|assigned_to_me)).update(
-                assigned_worker_name=self.worker_name,status=ALLOCATED)
+            logging.debug('grabbing all queued tasks')
+            all_available = db(ts.status.belongs((QUEUED,RUNNING)))\
+                (ts.times_run<ts.repeats)\
+                (ts.start_time<=now)\
+                (ts.stop_time>now)\
+                (ts.next_run_time<=now)\
+                (ts.enabled==True)\
+                (ts.assigned_worker_name.belongs((None,'',self.worker_name))) #None?
+            number_grabbed = all_available.update(
+                assigned_worker_name=self.worker_name,status=ASSIGNED)
             db.commit()
         except:
             db.rollback()
-            counter = 0
-        if counter:
-            # pick the first
-            row = db(allocated & due & assigned_to_me).select(
-                orderby=db.task_scheduled.next_run_time,limitby=(0,1)).first()
-            # release others if any
-            if row:
-                row.update_record(status=RUNNING,last_run_time=datetime.now())
-                db(allocated & due & assigned_to_me).update(
-                    assigned_worker_name=None,status=QUEUED)
-            db.commit()
-        else:
-            row = None
-        return row
-
-    def run_next_task(self,group_names=['main']):
-        """
-        get and execute next task
-        """
-        db = self.db
-        now = datetime.now()
-        task = self.assign_next_task(group_names=group_names)
-        if not task: return False
-        logging.info('running task %s' % task.name)
-        task_id = db.task_run.insert(
-            task_scheduled=task.id,status=RUNNING,
-            start_time=task.last_run_time)
-        db.commit()
-        times_run = task.times_run+1
-        try:
-            func = self.tasks[task.func]
-            args = loads(task.args)
-            vars = loads(task.vars)
-            d = timeout(task.timeout,func,args,vars)
-            status, result, output, tb = \
-                COMPLETED, d['result'], d['output'], None
-        except KeyboardInterrupt:
-            status, result, output, tb = STOPPED, None, None, None
-        except TimeoutException:
-            status, result, output, tb = TIMEOUT, None, None, None
-        except:
-            status, result, output = FAILED, None, None
-            tb = 'SUBMISSION ERROR:\n%s' % traceback.format_exc()
-        next_run_time = task.last_run_time + timedelta(seconds=task.period)
-        status_repeat = status
-        if status==COMPLETED:
-            if (not task.repeats or times_run<task.repeats) and \
-                    (not next_run_time or next_run_time<task.stop_time):
-                status_repeat = QUEUED
-                logging.info('task %s %s' % (task.name,status))
-        while True:                
-            try:                        
-                db(db.task_run.id==task_id).update(
-                    status=status,
-                    output=output,
-                    traceback=tb,
-                    result=dumps(result))
-                if status==STOPPED:
-                    task.update_record(
-                        status=status,
-                        assigned_worker_name=None)
-                else:
-                    task.update_record(
-                        status=status_repeat,
-                        next_run_time=next_run_time,
-                        times_run=times_run,
-                        assigned_worker_name=None)
+        logging.debug('grabbed %s tasks' % number_grabbed)
+        if number_grabbed:
+            grabbed = db(ts.assigned_worker_name==self.worker_name)\
+                (ts.status==ASSIGNED)
+            task = grabbed.select(limitby=(0,1),
+                                  orderby=ts.next_run_time).first()
+                                  
+            logging.debug('releasing all but one (running)')
+            if task:
+                task.update_record(status=RUNNING,last_run_time=now)
+                grabbed.update(assigned_worker_name='',status=QUEUED)
                 db.commit()
-                if status==STOPPED:
-                    raise KeyboardInterrupt
-                return True
-            except db._adapter.driver.OperationalError:
-                db.rollback()                
-            # keep looping until you can log task!
- 
-    def log_heartbeat(self):
-        """
-        logs a worker heartbeat
-        """
-        db = self.db
-        now = datetime.now()
-        me = self.worker_name
-        if not db(db.worker_heartbeat.name==me).update(last_heartbeat=now):
-            db.worker_heartbeat.insert(name=me,last_heartbeat=now)
-        db.commit()
+        else:
+            return None
+        next_run_time = task.last_run_time + datetime.timedelta(seconds=task.period)
+        times_run = task.times_run + 1
+        if times_run < task.repeats:
+            run_again = True
+        else:
+            run_again = False
+        logging.debug('new scheduler_run record')    
+        while True:
+            try:
+                run_id = db.scheduler_run.insert(
+                    scheduler_task = task.id,
+                    status=RUNNING,
+                    start_time=now,
+                    worker_name=self.worker_name)
+                db.commit()
+                break
+            except:
+                db.rollback
+        return Task(
+            app = task.application_name,
+            function = task.function_name,
+            timeout = task.timeout,
+            args = task.args, #in json
+            vars = task.vars, #in json
+            task_id = task.id,
+            run_id = run_id,
+            run_again = run_again,
+            next_run_time=next_run_time,
+            times_run = times_run)
 
-    def fix_failures(self):
-        """
-        find all tasks that have been running than they should and 
-        sets them to OVERDUE
-        """
+    def report_task(self,task,task_report):
+        logging.debug('recording task report in db (%s)' % task_report.status)    
         db = self.db
-        ts = db.task_scheduled
-        tasks = db(ts.status==RUNNING).select()
-        ids = [task.id for task in tasks if task.last_run_time \
-                   < (datetime.now() - timedelta(seconds=task.timeout))]
-        if ids:
-            db(ts.status==RUNNING)(ts.id.belongs(ids)).update(status=OVERDUE)
-        db(ts.status==QUEUED).update(assigned_worker_name=None) 
+        db(db.scheduler_run.id==task.run_id).update(
+            status = task_report.status,
+            stop_time = datetime.datetime.now(),
+            result = task_report.result,
+            output = task_report.output,
+            traceback = task_report.tb)        
+        if task_report.status == COMPLETED:
+            d = dict(status = task.run_again and QUEUED or COMPLETED,
+                     next_run_time = task.next_run_time,
+                     times_run = task.times_run,
+                     assigned_worker_name = '')
+        else:
+            d = dict(
+                assigned_worker_name = '',
+                status = {'FAILED':'FAILED',
+                          'TIMEOUT':'TIMEOUT',
+                          'STOPPED':'QUEUED'}[task_report.status])
+        db(db.scheduler_task.id==task.task_id)\
+            (db.scheduler_task.status==RUNNING).update(**d)
         db.commit()
-
-    def cleanup_scheduled(self, statuses=[COMPLETED],expiration=24*3600):
-        """
-        delete task_scheduled that were completed long ago
-        can be run as a task by adding:
-            tasks['scheduler.cleanup_scheduled']=scheduler.cleanup_scheduled
-        """
-        db = self.db
-        ts = db.task_scheduled
-        now = datetime.now()
-        db(ts.status.belongs(statuses))\
-            (ts.last_run_time+expiration<now).delete()
-        db.commit()
-
-    def cleanup_run(self, statuses=[COMPLETED],expiration=24*3600):
-        """
-        delete task_run that were completed long ago
-        can be run as a task by adding:
-            tasks['scheduler.cleanup_run']=scheduler.cleanup_run
-        """
-        db = self.db
-        now = datetime.now()
-        db(db.task_run.status.belongs(statuses))\
-            (db.task_run.start_time+expiration<now).delete()
-        db.commit()
-
-    @staticmethod
-    def guess_worker_name():
-        """
-        some times we may not know the name of a worker so we make one up
-        """
+        logging.debug('committed!')
+    
+    def send_heartbeat(self,counter):
+        if not self.db_thread:
+            logging.debug('thread building own DAL object')    
+            self.db_thread = DAL(self.db._uri,folder = self.db._adapter.folder)
+            self.define_tables(self.db_thread,migrate=False)
         try:
-            worker_name = current.request.env.http_host
+            db = self.db_thread
+            sw, st = db.scheduler_worker, db.scheduler_task
+            now = datetime.datetime.now()
+            expiration = now-datetime.timedelta(seconds=HEARTBEAT*3)    
+            # record heartbeat
+            logging.debug('recording heartbeat')    
+            if not db(sw.worker_name==self.worker_name)\
+                    .update(last_heartbeat = now, status = ACTIVE):
+                sw.insert(status = ACTIVE,worker_name = self.worker_name,
+                          first_heartbeat = now,last_heartbeat = now)
+            if counter % 10 == 0:
+                # deallocate jobs assigned to inactive workers and requeue them
+                logging.debug('freeing workers that have not sent heartbeat')    
+                inactive_workers = db(sw.last_heartbeat<expiration)
+                db(st.assigned_worker_name.belongs(
+                        inactive_workers._select(sw.worker_name)))\
+                        (st.status.belongs((RUNNING,ASSIGNED,QUEUED)))\
+                        .update(assigned_worker_name='',status=QUEUED)
+                inactive_workers.delete()
+            db.commit()
         except:
-            worker_name = socket.gethostname()
-        worker_name += '#'+str(uuid.uuid4())
-        return worker_name
+            db.rollback()
+        time.sleep(HEARTBEAT)
+    
+    def sleep(self):
+        time.sleep(HEARTBEAT) # should only sleep until next available task       
 
-    def worker_loop(self,
-                    logger_level='INFO',
-                    heartbeat=20,
-                    group_names=['main'],
-                    setup_logging=True):
-        """
-        this implements a worker process and should only run as worker
-        it loops and logs (almost) everything
-        """
-        db = self.db
-        try:
-            if setup_logging:
-                level = getattr(logging,logger_level)
-                logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
-                logging.getLogger().setLevel(level)
-                logging.info('worker_name = %s' % self.worker_name)
-            while True:
-                try:
-                    if 'main' in group_names:
-                        self.fix_failures()
-                    self.log_heartbeat()
-                    logging.info('checking for tasks...')
-                    while self.run_next_task(group_names=group_names): pass
-                    self.sleep(heartbeat)
-                except db._adapter.driver.OperationalError:
-                    db.rollback()
-                    # whatever happened, try again
-        except KeyboardInterrupt:
-            logging.info('[ctrl]+C')
-
-def main():
-    """
-    allows to run worker without python web2py.py .... by simply python this.py
-    """
-    parser = optparse.OptionParser()
-    parser.add_option("-w", "--worker_name", dest="worker_name", default=None,
-                      help="start a worker with name")
-    parser.add_option("-b", "--heartbeat",dest="heartbeat", default = 10,
-                      help="heartbeat time in seconds (default 10)")
-    parser.add_option("-L", "--logger_level",dest="logger_level",
-                      default = 'INFO',
-                      help="level of logging (DEBUG, INFO, WARNING, ERROR)")
-    parser.add_option("-g", "--group_names",dest="group_names",
-                      default = 'main',
-                      help="comma separated list of groups to be picked by the worker")
-    parser.add_option("-f", "--db_folder",dest="db_folder",
-                      default = None,
-                      help="location of the dal database folder")
-    parser.add_option("-u", "--db_uri",dest="db_uri",
-                      default = None,
-                      help="database URI string (web2py DAL syntax)")
-    parser.add_option("-m", "--db_migrate",dest="db_migrate",
-                      action = "store_true", default=False,
-                      help="create tables if missing")
-    parser.add_option("-t", "--tasks",dest="tasks",default=None,
-                      help="file containing task files, must define tasks = {'task_name':(lambda: 'output')} or similar set of tasks")
-    (options, args) = parser.parse_args()
-    if not options.tasks or not options.db_uri:
-        print USAGE
-    path,filename = os.path.split(options.tasks)
-    if filename.endswith('.py'):
-        filename = filename[:-3]
-    sys.path.append(path)
-    print 'importing tasks...'
-    tasks = __import__(filename, globals(), locals(), [], -1).tasks
-    print 'tasks found: '+', '.join(tasks.keys())
-    group_names = [x.strip() for x in options.group_names.split(',')]
-    print 'groups for this worker: '+', '.join(group_names)
-    print 'connecting to database in folder: ' + options.db_folder or './'
-    print 'using URI: '+options.db_uri
-    db = DAL(options.db_uri,folder=options.db_folder)
-    print 'instantiating scheduler...'
-    scheduler=Scheduler(db = db,
-                        worker_name = options.worker_name,
-                        tasks = tasks,
-                        migrate = options.db_migrate)
-    print 'starting main worker loop...'
-    scheduler.worker_loop(logger_level = options.logger_level,
-                          heartbeat = options.heartbeat,
-                          group_names = group_names)
-
-if __name__=='__main__': main()
-
-
+if __name__=='__main__':    
+    logging.basicConfig(format="%(asctime)-15s %(levelname)-8s: %(message)s")
+    logging.getLogger().setLevel(logging.DEBUG)
+    db = DAL('sqlite://storage.sqlite',folder='/Users/mdipierro/web2py/applications/scheduler/databases')
+    Scheduler(db,migrate=True).loop()
