@@ -1445,9 +1445,10 @@ class SQLFORM(FORM):
         tablename = table._tablename
         referrer = session.get('_web2py_grid_referrer_'+formname, url())
         def check_authorization():
-            if not URL.verify(request,user_signature=user_signature):
-                session.flash = T('not authorized')
-                redirect(referrer)
+            if user_signature:
+                if not URL.verify(request,user_signature=user_signature):
+                    session.flash = T('not authorized')
+                    redirect(referrer)
         if upload=='<default>':
             upload = lambda filename: url(args=['download',filename])
             if len(request.args)>1 and request.args[-2]=='download':

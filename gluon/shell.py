@@ -26,6 +26,7 @@ from restricted import RestrictedError
 from globals import Request, Response, Session
 from storage import Storage
 from admin import w2p_unpack
+from dal import BaseAdapter
 
 
 logger = logging.getLogger("web2py")
@@ -203,14 +204,18 @@ def run(
         exec_pythonrc()
         try:
             execfile(startfile, _env)
+            if import_models: BaseAdapter.close_all_instances('commit')
         except RestrictedError, e:
             print e.traceback
+            if import_models: BaseAdapter.close_all_instances('rollback')
     elif python_code:
         exec_pythonrc()
         try:
             exec(python_code, _env)
+            if import_models: BaseAdapter.close_all_instances('commit')
         except RestrictedError, e:
             print e.traceback
+            if import_models: BaseAdapter.close_all_instances('rollback')
     else:
         if not plain:
             if bpython:

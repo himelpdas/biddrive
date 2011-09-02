@@ -6,10 +6,18 @@ import cStringIO
 import threading
 import traceback
 import signal
+try:
+    from gluon.contrib.simplejson import loads, dumps
+except:
+    from simplejson import loads, dumps
+
+if 'WEB2PY_PATH' in os.environ:
+    sys.path.append(os.environ['WEB2PY_PATH'])
 
 class Task(object):
-    def __init__(self,function,timeout,args=None,vars=None,row=None):
+    def __init__(self,app,function,timeout,args=None,vars=None,row=None):
         print 'new task'
+        self.app = app
         self.function = function
         self.timeout = timeout
         self.args = args or []
@@ -21,6 +29,11 @@ class Task(object):
 class TaskReport(object):
     def __init__(self,status,result=None,output=None,tb=None):
         print 'new task report'
+        if tb:
+            print tb
+        else:
+            print '    output =',output
+            print '    result =',result
         self.status = status
         self.result = result
         self.output = output
@@ -35,16 +48,28 @@ def f(*argv,**kwargs):
         time.sleep(1)    
     return 'done'
 
-
 def executor(queue,task):
     """ the background process """
     print 'task started'
-    output, sys.stdout = sys.stdout, cStringIO.StringIO()
+    stdout, sys.stdout = sys.stdout, cStringIO.StringIO()
     try:
-        result = eval(task.function)(*task.args,**task.vars)
-        queue.put(TaskReport('success',result,sys.stdout.getvalue()))
+        if task.app:
+            os.chdir(os.environ['WEB2PY_PATH'])
+            from gluon.shell import env
+            from gluon.dal import BaseAdapter
+            _env = env(task.app,import_models=True)
+            scheduler_tasks = _env.get('scheduler_tasks',{})
+            function = scheduler_tasks[task.function]
+            result = dumps(function(*loads(task.args),**loads(task.vars)))
+        else:
+            ### for testing purpose only
+            result = eval(task.function)(*loads(task.args),**loads(task.vars))
+        stdout, sys.stdout = sys.stdout, stdout
+        queue.put(TaskReport('success', result,stdout.getvalue()))
     except BaseException,e:
-        queue.put(TaskReport('failed',tb=traceback.format_exc()))
+        sys.stdout = stdout
+        tb = traceback.format_exc()
+        queue.put(TaskReport('failed',tb=tb))
 
 class MetaScheduler(threading.Thread):
     def __init__(self):
@@ -107,10 +132,11 @@ class MetaScheduler(threading.Thread):
             
     def pop_task(self):
         return Task(
-            function = 'f',
+            app = 'scheduler',
+            function = 'demo1',
             timeout = 7,
-            args = [5],
-            vars = {},
+            args = '[2]',
+            vars = '{}',
             row = None)
 
     def report_task(self,task,task_report):
