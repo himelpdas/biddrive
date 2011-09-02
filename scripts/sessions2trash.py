@@ -35,92 +35,127 @@ SLEEP_MINUTES = 5
 VERSION = 0.3
 
 
-def main():
-    """Main processing."""
+class SessionSet(object):
+    """Class representing a set of sessions"""
 
-    usage = '%prog [options]' + '\nVersion: %s' % VERSION
-    parser = OptionParser(usage=usage)
+    def __init__(self, expiration, force, verbose):
+        self.expiration = expiration
+        self.force = force
+        self.verbose = verbose
 
-    parser.add_option('-o', '--once',
-        action='store_true', dest='once', default=False,
-        help='Delete sessions, then exit.',
-        )
-    parser.add_option('-s', '--sleep',
-        dest='sleep', default=SLEEP_MINUTES * 60, type="int",
-        help='Number of seconds to sleep between executions. Default 300.',
-        )
-    parser.add_option('-x', '--expiration',
-        dest='expiration', default=None, type="int",
-        help='Expiration value for sessions without expiration (in seconds)',
-        )
-    parser.add_option('-f', '--force',
-        action='store_true', dest='force', default=False,
-        help=('Ignore session expiration. '
-            'Force expiry based on -x option or auth.settings.expiration.')
-        )
-    parser.add_option('-v', '--verbose',
-        action='store_true', dest='verbose', default=False,
-        help='Print verbose output.',
-        )
+    def get(self):
+        """Get session files/records."""
+        raise NotImplementedError
 
-    (options, unused_args) = parser.parse_args()
+    def trash(self):
+        """Trash expired sessions."""
+        now = datetime.datetime.now()
+        for item in self.get():
+            status = 'OK'
+            last_visit = item.last_visit_default()
 
-    expiration = options.expiration
-    if expiration is None:
-        try:
-            expiration = auth.settings.expiration
-        except:
-            expiration = EXPIRATION_MINUTES * 60
-
-    while True:
-        trash_session_files(expiration, options.force, options.verbose)
-
-        if options.once:
-            break
-        else:
-            time.sleep(options.sleep)
-
-
-def trash_session_files(expiration, force=False, verbose=False):
-    """
-    Trashes expired session files.
-
-    Arguments::
-        expiration: integer, expiration value to use for sessions without one.
-        force: If True, ignores session expiration and use value of
-                expiration argument.
-        verbose: If True, print names of sessions trashed.
-    """
-    now = datetime.datetime.now()
-
-    path = os.path.join(request.folder, 'sessions')
-    for file in os.listdir(path):
-        filename = os.path.join(path, file)
-        last_visit = datetime.datetime.fromtimestamp(
-                os.stat(filename)[stat.ST_MTIME])
-
-        if expiration > 0:
             try:
-                f = open(filename, 'rb+')
-                try:
-                    session = Storage()
-                    session.update(cPickle.load(f))
-                finally:
-                    f.close()
-
+                session = item.get()
                 if session.auth:
-                    if session.auth.expiration and not force:
-                        expiration = session.auth.expiration
+                    if session.auth.expiration and not self.force:
+                        self.expiration = session.auth.expiration
                     if session.auth.last_visit:
                         last_visit = session.auth.last_visit
             except:
                 pass
 
-        if expiration == 0 or \
-                total_seconds(now - last_visit) > expiration:
-            os.unlink(filename)
-            if verbose:
-                print('Session trashed: %s' % file)
+            age = 0
+            if last_visit:
+                age = total_seconds(now - last_visit)
+
+            if age > self.expiration or not self.expiration:
+                item.delete()
+                status = 'trashed'
+
+            if self.verbose > 1:
+                print 'key: %s' % str(item)
+                print 'expiration: %s seconds' % self.expiration
+                print 'last visit: %s' % str(last_visit)
+                print 'age: %s seconds' % age
+                print 'status: %s' % status
+                print ''
+            elif self.verbose > 0:
+                print('%s %s' % (str(item), status))
+
+
+class SessionSetDb(SessionSet):
+    """Class representing a set of sessions stored in database"""
+
+    def __init__(self, expiration, force, verbose):
+        SessionSet.__init__(self, expiration, force, verbose)
+
+    def get(self):
+        """Return list of SessionDb instances for existing sessions."""
+        sessions = []
+        tablename = 'web2py_session'
+        if request.application:
+            tablename = 'web2py_session_' + request.application
+        if tablename in db:
+            for row in db(db[tablename].id > 0).select():
+                sessions.append(SessionDb(row))
+        return sessions
+
+
+class SessionSetFiles(SessionSet):
+    """Class representing a set of sessions stored in flat files"""
+
+    def __init__(self, expiration, force, verbose):
+        SessionSet.__init__(self, expiration, force, verbose)
+
+    def get(self):
+        """Return list of SessionFile instances for existing sessions."""
+        path = os.path.join(request.folder, 'sessions')
+        return [SessionFile(os.path.join(path, x)) for x in os.listdir(path)]
+
+
+class SessionDb(object):
+    """Class representing a single session stored in database"""
+
+    def __init__(self, row):
+        self.row = row
+
+    def delete(self):
+        self.row.delete_record()
+        db.commit()
+
+    def get(self):
+        session = Storage()
+        session.update(cPickle.loads(self.row.session_data))
+        return session
+
+    def last_visit_default(self):
+        return self.row.modified_datetime
+
+    def __str__(self):
+        return self.row.unique_key
+
+
+class SessionFile(object):
+    """Class representing a single session stored as a flat file"""
+
+    def __init__(self, filename):
+        self.filename = filename
+
+    def delete(self):
+        os.unlink(self.filename)
+
+    def get(self):
+        session = Storage()
+        with open(self.filename, 'rb+') as f:
+            session.update(cPickle.load(f))
+        return session
+
+    def last_visit_default(self):
+        return datetime.datetime.fromtimestamp(
+                os.stat(self.filename)[stat.ST_MTIME])
+
+    def __str__(self):
+        return self.filename
 
 
 def total_seconds(delta):
@@ -133,5 +168,55 @@ def total_seconds(delta):
     return (delta.microseconds + (delta.seconds + (delta.days * 24 * 3600)) * \
             10 ** 6) / 10 ** 6
 
-main()
 
+def main():
+    """Main processing."""
+
+    usage = '%prog [options]' + '\nVersion: %s' % VERSION
+    parser = OptionParser(usage=usage)
+
+    parser.add_option('-f', '--force',
+        action='store_true', dest='force', default=False,
+        help=('Ignore session expiration. '
+            'Force expiry based on -x option or auth.settings.expiration.')
+        )
+    parser.add_option('-o', '--once',
+        action='store_true', dest='once', default=False,
+        help='Delete sessions, then exit.',
+        )
+    parser.add_option('-s', '--sleep',
+        dest='sleep', default=SLEEP_MINUTES * 60, type="int",
+        help='Number of seconds to sleep between executions. Default 300.',
+        )
+    parser.add_option('-v', '--verbose',
+        default=0, action='count',
+        help="print verbose output, a second -v increases verbosity")
+    parser.add_option('-x', '--expiration',
+        dest='expiration', default=None, type="int",
+        help='Expiration value for sessions without expiration (in seconds)',
+        )
+
+    (options, unused_args) = parser.parse_args()
+
+    expiration = options.expiration
+    if expiration is None:
+        try:
+            expiration = auth.settings.expiration
+        except:
+            expiration = EXPIRATION_MINUTES * 60
+
+    set_db = SessionSetDb(expiration, options.force, options.verbose)
+    set_files = SessionSetFiles(expiration, options.force, options.verbose)
+    while True:
+        set_db.trash()
+        set_files.trash()
+
+        if options.once:
+            break
+        else:
+            if options.verbose:
+                print 'Sleeping %s seconds' % (options.sleep)
+            time.sleep(options.sleep)
+
+
+main()
