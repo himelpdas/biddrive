@@ -235,6 +235,7 @@ if not 'google' in drivers:
 
     try:
         import psycopg2
+        from psycopg2.extensions import adapt as psycopg2_adapt
         drivers.append('PostgreSQL')
     except ImportError:
         logger.debug('no psycopg2 driver')
@@ -472,6 +473,9 @@ class BaseAdapter(ConnectionPool):
         'list:string': 'TEXT',
         'list:reference': 'TEXT',
         }
+
+    def adapt(self,obj):
+        return "'%s'" % obj.replace("'", "''")
 
     def integrity_error(self):
         return self.driver.IntegrityError
@@ -1366,7 +1370,7 @@ class BaseAdapter(ConnectionPool):
             obj.decode(self.db_codec)
         except:
             obj = obj.decode('latin1').encode(self.db_codec)
-        return "'%s'" % obj.replace("'", "''")
+        return self.adapt(obj)
 
     def represent_exceptions(self, obj, fieldtype):
         return None
@@ -1742,6 +1746,9 @@ class PostgreSQLAdapter(BaseAdapter):
         'list:string': 'TEXT',
         'list:reference': 'TEXT',
         }
+
+    def adapt(self,obj):
+        return psycopg2_adapt(obj)
 
     def sequence_name(self,table):
         return '%s_id_Seq' % table
@@ -2807,6 +2814,9 @@ class DatabaseStoredFile:
 
     web2py_filesystem = False
 
+    def escape(self,obj):
+        return self.db._adapter.esacpe(obj)    
+
     def __init__(self,db,filename,mode):
         if db._adapter.dbengine != 'mysql':
             raise RuntimeError, "only MySQL can store metadata .table files in database for now"
@@ -2819,7 +2829,8 @@ class DatabaseStoredFile:
         self.p=0
         self.data = ''
         if mode in ('r','rw','a'):
-            query = "SELECT content FROM web2py_filesystem WHERE path='%s'" % filename
+            query = "SELECT content FROM web2py_filesystem WHERE path='%s'" \
+                % filename
             rows = self.db.executesql(query)
             if rows:
                 self.data = rows[0][0]
@@ -2849,9 +2860,10 @@ class DatabaseStoredFile:
         self.data += data
 
     def close(self):
-        self.db.executesql("DELETE FROM web2py_filesystem WHERE path='%s'" % self.filename)
-        query = "INSERT INTO web2py_filesystem(path,content) VALUES ('%s','%s')" % \
-            (self.filename, self.data.replace("'","''"))
+        self.db.executesql("DELETE FROM web2py_filesystem WHERE path=%s" \
+                               % self.adapt(self.filename))
+        query = "INSERT INTO web2py_filesystem(path,content) VALUES (%s,%s)"\
+            % (self.adapt(self.filename), self.adapt(self.data))
         self.db.executesql(query)
         self.db.commit()
 
@@ -2859,7 +2871,8 @@ class DatabaseStoredFile:
     def exists(db,filename):
         if os.path.exists(filename):
             return True
-        query = "SELECT path FROM web2py_filesystem WHERE path='%s'" % filename
+        query = "SELECT path FROM web2py_filesystem WHERE path=%s" \
+            % self.adapt(filename)
         if db.executesql(query):
             return True
         return False
