@@ -247,6 +247,7 @@ class TYPE(object):
         self.parse=parse
 
     def __call__(self,value):
+        from gluon import current
         try:
             obj = loads(value)
         except:
