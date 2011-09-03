@@ -58,8 +58,8 @@ class JSONRPCClient(object):
         # build data sent to the service
         data = {'id': 1, 'method': method, 'params': args, }
         body = json.dumps(data)
-        headers = {'Content-type': 'text/x-json; charset="UTF-8"',
-                   'Content-length': str(len(body)),}
+        headers = {'Content-Type': 'application/json; charset=utf-8',
+                   'Content-Length': str(len(body)),}
 
         # make HTTP request
         req = urllib2.Request(self.location)

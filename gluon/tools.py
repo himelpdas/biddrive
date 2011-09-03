@@ -3808,7 +3808,7 @@ class Service(object):
     def serve_json(self, args=None):
         request = current.request
         response = current.response
-        response.headers['Content-Type'] = 'text/x-json'
+        response.headers['Content-Type'] = 'application/json; charset=utf-8'
         if not args:
             args = request.args
         d = dict(request.vars)
@@ -3825,7 +3825,7 @@ class Service(object):
 
     def serve_jsonrpc(self):
         import contrib.simplejson as simplejson
-        response.headers['Content-Type'] = 'application/json'
+
         def return_response(id, result):
             return serializers.json({'version': '1.1',
                 'id': id, 'result': result, 'error': None})
@@ -3837,6 +3837,8 @@ class Service(object):
                                      })
 
         request = current.request
+        response = current.response
+        response.headers['Content-Type'] = 'application/json; charset=utf-8'
         methods = self.jsonrpc_procedures
         data = simplejson.loads(request.body.read())
         id, method, params = data['id'], data['method'], data.get('params','')
