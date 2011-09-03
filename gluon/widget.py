@@ -781,11 +781,11 @@ def start_schedulers(options):
         sys.stderr.write('Sorry, -K only supported for python 2.6-2.7\n')
         return
     processes = []
-    h = 20*len(apps)
-    code = "from gluon import current; current._scheduler.worker_loop(heartbeat=%i)" % h
+    code = "from gluon import current; current._scheduler.loop()"
     for app in apps:
-        print 'starting %s scheduler...' % app
+        print 'starting scheduler for "%s"...' % app
         args = (app,True,True,None,False,code)
+        logging.getLogger().setLevel(logging.DEBUG)        
         p = Process(target=run, args=args)
         processes.append(p)
         p.start()
