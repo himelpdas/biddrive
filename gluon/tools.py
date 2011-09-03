@@ -3825,10 +3825,10 @@ class Service(object):
 
     def serve_jsonrpc(self):
         import contrib.simplejson as simplejson
+        response.headers['Content-Type'] = 'application/json'
         def return_response(id, result):
             return serializers.json({'version': '1.1',
                 'id': id, 'result': result, 'error': None})
-
         def return_error(id, code, message):
             return serializers.json({'id': id,
                                      'version': '1.1',
