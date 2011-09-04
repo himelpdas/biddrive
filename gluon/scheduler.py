@@ -280,11 +280,13 @@ class Scheduler(MetaScheduler):
         self.define_tables(db,migrate=migrate)
 
     def define_tables(self,db,migrate):
+        from gluon import current
         logging.debug('defining tables (migrate=%s)' % migrate)
         now = datetime.datetime.now()
         db.define_table(
             'scheduler_task',
-            Field('application_name',requires=IS_NOT_EMPTY()),
+            Field('application_name',requires=IS_NOT_EMPTY(),
+                  default=current.request.application,writable=False),
             Field('task_name',requires=IS_NOT_EMPTY()),
             Field('group_name',default='main',writable=False),
             Field('status',requires=IS_IN_SET(TASK_STATUS),
