@@ -285,8 +285,7 @@ class Scheduler(MetaScheduler):
         now = datetime.datetime.now()
         db.define_table(
             'scheduler_task',
-            Field('application_name',requires=IS_NOT_EMPTY(),
-                  default=current.request.application,writable=False),
+            Field('application_name',requires=IS_NOT_EMPTY()),
             Field('task_name',requires=IS_NOT_EMPTY()),
             Field('group_name',default='main',writable=False),
             Field('status',requires=IS_IN_SET(TASK_STATUS),
@@ -306,6 +305,9 @@ class Scheduler(MetaScheduler):
             Field('last_run_time','datetime',writable=False,readable=False),
             Field('assigned_worker_name',default='',writable=False),
             migrate=migrate,format='%(task_name)s')
+        if hasattr(current,'request'):
+            db.scheduler_task.application_name.default=current.request.application
+            db.scheduler_task.application_name.writable=False
 
         db.define_table(
             'scheduler_run',
