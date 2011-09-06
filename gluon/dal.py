@@ -5330,7 +5330,7 @@ class Field(Expression):
         self.authorize = authorize
         self.autodelete = autodelete
         if not represent and type in ('list:integer','list:string'):
-            represent=lambda x: ', '.join(str(y) for y in x or [])
+            represent=lambda x,r=None: ', '.join(str(y) for y in x or [])
         self.represent = represent
         self.compute = compute
         self.isattachment = True

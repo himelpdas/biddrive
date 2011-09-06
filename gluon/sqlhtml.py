@@ -1536,8 +1536,12 @@ class SQLFORM(FORM):
             if searchable==True:
                 subquery = None
                 if key and not ' ' in key:
-                    subquery = reduce(OR,[field.contains(key) for field in fields \
-                                              if field.type in ('string','text')])
+                    parts = [field.contains(key) for field in fields \
+                                 if field.type in ('string','text')]
+                else:
+                    parts = None
+                if parts:
+                    subquery = reduce(OR,parts)
                 else:
                     try:
                         subquery = SQLFORM.build_search_query(fields,key)
