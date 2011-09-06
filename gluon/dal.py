@@ -1514,7 +1514,7 @@ class BaseAdapter(ConnectionPool):
                     for f,v in fields_virtual:
                         box[f] = v.f(row)
                     for f,v in fields_lazy:
-                        box[f] = VirtualCommand(v.f,row)
+                        box[f] = (v.handler or VirtualCommand)(v.f,row)
 
             ### old style virtual fields
             for item in table.virtualfields:
@@ -5216,8 +5216,9 @@ class FieldVirtual(object):
         self.f = f
 
 class FieldLazy(object):
-    def __init__(self,f):
+    def __init__(self,f,handler=None):
         self.f = f
+        self.handler = handler
 
 
 class Field(Expression):
