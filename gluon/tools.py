@@ -3034,7 +3034,7 @@ class Crud(object):
 
     @staticmethod
     def archive(form,archive_table=None,current_record='current_record'):
-        return Auch.archive(form,archive_table=archive_table,
+        return Auth.archive(form,archive_table=archive_table,
                             current_record=current_record)
 
     def update(
