@@ -1488,7 +1488,7 @@ class SQLFORM(FORM):
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             form = SQLFORM(table,record,upload=upload,readonly=True,_class='web2py_form')
-            return DIV(buttons(edit=True,record=record),form,formfooter,_class=_class)
+            return DIV(buttons(edit=editable,record=record),form,formfooter,_class=_class)
         elif editable and len(request.args)>2 and request.args[-3]=='edit':
             check_authorization()
             table = db[request.args[-2]]
@@ -1498,7 +1498,7 @@ class SQLFORM(FORM):
                          onvalidation=onvalidation,
                          onsuccess=onupdate,
                          next=referrer)
-            return DIV(buttons(view=True,record=record),form,formfooter,_class=_class)
+            return DIV(buttons(view=details,record=record),form,formfooter,_class=_class)
         elif deletable and len(request.args)>2 and request.args[-3]=='delete':
             check_authorization()
             table = db[request.args[-2]]
@@ -1586,7 +1586,7 @@ class SQLFORM(FORM):
         if selectable:
             head.append(TH(_class=ui.get('default','')))
         for field in fields:
-            if not columns is None and not field in columns: continue
+            if columns and not str(field) in columns: continue
             if not field.readable: continue
             key = str(field)
             header = headers.get(str(field),hasattr(field,'label') and field.label or key)
@@ -1601,6 +1601,10 @@ class SQLFORM(FORM):
                             keywords=request.vars.keywords or '',
                             order=key)))
             head.append(TH(header, _class=ui.get('default','')))
+            
+        for link in links or []:
+            if isinstance(link,dict): 
+                head.append(TH(link['header'], _class=ui.get('default','')))                
         head.append(TH(_class=ui.get('default','')))
         
         paginator = UL()
@@ -1654,7 +1658,7 @@ class SQLFORM(FORM):
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
                                     value=request.vars.records))
                 for field in fields:
-                    if not columns is None and not field in columns: continue
+                    if columns and not str(field) in columns: continue
                     if not field.readable: continue
                     if field.type=='blob': continue
                     value = row[field]
@@ -1673,12 +1677,15 @@ class SQLFORM(FORM):
                                 value = A('File', _href='%s/%s' % (upload, value))
                         else:
                             value = ''
-                    if isinstance(value,str) and len(value)>maxtextlength:
+                    elif isinstance(value,str) and len(value)>maxtextlength:
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
                     tr.append(TD(value))
                 row_buttons = TD(_class='row_buttons')
                 for link in links or []:
-                    row_buttons.append(link(row))
+                    if isinstance(link, dict):
+                        tr.append(TD(link['body'](row)))
+                    else:
+                        row_buttons.append(link(row))
                 if details:
                     row_buttons.append(A(SPAN(T('View'),_class=ui.get('buttonview','')),_href=url(args=['view',tablename,id])))
                 if editable:
