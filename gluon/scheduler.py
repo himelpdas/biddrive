@@ -60,6 +60,8 @@ except:
 
 if 'WEB2PY_PATH' in os.environ:
     sys.path.append(os.environ['WEB2PY_PATH'])
+else:
+    os.environ['WEB2PY_PATH'] = os.path.dirname(os.path.dirname(__file__))
 
 from gluon import DAL, Field, IS_NOT_EMPTY, IS_IN_SET
 from gluon.utils import web2py_uuid
