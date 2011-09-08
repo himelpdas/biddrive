@@ -3830,7 +3830,7 @@ class Row(dict):
         elif m:
             try:
                 return dict.__getitem__(self, m.group(1))[m.group(2)]
-            except KeyError:
+            except (KeyError,TypeError):
                 key = m.group(2)
         return dict.__getitem__(self, key)
 
