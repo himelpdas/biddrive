@@ -266,7 +266,7 @@ def build_environment(request, response, session, store_current=True):
     if is_jython: # jython hack
         __builtins__ = mybuiltin()
     else:
-        __builtins__['__import__'] = __builtin__.__import__
+        __builtins__.__import__ = __builtin__.__import__ ### WHY?
     environment['__builtins__'] = __builtins__
     environment['HTTP'] = HTTP
     environment['redirect'] = redirect
