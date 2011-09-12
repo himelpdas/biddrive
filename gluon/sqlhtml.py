@@ -927,6 +927,7 @@ class SQLFORM(FORM):
         self.custom.submit = ''
         if (not readonly) and ('submit' in buttons):
             widget = INPUT(_type='submit',
+                           _class='w2p_submit',
                            _value=submit_button)
             xfields.append(('submit_record'+SQLFORM.ID_ROW_SUFFIX,
                             '', widget,col3.get('submit_button', '')))
