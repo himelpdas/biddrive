@@ -1041,7 +1041,7 @@ class Auth(object):
         messages.label_user_id = 'User ID'
         messages.label_group_id = 'Group ID'
         messages.label_name = 'Name'
-        messages.label_table_name = 'Table name'
+        messages.label_table_name = 'Object or table name'
         messages.label_record_id = 'Record ID'
         messages.label_time_stamp = 'Timestamp'
         messages.label_client_ip = 'Client IP'
