@@ -15,13 +15,13 @@
 __author__ = "Mariano Reingart (reingart@gmail.com)"
 __copyright__ = "Copyright (C) 2011 Mariano Reingart"
 __license__ = "LGPL 3.0"
-__version__ = "0.01"
+__version__ = "0.02"
 
 
 import urllib2
 import sys
 try:
-    import gluon.contrib.simplejson as json     # try web2py json serializer
+    import gluon.contrib.simplejson as json     # try web2py json serializer 
 except ImportError:
     try:
         import json                             # try stdlib (py2.6)
@@ -36,10 +36,10 @@ class JSONRPCError(RuntimeError):
     def __unicode__(self):
         return u"%s: %s" % (self.code, self.message)
     def __str__(self):
-        return self.__unicode__().encode("ascii","ignore")
+        return self.__unicode__().encode("ascii","ignore")        
 
 
-class JSONRPCClient(object):
+class ServiceProxy(object):
     "JSON RPC Simple Client Service Proxy"
     def __init__(self, location=None, exceptions=True, trace=False, timeout=60):
         self.location = location        # server location (url)
@@ -51,15 +51,15 @@ class JSONRPCClient(object):
     def __getattr__(self, attr):
         "pseudo method that can be called"
         return lambda *args: self.call(attr, *args)
-
+    
     def call(self, method, *args):
         "JSON RPC communication (method invocation)"
 
         # build data sent to the service
         data = {'id': 1, 'method': method, 'params': args, }
         body = json.dumps(data)
-        headers = {'Content-Type': 'application/json; charset=utf-8',
-                   'Content-Length': str(len(body)),}
+        headers = {'Content-type': 'text/x-json; charset="UTF-8"',
+                   'Content-length': str(len(body)),}
 
         # make HTTP request
         req = urllib2.Request(self.location)
@@ -79,15 +79,15 @@ class JSONRPCClient(object):
         else:
             f = urllib2.urlopen(req)
         content = f.read()
-
+        
         # store plain request and response for further debugging
         self.json_request = body
         self.json_response = content
 
-        if self.trace:
+        if self.trace: 
             print '\n', f.info(), '\n', content, '\n', "="*80
 
-        # parse json data coming from service
+        # parse json data coming from service 
         # {'version': '1.1', 'id': id, 'result': result, 'error': None}
         response = json.loads(content)
 
@@ -95,16 +95,12 @@ class JSONRPCClient(object):
         if self.error and self.exceptions:
             # {'name': 'JSONRPCError', 'code': code, 'message': message}
             raise JSONRPCError(self.error['code'], self.error['message'])
-
+            
         return response.get('result')
 
 
 if __name__ == "__main__":
     # basic tests:
-    client = JSONRPCClient(
-                location="http://localhost:8000/psp2py/services/call/jsonrpc",
-                exceptions=True, trace=True,
-                )
+    client = ServiceProxy("http://www.web2py.com.ar/webservices/sample/call/jsonrpc",
+	                exceptions=True, trace=True,)
     print client.add(1, 2)
-
-
