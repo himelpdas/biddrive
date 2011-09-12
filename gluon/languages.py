@@ -210,7 +210,7 @@ class translator(object):
         self.otherTs = {}
 
     def get_possible_languages(self):
-        possible_languages = self.current_languages
+        possible_languages = [lang for lang in self.current_languages]
         file_ending = re.compile("\.py$")
         for langfile in os.listdir(os.path.join(self.folder,'languages')):
             if file_ending.search(langfile):
