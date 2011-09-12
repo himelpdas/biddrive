@@ -53,19 +53,20 @@ class RPXAccount(object):
         self.prompt = prompt
         self.on_login_failure = on_login_failure
         self.mappings = Storage()
-
-        self.mappings.Facebook = lambda profile:\
+        
+        dn = {'givenName':'','familyName':''}
+        self.mappings.Facebook = lambda profile, dn=dn:\
             dict(registration_id = profile.get("identifier",""),
                  username = profile.get("preferredUsername",""),
-                 email = profile.get("email",""),
-                 first_name = profile.get("name","").get("givenName",""),
-                 last_name = profile.get("name","").get("familyName",""))
-        self.mappings.Google = lambda profile:\
+                 email = profile.get("email",""),                 
+                 first_name = profile.get("name",dn).get("givenName",""),
+                 last_name = profile.get("name",dn).get("familyName",""))
+        self.mappings.Google = lambda profile, dn=dn:\
             dict(registration_id=profile.get("identifier",""),
                  username=profile.get("preferredUsername",""),
                  email=profile.get("email",""),
-                 first_name=profile.get("name","").get("givenName",""),
-                 last_name=profile.get("name","").get("familyName",""))
+                 first_name=profile.get("name",dn).get("givenName",""),
+                 last_name=profile.get("name",dn).get("familyName",""))
         self.mappings.default = lambda profile:\
             dict(registration_id=profile.get("identifier",""),
                  username=profile.get("preferredUsername",""),
