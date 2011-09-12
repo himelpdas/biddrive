@@ -1311,7 +1311,7 @@ class Auth(object):
                     settings.table_group_name,
                     '%(role)s (%(id)s)')
             table.name.requires = IS_NOT_EMPTY(error_message=self.messages.is_empty)
-            table.table_name.requires = IS_EMPTY_OR(IS_IN_SET(self.db.tables))
+            #table.table_name.requires = IS_EMPTY_OR(IS_IN_SET(self.db.tables))
             table.record_id.requires = IS_INT_IN_RANGE(0, 10 ** 9)
         settings.table_permission = db[settings.table_permission_name]
         if not settings.table_event_name in db.tables:
