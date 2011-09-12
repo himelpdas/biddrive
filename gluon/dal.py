@@ -1815,8 +1815,6 @@ class PostgreSQLAdapter(BaseAdapter):
             return self.driver.connect(msg,**driver_args)
         self.pool_connection(connect)
         self.connection.set_client_encoding('UTF8')
-        self.execute('BEGIN;')
-        self.execute("SET CLIENT_ENCODING TO 'UNICODE';")
         self.execute("SET standard_conforming_strings=on;")
 
     def lastrowid(self,table):
