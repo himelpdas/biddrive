@@ -61,7 +61,7 @@ except:
 if 'WEB2PY_PATH' in os.environ:
     sys.path.append(os.environ['WEB2PY_PATH'])
 else:
-    os.environ['WEB2PY_PATH'] = os.path.dirname(os.path.dirname(__file__))
+    os.environ['WEB2PY_PATH'] = os.getcwd()
 
 from gluon import DAL, Field, IS_NOT_EMPTY, IS_IN_SET
 from gluon.utils import web2py_uuid
@@ -111,7 +111,32 @@ def demo_function(*argv,**kwargs):
         print 'click',i
         time.sleep(1)    
     return 'done'
+    
+#the two functions below deal with simplejson decoding as unicode, esp for the dict decode
+#and subsequent usage as function Keyword arguments unicode variable names won't work!
+#borrowed from http://stackoverflow.com/questions/956867/how-to-get-string-objects-instead-unicode-ones-from-json-in-python
+def _decode_list(lst):
+    newlist = []
+    for i in lst:
+        if isinstance(i, unicode):
+            i = i.encode('utf-8')
+        elif isinstance(i, list):
+            i = _decode_list(i)
+        newlist.append(i)
+    return newlist
 
+def _decode_dict(dct):
+    newdict = {}
+    for k, v in dct.iteritems():
+        if isinstance(k, unicode):
+            k = k.encode('utf-8')
+        if isinstance(v, unicode):
+             v = v.encode('utf-8')
+        elif isinstance(v, list):
+            v = _decode_list(v)
+        newdict[k] = v
+    return newdict
+    
 def executor(queue,task):
     """ the background process """
     logging.debug('    task started')
@@ -130,10 +155,12 @@ def executor(queue,task):
             scheduler_tasks = current._scheduler.tasks            
             _function = scheduler_tasks[task.function]
             globals().update(_env)            
-            result = dumps(_function(*loads(task.args),**loads(task.vars)))
+            args = loads(task.args)
+            vars = loads(task.vars, object_hook=_decode_dict)
+            result = dumps(_function(*args,**vars))
         else:
             ### for testing purpose only
-            result = eval(task.function)(*loads(task.args),**loads(task.vars))
+            result = eval(task.function)(*loads(task.args, list_hook),**loads(task.vars, object_hook=_decode_dict))
         stdout, sys.stdout = sys.stdout, stdout
         queue.put(TaskReport(COMPLETED, result,stdout.getvalue()))
     except BaseException,e:
@@ -264,7 +291,7 @@ class TYPE(object):
                 return (value,current.T('Not of type: %s') % self.myclass)
 
 class Scheduler(MetaScheduler):
-    def __init__(self,db,tasks={},migrate=False,
+    def __init__(self,db,tasks={},migrate=True,
                  worker_name=None,group_names=None,heartbeat=HEARTBEAT):
 
         MetaScheduler.__init__(self)
@@ -287,7 +314,8 @@ class Scheduler(MetaScheduler):
         now = datetime.datetime.now()
         db.define_table(
             'scheduler_task',
-            Field('application_name',requires=IS_NOT_EMPTY()),
+            Field('application_name',requires=IS_NOT_EMPTY(),
+                  default=None,writable=False),
             Field('task_name',requires=IS_NOT_EMPTY()),
             Field('group_name',default='main',writable=False),
             Field('status',requires=IS_IN_SET(TASK_STATUS),
@@ -309,7 +337,6 @@ class Scheduler(MetaScheduler):
             migrate=migrate,format='%(task_name)s')
         if hasattr(current,'request'):
             db.scheduler_task.application_name.default=current.request.application
-            db.scheduler_task.application_name.writable=False
 
         db.define_table(
             'scheduler_run',
@@ -356,8 +383,7 @@ class Scheduler(MetaScheduler):
         if number_grabbed:
             grabbed = db(ts.assigned_worker_name==self.worker_name)\
                 (ts.status==ASSIGNED)
-            task = grabbed.select(limitby=(0,1),
-                                  orderby=ts.next_run_time).first()
+            task = grabbed.select(limitby=(0,1), orderby=ts.next_run_time).first()
                                   
             logging.debug('   releasing all but one (running)')
             if task:

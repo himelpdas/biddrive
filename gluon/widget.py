@@ -788,7 +788,9 @@ def start_schedulers(options):
         logging.getLogger().setLevel(logging.DEBUG)        
         p = Process(target=run, args=args)
         processes.append(p)
+        print "Currently running %s scheduler processes" % (len(processes))
         p.start()
+        print "Processes started"
     for p in processes:
         try:
             p.join()
