@@ -98,10 +98,11 @@ class RedisClient(object):
         clear cache entries
         """
         r = re.compile(regex)
+        prefix = "w2p:%s:" % (self.request.application)
         pipe = self.r_server.pipeline()
-        for a in self.r_server.keys("w2p:%s:*" % \
-                                        (self.request.application)):
-            if r.match(str(a).replace("w2p:", '', 1)):
+        for a in self.r_server.keys("%s*" % \
+                                        (prefix)):
+            if r.match(str(a).replace(prefix, '', 1)):
                 pipe.delete(a)
         pipe.execute()
 
