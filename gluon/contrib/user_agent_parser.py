@@ -412,7 +412,8 @@ class mobilize(object):
 
     def __call__(self):
         from gluon import current 
-        if current.session._user_agent and current.session._user_agent.is_mobile: 
+        user_agent = current.request.user_agent()
+        if user_agent.is_mobile: 
             items = current.response.view.split('.')
             items.insert(-1,'mobile')
             current.response.view = '.'.join(items)
