@@ -1177,5 +1177,5 @@ recalled
 - addresed OWASP #10, thanks Anthony and Eric
 - Auth(auto_redirect=[URL(...)])
 - auth.settings.login_after_registration=True
-- detection of mobile devices and @mobilize helper (view.mobile.html)
+- detection of mobile devices and @mobilize helper (view.mobile.html), thanks Angelo
 - many bug fixes (thanks Jonathan, Michele, Fran and others)
