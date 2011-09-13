@@ -39,7 +39,7 @@ class JSONRPCError(RuntimeError):
         return self.__unicode__().encode("ascii","ignore")        
 
 
-class ServiceProxy(object):
+class ServerProxy(object):
     "JSON RPC Simple Client Service Proxy"
     def __init__(self, location=None, exceptions=True, trace=False, timeout=60):
         self.location = location        # server location (url)
@@ -101,6 +101,6 @@ class ServiceProxy(object):
 
 if __name__ == "__main__":
     # basic tests:
-    client = ServiceProxy("http://www.web2py.com.ar/webservices/sample/call/jsonrpc",
-	                exceptions=True, trace=True,)
+    location = "http://www.web2py.com.ar/webservices/sample/call/jsonrpc"
+    client = ServerProxy(location, exceptions=True, trace=True,)
     print client.add(1, 2)
