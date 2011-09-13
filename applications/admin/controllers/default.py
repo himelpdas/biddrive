@@ -710,8 +710,8 @@ def design():
         functions[c] = items
 
     # Get all views
-    views = sorted(listdir(apath('%s/views/' % app, r=request), '[\w/\-]+\.\w+$'))
-    views = [x.replace('\\','/') for x in views]
+    views = sorted(listdir(apath('%s/views/' % app, r=request), '[\w/\-]+(\.\w+)+$'))
+    views = [x.replace('\\','/') for x in views if not x.endswith('.bak')]
     extend = {}
     include = {}
     for c in views:
