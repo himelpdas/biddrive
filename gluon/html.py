@@ -1755,6 +1755,7 @@ class FORM(DIV):
         self.vars = Storage()
         self.errors = Storage()
         self.latest = Storage()
+        self.accepted = None # none for not submitted
 
     def accepts(
         self,

@@ -1178,4 +1178,4 @@ recalled
 - Auth(auto_redirect=[URL(...)])
 - auth.settings.login_after_registration=True
 - detection of mobile devices and @mobilize helper (view.mobile.html)
-- other minor bug fixes
+- many bug fixes (thanks Jonathan, Michele, Fran and others)
