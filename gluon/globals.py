@@ -102,6 +102,8 @@ class Request(Storage):
                 method = _self.env.request_method
                 if len(_self.args) and '.' in _self.args[-1]:
                     _self.args[-1],_self.extension = _self.args[-1].rsplit('.',1)
+                    current.response.headers['Content-Type'] = \
+                        contenttype(_self.extension.lower())
                 if not method in ['GET','POST','DELETE','PUT']:
                     raise HTTP(400,"invalid method")
                 rest_action = _action().get(method,None)

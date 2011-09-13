@@ -1147,13 +1147,35 @@ recalled
 - experimental gluon/scheduler.py
 - scripts/make_min_web2py.py
 - crud.search has more options, thanks Denes
+- gluon/contrib/simplejsonrpc.py
+- gluon/contrib/redis_cache.py
 - cleanup of code
 - support for A(name,callback=url,target='id',delete='tr')
 - support for A(name,component=url,target='id',delete='tr')
+- isapiwsgihandler.py
 - dal expression.coalesce(*options)
 - new pip installer, thanks Chris Steel
 - gluon/contrib/simplejsonrpc.py, thanks Mariano
 - expire_sessions.py respects expiration time, thanks iceberg
 - fixed problem with max text length
 - addressed this issue: http://fuelyourcoding.com/jquery-events-stop-misusing-return-false/
+- x509 support (needs rocket upgrade, thanks Michele)
+- form.process() and for.validate()
+- rocket upgrade (1.2.4)
+- jQuery upgrade (1.6.3)
+- new syntax rows[i]('tablename.fieldname')
+- new query syntax field.contains(list,all=True or False)
+- new SQLFORM.grid and SQLFORM.smartgrid (should replace crud.search and crud.select)
+- support for natural language queries (english only) in SQLFORM.grid
+- support for computed columns and additional links in SQLFORM.grid
+- new style virtual fields (experimental): db.table.field=Field.Lazy(...)
+- request.utcnow
+- cleaner/simpler welcome/models/db.py and welcome layout.html
+- response.include_meta() and response.include_files(), thanks Denes
+- dal auto-reconnect on time-out connections
+- COL and COLGROUP helpers
+- addresed OWASP #10, thanks Anthony and Eric
+- Auth(auto_redirect=[URL(...)])
+- auth.settings.login_after_registration=True
+- detection of mobile devices and @mobilize helper (view.mobile.html)
 - other minor bug fixes

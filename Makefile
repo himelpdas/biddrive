@@ -28,7 +28,7 @@ update:
 	wget -O gluon/contrib/feedparser.py http://feedparser.googlecode.com/svn/trunk/feedparser/feedparser.py
 	wget -O gluon/contrib/simplejsonrpc.py http://rad2py.googlecode.com/hg/ide2py/simplejsonrpc.py
 src:
-	echo 'Version 1.98.2 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
+	echo 'Version 1.99.0 ('`date +%Y-%m-%d\ %H:%M:%S`')' > VERSION
 	### rm -f all junk files
 	make clean
 	### clean up baisc apps
