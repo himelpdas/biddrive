@@ -38,9 +38,10 @@ crud, service, plugins = Crud(db), Service(), PluginManager()
 auth.define_tables() 
 
 ## configure email
-auth.settings.mailer.settings.server = 'logging' or 'smtp.gmail.com:587'
-auth.settings.mailer.settings.sender = 'you@gmail.com'
-auth.settings.mailer.settings.login = 'username:password'
+mail=auth.settings.mailer
+mail.settings.server = 'logging' or 'smtp.gmail.com:587'
+mail.settings.sender = 'you@gmail.com'
+mail.settings.login = 'username:password'
 
 ## configure auth policy
 auth.settings.registration_requires_verification = False
