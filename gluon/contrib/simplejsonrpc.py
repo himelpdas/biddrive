@@ -58,7 +58,7 @@ class ServerProxy(object):
         # build data sent to the service
         data = {'id': 1, 'method': method, 'params': args, }
         body = json.dumps(data)
-        headers = {'Content-type': 'text/x-json; charset="UTF-8"',
+        headers = {'Content-type': 'application/json; charset=utf-8',
                    'Content-length': str(len(body)),}
 
         # make HTTP request
@@ -91,7 +91,7 @@ class ServerProxy(object):
         # {'version': '1.1', 'id': id, 'result': result, 'error': None}
         response = json.loads(content)
 
-        self.error = response['error']
+        self.error = response.get('error', {})
         if self.error and self.exceptions:
             # {'name': 'JSONRPCError', 'code': code, 'message': message}
             raise JSONRPCError(self.error['code'], self.error['message'])
