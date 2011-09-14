@@ -1581,6 +1581,8 @@ class SQLiteAdapter(BaseAdapter):
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         if not 'check_same_thread' in driver_args:
             driver_args['check_same_thread'] = False
+        if not 'detect_types' in driver_args:
+            driver_args['detect_types'] = self.driver.PARSE_DECLTYPES
         def connect(dbpath=dbpath, driver_args=driver_args):
             return self.driver.Connection(dbpath, **driver_args)
         self.pool_connection(connect)
