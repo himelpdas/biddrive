@@ -191,7 +191,9 @@ sup { vertical-align: super; font-size: smaller; }
 
 pre {
     padding: 15px;
+}
 
+pre, code {
     /* www.pathf.com/blogs/2008/05/formatting-quoted-code-in-blog-posts-css21-white-space-pre-wrap/ */
     white-space: pre; /* CSS2 */
     white-space: pre-wrap; /* CSS 2.1 */

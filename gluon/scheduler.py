@@ -368,7 +368,7 @@ class Scheduler(MetaScheduler):
         try:
             logging.debug(' grabbing all queued tasks')
             all_available = db(ts.status.belongs((QUEUED,RUNNING)))\
-                (ts.times_run<ts.repeats)\
+                ((ts.times_run<ts.repeats)|(ts.repeats==0))\
                 (ts.start_time<=now)\
                 (ts.stop_time>now)\
                 (ts.next_run_time<=now)\
@@ -394,7 +394,7 @@ class Scheduler(MetaScheduler):
             return None
         next_run_time = task.last_run_time + datetime.timedelta(seconds=task.period)
         times_run = task.times_run + 1
-        if times_run < task.repeats:
+        if times_run < task.repeats or task.repeats==0:
             run_again = True
         else:
             run_again = False
