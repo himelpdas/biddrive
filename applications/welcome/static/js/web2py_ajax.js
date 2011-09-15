@@ -32,17 +32,12 @@ function web2py_ajax_init() {
   var confirm_message = (typeof w2p_ajax_confirm_message != 'undefined') ? w2p_ajax_confirm_message : "Are you sure you want to delete this object?";
   jQuery("input[type='checkbox'].delete").live('click', function(){ if(this.checked) if(!confirm(confirm_message)) this.checked=false; });
   var date_format = (typeof w2p_ajax_date_format != 'undefined') ? w2p_ajax_date_format : "%Y-%m-%d";
-  try {jQuery("input.date").live('focus',function() {Calendar.setup({
-     inputField:this, ifFormat:date_format, showsTime:false
-  }); }); } catch(e) {};
-  var datetime_format = (typeof w2p_ajax_datetime_format != 'undefined') ? w2p_ajax_datetime_format : "%Y-%m-%d %H:%M:%S";
-  try { jQuery("input.datetime").live('focus', function() {Calendar.setup({
-     inputField:this, ifFormat:datetime_format, showsTime: true,timeFormat: "24"
-  }); }); } catch(e) {};
-
-  jQuery("input.time").live('focus', function() { var el = jQuery(this); 
-          if (!el.hasClass('hasTimeEntry')) try { el.timeEntry(); } catch(e) {}; 
-  });
+  var datetime_format = (typeof w2p_ajax_datetime_format != 'undefined') ? w2p_ajax_datetime_format : "%Y-%m-%d %h:%i:%s";
+  try {
+      jQuery("input.datetime").AnyTime_picker({format: datetime_format});
+      jQuery("input.date").AnyTime_picker({format: date_format});
+      jQuery("input.time").AnyTime_picker({format: "%h:%i:%s"});
+  } catch(e) {};
 };
 
 jQuery(function() {   

@@ -597,7 +597,7 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_grid tbody td {
     padding: 5px 10px 5px;
     line-height: 13.5px;
-    vertical-align: middle;
+    vertical-align: top;
 }
 .web2py_grid input:focus,
 .web2py_grid textarea:focus,
