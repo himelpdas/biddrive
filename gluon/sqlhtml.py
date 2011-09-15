@@ -1433,7 +1433,11 @@ class SQLFORM(FORM):
         T = current.T
         request = current.request
         session = current.session
-        response = current.response
+        response = current.response        
+        wenabled = (not user_signature or session.auth.user)
+        #create = create and wenabled
+        #editable = editable and wenabled
+        deletable = deletable and wenabled
         def url(**b):
             b['args'] = args+b.get('args',[])
             b['user_signature'] = user_signature
