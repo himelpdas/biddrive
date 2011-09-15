@@ -29,6 +29,7 @@ class HTML2FPDF(HTMLParser):
     def __init__(self, pdf, image_map):
         HTMLParser.__init__(self)
         self.image_map = image_map
+        self.set_font(kwargs.get("font","times"), kwargs.get("fontsize",12))
         self.style = {}
         self.pre = False
         self.href = ''
@@ -39,7 +40,6 @@ class HTML2FPDF(HTMLParser):
         self.r = self.g = self.b = 0
         self.indent = 0
         self.bullet = []
-        self.set_font("times", 12)
         self.table = None           # table attributes
         self.table_col_width = None # column (header) widths
         self.table_col_index = None # current column index
@@ -380,9 +380,9 @@ class HTML2FPDF(HTMLParser):
         self.pdf.ln(3)
 
 class HTMLMixin():
-    def write_html(self, text, image_map=lambda x:x):
+    def write_html(self, text, image_map=lambda x:x, **kwargs):
         "Parse HTML and convert it to PDF"
-        h2p = HTML2FPDF(self,image_map=image_map)
+        h2p = HTML2FPDF(self,image_map=image_map,**kwargs)
         h2p.feed(text)
 
 if __name__=='__main__':
