@@ -3760,7 +3760,7 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[10:] in field.db.tables:
         referenced = field.db[field_type[10:]]
-        def repr_ref(id, r=referenced, row=None, f=ff): return f(r, id)
+        def repr_ref(id, row=None, r=referenced, f=ff): return f(r, id)
         field.represent = field.represent or repr_ref
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field.db,referenced._id,
@@ -3774,7 +3774,7 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[15:] in field.db.tables:
         referenced = field.db[field_type[15:]]
-        def list_ref_repr(ids, r=referenced, row=None, f=ff):
+        def list_ref_repr(ids, row=None, r=referenced, f=ff):
             if not ids:
                 return None
             refs = r._db(r._id.belongs(ids)).select(r._id)

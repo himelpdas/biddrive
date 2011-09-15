@@ -1339,7 +1339,7 @@ class SQLFORM(FORM):
         request = current.request
         session = current.session
         response = current.response        
-        wenabled = (not user_signature or session.auth.user)
+        wenabled = (not user_signature or (session.auth and session.auth.user))
         #create = create and wenabled
         #editable = editable and wenabled
         deletable = deletable and wenabled
