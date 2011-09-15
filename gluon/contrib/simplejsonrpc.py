@@ -93,9 +93,8 @@ class ServerProxy(object):
 
         self.error = response.get('error', {})
         if self.error and self.exceptions:
-            # {'name': 'JSONRPCError', 'code': code, 'message': message}
-            raise JSONRPCError(self.error['code'], self.error['message'])
-            
+            raise JSONRPCError(self.error.get('code', 0), self.error.get('message', ''))
+
         return response.get('result')
 
 
