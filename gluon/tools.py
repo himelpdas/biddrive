@@ -31,8 +31,14 @@ from fileutils import read_file
 from gluon import *
 
 import serializers
-import contrib.simplejson as simplejson
 
+try:
+    import json as json_parser                      # try stdlib (Python 2.6)
+except ImportError:
+    try:
+        import simplejson as json_parser            # try external module
+    except:
+        import contrib.simplejson as json_parser    # fallback to pure-Python module
 
 __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode', 'prettydate']
 
@@ -3075,7 +3081,7 @@ class Crud(object):
         response = current.response
         session = current.session
         if request.extension == 'json' and request.vars.json:
-            request.vars.update(simplejson.loads(request.vars.json))
+            request.vars.update(json_parser.loads(request.vars.json))
         if next == DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
@@ -3824,8 +3830,6 @@ class Service(object):
             self.code,self.info = code,info
 
     def serve_jsonrpc(self):
-        import contrib.simplejson as simplejson
-
         def return_response(id, result):
             return serializers.json({'version': '1.1',
                 'id': id, 'result': result, 'error': None})
@@ -3840,7 +3844,7 @@ class Service(object):
         response = current.response
         response.headers['Content-Type'] = 'application/json; charset=utf-8'
         methods = self.jsonrpc_procedures
-        data = simplejson.loads(request.body.read())
+        data = json_parser.loads(request.body.read())
         id, method, params = data['id'], data['method'], data.get('params','')
         if not method in methods:
             return return_error(id, 100, 'method "%s" does not exist' % method)
