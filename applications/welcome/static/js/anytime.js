@@ -480,7 +480,7 @@ AnyTime.Converter = function(options)
 	              str += String(t);
 	            }
 	            break;
-	          case 'i': // Minutes, numeric (00..59)
+	          case 'M': // Minutes, numeric (00..59)
 	            t = d.getMinutes();
 	            if ( t < 10 ) str += '0';
 	            str += String(t);
@@ -494,9 +494,6 @@ AnyTime.Converter = function(options)
 	              str += '12';
 	            else
 	              str += String(t);
-	            break;
-	          case 'M': // Month name (January..December)
-	            str += this.mNames[ d.getMonth() ];
 	            break;
 	          case 'm': // Month, numeric (00..12)
 	            t = d.getMonth() + 1;
@@ -783,7 +780,7 @@ AnyTime.Converter = function(options)
 	            time.setHours( Number(str.substr(s,2)) );
 	            s += 2;
 	            break;
-	          case 'i': // Minutes, numeric (00..59)
+	          case 'M': // Minutes, numeric (00..59)
 	            time.setMinutes( Number(str.substr(s,2)) );
 	            s += 2;
 	            break;
@@ -809,27 +806,6 @@ AnyTime.Converter = function(options)
 	            {
 	              time.setHours( Number(str.substr(s,1)) );
 	              s++;
-	            }
-	            break;
-	          case 'M': // Month name (January..December)
-	            matched = false;
-	            for (sublen=_shortMon ; s + sublen <= slen ; sublen++ )
-	            {
-	              if ( sublen > _longMon )
-	                break;
-	              sub = str.substr(s,sublen);
-	              for ( i = 0 ; i < 12 ; i++ )
-	              {
-	                if ( this.mNames[i] == sub )
-	                {
-	                  time.setMonth( i );
-	                  matched = true;
-	                  s += sublen;
-	                  break;
-	                }
-	              }
-	              if ( matched )
-	                break;
 	            }
 	            break;
 	          case 'm': // Month, numeric (00..12)
@@ -1448,12 +1424,12 @@ AnyTime.picker = function( id, options )
 		  	else
 		  		this.askEra = (format.indexOf('%B')>=0) || (format.indexOf('%C')>=0) || (format.indexOf('%E')>=0);
 		  	var askYear = (format.indexOf('%Y')>=0) || (format.indexOf('%y')>=0) || (format.indexOf('%Z')>=0) || (format.indexOf('%z')>=0);
-		  	var askMonth = (format.indexOf('%b')>=0) || (format.indexOf('%c')>=0) || (format.indexOf('%M')>=0) || (format.indexOf('%m')>=0);
+		  	var askMonth = (format.indexOf('%b')>=0) || (format.indexOf('%c')>=0) || (format.indexOf('%m')>=0);
 		  	var askDoM = (format.indexOf('%D')>=0) || (format.indexOf('%d')>=0) || (format.indexOf('%e')>=0);
 		  	var askDate = askYear || askMonth || askDoM;
 		  	this.twelveHr = (format.indexOf('%h')>=0) || (format.indexOf('%I')>=0) || (format.indexOf('%l')>=0) || (format.indexOf('%r')>=0);
 		  	var askHour = this.twelveHr || (format.indexOf('%H')>=0) || (format.indexOf('%k')>=0) || (format.indexOf('%T')>=0);
-		  	var askMinute = (format.indexOf('%i')>=0) || (format.indexOf('%r')>=0) || (format.indexOf('%T')>=0);
+		  	var askMinute = (format.indexOf('%i')>=0) || (format.indexOf('%M')>=0) || (format.indexOf('%r')>=0) || (format.indexOf('%T')>=0);
 		  	var askSec = ( (format.indexOf('%r')>=0) || (format.indexOf('%S')>=0) || (format.indexOf('%s')>=0) || (format.indexOf('%T')>=0) );
 		  	if ( askSec && ( typeof options.askSecond != 'undefined' ) )
 		  		askSec = options.askSecond;
