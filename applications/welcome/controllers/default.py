@@ -9,9 +9,6 @@
 ## - call exposes all registered services (none by default)
 #########################################################################
 
-def test():
-    return dict(form=FORM(INPUT(_class='datetime',_id="a")))
-
 def index():
     """
     example action using the internationalization operator T and flash

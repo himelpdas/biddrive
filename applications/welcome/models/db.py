@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# this file is released under public domain and you can use without limitations
 
 #########################################################################
 ## This scaffolding model makes your app work on Google App Engine too
+## File is released under public domain and you can use without limitations
 #########################################################################
 
 if not request.env.web2py_runtime_gae:     
@@ -13,7 +13,7 @@ else:
     db = DAL('google:datastore') 
     ## store sessions and tickets there
     session.connect(request, response, db = db) 
-    ## or store session in Memcache
+    ## or store session in Memcache, Redis, etc.
     ## from gluon.contrib.memdb import MEMDB
     ## from google.appengine.api.memcache import Client
     ## session.connect(request, response, db = MEMDB(Client()))
@@ -22,6 +22,7 @@ else:
 ## none otherwise. a pattern can be 'controller/function.extension'
 response.generic_patterns = ['*'] if request.is_local else []
 
+#########################################################################
 ## Here is sample code if you need for
 ## - email capabilities
 ## - authentication (registration, login, logout, ... )
@@ -30,8 +31,9 @@ response.generic_patterns = ['*'] if request.is_local else []
 ## - old style crud actions
 ## (more options discussed in gluon/tools.py)
 #########################################################################
+
 from gluon.tools import Auth, Crud, Service, PluginManager, prettydate
-auth = Auth(db,hmac_key=Auth.get_or_create_key()) 
+auth = Auth(db, hmac_key=Auth.get_or_create_key()) 
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
 ## create all tables needed by auth if not custom tables
