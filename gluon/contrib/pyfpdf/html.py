@@ -26,10 +26,9 @@ def hex2dec(color = "#000000"):
 class HTML2FPDF(HTMLParser):
     "Render basic HTML to FPDF"
 
-    def __init__(self, pdf, image_map):
+    def __init__(self, pdf, image_map, **kwargs):
         HTMLParser.__init__(self)
         self.image_map = image_map
-        self.set_font(kwargs.get("font","times"), kwargs.get("fontsize",12))
         self.style = {}
         self.pre = False
         self.href = ''
@@ -40,6 +39,7 @@ class HTML2FPDF(HTMLParser):
         self.r = self.g = self.b = 0
         self.indent = 0
         self.bullet = []
+        self.set_font(kwargs.get("font","times"), kwargs.get("fontsize",12))
         self.table = None           # table attributes
         self.table_col_width = None # column (header) widths
         self.table_col_index = None # current column index
