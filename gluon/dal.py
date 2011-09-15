@@ -3760,7 +3760,7 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[10:] in field.db.tables:
         referenced = field.db[field_type[10:]]
-        def repr_ref(id, r=referenced, f=ff): return f(r, id)
+        def repr_ref(id, r=referenced, row=None, f=ff): return f(r, id)
         field.represent = field.represent or repr_ref
         if hasattr(referenced, '_format') and referenced._format:
             requires = validators.IS_IN_DB(field.db,referenced._id,
@@ -3774,7 +3774,7 @@ def sqlhtml_validators(field):
             field_type.find('.') < 0 and \
             field_type[15:] in field.db.tables:
         referenced = field.db[field_type[15:]]
-        def list_ref_repr(ids, r=referenced, f=ff):
+        def list_ref_repr(ids, r=referenced, row=None, f=ff):
             if not ids:
                 return None
             refs = r._db(r._id.belongs(ids)).select(r._id)
@@ -3790,7 +3790,7 @@ def sqlhtml_validators(field):
             requires._and = validators.IS_NOT_IN_DB(field.db,field)
         return requires
     elif field_type.startswith('list:'):
-        def repr_list(values): return', '.join(str(v) for v in (values or []))
+        def repr_list(values,row=None): return', '.join(str(v) for v in (values or []))
         field.represent = field.represent or repr_list
     if field.unique:
         requires.insert(0,validators.IS_NOT_IN_DB(field.db,field))
@@ -3902,6 +3902,111 @@ copy_reg.pickle(Row, Row_pickler, Row_unpickler)
 class SQLCallableList(list):
     def __call__(self):
         return copy.copy(self)
+
+def smart_query(fields,text):
+    if not isinstance(fields,(list,tuple)):
+        fields = [fields]
+    new_fields = []
+    for field in fields:
+        if isinstance(field,Field):
+            new_fields.append(field)
+        elif isinstance(field,Table):
+            for ofield in field:
+                new_fields.append(ofield)
+        else:
+            raise RuntimeError, "fields must be a list of fields"
+    field_map = {}
+    for field in fields:
+        n = field.name.lower()
+        if not n in field_map: 
+            field_map[n] = field
+        n = str(field).lower()
+        if not n in field_map:
+            field_map[n] = field
+    re_constants = re.compile('(\"[^\"]*?\")|(\'[^\']*?\')')
+    constants = {}
+    i = 0 
+    while True:
+        m = re_constants.search(text)
+        if not m: break
+        text = text[:m.start()]+('#%i' % i)+text[m.end():] 
+        constants[str(i)] = m.group()[1:-1]
+        i+=1
+    text = re.sub('\s+',' ',text).lower()
+    for a,b in [('&','and'),
+                ('|','or'),
+                ('~','not'),
+                ('==','=='),
+                ('<','<'),
+                ('>','>'),
+                ('<=','<='),
+                ('>=','>='),
+                ('<>','!='),
+                ('=<','<='),
+                ('=>','>='),
+                ('=','=='),
+                (' less or equal than ','<='),
+                (' greater or equal than ','>='),
+                (' equal or less than ','<='),
+                (' equal or greater than ','>='),
+                (' less or equal ','<='),
+                (' greater or equal ','>='),
+                (' equal or less ','<='),
+                (' equal or greater ','>='),
+                (' not equal to ','!='),
+                (' not equal ','!='),
+                (' equal to ','=='),
+                (' equal ','=='),
+                (' equals ','!='),
+                (' less than ','<'),
+                (' greater than ','>'),
+                (' starts with ','startswith'),
+                (' ends with ','endswith'),
+                (' is ','==')]:            
+        if a[0]==' ':
+            text = text.replace(' is'+a,' %s ' % b)
+        text = text.replace(a,' %s ' % b)
+    text = re.sub('\s+',' ',text).lower()
+    query = field = neg = op = logic = None
+    for item in text.split():
+        if field is None:
+            if item == 'not':
+                neg = True
+            elif not neg and not logic and item in ('and','or'):
+                logic = item
+            elif item in field_map:
+                field = field_map[item]                
+            else:
+                raise RuntimeError, "Invalid syntax"
+        elif not field is None and op is None:
+            op = item
+        elif not op is None:
+            if item.startswith('#'):
+                if not item[1:] in constants:
+                    raise RuntimeError, "Invalid syntax"
+                value = constants[item[1:]]
+            else:
+                value = item
+                if op == '==': op = 'like'
+            if op == '==': new_query = field==value
+            elif op == '<': new_query = field<value
+            elif op == '>': new_query = field>value                
+            elif op == '<=': new_query = field<=value
+            elif op == '>=': new_query = field>=value                
+            elif op == 'contains': new_query = field.contains(value)
+            elif op == 'like': new_query = field.like(value)
+            elif op == 'startswith': new_query = field.startswith(value)
+            elif op == 'endswith': new_query = field.endswith(value)
+            else: raise RuntimeError, "Invalid operation"
+            if neg: new_query = ~new_query                
+            if query is None:
+                query = new_query
+            elif logic == 'and':
+                query &= new_query
+            elif logic == 'or':
+                query |= new_query                
+            field = op = neg = logic = None
+    return query
 
 
 class DAL(dict):
@@ -4406,6 +4511,9 @@ def index():
 
     def __repr__(self):
         return '<DAL ' + dict.__repr__(self) + '>'
+
+    def smart_query(self,fields,text):
+        return Set(self, smart_query(fields,text))
 
     def __call__(self, query=None):
         if isinstance(query,Table):
