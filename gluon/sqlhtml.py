@@ -1717,7 +1717,7 @@ class SQLFORM(FORM):
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
                 links.append(lambda row,t=T(tablename),args=args,args0=args0:\
-                                 A(SPAN(t,_class='icon table'),_href=URL(args=request.args[:args]+[args0,row.id])))                
+                                 A(SPAN(t),_href=URL(args=request.args[:args]+[args0,row.id])))                
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):
