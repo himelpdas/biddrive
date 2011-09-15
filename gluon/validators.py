@@ -630,6 +630,11 @@ class IS_INT_IN_RANGE(Validator):
             pass
         return (value, self.error_message)
 
+def str2dec(number):
+    s = str(number)
+    if not '.' in s: s+='.00'
+    else: s+='0'*(2-len(s.split('.')[1]))
+    return s
 
 class IS_FLOAT_IN_RANGE(Validator):
     """
@@ -718,10 +723,7 @@ class IS_FLOAT_IN_RANGE(Validator):
         return (value, self.error_message)
 
     def formatter(self,value):
-        if self.dot=='.':
-            return str(value)
-        else:
-            return str(value).replace('.',self.dot)
+        return str2dec(value).replace('.',self.dot)
 
 
 class IS_DECIMAL_IN_RANGE(Validator):
@@ -825,7 +827,7 @@ class IS_DECIMAL_IN_RANGE(Validator):
         return (value, self.error_message)
 
     def formatter(self, value):
-        return str(value).replace('.',self.dot)
+        return str2dec(value).replace('.',self.dot)
 
 def is_empty(value, empty_regex=None):
     "test empty field"

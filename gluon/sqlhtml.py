@@ -1595,6 +1595,8 @@ class SQLFORM(FORM):
                             value = ''
                     elif isinstance(value,str) and len(value)>maxtextlength:
                         value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
+                    else:
+                        value=field.formatter(value)
                     tr.append(TD(value))
                 row_buttons = TD(_class='row_buttons')
                 for link in links or []:
