@@ -39,6 +39,8 @@ class HTML2FPDF(HTMLParser):
         self.r = self.g = self.b = 0
         self.indent = 0
         self.bullet = []
+        self.font_face="times"      # initialize font      
+        self.color=0                # initialize font color 
         self.set_font(kwargs.get("font","times"), kwargs.get("fontsize",12))
         self.table = None           # table attributes
         self.table_col_width = None # column (header) widths
@@ -215,8 +217,8 @@ class HTML2FPDF(HTMLParser):
                 self.pdf.set_font(face)
                 self.font_face = face
             if 'size' in attrs:
-                face = attrs.get('size')
-                self.pdf.set_font('', size)
+                size = int(attrs.get('size'))
+                self.pdf.set_font(self.font_face, size=int(size))
                 self.font_size = size
         if tag=='table':
             self.table = dict([(k.lower(), v) for k,v in attrs.items()])
@@ -325,9 +327,9 @@ class HTML2FPDF(HTMLParser):
             if self.color:
                 self.pdf.set_text_color(0,0,0)
                 self.color = None
-            if self.font:
-                self.SetFont('Times','',12)
-                self.font = None
+            if self.font_face:
+                self.set_font('Times',12)
+                
         if tag=='center':
             self.align = None
 
