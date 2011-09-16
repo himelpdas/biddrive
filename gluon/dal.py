@@ -4784,6 +4784,9 @@ class Table(dict):
                 else:
                     self[k].notnull = True
 
+    def update(self,*args,**kwargs):
+        raise RuntimeError, "Syntax Not Supported"
+
     def _validate(self,**vars):
         errors = Row()
         for key,value in vars.items():
