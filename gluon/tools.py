@@ -1694,9 +1694,6 @@ class Auth(object):
         if user:
             user = Storage(table_user._filter_fields(user, id=True))
 
-            if log:
-                self.log_event(log % user)
-
         # process authenticated users
             # user wants to be logged in for longer
             session.auth = Storage(
@@ -1708,6 +1705,8 @@ class Auth(object):
                 )
 
             self.user = user
+            if log:
+                self.log_event(log % user)
             session.flash = self.messages.logged_in
 
         # how to continue
