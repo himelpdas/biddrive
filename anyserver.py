@@ -137,10 +137,11 @@ class Servers:
     def mongrel2(app,address,**options):
         import uuid
         sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+        from mongrel2 import handler
         conn = handler.Connection(str(uuid.uuid4()), 
                                   "tcp://127.0.0.1:9997",
                                   "tcp://127.0.0.1:9996")
-        mongrel2_hanlder(app,conn,debug=False)
+        mongrel2_handler(app,conn,debug=False)
         
 
 def run(servername,ip,port,softcron=True,logging=False,profiler=None):
@@ -155,7 +156,7 @@ def run(servername,ip,port,softcron=True,logging=False,profiler=None):
         global_settings.web2py_crontype = 'soft'
     getattr(Servers,servername)(application,(ip,int(port)))
 
-def mongrel2_hanlder(application,conn,debug=False):
+def mongrel2_handler(application,conn,debug=False):
     """
     Based on :
     https://github.com/berry/Mongrel2-WSGI-Handler/blob/master/wsgi-handler.py
@@ -164,7 +165,6 @@ def mongrel2_hanlder(application,conn,debug=False):
     A WSGI application should return a iterable op StringTypes. 
     Any encoding must be handled by the WSGI application itself.
     """
-    from mongrel2 import handler
     from wsgiref.handlers import SimpleHandler
     try:
         import cStringIO as StringIO
