@@ -718,8 +718,8 @@ a.button:hover span.icon.user { background-position: 0 -869px }
 .web2py_paginator ul li {
     display: inline;
 }
-.web2py_paginator .current {
-    font-weight: bold;
+.web2py_paginator ul li.current a {
+    font-weight: bold !important;
 }
 
 /* Icons ---------------------------------- */
