@@ -420,9 +420,12 @@ class Listener(Thread):
         self.interface = interface
         self.addr = interface[0]
         self.port = interface[1]
-        self.secure = len(interface) == 4 and \
+        self.secure = len(interface) >= 4  and \
                       os.path.exists(interface[2]) and \
                       os.path.exists(interface[3])
+        self.clientcert_req = len(interface) == 5 and \
+                              os.path.exists(interface[4])
+
         self.thread = None
         self.ready = False
 
@@ -451,6 +454,14 @@ class Listener(Thread):
                 self.err_log.error("Cannot find certificate file "
                           "'%s'.  Cannot bind to %s:%s" % data)
                 return
+
+            if self.clientcert_req and not os.path.exists(interface[4]):
+                data = (interface[4], interface[0], interface[1])
+                self.err_log.error("Cannot find root ca certificate file "
+                          "'%s'.  Cannot bind to %s:%s" % data)
+                return
+            
+
 
         # Set socket options
         try:
@@ -487,15 +498,24 @@ class Listener(Thread):
 
     def wrap_socket(self, sock):
         try:
+            if len(self.interface) > 4:
+                ca_certs = self.interface[4]
+                cert_reqs = ssl.CERT_OPTIONAL
+            else:
+                ca_certs = None
+                cert_reqs = ssl.CERT_NONE
             sock = ssl.wrap_socket(sock,
                                    keyfile = self.interface[2],
                                    certfile = self.interface[3],
                                    server_side = True,
+                                   cert_reqs = cert_reqs,
+                                   ca_certs = ca_certs,
                                    ssl_version = ssl.PROTOCOL_SSLv23)
-        except SSLError:
+        except SSLError,e:
             # Generally this happens when an HTTP request is received on a
             # secure socket. We don't do anything because it will be detected
             # by Worker and dealt with appropriately.
+            self.err_log.error('SSL Error: %s ' % e)
             pass
 
         return sock
@@ -1813,6 +1833,8 @@ class WSGIWorker(Worker):
         if conn.ssl:
             environ['wsgi.url_scheme'] = 'https'
             environ['HTTPS'] = 'on'
+            peercert = conn.socket.getpeercert(binary_form=True)
+            environ['SSL_CLIENT_RAW_CERT'] = peercert and ssl.DER_cert_to_PEM_cert(peercert)
         else:
             environ['wsgi.url_scheme'] = 'http'
 
