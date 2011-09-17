@@ -16,7 +16,6 @@ import sys
 import os
 import re
 import time
-import copy
 import smtplib
 import urllib
 import urllib2
@@ -692,7 +691,7 @@ class Recaptcha(DIV):
             return XML(captcha).xml()
 
 
-def addrow(form,a,b,c,style,_id,position=-1):
+def addrow(form, a, b, c, style, _id, position=-1):
     if style == "divs":
         form[0].insert(position, DIV(DIV(LABEL(a),_class='w2p_fl'),
                                      DIV(b, _class='w2p_fw'),
@@ -810,11 +809,11 @@ class Auth(object):
     def url(self, f=None, args=None, vars=None):
         if args is None: args=[]
         if vars is None: vars={}
-        return URL(c=self.settings.controller,f=f,args=args,vars=vars)
+        return URL(c=self.settings.controller, f=f, args=args, vars=vars)
 
     def __init__(self, environment=None, db=None, mailer=True,
-                 hmac_key = None, controller='default', cas_provider = None,
-                 auto_redirect = False):
+                 hmac_key=None, controller='default', cas_provider=None,
+                 auto_redirect=False):
         """
         auth=Auth(db)
 
@@ -825,7 +824,7 @@ class Auth(object):
         - controller (where is the user action?)
         - cas_provider (delegate authentication to the URL, CAS2)
         - auto_redirect = [..] a list of URL(...)s that can be 
-          linked from outsize and it is safe to redirect to after login.
+          linked from outside and are safe to redirect to after login.
 
         """
         ## next two lines for backward compatibility
@@ -1128,7 +1127,7 @@ class Auth(object):
         else:
             raise HTTP(404)
 
-    def navbar(self,prefix='Welcome',action=None):
+    def navbar(self, prefix='Welcome', action=None):
         request = current.request
         T = current.T
         if isinstance(prefix,str):
@@ -1411,7 +1410,6 @@ class Auth(object):
             username = 'email'
         else:
             raise SyntaxError, "user must have username or email"
-        passfield = self.settings.password_field
         user = self.db(table_user[username] == keys[username]).select().first()
         keys['registration_key']=''
         if user:
@@ -1496,16 +1494,15 @@ class Auth(object):
         return self.login(next,onvalidation,cas_onaccept,log)
 
 
-    def cas_validate(self,version=2):
+    def cas_validate(self, version=2):
         request = current.request
         db, table = self.db, self.settings.table_cas
         current.response.headers['Content-Type']='text'
         ticket = table(uuid=request.vars.ticket)
-        url = request.env.path_info.rsplit('/',1)[0]
         if ticket: # and ticket.created_on>request.now-datetime.timedelta(60):
             user = self.settings.table_user(ticket.user_id)
             fullname = user.first_name+' '+user.last_name
-            if version==1:
+            if version == 1:
                 raise HTTP(200,'yes\n%s:%s:%s'%(user.id,user.email,fullname))
             # assume version 2
             username = user.get('username',user.email)
@@ -1517,7 +1514,7 @@ class Auth(object):
                               for field in self.settings.table_user \
                               if field.readable]),
                     **{'_xmlns:cas':'http://www.yale.edu/tp/cas'}).xml())
-        if version==1:
+        if version == 1:
             raise HTTP(200,'no\n')
         # assume version 2
         raise HTTP(200,'<?xml version="1.0" encoding="UTF-8"?>\n'+\
@@ -2362,7 +2359,7 @@ class Auth(object):
             )
         if form.accepts(request, session,
                         formname='profile',
-                        onvalidation=onvalidation,hideerror=self.settings.hideerror):
+                        onvalidation=onvalidation, hideerror=self.settings.hideerror):
             self.user.update(table_user._filter_fields(form.vars))
             session.flash = self.messages.profile_updated
             if log:
@@ -2414,13 +2411,13 @@ class Auth(object):
                 self.settings.login_onaccept(form)
             log = self.messages.impersonate_log
             if log:
-                self.log_event(log % dict(id=current_id,other_id=auth.user.id))
+                self.log_event(log % dict(id=current_id, other_id=auth.user.id))
         elif user_id in (0, '0') and self.is_impersonating():
             session.clear()
             session.update(cPickle.loads(auth.impersonator))
             self.user = session.auth.user
         if requested_id == DEFAULT and not request.post_vars:
-            return SQLFORM.factory(Field('user_id','integer'))
+            return SQLFORM.factory(Field('user_id', 'integer'))
         return self.user
 
     def groups(self):
@@ -2544,7 +2541,7 @@ class Auth(object):
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        self.settings.login_url + '?_next=' + urllib.quote(next)
                         )
                 if not self.has_membership(group_id=group_id, role=role):
                     current.session.flash = self.messages.access_denied
@@ -2612,12 +2609,12 @@ class Auth(object):
             def f(*a, **b):
                 if self.settings.allow_basic_login_only and not self.basic():
                     if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
+                        raise HTTP(403, "Not authorized")
                     return call_or_redirect(self.settings.on_failed_authorization)
 
                 if not self.basic() and not self.is_logged_in():
                     if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
+                        raise HTTP(403, "Not authorized")
                     request = current.request
                     next = URL(r=request,args=request.args,
                                vars=request.get_vars)
@@ -2655,10 +2652,8 @@ class Auth(object):
         """
 
         self.db(self.settings.table_group.id == group_id).delete()
-        self.db(self.settings.table_membership.group_id
-                 == group_id).delete()
-        self.db(self.settings.table_permission.group_id
-                 == group_id).delete()
+        self.db(self.settings.table_membership.group_id == group_id).delete()
+        self.db(self.settings.table_permission.group_id == group_id).delete()
         log = self.messages.del_group_log
         if log:
             self.log_event(log % dict(group_id=group_id))
@@ -2727,8 +2722,7 @@ class Auth(object):
             id = membership.insert(group_id=group_id, user_id=user_id)
         log = self.messages.add_membership_log
         if log:
-            self.log_event(log % dict(user_id=user_id,
-                                      group_id=group_id))
+            self.log_event(log % dict(user_id=user_id, group_id=group_id))
         return id
 
     def del_membership(self, group_id, user_id=None, role=None):
@@ -2942,7 +2936,7 @@ class Crud(object):
         """
         if args is None: args=[]
         if vars is None: vars={}
-        return URL(c=self.settings.controller,f=f,args=args,vars=vars)
+        return URL(c=self.settings.controller, f=f, args=args, vars=vars)
 
     def __init__(self, environment, db=None, controller='default'):
         self.db = db
@@ -3072,8 +3066,7 @@ class Crud(object):
             record_id = record or 0
         if record_id and not self.has_permission('update', table, record_id):
             redirect(self.settings.auth.settings.on_failed_authorization)
-        if not record_id \
-                and not self.has_permission('create', table, record_id):
+        if not record_id and not self.has_permission('create', table, record_id):
             redirect(self.settings.auth.settings.on_failed_authorization)
 
         request = current.request
@@ -3111,21 +3104,18 @@ class Crud(object):
             )
         self.accepted = False
         self.deleted = False
-        captcha = self.settings.update_captcha or \
-                  self.settings.captcha
+        captcha = self.settings.update_captcha or self.settings.captcha
         if record and captcha:
             addrow(form, captcha.label, captcha, captcha.comment,
                          self.settings.formstyle,'captcha__row')
-        captcha = self.settings.create_captcha or \
-                  self.settings.captcha
+        captcha = self.settings.create_captcha or self.settings.captcha
         if not record and captcha:
             addrow(form, captcha.label, captcha, captcha.comment,
                          self.settings.formstyle,'captcha__row')
         if not request.extension in ('html','load'):
             (_session, _formname) = (None, None)
         else:
-            (_session, _formname) = \
-                (session, '%s/%s' % (table._tablename, form.record_id))
+            (_session, _formname) = (session, '%s/%s' % (table._tablename, form.record_id))
         if formname!=DEFAULT:
             _formname = formname
         keepvalues = self.settings.keepvalues
@@ -3263,7 +3253,6 @@ class Crud(object):
         orderby=None,
         limitby=None,
         ):
-        request = current.request
         if not (isinstance(table, self.db.Table) or table in self.db.tables):
             raise HTTP(404)
         if not self.has_permission('select', table):
@@ -3969,7 +3958,6 @@ class Service(object):
         @service.json
         @service.jsonrpc
         @service.xmlrpc
-        @service.jsonrpc
         @service.amfrpc
         @service.amfrpc3('domain')
         @service.soap('Method', returns={'Result':int}, args={'a':int,'b':int,})
@@ -4169,7 +4157,8 @@ class PluginManager(object):
             self.__dict__.clear()
         settings = self.__getattr__(plugin)
         settings.installed = True
-        [settings.update({key:value}) for key,value in defaults.items() if not key in settings]
+        [settings.update({key:value}) for key,value in defaults.items() \
+            if not key in settings]
     def __getattr__(self, key):
         if not key in self.__dict__:
             self.__dict__[key] = Storage()
@@ -4182,6 +4171,3 @@ class PluginManager(object):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-
-
-
