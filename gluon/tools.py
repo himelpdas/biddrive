@@ -68,6 +68,9 @@ def call_or_redirect(f,*args):
     else:
         redirect(f)
 
+def is_relative(url):
+    return url and not url[0] == '/' and url[:4] != 'http'
+
 class Mail(object):
     """
     Class for configuring and sending emails with alternative text / html
@@ -811,9 +814,18 @@ class Auth(object):
         if vars is None: vars={}
         return URL(c=self.settings.controller, f=f, args=args, vars=vars)
 
+    def push_next(self):
+        here = URL(args=current.request.args,vars=current.request.vars)
+        current.session._auth_next = current.session._auth_next or here
+ 
+    def pop_next(self):
+        next = current.session._auth_next
+        if next and next.startswith(URL()):
+            next = current.session._auth_next = None
+        return next
+
     def __init__(self, environment=None, db=None, mailer=True,
-                 hmac_key=None, controller='default', cas_provider=None,
-                 auto_redirect=False):
+                 hmac_key=None, controller='default', cas_provider=None):
         """
         auth=Auth(db)
 
@@ -823,9 +835,6 @@ class Auth(object):
         - hmac_key can be a hmac_key or hmac_key=Auth.get_or_create_key()
         - controller (where is the user action?)
         - cas_provider (delegate authentication to the URL, CAS2)
-        - auto_redirect = [..] a list of URL(...)s that can be 
-          linked from outside and are safe to redirect to after login.
-
         """
         ## next two lines for backward compatibility
         if not db and environment and isinstance(environment,DAL):
@@ -847,17 +856,8 @@ class Auth(object):
         settings = self.settings = Settings()
 
         # ## what happens after login?
-
-        if auto_redirect and URL() in auto_redirect:
-            if not self.user:
-                if not session._auth_next:
-                    session._auth_next = URL(args=request.args,
-                                             vars=request.get_vars)
-        if auto_redirect and not URL() in auto_redirect and \
-                self.user and session._auth_next:
-            next = session._auth_next
-            session._auth_next = None
-            redirect(next)
+        if session.auth: 
+            redirect(self.pop_next())
 
         # ## what happens after registration?
 
@@ -1562,9 +1562,7 @@ class Auth(object):
         try: table_user[passfield].requires[-1].min_length = 0
         except: pass
         if next == DEFAULT:
-            next = request.get_vars._next or request.post_vars._next
-            if not next or not next.startswith('/'):
-                next = self.settings.login_next
+            next = self.pop_next() or self.settings.login_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.login_onvalidation
         if onaccept == DEFAULT:
@@ -1579,7 +1577,6 @@ class Auth(object):
             form = SQLFORM(
                 table_user,
                 fields=[username, passfield],
-                hidden=dict(_next=next),
                 showid=self.settings.showid,
                 submit_button=self.messages.login_button,
                 delete_label=self.messages.delete_label,
@@ -1683,9 +1680,8 @@ class Auth(object):
                 return cas.login_form()
             else:
                 # we need to pass through login again before going on
-                next = self.url('user',args='login',vars=dict(_next=next))
+                next = self.url('user',args='login')
                 redirect(cas.login_url(next))
-
 
         # process authenticated users
         if user:
@@ -1710,10 +1706,7 @@ class Auth(object):
         if self.settings.login_form == self:
             if accepted_form:
                 callback(onaccept,form)
-                if isinstance(next, (list, tuple)):
-                    # fix issue with 2.6
-                    next = next[0]
-                if next and not next[0] == '/' and next[:4] != 'http':
+                if is_relative(next):
                     next = self.url(next.replace('[id]', str(form.vars.id)))
                 redirect(next)
             table_user[username].requires = old_requires
@@ -1750,8 +1743,7 @@ class Auth(object):
 
         current.session.auth = None
         current.session.flash = self.messages.logged_out
-        if next:
-            redirect(next)
+        redirect(next)
 
     def register(
         self,
@@ -1775,9 +1767,7 @@ class Auth(object):
         if self.is_logged_in():
             redirect(self.settings.logged_url)
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.register_next
+            next = self.pop_next() or self.settings.register_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.register_onvalidation
         if onaccept == DEFAULT:
@@ -1789,7 +1779,6 @@ class Auth(object):
         formstyle = self.settings.formstyle        
         form = SQLFORM(table_user,
                        fields = self.settings.register_fields,
-                       hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.register_button,
                        delete_label=self.messages.delete_label,
@@ -1860,9 +1849,7 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif isinstance(next, (list, tuple)): ### fix issue with 2.6
-                next = next[0]
-            elif next and not next[0] == '/' and next[:4] != 'http':
+            elif is_relative(next):
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
         return form
@@ -1944,9 +1931,7 @@ class Auth(object):
             response.flash = self.messages.function_disabled
             return ''
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.retrieve_username_next
+            next = self.pop_next() or self.settings.retrieve_username_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_username_onvalidation
         if onaccept == DEFAULT:
@@ -1958,7 +1943,6 @@ class Auth(object):
             error_message=self.messages.invalid_email)]
         form = SQLFORM(table_user,
                        fields=['email'],
-                       hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label,
@@ -1987,9 +1971,7 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif isinstance(next, (list, tuple)): ### fix issue with 2.6
-                next = next[0]
-            elif next and not next[0] == '/' and next[:4] != 'http':
+            elif is_relative(next):
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
         table_user.email.requires = old_requires
@@ -2030,9 +2012,7 @@ class Auth(object):
             response.flash = self.messages.function_disabled
             return ''
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.retrieve_password_next
+            next = self.pop_next() or self.settings.retrieve_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_password_onvalidation
         if onaccept == DEFAULT:
@@ -2044,7 +2024,6 @@ class Auth(object):
             error_message=self.messages.invalid_email)]
         form = SQLFORM(table_user,
                        fields=['email'],
-                       hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label,
@@ -2081,9 +2060,7 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif isinstance(next, (list, tuple)): ### fix issue with 2.6
-                next = next[0]
-            elif next and not next[0] == '/' and next[:4] != 'http':
+            elif is_relative(next):
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
         table_user.email.requires = old_requires
@@ -2110,10 +2087,7 @@ class Auth(object):
         session = current.session
 
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.reset_password_next
-
+            next = self.pop_next() or self.settings.reset_password_next
         try:
             key = request.vars.key or request.args[-1]
             t0 = int(key.split('-')[0])
@@ -2167,10 +2141,7 @@ class Auth(object):
                 (self.settings.retrieve_password_captcha!=False and self.settings.captcha)
 
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.request_reset_password_next
-
+            next = self.pop_next() or self.settings.request_reset_password_next
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
@@ -2180,14 +2151,12 @@ class Auth(object):
             onaccept = self.settings.reset_password_onaccept
         if log == DEFAULT:
             log = self.messages.reset_password_log
-        # old_requires = table_user.email.requires <<< perhaps should be restored
         table_user.email.requires = [
             IS_EMAIL(error_message=self.messages.invalid_email),
             IS_IN_DB(self.db, table_user.email,
                      error_message=self.messages.invalid_email)]
         form = SQLFORM(table_user,
                        fields=['email'],
-                       hidden=dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.password_reset_button,
                        delete_label=self.messages.delete_label,
@@ -2222,9 +2191,7 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif isinstance(next, (list, tuple)): ### fix issue with 2.6
-                next = next[0]
-            elif next and not next[0] == '/' and next[:4] != 'http':
+            elif is_relative(next):
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
         # old_requires = table_user.email.requires
@@ -2266,9 +2233,7 @@ class Auth(object):
         request = current.request
         session = current.session
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.change_password_next
+            next = self.pop_next() or self.settings.change_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.change_password_onvalidation
         if onaccept == DEFAULT:
@@ -2306,9 +2271,7 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
-            elif isinstance(next, (list, tuple)): ### fix issue with 2.6
-                next = next[0]
-            elif next and not next[0] == '/' and next[:4] != 'http':
+            elif is_relative(next):
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
         return form
@@ -2336,9 +2299,7 @@ class Auth(object):
         request = current.request
         session = current.session
         if next == DEFAULT:
-            next = request.get_vars._next \
-                or request.post_vars._next \
-                or self.settings.profile_next
+            next = self.pop_next() or self.settings.profile_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.profile_onvalidation
         if onaccept == DEFAULT:
@@ -2349,7 +2310,6 @@ class Auth(object):
             table_user,
             self.user.id,
             fields = self.settings.profile_fields,
-            hidden = dict(_next=next),
             showid = self.settings.showid,
             submit_button = self.messages.profile_save_button,
             delete_label = self.messages.delete_label,
@@ -2367,9 +2327,7 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
-            elif isinstance(next, (list, tuple)): ### fix issue with 2.6
-                next = next[0]
-            elif next and not next[0] == '/' and next[:4] != 'http':
+            elif is_relative(next):
                 next = self.url(next.replace('[id]', str(form.vars.id)))
             redirect(next)
         return form
@@ -2467,12 +2425,11 @@ class Auth(object):
                         raise HTTP(403,"Not authorized")
                     if not self.basic() and not self.is_logged_in():
                         request = current.request
-                        next = URL(r=request,args=request.args,
-                                   vars=request.get_vars)
+                        self.push_next()
                         current.session.flash = current.response.flash
                         return call_or_redirect(
                             self.settings.on_failed_authentication,
-                            self.settings.login_url + '?_next='+urllib.quote(next))
+                            self.settings.login_url)
                     else:
                         current.session.flash = self.messages.access_denied
                         return call_or_redirect(self.settings.on_failed_authorization)
@@ -2502,12 +2459,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     request = current.request
-                    next = URL(r=request,args=request.args,
-                               vars=request.get_vars)
+                    self.push_next()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        self.settings.login_url
                         )
                 return action(*a, **b)
             f.__doc__ = action.__doc__
@@ -2536,12 +2492,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     request = current.request
-                    next = URL(r=request,args=request.args,
-                               vars=request.get_vars)
+                    self.push_next()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url + '?_next=' + urllib.quote(next)
+                        self.settings.login_url
                         )
                 if not self.has_membership(group_id=group_id, role=role):
                     current.session.flash = self.messages.access_denied
@@ -2579,12 +2534,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     request = current.request
-                    next = URL(r=request,args=request.args,
-                               vars=request.get_vars)
+                    self.set_netx()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        self.settings.login_url
                         )
                 if not self.has_permission(name, table_name, record_id):
                     current.session.flash = self.messages.access_denied
@@ -2616,12 +2570,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403, "Not authorized")
                     request = current.request
-                    next = URL(r=request,args=request.args,
-                               vars=request.get_vars)
+                    self.push_next()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url + '?_next='+urllib.quote(next)
+                        self.settings.login_url
                         )
                 if not URL.verify(current.request,user_signature=True):
                     current.session.flash = self.messages.access_denied
@@ -3142,7 +3095,7 @@ class Crud(object):
             if isinstance(next, (list, tuple)): ### fix issue with 2.6
                next = next[0]
             if next: # Only redirect when explicit
-                if next[0] != '/' and next[:4] != 'http':
+                if is_relative(next):
                     next = URL(r=request,
                                f=next.replace('[id]', str(form.vars.id)))
                 session.flash = response.flash
@@ -3242,8 +3195,7 @@ class Crud(object):
             del table[record_id]
             callback(self.settings.delete_onaccept,record,table._tablename)
             session.flash = message
-        if next: # Only redirect when explicit
-            redirect(next)
+        redirect(next)
 
     def rows(
         self,
