@@ -39,8 +39,10 @@ except ImportError:
     except:
         import contrib.simplejson as json_parser    # fallback to pure-Python module
 
-__all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 'PluginManager', 'fetch', 'geocode', 'prettydate']
+__all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 
+           'PluginManager', 'fetch', 'geocode', 'prettydate']
 
+### mind there are two loggers here (logger and crud.settings.logger)!
 logger = logging.getLogger("web2py")
 
 DEFAULT = lambda: None
@@ -1375,18 +1377,20 @@ class Auth(object):
                 maps=maps)
 
 
-    def log_event(self, description, origin='auth'):
+    def log_event(self, description, vars=None, origin='auth'):
         """
         usage::
 
             auth.log_event(description='this happened', origin='auth')
         """
-
-        if self.is_logged_in():
+        if not description:
+            return
+        elif self.is_logged_in():
             user_id = self.user.id
         else:
             user_id = None  # user unknown
-        self.settings.table_event.insert(description=description,
+        vars = vars or {}
+        self.settings.table_event.insert(description=description % vars,
                                          origin=origin, user_id=user_id)
 
     def get_or_create_user(self, keys):
@@ -1667,8 +1671,8 @@ class Auth(object):
                                 user = self.get_or_create_user(form.vars)
                                 break
                 if not user:
-                    if self.settings.login_failed_log:
-                        self.log_event(self.settings.login_failed_log % request.post_vars)
+                    self.log_event(self.settings.login_failed_log,
+                                   request.post_vars)
                     # invalid login
                     session.flash = self.messages.invalid_login
                     redirect(self.url(args=request.args,vars=request.get_vars))
@@ -1704,8 +1708,7 @@ class Auth(object):
                 )
 
             self.user = user
-            if log:
-                self.log_event(log % user)
+            self.log_event(log, user)
             session.flash = self.messages.logged_in
 
         # how to continue
@@ -1740,9 +1743,8 @@ class Auth(object):
             onlogout(self.user)
         if log == DEFAULT:
             log = self.messages.logout_log
-        if log and self.user:
-            self.log_event(log % self.user)
-
+        if self.user:
+            self.log_event(log, self.user)
         if self.settings.login_form != self:
             cas = self.settings.login_form
             cas_user = cas.get_user()
@@ -1853,8 +1855,7 @@ class Auth(object):
                                        hmac_key = web2py_uuid())
                 self.user = user
                 session.flash = self.messages.logged_in
-            if log:
-                self.log_event(log % form.vars)
+            self.log_event(log, form.vars)
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
@@ -1907,8 +1908,7 @@ class Auth(object):
             next = self.settings.verify_email_next
         if onaccept == DEFAULT:
             onaccept = self.settings.verify_email_onaccept
-        if log:
-            self.log_event(log % user)
+        self.log_event(log, user)
         callback(onaccept,user)
         redirect(next)
 
@@ -1976,8 +1976,7 @@ class Auth(object):
                     message=self.messages.retrieve_username
                      % dict(username=username))
             session.flash = self.messages.email_sent
-            if log:
-                self.log_event(log % user)
+            self.log_event(log, user)
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
@@ -2066,8 +2065,7 @@ class Auth(object):
                 session.flash = self.messages.email_sent
             else:
                 session.flash = self.messages.unable_to_send_email
-            if log:
-                self.log_event(log % user)
+            self.log_event(log, user)
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
@@ -2199,8 +2197,7 @@ class Auth(object):
                 user.update_record(reset_password_key=reset_password_key)
             else:
                 session.flash = self.messages.unable_to_send_email
-            if log:
-                self.log_event(log % user)
+            self.log_event(log, user)
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
@@ -2280,8 +2277,7 @@ class Auth(object):
             d = {passfield: form.vars.new_password}
             s.update(**d)
             session.flash = self.messages.password_changed
-            if log:
-                self.log_event(log % self.user)
+            self.log_event(log, self.user)
             callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
@@ -2337,8 +2333,7 @@ class Auth(object):
                         onvalidation=onvalidation, hideerror=self.settings.hideerror):
             self.user.update(table_user._filter_fields(form.vars))
             session.flash = self.messages.profile_updated
-            if log:
-                self.log_event(log % self.user)
+            self.log_event(log,self.user)
             callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
@@ -2383,8 +2378,7 @@ class Auth(object):
                 form = Storage(dict(vars=self.user))
                 self.settings.login_onaccept(form)
             log = self.messages.impersonate_log
-            if log:
-                self.log_event(log % dict(id=current_id, other_id=auth.user.id))
+            self.log_event(log,dict(id=current_id, other_id=auth.user.id))
         elif user_id in (0, '0') and self.is_impersonating():
             session.clear()
             session.update(cPickle.loads(auth.impersonator))
@@ -2418,7 +2412,8 @@ class Auth(object):
         """
         you can change the view for this page to make it look as you like
         """
-
+        if current.request.ajax:
+            raise HTTP(403,'ACCESS DENIED')
         return 'ACCESS DENIED'
 
     def requires(self, condition):
@@ -2433,21 +2428,24 @@ class Auth(object):
                 if self.settings.allow_basic_login_only and not self.basic():
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
-                    return call_or_redirect(self.settings.on_failed_authorization)
-
-                if not condition:
+                    return call_or_redirect(
+                        self.settings.on_failed_authorization)
+                if not self.basic() and not self.is_logged_in():
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
-                    if not self.basic() and not self.is_logged_in():
-                        request = current.request
-                        next = self.here()
-                        current.session.flash = current.response.flash
-                        return call_or_redirect(
-                            self.settings.on_failed_authentication,
-                            self.settings.login_url+'?_next='+urllib.quote(next))
-                    else:
-                        current.session.flash = self.messages.access_denied
-                        return call_or_redirect(self.settings.on_failed_authorization)
+                    elif current.request.ajax:
+                        return A('login',_href=self.settings.login_url)
+                    request = current.request
+                    next = self.here()
+                    current.session.flash = current.response.flash
+                    return call_or_redirect(
+                        self.settings.on_failed_authentication,
+                        self.settings.login_url+\
+                            '?_next='+urllib.quote(next))
+                if not condition:
+                    current.session.flash = self.messages.access_denied
+                    return call_or_redirect(
+                        self.settings.on_failed_authorization)
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
@@ -2460,32 +2458,7 @@ class Auth(object):
         """
         decorator that prevents access to action if not logged in
         """
-
-        def decorator(action):
-
-            def f(*a, **b):
-
-                if self.settings.allow_basic_login_only and not self.basic():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    return call_or_redirect(self.settings.on_failed_authorization)
-
-                if not self.basic() and not self.is_logged_in():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    request = current.request
-                    next = self.here()
-                    current.session.flash = current.response.flash
-                    return call_or_redirect(
-                        self.settings.on_failed_authentication,
-                        self.settings.login_url+'?_next='+urllib.quote(next))
-                return action(*a, **b)
-            f.__doc__ = action.__doc__
-            f.__name__ = action.__name__
-            f.__dict__.update(action.__dict__)
-            return f
-
-        return decorator
+        return self.requires(self.is_logged_in())
 
     def requires_membership(self, role=None, group_id=None):
         """
@@ -2494,74 +2467,15 @@ class Auth(object):
         If role is provided instead of group_id then the
         group_id is calculated.
         """
+        return self.requires(self.has_membership(group_id=group_id, role=role))
 
-        def decorator(action):
-            def f(*a, **b):
-                if self.settings.allow_basic_login_only and not self.basic():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    return call_or_redirect(self.settings.on_failed_authorization)
-
-                if not self.basic() and not self.is_logged_in():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    request = current.request
-                    next = self.here()
-                    current.session.flash = current.response.flash
-                    return call_or_redirect(
-                        self.settings.on_failed_authentication,
-                        self.settings.login_url+'?_next='+urllib.quote(next))
-                if not self.has_membership(group_id=group_id, role=role):
-                    current.session.flash = self.messages.access_denied
-                    return call_or_redirect(self.settings.on_failed_authorization)
-                return action(*a, **b)
-            f.__doc__ = action.__doc__
-            f.__name__ = action.__name__
-            f.__dict__.update(action.__dict__)
-            return f
-
-        return decorator
-
-
-    def requires_permission(
-        self,
-        name,
-        table_name='',
-        record_id=0,
-        ):
+    def requires_permission(self, name, table_name='', record_id=0):
         """
         decorator that prevents access to action if not logged in or
         if user logged in is not a member of any group (role) that
         has 'name' access to 'table_name', 'record_id'.
         """
-
-        def decorator(action):
-
-            def f(*a, **b):
-                if self.settings.allow_basic_login_only and not self.basic():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    return call_or_redirect(self.settings.on_failed_authorization)
-
-                if not self.basic() and not self.is_logged_in():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    request = current.request
-                    next = self.here()
-                    current.session.flash = current.response.flash
-                    return call_or_redirect(
-                        self.settings.on_failed_authentication,
-                        self.settings.login_url+'?_next='+urllib.quote(next))
-                if not self.has_permission(name, table_name, record_id):
-                    current.session.flash = self.messages.access_denied
-                    return call_or_redirect(self.settings.on_failed_authorization)
-                return action(*a, **b)
-            f.__doc__ = action.__doc__
-            f.__name__ = action.__name__
-            f.__dict__.update(action.__dict__)
-            return f
-
-        return decorator
+        return self.requires(self.has_permission(name, table_name, record_id))
 
     def requires_signature(self):
         """
@@ -2570,44 +2484,17 @@ class Auth(object):
         If role is provided instead of group_id then the
         group_id is calculated.
         """
-
-        def decorator(action):
-            def f(*a, **b):
-                if self.settings.allow_basic_login_only and not self.basic():
-                    if current.request.is_restful:
-                        raise HTTP(403, "Not authorized")
-                    return call_or_redirect(self.settings.on_failed_authorization)
-
-                if not self.basic() and not self.is_logged_in():
-                    if current.request.is_restful:
-                        raise HTTP(403, "Not authorized")
-                    request = current.request
-                    next = self.here()
-                    current.session.flash = current.response.flash
-                    return call_or_redirect(
-                        self.settings.on_failed_authentication,
-                        self.settings.login_url+'?_next='+urllib.quote(next))
-                if not URL.verify(current.request,user_signature=True):
-                    current.session.flash = self.messages.access_denied
-                    return call_or_redirect(self.settings.on_failed_authorization)
-                return action(*a, **b)
-            f.__doc__ = action.__doc__
-            f.__name__ = action.__name__
-            f.__dict__.update(action.__dict__)
-            return f
-
-        return decorator
+        return self.requires(URL.verify(current.request,user_signature=True))
 
     def add_group(self, role, description=''):
         """
         creates a group associated to a role
         """
 
-        group_id = self.settings.table_group.insert(role=role,
-                description=description)
-        log = self.messages.add_group_log
-        if log:
-            self.log_event(log % dict(group_id=group_id, role=role))
+        group_id = self.settings.table_group.insert(
+            role=role, description=description)
+        self.log_event(self.messages.add_group_log,
+                       dict(group_id=group_id, role=role))
         return group_id
 
     def del_group(self, group_id):
@@ -2618,9 +2505,7 @@ class Auth(object):
         self.db(self.settings.table_group.id == group_id).delete()
         self.db(self.settings.table_membership.group_id == group_id).delete()
         self.db(self.settings.table_permission.group_id == group_id).delete()
-        log = self.messages.del_group_log
-        if log:
-            self.log_event(log % dict(group_id=group_id))
+        self.log_event(self.messages.del_group_log,dict(group_id=group_id))
 
     def id_group(self, role):
         """
@@ -2659,10 +2544,8 @@ class Auth(object):
             r = True
         else:
             r = False
-        log = self.messages.has_membership_log
-        if log:
-            self.log_event(log % dict(user_id=user_id,
-                                      group_id=group_id, check=r))
+        self.log_event(self.messages.has_membership_log,
+                       dict(user_id=user_id,group_id=group_id, check=r))
         return r
 
     def add_membership(self, group_id=None, user_id=None, role=None):
@@ -2684,9 +2567,8 @@ class Auth(object):
             return record.id
         else:
             id = membership.insert(group_id=group_id, user_id=user_id)
-        log = self.messages.add_membership_log
-        if log:
-            self.log_event(log % dict(user_id=user_id, group_id=group_id))
+        self.log_event(self.messages.add_membership_log,
+                       dict(user_id=user_id, group_id=group_id))
         return id
 
     def del_membership(self, group_id, user_id=None, role=None):
@@ -2699,10 +2581,8 @@ class Auth(object):
         if not user_id and self.user:
             user_id = self.user.id
         membership = self.settings.table_membership
-        log = self.messages.del_membership_log
-        if log:
-            self.log_event(log % dict(user_id=user_id,
-                                      group_id=group_id))
+        self.log_event(self.messages.del_membership_log,
+                       dict(user_id=user_id,group_id=group_id))
         return self.db(membership.user_id
                        == user_id)(membership.group_id
                                    == group_id).delete()
@@ -2748,10 +2628,10 @@ class Auth(object):
             r = True
         else:
             r = False
-        log = self.messages.has_permission_log
-        if log and user_id:
-            self.log_event(log % dict(user_id=user_id, name=name,
-                           table_name=table_name, record_id=record_id))
+        if user_id:
+            self.log_event(self.messages.has_permission_log,
+                           dict(user_id=user_id, name=name,
+                                table_name=table_name, record_id=record_id))
         return r
 
     def add_permission(
@@ -2771,11 +2651,10 @@ class Auth(object):
         id = permission.insert(group_id=group_id, name=name,
                                table_name=str(table_name),
                                record_id=long(record_id))
-        log = self.messages.add_permission_log
-        if log:
-            self.log_event(log % dict(permission_id=id, group_id=group_id,
-                           name=name, table_name=table_name,
-                           record_id=record_id))
+        self.log_event(self.messages.add_permission_log,
+                       dict(permission_id=id, group_id=group_id,
+                            name=name, table_name=table_name,
+                            record_id=record_id))
         return id
 
     def del_permission(
@@ -2790,10 +2669,9 @@ class Auth(object):
         """
 
         permission = self.settings.table_permission
-        log = self.messages.del_permission_log
-        if log:
-            self.log_event(log % dict(group_id=group_id, name=name,
-                           table_name=table_name, record_id=record_id))
+        self.log_event(self.messages.del_permission_log,
+                       dict(group_id=group_id, name=name,
+                            table_name=table_name, record_id=record_id))
         return self.db(permission.group_id == group_id)(permission.name
                  == name)(permission.table_name
                            == str(table_name))(permission.record_id
@@ -2977,9 +2855,9 @@ class Crud(object):
         else:
             raise HTTP(404)
 
-    def log_event(self, message):
+    def log_event(self, message, vars):
         if self.settings.logger:
-            self.settings.logger.log_event(message, 'crud')
+            self.settings.logger.log_event(message, vars, origin = 'crud')
 
     def has_permission(self, name, table, record=0):
         if not self.settings.auth:
@@ -3094,7 +2972,7 @@ class Crud(object):
             self.accepted = True
             response.flash = message
             if log:
-                self.log_event(log % form.vars)
+                self.log_event(log, form.vars)
             if request.vars.delete_this_record:
                 self.deleted = True
                 message = self.messages.record_deleted
