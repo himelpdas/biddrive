@@ -1237,6 +1237,7 @@ class BaseAdapter(ConnectionPool):
 
     def _count(self,query,distinct=None):
         tablenames = self.tables(query)
+        query = self.filter_tenant(query,tablenames)
         if query:
             sql_w = ' WHERE ' + self.expand(query)
         else:
@@ -1532,7 +1533,8 @@ class BaseAdapter(ConnectionPool):
             if fieldname in table:
                 default = table[fieldname].default
                 if not default is None:
-                    query = query&(table[fieldname]==default)
+                    if query:
+                        query = query&(table[fieldname]==default)
         return query
 
 ###################################################################################
