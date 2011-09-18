@@ -74,7 +74,7 @@ class Request(Storage):
         self.application = None
         self.function = None
         self.args = List()
-        self.extension = None
+        self.extension = 'html'
         self.now = datetime.datetime.now()
         self.is_restful = False
         self.is_https = False
