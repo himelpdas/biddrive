@@ -1714,13 +1714,13 @@ class Auth(object):
                 callback(onaccept,form)
                 if is_relative(next):
                     next = self.url(next.replace('[id]', str(form.vars.id)))
-                print 'redirecting A',next
                 redirect(next)
             table_user[username].requires = old_requires
             return form
         elif user:
             callback(onaccept,None)
-        print 'redirecting B',next
+        if next == session._auth_next:
+            del session._auth_next
         redirect(next)
 
     def logout(self, next=DEFAULT, onlogout=DEFAULT, log=DEFAULT):
