@@ -814,16 +814,9 @@ class Auth(object):
         if vars is None: vars={}
         return URL(c=self.settings.controller, f=f, args=args, vars=vars)
 
-    def push_next(self):
-        here = URL(args=current.request.args,vars=current.request.vars)
-        current.session._auth_next = current.session._auth_next or here
+    def here(self):
+        return URL(args=current.request.args,vars=current.request.vars)
  
-    def pop_next(self):
-        next = current.session._auth_next
-        if next and next.startswith(URL()):
-            next = current.session._auth_next = None
-        return next
-
     def __init__(self, environment=None, db=None, mailer=True,
                  hmac_key=None, controller='default', cas_provider=None):
         """
@@ -856,8 +849,10 @@ class Auth(object):
         settings = self.settings = Settings()
 
         # ## what happens after login?
-        if session.auth: 
-            redirect(self.pop_next())
+
+        self.next = current.request.vars._next
+        if isinstance(self.next,(list,tuple)):
+            self.next = self.next[0]
 
         # ## what happens after registration?
 
@@ -1561,8 +1556,16 @@ class Auth(object):
         passfield = self.settings.password_field
         try: table_user[passfield].requires[-1].min_length = 0
         except: pass
+
+        ### use session for federated login
+        if self.next:
+            session._auth_next = self.next
+        elif session._auth_next:
+            self.next = session._auth_next
+        ### pass
+
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.login_next
+            next = self.next or self.settings.login_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.login_onvalidation
         if onaccept == DEFAULT:
@@ -1577,6 +1580,7 @@ class Auth(object):
             form = SQLFORM(
                 table_user,
                 fields=[username, passfield],
+                hidden = dict(_next=next),
                 showid=self.settings.showid,
                 submit_button=self.messages.login_button,
                 delete_label=self.messages.delete_label,
@@ -1604,7 +1608,8 @@ class Auth(object):
             captcha = self.settings.login_captcha or \
                 (self.settings.login_captcha!=False and self.settings.captcha)
             if captcha:
-                addrow(form, captcha.label, captcha, captcha.comment, self.settings.formstyle,'captcha__row')
+                addrow(form, captcha.label, captcha, captcha.comment, 
+                       self.settings.formstyle,'captcha__row')
             accepted_form = False
 
             if form.accepts(request, session,
@@ -1675,9 +1680,10 @@ class Auth(object):
 
             if cas_user:
                 cas_user[passfield] = None
-                user = self.get_or_create_user(table_user._filter_fields(cas_user))
+                user = self.get_or_create_user(
+                    table_user._filter_fields(cas_user))
             elif hasattr(cas,'login_form'):
-                return cas.login_form()
+                return cas.login_form()            
             else:
                 # we need to pass through login again before going on
                 next = self.url('user',args='login')
@@ -1708,11 +1714,13 @@ class Auth(object):
                 callback(onaccept,form)
                 if is_relative(next):
                     next = self.url(next.replace('[id]', str(form.vars.id)))
+                print 'redirecting A',next
                 redirect(next)
             table_user[username].requires = old_requires
             return form
         elif user:
             callback(onaccept,None)
+        print 'redirecting B',next
         redirect(next)
 
     def logout(self, next=DEFAULT, onlogout=DEFAULT, log=DEFAULT):
@@ -1767,7 +1775,7 @@ class Auth(object):
         if self.is_logged_in():
             redirect(self.settings.logged_url)
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.register_next
+            next = self.next or self.settings.register_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.register_onvalidation
         if onaccept == DEFAULT:
@@ -1779,6 +1787,7 @@ class Auth(object):
         formstyle = self.settings.formstyle        
         form = SQLFORM(table_user,
                        fields = self.settings.register_fields,
+                       hidden = dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.register_button,
                        delete_label=self.messages.delete_label,
@@ -1931,7 +1940,7 @@ class Auth(object):
             response.flash = self.messages.function_disabled
             return ''
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.retrieve_username_next
+            next = self.next or self.settings.retrieve_username_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_username_onvalidation
         if onaccept == DEFAULT:
@@ -1943,6 +1952,7 @@ class Auth(object):
             error_message=self.messages.invalid_email)]
         form = SQLFORM(table_user,
                        fields=['email'],
+                       hidden = dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label,
@@ -2012,7 +2022,7 @@ class Auth(object):
             response.flash = self.messages.function_disabled
             return ''
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.retrieve_password_next
+            next = self.next or self.settings.retrieve_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_password_onvalidation
         if onaccept == DEFAULT:
@@ -2024,6 +2034,7 @@ class Auth(object):
             error_message=self.messages.invalid_email)]
         form = SQLFORM(table_user,
                        fields=['email'],
+                       hidden = dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.submit_button,
                        delete_label=self.messages.delete_label,
@@ -2087,7 +2098,7 @@ class Auth(object):
         session = current.session
 
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.reset_password_next
+            next = self.next or self.settings.reset_password_next
         try:
             key = request.vars.key or request.args[-1]
             t0 = int(key.split('-')[0])
@@ -2107,6 +2118,7 @@ class Auth(object):
                   requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                                     self.messages.mismatched_password)]),
             submit_button=self.messages.password_reset_button,
+            hidden = dict(_next=next),
             formstyle=self.settings.formstyle,
             separator=self.settings.label_separator
         )
@@ -2141,7 +2153,7 @@ class Auth(object):
                 (self.settings.retrieve_password_captcha!=False and self.settings.captcha)
 
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.request_reset_password_next
+            next = self.next or self.settings.request_reset_password_next
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
@@ -2157,6 +2169,7 @@ class Auth(object):
                      error_message=self.messages.invalid_email)]
         form = SQLFORM(table_user,
                        fields=['email'],
+                       hidden = dict(_next=next),
                        showid=self.settings.showid,
                        submit_button=self.messages.password_reset_button,
                        delete_label=self.messages.delete_label,
@@ -2233,7 +2246,7 @@ class Auth(object):
         request = current.request
         session = current.session
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.change_password_next
+            next = self.next or self.settings.change_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.change_password_onvalidation
         if onaccept == DEFAULT:
@@ -2256,6 +2269,7 @@ class Auth(object):
                 requires=[IS_EXPR('value==%s' % repr(request.vars.new_password),
                               self.messages.mismatched_password)]),
             submit_button=self.messages.password_change_button,
+            hidden = dict(_next=next),
             formstyle = self.settings.formstyle,
             separator=self.settings.label_separator
         )
@@ -2299,7 +2313,7 @@ class Auth(object):
         request = current.request
         session = current.session
         if next == DEFAULT:
-            next = self.pop_next() or self.settings.profile_next
+            next = self.next or self.settings.profile_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.profile_onvalidation
         if onaccept == DEFAULT:
@@ -2310,6 +2324,7 @@ class Auth(object):
             table_user,
             self.user.id,
             fields = self.settings.profile_fields,
+            hidden = dict(_next=next),
             showid = self.settings.showid,
             submit_button = self.messages.profile_save_button,
             delete_label = self.messages.delete_label,
@@ -2425,11 +2440,11 @@ class Auth(object):
                         raise HTTP(403,"Not authorized")
                     if not self.basic() and not self.is_logged_in():
                         request = current.request
-                        self.push_next()
+                        next = self.here()
                         current.session.flash = current.response.flash
                         return call_or_redirect(
                             self.settings.on_failed_authentication,
-                            self.settings.login_url)
+                            self.settings.login_url+'?_next='+urllib.quote(next))
                     else:
                         current.session.flash = self.messages.access_denied
                         return call_or_redirect(self.settings.on_failed_authorization)
@@ -2459,12 +2474,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     request = current.request
-                    self.push_next()
+                    next = self.here()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url
-                        )
+                        self.settings.login_url+'?_next='+urllib.quote(next))
                 return action(*a, **b)
             f.__doc__ = action.__doc__
             f.__name__ = action.__name__
@@ -2492,12 +2506,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     request = current.request
-                    self.push_next()
+                    next = self.here()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url
-                        )
+                        self.settings.login_url+'?_next='+urllib.quote(next))
                 if not self.has_membership(group_id=group_id, role=role):
                     current.session.flash = self.messages.access_denied
                     return call_or_redirect(self.settings.on_failed_authorization)
@@ -2534,12 +2547,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     request = current.request
-                    self.set_netx()
+                    next = self.here()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url
-                        )
+                        self.settings.login_url+'?_next='+urllib.quote(next))
                 if not self.has_permission(name, table_name, record_id):
                     current.session.flash = self.messages.access_denied
                     return call_or_redirect(self.settings.on_failed_authorization)
@@ -2570,12 +2582,11 @@ class Auth(object):
                     if current.request.is_restful:
                         raise HTTP(403, "Not authorized")
                     request = current.request
-                    self.push_next()
+                    next = self.here()
                     current.session.flash = current.response.flash
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
-                        self.settings.login_url
-                        )
+                        self.settings.login_url+'?_next='+urllib.quote(next))
                 if not URL.verify(current.request,user_signature=True):
                     current.session.flash = self.messages.access_denied
                     return call_or_redirect(self.settings.on_failed_authorization)
