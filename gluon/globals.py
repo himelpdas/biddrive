@@ -79,6 +79,7 @@ class Request(Storage):
         self.is_restful = False
         self.is_https = False
         self.is_local = False
+        self.global_settings = settings.global_settings
 
     def compute_uuid(self):
         self.uuid = '%s/%s.%s.%s' % (

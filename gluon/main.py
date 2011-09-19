@@ -103,8 +103,9 @@ requests = 0    # gc timer
 regex_client = re.compile('[\w\-:]+(\.[\w\-]+)*\.?')  # ## to account for IPV6
 
 version_info = open(abspath('VERSION', gluon=True), 'r')
-web2py_version = version_info.read()
+web2py_version = version_info.read().strip()
 version_info.close()
+global_settings.web2py_version = web2py_version
 
 try:
     import rocket
