@@ -44,12 +44,12 @@ __all__ = [
     ]
 
 def parse_version(version = "Version 1.99.0 (2011-09-19 08:23:26)"):
-    re_version = re.compile('[^\d]+ (\d+)\.(\d+)\.(\d+)\s*(?P<type>[a-z]+)?\s*\((?P<datetime>.+?)\)')
+    re_version = re.compile('[^\d]+ (\d+)\.(\d+)\.(\d+)\s*\((?P<datetime>.+?)\)\s*(?P<type>[a-z]+)?')
     m = re_version.match(version)
     a,b,c = int(m.group(1)),int(m.group(2)),int(m.group(3)),
     s = m.group('type') or 'dev'
     d = datetime.datetime.strptime(m.group('datetime'),'%Y-%m-%d %H:%M:%S')
-    return (a,b,c,s,d)
+    return (a,b,c,d,s)
 
 def read_file(filename, mode='r'):
     "returns content from filename, making sure to close the file explicitly on exit."
