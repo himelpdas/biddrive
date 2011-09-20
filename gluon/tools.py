@@ -70,8 +70,14 @@ def call_or_redirect(f,*args):
     else:
         redirect(f)
 
-def is_relative(url):
-    return url and not url[0] == '/' and url[:4] != 'http'
+def replace_id(next, form):
+    if url and not url[0] == '/' and url[:4] != 'http':
+        # this is here for backward compatibility
+        return self.url(next.replace('[id]', str(form.vars.id)))
+    elif url:
+        # this allows http://..../%{id}s/%{name}s/etc.
+        return next % form.vars
+    return next
 
 class Mail(object):
     """
@@ -1715,8 +1721,7 @@ class Auth(object):
         if self.settings.login_form == self:
             if accepted_form:
                 callback(onaccept,form)
-                if is_relative(next):
-                    next = self.url(next.replace('[id]', str(form.vars.id)))
+                next = replace_id(next, form)
                 redirect(next)
             table_user[username].requires = old_requires
             return form
@@ -1859,8 +1864,8 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif is_relative(next):
-                next = self.url(next.replace('[id]', str(form.vars.id)))
+            else:
+                next = replace_id(next, form)
             redirect(next)
         return form
 
@@ -1980,8 +1985,8 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif is_relative(next):
-                next = self.url(next.replace('[id]', str(form.vars.id)))
+            else:
+                next = replace_id(next, form)
             redirect(next)
         table_user.email.requires = old_requires
         return form
@@ -2069,8 +2074,8 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif is_relative(next):
-                next = self.url(next.replace('[id]', str(form.vars.id)))
+            else:
+                next = replace_id(next, form)
             redirect(next)
         table_user.email.requires = old_requires
         return form
@@ -2201,8 +2206,8 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args = request.args)
-            elif is_relative(next):
-                next = self.url(next.replace('[id]', str(form.vars.id)))
+            else:
+                next = replace_id(next, form)
             redirect(next)
         # old_requires = table_user.email.requires
         return form
@@ -2281,8 +2286,8 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
-            elif is_relative(next):
-                next = self.url(next.replace('[id]', str(form.vars.id)))
+            else:
+                next = replace_id(next, form)
             redirect(next)
         return form
 
@@ -2337,8 +2342,8 @@ class Auth(object):
             callback(onaccept,form)
             if not next:
                 next = self.url(args=request.args)
-            elif is_relative(next):
-                next = self.url(next.replace('[id]', str(form.vars.id)))
+            else:
+                next = replace_id(next, form)
             redirect(next)
         return form
 
@@ -2984,9 +2989,7 @@ class Crud(object):
             if isinstance(next, (list, tuple)): ### fix issue with 2.6
                next = next[0]
             if next: # Only redirect when explicit
-                if is_relative(next):
-                    next = URL(r=request,
-                               f=next.replace('[id]', str(form.vars.id)))
+                next = replace_id(next, form)
                 session.flash = response.flash
                 redirect(next)
         elif not request.extension in ('html','load'):
