@@ -1042,6 +1042,7 @@ class BaseAdapter(ConnectionPool):
             logfile.close()
 
     def _update(self,tablename,query,fields):
+        query = self.filter_tenant(query,[tablename])
         if query:
             sql_w = ' WHERE ' + self.expand(query)
         else:
@@ -1058,6 +1059,7 @@ class BaseAdapter(ConnectionPool):
             return None
 
     def _delete(self,tablename, query):
+        query = self.filter_tenant(query,[tablename])
         if query:
             sql_w = ' WHERE ' + self.expand(query)
         else:
@@ -1533,8 +1535,11 @@ class BaseAdapter(ConnectionPool):
             if fieldname in table:
                 default = table[fieldname].default
                 if not default is None:
-                    if query:
-                        query = query&(table[fieldname]==default)
+                    newquery = table[fieldname]==default
+                    if query is None:
+                        query = newquery
+                    else:
+                        query = query&newquery
         return query
 
 ###################################################################################
