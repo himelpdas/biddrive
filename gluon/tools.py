@@ -75,7 +75,7 @@ def replace_id(next, form):
         # this is here for backward compatibility
         return self.url(next.replace('[id]', str(form.vars.id)))
     elif url:
-        # this allows http://..../%{id}s/%{name}s/etc.
+        # this allows http://..../%(id)s/%(name)s/etc.
         return next % form.vars
     return next
 
