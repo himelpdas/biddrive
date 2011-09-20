@@ -11,6 +11,7 @@ Adds support for x509 authentication.
 
 from gluon.globals import current
 from gluon.storage import Storage
+from gluon.http import HTTP,redirect
 
 #requires M2Crypto
 from M2Crypto import X509
@@ -26,8 +27,8 @@ class X509Auth(object):
 
 
     def __init__(self):
-        request = current.request
-        self.ssl_client_raw_cert = request.env.ssl_client_raw_cert
+        self.request = current.request
+        self.ssl_client_raw_cert = self.request.env.ssl_client_raw_cert
 
         # rebuild the certificate passed by the env
         # this is double work, but it is the only way
@@ -37,7 +38,7 @@ class X509Auth(object):
 
             x509=X509.load_cert_string(self.ssl_client_raw_cert, X509.FORMAT_PEM)
             # extract it from the cert
-            self.serial = request.env.ssl_client_serial or ('%x' % x509.get_serial_number()).upper()
+            self.serial = self.request.env.ssl_client_serial or ('%x' % x509.get_serial_number()).upper()
 
 
             subject = x509.get_subject()
@@ -54,8 +55,16 @@ class X509Auth(object):
 
 
 
+    def login_form(self, **args):
+        raise HTTP(403,'Login not allowed. No valid x509 crentials')
+
+        
+
     def login_url(self, next="/"):
-        return next
+        raise HTTP(403,'Login not allowed. No valid x509 crentials')
+
+
+
 
     def logout_url(self, next="/"):
         return next
