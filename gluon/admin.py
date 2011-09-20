@@ -15,7 +15,7 @@ from shutil import rmtree
 from utils import web2py_uuid
 from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
 from fileutils import up, fix_newlines, abspath, recursive_unlink
-from fileutils import read_file, write_file
+from fileutils import read_file, write_file, parse_version
 from restricted import RestrictedError
 from settings import global_settings
 
@@ -344,7 +344,7 @@ def check_new_version(myversion, version_URL):
     """
     try:
         from urllib import urlopen
-        version = urlopen(version_URL).read()
+        version = parse_version(urlopen(version_URL).read())
     except Exception:
         return -1, myversion
 

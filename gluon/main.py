@@ -29,7 +29,7 @@ import tempfile
 import random
 import string
 import platform
-from fileutils import abspath, write_file
+from fileutils import abspath, write_file, parse_version
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
 from globals import current
@@ -103,7 +103,7 @@ requests = 0    # gc timer
 regex_client = re.compile('[\w\-:]+(\.[\w\-]+)*\.?')  # ## to account for IPV6
 
 version_info = open(abspath('VERSION', gluon=True), 'r')
-web2py_version = version_info.read().strip()
+web2py_version = parse_version(version_info.read().strip())
 version_info.close()
 global_settings.web2py_version = web2py_version
 
