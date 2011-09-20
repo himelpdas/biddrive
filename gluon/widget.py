@@ -222,7 +222,7 @@ class web2pyDialog(object):
 
         self.password = Tkinter.Entry(self.root, show='*')
         self.password.bind('<Return>', lambda e: self.start())
-        self.password.focus_force()
+        self.password.focus_force() 
         self.password.grid(row=2, column=1, sticky=sticky)
 
         # Prepare the canvas
@@ -489,6 +489,12 @@ def console():
                       dest='ssl_private_key',
                       help='file that contains ssl private key')
 
+    parser.add_option('--ca-cert',
+                      action='store',
+                      dest='ssl_ca_certificate',
+                      default=None,
+                      help='Use this file containing the CA certificate to validate X509 certificates from clients')
+
     parser.add_option('-d',
                       '--pid_filename',
                       default='httpserver.pid',
@@ -713,7 +719,8 @@ def console():
                       dest='nobanner',
                       help='Do not print header banner')
 
-    msg = 'listen on multiple addresses: "ip:port:cert:key;ip2:port2:cert2:key2;..." (:cert:key optional; no spaces)'
+
+    msg = 'listen on multiple addresses: "ip:port:cert:key:ca_cert;ip2:port2:cert2:key2:ca_cert2;..." (:cert:key optional; no spaces)'
     parser.add_option('--interfaces',
                       action='store',
                       dest='interfaces',
@@ -948,6 +955,7 @@ def start(cron=True):
                              profiler_filename=options.profiler_filename,
                              ssl_certificate=options.ssl_certificate,
                              ssl_private_key=options.ssl_private_key,
+                             ssl_ca_certificate=options.ssl_ca_certificate,
                              min_threads=options.minthreads,
                              max_threads=options.maxthreads,
                              server_name=options.server_name,

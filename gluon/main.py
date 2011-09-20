@@ -724,6 +724,7 @@ class HttpServer(object):
         profiler_filename=None,
         ssl_certificate=None,
         ssl_private_key=None,
+        ssl_ca_certificate=None,
         min_threads=None,
         max_threads=None,
         server_name=None,
@@ -775,6 +776,9 @@ class HttpServer(object):
             logger.warning('unable to open SSL private key. SSL is OFF')
         else:
             sock_list.extend([ssl_private_key, ssl_certificate])
+            if ssl_ca_certificate:
+                sock_list.append(ssl_ca_certificate)
+            
             logger.info('SSL is ON')
         app_info = {'wsgi_app': appfactory(wsgibase,
                                            log_filename,
