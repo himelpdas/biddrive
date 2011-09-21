@@ -322,7 +322,7 @@ class web2pyDialog(object):
                 pass
 
             self.root.destroy()
-            sys.exit()
+            sys.exit(0)
 
     def error(self, message):
         """ Show error message """

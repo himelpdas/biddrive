@@ -1906,6 +1906,9 @@ class FORM(DIV):
             if next:
                 if self.vars.id:
                     next = next.replace('[id]',str(self.vars.id))
+                    next = next % self.vars
+                    if not next.startswith('/'):
+                        next = URL(next)
                 redirect(next)
             return True
         elif self.errors:
