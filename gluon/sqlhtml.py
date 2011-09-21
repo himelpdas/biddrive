@@ -1308,7 +1308,8 @@ class SQLFORM(FORM):
              onupdate=None, 
              ondelete=None,
              sorter_icons=('[^]','[v]'),
-             ui = 'jquery-ui',
+             ui = 'web2py',
+             showbuttontext=True,
              _class="web2py_grid",             
              formname='web2py_grid',
             ):
@@ -1322,13 +1323,33 @@ class SQLFORM(FORM):
                       cornerall='ui-corner-all',
                       cornertop='ui-corner-top',
                       cornerbottom='ui-corner-bottom',
-                      buttonadd='ui-icon-text ui-icon-plusthick',
-                      buttonback='ui-icon-text ui-icon-arrowreturnthick-1-w',
-                      buttonexport='ui-icon-text ui-icon-triangle-1-s',
-                      buttondelete='ui-icon-text ui-icon-trash',
-                      buttonedit='ui-icon-text ui-icon-pencil',
-                      buttontable='ui-icon-text ui-icon-triangle-1-e',
-                      buttonview='ui-icon-text ui-icon-zoomin'
+                      button='ui-button-text-icon-primary',
+                      buttontext='ui-button-text',
+                      buttonadd='ui-icon ui-icon-plusthick',
+                      buttonback='ui-icon ui-icon-arrowreturnthick-1-w',
+                      buttonexport='ui-icon ui-icon-transferthick-e-w',
+                      buttondelete='ui-icon ui-icon-trash',
+                      buttonedit='ui-icon ui-icon-pencil',
+                      buttontable='ui-icon ui-icon-triangle-1-e',
+                      buttonview='ui-icon ui-icon-zoomin',
+                      )
+        elif ui == 'web2py':
+            ui = dict(widget='',                      
+                      header='',
+                      content='',
+                      default='',
+                      cornerall='',
+                      cornertop='',
+                      cornerbottom='',
+                      button='button',
+                      buttontext='buttontext button',
+                      buttonadd='icon plus',
+                      buttonback='icon leftarrow',
+                      buttonexport='icon downarrow',
+                      buttondelete='icon trash',
+                      buttonedit='icon pen',
+                      buttontable='icon rightarrow',
+                      buttonview='icon magnifier',
                       )
         elif not isinstance(ui,dict):
             raise RuntimeError,'SQLFORM.grid ui argument must be a dictionary'
@@ -1347,6 +1368,18 @@ class SQLFORM(FORM):
             b['args'] = args+b.get('args',[])
             b['user_signature'] = user_signature
             return URL(**b)
+
+        def gridbutton(buttonclass='buttonadd',buttontext='Add',buttonurl=url(args=[]),callback=None,delete=None):
+            if showbuttontext:
+                if callback:
+                    return A(SPAN(_class=ui.get(buttonclass,'')), SPAN(T(buttontext),_title=buttontext,_class=ui.get('buttontext','')) ,callback=callback,delete=delete,_class=ui.get('button',''))
+                else:
+                    return A(SPAN(_class=ui.get(buttonclass,'')), SPAN(T(buttontext),_title=buttontext,_class=ui.get('buttontext','')) ,_href=buttonurl,_class=ui.get('button',''))
+            else:
+                if callback:
+                    return A(SPAN(_class=ui.get(buttonclass,'')),callback=callback,delete=delete,_title=buttontext,_class=ui.get('buttontext',''))
+                else:
+                    return A(SPAN(_class=ui.get(buttonclass,'')),_href=buttonurl,_title=buttontext,_class=ui.get('buttontext',''))
 
         dbset = db(query)
         tables = [db[tablename] for tablename in db._adapter.tables(dbset.query)]
@@ -1370,13 +1403,13 @@ class SQLFORM(FORM):
                 raise HTTP(200,stream,**response.headers)
 
         def buttons(edit=False,view=False,record=None):
-            buttons = DIV(A(SPAN(T('Back'),_class=ui.get('buttonback','')),_href=referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
+            buttons = DIV(gridbutton('buttonback', 'Back', referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
             if edit:
                 args = ['edit',table._tablename,request.args[-1]]
-                buttons.append(A(SPAN(T('Edit'),_class=ui.get('buttonedit','')),_href=url(args=args)))
+                buttons.append(gridbutton('buttonedit', 'Edit', url(args=args)))
             if view:
                 args = ['view',table._tablename,request.args[-1]]
-                buttons.append(A(SPAN(T('View'),_class=ui.get('buttonview','')),_href=url(args=args)))
+                buttons.append(gridbutton('buttonview', 'View', url(args=args)))
             if record and links:
                 for link in links:
                     buttons.append(link(record))
@@ -1475,9 +1508,9 @@ class SQLFORM(FORM):
                 
         search_actions = DIV(_class='web2py_search_actions')
         if create:
-            search_actions.append(A(SPAN(T('Add'),_class=ui.get('buttonadd','')),_href=url(args=['new',tablename])))
+            search_actions.append(gridbutton(buttonclass='buttonadd',buttontext='Add',buttonurl=url(args=['new',tablename])))
         if csv:
-            search_actions.append(A(SPAN(T('Export'),_class=ui.get('buttonexport','')),_href=url(args=['csv'])))
+            search_actions.append(gridbutton(buttonclass='buttonexport',buttontext='Export',buttonurl=url(args=['csv'])))
 
         console.append(search_actions)
 
@@ -1605,12 +1638,11 @@ class SQLFORM(FORM):
                     else:
                         row_buttons.append(link(row))
                 if details:
-                    row_buttons.append(A(SPAN(T('View'),_class=ui.get('buttonview','')),_href=url(args=['view',tablename,id])))
+                    row_buttons.append(gridbutton('buttonview', 'View', url(args=['view',tablename,id])))
                 if editable:
-                    row_buttons.append(A(SPAN(T('Edit'),_class=ui.get('buttonedit','')),_href=url(args=['edit',tablename,id])))
+                    row_buttons.append(gridbutton('buttonedit', 'Edit', url(args=['edit',tablename,id])))
                 if deletable:
-                    row_buttons.append(A(SPAN(T('Delete'),_class=ui.get('buttondelete','')),callback=url(args=['delete',tablename,id]),
-                                   delete='tr'))
+                    row_buttons.append(gridbutton('buttondelete', 'Delete', callback=url(args=['delete',tablename,id]), delete='tr'))
                 tr.append(row_buttons)
                 tbody.append(tr)
             htmltable.append(tbody)
