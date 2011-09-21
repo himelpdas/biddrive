@@ -70,14 +70,14 @@ def call_or_redirect(f,*args):
     else:
         redirect(f)
 
-def replace_id(next, form):
+def replace_id(url, form):
     if url and not url[0] == '/' and url[:4] != 'http':
         # this is here for backward compatibility
-        return self.url(next.replace('[id]', str(form.vars.id)))
+        return URL(url.replace('[id]', str(form.vars.id)))
     elif url:
         # this allows http://..../%(id)s/%(name)s/etc.
-        return next % form.vars
-    return next
+        return url % form.vars
+    return url
 
 class Mail(object):
     """
