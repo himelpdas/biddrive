@@ -73,7 +73,7 @@ class JSONTransportMixin:
 class JSONTransport(JSONTransportMixin, Transport):
     pass
 
-class SafeJSONTransport(JSONTransportMixin, SafeTransport):
+class JSONSafeTransport(JSONTransportMixin, SafeTransport):
     pass
 
     
