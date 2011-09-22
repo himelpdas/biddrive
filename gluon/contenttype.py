@@ -244,6 +244,7 @@ CONTENT_TYPE = {
     '.jpx': 'image/jp2',
     '.js': 'application/javascript',
     '.json': 'application/json',
+    '.jsonp': 'application/jsonp',
     '.k25': 'image/x-kodak-k25',
     '.kar': 'audio/midi',
     '.karbon': 'application/x-karbon',
