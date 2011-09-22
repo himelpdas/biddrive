@@ -665,7 +665,8 @@ a.buttontext span.icon{ margin:auto;}
 .web2py_search_actions a,
 .web2py_console input[type=submit],
 .web2py_console input[type=button],
-.web2py_console button {
+.web2py_console button,
+a.button {
     line-height: 13.5px; margin-right: 5px; display: inline-block;
     padding: 3px 5px 3px 5px;
     font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
@@ -685,7 +686,8 @@ a.buttontext span.icon{ margin:auto;}
 .web2py_search_actions a:hover,
 .web2py_console input[type=submit]:hover,
 .web2py_console input[type=button]:hover,
-.web2py_paginator ul li a:hover {
+.web2py_paginator ul li a:hover,
+a.button:hover {
     color: #FFFFFF; 
     /*border-color: #e5e4e4; text-decoration: none;
     text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
@@ -732,13 +734,3 @@ a.buttontext span.icon{ margin:auto;}
 .web2py_paginator ul li.current a {
     font-weight: bold !important;
 }
-
-/* Icons ---------------------------------- */
-/*.ui-icon-text {    
-    width: 14px; 
-    height: 12px;
-    padding-left: 2em;
-    background-image: url('../images/css3buttons_icons.png');
-    background-repeat: no-repeat;
-}
-*/
