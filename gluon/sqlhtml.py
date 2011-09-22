@@ -1278,7 +1278,8 @@ class SQLFORM(FORM):
         if 'table_name' in attributes:
             del attributes['table_name']
 
-        return SQLFORM(DAL(None).define_table(table_name, *fields), **attributes)
+        return SQLFORM(DAL(None).define_table(table_name, *fields), 
+                       **attributes)
 
     @staticmethod
     def grid(query,
@@ -1361,9 +1362,9 @@ class SQLFORM(FORM):
         session = current.session
         response = current.response        
         wenabled = (not user_signature or (session.auth and session.auth.user))
-        #create = create and wenabled
-        #editable = editable and wenabled
-        deletable = deletable and wenabled
+        #create = wenabled and create
+        #editable = wenabled and editable
+        deletable = wenabled and deletable
         def url(**b):
             b['args'] = args+b.get('args',[])
             b['user_signature'] = user_signature
@@ -1372,19 +1373,32 @@ class SQLFORM(FORM):
         def gridbutton(buttonclass='buttonadd',buttontext='Add',buttonurl=url(args=[]),callback=None,delete=None):
             if showbuttontext:
                 if callback:
-                    return A(SPAN(_class=ui.get(buttonclass,'')), SPAN(T(buttontext),_title=buttontext,_class=ui.get('buttontext','')) ,callback=callback,delete=delete,_class=ui.get('button',''))
+                    return A(SPAN(_class=ui.get(buttonclass,'')), 
+                             SPAN(T(buttontext),_title=buttontext,
+                                  _class=ui.get('buttontext','')),
+                             callback=callback,delete=delete,
+                             _class=ui.get('button',''))
                 else:
-                    return A(SPAN(_class=ui.get(buttonclass,'')), SPAN(T(buttontext),_title=buttontext,_class=ui.get('buttontext','')) ,_href=buttonurl,_class=ui.get('button',''))
+                    return A(SPAN(_class=ui.get(buttonclass,'')), 
+                             SPAN(T(buttontext),_title=buttontext,
+                                  _class=ui.get('buttontext','')),
+                             _href=buttonurl,_class=ui.get('button',''))
             else:
                 if callback:
-                    return A(SPAN(_class=ui.get(buttonclass,'')),callback=callback,delete=delete,_title=buttontext,_class=ui.get('buttontext',''))
+                    return A(SPAN(_class=ui.get(buttonclass,'')),
+                             callback=callback,delete=delete,
+                             _title=buttontext,_class=ui.get('buttontext',''))
                 else:
-                    return A(SPAN(_class=ui.get(buttonclass,'')),_href=buttonurl,_title=buttontext,_class=ui.get('buttontext',''))
+                    return A(SPAN(_class=ui.get(buttonclass,'')),
+                             _href=buttonurl,_title=buttontext,
+                             _class=ui.get('buttontext',''))
 
         dbset = db(query)
-        tables = [db[tablename] for tablename in db._adapter.tables(dbset.query)]
+        tables = [db[tablename] for tablename in db._adapter.tables(
+                dbset.query)]
         if not fields:
-            fields = reduce(lambda a,b:a+b,[[field for field in table] for table in tables])
+            fields = reduce(lambda a,b:a+b,
+                            [[field for field in table] for table in tables])
         if not field_id:
             field_id = tables[0]._id
         table = field_id.table
@@ -1403,47 +1417,70 @@ class SQLFORM(FORM):
                 raise HTTP(200,stream,**response.headers)
 
         def buttons(edit=False,view=False,record=None):
-            buttons = DIV(gridbutton('buttonback', 'Back', referrer),_class='form_header row_buttons %(header)s %(cornertop)s' % ui)
+            buttons = DIV(gridbutton('buttonback', 'Back', referrer),
+                          _class='form_header row_buttons %(header)s %(cornertop)s' % ui)
             if edit:
                 args = ['edit',table._tablename,request.args[-1]]
-                buttons.append(gridbutton('buttonedit', 'Edit', url(args=args)))
+                buttons.append(gridbutton('buttonedit', 'Edit',
+                                          url(args=args)))
             if view:
                 args = ['view',table._tablename,request.args[-1]]
-                buttons.append(gridbutton('buttonview', 'View', url(args=args)))
+                buttons.append(gridbutton('buttonview', 'View',
+                                          url(args=args)))
             if record and links:
                 for link in links:
                     buttons.append(link(record))
             return buttons
         
-        formfooter = DIV(_class='form_footer row_buttons %(header)s %(cornerbottom)s' % ui)
+        formfooter = DIV(
+            _class='form_footer row_buttons %(header)s %(cornerbottom)s' % ui)
+
+        create_form = edit_form = None
 
         if create and len(request.args)>1 and request.args[-2]=='new':
             check_authorization()
             table = db[request.args[-1]]
-            form = SQLFORM(
+            create_form = SQLFORM(
                 table,
                 _class='web2py_form'
                 ).process(next=referrer,
                           onvalidation=onvalidation,
-                          onsuccess=oncreate,
+                          onsuccess=oncreate,                          
                           formname=formname)
-            return DIV(buttons(),form,formfooter,_class=_class)
+            res = DIV(buttons(),create_form,formfooter,_class=_class)
+            res.create_form = create_form
+            res.edit_form = None
+            res.update_form = None
+            return res
         elif details and len(request.args)>2 and request.args[-3]=='view':
             check_authorization()
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
-            form = SQLFORM(table,record,upload=upload,readonly=True,_class='web2py_form')
-            return DIV(buttons(edit=editable,record=record),form,formfooter,_class=_class)
+            form = SQLFORM(table,record,upload=upload,
+                           readonly=True,_class='web2py_form')
+            res = DIV(buttons(edit=editable,record=record),form,
+                      formfooter,_class=_class)
+            res.create_form = None
+            res.edit_form = None
+            res.update_form = None
+            return res
         elif editable and len(request.args)>2 and request.args[-3]=='edit':
             check_authorization()
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
-            form = SQLFORM(table,record,upload=upload,deletable=deletable,_class='web2py_form')
-            form.process(formname=formname,
-                         onvalidation=onvalidation,
-                         onsuccess=onupdate,
-                         next=referrer)
-            return DIV(buttons(view=details,record=record),form,formfooter,_class=_class)
+            edit_form = SQLFORM(table,record,upload=upload,
+                                deletable=deletable,
+                                _class='web2py_form')
+            edit_form.process(formname=formname,
+                              onvalidation=onvalidation,
+                              onsuccess=onupdate,
+                              next=referrer)
+            res = DIV(buttons(view=details,record=record),
+                      edit_form,formfooter,_class=_class)
+            res.create_form = None
+            res.edit_form = edit_form
+            res.update_form = None
+            return res
         elif deletable and len(request.args)>2 and request.args[-3]=='delete':
             check_authorization()
             table = db[request.args[-2]]
@@ -1454,11 +1491,13 @@ class SQLFORM(FORM):
         elif csv and len(request.args)>0 and request.args[-1]=='csv':
             check_authorization()
             response.headers['Content-Type'] = 'text/csv'
-            response.headers['Content-Disposition']='attachment;filename=rows.csv;'
+            response.headers['Content-Disposition'] = \
+                'attachment;filename=rows.csv;'
             raise HTTP(200,str(dbset.select()),
                        **{'Content-Type':'text/csv',
                           'Content-Disposition':'attachment;filename=rows.csv;'})
-        elif request.vars.records and not isinstance(request.vars.records,list):
+        elif request.vars.records and not isinstance(
+            request.vars.records,list):
             request.vars.records=[request.vars.records]
         elif not request.vars.records:
             request.vars.records=[]
@@ -1466,9 +1505,11 @@ class SQLFORM(FORM):
         def AND(a,b): return a&b
 
         session['_web2py_grid_referrer_'+formname] = \
-            URL(args=request.args,vars=request.vars,user_signature=user_signature)
+            URL(args=request.args,vars=request.vars,
+                user_signature=user_signature)
         console = DIV(_class='web2py_console %(header)s %(cornertop)s' % ui)
         error = None
+        search_form = None
         if searchable:
             form = FORM(INPUT(_name='keywords',_value=request.vars.keywords,
                               _id='web2py_keywords'),
@@ -1476,13 +1517,15 @@ class SQLFORM(FORM):
                         INPUT(_type='submit',_value=T('Clear'),
                               _onclick="jQuery('#web2py_keywords').val('');"),
                         _method="GET",_action=url())
+            search_form = form
             console.append(form)
             key = request.vars.get('keywords','').strip()
             if searchable==True:
                 subquery = None
                 if key and not ' ' in key:
+                    SEARCHABLE_TYPES = ('string','text','list:string')
                     parts = [field.contains(key) for field in fields \
-                                 if field.type in ('string','text')]
+                                 if field.type in SEARCHABLE_TYPES]
                 else:
                     parts = None
                 if parts:
@@ -1508,9 +1551,15 @@ class SQLFORM(FORM):
                 
         search_actions = DIV(_class='web2py_search_actions')
         if create:
-            search_actions.append(gridbutton(buttonclass='buttonadd',buttontext='Add',buttonurl=url(args=['new',tablename])))
+            search_actions.append(gridbutton(
+                    buttonclass='buttonadd',
+                    buttontext='Add',
+                    buttonurl=url(args=['new',tablename])))
         if csv:
-            search_actions.append(gridbutton(buttonclass='buttonexport',buttontext='Export',buttonurl=url(args=['csv'])))
+            search_actions.append(gridbutton(
+                    buttonclass='buttonexport',
+                    buttontext='Export',
+                    buttonurl=url(args=['csv'])))
 
         console.append(search_actions)
 
@@ -1538,7 +1587,8 @@ class SQLFORM(FORM):
             if columns and not str(field) in columns: continue
             if not field.readable: continue
             key = str(field)
-            header = headers.get(str(field),hasattr(field,'label') and field.label or key)
+            header = headers.get(str(field),
+                                 hasattr(field,'label') and field.label or key)
             if sortable:
                 if key == order:
                     key, marker = '~'+order, sorter_icons[0]
@@ -1553,7 +1603,8 @@ class SQLFORM(FORM):
             
         for link in links or []:
             if isinstance(link,dict): 
-                head.append(TH(link['header'], _class=ui.get('default','')))                
+                head.append(TH(link['header'], _class=ui.get('default','')))
+
         head.append(TH(_class=ui.get('default','')))
         
         paginator = UL()
@@ -1575,7 +1626,8 @@ class SQLFORM(FORM):
             pages = range(max(0,page-5),min(page+5,npages-1))
             for p in pages:
                 if p == page:
-                    paginator.append(LI(A(p+1,_onclick='return false'),_class='current'))
+                    paginator.append(LI(A(p+1,_onclick='return false'),
+                                        _class='current'))
                 else:
                     paginator.append(LI(self_link(p+1,p)))
             if page<npages-2:
@@ -1617,13 +1669,15 @@ class SQLFORM(FORM):
                         except KeyError:
                             pass
                     elif field.type=='boolean':
-                        value = INPUT(_type="checkbox",_checked = value, _disabled=True)
+                        value = INPUT(_type="checkbox",_checked = value, 
+                                      _disabled=True)
                     elif field.type=='upload':
                         if value:
                             if callable(upload):
                                 value = A('File', _href=upload(value))
                             elif upload:
-                                value = A('File', _href='%s/%s' % (upload, value))
+                                value = A('File', 
+                                          _href='%s/%s' % (upload, value))
                         else:
                             value = ''
                     elif isinstance(value,str) and len(value)>maxtextlength:
@@ -1637,12 +1691,19 @@ class SQLFORM(FORM):
                         tr.append(TD(link['body'](row)))
                     else:
                         row_buttons.append(link(row))
-                if details:
-                    row_buttons.append(gridbutton('buttonview', 'View', url(args=['view',tablename,id])))
-                if editable:
-                    row_buttons.append(gridbutton('buttonedit', 'Edit', url(args=['edit',tablename,id])))
-                if deletable:
-                    row_buttons.append(gridbutton('buttondelete', 'Delete', callback=url(args=['delete',tablename,id]), delete='tr'))
+                if details and (not callable(details) or details(row)):
+                    row_buttons.append(gridbutton(
+                            'buttonview', 'View',
+                            url(args=['view',tablename,id])))
+                if editable and (not callable(editable) or editable(row)):
+                    row_buttons.append(gridbutton(
+                            'buttonedit', 'Edit',
+                            url(args=['edit',tablename,id])))
+                if deletable and (not callable(deletable) or deletable(row)):
+                    row_buttons.append(gridbutton(
+                            'buttondelete', 'Delete',
+                            callback=url(args=['delete',tablename,id]),
+                            delete='tr'))
                 tr.append(row_buttons)
                 tbody.append(tr)
             htmltable.append(tbody)
@@ -1659,6 +1720,9 @@ class SQLFORM(FORM):
                   DIV(paginator,_class=\
                           "web2py_paginator %(header)s %(cornerbottom)s" % ui),
                   _class='%s %s' % (_class, ui.get('widget','')))
+        res.create_form = create_form
+        res.edit_form = edit_form
+        res.search_form = search_form
         return res
 
     @staticmethod
@@ -1669,7 +1733,8 @@ class SQLFORM(FORM):
         @auth.requires_login()
         def index():
             db.define_table('person',Field('name'),format='%(name)s')
-            db.define_table('dog',Field('name'),Field('owner',db.person),format='%(name)s')
+            db.define_table('dog',
+                Field('name'),Field('owner',db.person),format='%(name)s')
             db.define_table('comment',Field('body'),Field('dog',db.dog))
             if db(db.person).isempty():
                 from gluon.contrib.populate import populate
@@ -1680,10 +1745,13 @@ class SQLFORM(FORM):
         form=SQLFORM.smartgrid(db[request.args(0) or 'person']) #***
         return dict(form=form)
 
-        *** builds a complete interface to navigate all tables linke to the request.args(0)
-            table: pagination, search, view, edit, delete, children, parent, etc.
+        *** builds a complete interface to navigate all tables links 
+            to the request.args(0)
+            table: pagination, search, view, edit, delete, 
+                   children, parent, etc.
 
-        constraints is a dict {'table',query} that limits which records can be accessible
+        constraints is a dict {'table',query} that limits which 
+        records can be accessible
         links is a list of lambda row: A(....) that will add buttons
         linked_tables is a optional list of tablenames of tables to be linked
 
@@ -1698,7 +1766,8 @@ class SQLFORM(FORM):
             request.args=[table._tablename]
         try:
             args = 1
-            previous_tablename,previous_fieldname,previous_id = table._tablename,None,None
+            previous_tablename,previous_fieldname,previous_id = \
+                table._tablename,None,None
             while len(request.args)>args:
                 key = request.args(args)
                 if '.' in key:
@@ -1736,9 +1805,7 @@ class SQLFORM(FORM):
             if args>1:
                 query = (field == id)
                 if linked_tables is None or referee in linked_tables:
-                    field.represent = lambda id,r=None,referee=referee,rep=field.represent:\
-                        A(rep(id),_href=URL(args=request.args[:args]+['view',referee,id],
-                                            user_signature=user_signature))
+                    field.represent = lambda id,r=None,referee=referee,rep=field.represent: A(rep(id),_href=URL(args=request.args[:args]+['view',referee,id], user_signature=user_signature))
         except (KeyError,ValueError,TypeError):
             redirect(URL(args=table._tablename))
         if args==1:

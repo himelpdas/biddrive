@@ -564,9 +564,10 @@ class Mail(object):
         result = {}
         try:
             if self.settings.server == 'logging':
-                logger.warn('email not sent\n%s\nFrom: %s\nTo: %s\n\n%s\n%s\n' % \
-                                 ('-'*40,self.settings.sender,
-                                  ', '.join(to),text or html,'-'*40))
+                logger.warn('email not sent\n%s\nFrom: %s\nTo: %s\nSubject: %s\n\n%s\n%s\n' % \
+                                ('-'*40,self.settings.sender,
+                                 subject,
+                                 ', '.join(to),text or html,'-'*40))
             elif self.settings.server == 'gae':
                 xcc = dict()
                 if cc:
