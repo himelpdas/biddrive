@@ -56,7 +56,7 @@ def license():
     return response.render(dict(license=MARKMIN(read_file(filename))))
 
 def version():
-    return request.env.web2py_version
+    return 'Version %s.%s.%s (%s) %s' % request.env.web2py_version
 
 @cache('examples')
 def examples():
