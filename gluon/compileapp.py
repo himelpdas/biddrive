@@ -314,7 +314,7 @@ def compile_views(folder):
     """
 
     path = os.path.join(folder, 'views')
-    for file in listdir(path, '^[\w/]+\.\w+$'):
+    for file in listdir(path, '^[\w/\-]+(\.\w+)+$'):
         data = parse_template(file, path)
         filename = ('views/%s.py' % file).replace('/', '_').replace('\\', '_')
         filename = os.path.join(folder, 'compiled', filename)
