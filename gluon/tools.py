@@ -1127,7 +1127,8 @@ class Auth(object):
         elif args[0]=='cas' and not self.settings.cas_provider:
             if args(1) == 'login': return self.cas_login(version=2)
             if args(1) == 'validate': return self.cas_validate(version=2)
-            if args(1) == 'logout': return self.logout()
+            if args(1) == 'logout':
+                return self.logout(next=request.vars.service or DEFAULT)
         else:
             raise HTTP(404)
 
