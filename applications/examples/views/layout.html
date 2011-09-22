@@ -71,7 +71,7 @@ rue;
 		  {{=T('Download')}}    
 	      </span>
 	      <span id="textBtDownload2">
-		{{=T('Latest Stable ')}}{{=request.env.web2py_version[:15]}}
+		{{=T('Latest Stable ')}}{{="Version %s.%s.%s " % request.env.web2py_version[:3] + request.env.web2py_version[4]}}
 	      </span>
 	    </a>
 	  </div>     

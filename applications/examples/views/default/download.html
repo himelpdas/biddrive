@@ -1,14 +1,14 @@
 {{response.files.append(URL('static','css/artwork.css'))}}
 {{extend 'layout.html'}}
 {{import os}}
-{{version = request.env.web2py_version.split('(')}}
+{{version = request.env.web2py_version}}
 <div class="onecolcontent">
   <h2>web2py<sup style="font-size:0.5em;">TM</sup> Download</h2>
   <blockquote>
     <center>
       <table style="width:50%;">
 	<tr>
-	  <th style="white-space:nowrap;padding-left:10px;">Current (for everybody)<br/>{{=version[0]}}<br />({{=version[1]}}</th>
+	  <th style="white-space:nowrap;padding-left:10px;">Current (for everybody)<br/>{{="%s.%s.%s %s" % (version[0],version[1],version[2],version[4])}}<br />({{=version[3]}})</th>
 	  <th style="padding-left:30px;">Nightly Built (for testers)</th>
 	  <th style="padding-left:30px;">Trunk (for developers)</th>
 	</tr>
