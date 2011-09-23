@@ -9,6 +9,7 @@ import errno
 import socket
 import logging
 import platform
+import traceback
 
 # Define Constants
 VERSION = '1.2.4'
@@ -420,11 +421,8 @@ class Listener(Thread):
         self.interface = interface
         self.addr = interface[0]
         self.port = interface[1]
-        self.secure = len(interface) >= 4  and \
-                      os.path.exists(interface[2]) and \
-                      os.path.exists(interface[3])
-        self.clientcert_req = len(interface) == 5 and \
-                              os.path.exists(interface[4])
+        self.secure = len(interface) >= 4
+        self.clientcert_req = (len(interface) == 5 and interface[4])
 
         self.thread = None
         self.ready = False
@@ -461,8 +459,6 @@ class Listener(Thread):
                           "'%s'.  Cannot bind to %s:%s" % data)
                 return
             
-
-
         # Set socket options
         try:
             listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -498,24 +494,28 @@ class Listener(Thread):
 
     def wrap_socket(self, sock):
         try:
-            if len(self.interface) > 4:
+            if self.clientcert_req:
                 ca_certs = self.interface[4]
                 cert_reqs = ssl.CERT_OPTIONAL
+                sock = ssl.wrap_socket(sock,
+                                       keyfile = self.interface[2],
+                                       certfile = self.interface[3],
+                                       server_side = True,
+                                       cert_reqs = cert_reqs,
+                                       ca_certs = ca_certs,
+                                       ssl_version = ssl.PROTOCOL_SSLv23)
             else:
-                ca_certs = None
-                cert_reqs = ssl.CERT_NONE
-            sock = ssl.wrap_socket(sock,
-                                   keyfile = self.interface[2],
-                                   certfile = self.interface[3],
-                                   server_side = True,
-                                   cert_reqs = cert_reqs,
-                                   ca_certs = ca_certs,
-                                   ssl_version = ssl.PROTOCOL_SSLv23)
-        except SSLError,e:
+                sock = ssl.wrap_socket(sock,
+                                       keyfile = self.interface[2],
+                                       certfile = self.interface[3],
+                                       server_side = True,
+                                       ssl_version = ssl.PROTOCOL_SSLv23)
+
+        except SSLError:
             # Generally this happens when an HTTP request is received on a
             # secure socket. We don't do anything because it will be detected
             # by Worker and dealt with appropriately.
-            self.err_log.error('SSL Error: %s ' % e)
+            self.err_log.error('SSL Error: %s' % traceback.format_exc())
             pass
 
         return sock
@@ -576,7 +576,7 @@ class Listener(Thread):
                 else:
                     continue
             except:
-                self.err_log.error(str(traceback.format_exc()))
+                self.err_log.error(traceback.format_exc())
 
 # Monolithic build...end of module: rocket\listener.py
 # Monolithic build...start of module: rocket\main.py
@@ -724,7 +724,7 @@ class Rocket(object):
                 break
             except:
                 if self._monitor.isAlive():
-                    log.error(str(traceback.format_exc()))
+                    log.error(traceback.format_exc())
                     continue
 
         return self.stop()
@@ -1833,8 +1833,12 @@ class WSGIWorker(Worker):
         if conn.ssl:
             environ['wsgi.url_scheme'] = 'https'
             environ['HTTPS'] = 'on'
-            peercert = conn.socket.getpeercert(binary_form=True)
-            environ['SSL_CLIENT_RAW_CERT'] = peercert and ssl.DER_cert_to_PEM_cert(peercert)
+            try:
+                peercert = conn.socket.getpeercert(binary_form=True)
+                environ['SSL_CLIENT_RAW_CERT'] = \
+                    peercert and ssl.DER_cert_to_PEM_cert(peercert)
+            except Exception,e:
+                print e
         else:
             environ['wsgi.url_scheme'] = 'http'
 

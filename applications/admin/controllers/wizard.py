@@ -426,7 +426,7 @@ def make_view(page,contents):
 
 def populate(tables):
     s = 'from gluon.contrib.populate import populate\n'
-    s+= 'if db(db.auth_user).isemty():\n'
+    s+= 'if db(db.auth_user).isempty():\n'
     for table in sort_tables(tables):
         t=table=='auth_user' and 'auth_user' or 't_'+table
         s+="     populate(db.%s,10)\n" % t
