@@ -753,14 +753,16 @@ def console():
 
     options.folder = os.path.abspath(options.folder)
 
-    #  accept --interfaces in the form "ip:port:cert:key;ip2:port2;ip3:port3:cert3:key3"
+    #  accept --interfaces in the form 
+    #  "ip:port:cert:key;ip2:port2;ip3:port3:cert3:key3"
     #  (no spaces; optional cert:key indicate SSL)
-    #
     if isinstance(options.interfaces, str):
-        options.interfaces = [interface.split(':') for interface in options.interfaces.split(';')]
+        options.interfaces = [
+            interface.split(':') for interface in options.interfaces.split(';')]
         for interface in options.interfaces:
             interface[1] = int(interface[1])    # numeric port
-        options.interfaces = [tuple(interface) for interface in options.interfaces]
+        options.interfaces = [
+            tuple(interface) for interface in options.interfaces]
 
     if options.numthreads is not None and options.minthreads is None:
         options.minthreads = options.numthreads  # legacy
@@ -804,8 +806,8 @@ def start_schedulers(options):
         except KeyboardInterrupt:
             p.terminate()
             p.join()
-            
 
+            
 def start(cron=True):
     """ Start server  """
 
