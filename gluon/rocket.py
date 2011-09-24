@@ -1833,14 +1833,16 @@ class WSGIWorker(Worker):
         if conn.ssl:
             environ['wsgi.url_scheme'] = 'https'
             environ['HTTPS'] = 'on'
+        else:
+            environ['wsgi.url_scheme'] = 'http'
+
+        if conn.ssl:
             try:
                 peercert = conn.socket.getpeercert(binary_form=True)
                 environ['SSL_CLIENT_RAW_CERT'] = \
                     peercert and ssl.DER_cert_to_PEM_cert(peercert)
             except Exception,e:
                 print e
-        else:
-            environ['wsgi.url_scheme'] = 'http'
 
         if environ.get('HTTP_TRANSFER_ENCODING', '') == 'chunked':
             environ['wsgi.input'] = ChunkedReader(sock_file)
