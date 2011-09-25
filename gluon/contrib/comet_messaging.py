@@ -6,7 +6,7 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 Attention: Requires Chrome or Safari. For IE of Firefox you need https://github.com/gimite/web-socket-js
 
-1) install tornado
+1) install tornado (requires Tornado 2.1)
 
    easy_install tornado
 
