@@ -1563,7 +1563,7 @@ class SQLFORM(FORM):
 
         console.append(search_actions)
 
-        message = error or T('%(nrows)s records found' % dict(nrows=nrows))
+        message = error or T('%(nrows)s records found') % dict(nrows=nrows)
 
         console.append(DIV(message,_class='web2py_counter'))
 
@@ -1583,6 +1583,7 @@ class SQLFORM(FORM):
         head = TR(_class=ui.get('header',''))
         if selectable:
             head.append(TH(_class=ui.get('default','')))
+        columns = [str(field) for field in columns]
         for field in fields:
             if columns and not str(field) in columns: continue
             if not field.readable: continue
