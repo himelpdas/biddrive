@@ -869,6 +869,10 @@ class Auth(object):
         settings.password_min_length = 4
         settings.cas_domains = [request.env.http_host]
         settings.cas_provider = cas_provider
+        settings.cas_actions = {'login':'login',
+                                'validate':'validate',
+                                'logout':'logout'}
+        settings.cas_maps = None
         settings.extra_fields = {}
         settings.actions_disabled = []
         settings.reset_password_requires_verification = False
@@ -1125,9 +1129,11 @@ class Auth(object):
                        'impersonate','not_authorized'):
             return getattr(self,args[0])()
         elif args[0]=='cas' and not self.settings.cas_provider:
-            if args(1) == 'login': return self.cas_login(version=2)
-            if args(1) == 'validate': return self.cas_validate(version=2)
-            if args(1) == 'logout':
+            if args(1) == self.settings.cas_actions['login']:
+                return self.cas_login(version=2)
+            elif args(1) == self.settings.cas_actions['validate']:
+                return self.cas_validate(version=2)
+            elif args(1) == self.settings.cas_actions['logout']:
                 return self.logout(next=request.vars.service or DEFAULT)
         else:
             raise HTTP(404)
@@ -1373,15 +1379,20 @@ class Auth(object):
             settings.actions_disabled = \
                 ['profile','register','change_password','request_reset_password']
             from gluon.contrib.login_methods.cas_auth import CasAuth
-            maps = dict((name,lambda v,n=name:v.get(n,None)) for name in \
-                            settings.table_user.fields if name!='id' \
-                            and settings.table_user[name].readable)
-            maps['registration_id'] = \
-                lambda v,p=settings.cas_provider:'%s/%s' % (p,v['user'])
+            maps = self.settings.cas_maps
+            if not maps:
+                maps = dict((name,lambda v,n=name:v.get(n,None)) for name in \
+                                settings.table_user.fields if name!='id' \
+                                and settings.table_user[name].readable)
+                maps['registration_id'] = \
+                    lambda v,p=settings.cas_provider:'%s/%s' % (p,v['user'])
+            actions = [self.settings.cas_actions['login'],
+                       self.settings.cas_actions['validate'],
+                       self.settings.cas_actions['logout']]
             settings.login_form = CasAuth(
                 casversion = 2,
                 urlbase = settings.cas_provider,
-                actions=['login','validate','logout'],
+                actions=actions,
                 maps=maps)
 
 
