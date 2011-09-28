@@ -1627,8 +1627,9 @@ class JDBCSQLiteAdapter(SQLiteAdapter):
                 dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
         def connect(dbpath=dbpath,driver_args=driver_args):
             return self.driver.connect(java.sql.DriverManager.getConnection('jdbc:sqlite:'+dbpath),**driver_args)
+        self.pool_connection(connect)
         # FIXME http://www.zentus.com/sqlitejdbc/custom_functions.html for UDFs
-        # self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
+        self.connection.create_function('web2py_extract', 2, SQLiteAdapter.web2py_extract)
 
     def execute(self,a):        
         return self.log_execute(a)
