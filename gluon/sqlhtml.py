@@ -1583,7 +1583,7 @@ class SQLFORM(FORM):
         head = TR(_class=ui.get('header',''))
         if selectable:
             head.append(TH(_class=ui.get('default','')))
-        columns = [str(field) for field in columns]
+        columns = columns and [str(field) for field in columns]
         for field in fields:
             if columns and not str(field) in columns: continue
             if not field.readable: continue
@@ -1753,18 +1753,20 @@ class SQLFORM(FORM):
 
         constraints is a dict {'table',query} that limits which 
         records can be accessible
-        links is a list of lambda row: A(....) that will add buttons
-        linked_tables is a optional list of tablenames of tables to be linked
-
+        links is a dict like 
+           {'tablename':[lambda row: A(....), ...]}
+        that will add buttons when table tablename is displayed
+        linked_tables is a optional list of tablenames of tables 
+        to be linked
         """
         from gluon import current, A, URL, DIV, H3, redirect
         request, T = current.request, current.T
         db = table._db
-        if links is None: links = []
-        if constraints is None: constraints = {}
         breadcrumbs = []
         if request.args(0) != table._tablename:
             request.args=[table._tablename]
+        if links is None: links = {}
+        if constraints is None: constraints = {}
         try:
             args = 1
             previous_tablename,previous_fieldname,previous_id = \
@@ -1811,13 +1813,23 @@ class SQLFORM(FORM):
             redirect(URL(args=table._tablename))
         if args==1:
             query = table.id>0
+
+        # filter out data info for displayed table
         if table._tablename in constraints:
-            query = query&constraints[table._tablename]
+            query = query & constraints[table._tablename]
+        if isinstance(links,dict):
+            links = links.get(table._tablename,[])
+        for key in 'columns,orderby,searchable,sortable,paginate,deletable,editable,details,selectable,create'.split(','):
+            if isinstance(kwargs.get(key,None),dict):
+                kwargs[key] = kwargs[key][table._tablename]
+
         for tablename,fieldname in table._referenced_by:
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
-                links.append(lambda row,t=T(tablename),args=args,args0=args0:\
-                                 A(SPAN(t),_href=URL(args=request.args[:args]+[args0,row.id])))                
+                links.append(
+                    lambda row,t=T(tablename),args=args,args0=args0:\
+                        A(SPAN(t),_href=URL(
+                            args=request.args[:args]+[args0,row.id])))
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):
