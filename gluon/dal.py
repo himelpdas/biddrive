@@ -4779,7 +4779,7 @@ class Table(dict):
             if self._db and not field.type in ('text','blob') and \
                     self._db._adapter.maxcharlength < field.length:
                 field.length = self._db._adapter.maxcharlength
-            if field.requires == DEFAULT:
+            if field.requires is DEFAULT:
                 field.requires = sqlhtml_validators(field)
         self.ALL = SQLALL(self)
 
@@ -4865,7 +4865,7 @@ class Table(dict):
             return dict.__getitem__(self, str(key))
 
     def __call__(self, key=DEFAULT, **kwargs):
-        if key!=DEFAULT:
+        if not key is DEFAULT:
             if isinstance(key, Query):
                 record = self._db(key).select(limitby=(0,1)).first()
             elif not str(key).isdigit():
@@ -4984,11 +4984,11 @@ class Table(dict):
             response.id = None
         return response
 
-    def update_or_insert(self, key=DEFAULT, **values):
-        if key==DEFAULT:
+    def update_or_insert(self, _key=DEFAULT, **values):
+        if _key is DEFAULT:
             record = self(**values)
         else:
-            record = self(key)
+            record = self(_key)
         if record:
             record.update_record(**values)
             newid = None
@@ -5425,7 +5425,7 @@ class Field(Expression):
             type = 'reference ' + type._tablename
         self.type = type  # 'string', 'integer'
         self.length = (length is None) and DEFAULTLENGTH.get(type,512) or length
-        if default==DEFAULT:
+        if default is DEFAULT:
             self.default = update or None
         else:
             self.default = default
@@ -5437,7 +5437,7 @@ class Field(Expression):
         self.uploadfolder = uploadfolder
         self.uploadseparate = uploadseparate
         self.widget = widget
-        if label == DEFAULT:
+        if label is DEFAULT:
             self.label = ' '.join(i.capitalize() for i in fieldname.split('_'))
         else:
             self.label = label or ''

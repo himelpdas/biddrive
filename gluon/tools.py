@@ -1496,7 +1496,7 @@ class Auth(object):
         if self.is_logged_in():
             allow_access()
         def cas_onaccept(form, onaccept=onaccept):
-            if onaccept!=DEFAULT: onaccept(form)
+            if not onaccept is DEFAULT: onaccept(form)
             allow_access()
         return self.login(next,onvalidation,cas_onaccept,log)
 
@@ -1576,13 +1576,13 @@ class Auth(object):
             self.next = session._auth_next
         ### pass
 
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.login_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.login_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.login_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.login_log
 
         user = None # default
@@ -1742,13 +1742,13 @@ class Auth(object):
 
         """
 
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.settings.logout_next
-        if onlogout == DEFAULT:
+        if onlogout is DEFAULT:
             onlogout = self.settings.logout_onlogout
         if onlogout:
             onlogout(self.user)
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.logout_log
         if self.user:
             self.log_event(log, self.user)
@@ -1783,13 +1783,13 @@ class Auth(object):
         session = current.session
         if self.is_logged_in():
             redirect(self.settings.logged_url)
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.register_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.register_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.register_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.register_log
 
         passfield = self.settings.password_field        
@@ -1909,11 +1909,11 @@ class Auth(object):
         # make sure session has same user.registrato_key as db record
         if current.session.auth and current.session.auth.user:
             current.session.auth.user.registration_key = user.registration_key
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.verify_email_log
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.settings.verify_email_next
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.verify_email_onaccept
         self.log_event(log, user)
         callback(onaccept,user)
@@ -1946,13 +1946,13 @@ class Auth(object):
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.retrieve_username_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.retrieve_username_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.retrieve_username_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.retrieve_username_log
         old_requires = table_user.email.requires
         table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
@@ -2027,13 +2027,13 @@ class Auth(object):
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.retrieve_password_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.retrieve_password_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.retrieve_password_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.retrieve_password_log
         old_requires = table_user.email.requires
         table_user.email.requires = [IS_IN_DB(self.db, table_user.email,
@@ -2102,7 +2102,7 @@ class Auth(object):
         # response = current.response
         session = current.session
 
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.reset_password_next
         try:
             key = request.vars.key or request.args[-1]
@@ -2157,16 +2157,16 @@ class Auth(object):
         captcha = self.settings.retrieve_password_captcha or \
                 (self.settings.retrieve_password_captcha!=False and self.settings.captcha)
 
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.request_reset_password_next
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.reset_password_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.reset_password_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.reset_password_log
         table_user.email.requires = [
             IS_EMAIL(error_message=self.messages.invalid_email),
@@ -2249,13 +2249,13 @@ class Auth(object):
 
         request = current.request
         session = current.session
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.change_password_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.change_password_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.change_password_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.change_password_log
         passfield = self.settings.password_field
         form = SQLFORM.factory(
@@ -2315,13 +2315,13 @@ class Auth(object):
         self.settings.table_user[passfield].writable = False
         request = current.request
         session = current.session
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.next or self.settings.profile_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.profile_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.profile_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.profile_log
         form = SQLFORM(
             table_user,
@@ -2367,7 +2367,7 @@ class Auth(object):
             raise HTTP(401, "Not Authorized")
         current_id = auth.user.id
         requested_id = user_id
-        if user_id == DEFAULT:
+        if user_id is DEFAULT:
             user_id = current.request.post_vars.user_id
         if user_id and user_id != self.user.id and user_id != '0':
             if not self.has_permission('impersonate',
@@ -2390,7 +2390,7 @@ class Auth(object):
             session.clear()
             session.update(cPickle.loads(auth.impersonator))
             self.user = session.auth.user
-        if requested_id == DEFAULT and not request.post_vars:
+        if requested_id is DEFAULT and not request.post_vars:
             return SQLFORM.factory(Field('user_id', 'integer'))
         return self.user
 
@@ -2923,21 +2923,21 @@ class Crud(object):
         session = current.session
         if request.extension == 'json' and request.vars.json:
             request.vars.update(json_parser.loads(request.vars.json))
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
                 or self.settings.update_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.update_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.update_onaccept
-        if ondelete == DEFAULT:
+        if ondelete is DEFAULT:
             ondelete = self.settings.update_ondelete
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.update_log
-        if deletable == DEFAULT:
+        if deletable is DEFAULT:
             deletable = self.settings.update_deletable
-        if message == DEFAULT:
+        if message is DEFAULT:
             message = self.messages.record_updated
         form = SQLFORM(
             table,
@@ -2965,7 +2965,7 @@ class Crud(object):
             (_session, _formname) = (None, None)
         else:
             (_session, _formname) = (session, '%s/%s' % (table._tablename, form.record_id))
-        if formname!=DEFAULT:
+        if not formname is DEFAULT:
             _formname = formname
         keepvalues = self.settings.keepvalues
         if request.vars.delete_this_record:
@@ -3013,15 +3013,15 @@ class Crud(object):
             [, onaccept=DEFAULT [, log=DEFAULT[, message=DEFAULT]]]]])
         """
 
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = self.settings.create_next
-        if onvalidation == DEFAULT:
+        if onvalidation is DEFAULT:
             onvalidation = self.settings.create_onvalidation
-        if onaccept == DEFAULT:
+        if onaccept is DEFAULT:
             onaccept = self.settings.create_onaccept
-        if log == DEFAULT:
+        if log is DEFAULT:
             log = self.messages.create_log
-        if message == DEFAULT:
+        if message is DEFAULT:
             message = self.messages.record_created
         return self.update(
             table,
@@ -3077,11 +3077,11 @@ class Crud(object):
             redirect(self.settings.auth.settings.on_failed_authorization)
         request = current.request
         session = current.session
-        if next == DEFAULT:
+        if next is DEFAULT:
             next = request.get_vars._next \
                 or request.post_vars._next \
                 or self.settings.delete_next
-        if message == DEFAULT:
+        if message is DEFAULT:
             message = self.messages.record_deleted
         record = table[record_id]
         if record:
