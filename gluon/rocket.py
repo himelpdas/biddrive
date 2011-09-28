@@ -515,7 +515,7 @@ class Listener(Thread):
             # Generally this happens when an HTTP request is received on a
             # secure socket. We don't do anything because it will be detected
             # by Worker and dealt with appropriately.
-            self.err_log.error('SSL Error: %s' % traceback.format_exc())
+            # self.err_log.error('SSL Error: %s' % traceback.format_exc())
             pass
 
         return sock
