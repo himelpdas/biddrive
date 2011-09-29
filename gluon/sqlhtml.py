@@ -1796,7 +1796,7 @@ class SQLFORM(FORM):
                         name = db[referee]._format % record
                     except TypeError:
                         name = id
-                    breadcrumbs += [A(T(referee),
+                    breadcrumbs += [A(T(db[referee]._plural.capitalize()),
                                       _href=URL(args=request.args[:args])),' ',
                                     A(name,
                                       _href=URL(args=request.args[:args]+[
@@ -1827,13 +1827,13 @@ class SQLFORM(FORM):
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
                 links.append(
-                    lambda row,t=T(tablename),args=args,args0=args0:\
+                    lambda row,t=T(db[tablename]._plural.capitalize()),args=args,args0=args0:\
                         A(SPAN(t),_href=URL(
                             args=request.args[:args]+[args0,row.id])))
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):
-            breadcrumbs.append(A(T(table._tablename),
+            breadcrumbs.append(A(T(table._plural.capitalize()),
                                  _href=URL(args=request.args[:args])))
             grid.insert(0,DIV(H3(*breadcrumbs),_class='web2py_breadcrumbs'))
         return grid

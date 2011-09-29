@@ -316,6 +316,28 @@ if not 'google' in drivers:
     except:
         logger.debug('no mongoDB driver')
 
+PLURALIZE_RULES = [
+    (re.compile('child$'), re.compile('child$'), 'children'), 
+    (re.compile('oot$'), re.compile('oot$'), 'eet'), 
+    (re.compile('ooth$'), re.compile('ooth$'), 'eeth'), 
+    (re.compile('l[eo]af$'), re.compile('l([eo])af$'), 'l\\1aves'), 
+    (re.compile('sis$'), re.compile('sis$'), 'ses'), 
+    (re.compile('man$'), re.compile('man$'), 'men'), 
+    (re.compile('ife$'), re.compile('ife$'), 'ives'), 
+    (re.compile('eau$'), re.compile('eau$'), 'eaux'), 
+    (re.compile('lf$'), re.compile('lf$'), 'lves'), 
+    (re.compile('[sxz]$'), re.compile('$'), 'es'), 
+    (re.compile('[^aeioudgkprt]h$'), re.compile('$'), 'es'), 
+    (re.compile('(qu|[^aeiou])y$'), re.compile('y$'), 'ies'), 
+    (re.compile('$'), re.compile('$'), 's'),
+    ]
+    
+def pluralize(singular, rules=PLURALIZE_RULES):        
+    for line in rules:
+        re_search, re_sub, replace = line
+        plural = re_search.search(singular) and re_sub.sub(replace, singular)
+        if plural: return plural
+
 def OR(a,b):
     return a|b
 
@@ -539,7 +561,10 @@ class BaseAdapter(ConnectionPool):
         return '%s_sequence' % tablename
 
 
-    def create_table(self, table, migrate=True, fake_migrate=False, polymodel=None):
+    def create_table(self, table,
+                     migrate=True,
+                     fake_migrate=False,
+                     polymodel=None):
         fields = []
         sql_fields = {}
         sql_fields_aux = {}
@@ -4439,15 +4464,20 @@ def index():
         for key in args:
             if key not in [
                     'migrate',
-                    'primarykey',
+                    'primarykey',                    
                     'fake_migrate',
                     'format',
+                    'singular',
+                    'plural',
                     'trigger_name',
                     'sequence_name',
                     'polymodel',
                     'table_class']:
                 raise SyntaxError, 'invalid table "%s" attribute: %s' \
                     % (tablename, key)
+        if not isinstance(tablename,str):
+            raise SyntaxError, "missing table name"
+        tablename = cleanup(tablename)
         migrate = self._migrate_enabled and args.get('migrate',
                                                      self._migrate)
         fake_migrate = self._fake_migrate_all or args.get('fake_migrate',
@@ -4456,11 +4486,10 @@ def index():
         format = args.get('format',None)
         trigger_name = args.get('trigger_name', None)
         sequence_name = args.get('sequence_name', None)
-        primarykey=args.get('primarykey',None)
-        polymodel=args.get('polymodel',None)
-        if not isinstance(tablename,str):
-            raise SyntaxError, "missing table name"
-        tablename = cleanup(tablename)
+        primarykey =args.get('primarykey',None)
+        polymodel = args.get('polymodel',None)
+        singular = args.get('singular',tablename).replace('_',' ')
+        plural = args.get('plural',pluralize(singular))
         lowertablename = tablename.lower()
 
         if tablename.startswith('_') or hasattr(self,lowertablename) or \
@@ -4496,6 +4525,8 @@ def index():
             t._dbt = None
         self.tables.append(tablename)
         t._format = format
+        t._singular = singular
+        t._plural = plural
         return t
 
     def __iter__(self):
