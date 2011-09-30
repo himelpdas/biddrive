@@ -2184,10 +2184,9 @@ class web2pyHTMLParser(HTMLParser):
         else:
             self.last = tag.tag[:-1]
     def handle_data(self,data):
-        try:
-            self.parent.append(data.encode('utf8','xmlcharref'))
-        except:
-            self.parent.append(data.decode('latin1').encode('utf8','xmlcharref'))
+        if not isinstance(data,unicode):
+            data = data.decode('utf8')
+        self.parent.append(data.encode('utf8','xmlcharref'))
     def handle_charref(self,name):
         if name[1].lower()=='x':
             self.parent.append(unichr(int(name[2:], 16)).encode('utf8'))
