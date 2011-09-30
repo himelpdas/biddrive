@@ -1821,8 +1821,10 @@ class SQLFORM(FORM):
             links = links.get(table._tablename,[])
         for key in 'columns,orderby,searchable,sortable,paginate,deletable,editable,details,selectable,create'.split(','):
             if isinstance(kwargs.get(key,None),dict):
-                kwargs[key] = kwargs[key][table._tablename]
-
+                if table._tablename in kwargs[key]:
+                    kwargs[key] = kwargs[key][table._tablename]
+                else:
+                    del kwargs[key]
         for tablename,fieldname in table._referenced_by:
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
