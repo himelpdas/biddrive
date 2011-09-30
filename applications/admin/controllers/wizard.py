@@ -315,10 +315,10 @@ def make_table(table,fields):
 
         ### determine field representation
         elif 'wiki' in has:
-            s+=",\n          represent=lambda x: MARKMIN(x)"
+            s+=",\n          represent=lambda x, row: MARKMIN(x)"
             s+=",\n          comment='WIKI (markmin)'"
         elif 'html' in has:
-            s+=",\n          represent=lambda x: XML(x,sanitize=True)"
+            s+=",\n          represent=lambda x, row: XML(x,sanitize=True)"
             s+=",\n          comment='HTML (sanitized)'"
         ### determine field access
         if name=='password' or 'writeonly' in has:
