@@ -4488,8 +4488,8 @@ def index():
         sequence_name = args.get('sequence_name', None)
         primarykey =args.get('primarykey',None)
         polymodel = args.get('polymodel',None)
-        singular = args.get('singular',tablename).replace('_',' ')
-        plural = args.get('plural',pluralize(singular))
+        singular = args.get('singular',tablename).replace('_',' ').capitalize()
+        plural = args.get('plural',pluralize(singular.lower())).capitalize()
         lowertablename = tablename.lower()
 
         if tablename.startswith('_') or hasattr(self,lowertablename) or \
