@@ -2840,8 +2840,8 @@ class CubridAdapter(MySQLAdapter):
             raise SyntaxError, 'Database name required'
         port = int(m.group('port') or '30000')
         charset = m.group('charset') or 'utf8'
-        user=credential_decoder(user),
-        passwd=credential_decoder(password),        
+        user = credential_decoder(user)
+        passwd = credential_decoder(password)
         def connect(host=host,port=port,db=db,
                     user=user,passwd=password,driver_args=driver_args):
             return self.driver.connect(host,port,db,user,passwd,**driver_args)
