@@ -60,6 +60,16 @@ function web2py_trap_form(action,target) {
       });
    });
 }
+function web2py_trap_link(target) {
+    jQuery('#'+target+' a.w2p_trap').each(function(i){
+	    var link=jQuery(this);
+	    link.click(function(e) {
+		    jQuery('.flash').hide().html('');
+		    web2py_ajax_page('get',link.attr('href'),[],target);
+		    e.preventDefault();
+		});
+	});  
+}
 function web2py_ajax_page(method,action,data,target) {
   jQuery.ajax({'type':method,'url':action,'data':data,
     'beforeSend':function(xhr) {
@@ -75,6 +85,7 @@ function web2py_ajax_page(method,action,data,target) {
       else if(content=='append') t.append(html);
       else if(content!='hide') t.html(html);  
       web2py_trap_form(action,target);
+      web2py_trap_link(target);
       web2py_ajax_init();      
       if(command) eval(command);
       if(flash) jQuery('.flash').html(flash).slideDown();

@@ -32,17 +32,15 @@ function web2py_ajax_init() {
   var confirm_message = (typeof w2p_ajax_confirm_message != 'undefined') ? w2p_ajax_confirm_message : "Are you sure you want to delete this object?";
   jQuery("input[type='checkbox'].delete").live('click', function(){ if(this.checked) if(!confirm(confirm_message)) this.checked=false; });
   var date_format = (typeof w2p_ajax_date_format != 'undefined') ? w2p_ajax_date_format : "%Y-%m-%d";
-  try {jQuery("input.date").live('focus',function() {Calendar.setup({
-     inputField:this, ifFormat:date_format, showsTime:false
-  }); }); } catch(e) {};
   var datetime_format = (typeof w2p_ajax_datetime_format != 'undefined') ? w2p_ajax_datetime_format : "%Y-%m-%d %H:%M:%S";
-  try { jQuery("input.datetime").live('focus', function() {Calendar.setup({
-     inputField:this, ifFormat:datetime_format, showsTime: true,timeFormat: "24"
-  }); }); } catch(e) {};
-
-  jQuery("input.time").live('focus', function() { var el = jQuery(this); 
-          if (!el.hasClass('hasTimeEntry')) try { el.timeEntry(); } catch(e) {}; 
-  });
+  try {
+      jQuery("input.datetime").AnyTime_picker({
+	      format: datetime_format.replace('%M','%i')});
+      jQuery("input.date").AnyTime_picker({
+	      format: date_format.replace('%M','%i')});
+      jQuery("input.time").AnyTime_picker({
+	      format: "%H:%i:%S"});
+  } catch(e) {};
 };
 
 jQuery(function() {   
@@ -62,6 +60,16 @@ function web2py_trap_form(action,target) {
       });
    });
 }
+function web2py_trap_link(target) {
+    jQuery('#'+target+' a.w2p_trap').each(function(i){
+	    var link=jQuery(this);
+	    link.click(function(e) {
+		    jQuery('.flash').hide().html('');
+		    web2py_ajax_page('get',link.attr('href'),[],target);
+		    e.preventDefault();
+		});
+	});  
+}
 function web2py_ajax_page(method,action,data,target) {
   jQuery.ajax({'type':method,'url':action,'data':data,
     'beforeSend':function(xhr) {
@@ -77,6 +85,7 @@ function web2py_ajax_page(method,action,data,target) {
       else if(content=='append') t.append(html);
       else if(content!='hide') t.html(html);  
       web2py_trap_form(action,target);
+      web2py_trap_link(target);
       web2py_ajax_init();      
       if(command) eval(command);
       if(flash) jQuery('.flash').html(flash).slideDown();

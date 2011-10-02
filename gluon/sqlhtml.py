@@ -31,6 +31,9 @@ import cStringIO
 table_field = re.compile('[\w_]+\.[\w_]+')
 widget_class = re.compile('^\w*')
 
+def trap(_class=None):
+    return 'w2p_trap'+(_class and ' '+_class or '')
+
 def represent(field,value,record):
     f = field.represent
     if not callable(f):
@@ -1377,22 +1380,23 @@ class SQLFORM(FORM):
                              SPAN(T(buttontext),_title=buttontext,
                                   _class=ui.get('buttontext','')),
                              callback=callback,delete=delete,
-                             _class=ui.get('button',''))
+                             _class=trap(ui.get('button','')))
                 else:
                     return A(SPAN(_class=ui.get(buttonclass,'')), 
                              SPAN(T(buttontext),_title=buttontext,
                                   _class=ui.get('buttontext','')),
-                             _href=buttonurl,_class=ui.get('button',''))
+                             _href=buttonurl,
+                             _class=trap(ui.get('button','')))
             else:
                 if callback:
                     return A(SPAN(_class=ui.get(buttonclass,'')),
                              callback=callback,delete=delete,
-                             _title=buttontext,_class=ui.get('buttontext',''))
+                             _title=buttontext,
+                             _class=trap(ui.get('buttontext','')))
                 else:
                     return A(SPAN(_class=ui.get(buttonclass,'')),
                              _href=buttonurl,_title=buttontext,
-                             _class=ui.get('buttontext',''))
-
+                             _class=trap(ui.get('buttontext','')))
         dbset = db(query)
         tables = [db[tablename] for tablename in db._adapter.tables(
                 dbset.query)]
@@ -1599,7 +1603,7 @@ class SQLFORM(FORM):
                     marker = ''
                 header = A(header,marker,_href=url(vars=dict(
                             keywords=request.vars.keywords or '',
-                            order=key)))
+                            order=key)),_class=trap())
             head.append(TH(header, _class=ui.get('default','')))
             
         for link in links or []:
@@ -1619,7 +1623,7 @@ class SQLFORM(FORM):
                 d = dict(page=p+1)
                 if order: d['order']=order
                 if request.vars.keywords: d['keywords']=request.vars.keywords
-                return A(name,_href=url(vars=d))
+                return A(name,_href=url(vars=d),_class=trap())
             if page>0:
                 paginator.append(LI(self_link('<<',0)))
             if page>1:
@@ -1628,7 +1632,7 @@ class SQLFORM(FORM):
             for p in pages:
                 if p == page:
                     paginator.append(LI(A(p+1,_onclick='return false'),
-                                        _class='current'))
+                                        _class=trap('current')))
                 else:
                     paginator.append(LI(self_link(p+1,p)))
             if page<npages-2:
@@ -1796,9 +1800,9 @@ class SQLFORM(FORM):
                         name = db[referee]._format % record
                     except TypeError:
                         name = id
-                    breadcrumbs += [A(T(db[referee]._plural),
+                    breadcrumbs += [A(T(db[referee]._plural),_class=trap(),
                                       _href=URL(args=request.args[:args])),' ',
-                                    A(name,
+                                    A(name,_class=trap(),
                                       _href=URL(args=request.args[:args]+[
                                     'view',referee,id],user_signature=True)),
                                     ' > ']
@@ -1808,7 +1812,7 @@ class SQLFORM(FORM):
             if args>1:
                 query = (field == id)
                 if linked_tables is None or referee in linked_tables:
-                    field.represent = lambda id,r=None,referee=referee,rep=field.represent: A(rep(id),_href=URL(args=request.args[:args]+['view',referee,id], user_signature=user_signature))
+                    field.represent = lambda id,r=None,referee=referee,rep=field.represent: A(rep(id),_class=trap(),_href=URL(args=request.args[:args]+['view',referee,id], user_signature=user_signature))
         except (KeyError,ValueError,TypeError):
             redirect(URL(args=table._tablename))
         if args==1:
@@ -1830,12 +1834,12 @@ class SQLFORM(FORM):
                 args0 = tablename+'.'+fieldname
                 links.append(
                     lambda row,t=T(db[tablename]._plural),args=args,args0=args0:\
-                        A(SPAN(t),_href=URL(
+                        A(SPAN(t),_class=trap(),_href=URL(
                             args=request.args[:args]+[args0,row.id])))
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):
-            breadcrumbs.append(A(T(table._plural),
+            breadcrumbs.append(A(T(table._plural),_class=trap(),
                                  _href=URL(args=request.args[:args])))
             grid.insert(0,DIV(H3(*breadcrumbs),_class='web2py_breadcrumbs'))
         return grid
