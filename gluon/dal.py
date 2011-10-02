@@ -39,7 +39,7 @@ Example of usage:
 ### create DAL connection (and create DB if not exists)
 >>> db=DAL(('mysql://a:b@locahost/x','sqlite://storage.sqlite'),folder=None)
 
-### define a table 'person' (create/aster as necessary)
+### define a table 'person' (create/alter as necessary)
 >>> person = db.define_table('person',Field('name','string'))
 
 ### insert a record
