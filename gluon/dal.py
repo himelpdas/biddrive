@@ -2856,7 +2856,7 @@ class DatabaseStoredFile:
     web2py_filesystem = False
 
     def escape(self,obj):
-        return self.db._adapter.esacpe(obj)    
+        return self.db._adapter.escape(obj)    
 
     def __init__(self,db,filename,mode):
         if db._adapter.dbengine != 'mysql':
