@@ -2841,8 +2841,9 @@ class CubridAdapter(MySQLAdapter):
         port = int(m.group('port') or '30000')
         charset = m.group('charset') or 'utf8'
         user=credential_decoder(user),
-        passwd=credential_decoder(password),
-        def connect(host,port,db,user,passwd,driver_args=driver_args):
+        passwd=credential_decoder(password),        
+        def connect(host=host,port=port,db=db,
+                    user=user,passwd=password,driver_args=driver_args):
             return self.driver.connect(host,port,db,user,passwd,**driver_args)
         self.pool_connection(connect)
         self.execute('SET FOREIGN_KEY_CHECKS=1;')
@@ -2912,8 +2913,7 @@ class DatabaseStoredFile:
     def exists(db,filename):
         if os.path.exists(filename):
             return True
-        query = "SELECT path FROM web2py_filesystem WHERE path=%s" \
-            % self.adapt(filename)
+        query = "SELECT path FROM web2py_filesystem WHERE path='%s'" % filename
         if db.executesql(query):
             return True
         return False
