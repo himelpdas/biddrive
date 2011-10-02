@@ -966,15 +966,23 @@ class BaseAdapter(ConnectionPool):
         return '(%s <> %s)' % (self.expand(first),self.expand(second,first.type))
 
     def LT(self,first,second=None):
+        if second is None:
+            raise RuntimeError, "Cannot compare %s < None" % first
         return '(%s < %s)' % (self.expand(first),self.expand(second,first.type))
 
     def LE(self,first,second=None):
+        if second is None:
+            raise RuntimeError, "Cannot compare %s <= None" % first
         return '(%s <= %s)' % (self.expand(first),self.expand(second,first.type))
 
     def GT(self,first,second=None):
+        if second is None:
+            raise RuntimeError, "Cannot compare %s > None" % first
         return '(%s > %s)' % (self.expand(first),self.expand(second,first.type))
 
     def GE(self,first,second=None):
+        if second is None:
+            raise RuntimeError, "Cannot compare %s >= None" % first
         return '(%s >= %s)' % (self.expand(first),self.expand(second,first.type))
 
     def ADD(self,first,second):
