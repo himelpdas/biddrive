@@ -4626,9 +4626,18 @@ def index():
             by[:] = [item for item in by if not item[0] == other]
 
     def export_to_csv_file(self, ofile, *args, **kwargs):
+        step = int(kwargs.get('max_fetch_rows,',500))
+        write_colnames = kwargs['write_colnames'] = \
+            kwargs.get("write_colnames", True)        
         for table in self.tables:
             ofile.write('TABLE %s\r\n' % table)
-            self(self[table]._id > 0).select().export_to_csv_file(ofile, *args, **kwargs)
+            query = self[table]._id > 0
+            nrows = self(query).count()
+            kwargs['write_colnames'] = write_colnames
+            for k in range(0,nrows,step):
+                self(query).select(limitby=(k,k+step)).export_to_csv_file(
+                    ofile, *args, **kwargs)
+                kwargs['write_colnames'] = False
             ofile.write('\r\n\r\n')
         ofile.write('END')
 
@@ -6037,8 +6046,10 @@ class Rows(object):
         writer = csv.writer(ofile, delimiter=delimiter,
                             quotechar=quotechar, quoting=quoting)
         colnames = kwargs.get('colnames', self.colnames)
+        write_colnames = kwargs.get('write_colnames',True)
         # a proper csv starting with the column names
-        writer.writerow(colnames)
+        if write_colnames:
+            writer.writerow(colnames)
 
         def none_exception(value):
             """
