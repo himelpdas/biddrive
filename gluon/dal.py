@@ -4033,11 +4033,13 @@ def smart_query(fields,text):
             elif op == '<': new_query = field<value
             elif op == '>': new_query = field>value                
             elif op == '<=': new_query = field<=value
-            elif op == '>=': new_query = field>=value                
-            elif op == 'contains': new_query = field.contains(value)
-            elif op == 'like': new_query = field.like(value)
-            elif op == 'startswith': new_query = field.startswith(value)
-            elif op == 'endswith': new_query = field.endswith(value)
+            elif op == '>=': new_query = field>=value
+            elif field.type in ('text','string'):
+                if op == 'contains': new_query = field.contains(value)
+                elif op == 'like': new_query = field.like(value)
+                elif op == 'startswith': new_query = field.startswith(value)
+                elif op == 'endswith': new_query = field.endswith(value)
+                else: raise RuntimeError, "Invalid operation"
             else: raise RuntimeError, "Invalid operation"
             if neg: new_query = ~new_query                
             if query is None:
