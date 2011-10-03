@@ -31,8 +31,8 @@ import cStringIO
 table_field = re.compile('[\w_]+\.[\w_]+')
 widget_class = re.compile('^\w*')
 
-def trap(_class=None):
-    return 'w2p_trap'+(_class and ' '+_class or '')
+def trap_class(_class=None,trap=True):
+    return (trap and 'w2p_trap' or '')+(_class and ' '+_class or '')
 
 def represent(field,value,record):
     f = field.represent
@@ -1285,6 +1285,20 @@ class SQLFORM(FORM):
                        **attributes)
 
     @staticmethod
+    def build_query(fields,keywords):
+        key = keywords.strip()
+        if key and not ' ' in key:
+            SEARCHABLE_TYPES = ('string','text','list:string')
+            parts = [field.contains(key) for field in fields if field.type in SEARCHABLE_TYPES]
+        else:
+            parts = None
+        if parts:
+            return reduce(lambda a,b: a|b,parts)
+        else:
+            return smart_query(fields,key)
+        
+ 
+    @staticmethod
     def grid(query,
              fields=None,
              field_id=None,
@@ -1373,30 +1387,30 @@ class SQLFORM(FORM):
             b['user_signature'] = user_signature
             return URL(**b)
 
-        def gridbutton(buttonclass='buttonadd',buttontext='Add',buttonurl=url(args=[]),callback=None,delete=None):
+        def gridbutton(buttonclass='buttonadd',buttontext='Add',buttonurl=url(args=[]),callback=None,delete=None,trap=True):
             if showbuttontext:
                 if callback:
                     return A(SPAN(_class=ui.get(buttonclass,'')), 
                              SPAN(T(buttontext),_title=buttontext,
                                   _class=ui.get('buttontext','')),
                              callback=callback,delete=delete,
-                             _class=trap(ui.get('button','')))
+                             _class=trap_class(ui.get('button',''),trap))
                 else:
                     return A(SPAN(_class=ui.get(buttonclass,'')), 
                              SPAN(T(buttontext),_title=buttontext,
                                   _class=ui.get('buttontext','')),
                              _href=buttonurl,
-                             _class=trap(ui.get('button','')))
+                             _class=trap_class(ui.get('button',''),trap))
             else:
                 if callback:
                     return A(SPAN(_class=ui.get(buttonclass,'')),
                              callback=callback,delete=delete,
                              _title=buttontext,
-                             _class=trap(ui.get('buttontext','')))
+                             _class=trap_class(ui.get('buttontext',''),trap))
                 else:
                     return A(SPAN(_class=ui.get(buttonclass,'')),
                              _href=buttonurl,_title=buttontext,
-                             _class=trap(ui.get('buttontext','')))
+                             _class=trap_class(ui.get('buttontext',''),trap))
         dbset = db(query)
         tables = [db[tablename] for tablename in db._adapter.tables(
                 dbset.query)]
@@ -1493,6 +1507,11 @@ class SQLFORM(FORM):
                 return ondelete(table,request.args[-2],ret)
             return ret
         elif csv and len(request.args)>0 and request.args[-1]=='csv':
+            if request.vars.keywords:
+                try:
+                    dbset=dbset(SQLFORM.build_query(fields,request.vars.keywords))
+                except:
+                    raise HTTP(400)
             check_authorization()
             response.headers['Content-Type'] = 'text/csv'
             response.headers['Content-Disposition'] = \
@@ -1505,8 +1524,6 @@ class SQLFORM(FORM):
             request.vars.records=[request.vars.records]
         elif not request.vars.records:
             request.vars.records=[]
-        def OR(a,b): return a|b
-        def AND(a,b): return a&b
 
         session['_web2py_grid_referrer_'+formname] = \
             URL(args=request.args,vars=request.vars,
@@ -1523,27 +1540,18 @@ class SQLFORM(FORM):
                         _method="GET",_action=url())
             search_form = form
             console.append(form)
-            key = request.vars.get('keywords','').strip()
-            if searchable==True:
+            keywords = request.vars.get('keywords','')
+            try:
+                subquery = SQLFORM.build_query(fields, keywords)
+            except RuntimeError:
                 subquery = None
-                if key and not ' ' in key:
-                    SEARCHABLE_TYPES = ('string','text','list:string')
-                    parts = [field.contains(key) for field in fields \
-                                 if field.type in SEARCHABLE_TYPES]
-                else:
-                    parts = None
-                if parts:
-                    subquery = reduce(OR,parts)
-                else:
-                    try:
-                        subquery = smart_query(fields,key)
-                    except RuntimeError:
-                        subquery = None
-                        error = T('Invalid query')
-            else:
-                subquery = searchable(key,fields)
-            if subquery:
-                dbset = dbset(subquery)   
+                error = T('Invalid query')
+        elif callable(searchable):
+            subquery = searchable(keywords,fields)
+        else:
+            subquery = None
+        if subquery:
+            dbset = dbset(subquery)   
         try:
             if left:
                 nrows = dbset.select('count(*)',left=left).first()['count(*)']
@@ -1563,7 +1571,8 @@ class SQLFORM(FORM):
             search_actions.append(gridbutton(
                     buttonclass='buttonexport',
                     buttontext='Export',
-                    buttonurl=url(args=['csv'])))
+                    trap = False,
+                    buttonurl=url(args=['csv'],vars=dict(keywords=request.vars.keywords))))
 
         console.append(search_actions)
 
@@ -1603,7 +1612,7 @@ class SQLFORM(FORM):
                     marker = ''
                 header = A(header,marker,_href=url(vars=dict(
                             keywords=request.vars.keywords or '',
-                            order=key)),_class=trap())
+                            order=key)),_class=trap_class())
             head.append(TH(header, _class=ui.get('default','')))
             
         for link in links or []:
@@ -1623,7 +1632,7 @@ class SQLFORM(FORM):
                 d = dict(page=p+1)
                 if order: d['order']=order
                 if request.vars.keywords: d['keywords']=request.vars.keywords
-                return A(name,_href=url(vars=d),_class=trap())
+                return A(name,_href=url(vars=d),_class=trap_class())
             if page>0:
                 paginator.append(LI(self_link('<<',0)))
             if page>1:
@@ -1632,7 +1641,7 @@ class SQLFORM(FORM):
             for p in pages:
                 if p == page:
                     paginator.append(LI(A(p+1,_onclick='return false'),
-                                        _class=trap('current')))
+                                        _class=trap_class('current')))
                 else:
                     paginator.append(LI(self_link(p+1,p)))
             if page<npages-2:
@@ -1800,9 +1809,9 @@ class SQLFORM(FORM):
                         name = db[referee]._format % record
                     except TypeError:
                         name = id
-                    breadcrumbs += [A(T(db[referee]._plural),_class=trap(),
+                    breadcrumbs += [A(T(db[referee]._plural),_class=trap_class(),
                                       _href=URL(args=request.args[:args])),' ',
-                                    A(name,_class=trap(),
+                                    A(name,_class=trap_class(),
                                       _href=URL(args=request.args[:args]+[
                                     'view',referee,id],user_signature=True)),
                                     ' > ']
@@ -1812,7 +1821,7 @@ class SQLFORM(FORM):
             if args>1:
                 query = (field == id)
                 if linked_tables is None or referee in linked_tables:
-                    field.represent = lambda id,r=None,referee=referee,rep=field.represent: A(rep(id),_class=trap(),_href=URL(args=request.args[:args]+['view',referee,id], user_signature=user_signature))
+                    field.represent = lambda id,r=None,referee=referee,rep=field.represent: A(rep(id),_class=trap_class(),_href=URL(args=request.args[:args]+['view',referee,id], user_signature=user_signature))
         except (KeyError,ValueError,TypeError):
             redirect(URL(args=table._tablename))
         if args==1:
@@ -1834,12 +1843,12 @@ class SQLFORM(FORM):
                 args0 = tablename+'.'+fieldname
                 links.append(
                     lambda row,t=T(db[tablename]._plural),args=args,args0=args0:\
-                        A(SPAN(t),_class=trap(),_href=URL(
+                        A(SPAN(t),_class=trap_class(),_href=URL(
                             args=request.args[:args]+[args0,row.id])))
         grid=SQLFORM.grid(query,args=request.args[:args],links=links,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):
-            breadcrumbs.append(A(T(table._plural),_class=trap(),
+            breadcrumbs.append(A(T(table._plural),_class=trap_class(),
                                  _href=URL(args=request.args[:args])))
             grid.insert(0,DIV(H3(*breadcrumbs),_class='web2py_breadcrumbs'))
         return grid
