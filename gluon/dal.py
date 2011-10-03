@@ -4243,34 +4243,34 @@ class DAL(dict):
         else:
             return False
 
-    def parse_as_rest(self,patterns,args,vars,query=None,nested_select=True):
+    def parse_as_rest(self,patterns,args,vars,queries=None,nested_select=True):
         """
         EXAMPLE:
 
 db.define_table('person',Field('name'),Field('info'))
-db.define_table('pet',Field('person',db.person),Field('name'),Field('info'))
+db.define_table('pet',Field('owner',db.person),Field('name'),Field('info'))
 
 @request.restful()
 def index():
-    def GET(*kargs,**kvars):
+    def GET(*args,**vars):
         patterns = [
-            "/persons[person]",
-            "/{person.name.startswith}",
-            "/{person.name}/:field",
-            "/{person.name}/pets[pet.person]",
-            "/{person.name}/pet[pet.person]/{pet.name}",
-            "/{person.name}/pet[pet.person]/{pet.name}/:field"
+            "/friends[person]",
+            "/{friend.name.startswith}",
+            "/{friend.name}/:field",
+            "/{friend.name}/pets[pet.owner]",
+            "/{friend.name}/pet[pet.owner]/{pet.name}",
+            "/{friend.name}/pet[pet.owner]/{pet.name}/:field"
             ]
-        parser = db.parse_as_rest(patterns,kargs,kvars)
+        parser = db.parse_as_rest(patterns,args,vars)
         if parser.status == 200:
             return dict(content=parser.response)
         else:
             raise HTTP(parser.status,parser.error)
-    def POST(table_name,**kvars):
+    def POST(table_name,**vars):
         if table_name == 'person':
-            return db.person.validate_and_insert(**kvars)
+            return db.person.validate_and_insert(**vars)
         elif table_name == 'pet':
-            return db.pet.validate_and_insert(**kvars)
+            return db.pet.validate_and_insert(**vars)
         else:
             raise HTTP(400)
     return locals()
@@ -4290,7 +4290,7 @@ def index():
                 f = db[table][field]
                 if not f.readable: continue
                 if f.type=='id' or 'slug' in field or f.type.startswith('reference'):
-                    tag += '/{%s.%s}' % (table,field)
+                    tag += '/{%s.%s}' % (table,field)                    
                     patterns.append(tag)
                     patterns.append(tag+'/:field')
                 elif f.type.startswith('boolean'):
@@ -4336,6 +4336,7 @@ def index():
             patterns=[]
             for table in db.tables:
                 if not table.startswith('auth_'):
+                    patterns.append('/%s[%s]' % (table,table))
                     patterns += auto_table(table,base='',depth=1)
         else:
             i = 0
@@ -4343,7 +4344,8 @@ def index():
                 pattern = patterns[i]
                 tokens = pattern.split('/')
                 if tokens[-1].startswith(':auto') and re2.match(tokens[-1]):
-                    new_patterns = auto_table(tokens[-1][tokens[-1].find('[')+1:-1],'/'.join(tokens[:-1]))
+                    new_patterns = auto_table(tokens[-1][tokens[-1].find('[')+1:-1],
+                                              '/'.join(tokens[:-1]))
                     patterns = patterns[:i]+new_patterns+patterns[i+1:]
                     i += len(new_patterns)
                 else:
@@ -4353,14 +4355,13 @@ def index():
                         'error':None,'response':patterns})
         for pattern in patterns:
             otable=table=None
-            dbset=db(query)
+            if not isinstance(queries,dict):
+                dbset=db(queries)            
             i=0
             tags = pattern[1:].split('/')
-            # print pattern
             if len(tags)!=len(args):
-                continue
+                continue            
             for tag in tags:
-                # print i, tag, args[i]
                 if re1.match(tag):
                     # print 're1:'+tag
                     tokens = tag[1:-1].split('.')
@@ -4400,13 +4401,14 @@ def index():
                             query = ~query
                         elif len(tokens)>=4:
                             raise RuntimeError, "invalid pattern: %s" % pattern
+                        if not otable and isinstance(queries,dict):
+                            dbset = db(queries[table])
                         dbset=dbset(query)
                     else:
                         raise RuntimeError, "missing relation in pattern: %s" % pattern
-                elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]:
-                    # print 're2:'+tag
+                elif re2.match(tag) and args[i]==tag[:tag.find('[')]:
                     ref = tag[tag.find('[')+1:-1]
-                    if '.' in ref:
+                    if '.' in ref and otable:
                         table,field = ref.split('.')
                         # print table,field
                         if nested_select:
@@ -4419,7 +4421,10 @@ def index():
                             items = [item.id for item in dbset.select(db[otable]._id)]
                             dbset=db(db[table][field].belongs(items))
                     else:
-                        dbset=dbset(db[ref])
+                        table = ref
+                        if not otable and isinstance(queries,dict):
+                            dbset = db(queries[table])
+                        dbset=dbset(db[table])
                 elif tag==':field' and table:
                     # # print 're3:'+tag
                     field = args[i]
@@ -4440,17 +4445,16 @@ def index():
                 otable = table
                 i += 1
                 if i==len(tags) and table:
-                    otable,ofield = vars.get('order','%s.%s' % (table,field)).split('.',1)
+                    ofields = vars.get('order',db[table]._id.name).split('|')
                     try:
-                        if otable[:1]=='~': orderby = ~db[otable[1:]][ofield]
-                        else: orderby = db[otable][ofield]
+                        orderby = [db[table][f] if not f.startswith('~') else ~db[table][f[1:]] for f in ofields]
                     except KeyError:
                         return Row({'status':400,'error':'invalid orderby','response':None})
                     fields = [field for field in db[table] if field.readable]
                     count = dbset.count()
                     try:
-                        limits = (int(vars.get('min',0)),int(vars.get('max',1000)))
-                        if limits[0]<0 or limits[1]<limits[0]: raise ValueError
+                        offset = int(vars.get('offset',None) or 0)
+                        limits = (offset,int(vars.get('limit',None) or 1000)+offset)
                     except ValueError:
                         Row({'status':400,'error':'invalid limits','response':None})
                     if count > limits[1]-limits[0]:
