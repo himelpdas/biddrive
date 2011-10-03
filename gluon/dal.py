@@ -3956,6 +3956,7 @@ def smart_query(fields,text):
                 new_fields.append(ofield)
         else:
             raise RuntimeError, "fields must be a list of fields"
+    fields = new_fields
     field_map = {}
     for field in fields:
         n = field.name.lower()
