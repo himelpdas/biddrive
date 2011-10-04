@@ -4503,8 +4503,8 @@ def index():
         sequence_name = args.get('sequence_name', None)
         primarykey =args.get('primarykey',None)
         polymodel = args.get('polymodel',None)
-        singular = args.get('singular',tablename).replace('_',' ').capitalize()
-        plural = args.get('plural',pluralize(singular.lower())).capitalize()
+        singular = args.get('singular',tablename.replace('_',' ').capitalize())
+        plural = args.get('plural',pluralize(singular.lower()).capitalize())
         lowertablename = tablename.lower()
 
         if tablename.startswith('_') or hasattr(self,lowertablename) or \
@@ -4977,7 +4977,7 @@ class Table(dict):
         return self[key]
 
     def __setattr__(self, key, value):
-        if key in self:
+        if key[:1]!='_' and key in self:
             raise SyntaxError, 'Object exists and cannot be redefined: %s' % key
         self[key] = value
 
