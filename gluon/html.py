@@ -2004,7 +2004,7 @@ class BEAUTIFY(DIV):
                         value = c[key]
                         if type(value) == types.LambdaType:
                             continue
-                        rows.append(TR(TD(filtered_key, _style='font-weight:bold;'),
+                        rows.append(TR(TD(filtered_key, _style='font-weight:bold;vertical-align:top'),
                                        TD(':',_valign='top'),
                                        TD(BEAUTIFY(value, **attributes))))
                     components.append(TABLE(*rows, **attributes))
