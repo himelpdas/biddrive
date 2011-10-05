@@ -347,7 +347,7 @@ def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=
     # check if user_signature requires
     if user_signature:
         from globals import current
-        if not current.session:
+        if not current.session or not current.session.auth:
             return False
         hmac_key = current.session.auth.hmac_key
     if not hmac_key:
