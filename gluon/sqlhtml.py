@@ -16,7 +16,7 @@ Holds:
 
 from http import HTTP
 from html import XML, SPAN, TAG, A, DIV, CAT, UL, LI, TEXTAREA, BR, IMG, SCRIPT
-from html import FORM, INPUT, LABEL, OPTION, SELECT
+from html import FORM, INPUT, LABEL, OPTION, SELECT, MENU
 from html import TABLE, THEAD, TBODY, TR, TD, TH
 from html import URL
 from dal import DAL, Table, Row, CALLABLETYPES, smart_query
@@ -1297,6 +1297,32 @@ class SQLFORM(FORM):
         else:
             return smart_query(fields,key)
         
+    @staticmethod
+    def search_menu(fields,search_options=None):
+        from gluon import current
+        T = current.T
+        search_options = search_options or {'string':['=','<','>','<=','>=','starts with','contains'],
+                                            'string':['=','<','>','<=','>=','starts with','contains'],
+                                            'date':['=','<','>','<=','>='],
+                                            'time':['=','<','>','<=','>='],
+                                            'datetime':['=','<','>','<=','>='],
+                                            'integer':['=','<','>','<=','>='],
+                                            'double':['=','<','>','<=','>=']}
+        menu = []
+        for field in fields:
+            options = search_options.get(field.type,None)
+            if options:
+                menu.append((T(field.label),False,False,[]))
+                for option in options:
+                    menu[-1][-1].append((T(option),False,False,
+                                         [(SPAN(INPUT(_type=field.type),
+                                                INPUT(_type="button",_value=T('add'),
+                                                      _onclick="w2p_build_search('"+field.name+" "+option+" ',this,event);")),
+                                           False,False)]))			    
+        menu = [(T('Query'),False,False,menu)]
+        return DIV(MENU(menu,_class='sf-menu'),
+                   SCRIPT("function w2p_build_search(a,b,e) { var s=a+'\\''+jQuery(b).prev().val()+'\\''; var k=jQuery('input#web2py_keywords'); var v=k.val(); k.val((v?(v+' and '):'')+s); e.preventDefault();}"),
+                   SCRIPT("jQuery(function(){jQuery('ul.sf-menu').superfish();});"))
  
     @staticmethod
     def grid(query,
@@ -1532,12 +1558,14 @@ class SQLFORM(FORM):
         error = None
         search_form = None
         if searchable:
-            form = FORM(INPUT(_name='keywords',_value=request.vars.keywords,
-                              _id='web2py_keywords'),
-                        INPUT(_type='submit',_value=T('Search')),
-                        INPUT(_type='submit',_value=T('Clear'),
-                              _onclick="jQuery('#web2py_keywords').val('');"),
-                        _method="GET",_action=url())
+            form = FORM(
+                SQLFORM.search_menu([f for f in table if f.readable]),
+                INPUT(_name='keywords',_value=request.vars.keywords,
+                      _id='web2py_keywords'),
+                INPUT(_type='submit',_value=T('Search')),
+                INPUT(_type='submit',_value=T('Clear'),
+                      _onclick="jQuery('#web2py_keywords').val('');"),
+                _method="GET",_action=url())
             search_form = form
             console.append(form)
             keywords = request.vars.get('keywords','')
