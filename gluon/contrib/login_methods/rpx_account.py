@@ -86,7 +86,7 @@ class RPXAccount(object):
                 self.profile = auth_info['profile']
                 provider = re.sub('[^\w\-]','',self.profile['providerName'])
                 user = self.mappings.get(provider,self.mappings.default)(self.profile)
-                if not user.get('registration_id',None):
+                if not user.get('email',None):
                     redirect(self.on_login_failure)
                 return user
             elif self.on_login_failure:
