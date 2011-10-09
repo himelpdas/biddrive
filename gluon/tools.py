@@ -1705,9 +1705,9 @@ class Auth(object):
             cas_user = cas.get_user()
 
             if cas_user:
-                cas_user[passfield] = None
-                user = self.get_or_create_user(
-                    table_user._filter_fields(cas_user))
+                if cas_user.get('email',None) or 'registration_id' in table_user.fields:
+                    cas_user[passfield] = None
+                    user = self.get_or_create_user(table_user._filter_fields(cas_user))
             elif hasattr(cas,'login_form'):
                 return cas.login_form()            
             else:
@@ -1719,7 +1719,7 @@ class Auth(object):
         if user:
             user = Storage(table_user._filter_fields(user, id=True))
 
-        # process authenticated users
+            # process authenticated users
             # user wants to be logged in for longer
             session.auth = Storage(
                 user = user,
