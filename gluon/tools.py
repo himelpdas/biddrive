@@ -1254,6 +1254,9 @@ class Auth(object):
                     Field('reset_password_key', length=512,
                           writable=False, readable=False, default='',
                           label=self.messages.label_reset_password_key),
+                    Field('registration_id', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_registration_id),
                     *settings.extra_fields.get(settings.table_user_name,[]),
                     **dict(
                         migrate=self.__get_migrate(settings.table_user_name,
