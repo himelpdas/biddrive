@@ -1651,12 +1651,12 @@ class SQLFORM(FORM):
         if create:
             search_actions.append(gridbutton(
                     buttonclass='buttonadd',
-                    buttontext='Add',
+                    buttontext=T('Add'),
                     buttonurl=url(args=['new',tablename])))
         if csv:
             search_actions.append(gridbutton(
                     buttonclass='buttonexport',
-                    buttontext='Export',
+                    buttontext=T('Export'),
                     trap = False,
                     buttonurl=url(args=['csv'],vars=dict(keywords=request.vars.keywords))))
 
