@@ -2902,10 +2902,10 @@ class DatabaseStoredFile:
         self.data += data
 
     def close(self):
-        self.db.executesql("DELETE FROM web2py_filesystem WHERE path=%s" \
-                               % self.adapt(self.filename))
-        query = "INSERT INTO web2py_filesystem(path,content) VALUES (%s,%s)"\
-            % (self.adapt(self.filename), self.adapt(self.data))
+        self.db.executesql("DELETE FROM web2py_filesystem WHERE path='%s'" \
+                               % self.filename)
+        query = "INSERT INTO web2py_filesystem(path,content) VALUES ('%s','%s')"\
+            % (self.filename, self.data.replace("'","''"))
         self.db.executesql(query)
         self.db.commit()
 
