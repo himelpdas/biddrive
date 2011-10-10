@@ -1296,9 +1296,64 @@ class SQLFORM(FORM):
             return reduce(lambda a,b: a|b,parts)
         else:
             return smart_query(fields,key)
-        
+
     @staticmethod
     def search_menu(fields,search_options=None):
+        from gluon import current
+        T = current.T
+        search_options = search_options or {
+            'string':['=','<','>','<=','>=','starts with','contains'],
+            'string':['=','<','>','<=','>=','starts with','contains'],
+            'date':['=','<','>','<=','>='],
+            'time':['=','<','>','<=','>='],
+            'datetime':['=','<','>','<=','>='],
+            'integer':['=','<','>','<=','>='],
+            'double':['=','<','>','<=','>=']}
+        criteria = []
+        selectfields = {'':''}
+        for field in fields:
+            name = str(field).replace('.','-')
+            criterion = []
+            options = search_options.get(field.type,None)
+            if options:
+                selectfields[T(field.label)] = str(field)
+                operators = SELECT(*[T(option) for option in options])
+                value_input = INPUT(_type='text',_class=field.type+' w2p_query_value')
+                and_button = INPUT(_type="button", _value=T('And'),
+                                   _onclick="w2p_build_query('and','"+str(field)+"')")
+                or_button = INPUT(_type="button", _value=T('Or'),
+                                  _onclick="w2p_build_query('or','"+str(field)+"')")
+                criterion.extend([operators,value_input,and_button,or_button])
+            criteria.append(DIV(criterion, _id='w2p_field_%s' % name,
+                                _class='w2p_query_row hidden'))
+        criteria.insert(0,SELECT(
+                _id="w2p_query_fields",
+                _onchange="jQuery('.w2p_query_row').hide();"+\
+                    "jQuery('#w2p_field_'+jQuery(this).val().replace('.','-')).show();",
+                *[OPTION(label, _value=selectfields[label]) for label in selectfields]))
+        fadd = SCRIPT("""
+        jQuery('#w2p_query_panel input,#w2p_query_panel select').css('width','auto').css('float','left');
+        function w2p_build_query(aggregator,a){
+          var b=a.replace('.','-');
+          var option = jQuery('#w2p_field_'+b+' select').val();
+          var value = jQuery('#w2p_field_'+b+' .w2p_query_value').val().replace('"','\\\\"');
+          var s=a+' '+option+' "'+value+'"';
+          var k=jQuery('#web2py_keywords');
+          var v=k.val();
+          k.val((v?(v+' '+ aggregator +' '):'')+s);
+          jQuery('#w2p_query_fields').val('');
+          jQuery('#w2p_query_panel').slideUp();
+        }
+        """)
+        return CAT(
+            DIV(_id="w2p_query_panel",_style='position:absolute;z-index:1000',_class='hidden',*criteria),
+            fadd,
+            INPUT(
+                _value="query",_type="button",_id="w2p_query_trigger",
+                _onclick="jQuery('#w2p_query_fields').val('');jQuery('#w2p_query_panel').slideToggle();"))
+            
+    @staticmethod
+    def search_menu2(fields,search_options=None):
         from gluon import current
         T = current.T
         search_options = search_options or {'string':['=','<','>','<=','>=','starts with','contains'],
@@ -1356,6 +1411,7 @@ class SQLFORM(FORM):
              showbuttontext=True,
              _class="web2py_grid",             
              formname='web2py_grid',
+             search_widget='default',
             ):
 
         # jQuery UI ThemeRoller classes (empty if ui is disabled)
@@ -1397,7 +1453,7 @@ class SQLFORM(FORM):
                       )
         elif not isinstance(ui,dict):
             raise RuntimeError,'SQLFORM.grid ui argument must be a dictionary'
-
+        
         from gluon import current, redirect
         db = query._db
         T = current.T
@@ -1408,6 +1464,8 @@ class SQLFORM(FORM):
         #create = wenabled and create
         #editable = wenabled and editable
         deletable = wenabled and deletable
+        if search_widget=='default':
+            search_widget = SQLFORM.search_menu
         def url(**b):
             b['args'] = args+b.get('args',[])
             b['user_signature'] = user_signature
@@ -1559,7 +1617,7 @@ class SQLFORM(FORM):
         search_form = None
         if searchable:
             form = FORM(
-                SQLFORM.search_menu([f for f in table if f.readable]),
+                search_widget and search_widget([f for f in table if f.readable]) or '',
                 INPUT(_name='keywords',_value=request.vars.keywords,
                       _id='web2py_keywords'),
                 INPUT(_type='submit',_value=T('Search')),
