@@ -34,11 +34,11 @@ function web2py_ajax_init() {
   var date_format = (typeof w2p_ajax_date_format != 'undefined') ? w2p_ajax_date_format : "%Y-%m-%d";
   var datetime_format = (typeof w2p_ajax_datetime_format != 'undefined') ? w2p_ajax_datetime_format : "%Y-%m-%d %H:%M:%S";
   try {
-      jQuery("input.datetime").AnyTime_picker({
+      jQuery("input.datetime").AnyTime_noPicker().AnyTime_picker({
 	      format: datetime_format.replace('%M','%i')});
-      jQuery("input.date").AnyTime_picker({
+      jQuery("input.date").AnyTime_noPicker().AnyTime_picker({
 	      format: date_format.replace('%M','%i')});
-      jQuery("input.time").AnyTime_picker({
+      jQuery("input.time").AnyTime_noPicker().AnyTime_picker({
 	      format: "%H:%i:%S"});
   } catch(e) {};
 };
