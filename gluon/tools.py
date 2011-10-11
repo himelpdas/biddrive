@@ -1254,9 +1254,9 @@ class Auth(object):
                     Field('reset_password_key', length=512,
                           writable=False, readable=False, default='',
                           label=self.messages.label_reset_password_key),
-                    # Field('registration_id', length=512,
-                    #       writable=False, readable=False, default='',
-                    #       label=self.messages.label_registration_id),
+                    Field('registration_id', length=512,
+                          writable=False, readable=False, default='',
+                          label=self.messages.label_registration_id),
                     *settings.extra_fields.get(settings.table_user_name,[]),
                     **dict(
                         migrate=self.__get_migrate(settings.table_user_name,
@@ -1422,22 +1422,22 @@ class Auth(object):
             If the user doesn't yet exist, then they are created.
         """
         table_user = self.settings.table_user
-        if 'registration_id' in table_user.fields() and \
-                'registration_id' in keys:
-            username = 'registration_id'
-        elif 'username' in table_user.fields():
-            username = 'username'
-        elif 'email' in table_user.fields():
-            username = 'email'
-        else:
-            raise SyntaxError, "user must have username or email"
-        user = self.db(table_user[username] == keys[username]).select().first()
+        user = None        
+        checks = []
+        # make a guess about who this user is
+        for fieldname in ['registration_id','username','email']:
+            if fieldname in table_user.fields() and keys.get(fieldname,None):
+                checks.append(fieldname)
+                user = user or table_user(**{fieldname:keys[fieldname]})
+        # if we think we found the user but registration_id does not match, make new user
+        if user and user.registration_id and user.registration_id!=keys.get('registration_id',None):
+            user = None # THINK MORE ABOUT THIS? DO WE TRUST OPENID PROVIDER?
         keys['registration_key']=''
         if user:
             user.update_record(**table_user._filter_fields(keys))
-        else:
+        elif check:
             if not 'first_name' in keys and 'first_name' in table_user.fields:
-                keys['first_name'] = keys[username]
+                keys['first_name'] = keys.get('username',keys.get('email','anonymous')).split('@')[0]
             user_id = table_user.insert(**table_user._filter_fields(keys))
             user =  self.user = table_user[user_id]
             if self.settings.create_user_groups:
@@ -1705,9 +1705,8 @@ class Auth(object):
             cas_user = cas.get_user()
 
             if cas_user:
-                if cas_user.get('email',None) or 'registration_id' in table_user.fields:
-                    cas_user[passfield] = None
-                    user = self.get_or_create_user(table_user._filter_fields(cas_user))
+                cas_user[passfield] = None
+                user = self.get_or_create_user(table_user._filter_fields(cas_user))
             elif hasattr(cas,'login_form'):
                 return cas.login_form()            
             else:
