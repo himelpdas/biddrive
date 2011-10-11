@@ -1341,7 +1341,7 @@ class SQLFORM(FORM):
           var k=jQuery('#web2py_keywords');
           var v=k.val();
           k.val((v?(v+' '+ aggregator +' '):'')+s);
-          jQuery('#w2p_query_fields').val('');
+          jQuery('#w2p_query_fields').val('').change();
           jQuery('#w2p_query_panel').slideUp();
         }
         """)
