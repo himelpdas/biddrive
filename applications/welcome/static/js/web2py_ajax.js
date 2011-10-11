@@ -22,11 +22,7 @@ function ajax(u,s,t) {
 }
 
 String.prototype.reverse = function () { return this.split('').reverse().join('');};
-function web2py_ajax_init() {
-  jQuery('.hidden').hide();
-  jQuery('.error').hide().slideDown('slow');
-  jQuery('.flash').click(function(e) { jQuery(this).fadeOut('slow'); e.preventDefault(); });
-  // jQuery('input[type=submit]').click(function(){var t=jQuery(this);t.hide();t.after('<input class="submit_disabled" disabled="disabled" type="submit" name="'+t.attr("name")+'_dummy" value="'+t.val()+'">')});
+function web2py_ajax_fields() {
   jQuery('input.integer').live('keyup', function(){this.value=this.value.reverse().replace(/[^0-9\-]|\-(?=.)/g,'').reverse();});
   jQuery('input.double,input.decimal').live('keyup', function(){this.value=this.value.reverse().replace(/[^0-9\-\.,]|[\-](?=.)|[\.,](?=[0-9]*[\.,])/g,'').reverse();});
   var confirm_message = (typeof w2p_ajax_confirm_message != 'undefined') ? w2p_ajax_confirm_message : "Are you sure you want to delete this object?";
@@ -41,6 +37,13 @@ function web2py_ajax_init() {
       jQuery("input.time").AnyTime_noPicker().AnyTime_picker({
 	      format: "%H:%i:%S"});
   } catch(e) {};
+};
+function web2py_ajax_init() {
+  jQuery('.hidden').hide();
+  jQuery('.error').hide().slideDown('slow');
+  jQuery('.flash').click(function(e) { jQuery(this).fadeOut('slow'); e.preventDefault(); });
+  // jQuery('input[type=submit]').click(function(){var t=jQuery(this);t.hide();t.after('<input class="submit_disabled" disabled="disabled" type="submit" name="'+t.attr("name")+'_dummy" value="'+t.val()+'">')});
+  web2py_ajax_fields();
 };
 
 jQuery(function() {   

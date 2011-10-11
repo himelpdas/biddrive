@@ -1302,13 +1302,14 @@ class SQLFORM(FORM):
         from gluon import current
         T = current.T
         search_options = search_options or {
-            'string':['=','<','>','<=','>=','starts with','contains'],
-            'string':['=','<','>','<=','>=','starts with','contains'],
-            'date':['=','<','>','<=','>='],
-            'time':['=','<','>','<=','>='],
-            'datetime':['=','<','>','<=','>='],
-            'integer':['=','<','>','<=','>='],
-            'double':['=','<','>','<=','>=']}
+            'string':['=','!=','<','>','<=','>=','starts with','contains'],
+            'string':['=','!=','<','>','<=','>=','starts with','contains'],
+            'date':['=','!=','<','>','<=','>='],
+            'time':['=','!=','<','>','<=','>='],
+            'datetime':['=','!=','<','>','<=','>='],
+            'integer':['=','!=','<','>','<=','>='],
+            'double':['=','!=','<','>','<=','>='],
+            'boolean':['=','!=']}
         criteria = []
         selectfields = {'':''}
         for field in fields:
@@ -1318,7 +1319,12 @@ class SQLFORM(FORM):
             if options:
                 selectfields[T(field.label)] = str(field)
                 operators = SELECT(*[T(option) for option in options])
-                value_input = INPUT(_type='text',_class=field.type+' w2p_query_value')
+                if field.type=='boolean':
+                    value_input = SELECT(
+                        OPTION(T("True"),_value="T"),OPTION(T("False"),_value="F"),
+                        _id="w2p_value_"+name)
+                else:
+                    value_input = INPUT(_type='text',_id="w2p_value_"+name,_class=field.type)
                 and_button = INPUT(_type="button", _value=T('And'),
                                    _onclick="w2p_build_query('and','"+str(field)+"')")
                 or_button = INPUT(_type="button", _value=T('Or'),
@@ -1333,10 +1339,11 @@ class SQLFORM(FORM):
                 *[OPTION(label, _value=selectfields[label]) for label in selectfields]))
         fadd = SCRIPT("""
         jQuery('#w2p_query_panel input,#w2p_query_panel select').css('width','auto').css('float','left');
+        jQuery(function(){web2py_ajax_fields();});
         function w2p_build_query(aggregator,a){
           var b=a.replace('.','-');
           var option = jQuery('#w2p_field_'+b+' select').val();
-          var value = jQuery('#w2p_field_'+b+' .w2p_query_value').val().replace('"','\\\\"');
+          var value = jQuery('#w2p_value_'+b).val().replace('"','\\\\"');
           var s=a+' '+option+' "'+value+'"';
           var k=jQuery('#web2py_keywords');
           var v=k.val();
