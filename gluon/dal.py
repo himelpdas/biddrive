@@ -3385,7 +3385,8 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
         (items, tablename, fields) = self.select_raw(query,fields,attributes)
         # self.db['_lastsql'] = self._select(query,fields,attributes)
         rows = [
-            [t=='id' and int(item.key().id()) or getattr(item, t) for t in fields]
+            [t=='id' and (int(item.key().id()) if item.key().id() else 
+                          item.key().name()) or getattr(item, t) for t in fields]
             for item in items]
         colnames = ['%s.%s' % (tablename, t) for t in fields]
         return self.parse(rows, colnames, False)

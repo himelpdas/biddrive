@@ -184,7 +184,7 @@ class LoadFactory(object):
             return html.TAG[''](html.DIV(html.XML(page),**attr),script)
 
 
-def local_import_aux(name, force=False, app='welcome'):
+def local_import_aux(name, reload_force=False, app='welcome'):
     """
     In apps, instead of importing a local module
     (in applications/app/modules) with::
@@ -207,7 +207,7 @@ def local_import_aux(name, force=False, app='welcome'):
     module = __import__(name)
     for item in name.split(".")[1:]:
         module = getattr(module, item)
-    if force:
+    if reload_force:
         reload(module)
     return module
 
