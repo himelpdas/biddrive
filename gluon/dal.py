@@ -5034,9 +5034,16 @@ class Table(dict):
 
     def validate_and_insert(self,**fields):
         response = Row()
-        response.errors = self._validate(**fields)
+        response.errors = Row()
+        new_fields = copy.copy(fields)
+        for key,value in fields.items():
+            value,error = self[key].validate(value)
+            if error:
+                response.errors[key] = error
+            else:
+                new_fields[key] = value
         if not response.errors:
-            response.id = self.insert(**fields)
+            response.id = self.insert(**new_fields)
         else:
             response.id = None
         return response
@@ -5769,15 +5776,22 @@ class Set(object):
     def validate_and_update(self, **update_fields):
         tablename = self.db._adapter.get_table(self.query)
         response = Row()
-        response.errors = self.db[tablename]._validate(**update_fields)
-        fields = self.db[tablename]._listify(update_fields,update=True)
+        response.errors = Row()
+        new_fields = copy.copy(update_fields)
+        for key,value in update_fields.items():
+            value,error = self.db[tablename][key].validate(value)
+            if error:
+                response.errors[key] = error
+            else:
+                new_fields[key] = value
+        fields = self.db[tablename]._listify(new_fields,update=True)
         if not fields:
             raise SyntaxError, "No fields to update"
-        self.delete_uploaded_files(update_fields)
-        if not response.errors:
-            response.updated = self.db._adapter.update(tablename,self.query,fields)
-        else:
+        if response.errors:
             response.updated = None
+        else:
+            self.delete_uploaded_files(new_fields)
+            response.updated = self.db._adapter.update(tablename,self.query,fields)
         return response
 
     def delete_uploaded_files(self, upload_fields=None):
