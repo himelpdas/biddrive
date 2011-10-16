@@ -33,12 +33,12 @@ An interactive, stateful AJAX shell that runs Python code on the server.
 import logging
 import new
 import os
-import cPickle
+import pickle
 import sys
 import traceback
 import types
 import wsgiref.handlers
-import StringIO
+import io
 import threading
 locker = threading.RLock()
 
@@ -51,8 +51,8 @@ _HISTORY_KIND = '_Shell_History'
 # Types that can't be pickled.
 UNPICKLABLE_TYPES = (
     types.ModuleType,
-    types.TypeType,
-    types.ClassType,
+    type,
+    type,
     types.FunctionType,
     )
 
@@ -101,7 +101,7 @@ class History:
             name: the name of the global to remove
             value: any picklable value
         """
-        blob = cPickle.dumps(value)
+        blob = pickle.dumps(value)
 
         if name in self.global_names:
             index = self.global_names.index(name)
@@ -126,7 +126,7 @@ class History:
     def globals_dict(self):
         """Returns a dictionary view of the globals.
         """
-        return dict((name, cPickle.loads(val))
+        return dict((name, pickle.loads(val))
                     for name, val in zip(self.global_names, self.globals))
 
     def add_unpicklable(self, statement, names):
@@ -159,7 +159,7 @@ def represent(obj):
     code below to determine whether the object changes over time.
     """
     try:
-        return cPickle.dumps(obj)
+        return pickle.dumps(obj)
     except:
         return repr(obj)
 
@@ -193,7 +193,7 @@ def run(history, statement, env={}):
 
     # use this request's __builtin__, since it changes on each request.
     # this is needed for import statements, among other things.
-    import __builtin__
+    import builtins
     statement_module.__builtins__ = __builtin__
 
     # load the history from the datastore
@@ -203,7 +203,7 @@ def run(history, statement, env={}):
     # globals, run the statement, and re-pickle the history globals, all
     # inside it.
     old_main = sys.modules.get('__main__')
-    output = StringIO.StringIO()
+    output = io.StringIO()
     try:
         sys.modules['__main__'] = statement_module
         statement_module.__name__ = '__main__'
@@ -211,10 +211,10 @@ def run(history, statement, env={}):
 
         # re-evaluate the unpicklables
         for code in history.unpicklables:
-            exec code in statement_module.__dict__
+            exec(code, statement_module.__dict__)
 
         # re-initialize the globals
-        for name, val in history.globals_dict().items():
+        for name, val in list(history.globals_dict().items()):
             try:
                 statement_module.__dict__[name] = val
             except:
@@ -224,13 +224,13 @@ def run(history, statement, env={}):
                 history.remove_global(name)
 
         # run!
-        old_globals = dict((key,represent(value)) for key,value in statement_module.__dict__.items())
+        old_globals = dict((key,represent(value)) for key,value in list(statement_module.__dict__.items()))
         try:
             old_stdout, old_stderr = sys.stdout, sys.stderr
             try:
                 sys.stderr = sys.stdout = output
                 locker.acquire()
-                exec compiled in statement_module.__dict__
+                exec(compiled, statement_module.__dict__)
             finally:
                 locker.release()
                 sys.stdout, sys.stderr = old_stdout, old_stderr
@@ -240,20 +240,20 @@ def run(history, statement, env={}):
 
         # extract the new globals that this statement added
         new_globals = {}
-        for name, val in statement_module.__dict__.items():
+        for name, val in list(statement_module.__dict__.items()):
             if name not in old_globals or represent(val) != old_globals[name]:
                 new_globals[name] = val
 
         if True in [isinstance(val, UNPICKLABLE_TYPES)
-                    for val in new_globals.values()]:
+                    for val in list(new_globals.values())]:
             # this statement added an unpicklable global. store the statement and
             # the names of all of the globals it added in the unpicklables.
-            history.add_unpicklable(statement, new_globals.keys())
+            history.add_unpicklable(statement, list(new_globals.keys()))
             logging.debug('Storing this statement as an unpicklable.')
         else:
             # this statement didn't add any unpicklables. pickle and store the
             # new globals back into the datastore.
-            for name, val in new_globals.items():
+            for name, val in list(new_globals.items()):
                 if not name.startswith('__'):
                     history.set_global(name, val)
 
@@ -263,6 +263,6 @@ def run(history, statement, env={}):
 
 if __name__=='__main__':
     history=History()
-    while True: print run(history, raw_input('>>> ')).rstrip()
+    while True: print(run(history, input('>>> ')).rstrip())
 
 

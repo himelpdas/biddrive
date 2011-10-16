@@ -86,7 +86,7 @@ class Sheet:
         """
         call this in action that creates table, it will handle ajax callbacks
         """
-        cell = request.vars.keys()[0]
+        cell = list(request.vars.keys())[0]
         if request.args(0) == 'focus':
             return "jQuery('#%s').val('%s');" % (cell, quote(self[cell].value))
         value = request.vars[cell]
@@ -113,7 +113,7 @@ class Sheet:
                                'i', 'j', 'k', 'x', 'y', 'z', 'sum']
         self.environment = {}
         [self.cell('r%sc%s'%(k/cols, k%cols), '0.0', readonly, active, onchange)
-            for k in xrange(rows*cols)]
+            for k in range(rows*cols)]
         exec('from math import *', {}, self.environment)
 
     def delete_from(self, other_list):
@@ -139,7 +139,7 @@ class Sheet:
         """
         key = str(key)
         if not self.regex.match(key):
-            raise SyntaxError, "Invalid cell name: %s" % key
+            raise SyntaxError("Invalid cell name: %s" % key)
         node = Node(key, value, self.url, readonly, active, onchange)
         self.nodes[key] = node
         self[key] = value
@@ -194,7 +194,7 @@ class Sheet:
                 exec('__value__=' + node.value[1:], {}, self.environment)
                 node.computed_value = self.environment['__value__']
                 del self.environment['__value__']
-            except Exception, e:
+            except Exception as e:
                 node.computed_value = self.error % dict(error=str(e))
         self.environment[node.name] = node.computed_value
         if node.onchange:
@@ -259,6 +259,6 @@ if __name__ == '__main__':
     s.cell('a', value="2")
     s.cell('b', value="=sin(a)")
     s.cell('c', value="=cos(a)**2+b*b")
-    print s['c'].computed_value
+    print(s['c'].computed_value)
 
 

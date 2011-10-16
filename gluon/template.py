@@ -17,10 +17,11 @@ Contributors:
 import os
 import re
 import cgi
-import cStringIO
+import io
 import logging
+import collections
 try:
-    from restricted import RestrictedError
+    from .restricted import RestrictedError
 except:
     def RestrictedError(a,b,c):
         logging.error(str(a)+':'+str(b)+':'+str(c))
@@ -312,7 +313,7 @@ class TemplateParser(object):
         self.blocks = {}
 
         # Begin parsing.
-        self.parse(text)
+        self.parse(text.decode("utf8"))
 
     def to_string(self):
         """
@@ -865,22 +866,22 @@ def render(content = "hello world",
     """
     # Here to avoid circular Imports
     try:
-        from globals import Response
+        from .globals import Response
     except:
         # Working standalone. Build a mock Response object.
         class Response():
             def __init__(self):
-                self.body = cStringIO.StringIO()
+                self.body = io.StringIO()
             def write(self, data, escape=True):
                 if not escape:
                     self.body.write(str(data))
-                elif hasattr(data,'xml') and callable(data.xml):
+                elif hasattr(data,'xml') and isinstance(data.xml, collections.Callable):
                     self.body.write(data.xml())
                 else:
                     # make it a string
-                    if not isinstance(data, (str, unicode)):
+                    if not isinstance(data, str):
                         data = str(data)
-                    elif isinstance(data, unicode):
+                    elif isinstance(data, str):
                         data = data.encode('utf8', 'xmlcharrefreplace')
                     data = cgi.escape(data, True).replace("'","&#x27;")
                     self.body.write(data)
@@ -896,7 +897,7 @@ def render(content = "hello world",
 
     # If we don't have anything to render, why bother?
     if not content and not stream and not filename:
-        raise SyntaxError, "Must specify a stream or filename or content"
+        raise SyntaxError("Must specify a stream or filename or content")
 
     # Here for legacy purposes, probably can be reduced to something more simple.
     close_stream = False
@@ -905,7 +906,7 @@ def render(content = "hello world",
             stream = open(filename, 'rb')
             close_stream = True
         elif content:
-            stream = cStringIO.StringIO(content)
+            stream = io.StringIO(content)
 
     # Get a response class.
     context['response'] = Response()
@@ -913,7 +914,7 @@ def render(content = "hello world",
     # Execute the template.
     code = str(TemplateParser(stream.read(), context=context, path=path, lexers=lexers, delimiters=delimiters))
     try:
-        exec(code) in context
+        exec((code), context)
     except Exception:
         # for i,line in enumerate(code.split('\n')): print i,line
         raise

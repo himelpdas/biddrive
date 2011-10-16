@@ -18,28 +18,28 @@ import fnmatch
 import os
 import copy
 import random
-import __builtin__
-from storage import Storage, List
-from template import parse_template
-from restricted import restricted, compile2
-from fileutils import mktree, listdir, read_file, write_file
-from myregex import regex_expose
-from languages import translator
-from dal import BaseAdapter, SQLDB, SQLField, DAL, Field
-from sqlhtml import SQLFORM, SQLTABLE
-from cache import Cache
-from globals import current
-import settings
-from cfs import getcfs
-import html
-import validators
-from http import HTTP, redirect
+import builtins
+from .storage import Storage, List
+from .template import parse_template
+from .restricted import restricted, compile2
+from .fileutils import mktree, listdir, read_file, write_file
+from .myregex import regex_expose
+from .languages import translator
+from .dal import BaseAdapter, SQLDB, SQLField, DAL, Field
+from .sqlhtml import SQLFORM, SQLTABLE
+from .cache import Cache
+from .globals import current
+from . import settings
+from .cfs import getcfs
+from . import html
+from . import validators
+from .http import HTTP, redirect
 import marshal
 import shutil
 import imp
 import logging
 logger = logging.getLogger("web2py")
-import rewrite
+from . import rewrite
 
 try:
     import py_compile
@@ -98,7 +98,7 @@ class mybuiltin(object):
         try:
             return getattr(__builtin__, key)
         except AttributeError:
-            raise KeyError, key
+            raise KeyError(key)
     def __setitem__(self, key, value):
         setattr(self, key, value)
 
@@ -113,7 +113,7 @@ class LoadFactory(object):
                  url=None,user_signature=False, content='loading...',**attr):
         if args is None: args = []
         vars = Storage(vars or {})
-        import globals
+        from . import globals
         target = target or 'c'+str(random.random())[2:]
         attr['_id']=target
         request = self.environment['request']
@@ -132,10 +132,10 @@ class LoadFactory(object):
             c = c or request.controller
 
             other_request = Storage()
-            for key, value in request.items():
+            for key, value in list(request.items()):
                 other_request[key] = value
             other_request['env'] = Storage()
-            for key, value in request.env.items():
+            for key, value in list(request.env.items()):
                 other_request.env['key'] = value
             other_request.controller = c
             other_request.function = f
@@ -147,7 +147,7 @@ class LoadFactory(object):
             other_response = globals.Response()
             other_request.env.path_info = '/' + \
                 '/'.join([request.application,c,f] + \
-                             map(str, other_request.args))
+                             list(map(str, other_request.args)))
             other_request.env.query_string = \
                 vars and html.URL(vars=vars).split('?')[1] or ''
             other_request.env.http_web2py_component_location = \
@@ -266,7 +266,7 @@ def build_environment(request, response, session, store_current=True):
     if is_jython: # jython hack
         __builtins__ = mybuiltin()
     else:
-        __builtins__['__import__'] = __builtin__.__import__ ### WHY?
+        __builtins__['__import__'] = builtins.__import__ ### WHY?
     environment['__builtins__'] = __builtins__
     environment['HTTP'] = HTTP
     environment['redirect'] = redirect
@@ -304,7 +304,7 @@ def read_pyc(filename):
     """
     data = read_file(filename, 'rb')
     if not is_gae and data[:4] != imp.get_magic():
-        raise SystemError, 'compiled code is incompatible'
+        raise SystemError('compiled code is incompatible')
     return marshal.loads(data[8:])
 
 
@@ -416,8 +416,8 @@ def run_controller_in(controller, function, environment):
         restricted(read_pyc(filename), environment, layer=filename)
     elif function == '_TEST':
         # TESTING: adjust the path to include site packages
-        from settings import global_settings
-        from admin import abspath, add_path_first
+        from .settings import global_settings
+        from .admin import abspath, add_path_first
         paths = (global_settings.gluon_parent, abspath('site-packages', gluon=True),  abspath('gluon', gluon=True), '')
         [add_path_first(path) for path in paths]
         # TESTING END
@@ -428,7 +428,7 @@ def run_controller_in(controller, function, environment):
             raise HTTP(404,
                        rewrite.thread.routes.error_message % badc,
                        web2py_error=badc)
-        environment['__symbols__'] = environment.keys()
+        environment['__symbols__'] = list(environment.keys())
         code = read_file(filename)
         code += TEST_CODE
         restricted(code, environment, layer=filename)
@@ -455,7 +455,7 @@ def run_controller_in(controller, function, environment):
     if response.postprocessing:
         for p in response.postprocessing:
             vars = p(vars)
-    if isinstance(vars,unicode):
+    if isinstance(vars,str):
         vars = vars.encode('utf8')
     if hasattr(vars,'xml'):
         vars = vars.xml()

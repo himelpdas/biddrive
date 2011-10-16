@@ -12,25 +12,27 @@ import os
 import re
 import copy
 import types
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import base64
-import sanitizer
-import rewrite
+from . import sanitizer
+from . import rewrite
 import itertools
-import decoder
-import copy_reg
-import cPickle
+from . import decoder
+import copyreg
+import pickle
 import marshal
-from HTMLParser import HTMLParser
-from htmlentitydefs import name2codepoint
-from contrib.markmin.markmin2html import render
+from html.parser import HTMLParser
+from html.entities import name2codepoint
+from .contrib.markmin.markmin2html import render
 
-from storage import Storage
-from highlight import highlight
-from utils import web2py_uuid, hmac_hash
+from .storage import Storage
+from .highlight import highlight
+from .utils import web2py_uuid, hmac_hash
 
 import hmac
 import hashlib
+import collections
+from functools import reduce
 
 regex_crlf = re.compile('\r|\n')
 
@@ -113,14 +115,14 @@ def xmlescape(data, quote = True):
     """
 
     # first try the xml function
-    if hasattr(data,'xml') and callable(data.xml):
+    if hasattr(data,'xml') and isinstance(data.xml, collections.Callable):
         return data.xml()
 
     # otherwise, make it a string
-    if not isinstance(data, (str, unicode)):
-        data = str(data)
-    elif isinstance(data, unicode):
-        data = data.encode('utf8', 'xmlcharrefreplace')
+    if not isinstance(data, str): #py3k
+        data = str(data) #py3k
+    ##if isinstance(data, str):
+    ##    data = data.encode('utf8', 'xmlcharrefreplace')
 
     # ... and do the escaping
     data = cgi.escape(data, quote).replace("'","&#x27;")
@@ -214,7 +216,7 @@ def URL(
     if not r:
         if a and not c and not f: (f,a,c)=(a,c,f)
         elif a and c and not f: (c,f,a)=(a,c,f)
-        from globals import current
+        from .globals import current
         if hasattr(current,'request'):
             r = current.request
     if r:
@@ -239,23 +241,23 @@ def URL(
     function2 = '%s.%s' % (function,extension or 'html')
 
     if not (application and controller and function):
-        raise SyntaxError, 'not enough information to build the url'
+        raise SyntaxError('not enough information to build the url')
 
     if not isinstance(args, (list, tuple)):
         args = [args]
 
     if args:
         if encode_embedded_slash:
-            other = '/' + '/'.join([urllib.quote(str(x), '') for x in args])
+            other = '/' + '/'.join([urllib.parse.quote(str(x), '') for x in args])
         else:
-            other = args and urllib.quote('/' + '/'.join([str(x) for x in args]))
+            other = args and urllib.parse.quote('/' + '/'.join([str(x) for x in args]))
     else:
         other = ''
 
     if other.endswith('/'):
         other += '/'    # add trailing slash to make last trailing empty arg explicit
 
-    if vars.has_key('_signature'): vars.pop('_signature')
+    if '_signature' in vars: vars.pop('_signature')
     list_vars = []
     for (key, vals) in sorted(vars.items()):
         if not isinstance(vals, (list, tuple)):
@@ -264,7 +266,7 @@ def URL(
             list_vars.append((key, val))
 
     if user_signature:
-        from globals import current
+        from .globals import current
         if current.session.auth:
             hmac_key = current.session.auth.hmac_key
 
@@ -285,21 +287,21 @@ def URL(
             h_vars = [(k, v) for (k, v) in list_vars if k in hash_vars]
 
         # re-assembling the same way during hash authentication
-        message = h_args + '?' + urllib.urlencode(sorted(h_vars))
+        message = h_args + '?' + urllib.parse.urlencode(sorted(h_vars))
 
         sig = hmac_hash(message, hmac_key, digest_alg='sha1', salt=salt)
         # add the signature into vars
         list_vars.append(('_signature', sig))
 
     if list_vars:
-        other += '?%s' % urllib.urlencode(list_vars)
+        other += '?%s' % urllib.parse.urlencode(list_vars)
     if anchor:
-        other += '#' + urllib.quote(str(anchor))
+        other += '#' + urllib.parse.quote(str(anchor))
     if extension:
         function += '.' + extension
 
     if regex_crlf.search(join([application, controller, function, other])):
-        raise SyntaxError, 'CRLF Injection Detected'
+        raise SyntaxError('CRLF Injection Detected')
     url = rewrite.url_out(r, env, application, controller, function,
                           args, other, scheme, host, port)
     return url
@@ -341,12 +343,12 @@ def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=
 
     """
 
-    if not request.get_vars.has_key('_signature'):
+    if '_signature' not in request.get_vars:
         return False # no signature in the request URL
 
     # check if user_signature requires
     if user_signature:
-        from globals import current
+        from .globals import current
         if not current.session:
             return False
         hmac_key = current.session.auth.hmac_key
@@ -365,7 +367,7 @@ def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=
     # join all the args & vars into one long string
 
     # always include all of the args
-    other = args and urllib.quote('/' + '/'.join([str(x) for x in args])) or ''
+    other = args and urllib.parse.quote('/' + '/'.join([str(x) for x in args])) or ''
     h_args = '/%s/%s/%s.%s%s' % (request.application,
                                  request.controller,
                                  request.function,
@@ -397,7 +399,7 @@ def verifyURL(request, hmac_key=None, hash_vars=True, salt=None, user_signature=
             # user has removed one of our vars! Immediate fail
             return False
     # build the full message string with both args & vars
-    message = h_args + '?' + urllib.urlencode(sorted(h_vars))
+    message = h_args + '?' + urllib.parse.urlencode(sorted(h_vars))
 
     # hash with the hmac_key provided
     sig = hmac_hash(message, str(hmac_key), digest_alg='sha1', salt=salt)
@@ -479,14 +481,17 @@ class XML(XmlComponent):
         if sanitize:
             text = sanitizer.sanitize(text, permitted_tags,
                     allowed_attributes)
-        if isinstance(text, unicode):
+        if isinstance(text, str):
             text = text.encode('utf8', 'xmlcharrefreplace')
         elif not isinstance(text, str):
             text = str(text)
         self.text = text
 
     def xml(self):
-        return self.text
+        if isinstance(self.text, str):
+            return self.text
+        else:
+            return str(self.text, 'utf8') #py3k!
 
     def __str__(self):
         return self.xml()
@@ -505,7 +510,7 @@ class XML(XmlComponent):
 
     def __getattr__(self,name):
         return getattr(str(self),name)
-
+            
     def __getitem__(self,i):
         return str(self)[i]
 
@@ -538,7 +543,7 @@ def XML_unpickle(data):
     return marshal.loads(data)
 def XML_pickle(data):
     return XML_unpickle, (marshal.dumps(str(data)),)
-copy_reg.pickle(XML, XML_pickle, XML_unpickle)
+copyreg.pickle(XML, XML_pickle, XML_unpickle)
 
 
 
@@ -575,8 +580,8 @@ class DIV(XmlComponent):
         """
 
         if self.tag[-1:] == '/' and components:
-            raise SyntaxError, '<%s> tags cannot have components'\
-                 % self.tag
+            raise SyntaxError('<%s> tags cannot have components'\
+                 % self.tag)
         if len(components) == 1 and isinstance(components[0], (list,tuple)):
             self.components = list(components[0])
         else:
@@ -594,7 +599,7 @@ class DIV(XmlComponent):
         dictionary like updating of the tag attributes
         """
 
-        for (key, value) in kargs.items():
+        for (key, value) in list(kargs.items()):
             self[key] = value
         return self
 
@@ -654,7 +659,7 @@ class DIV(XmlComponent):
         :param value: the new value
         """
         self._setnode(value)
-        if isinstance(i, (str, unicode)):
+        if isinstance(i, str):
             self.attributes[i] = value
         else:
             self.components[i] = value
@@ -679,7 +684,7 @@ class DIV(XmlComponent):
         """
         return len(self.components)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """
         always return True
         """
@@ -732,7 +737,7 @@ class DIV(XmlComponent):
         # TODO: docstring
         newstatus = status
         for c in self.components:
-            if hasattr(c, '_traverse') and callable(c._traverse):
+            if hasattr(c, '_traverse') and isinstance(c._traverse, collections.Callable):
                 c.vars = self.vars
                 c.request_vars = self.request_vars
                 c.errors = self.errors
@@ -919,7 +924,7 @@ class DIV(XmlComponent):
         # make a copy of the components
         matches = []
         first_only = False
-        if kargs.has_key("first_only"):
+        if "first_only" in kargs:
             first_only = kargs["first_only"]
             del kargs["first_only"]
         # check if the component has an attribute with the same
@@ -928,7 +933,7 @@ class DIV(XmlComponent):
         tag = getattr(self,'tag').replace("/","")
         if args and tag not in args:
             check = False
-        for (key, value) in kargs.items():
+        for (key, value) in list(kargs.items()):
             if isinstance(value,(str,int)):
                 if self[key] != str(value):
                     check = False
@@ -984,7 +989,7 @@ class DIV(XmlComponent):
         sibs = [s for s in self.parent.components if not s == self]
         matches = []
         first_only = False
-        if kargs.has_key("first_only"):
+        if "first_only" in kargs:
             first_only = kargs["first_only"]
             del kargs["first_only"]
         for c in sibs:
@@ -993,7 +998,7 @@ class DIV(XmlComponent):
                 tag = getattr(c,'tag').replace("/","")
                 if args and tag not in args:
                         check = False
-                for (key, value) in kargs.items():
+                for (key, value) in list(kargs.items()):
                     if c[key] != value:
                             check = False
                 if check:
@@ -1019,12 +1024,12 @@ class CAT(DIV):
     tag = ''
 
 def TAG_unpickler(data):
-    return cPickle.loads(data)
+    return pickle.loads(data)
 
 def TAG_pickler(data):
     d = DIV()
     d.__dict__ = data.__dict__
-    marshal_dump = cPickle.dumps(d)
+    marshal_dump = pickle.dumps(d)
     return (TAG_unpickler, (marshal_dump,))
 
 class __TAG__(XmlComponent):
@@ -1043,11 +1048,11 @@ class __TAG__(XmlComponent):
     def __getattr__(self, name):
         if name[-1:] == '_':
             name = name[:-1] + '/'
-        if isinstance(name,unicode):
+        if isinstance(name,str):
             name = name.encode('utf-8')
         class __tag__(DIV):
             tag = name
-        copy_reg.pickle(__tag__, TAG_pickler, TAG_unpickler)
+        copyreg.pickle(__tag__, TAG_pickler, TAG_unpickler)
         return lambda *a, **b: __tag__(*a, **b)
 
     def __call__(self,html):
@@ -1834,7 +1839,7 @@ class FORM(DIV):
     def hidden_fields(self):
         c = []
         if 'hidden' in self.attributes:
-            for (key, value) in self.attributes.get('hidden',{}).items():
+            for (key, value) in list(self.attributes.get('hidden',{}).items()):
                 c.append(INPUT(_type='hidden', _name=key, _value=value))
 
         if hasattr(self, 'formkey') and self.formkey:
@@ -1901,7 +1906,7 @@ class FORM(DIV):
                     current.session.flash = message_onsuccess
                 else:
                     current.response.flash = message_onsuccess
-            elif callable(onsuccess):
+            elif isinstance(onsuccess, collections.Callable):
                 onsuccess(self)
             if next:
                 if self.vars.id:
@@ -1914,7 +1919,7 @@ class FORM(DIV):
         elif self.errors:
             if onfailure == 'flash':
                 current.response.flash = message_onfailure
-            elif callable(onfailure):
+            elif isinstance(onfailure, collections.Callable):
                 onfailure(self)
             return False
 
@@ -1987,15 +1992,15 @@ class BEAUTIFY(DIV):
         if level == 0:
             return
         for c in self.components:
-            if hasattr(c,'xml') and callable(c.xml):
+            if hasattr(c,'xml') and isinstance(c.xml, collections.Callable):
                 components.append(c)
                 continue
-            elif hasattr(c,'keys') and callable(c.keys):
+            elif hasattr(c,'keys') and isinstance(c.keys, collections.Callable):
                 rows = []
                 try:
                     keys = (sorter and sorter(c)) or c
                     for key in keys:
-                        if isinstance(key,(str,unicode)) and keyfilter:
+                        if isinstance(key,str) and keyfilter:
                             filtered_key = keyfilter(key)
                         else:
                             filtered_key = str(key)
@@ -2013,7 +2018,7 @@ class BEAUTIFY(DIV):
                     pass
             if isinstance(c, str):
                 components.append(str(c))
-            elif isinstance(c, unicode):
+            elif isinstance(c, str):
                 components.append(c.encode('utf8'))
             elif isinstance(c, (list, tuple)):
                 items = [TR(TD(BEAUTIFY(item, **attributes)))
@@ -2190,11 +2195,11 @@ class web2pyHTMLParser(HTMLParser):
             self.parent.append(data.decode('latin1').encode('utf8','xmlcharref'))
     def handle_charref(self,name):
         if name[1].lower()=='x':
-            self.parent.append(unichr(int(name[2:], 16)).encode('utf8'))
+            self.parent.append(chr(int(name[2:], 16)).encode('utf8'))
         else:
-            self.parent.append(unichr(int(name[1:], 10)).encode('utf8'))
+            self.parent.append(chr(int(name[1:], 10)).encode('utf8'))
     def handle_entityref(self,name):
-        self.parent.append(unichr(name2codepoint[name]).encode('utf8'))
+        self.parent.append(chr(name2codepoint[name]).encode('utf8'))
     def handle_endtag(self, tagname):
         # this deals with unbalanced tags
         if tagname==self.last:
@@ -2204,7 +2209,7 @@ class web2pyHTMLParser(HTMLParser):
                 parent_tagname=self.parent.tag
                 self.parent = self.parent.parent
             except:
-                raise RuntimeError, "unable to balance tag %s" % tagname
+                raise RuntimeError("unable to balance tag %s" % tagname)
             if parent_tagname[:len(tagname)]==tagname: break
 
 def markdown_serializer(text,tag=None,attr=None):

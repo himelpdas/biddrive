@@ -84,7 +84,7 @@ class CasAuth( object ):
         exposed as CAS.login(request)
         returns a token on success, None on failed authentication
         """
-        import urllib
+        import urllib.request, urllib.parse, urllib.error
         self.ticket=current.request.vars.ticket
         if not current.request.vars.ticket:
             redirect( "%s?service=%s"% (self.cas_login_url,
@@ -93,7 +93,7 @@ class CasAuth( object ):
             url="%s?service=%s&ticket=%s" % (self.cas_check_url,
                                              self.cas_my_url,
                                              self.ticket )
-            data=urllib.urlopen( url ).read()
+            data=urllib.request.urlopen( url ).read()
             if data.startswith('yes') or data.startswith('no'):
                 data = data.split('\n')
                 if data[0]=='yes':
@@ -127,6 +127,6 @@ class CasAuth( object ):
         exposed CAS.logout()
         redirects to the CAS logout page
         """
-        import urllib
+        import urllib.request, urllib.parse, urllib.error
         redirect("%s?service=%s" % (self.cas_logout_url,self.cas_my_url))
 

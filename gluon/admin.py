@@ -10,14 +10,14 @@ import os
 import sys
 import traceback
 import zipfile
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from shutil import rmtree
-from utils import web2py_uuid
-from fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
-from fileutils import up, fix_newlines, abspath, recursive_unlink
-from fileutils import read_file, write_file, parse_version
-from restricted import RestrictedError
-from settings import global_settings
+from .utils import web2py_uuid
+from .fileutils import w2p_pack, w2p_unpack, w2p_pack_plugin, w2p_unpack_plugin
+from .fileutils import up, fix_newlines, abspath, recursive_unlink
+from .fileutils import read_file, write_file, parse_version
+from .restricted import RestrictedError
+from .settings import global_settings
 
 def apath(path='', r=None):
     """
@@ -140,7 +140,7 @@ def app_compile(app, request):
     request:
         the global request object
     """
-    from compileapp import compile_application, remove_compiled_application
+    from .compileapp import compile_application, remove_compiled_application
     folder = apath(app, request)
     try:
         compile_application(folder)
@@ -343,7 +343,7 @@ def check_new_version(myversion, version_URL):
         the most up-to-version available
     """
     try:
-        from urllib import urlopen
+        from urllib.request import urlopen
         version = parse_version(urlopen(version_URL).read())
     except Exception:
         return -1, myversion
@@ -360,7 +360,7 @@ def unzip(filename, dir, subfolder=''):
     """
     filename = abspath(filename)
     if not zipfile.is_zipfile(filename):
-        raise RuntimeError, 'Not a valid zipfile'
+        raise RuntimeError('Not a valid zipfile')
     zf = zipfile.ZipFile(filename)
     if not subfolder.endswith('/'):
         subfolder = subfolder + '/'
@@ -419,13 +419,13 @@ def upgrade(request, url='http://web2py.com'):
     filename = abspath('web2py_%s_downloaded.zip' % version_type)
     file = None
     try:
-        write_file(filename, urllib.urlopen(full_url).read(), 'wb')
-    except Exception,e:
+        write_file(filename, urllib.request.urlopen(full_url).read(), 'wb')
+    except Exception as e:
         return False, e
     try:
         unzip(filename, destination, subfolder)
         return True, None
-    except Exception,e:
+    except Exception as e:
         return False, e
 
 def add_path_first(path):

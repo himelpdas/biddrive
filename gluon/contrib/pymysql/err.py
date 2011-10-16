@@ -12,7 +12,7 @@ except ImportError:
         Exception = e.Exception
         Warning = e.Warning
 
-from constants import ER
+from .constants import ER
 
 class MySQLError(Exception):
 
@@ -125,10 +125,10 @@ def _check_mysql_exception(errinfo):
     errno, sqlstate, errorvalue = errinfo
     errorclass = error_map.get(errno, None)
     if errorclass:
-        raise errorclass, (errno,errorvalue)
+        raise errorclass(errno,errorvalue)
 
     # couldn't find the right error number
-    raise InternalError, (errno, errorvalue)
+    raise InternalError(errno, errorvalue)
 
 def raise_mysql_exception(data):
     errinfo = _get_error_info(data)

@@ -14,12 +14,13 @@ import re
 import datetime
 import time
 import cgi
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import struct
 import decimal
 import unicodedata
-from cStringIO import StringIO
-from utils import simple_hash, hmac_hash, web2py_uuid
+from io import StringIO
+from .utils import simple_hash, hmac_hash, web2py_uuid
+from functools import reduce
 
 __all__ = [
     'CLEANUP',
@@ -56,8 +57,8 @@ __all__ = [
     ]
 
 def translate(text):
-    if isinstance(text,(str,unicode)):
-        from globals import current
+    if isinstance(text,str):
+        from .globals import current
         if hasattr(current,'T'):
             return current.T(text)
     return text
@@ -210,7 +211,7 @@ class IS_EXPR(Validator):
 
     def __call__(self, value):
         environment = {'value': value}
-        exec '__ret__=' + self.expression in environment
+        exec('__ret__=' + self.expression, environment)
         if environment['__ret__']:
             return (value, None)
         return (value, translate(self.error_message))
@@ -267,7 +268,7 @@ class IS_LENGTH(Validator):
                     length = 0
             if self.minsize <= length <= self.maxsize:
                 return (value, None)
-        elif isinstance(value, (str, unicode, list)):
+        elif isinstance(value, (str, list)):
             if self.minsize <= len(value) <= self.maxsize:
                 return (value, None)
         elif self.minsize <= len(str(value)) <= self.maxsize:
@@ -320,7 +321,7 @@ class IS_IN_SET(Validator):
         self.multiple = multiple
         if isinstance(theset, dict):
             self.theset = [str(item) for item in theset]
-            self.labels = theset.values()
+            self.labels = list(theset.values())
         elif theset and isinstance(theset, (tuple,list)) \
             and isinstance(theset[0], (tuple,list)) and len(theset[0])==2:
             self.theset = [str(item) for item,label in theset]
@@ -346,7 +347,7 @@ class IS_IN_SET(Validator):
     def __call__(self, value):
         if self.multiple:
             ### if below was values = re.compile("[\w\-:]+").findall(str(value))
-            if isinstance(value, (str,unicode)):
+            if isinstance(value, str):
                 values = [value]
             elif isinstance(value, (tuple, list)):
                 values = value
@@ -395,7 +396,7 @@ class IS_IN_DB(Validator):
         sort=False,
         _and=None,
         ):
-        from dal import Table
+        from .dal import Table
         if isinstance(field,Table): field = field._id
 
         if hasattr(dbset, 'define_table'):
@@ -511,7 +512,7 @@ class IS_NOT_IN_DB(Validator):
         allowed_override=[],
         ):
 
-        from dal import Table
+        from .dal import Table
         if isinstance(field,Table): field = field._id
 
         if hasattr(dbset, 'define_table'):
@@ -831,7 +832,7 @@ class IS_DECIMAL_IN_RANGE(Validator):
 
 def is_empty(value, empty_regex=None):
     "test empty field"
-    if isinstance(value, (str, unicode)):
+    if isinstance(value, str):
         value = value.strip()
         if empty_regex is not None and empty_regex.match(value):
             value = ''
@@ -1185,7 +1186,7 @@ url_split_regex = \
 # Defined in RFC 3490, Section 3.1, Requirement #1
 # Use this regex to split the authority component of a unicode URL into
 # its component labels
-label_split_regex = re.compile(u'[\u002e\u3002\uff0e\uff61]')
+label_split_regex = re.compile('[\u002e\u3002\uff0e\uff61]')
 
 
 def escape_unicode(string):
@@ -1258,7 +1259,7 @@ def unicode_to_ascii_authority(authority):
     except:
         asciiLabels=[str(label) for label in labels]
     #RFC 3490, Section 4, Step 5
-    return str(reduce(lambda x, y: x + unichr(0x002E) + y, asciiLabels))
+    return str(reduce(lambda x, y: x + chr(0x002E) + y, asciiLabels))
 
 
 def unicode_to_ascii_url(url, prepend_scheme):
@@ -1300,7 +1301,7 @@ def unicode_to_ascii_url(url, prepend_scheme):
         #Try appending a scheme to see if that fixes the problem
         scheme_to_prepend = prepend_scheme or 'http'
         groups = url_split_regex.match(
-            unicode(scheme_to_prepend) + u'://' + url).groups()
+            str(scheme_to_prepend) + '://' + url).groups()
     #if we still can't find the authority
     if not groups[3]:
         raise Exception('No authority component found, '+ \
@@ -1375,9 +1376,8 @@ class IS_GENERIC_URL(Validator):
             self.allowed_schemes = allowed_schemes
         self.prepend_scheme = prepend_scheme
         if self.prepend_scheme not in self.allowed_schemes:
-            raise SyntaxError, \
-                "prepend_scheme='%s' is not in allowed_schemes=%s" \
-                % (self.prepend_scheme, self.allowed_schemes)
+            raise SyntaxError("prepend_scheme='%s' is not in allowed_schemes=%s" \
+                % (self.prepend_scheme, self.allowed_schemes))
 
     def __call__(self, value):
         """
@@ -1399,7 +1399,7 @@ class IS_GENERIC_URL(Validator):
                     scheme = url_split_regex.match(value).group(2)
                     # Clean up the scheme before we check it
                     if not scheme is None:
-                        scheme = urllib.unquote(scheme).lower()
+                        scheme = urllib.parse.unquote(scheme).lower()
                     # If the scheme really exists
                     if scheme in self.allowed_schemes:
                         # Then the URL is valid
@@ -1792,14 +1792,12 @@ class IS_HTTP_URL(Validator):
 
         for i in self.allowed_schemes:
             if i not in http_schemes:
-                raise SyntaxError, \
-                    "allowed_scheme value '%s' is not in %s" % \
-                    (i, http_schemes)
+                raise SyntaxError("allowed_scheme value '%s' is not in %s" % \
+                    (i, http_schemes))
 
         if self.prepend_scheme not in self.allowed_schemes:
-            raise SyntaxError, \
-                "prepend_scheme='%s' is not in allowed_schemes=%s" % \
-                (self.prepend_scheme, self.allowed_schemes)
+            raise SyntaxError("prepend_scheme='%s' is not in allowed_schemes=%s" % \
+                (self.prepend_scheme, self.allowed_schemes))
 
     def __call__(self, value):
         """
@@ -1961,14 +1959,13 @@ class IS_URL(Validator):
         self.error_message = error_message
         self.mode = mode.lower()
         if not self.mode in ['generic', 'http']:
-            raise SyntaxError, "invalid mode '%s' in IS_URL" % self.mode
+            raise SyntaxError("invalid mode '%s' in IS_URL" % self.mode)
         self.allowed_schemes = allowed_schemes
 
         if self.allowed_schemes:
             if prepend_scheme not in self.allowed_schemes:
-                raise SyntaxError, \
-                    "prepend_scheme='%s' is not in allowed_schemes=%s" \
-                    % (prepend_scheme, self.allowed_schemes)
+                raise SyntaxError("prepend_scheme='%s' is not in allowed_schemes=%s" \
+                    % (prepend_scheme, self.allowed_schemes))
 
         # if allowed_schemes is None, then we will defer testing
         # prepend_scheme's validity to a sub-method
@@ -1995,9 +1992,9 @@ class IS_URL(Validator):
                                     allowed_schemes=self.allowed_schemes,
                                     prepend_scheme=self.prepend_scheme)
         else:
-            raise SyntaxError, "invalid mode '%s' in IS_URL" % self.mode
+            raise SyntaxError("invalid mode '%s' in IS_URL" % self.mode)
 
-        if type(value) != unicode:
+        if type(value) != str:
             return subMethod(value)
         else:
             try:
@@ -2602,7 +2599,7 @@ class IS_STRONG(object):
         if len(failures) == 0:
             return (value, None)
         if not translate(self.error_message):
-            from html import XML
+            from .html import XML
             return (value, XML('<br />'.join(failures)))
         else:
             return (value, translate(self.error_message))
@@ -2900,8 +2897,8 @@ class IS_IPV4(Validator):
         '^(([1-9]?\d|1\d\d|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d\d|2[0-4]\d|25[0-5])$')
     numbers = (16777216, 65536, 256, 1)
     localhost = 2130706433
-    private = ((2886729728L, 2886795263L), (3232235520L, 3232301055L))
-    automatic = (2851995648L, 2852061183L)
+    private = ((2886729728, 2886795263), (3232235520, 3232301055))
+    automatic = (2851995648, 2852061183)
 
     def __init__(
         self,
@@ -2917,7 +2914,7 @@ class IS_IPV4(Validator):
             if isinstance(value, str):
                 temp.append(value.split('.'))
             elif isinstance(value, (list, tuple)):
-                if len(value) == len(filter(lambda item: isinstance(item, int), value)) == 4:
+                if len(value) == len([item for item in value if isinstance(item, int)]) == 4:
                     temp.append(value)
                 else:
                     for item in value:

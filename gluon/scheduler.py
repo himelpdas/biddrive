@@ -44,7 +44,7 @@ import os
 import time
 import multiprocessing
 import sys
-import cStringIO
+import io
 import threading
 import traceback
 import signal
@@ -108,7 +108,7 @@ class TaskReport(object):
 def demo_function(*argv,**kwargs):
     """ test function """
     for i in range(argv[0]):
-        print 'click',i
+        print(('click',i))
         time.sleep(1)    
     return 'done'
     
@@ -118,7 +118,7 @@ def demo_function(*argv,**kwargs):
 def _decode_list(lst):
     newlist = []
     for i in lst:
-        if isinstance(i, unicode):
+        if isinstance(i, str):
             i = i.encode('utf-8')
         elif isinstance(i, list):
             i = _decode_list(i)
@@ -127,10 +127,10 @@ def _decode_list(lst):
 
 def _decode_dict(dct):
     newdict = {}
-    for k, v in dct.iteritems():
-        if isinstance(k, unicode):
+    for k, v in list(dct.items()):
+        if isinstance(k, str):
             k = k.encode('utf-8')
-        if isinstance(v, unicode):
+        if isinstance(v, str):
              v = v.encode('utf-8')
         elif isinstance(v, list):
             v = _decode_list(v)
@@ -140,7 +140,7 @@ def _decode_dict(dct):
 def executor(queue,task):
     """ the background process """
     logging.debug('    task started')
-    stdout, sys.stdout = sys.stdout, cStringIO.StringIO()
+    stdout, sys.stdout = sys.stdout, io.StringIO()
     try:        
         if task.app:
             os.chdir(os.environ['WEB2PY_PATH'])
@@ -163,7 +163,7 @@ def executor(queue,task):
             result = eval(task.function)(*loads(task.args, list_hook),**loads(task.vars, object_hook=_decode_dict))
         stdout, sys.stdout = sys.stdout, stdout
         queue.put(TaskReport(COMPLETED, result,stdout.getvalue()))
-    except BaseException,e:
+    except BaseException as e:
         sys.stdout = stdout
         tb = traceback.format_exc()
         queue.put(TaskReport(FAILED,tb=tb))
@@ -229,7 +229,7 @@ class MetaScheduler(threading.Thread):
         self.start()
         
     def send_heartbeat(self,counter):
-        print 'thum'
+        print('thum')
         time.sleep(1)
             
     def pop_task(self):
@@ -241,7 +241,7 @@ class MetaScheduler(threading.Thread):
             vars = '{}')
 
     def report_task(self,task,task_report):
-        print 'reporting task'
+        print('reporting task')
         pass
     
     def sleep(self):
@@ -514,33 +514,33 @@ def main():
             "tasks = {'task_name':(lambda: 'output')} or similar set of tasks")
     (options, args) = parser.parse_args()
     if not options.tasks or not options.db_uri:
-        print USAGE
+        print(USAGE)
     if options.tasks:
         path,filename = os.path.split(options.tasks)
         if filename.endswith('.py'):
             filename = filename[:-3]
         sys.path.append(path)
-        print 'importing tasks...'
+        print('importing tasks...')
         tasks = __import__(filename, globals(), locals(), [], -1).tasks
-        print 'tasks found: '+', '.join(tasks.keys())
+        print(('tasks found: '+', '.join(list(tasks.keys()))))
     else:
         tasks = {}
     group_names = [x.strip() for x in options.group_names.split(',')]
 
     logging.getLogger().setLevel(logging.DEBUG)
 
-    print 'groups for this worker: '+', '.join(group_names)
-    print 'connecting to database in folder: ' + options.db_folder or './'
-    print 'using URI: '+options.db_uri
+    print(('groups for this worker: '+', '.join(group_names)))
+    print(('connecting to database in folder: ' + options.db_folder or './'))
+    print(('using URI: '+options.db_uri))
     db = DAL(options.db_uri,folder=options.db_folder)
-    print 'instantiating scheduler...'
+    print('instantiating scheduler...')
     scheduler=Scheduler(db = db,
                         worker_name = options.worker_name,
                         tasks = tasks,
                         migrate = True,
                         group_names = group_names,
                         heartbeat = options.heartbeat)
-    print 'starting main worker loop...'
+    print('starting main worker loop...')
     scheduler.loop()
 
 if __name__=='__main__':

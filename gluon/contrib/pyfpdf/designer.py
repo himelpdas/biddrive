@@ -90,8 +90,8 @@ class CustomDialog(wx.Dialog):
                 for field in fields:
                     try:
                         values[field] = eval(dlg.textctrls[field].GetValue())
-                    except Exception, e:
-                        msg = wx.MessageDialog(parent, unicode(e),
+                    except Exception as e:
+                        msg = wx.MessageDialog(parent, str(e),
                                "Error in field %s" % field,
                                wx.OK | wx.ICON_INFORMATION
                                )
@@ -333,7 +333,7 @@ class Element(object):
             self.kwargs['text'] = txt
             self.shape.ClearText()
             for line in txt.split('\n'):
-                self.shape.AddText(unicode(line, "latin1"))
+                self.shape.AddText(str(line, "latin1"))
             self.canvas.Refresh(False)
         return self.kwargs['text']
     text = property(text, text)
@@ -356,7 +356,7 @@ class Element(object):
 
     def selected(self, sel=None):
         if sel is not None:
-            print "Setting Select(%s)" % sel
+            print("Setting Select(%s)" % sel)
             self.shape.Select(sel)
         return self.shape.Selected()
     selected = property(selected, selected)
@@ -534,7 +534,7 @@ class AppFrame(wx.Frame):
         finally:
             f.close()
         for lno, linea in enumerate(filedata):
-            if DEBUG: print "processing line", lno, linea
+            if DEBUG: print("processing line", lno, linea)
             args = []
             for i,v in enumerate(linea.split(";")):
                 if not v.startswith("'"):
@@ -550,7 +550,7 @@ class AppFrame(wx.Frame):
 
         # sort by z-order (priority)
         for args in sorted(tmp, key=lambda t: t[-1]):
-            if DEBUG: print args
+            if DEBUG: print(args)
             self.create_elements(*args)
         self.diagram.ShowAll( 1 )                       #
 
@@ -561,8 +561,8 @@ class AppFrame(wx.Frame):
             from time import gmtime, strftime
             ts = strftime("%Y%m%d%H%M%S", gmtime())
             os.rename(self.filename, self.filename + ts + ".bak")
-        except Exception, e:
-            if DEBUG: print e
+        except Exception as e:
+            if DEBUG: print(e)
             pass
 
         def csv_repr(v, decimal_sep="."):
@@ -591,7 +591,7 @@ class AppFrame(wx.Frame):
 
     def do_print(self, evt):
         # genero el renderizador con propiedades del PDF
-        from template import Template
+        from .template import Template
         t = Template(elements=[e.as_dict() for e in self.elements if not e.static])
         t.add_page()
         if not t['logo'] or not os.path.exists(t['logo']):
@@ -621,7 +621,7 @@ class AppFrame(wx.Frame):
             for element in self.elements:
                 if txt in element:
                     element.selected = True
-                    print "Found:", element.name
+                    print("Found:", element.name)
             self.canvas.Refresh(False)
         dlg.Destroy()
 
@@ -630,7 +630,7 @@ class AppFrame(wx.Frame):
         new_elements = []
         for element in self.elements:
             if element.selected:
-                print "Erasing:", element.name
+                print("Erasing:", element.name)
                 element.selected = False
                 self.canvas.Refresh(False)
                 element.remove()
@@ -650,7 +650,7 @@ class AppFrame(wx.Frame):
             for i in range(1, data['qty']+1):
                 for element in self.elements:
                     if element.selected:
-                        print "Copying:", element.name
+                        print("Copying:", element.name)
                         new_element = element.copy()
                         name = new_element.name
                         if len(name)>2 and name[-2:].isdigit():
@@ -690,7 +690,7 @@ class AppFrame(wx.Frame):
     def move_elements(self, x, y):
         for element in self.elements:
             if element.selected:
-                print "moving", element.name, x, y
+                print("moving", element.name, x, y)
                 element.x = element.x + x
                 element.y = element.y + y
 

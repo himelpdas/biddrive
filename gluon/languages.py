@@ -10,13 +10,13 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 import os
 import re
 import cgi
-import portalocker
+from . import portalocker
 import logging
 import marshal
-import copy_reg
-from fileutils import listdir
-import settings
-from cfs import getcfs
+import copyreg
+from .fileutils import listdir
+from . import settings
+from .cfs import getcfs
 
 __all__ = ['translator', 'findT', 'update_all_languages']
 
@@ -226,10 +226,10 @@ class translator(object):
     def force(self, *languages):
         if not languages or languages[0] is None:
             languages = []
-        if len(languages) == 1 and isinstance(languages[0], (str, unicode)):
+        if len(languages) == 1 and isinstance(languages[0], str):
             languages = languages[0]
         if languages:
-            if isinstance(languages, (str, unicode)):
+            if isinstance(languages, str):
                 accept_languages = languages.split(';')
                 languages = []
                 [languages.extend(al.split(',')) for al in accept_languages]
@@ -336,7 +336,7 @@ def lazyT_unpickle(data):
     return marshal.loads(data)
 def lazyT_pickle(data):
     return lazyT_unpickle, (marshal.dumps(str(data)),)
-copy_reg.pickle(lazyT, lazyT_pickle, lazyT_unpickle)
+copyreg.pickle(lazyT, lazyT_pickle, lazyT_unpickle)
 
 def update_all_languages(application_path):
     path = os.path.join(application_path, 'languages/')

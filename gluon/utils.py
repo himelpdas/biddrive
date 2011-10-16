@@ -21,7 +21,7 @@ logger = logging.getLogger("web2py")
 
 def md5_hash(text):
     """ Generate a md5 hash with the given text """
-    return hashlib.md5(text).hexdigest()
+    return hashlib.md5(text.encode("utf8")).hexdigest()
 
 def simple_hash(text, digest_alg = 'md5'):
     """
@@ -29,12 +29,12 @@ def simple_hash(text, digest_alg = 'md5'):
     digest hashing algorithm
     """
     if not digest_alg:
-        raise RuntimeError, "simple_hash with digest_alg=None"
+        raise RuntimeError("simple_hash with digest_alg=None")
     elif not isinstance(digest_alg,str):
         h = digest_alg(text)
     else:
         h = hashlib.new(digest_alg)
-        h.update(text)
+        h.update(text.encode("utf8"))
     return h.hexdigest()
 
 def get_digest(value):
@@ -63,7 +63,7 @@ def hmac_hash(value, key, digest_alg='md5', salt=None):
     if ':' in key:
         digest_alg, key = key.split(':')
     digest_alg = get_digest(digest_alg)
-    d = hmac.new(key,value,digest_alg)
+    d = hmac.new(key.encode("utf8"),value.encode("utf8"),digest_alg) #py3k!
     if salt:
         d.update(str(salt))
     return d.hexdigest()
@@ -94,6 +94,8 @@ def initialize_urandom():
             frandom = open('/dev/urandom','wb')
             try:
                 frandom.write(''.join(chr(t) for t in ctokens))
+            except:
+                pass #TODO: FIX PY3K
             finally:
                 frandom.close()
         except IOError:
@@ -115,15 +117,17 @@ def web2py_uuid():
     It works like uuid.uuid4 except that tries to use os.urandom() if possible
     and it XORs the output with the tokens uniquely associated with this machine.
     """
-    bytes = [random.randrange(256) for i in range(16)]
+    randbytes = [random.randrange(256) for i in range(16)]
     try:
-        ubytes = [ord(c) for c in os.urandom(16)] # use /dev/urandom if possible
-        bytes = [bytes[i] ^ ubytes[i] for i in range(16)]
+        ubytes = [c for c in os.urandom(16)] # use /dev/urandom if possible
+        randbytes = [randbytes[i] ^ ubytes[i] for i in range(16)]
     except NotImplementedError:
         pass
     ## xor bytes with constant ctokens
-    bytes = ''.join(chr(c ^ ctokens[i]) for i,c in enumerate(bytes))
-    return str(uuid.UUID(bytes=bytes, version=4))
+    randbytes = bytearray([c ^ ctokens[i] for i,c in enumerate(randbytes)])
+    return str(uuid.UUID(bytes=bytes(randbytes), version=4))
 
 
-
+if __name__ == '__main__':
+    print(web2py_uuid())
+    

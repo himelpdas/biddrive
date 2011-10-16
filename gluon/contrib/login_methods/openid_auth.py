@@ -44,7 +44,7 @@ try:
     from openid.extensions.sreg import SRegRequest, SRegResponse
     from openid.store import nonce
     from openid.consumer.discover import DiscoveryFailure
-except ImportError, err:
+except ImportError as err:
     raise ImportError("OpenIDAuth requires python-openid package")
 
 DEFAULT = lambda: None
@@ -158,7 +158,7 @@ class OpenIDAuth(object):
         and not processed yet. Else return the OpenID form for login.
         """
         request = current.request
-        if request.vars.has_key('janrain_nonce') and not self._processed():
+        if 'janrain_nonce' in request.vars and not self._processed():
             self._process_response()
             return self.auth()
         return self._form()
@@ -196,11 +196,11 @@ class OpenIDAuth(object):
                         if current.session.w2popenid:
                             del(current.session.w2popenid)
                         current.session.flash = self.messages.flash_openid_associated
-                        if request.vars.has_key(nextvar):
+                        if nextvar in request.vars:
                             redirect(request.vars[nextvar])
                         redirect(self.auth.settings.login_next)
 
-                    if not request.vars.has_key(nextvar):
+                    if nextvar not in request.vars:
                         # no next var, add it and do login again
                         # so if user login or register can go back here to associate the OpenID
                         redirect(URL(r=request,
@@ -332,7 +332,7 @@ width: 400px;
                 warning_openid_fail(session)
                 redirect(url)
             try:
-                if request.vars.has_key('_next'):
+                if '_next' in request.vars:
                     return_to_url = self.return_to_url + '?_next=' + request.vars._next
                 url = consumerhelper.begin(oid, self.realm, return_to_url)
             except DiscoveryFailure:
@@ -388,7 +388,7 @@ width: 400px;
     def list_user_openids(self):
         messages = self.messages
         request = current.request
-        if request.vars.has_key('delete_openid'):
+        if 'delete_openid' in request.vars:
             self.remove_openid(request.vars.delete_openid)
 
         query = self.db.alt_logins.user == self.auth.user.id
@@ -434,7 +434,7 @@ class ConsumerHelper(object):
         if not hasattr(self, "store"):
             store = Web2pyStore(db)
             session = self.session
-            if not session.has_key('w2popenid'):
+            if 'w2popenid' not in session:
                 session.w2popenid = Storage()
             self.store = store
         return self.store

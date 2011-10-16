@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 {{
-def all(items):
-    return reduce(lambda a,b:a and b,items,True)
+##def all(items): #py3k!
+##    return reduce(lambda a,b:a and b,items,True)
 def peekfile(path,file):
     return A(file.replace('\\\\','/'),_href=URL('peek', args=(app, path, file)))  
 def editfile(path,file):
@@ -152,7 +152,7 @@ for c in controllers: controller_functions+=[c[:-3]+'/%s.html'%x for x in functi
       {{=peekfile('views',c)}}
     </span>
     <span class="extras">
-      {{if extend.has_key(c):}}{{=T("extends")}} <b>{{=extend[c]}}</b> {{pass}}
+      {{if c in extend:}}{{=T("extends")}} <b>{{=extend[c]}}</b> {{pass}}
       {{if include[c]:}}{{=T("includes")}} {{pass}}{{=XML(', '.join([B(f).xml() for f in include[c]]))}}
     </span>
     </li>

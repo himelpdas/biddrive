@@ -11,15 +11,15 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
 import logging
 import pdb
-import Queue
+import queue
 import sys
 
 logger = logging.getLogger("web2py")
 
-class Pipe(Queue.Queue):
+class Pipe(queue.Queue):
     def __init__(self, name, mode='r', *args, **kwargs):
         self.__name = name
-        Queue.Queue.__init__(self, *args, **kwargs)
+        queue.Queue.__init__(self, *args, **kwargs)
 
     def write(self, data):
         logger.debug("debug %s writting %s" % (self.__name, data))

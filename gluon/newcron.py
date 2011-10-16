@@ -15,10 +15,11 @@ import sched
 import re
 import datetime
 import platform
-import portalocker
-import fileutils
-import cPickle
-from settings import global_settings
+from . import portalocker
+from . import fileutils
+import pickle
+from .settings import global_settings
+from functools import reduce
 
 logger = logging.getLogger("web2py.cron")
 _cron_stopping = False
@@ -103,7 +104,7 @@ class Token(object):
             ret = None
             portalocker.lock(self.master,portalocker.LOCK_EX)
             try:
-                (start, stop) =  cPickle.load(self.master)
+                (start, stop) =  pickle.load(self.master)
             except:
                 (start, stop) = (0, 1)
             if startup or self.now - start > 59.99:
@@ -113,7 +114,7 @@ class Token(object):
                     logger.warning('WEB2PY CRON: Stale cron.master detected')
                 logger.debug('WEB2PY CRON: Acquiring lock')
                 self.master.seek(0)
-                cPickle.dump((self.now,0),self.master)
+                pickle.dump((self.now,0),self.master)
         finally:
             portalocker.unlock(self.master)
         if not ret:
@@ -130,10 +131,10 @@ class Token(object):
             portalocker.lock(self.master,portalocker.LOCK_EX)
             logger.debug('WEB2PY CRON: Releasing cron lock')
             self.master.seek(0)
-            (start, stop) =  cPickle.load(self.master)
+            (start, stop) =  pickle.load(self.master)
             if start == self.now: # if this is my lock
                 self.master.seek(0)
-                cPickle.dump((self.now,time.time()),self.master)
+                pickle.dump((self.now,time.time()),self.master)
             portalocker.unlock(self.master)
             self.master.close()
 
@@ -256,7 +257,7 @@ def crondance(applications_parent, ctype='soft', startup=False):
             cronlines = fileutils.readlines_file(crontab, 'rt')
             lines = [x.strip() for x in cronlines if x.strip() and not x.strip().startswith('#')]
             tasks = [parsecronline(cline) for cline in lines]
-        except Exception, e:
+        except Exception as e:
             logger.error('WEB2PY CRON: crontab read error %s' % e)
             continue
 
@@ -305,7 +306,7 @@ def crondance(applications_parent, ctype='soft', startup=False):
                 shell = False
             try:
                 cronlauncher(commands, shell=shell).start()
-            except Exception, e:
+            except Exception as e:
                 logger.warning(
                     'WEB2PY CRON: Execution error for %s: %s' \
                         % (task.get('cmd'), e))

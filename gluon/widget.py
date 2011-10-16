@@ -10,26 +10,26 @@ The widget is called from web2py.
 """
 
 import sys
-import cStringIO
+import io
 import time
-import thread
+import _thread
 import re
 import os
 import socket
 import signal
 import math
 import logging
-import newcron
-import main
+from . import newcron
+from . import main
 
-from fileutils import w2p_pack, read_file, write_file
-from shell import run, test
-from settings import global_settings
+from .fileutils import w2p_pack, read_file, write_file
+from .shell import run, test
+from .settings import global_settings
 
 try:
-    import Tkinter, tkMessageBox
-    import contrib.taskbar_widget
-    from winservice import web2py_windows_service_handler
+    import tkinter, tkinter.messagebox
+    from .contrib import taskbar_widget
+    from .winservice import web2py_windows_service_handler
 except:
     pass
 
@@ -60,7 +60,7 @@ class IO(object):
     def __init__(self):
         """   """
 
-        self.buffer = cStringIO.StringIO()
+        self.buffer = io.StringIO()
 
     def write(self, data):
         """   """
@@ -79,14 +79,14 @@ def try_start_browser(url):
         import webbrowser
         webbrowser.open(url)
     except:
-        print 'warning: unable to detect your browser'
+        print('warning: unable to detect your browser')
 
 
 def start_browser(ip, port):
     """ Starts the default browser """
-    print 'please visit:'
-    print '\thttp://%s:%s' % (ip, port)
-    print 'starting browser...'
+    print('please visit:')
+    print('\thttp://%s:%s' % (ip, port))
+    print('starting browser...')
     try_start_browser('http://%s:%s' % (ip, port))
 
 
@@ -98,13 +98,13 @@ def presentation(root):
     dx = root.winfo_screenwidth()
     dy = root.winfo_screenheight()
 
-    dialog = Tkinter.Toplevel(root, bg='white')
+    dialog = tkinter.Toplevel(root, bg='white')
     dialog.geometry('%ix%i+%i+%i' % (500, 300, dx / 2 - 200, dy / 2 - 150))
 
     dialog.overrideredirect(1)
     dialog.focus_force()
 
-    canvas = Tkinter.Canvas(dialog,
+    canvas = tkinter.Canvas(dialog,
                             background='white',
                             width=500,
                             height=300)
@@ -113,20 +113,20 @@ def presentation(root):
 
     logo = 'splashlogo.gif'
     if os.path.exists(logo):
-        img = Tkinter.PhotoImage(file=logo)
-        pnl = Tkinter.Label(canvas, image=img, background='white', bd=0)
+        img = tkinter.PhotoImage(file=logo)
+        pnl = tkinter.Label(canvas, image=img, background='white', bd=0)
         pnl.pack(side='top', fill='both', expand='yes')
         # Prevent garbage collection of img
         pnl.image=img
 
     def add_label(text='Change Me', font_size=12, foreground='#195866', height=1):
-        return Tkinter.Label(
+        return tkinter.Label(
             master=canvas,
             width=250,
             height=height,
             text=text,
             font=('Helvetica', font_size),
-            anchor=Tkinter.CENTER,
+            anchor=tkinter.CENTER,
             foreground=foreground,
             background='white'
             )
@@ -149,10 +149,10 @@ class web2pyDialog(object):
         """ web2pyDialog constructor  """
 
         root.title('web2py server')
-        self.root = Tkinter.Toplevel(root)
+        self.root = tkinter.Toplevel(root)
         self.options = options
-        self.menu = Tkinter.Menu(self.root)
-        servermenu = Tkinter.Menu(self.menu, tearoff=0)
+        self.menu = tkinter.Menu(self.root)
+        servermenu = tkinter.Menu(self.menu, tearoff=0)
         httplog = os.path.join(self.options.folder, 'httpserver.log')
 
         # Building the Menu
@@ -165,10 +165,10 @@ class web2pyDialog(object):
 
         self.menu.add_cascade(label='Server', menu=servermenu)
 
-        self.pagesmenu = Tkinter.Menu(self.menu, tearoff=0)
+        self.pagesmenu = tkinter.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label='Pages', menu=self.pagesmenu)
 
-        helpmenu = Tkinter.Menu(self.menu, tearoff=0)
+        helpmenu = tkinter.Menu(self.menu, tearoff=0)
 
         # Home Page
         item = lambda: try_start_browser('http://www.web2py.com')
@@ -176,7 +176,7 @@ class web2pyDialog(object):
                              command=item)
 
         # About
-        item = lambda: tkMessageBox.showinfo('About web2py', ProgramInfo)
+        item = lambda: tkinter.messagebox.showinfo('About web2py', ProgramInfo)
         helpmenu.add_command(label='About',
                              command=item)
 
@@ -190,43 +190,43 @@ class web2pyDialog(object):
         else:
             self.root.protocol('WM_DELETE_WINDOW', self.quit)
 
-        sticky = Tkinter.NW
+        sticky = tkinter.NW
 
         # IP
-        Tkinter.Label(self.root,
+        tkinter.Label(self.root,
                       text='Server IP:',
-                      justify=Tkinter.LEFT).grid(row=0,
+                      justify=tkinter.LEFT).grid(row=0,
                                                  column=0,
                                                  sticky=sticky)
-        self.ip = Tkinter.Entry(self.root)
-        self.ip.insert(Tkinter.END, self.options.ip)
+        self.ip = tkinter.Entry(self.root)
+        self.ip.insert(tkinter.END, self.options.ip)
         self.ip.grid(row=0, column=1, sticky=sticky)
 
         # Port
-        Tkinter.Label(self.root,
+        tkinter.Label(self.root,
                       text='Server Port:',
-                      justify=Tkinter.LEFT).grid(row=1,
+                      justify=tkinter.LEFT).grid(row=1,
                                                  column=0,
                                                  sticky=sticky)
 
-        self.port_number = Tkinter.Entry(self.root)
-        self.port_number.insert(Tkinter.END, self.options.port)
+        self.port_number = tkinter.Entry(self.root)
+        self.port_number.insert(tkinter.END, self.options.port)
         self.port_number.grid(row=1, column=1, sticky=sticky)
 
         # Password
-        Tkinter.Label(self.root,
+        tkinter.Label(self.root,
                       text='Choose Password:',
-                      justify=Tkinter.LEFT).grid(row=2,
+                      justify=tkinter.LEFT).grid(row=2,
                                                  column=0,
                                                  sticky=sticky)
 
-        self.password = Tkinter.Entry(self.root, show='*')
+        self.password = tkinter.Entry(self.root, show='*')
         self.password.bind('<Return>', lambda e: self.start())
         self.password.focus_force() 
         self.password.grid(row=2, column=1, sticky=sticky)
 
         # Prepare the canvas
-        self.canvas = Tkinter.Canvas(self.root,
+        self.canvas = tkinter.Canvas(self.root,
                                      width=300,
                                      height=100,
                                      bg='black')
@@ -234,18 +234,18 @@ class web2pyDialog(object):
         self.canvas.after(1000, self.update_canvas)
 
         # Prepare the frame
-        frame = Tkinter.Frame(self.root)
+        frame = tkinter.Frame(self.root)
         frame.grid(row=4, column=0, columnspan=2)
 
         # Start button
-        self.button_start = Tkinter.Button(frame,
+        self.button_start = tkinter.Button(frame,
                                            text='start server',
                                            command=self.start)
 
         self.button_start.grid(row=0, column=0)
 
         # Stop button
-        self.button_stop = Tkinter.Button(frame,
+        self.button_stop = tkinter.Button(frame,
                                           text='stop server',
                                           command=self.stop)
 
@@ -327,7 +327,7 @@ class web2pyDialog(object):
     def error(self, message):
         """ Show error message """
 
-        tkMessageBox.showerror('web2py start server', message)
+        tkinter.messagebox.showerror('web2py start server', message)
 
     def start(self):
         """ Start web2py server """
@@ -373,15 +373,15 @@ class web2pyDialog(object):
                 path=options.folder,
                 interfaces=options.interfaces)
 
-            thread.start_new_thread(self.server.start, ())
-        except Exception, e:
+            _thread.start_new_thread(self.server.start, ())
+        except Exception as e:
             self.button_start.configure(state='normal')
             return self.error(str(e))
 
         self.button_stop.configure(state='normal')
 
         if not options.taskbar:
-            thread.start_new_thread(start_browser, (ip, port))
+            _thread.start_new_thread(start_browser, (ip, port))
 
         self.password.configure(state='readonly')
         self.ip.configure(state='readonly')
@@ -420,7 +420,7 @@ class web2pyDialog(object):
             value = self.p0[1:] + [10 + 90.0 / math.sqrt(1 + data.count('\n'))]
             self.p0 = value
 
-            for i in xrange(len(self.p0) - 1):
+            for i in range(len(self.p0) - 1):
                 c = self.canvas.coords(self.q0[i])
                 self.canvas.coords(self.q0[i],
                                    (c[0],
@@ -433,7 +433,7 @@ class web2pyDialog(object):
             self.t0 = t1
             self.p0 = [100] * 300
             self.q0 = [self.canvas.create_line(i, 100, i + 1, 100,
-                       fill='green') for i in xrange(len(self.p0) - 1)]
+                       fill='green') for i in range(len(self.p0) - 1)]
 
         self.canvas.after(1000, self.update_canvas)
 
@@ -737,7 +737,7 @@ def console():
     global_settings.cmd_args = args
 
     if options.quiet:
-        capture = cStringIO.StringIO()
+        capture = io.StringIO()
         sys.stdout = capture
         logger.setLevel(logging.CRITICAL + 1)
     else:
@@ -792,14 +792,14 @@ def start_schedulers(options):
     processes = []
     code = "from gluon import current; current._scheduler.loop()"
     for app in apps:
-        print 'starting scheduler for "%s"...' % app
+        print('starting scheduler for "%s"...' % app)
         args = (app,True,True,None,False,code)
         logging.getLogger().setLevel(logging.DEBUG)        
         p = Process(target=run, args=args)
         processes.append(p)
-        print "Currently running %s scheduler processes" % (len(processes))
+        print("Currently running %s scheduler processes" % (len(processes)))
         p.start()
-        print "Processes started"
+        print("Processes started")
     for p in processes:
         try:
             p.join()
@@ -816,13 +816,13 @@ def start(cron=True):
     (options, args) = console()
 
     if not options.nobanner:
-        print ProgramName
-        print ProgramAuthor
-        print ProgramVersion
+        print(ProgramName)
+        print(ProgramAuthor)
+        print(ProgramVersion)
 
-    from dal import drivers
+    from .dal import drivers
     if not options.nobanner:
-        print 'Database drivers available: %s' % ', '.join(drivers)
+        print('Database drivers available: %s' % ', '.join(drivers))
 
 
     # ## if -L load options from options.config file
@@ -834,7 +834,7 @@ def start(cron=True):
                 # Jython doesn't like the extra stuff
                 options2 = __import__(options.config)
             except Exception:
-                print 'Cannot import config file [%s]' % options.config
+                print('Cannot import config file [%s]' % options.config)
                 sys.exit(1)
         for key in dir(options2):
             if hasattr(options,key):
@@ -866,17 +866,17 @@ def start(cron=True):
     # ## if --softcron use softcron
     # ## use hardcron in all other cases
     if options.extcron:
-        print 'Starting extcron...'
+        print('Starting extcron...')
         global_settings.web2py_crontype = 'external'
         extcron = newcron.extcron(options.folder)
         extcron.start()
         extcron.join()
         return
     elif cron and not options.nocron and options.softcron:
-        print 'Using softcron (but this is not very efficient)'
+        print('Using softcron (but this is not very efficient)')
         global_settings.web2py_crontype = 'soft'
     elif cron and not options.nocron:
-        print 'Starting hardcron...'
+        print('Starting hardcron...')
         global_settings.web2py_crontype = 'hard'
         newcron.hardcron(options.folder).start()
 
@@ -886,7 +886,7 @@ def start(cron=True):
             web2py_windows_service_handler(['', options.winservice],
                     options.config)
         else:
-            print 'Error: Windows services not supported on this platform'
+            print('Error: Windows services not supported on this platform')
             sys.exit(1)
         return
 
@@ -899,14 +899,14 @@ def start(cron=True):
         options.taskbar = False
 
     if options.taskbar and os.name != 'nt':
-        print 'Error: taskbar not supported on this platform'
+        print('Error: taskbar not supported on this platform')
         sys.exit(1)
 
     root = None
 
     if not options.nogui:
         try:
-            import Tkinter
+            import tkinter
             havetk = True
         except ImportError:
             logger.warn('GUI not available because Tk library is not installed')
@@ -914,7 +914,7 @@ def start(cron=True):
 
         if options.password == '<ask>' and havetk or options.taskbar and havetk:
             try:
-                root = Tkinter.Tk()
+                root = tkinter.Tk()
             except:
                 pass
 
@@ -935,19 +935,19 @@ def start(cron=True):
     # ## if no tk and no password, ask for a password
 
     if not root and options.password == '<ask>':
-        options.password = raw_input('choose a password:')
+        options.password = input('choose a password:')
 
     if not options.password and not options.nobanner:
-        print 'no password, no admin interface'
+        print('no password, no admin interface')
 
     # ## start server
 
     (ip, port) = (options.ip, int(options.port))
 
     if not options.nobanner:
-        print 'please visit:'
-        print '\thttp://%s:%s' % (ip, port)
-        print 'use "kill -SIGTERM %i" to shutdown the web2py server' % os.getpid()
+        print('please visit:')
+        print('\thttp://%s:%s' % (ip, port))
+        print('use "kill -SIGTERM %i" to shutdown the web2py server' % os.getpid())
 
     server = main.HttpServer(ip=ip,
                              port=port,

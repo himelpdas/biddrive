@@ -12,9 +12,9 @@ import stat
 import time
 import re
 import errno
-import rewrite
-from http import HTTP
-from contenttype import contenttype
+from . import rewrite
+from .http import HTTP
+from .contenttype import contenttype
 
 
 regex_start_range = re.compile('\d+(?=\-)')
@@ -49,7 +49,7 @@ def stream_file_or_304_or_206(
         error_message = rewrite.thread.routes.error_message % 'invalid request'
     try:
         fp = open(static_file)
-    except IOError, e:
+    except IOError as e:
         if e[0] == errno.EISDIR:
             raise HTTP(403, error_message, web2py_error='file is a directory')
         elif e[0] == errno.EACCES:
@@ -81,7 +81,7 @@ def stream_file_or_304_or_206(
         bytes = part[1] - part[0] + 1
         try:
             stream = open(static_file, 'rb')
-        except IOError, e:
+        except IOError as e:
             if e[0] in (errno.EISDIR, errno.EACCES):
                 raise HTTP(403)
             else:
@@ -93,7 +93,7 @@ def stream_file_or_304_or_206(
     else:
         try:
             stream = open(static_file, 'rb')
-        except IOError, e:
+        except IOError as e:
             if e[0] in (errno.EISDIR, errno.EACCES):
                 raise HTTP(403)
             else:

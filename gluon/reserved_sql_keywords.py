@@ -1,3 +1,4 @@
+from functools import reduce
 # encoding utf-8
 
 __author__ = "Thadeus Burgess <thadeusb@thadeusb.com>"
@@ -1710,7 +1711,7 @@ ADAPTERS = {
     'common': COMMON,
 }
 
-ADAPTERS['all'] = reduce(lambda a,b:a.union(b),(x for x in ADAPTERS.values()))
+ADAPTERS['all'] = reduce(lambda a,b:a.union(b),(x for x in list(ADAPTERS.values())))
 
 
 

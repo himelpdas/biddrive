@@ -18,15 +18,15 @@ import re
 import optparse
 import glob
 import traceback
-import fileutils
-import settings
-from utils import web2py_uuid
-from compileapp import build_environment, read_pyc, run_models_in
-from restricted import RestrictedError
-from globals import Request, Response, Session
-from storage import Storage
-from admin import w2p_unpack
-from dal import BaseAdapter
+from . import fileutils
+from . import settings
+from .utils import web2py_uuid
+from .compileapp import build_environment, read_pyc, run_models_in
+from .restricted import RestrictedError
+from .globals import Request, Response, Session
+from .storage import Storage
+from .admin import w2p_unpack
+from .dal import BaseAdapter
 
 
 logger = logging.getLogger("web2py")
@@ -66,9 +66,9 @@ def exec_environment(
     if pyfile:
         pycfile = pyfile + 'c'
         if os.path.isfile(pycfile):
-            exec read_pyc(pycfile) in env
+            exec(read_pyc(pycfile), env)
         else:
-            execfile(pyfile, env)
+            exec(compile(open(pyfile).read(), pyfile, 'exec'), env)
     return Storage(env)
 
 
@@ -114,7 +114,7 @@ def env(
     request.env.remote_addr = '127.0.0.1'
     request.env.web2py_runtime_gae = settings.global_settings.web2py_runtime_gae
 
-    for k,v in extra_request.items():
+    for k,v in list(extra_request.items()):
         request[k] = v
 
     # Monkey patch so credentials checks pass.
@@ -129,7 +129,7 @@ def env(
     if import_models:
         try:
             run_models_in(environment)
-        except RestrictedError, e:
+        except RestrictedError as e:
             sys.stderr.write(e.traceback+'\n')
             sys.exit(1)
 
@@ -141,7 +141,7 @@ def exec_pythonrc():
     pythonrc = os.environ.get('PYTHONSTARTUP')
     if pythonrc and os.path.isfile(pythonrc):
         try:
-            execfile(pythonrc)
+            exec(compile(open(pythonrc).read(), pythonrc, 'exec'))
         except NameError:
             pass
 
@@ -168,7 +168,7 @@ def run(
         die(errmsg)
     adir = os.path.join('applications', a)
     if not os.path.exists(adir):
-        if raw_input('application %s does not exist, create (y/n)?'
+        if input('application %s does not exist, create (y/n)?'
                       % a).lower() in ['y', 'yes']:
             os.mkdir(adir)
             w2p_unpack('welcome.w2p', adir)
@@ -194,27 +194,27 @@ def run(
             if not os.path.isfile(cfile):
                 die(errmsg)
             else:
-                exec read_pyc(cfile) in _env
+                exec(read_pyc(cfile), _env)
         else:
-            execfile(cfile, _env)
+            exec(compile(open(cfile).read(), cfile, 'exec'), _env)
 
     if f:
         exec ('print %s()' % f, _env)
     elif startfile:
         exec_pythonrc()
         try:
-            execfile(startfile, _env)
+            exec(compile(open(startfile).read(), startfile, 'exec'), _env)
             if import_models: BaseAdapter.close_all_instances('commit')
-        except Exception, e:
-            print traceback.format_exc()
+        except Exception as e:
+            print(traceback.format_exc())
             if import_models: BaseAdapter.close_all_instances('rollback')
     elif python_code:
         exec_pythonrc()
         try:
             exec(python_code, _env)
             if import_models: BaseAdapter.close_all_instances('commit')
-        except Exception, e:
-            print traceback.format_exc()
+        except Exception as e:
+            print(traceback.format_exc())
             if import_models: BaseAdapter.close_all_instances('rollback')
     else:
         if not plain:
@@ -274,7 +274,7 @@ def parse_path_info(path_info):
 
 
 def die(msg):
-    print >> sys.stderr, msg
+    print(msg, file=sys.stderr)
     sys.exit(1)
 
 
@@ -317,24 +317,24 @@ def test(testpath, import_models=True, verbose=False):
             files = glob.glob(os.path.join(cdir, '*.py'))
     for testfile in files:
         globs = env(a, import_models)
-        ignores = globs.keys()
-        execfile(testfile, globs)
+        ignores = list(globs.keys())
+        exec(compile(open(testfile).read(), testfile, 'exec'), globs)
 
         def doctest_object(name, obj):
             """doctest obj and enclosed methods and classes."""
 
-            if type(obj) in (types.FunctionType, types.TypeType,
-                             types.ClassType, types.MethodType,
+            if type(obj) in (types.FunctionType, type,
+                             type, types.MethodType,
                              types.UnboundMethodType):
 
                 # Reload environment before each test.
 
                 globs = env(a, c=c, f=f, import_models=import_models)
-                execfile(testfile, globs)
+                exec(compile(open(testfile).read(), testfile, 'exec'), globs)
                 doctest.run_docstring_examples(obj, globs=globs,
                         name='%s: %s' % (os.path.basename(testfile),
                         name), verbose=verbose)
-                if type(obj) in (types.TypeType, types.ClassType):
+                if type(obj) in (type, type):
                     for attr_name in dir(obj):
 
                         # Execute . operator so decorators are executed.
@@ -342,7 +342,7 @@ def test(testpath, import_models=True, verbose=False):
                         o = eval('%s.%s' % (name, attr_name), globs)
                         doctest_object(attr_name, o)
 
-        for (name, obj) in globs.items():
+        for (name, obj) in list(globs.items()):
             if name not in ignores and (f is None or f == name):
                 doctest_object(name, obj)
 

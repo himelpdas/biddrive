@@ -8,10 +8,10 @@ examle of usage:
 cache.memcache = MemcacheClient(request,[127.0.0.1:11211],debug=true)
 """
 
-import cPickle as pickle
-import thread
+import pickle as pickle
+import _thread
 
-locker = thread.allocate_lock()
+locker = _thread.allocate_lock()
 
 def MemcacheClient(*a, **b):
     locker.acquire()

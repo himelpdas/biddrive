@@ -10,7 +10,7 @@ __author__ = 'Andrew Dalke <dalke@dalkescientific.com>'
 _generator_name = __name__ + '-' + '.'.join(map(str, __version__))
 
 import datetime
-import cStringIO
+import io
 
 # Could make this the base class; will need to add 'publish'
 
@@ -26,10 +26,10 @@ class WriteXmlMixin:
 
     def to_xml(self, encoding='iso-8859-1'):
         try:
-            import cStringIO as StringIO
+            import io as StringIO
         except ImportError:
-            import StringIO
-        f = StringIO.StringIO()
+            import io
+        f = io.StringIO()
         self.write_xml(f, encoding)
         return f.getvalue()
 
@@ -40,7 +40,7 @@ def _element(
     obj,
     d={},
     ):
-    if isinstance(obj, basestring) or obj is None:
+    if isinstance(obj, str) or obj is None:
 
         # special-case handling to make the API easier
         # to use for the common case.
@@ -452,7 +452,7 @@ class RSS2(WriteXmlMixin):
         _opt_element(handler, 'lastBuildDate', lastBuildDate)
 
         for category in self.categories:
-            if isinstance(category, basestring):
+            if isinstance(category, str):
                 category = Category(category)
             category.publish(handler)
 
@@ -539,7 +539,7 @@ class RSSItem(WriteXmlMixin):
         _opt_element(handler, 'author', self.author)
 
         for category in self.categories:
-            if isinstance(category, basestring):
+            if isinstance(category, str):
                 category = Category(category)
             category.publish(handler)
 
@@ -567,7 +567,7 @@ class RSSItem(WriteXmlMixin):
 
 
 def dumps(rss, encoding='utf-8'):
-    s = cStringIO.StringIO()
+    s = io.StringIO()
     rss.write_xml(s, encoding)
     return s.getvalue()
 
@@ -585,6 +585,6 @@ def test():
 
 
 if __name__ == '__main__':
-    print test()
+    print(test())
 
 

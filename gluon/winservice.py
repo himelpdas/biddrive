@@ -23,10 +23,10 @@ try:
     import win32event
 except:
     if os.name == 'nt':
-        print "Warning, winservice is unable to install the Mark Hammond Win32 extensions"
+        print("Warning, winservice is unable to install the Mark Hammond Win32 extensions")
 import servicemanager
-import _winreg
-from fileutils import up
+import winreg
+from .fileutils import up
 
 __all__ = ['web2py_windows_service_handler']
 
@@ -83,13 +83,13 @@ class Web2pyService(Service):
 
     def chdir(self):
         try:
-            h = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+            h = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
                                 r'SYSTEM\CurrentControlSet\Services\%s'
                                  % self._svc_name_)
             try:
-                cls = _winreg.QueryValue(h, 'PythonClass')
+                cls = winreg.QueryValue(h, 'PythonClass')
             finally:
-                _winreg.CloseKey(h)
+                winreg.CloseKey(h)
             dir = os.path.dirname(cls)
             os.chdir(dir)
             return True
@@ -111,7 +111,7 @@ class Web2pyService(Service):
                 options.minthreads = options.numthreads
             if not hasattr(options, 'minthreads'): options.minthreads = None
             if not hasattr(options, 'maxthreads'): options.maxthreads = None
-        import main
+        from . import main
         self.server = main.HttpServer(
             ip=options.ip,
             port=options.port,

@@ -1,6 +1,6 @@
 from types import StringType, ListType, TupleType
 from copy import deepcopy
-from Elements import *
+from .Elements import *
 
 DEFAULT_TAB_WIDTH = 720
 

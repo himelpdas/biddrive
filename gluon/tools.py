@@ -8,28 +8,35 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 
 import base64
-import cPickle
+import pickle
 import datetime
-import thread
+import _thread
 import logging
 import sys
 import os
 import re
 import time
 import smtplib
-import urllib
-import urllib2
-import Cookie
-import cStringIO
-from email import MIMEBase, MIMEMultipart, MIMEText, Encoders, Header, message_from_string
-
-from contenttype import contenttype
-from storage import Storage, StorageList, Settings, Messages
-from utils import web2py_uuid
-from fileutils import read_file
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+import http.cookies
+import io
+##from email import MIMEBase, MIMEMultipart, MIMEText, Encoders, Header, message_from_string #py3k!
+import email.mime.base as MIMEBase # py3k!
+import email.mime.multipart as MIMEMultipart # py3k!
+import email.mime.text as MIMEText # py3k!
+import email.encoders as Encoders # py3k!
+from email.header import Header # py3k!
+from email import message_from_string # py3k!
+ 
+from .contenttype import contenttype
+from .storage import Storage, StorageList, Settings, Messages
+from .utils import web2py_uuid
+from .fileutils import read_file
 from gluon import *
 
-import serializers
+from . import serializers
+import collections
 
 try:
     import json as json_parser                      # try stdlib (Python 2.6)
@@ -37,7 +44,7 @@ except ImportError:
     try:
         import simplejson as json_parser            # try external module
     except:
-        import contrib.simplejson as json_parser    # fallback to pure-Python module
+        from .contrib.simplejson import json_parser    # fallback to pure-Python module
 
 __all__ = ['Mail', 'Auth', 'Recaptcha', 'Crud', 'Service', 
            'PluginManager', 'fetch', 'geocode', 'prettydate']
@@ -65,7 +72,7 @@ def validators(*a):
     return b
 
 def call_or_redirect(f,*args):
-    if callable(f):
+    if isinstance(f, collections.Callable):
         redirect(f(*args))
     else:
         redirect(f)
@@ -350,13 +357,13 @@ class Mail(object):
         if not text is None or not html is None:
             attachment = MIMEMultipart.MIMEMultipart('alternative')
             if not text is None:
-                if isinstance(text, basestring):
+                if isinstance(text, str):
                     text = text.decode(encoding).encode('utf-8')
                 else:
                     text = text.read().decode(encoding).encode('utf-8')
                 attachment.attach(MIMEText.MIMEText(text,_charset='utf-8'))
             if not html is None:
-                if isinstance(html, basestring):
+                if isinstance(html, str):
                     html = html.decode(encoding).encode('utf-8')
                 else:
                     html = html.read().decode(encoding).encode('utf-8')
@@ -427,7 +434,7 @@ class Mail(object):
                     payload.attach(p)
                     # it's just a trick to handle the no encryption case
                     payload_in=payload
-                except errors.GPGMEError, ex:
+                except errors.GPGMEError as ex:
                     self.error="GPG error: %s" % ex.getstring()
                     return False
             ############################################
@@ -468,7 +475,7 @@ class Mail(object):
                     p=MIMEBase.MIMEBase("application",'octet-stream')
                     p.set_payload(cipher.read())
                     payload.attach(p)
-                except errors.GPGMEError, ex:
+                except errors.GPGMEError as ex:
                     self.error="GPG error: %s" % ex.getstring()
                     return False
         #######################################################
@@ -504,7 +511,7 @@ class Mail(object):
                     else:
                         p7 = s.sign(msg_bio,flags=SMIME.PKCS7_DETACHED)
                     msg_bio = BIO.MemoryBuffer(payload_in.as_string()) # Recreate coz sign() has consumed it.
-                except Exception,e:
+                except Exception as e:
                     self.error="Something went wrong on signing: <%s>" %str(e)
                     return False
 
@@ -527,7 +534,7 @@ class Mail(object):
                     else:
                         tmp_bio.write(payload_in.as_string())
                     p7 = s.encrypt(tmp_bio)
-                except Exception,e:
+                except Exception as e:
                     self.error="Something went wrong on encrypting: <%s>" %str(e)
                     return False
 
@@ -600,7 +607,7 @@ class Mail(object):
                     server.login(*self.settings.login.split(':',1))
                 result = server.sendmail(self.settings.sender, to, payload.as_string())
                 server.quit()
-        except Exception, e:
+        except Exception as e:
             logger.warn('Mail.send failure:%s' % e)
             self.result = result
             self.error = e
@@ -655,18 +662,18 @@ class Recaptcha(DIV):
                  and len(recaptcha_challenge_field)):
             self.errors['captcha'] = self.error_message
             return False
-        params = urllib.urlencode({
+        params = urllib.parse.urlencode({
             'privatekey': private_key,
             'remoteip': remoteip,
             'challenge': recaptcha_challenge_field,
             'response': recaptcha_response_field,
             })
-        request = urllib2.Request(
+        request = urllib.request.Request(
             url=self.VERIFY_SERVER,
             data=params,
             headers={'Content-type': 'application/x-www-form-urlencoded',
                         'User-agent': 'reCAPTCHA Python'})
-        httpresp = urllib2.urlopen(request)
+        httpresp = urllib.request.urlopen(request)
         return_values = httpresp.read().splitlines()
         httpresp.close()
         return_code = return_values[0]
@@ -860,8 +867,8 @@ class Auth(object):
         # ## what happens after login?
 
         self.next = current.request.vars._next
-        if isinstance(self.next,(list,tuple)):
-            self.next = self.next[0]
+        ##if isinstance(self.__next__,(list,tuple)): #py3k! I dont understand this...
+        ##    self.next = self.next[0] #py3k! I dont understand this...
 
         # ## what happens after registration?
 
@@ -1416,7 +1423,7 @@ class Auth(object):
         elif 'email' in table_user.fields():
             username = 'email'
         else:
-            raise SyntaxError, "user must have username or email"
+            raise SyntaxError("user must have username or email")
         user = self.db(table_user[username] == keys[username]).select().first()
         keys['registration_key']=''
         if user:
@@ -1570,14 +1577,14 @@ class Auth(object):
         except: pass
 
         ### use session for federated login
-        if self.next:
-            session._auth_next = self.next
-        elif session._auth_next:
+        ##if self.__next__: #py3k!
+        ##    session._auth_next = self.__next__ #py3k!
+        if session._auth_next: #py3k!
             self.next = session._auth_next
         ### pass
 
         if next == DEFAULT:
-            next = self.next or self.settings.login_next
+            next = self.settings.login_next #py3k! self.__next__ 
         if onvalidation == DEFAULT:
             onvalidation = self.settings.login_onvalidation
         if onaccept == DEFAULT:
@@ -1711,7 +1718,7 @@ class Auth(object):
                 user = user,
                 last_visit = request.now,
                 expiration = self.settings.long_expiration,
-                remember = request.vars.has_key("remember"),
+                remember = "remember" in request.vars,
                 hmac_key = web2py_uuid()
                 )
 
@@ -1784,7 +1791,7 @@ class Auth(object):
         if self.is_logged_in():
             redirect(self.settings.logged_url)
         if next == DEFAULT:
-            next = self.next or self.settings.register_next
+            next = self.settings.register_next #py3k! self.__next__ ???
         if onvalidation == DEFAULT:
             onvalidation = self.settings.register_onvalidation
         if onaccept == DEFAULT:
@@ -1947,7 +1954,7 @@ class Auth(object):
             response.flash = self.messages.function_disabled
             return ''
         if next == DEFAULT:
-            next = self.next or self.settings.retrieve_username_next
+            next = self.__next__ or self.settings.retrieve_username_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_username_onvalidation
         if onaccept == DEFAULT:
@@ -2028,7 +2035,7 @@ class Auth(object):
             response.flash = self.messages.function_disabled
             return ''
         if next == DEFAULT:
-            next = self.next or self.settings.retrieve_password_next
+            next = self.__next__ or self.settings.retrieve_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.retrieve_password_onvalidation
         if onaccept == DEFAULT:
@@ -2103,7 +2110,7 @@ class Auth(object):
         session = current.session
 
         if next == DEFAULT:
-            next = self.next or self.settings.reset_password_next
+            next = self.__next__ or self.settings.reset_password_next
         try:
             key = request.vars.key or request.args[-1]
             t0 = int(key.split('-')[0])
@@ -2158,7 +2165,7 @@ class Auth(object):
                 (self.settings.retrieve_password_captcha!=False and self.settings.captcha)
 
         if next == DEFAULT:
-            next = self.next or self.settings.request_reset_password_next
+            next = self.settings.request_reset_password_next #py3k! self.__next__ or 
         if not self.settings.mailer:
             response.flash = self.messages.function_disabled
             return ''
@@ -2250,7 +2257,7 @@ class Auth(object):
         request = current.request
         session = current.session
         if next == DEFAULT:
-            next = self.next or self.settings.change_password_next
+            next = self.__next__ or self.settings.change_password_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.change_password_onvalidation
         if onaccept == DEFAULT:
@@ -2316,7 +2323,7 @@ class Auth(object):
         request = current.request
         session = current.session
         if next == DEFAULT:
-            next = self.next or self.settings.profile_next
+            next = self.__next__ or self.settings.profile_next
         if onvalidation == DEFAULT:
             onvalidation = self.settings.profile_onvalidation
         if onaccept == DEFAULT:
@@ -2377,7 +2384,7 @@ class Auth(object):
             user = self.settings.table_user(user_id)
             if not user:
                 raise HTTP(401, "Not Authorized")
-            auth.impersonator = cPickle.dumps(session)
+            auth.impersonator = pickle.dumps(session)
             auth.user.update(
                 self.settings.table_user._filter_fields(user, True))
             self.user = auth.user
@@ -2388,7 +2395,7 @@ class Auth(object):
             self.log_event(log,dict(id=current_id, other_id=auth.user.id))
         elif user_id in (0, '0') and self.is_impersonating():
             session.clear()
-            session.update(cPickle.loads(auth.impersonator))
+            session.update(pickle.loads(auth.impersonator))
             self.user = session.auth.user
         if requested_id == DEFAULT and not request.post_vars:
             return SQLFORM.factory(Field('user_id', 'integer'))
@@ -2448,7 +2455,7 @@ class Auth(object):
                     return call_or_redirect(
                         self.settings.on_failed_authentication,
                         self.settings.login_url+\
-                            '?_next='+urllib.quote(next))
+                            '?_next='+urllib.parse.quote(next))
                 if not condition:
                     current.session.flash = self.messages.access_denied
                     return call_or_redirect(
@@ -2657,7 +2664,7 @@ class Auth(object):
             group_id = self.user_group()
         id = permission.insert(group_id=group_id, name=name,
                                table_name=str(table_name),
-                               record_id=long(record_id))
+                               record_id=int(record_id))
         self.log_event(self.messages.add_permission_log,
                        dict(permission_id=id, group_id=group_id,
                             name=name, table_name=table_name,
@@ -2682,7 +2689,7 @@ class Auth(object):
         return self.db(permission.group_id == group_id)(permission.name
                  == name)(permission.table_name
                            == str(table_name))(permission.record_id
-                 == long(record_id)).delete()
+                 == int(record_id)).delete()
 
     def accessible_query(self, name, table, user_id=None):
         """
@@ -2792,7 +2799,7 @@ class Crud(object):
         if not db and environment and isinstance(environment,DAL):
             self.db = environment
         elif not db:
-            raise SyntaxError, "must pass db as first or second argument"
+            raise SyntaxError("must pass db as first or second argument")
         self.environment = current
         settings = self.settings = Settings()
         settings.auth = None
@@ -3271,21 +3278,21 @@ class Crud(object):
         return form, results
 
 
-urllib2.install_opener(urllib2.build_opener(urllib2.HTTPCookieProcessor()))
+urllib.request.install_opener(urllib.request.build_opener(urllib.request.HTTPCookieProcessor()))
 
 def fetch(url, data=None, headers=None,
-          cookie=Cookie.SimpleCookie(),
+          cookie=http.cookies.SimpleCookie(),
           user_agent='Mozilla/5.0'):
     headers = headers or {}
     if not data is None:
-        data = urllib.urlencode(data)
+        data = urllib.parse.urlencode(data)
     if user_agent: headers['User-agent'] = user_agent
-    headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in cookie.values()])
+    headers['Cookie'] = ' '.join(['%s=%s;'%(c.key,c.value) for c in list(cookie.values())])
     try:
         from google.appengine.api import urlfetch
     except ImportError:
-        req = urllib2.Request(url, data, headers)
-        html = urllib2.urlopen(req).read()
+        req = urllib.request.Request(url, data, headers)
+        html = urllib.request.urlopen(req).read()
     else:
         method = ((data is None) and urlfetch.GET) or urlfetch.POST
         while url is not None:
@@ -3308,7 +3315,7 @@ regex_geocode = \
 
 def geocode(address):
     try:
-        a = urllib.quote(address)
+        a = urllib.parse.quote(address)
         txt = fetch('http://maps.google.com/maps/geo?q=%s&output=xml'
                      % a)
         item = regex_geocode.search(txt)
@@ -3319,10 +3326,10 @@ def geocode(address):
 
 
 def universal_caller(f, *a, **b):
-    c = f.func_code.co_argcount
-    n = f.func_code.co_varnames[:c]
+    c = f.__code__.co_argcount
+    n = f.__code__.co_varnames[:c]
 
-    defaults = f.func_defaults or []
+    defaults = f.__defaults__ or []
     pos_args = n[0:-len(defaults)]
     named_args = n[-len(defaults):]
 
@@ -3335,14 +3342,14 @@ def universal_caller(f, *a, **b):
     # There might be pos_args left, that are sent as named_values. Gather them as well.
     # If a argument already is populated with values we simply replaces them.
     for arg_name in pos_args[len(arg_dict):]:
-        if b.has_key(arg_name):
+        if arg_name in b:
             arg_dict[arg_name] = b[arg_name]
 
     if len(arg_dict) >= len(pos_args):
         # All the positional arguments is found. The function may now be called.
         # However, we need to update the arg_dict with the values from the named arguments as well.
         for arg_name in named_args:
-            if b.has_key(arg_name):
+            if arg_name in b:
                 arg_dict[arg_name] = b[arg_name]
 
         return f(**arg_dict)
@@ -3536,7 +3543,7 @@ class Service(object):
 
         """
         if not isinstance(domain, str):
-            raise SyntaxError, "AMF3 requires a domain for function"
+            raise SyntaxError("AMF3 requires a domain for function")
 
         def _amfrpc3(f):
             if domain:
@@ -3590,7 +3597,7 @@ class Service(object):
             args = request.args
 
         def none_exception(value):
-            if isinstance(value, unicode):
+            if isinstance(value, str):
                 return value.encode('utf8')
             if hasattr(value, 'isoformat'):
                 return value.isoformat()[:19].replace('T', ' ')
@@ -3600,16 +3607,16 @@ class Service(object):
         if args and args[0] in self.run_procedures:
             r = universal_caller(self.run_procedures[args[0]],
                                  *args[1:], **dict(request.vars))
-            s = cStringIO.StringIO()
+            s = io.StringIO()
             if hasattr(r, 'export_to_csv_file'):
                 r.export_to_csv_file(s)
             elif r and isinstance(r[0], (dict, Storage)):
                 import csv
                 writer = csv.writer(s)
-                writer.writerow(r[0].keys())
+                writer.writerow(list(r[0].keys()))
                 for line in r:
                     writer.writerow([none_exception(v) \
-                                     for v in line.values()])
+                                     for v in list(line.values())])
             else:
                 import csv
                 writer = csv.writer(s)
@@ -3687,7 +3694,7 @@ class Service(object):
             if hasattr(s, 'as_list'):
                 s = s.as_list()
             return return_response(id, s)
-        except Service.JsonRpcException, e:
+        except Service.JsonRpcException as e:
             return return_error(id, e.code, e.info)
         except BaseException:
             etype, eval, etb = sys.exc_info()
@@ -3699,7 +3706,7 @@ class Service(object):
     def serve_xmlrpc(self):
         request = current.request
         response = current.response
-        services = self.xmlrpc_procedures.values()
+        services = list(self.xmlrpc_procedures.values())
         return response.xmlrpc(request, services)
 
     def serve_amfrpc(self, version=0):
@@ -3730,7 +3737,7 @@ class Service(object):
 
     def serve_soap(self, version="1.1"):
         try:
-            from contrib.pysimplesoap.server import SoapDispatcher
+            from .contrib.pysimplesoap.server import SoapDispatcher
         except:
             return "pysimplesoap not installed in contrib"
         request = current.request
@@ -3751,7 +3758,7 @@ class Service(object):
             prefix='pys',
             documentation = documentation,
             ns = True)
-        for method, (function, returns, args, doc) in procedures.items():
+        for method, (function, returns, args, doc) in list(procedures.items()):
             dispatcher.register_function(method, function, returns, args, doc)
         if request.env.request_method == 'POST':
             # Process normal Soap Operation
@@ -3873,7 +3880,7 @@ def completion(callback):
                 d = f(*a,**b)
                 return d
             finally:
-                thread.start_new_thread(callback,(d,))
+                _thread.start_new_thread(callback,(d,))
         return __completion
     return _completion
 
@@ -3921,10 +3928,10 @@ def test_thread_separation():
         c.x=7
         lock1.release()
         lock2.release()
-    lock1=thread.allocate_lock()
-    lock2=thread.allocate_lock()
+    lock1=_thread.allocate_lock()
+    lock2=_thread.allocate_lock()
     lock1.acquire()
-    thread.start_new_thread(f,())
+    _thread.start_new_thread(f,())
     a=PluginManager()
     a.x=5
     lock1.release()
@@ -3986,8 +3993,8 @@ class PluginManager(object):
     """
     instances = {}
     def __new__(cls,*a,**b):
-        id = thread.get_ident()
-        lock = thread.allocate_lock()
+        id = _thread.get_ident()
+        lock = _thread.allocate_lock()
         try:
             lock.acquire()
             try:
@@ -4003,14 +4010,14 @@ class PluginManager(object):
             self.__dict__.clear()
         settings = self.__getattr__(plugin)
         settings.installed = True
-        [settings.update({key:value}) for key,value in defaults.items() \
+        [settings.update({key:value}) for key,value in list(defaults.items()) \
             if not key in settings]
     def __getattr__(self, key):
         if not key in self.__dict__:
             self.__dict__[key] = Storage()
         return self.__dict__[key]
     def keys(self):
-        return self.__dict__.keys()
+        return list(self.__dict__.keys())
     def __contains__(self,key):
         return key in self.__dict__
 

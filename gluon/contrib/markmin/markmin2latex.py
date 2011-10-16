@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     if options.info:
-        import markmin2html
+        from . import markmin2html
         markmin2latex(markmin2html.__doc__)
     elif options.test:
         doctest.testmod()
@@ -280,6 +280,6 @@ if __name__ == '__main__':
             output=output.replace(r'\section*{',r'\chapter*{')
             output=output.replace(r'\section{',r'\chapter{')
             output=output.replace(r'subsection{',r'section{')
-        print output
+        print(output)
 
 

@@ -4,11 +4,12 @@ Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
 License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 import datetime
-from storage import Storage
-from html import TAG
-from html import xmlescape
-from languages import lazyT
-import contrib.rss2 as rss2
+from .storage import Storage
+from .html import TAG
+from .html import xmlescape
+from .languages import lazyT
+from .contrib import rss2
+import collections
 
 try:
     import json as json_parser                      # try stdlib (Python 2.6)
@@ -16,37 +17,37 @@ except ImportError:
     try:
         import simplejson as json_parser            # try external module
     except:
-        import contrib.simplejson as json_parser    # fallback to pure-Python module
+        from .contrib.simplejson import json_parser    # fallback to pure-Python module
 
 def custom_json(o):
-    if hasattr(o,'custom_json') and callable(o.custom_json):
+    if hasattr(o,'custom_json') and isinstance(o.custom_json, collections.Callable):
         return o.custom_json()
     if isinstance(o, (datetime.date,
                       datetime.datetime,
                       datetime.time)):
         return o.isoformat()[:19].replace('T',' ')
-    elif isinstance(o, (int, long)):
+    elif isinstance(o, int):
         return int(o)
     elif isinstance(o, lazyT):
         return str(o)
-    elif hasattr(o,'as_list') and callable(o.as_list):
+    elif hasattr(o,'as_list') and isinstance(o.as_list, collections.Callable):
         return o.as_list()
-    elif hasattr(o,'as_dict') and callable(o.as_dict):
+    elif hasattr(o,'as_dict') and isinstance(o.as_dict, collections.Callable):
         return o.as_dict()
     else:
         raise TypeError(repr(o) + " is not JSON serializable")
 
 
 def xml_rec(value, key):
-    if hasattr(value,'custom_xml') and callable(value.custom_xml):
+    if hasattr(value,'custom_xml') and isinstance(value.custom_xml, collections.Callable):
         return value.custom_xml()
     elif isinstance(value, (dict, Storage)):
-        return TAG[key](*[TAG[k](xml_rec(v, '')) for k, v in value.items()])
+        return TAG[key](*[TAG[k](xml_rec(v, '')) for k, v in list(value.items())])
     elif isinstance(value, list):
         return TAG[key](*[TAG.item(xml_rec(item, '')) for item in value])
-    elif hasattr(value,'as_list') and callable(value.as_list):
+    elif hasattr(value,'as_list') and isinstance(value.as_list, collections.Callable):
         return str(xml_rec(value.as_list(),''))
-    elif hasattr(value,'as_dict') and callable(value.as_dict):
+    elif hasattr(value,'as_dict') and isinstance(value.as_dict, collections.Callable):
         return str(xml_rec(value.as_dict(),''))
     else:
         return xmlescape(value)

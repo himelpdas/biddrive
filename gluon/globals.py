@@ -14,29 +14,31 @@ Contains the classes for the global used variables:
 
 """
 
-from storage import Storage, List
-from streamer import streamer, stream_file_or_304_or_206, DEFAULT_CHUNK_SIZE
-from xmlrpc import handler
-from contenttype import contenttype
-from html import xmlescape, TABLE, TR, PRE
-from http import HTTP
-from fileutils import up
-from serializers import json, custom_json
-import settings
-from utils import web2py_uuid
-from settings import global_settings
+from .storage import Storage, List
+from .streamer import streamer, stream_file_or_304_or_206, DEFAULT_CHUNK_SIZE
+from .xmlrpc import handler
+from .contenttype import contenttype
+from .html import xmlescape, TABLE, TR, PRE
+from .http import HTTP
+from .fileutils import up
+from .serializers import json, custom_json
+from . import settings
+from .utils import web2py_uuid
+from .settings import global_settings
 
 import hashlib
-import portalocker
-import cPickle
-import cStringIO
+from . import portalocker
+import pickle
+import io
 import datetime
 import re
-import Cookie
+from http import cookies
+import http
 import os
 import sys
 import traceback
 import threading
+import collections
 
 regex_session_id = re.compile('^([\w\-]+/)?[\w\-\.]+$')
 
@@ -66,7 +68,7 @@ class Request(Storage):
     def __init__(self):
         self.wsgi = Storage() # hooks to environ and start_response
         self.env = Storage()
-        self.cookies = Cookie.SimpleCookie()
+        self.cookies = http.cookies.SimpleCookie()
         self.get_vars = Storage()
         self.post_vars = Storage()
         self.vars = Storage()
@@ -113,7 +115,7 @@ class Request(Storage):
                     raise HTTP(400,"method not supported")
                 try:
                     return rest_action(*_self.args,**_self.vars)
-                except TypeError, e:
+                except TypeError as e:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     if len(traceback.extract_tb(exc_traceback))==1:
                         raise HTTP(400,"invalid arguments")
@@ -136,9 +138,9 @@ class Response(Storage):
         self.status = 200
         self.headers = Storage()
         self.headers['X-Powered-By'] = 'web2py'
-        self.body = cStringIO.StringIO()
+        self.body = io.StringIO()
         self.session_id = None
-        self.cookies = Cookie.SimpleCookie()
+        self.cookies = http.cookies.SimpleCookie()
         self.postprocessing = []
         self.flash = ''            # used by the default view layout
         self.meta = Storage()      # used by web2py_ajax.html
@@ -155,17 +157,17 @@ class Response(Storage):
         if not escape:
             self.body.write(str(data))
         else:
-            self.body.write(xmlescape(data))
+            self.body.write(str(xmlescape(data)))
 
     def render(self, *a, **b):
-        from compileapp import run_view_in
+        from .compileapp import run_view_in
         if len(a) > 2:
-            raise SyntaxError, 'Response.render can be called with two arguments, at most'
+            raise SyntaxError('Response.render can be called with two arguments, at most')
         elif len(a) == 2:
             (view, self._vars) = (a[0], a[1])
         elif len(a) == 1 and isinstance(a[0], str):
             (view, self._vars) = (a[0], {})
-        elif len(a) == 1 and hasattr(a[0], 'read') and callable(a[0].read):
+        elif len(a) == 1 and hasattr(a[0], 'read') and isinstance(a[0].read, collections.Callable):
             (view, self._vars) = (a[0], {})
         elif len(a) == 1 and isinstance(a[0], dict):
             (view, self._vars) = (None, a[0])
@@ -174,9 +176,9 @@ class Response(Storage):
         self._vars.update(b)
         self._view_environment.update(self._vars)
         if view:
-            import cStringIO
+            import io
             (obody, oview) = (self.body, self.view)
-            (self.body, self.view) = (cStringIO.StringIO(), view)
+            (self.body, self.view) = (io.StringIO(), view)
             run_view_in(self._view_environment)
             page = self.body.getvalue()
             self.body.close()
@@ -188,7 +190,7 @@ class Response(Storage):
 
     def include_meta(self):
         s = ''
-        for key,value in (self.meta or {}).items():
+        for key,value in list((self.meta or {}).items()):
             s += '<meta name="%s" content="%s" />' % (key,xmlescape(value))
         self.write(s,escape=False)
 
@@ -217,7 +219,7 @@ class Response(Storage):
         the file content will be streamed at 100 bytes at the time
         """
 
-        if isinstance(stream, (str, unicode)):
+        if isinstance(stream, str):
             stream_file_or_304_or_206(stream,
                                       chunk_size=chunk_size,
                                       request=request,
@@ -254,7 +256,7 @@ class Response(Storage):
         downloads from http://..../download/filename
         """
 
-        import contenttype as c
+        from . import contenttype as c
         if not request.args:
             raise HTTP(404)
         name = request.args[-1]
@@ -300,7 +302,7 @@ class Response(Storage):
         return handler(request, self, methods)
 
     def toolbar(self):
-        from html import DIV, SCRIPT, BEAUTIFY, TAG, URL
+        from .html import DIV, SCRIPT, BEAUTIFY, TAG, URL
         BUTTON = TAG.button
         admin = URL("admin","default","design",
                     args=current.request.application)
@@ -373,11 +375,11 @@ class Session(Storage):
                         portalocker.lock(response.session_file,
                                 portalocker.LOCK_EX)
                         response.session_locked = True
-                        self.update(cPickle.load(response.session_file))
+                        self.update(pickle.load(response.session_file))
                         response.session_file.seek(0)
                         oc = response.session_filename.split('/')[-1].split('-')[0]
                         if check_client and client!=oc:
-                            raise Exception, "cookie attack"
+                            raise Exception("cookie attack")
                     finally:
                         pass
                         #This causes admin login to break. Must find out why.
@@ -425,14 +427,14 @@ class Session(Storage):
                 key = request.cookies[response.session_id_name].value
                 (record_id, unique_key) = key.split(':')
                 if record_id == '0':
-                    raise Exception, 'record_id == 0'
+                    raise Exception('record_id == 0')
                 rows = db(table.id == record_id).select()
                 if len(rows) == 0 or rows[0].unique_key != unique_key:
-                    raise Exception, 'No record'
+                    raise Exception('No record')
 
                  # rows[0].update_record(locked=True)
 
-                session_data = cPickle.loads(rows[0].session_data)
+                session_data = pickle.loads(rows[0].session_data)
                 self.update(session_data)
             except Exception:
                 record_id = None
@@ -443,7 +445,7 @@ class Session(Storage):
             response.session_id = '%s:%s' % (record_id, unique_key)
         response.cookies[response.session_id_name] = response.session_id
         response.cookies[response.session_id_name]['path'] = '/'
-        self.__hash = hashlib.md5(str(self)).digest()
+        self.__hash = hashlib.md5(str(self).encode("utf8")).digest()
         if self.flash:
             (response.flash, self.flash) = (self.flash, None)
 
@@ -487,7 +489,7 @@ class Session(Storage):
             response._dbtable_and_field
         dd = dict(locked=False, client_ip=request.env.remote_addr,
                   modified_datetime=request.now,
-                  session_data=cPickle.dumps(dict(self)),
+                  session_data=pickle.dumps(dict(self)),
                   unique_key=unique_key)
         if record_id:
             table._db(table.id == record_id).update(**dd)
@@ -507,7 +509,7 @@ class Session(Storage):
         __hash = self.__hash
         if __hash is not None:
             del self.__hash
-            if __hash == hashlib.md5(str(self)).digest():
+            if __hash == hashlib.md5(str(self).encode("utf8")).digest(): #py3k!
                 self._close(response)
                 return
 
@@ -525,7 +527,7 @@ class Session(Storage):
             response.session_locked = True
 
         if response.session_file:
-            cPickle.dump(dict(self), response.session_file)
+            pickle.dump(dict(self), response.session_file)
             response.session_file.truncate()
             self._close(response)
 

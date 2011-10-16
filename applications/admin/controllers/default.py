@@ -168,7 +168,7 @@ def site():
         if request.vars.appurl is not '':
             try:
                 f = urllib.urlopen(request.vars.appurl)
-            except Exception, e:
+            except Exception as e:
                 session.flash = DIV(T('Unable to download app because:'),PRE(str(e)))
                 redirect(URL(r=request))
             fname = request.vars.appurl
@@ -204,7 +204,7 @@ def site():
     if FILTER_APPS:
         apps = [f for f in apps if f in FILTER_APPS]
 
-    apps = sorted(apps,lambda a,b:cmp(a.upper(),b.upper()))
+    apps = sorted(apps,key=lambda a: a.upper()) #py3k!
 
     return dict(app=None, apps=apps, myversion=myversion)
 
@@ -453,7 +453,7 @@ def edit():
         try:
             code = request.vars.data.rstrip().replace('\r\n','\n')+'\n'
             compile(code, path, "exec", _ast.PyCF_ONLY_AST)
-        except Exception, e:
+        except Exception as e:
             start = sum([len(line)+1 for l, line
                             in enumerate(request.vars.data.split("\n"))
                             if l < e.lineno-1])
@@ -475,10 +475,10 @@ def edit():
         # Lets try to reload the modules
         try:
             mopath = '.'.join(request.args[2:])[:-3]
-            exec 'import applications.%s.modules.%s' % (request.args[0], mopath)
+            exec('import applications.%s.modules.%s' % (request.args[0], mopath))
             reload(sys.modules['applications.%s.modules.%s'
                     % (request.args[0], mopath)])
-        except Exception, e:
+        except Exception as e:
             response.flash = DIV(T('failed to reload module because:'),PRE(str(e)))
 
     edit_controller = None
@@ -529,7 +529,7 @@ def edit():
         editarea_preferences['REPLACE_TAB_BY_SPACES'] = '4'
         editarea_preferences['DISPLAY'] = 'onload'
         for key in editarea_preferences:
-            if globals().has_key(key):
+            if key in globals():
                 editarea_preferences[key]=globals()[key]
         return dict(app=request.args[0],
                     filename=filename,
@@ -979,7 +979,7 @@ def create_file():
                           dict(filename=full_filename[len(path):]))
         redirect(URL('edit',
                  args=[os.path.join(request.vars.location, filename)]))
-    except Exception, e:
+    except Exception as e:
         if not isinstance(e,HTTP):
             session.flash = T('cannot create file')
 
@@ -1205,7 +1205,7 @@ def twitter():
             return sj.loads(page)['#timeline']
         else:
             return 'disabled'
-    except Exception, e:
+    except Exception as e:
         return DIV(T('Unable to download because:'),BR(),str(e))
 
 def user():
@@ -1221,3 +1221,47 @@ def reload_routes():
     import gluon.rewrite
     gluon.rewrite.load()
     redirect(URL('site'))
+
+response._vars=response._caller(design)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)
+
+response._vars=response._caller(site)

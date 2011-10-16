@@ -176,7 +176,7 @@ class TestIsUrl(unittest.TestCase):
         try:
             x = IS_URL(mode='ftp')
             x('http://www.google.ca')
-        except Exception, e:
+        except Exception as e:
             if str(e) != "invalid mode 'ftp' in IS_URL":
                 self.fail('Wrong exception: ' + str(e))
         else:
@@ -189,7 +189,7 @@ class TestIsUrl(unittest.TestCase):
                        prepend_scheme='ftp')
             x('http://www.benn.ca')  # we can only reasonably know about the
                                      # error at calling time
-        except Exception, e:
+        except Exception as e:
             if str(e)\
                  != "allowed_scheme value 'ftp' is not in [None, 'http', 'https']":
                 self.fail('Wrong exception: ' + str(e))
@@ -203,7 +203,7 @@ class TestIsUrl(unittest.TestCase):
             x = IS_URL(prepend_scheme='ftp')
             x('http://www.benn.ca')  # we can only reasonably know about the
                                      # error at calling time
-        except Exception, e:
+        except Exception as e:
             if str(e)\
                  != "prepend_scheme='ftp' is not in allowed_schemes=[None, 'http', 'https']":
                 self.fail('Wrong exception: ' + str(e))
@@ -215,7 +215,7 @@ class TestIsUrl(unittest.TestCase):
 
         try:
             x = IS_URL(allowed_schemes=[None, 'https'])
-        except Exception, e:
+        except Exception as e:
             if str(e)\
                  != "prepend_scheme='http' is not in allowed_schemes=[None, 'https']":
                 self.fail('Wrong exception: ' + str(e))
@@ -227,7 +227,7 @@ class TestIsUrl(unittest.TestCase):
         try:
             x = IS_URL(allowed_schemes=[None, 'http'],
                        prepend_scheme='https')
-        except Exception, e:
+        except Exception as e:
             if str(e)\
                  != "prepend_scheme='https' is not in allowed_schemes=[None, 'http']":
                 self.fail('Wrong exception: ' + str(e))
@@ -239,7 +239,7 @@ class TestIsUrl(unittest.TestCase):
         try:
             x = IS_URL(mode='generic', allowed_schemes=[None, 'ftp',
                        'ftps'])
-        except Exception, e:
+        except Exception as e:
             if str(e)\
                  != "prepend_scheme='http' is not in allowed_schemes=[None, 'ftp', 'ftps']":
                 self.fail('Wrong exception: ' + str(e))
@@ -252,7 +252,7 @@ class TestIsUrl(unittest.TestCase):
         try:
             x = IS_URL(mode='generic', prepend_scheme='blargg')
             x('http://www.google.ca')  # we can only reasonably know about the error at calling time
-        except Exception, e:
+        except Exception as e:
             if not str(e).startswith(
                     "prepend_scheme='blargg' is not in allowed_schemes="):
                 self.fail('Wrong exception: ' + str(e))
@@ -264,7 +264,7 @@ class TestIsUrl(unittest.TestCase):
         try:
             x = IS_URL(mode='generic', allowed_schemes=[None, 'http'],
                        prepend_scheme='blargg')
-        except Exception, e:
+        except Exception as e:
             if str(e)\
                  != "prepend_scheme='blargg' is not in allowed_schemes=[None, 'http']":
                 self.fail('Wrong exception: ' + str(e))
@@ -295,7 +295,7 @@ class TestIsGenericUrl(unittest.TestCase):
 
     def testInvalidUrls(self):
         urlsToCheckA = []
-        for i in range(0, 32) + [127]:
+        for i in list(range(0, 32)) + [127]:
 
             # Control characters are disallowed in any part of a URL
 
@@ -565,7 +565,7 @@ class TestIsHttpUrl(unittest.TestCase):
 
         try:
             IS_HTTP_URL(prepend_scheme='mailto')
-        except Exception, e:
+        except Exception as e:
             if str(e)\
                  != "prepend_scheme='mailto' is not in allowed_schemes=[None, 'http', 'https']":
                 self.fail('Wrong exception: ' + str(e))
@@ -586,57 +586,57 @@ class TestUnicode(unittest.TestCase):
 
 
     def testUnicodeToAsciiUrl(self):
-        self.assertEquals(unicode_to_ascii_authority(u'www.Alliancefran\xe7aise.nu'), 'www.xn--alliancefranaise-npb.nu')
-        self.assertEquals(unicode_to_ascii_authority(u'www.benn.ca'), 'www.benn.ca')
-        self.assertRaises(UnicodeError, unicode_to_ascii_authority, u'\u4e2d'*1000) #label is too long
+        self.assertEquals(unicode_to_ascii_authority('www.Alliancefran\xe7aise.nu'), 'www.xn--alliancefranaise-npb.nu')
+        self.assertEquals(unicode_to_ascii_authority('www.benn.ca'), 'www.benn.ca')
+        self.assertRaises(UnicodeError, unicode_to_ascii_authority, '\u4e2d'*1000) #label is too long
 
 
     def testValidUrls(self):
-        self.assertEquals(self.x(u'www.Alliancefrancaise.nu'), ('http://www.Alliancefrancaise.nu', None))
-        self.assertEquals(self.x(u'www.Alliancefran\xe7aise.nu'), ('http://www.xn--alliancefranaise-npb.nu', None))
-        self.assertEquals(self.x(u'www.Alliancefran\xe7aise.nu:8080'), ('http://www.xn--alliancefranaise-npb.nu:8080', None))
-        self.assertEquals(self.x(u'http://www.Alliancefran\xe7aise.nu'), ('http://www.xn--alliancefranaise-npb.nu', None))
-        self.assertEquals(self.x(u'http://www.Alliancefran\xe7aise.nu/parnaise/blue'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue', None))
-        self.assertEquals(self.x(u'http://www.Alliancefran\xe7aise.nu/parnaise/blue#fragment'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue#fragment', None))
-        self.assertEquals(self.x(u'http://www.Alliancefran\xe7aise.nu/parnaise/blue?query=value#fragment'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue?query=value#fragment', None))
-        self.assertEquals(self.x(u'http://www.Alliancefran\xe7aise.nu:8080/parnaise/blue?query=value#fragment'), ('http://www.xn--alliancefranaise-npb.nu:8080/parnaise/blue?query=value#fragment', None))
-        self.assertEquals(self.x(u'www.Alliancefran\xe7aise.nu/parnaise/blue?query=value#fragment'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue?query=value#fragment', None))
-        self.assertEquals(self.x(u'http://\u4e2d\u4fd4.com'), ('http://xn--fiq13b.com', None))
-        self.assertEquals(self.x(u'http://\u4e2d\u4fd4.com/\u4e86'), ('http://xn--fiq13b.com/%4e%86', None))
-        self.assertEquals(self.x(u'http://\u4e2d\u4fd4.com/\u4e86?query=\u4e86'), ('http://xn--fiq13b.com/%4e%86?query=%4e%86', None))
-        self.assertEquals(self.x(u'http://\u4e2d\u4fd4.com/\u4e86?query=\u4e86#fragment'), ('http://xn--fiq13b.com/%4e%86?query=%4e%86#fragment', None))
-        self.assertEquals(self.x(u'http://\u4e2d\u4fd4.com?query=\u4e86#fragment'), ('http://xn--fiq13b.com?query=%4e%86#fragment', None))
-        self.assertEquals(self.x(u'http://B\xfccher.ch'), ('http://xn--bcher-kva.ch', None))
-        self.assertEquals(self.x(u'http://\xe4\xf6\xfc\xdf.com'), ('http://xn--ss-uia6e4a.com', None))
-        self.assertEquals(self.x(u'http://visegr\xe1d.com'), ('http://xn--visegrd-mwa.com', None))
-        self.assertEquals(self.x(u'http://h\xe1zipatika.com'), ('http://xn--hzipatika-01a.com', None))
-        self.assertEquals(self.x(u'http://www.\xe7ukurova.com'), ('http://www.xn--ukurova-txa.com', None))
-        self.assertEquals(self.x(u'http://nixier\xf6hre.nixieclock-tube.com'), ('http://xn--nixierhre-57a.nixieclock-tube.com', None))
-        self.assertEquals(self.x(u'google.ca.'), ('http://google.ca.', None))
+        self.assertEquals(self.x('www.Alliancefrancaise.nu'), ('http://www.Alliancefrancaise.nu', None))
+        self.assertEquals(self.x('www.Alliancefran\xe7aise.nu'), ('http://www.xn--alliancefranaise-npb.nu', None))
+        self.assertEquals(self.x('www.Alliancefran\xe7aise.nu:8080'), ('http://www.xn--alliancefranaise-npb.nu:8080', None))
+        self.assertEquals(self.x('http://www.Alliancefran\xe7aise.nu'), ('http://www.xn--alliancefranaise-npb.nu', None))
+        self.assertEquals(self.x('http://www.Alliancefran\xe7aise.nu/parnaise/blue'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue', None))
+        self.assertEquals(self.x('http://www.Alliancefran\xe7aise.nu/parnaise/blue#fragment'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue#fragment', None))
+        self.assertEquals(self.x('http://www.Alliancefran\xe7aise.nu/parnaise/blue?query=value#fragment'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue?query=value#fragment', None))
+        self.assertEquals(self.x('http://www.Alliancefran\xe7aise.nu:8080/parnaise/blue?query=value#fragment'), ('http://www.xn--alliancefranaise-npb.nu:8080/parnaise/blue?query=value#fragment', None))
+        self.assertEquals(self.x('www.Alliancefran\xe7aise.nu/parnaise/blue?query=value#fragment'), ('http://www.xn--alliancefranaise-npb.nu/parnaise/blue?query=value#fragment', None))
+        self.assertEquals(self.x('http://\u4e2d\u4fd4.com'), ('http://xn--fiq13b.com', None))
+        self.assertEquals(self.x('http://\u4e2d\u4fd4.com/\u4e86'), ('http://xn--fiq13b.com/%4e%86', None))
+        self.assertEquals(self.x('http://\u4e2d\u4fd4.com/\u4e86?query=\u4e86'), ('http://xn--fiq13b.com/%4e%86?query=%4e%86', None))
+        self.assertEquals(self.x('http://\u4e2d\u4fd4.com/\u4e86?query=\u4e86#fragment'), ('http://xn--fiq13b.com/%4e%86?query=%4e%86#fragment', None))
+        self.assertEquals(self.x('http://\u4e2d\u4fd4.com?query=\u4e86#fragment'), ('http://xn--fiq13b.com?query=%4e%86#fragment', None))
+        self.assertEquals(self.x('http://B\xfccher.ch'), ('http://xn--bcher-kva.ch', None))
+        self.assertEquals(self.x('http://\xe4\xf6\xfc\xdf.com'), ('http://xn--ss-uia6e4a.com', None))
+        self.assertEquals(self.x('http://visegr\xe1d.com'), ('http://xn--visegrd-mwa.com', None))
+        self.assertEquals(self.x('http://h\xe1zipatika.com'), ('http://xn--hzipatika-01a.com', None))
+        self.assertEquals(self.x('http://www.\xe7ukurova.com'), ('http://www.xn--ukurova-txa.com', None))
+        self.assertEquals(self.x('http://nixier\xf6hre.nixieclock-tube.com'), ('http://xn--nixierhre-57a.nixieclock-tube.com', None))
+        self.assertEquals(self.x('google.ca.'), ('http://google.ca.', None))
 
-        self.assertEquals(self.y(u'https://google.ca'), ('https://google.ca', None))
-        self.assertEquals(self.y(u'https://\u4e2d\u4fd4.com'), ('https://xn--fiq13b.com', None))
+        self.assertEquals(self.y('https://google.ca'), ('https://google.ca', None))
+        self.assertEquals(self.y('https://\u4e2d\u4fd4.com'), ('https://xn--fiq13b.com', None))
 
-        self.assertEquals(self.z(u'google.ca'), ('google.ca', None))
+        self.assertEquals(self.z('google.ca'), ('google.ca', None))
 
 
     def testInvalidUrls(self):
-        self.assertEquals(self.x(u'://ABC.com'), (u'://ABC.com', 'enter a valid URL'))
-        self.assertEquals(self.x(u'http://\u4e2d\u4fd4.dne'), (u'http://\u4e2d\u4fd4.dne', 'enter a valid URL'))
-        self.assertEquals(self.x(u'https://google.dne'), (u'https://google.dne', 'enter a valid URL'))
-        self.assertEquals(self.x(u'https://google..ca'), (u'https://google..ca', 'enter a valid URL'))
-        self.assertEquals(self.x(u'google..ca'), (u'google..ca', 'enter a valid URL'))
-        self.assertEquals(self.x(u'http://' + u'\u4e2d'*1000 + u'.com'), (u'http://' + u'\u4e2d'*1000 + u'.com', 'enter a valid URL'))
+        self.assertEquals(self.x('://ABC.com'), ('://ABC.com', 'enter a valid URL'))
+        self.assertEquals(self.x('http://\u4e2d\u4fd4.dne'), ('http://\u4e2d\u4fd4.dne', 'enter a valid URL'))
+        self.assertEquals(self.x('https://google.dne'), ('https://google.dne', 'enter a valid URL'))
+        self.assertEquals(self.x('https://google..ca'), ('https://google..ca', 'enter a valid URL'))
+        self.assertEquals(self.x('google..ca'), ('google..ca', 'enter a valid URL'))
+        self.assertEquals(self.x('http://' + '\u4e2d'*1000 + '.com'), ('http://' + '\u4e2d'*1000 + '.com', 'enter a valid URL'))
 
-        self.assertEquals(self.x(u'http://google.com#fragment_\u4e86'), (u'http://google.com#fragment_\u4e86', 'enter a valid URL'))
-        self.assertEquals(self.x(u'http\u4e86://google.com'), (u'http\u4e86://google.com', 'enter a valid URL'))
-        self.assertEquals(self.x(u'http\u4e86://google.com#fragment_\u4e86'), (u'http\u4e86://google.com#fragment_\u4e86', 'enter a valid URL'))
+        self.assertEquals(self.x('http://google.com#fragment_\u4e86'), ('http://google.com#fragment_\u4e86', 'enter a valid URL'))
+        self.assertEquals(self.x('http\u4e86://google.com'), ('http\u4e86://google.com', 'enter a valid URL'))
+        self.assertEquals(self.x('http\u4e86://google.com#fragment_\u4e86'), ('http\u4e86://google.com#fragment_\u4e86', 'enter a valid URL'))
 
-        self.assertEquals(self.y(u'http://\u4e2d\u4fd4.com/\u4e86'), (u'http://\u4e2d\u4fd4.com/\u4e86', 'enter a valid URL'))
+        self.assertEquals(self.y('http://\u4e2d\u4fd4.com/\u4e86'), ('http://\u4e2d\u4fd4.com/\u4e86', 'enter a valid URL'))
         #self.assertEquals(self.y(u'google.ca'), (u'google.ca', 'enter a valid URL'))
 
-        self.assertEquals(self.z(u'invalid.domain..com'), (u'invalid.domain..com', 'enter a valid URL'))
-        self.assertEquals(self.z(u'invalid.\u4e2d\u4fd4.blargg'), (u'invalid.\u4e2d\u4fd4.blargg', 'enter a valid URL'))
+        self.assertEquals(self.z('invalid.domain..com'), ('invalid.domain..com', 'enter a valid URL'))
+        self.assertEquals(self.z('invalid.\u4e2d\u4fd4.blargg'), ('invalid.\u4e2d\u4fd4.blargg', 'enter a valid URL'))
 
 # ##############################################################################
 

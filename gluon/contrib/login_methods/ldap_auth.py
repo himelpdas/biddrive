@@ -3,7 +3,7 @@ import logging
 try:
     import ldap
     ldap.set_option(ldap.OPT_REFERRALS, 0)
-except Exception, e:
+except Exception as e:
     logging.error('missing ldap, try "easy_install python-ldap"')
     raise e
 
@@ -152,7 +152,7 @@ def ldap_auth(server='ldap', port=None,
                             con.simple_bind_s(user_dn, password)
                             con.unbind()
                             return True
-                    except ldap.LDAPError, detail:
+                    except ldap.LDAPError as detail:
                         (exc_type, exc_value) = sys.exc_info()[:2]
                         sys.stderr.write("ldap_auth: searching %s for %s resulted in %s: %s\n" %
                                          (basedn, filter, exc_type, exc_value))
@@ -160,9 +160,9 @@ def ldap_auth(server='ldap', port=None,
 
             con.unbind()
             return True
-        except ldap.LDAPError, e:
+        except ldap.LDAPError as e:
             return False
-        except IndexError, ex: # for AD membership test
+        except IndexError as ex: # for AD membership test
             return False
 
     if filterstr[0] == '(' and filterstr[-1] == ')': # rfc4515 syntax

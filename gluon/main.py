@@ -14,14 +14,14 @@ Contains:
 
 import gc
 import cgi
-import cStringIO
-import Cookie
+import io
+from http import cookies
 import os
 import re
 import copy
 import sys
 import time
-import thread
+import _thread
 import datetime
 import signal
 import socket
@@ -29,13 +29,13 @@ import tempfile
 import random
 import string
 import platform
-from fileutils import abspath, write_file, parse_version
-from settings import global_settings
-from admin import add_path_first, create_missing_folders, create_missing_app_folders
-from globals import current
+from .fileutils import abspath, write_file, parse_version
+from .settings import global_settings
+from .admin import add_path_first, create_missing_folders, create_missing_app_folders
+from .globals import current
 
-from custom_import import custom_import_install
-from contrib.simplejson import dumps
+from .custom_import import custom_import_install
+from json import dumps
 
 #  Remarks:
 #  calling script has inserted path to script directory into sys.path
@@ -77,20 +77,20 @@ else:
     logging.basicConfig()
 logger = logging.getLogger("web2py")
 
-from restricted import RestrictedError
-from http import HTTP, redirect
-from globals import Request, Response, Session
-from compileapp import build_environment, run_models_in, \
+from .restricted import RestrictedError
+from .http import HTTP, redirect
+from .globals import Request, Response, Session
+from .compileapp import build_environment, run_models_in, \
     run_controller_in, run_view_in
-from fileutils import copystream
-from contenttype import contenttype
-from dal import BaseAdapter
-from settings import global_settings
-from validators import CRYPT
-from cache import Cache
-from html import URL as Url
-import newcron
-import rewrite
+from .fileutils import copystream
+from .contenttype import contenttype
+from .dal import BaseAdapter
+from .settings import global_settings
+from .validators import CRYPT
+from .cache import Cache
+from .html import URL as Url
+from . import newcron
+from . import rewrite
 
 __all__ = ['wsgibase', 'save_password', 'appfactory', 'HttpServer']
 
@@ -108,7 +108,7 @@ version_info.close()
 global_settings.web2py_version = web2py_version
 
 try:
-    import rocket
+    from . import rocket
 except:
     if not global_settings.web2py_runtime_gae:
         logger.warn('unable to import Rocket')
@@ -137,7 +137,7 @@ def copystream_progress(request, chunk_size= 10**5):
     X-Progress-ID:length and X-Progress-ID:uploaded
     """
     if not request.env.content_length:
-        return cStringIO.StringIO()
+        return io.StringIO()
     source = request.env.wsgi_input
     size = int(request.env.content_length)
     dest = tempfile.TemporaryFile()
@@ -242,7 +242,7 @@ def middleware_aux(request, response, *middleware_apps):
     def middleware(f):
         def app(environ, start_response):
             data = f()
-            start_response(response.status,response.headers.items())
+            start_response(response.status,list(response.headers.items()))
             if isinstance(data,list):
                 return data
             return [data]
@@ -315,6 +315,11 @@ def parse_get_post_vars(request, environ):
 
 
 def wsgibase(environ, responder):
+    # py3k wrapper (proof of concept, needs to be rewriten!)
+    response = wsgibase_str(environ, responder)
+    return [r.encode("utf8") if isinstance(r, str) else str(r) for r in response]
+    
+def wsgibase_str(environ, responder):
     """
     this is the gluon wsgi application. the first function called when a page
     is requested (static or dynamic). it can be called by paste.httpserver
@@ -353,6 +358,7 @@ def wsgibase(environ, responder):
     request.env.web2py_version = web2py_version
     request.env.update(global_settings)
     static_file = False
+    http_response = None         # py3k!
     try:
         try:
             try:
@@ -462,7 +468,7 @@ def wsgibase(environ, responder):
                 if request.env.http_cookie:
                     try:
                         request.cookies.load(request.env.http_cookie)
-                    except Cookie.CookieError, e:
+                    except http.cookies.CookieError as e:
                         pass # invalid cookies
 
                 # ##################################################
@@ -489,10 +495,10 @@ def wsgibase(environ, responder):
 
                 serve_controller(request, response, session)
 
-            except HTTP, http_response:
+            except HTTP as http_response_ex:
                 if static_file:
-                    return http_response.to(responder)
-
+                    return http_response_ex.to(responder)
+                http_response = http_response_ex #py3k!
                 if request.body:
                     request.body.close()
 
@@ -536,28 +542,28 @@ def wsgibase(environ, responder):
                     response.cookies[response.session_id_name]['secure'] = True
                 if len(response.cookies)>0:
                     http_response.headers['Set-Cookie'] = \
-                        [str(cookie)[11:] for cookie in response.cookies.values()]
+                        [str(cookie)[11:] for cookie in list(response.cookies.values())]
                 ticket=None
 
-            except RestrictedError, e:
+#            except RestrictedError as e:
 
-                if request.body:
-                    request.body.close()
+#                if request.body:
+#                    request.body.close()
 
                 # ##################################################
                 # on application error, rollback database
                 # ##################################################
 
-                ticket = e.log(request) or 'unknown'
-                if response._custom_rollback:
-                    response._custom_rollback()
-                else:
-                    BaseAdapter.close_all_instances('rollback')
+#                ticket = e.log(request) or 'unknown'
+#                if response._custom_rollback:
+#                    response._custom_rollback()
+#                else:
+#                    BaseAdapter.close_all_instances('rollback')		
 
-                http_response = \
-                    HTTP(500, rewrite.thread.routes.error_message_ticket % \
-                             dict(ticket=ticket),
-                         web2py_error='ticket %s' % ticket)
+#                http_response = \
+#                    HTTP(500, rewrite.thread.routes.error_message_ticket % \
+#                             dict(ticket=ticket),
+#                         web2py_error='ticket %s' % ticket)
 
         except:
 
@@ -577,10 +583,22 @@ def wsgibase(environ, responder):
                 pass
             e = RestrictedError('Framework', '', '', locals())
             ticket = e.log(request) or 'unrecoverable'
+
+            ##py3k! testing: show the full exception! (begins):
+            
+            #http_response = \
+            #    HTTP(500, rewrite.thread.routes.error_message_ticket \
+            #             % dict(ticket=ticket),
+            #         web2py_error='ticket %s' % ticket)
+            
+            import traceback  
+            exc = traceback.format_exc() 
+            
             http_response = \
-                HTTP(500, rewrite.thread.routes.error_message_ticket \
-                         % dict(ticket=ticket),
+                HTTP(500, "<PRE>%s</PRE>" % exc,
                      web2py_error='ticket %s' % ticket)
+
+            ##py3k! testing: show the full exception! (finish)
 
     finally:
         if response and hasattr(response, 'session_file') \
@@ -591,6 +609,7 @@ def wsgibase(environ, responder):
 #             gluon.debug.stop_trace()
 
     session._unlock(response)
+    
     http_response, new_environ = rewrite.try_rewrite_on_error(
         http_response, request, environ, ticket)
     if not http_response:
@@ -611,9 +630,9 @@ def save_password(password, port):
         chars = string.letters + string.digits
         password = ''.join([random.choice(chars) for i in range(8)])
         cpassword = CRYPT()(password)[0]
-        print '******************* IMPORTANT!!! ************************'
-        print 'your admin password is "%s"' % password
-        print '*********************************************************'
+        print('******************* IMPORTANT!!! ************************')
+        print(('your admin password is "%s"' % password))
+        print('*********************************************************')
     elif password == '<recycle>':
         # reuse the current password if any
         if os.path.exists(password_file):
@@ -649,7 +668,7 @@ def appfactory(wsgiapp=wsgibase,
     """
     if profilerfilename and os.path.exists(profilerfilename):
         os.unlink(profilerfilename)
-    locker = thread.allocate_lock()
+    locker = _thread.allocate_lock()
 
     def app_with_logging(environ, responder):
         """
@@ -678,7 +697,7 @@ def appfactory(wsgiapp=wsgibase,
             cProfile.runctx('ret[0] = wsgiapp(environ, responder2)',
                             globals(), locals(), profilerfilename+'.tmp')
             stat = pstats.Stats(profilerfilename+'.tmp')
-            stat.stream = cStringIO.StringIO()
+            stat.stream = io.StringIO()
             stat.strip_dirs().sort_stats("time").print_stats(80)
             profile_out = stat.stream.getvalue()
             profile_file = open(profilerfilename, 'a')
@@ -742,9 +761,9 @@ class HttpServer(object):
             # if interfaces is specified, it must be tested for rocket parameter correctness
             # not necessarily completely tested (e.g. content of tuples or ip-format)
             import types
-            if isinstance(interfaces,types.ListType):
+            if isinstance(interfaces,list):
                 for i in interfaces:
-                    if not isinstance(i,types.TupleType):
+                    if not isinstance(i,tuple):
                         raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"
             else:
                 raise "Wrong format for rocket interfaces parameter - see http://packages.python.org/rocket/"

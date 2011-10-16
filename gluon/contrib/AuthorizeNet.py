@@ -17,7 +17,7 @@ Modifed by Massimo Di Pierro
 __all__ = ['AIM']
 
 from operator import itemgetter
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 _known_tuple_types = {}
 
@@ -31,7 +31,7 @@ class NamedTupleBase(tuple):
         if kws:
             values = list(args) + [None]*(len(cls._fields) - len(args))
             fields = dict((val, idx) for idx, val in enumerate(cls._fields))
-            for kw, val in kws.iteritems():
+            for kw, val in list(kws.items()):
                 assert kw in kws, "%r not in field list" % kw
                 values[fields[kw]] = val
             args = tuple(values)
@@ -56,7 +56,7 @@ def namedtuple(typename, fieldnames):
     >>>
     """
     # Split up a string, some people do this
-    if isinstance(fieldnames, basestring):
+    if isinstance(fieldnames, str):
         fieldnames = fieldnames.replace(',', ' ').split()
     # Convert anything iterable that enumerates fields to a tuple now
     fieldname_tuple = tuple(str(field) for field in fieldnames)
@@ -111,16 +111,16 @@ class AIM:
         self.setParameter('x_tran_key', transkey)
 
     def process(self):
-        encoded_args = urllib.urlencode(self.parameters)
+        encoded_args = urllib.parse.urlencode(self.parameters)
         if self.testmode == True:
             url = 'https://test.authorize.net/gateway/transact.dll'
         else:
             url = 'https://secure.authorize.net/gateway/transact.dll'
 
         if self.proxy == None:
-            self.results += str(urllib.urlopen(url, encoded_args).read()).split(self.delimiter)
+            self.results += str(urllib.request.urlopen(url, encoded_args).read()).split(self.delimiter)
         else:
-            opener = urllib.FancyURLopener(self.proxy)
+            opener = urllib.request.FancyURLopener(self.proxy)
             opened = opener.open(url, encoded_args)
             try:
                 self.results += str(opened.read()).split(self.delimiter)
@@ -237,23 +237,23 @@ def test():
         payment.setParameter('x_email_customer', False)
         payment.process()
         if payment.isApproved():
-            print 'Response Code: ', payment.response.ResponseCode
-            print 'Response Text: ', payment.response.ResponseText
-            print 'Response: ', payment.getResultResponseFull()
-            print 'Transaction ID: ', payment.response.TransactionID
-            print 'CVV Result: ', payment.response.CVVResponse
-            print 'Approval Code: ', payment.response.AuthCode
-            print 'AVS Result: ', payment.response.AVSResponse
+            print(('Response Code: ', payment.response.ResponseCode))
+            print(('Response Text: ', payment.response.ResponseText))
+            print(('Response: ', payment.getResultResponseFull()))
+            print(('Transaction ID: ', payment.response.TransactionID))
+            print(('CVV Result: ', payment.response.CVVResponse))
+            print(('Approval Code: ', payment.response.AuthCode))
+            print(('AVS Result: ', payment.response.AVSResponse))
         elif payment.isDeclined():
-            print 'Your credit card was declined by your bank'
+            print('Your credit card was declined by your bank')
         elif payment.isError():
             raise AIM.AIMError('An uncaught error occurred')
-    except AIM.AIMError, e:
-        print "Exception thrown:", e
-        print 'An error occured'
-    print 'approved',payment.isApproved()
-    print 'declined',payment.isDeclined()
-    print 'error',payment.isError()
+    except AIM.AIMError as e:
+        print(("Exception thrown:", e))
+        print('An error occured')
+    print(('approved',payment.isApproved()))
+    print(('declined',payment.isDeclined()))
+    print(('error',payment.isError()))
 
 if __name__=='__main__':
     test()

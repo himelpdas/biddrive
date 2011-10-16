@@ -21,11 +21,11 @@ import re
 import logging
 import traceback
 import threading
-import urllib
-from storage import Storage, List
-from http import HTTP
-from fileutils import abspath, read_file
-from settings import global_settings
+import urllib.request, urllib.parse, urllib.error
+from .storage import Storage, List
+from .http import HTTP
+from .fileutils import abspath, read_file
+from .settings import global_settings
 
 logger = logging.getLogger('web2py.rewrite')
 
@@ -232,8 +232,8 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
 
         symbols = {}
         try:
-            exec (data + '\n') in symbols
-        except SyntaxError, e:
+            exec((data + '\n'), symbols)
+        except SyntaxError as e:
             logger.error(
                 '%s has a syntax error and will not be loaded\n' % path
                 + traceback.format_exc())
@@ -283,9 +283,9 @@ def load(routes='routes.py', app=None, data=None, rdict=None):
                 if routers:
                     router = Storage(routers.BASE)   # new copy
                     if appname in routers:
-                        for key in routers[appname].keys():
+                        for key in list(routers[appname].keys()):
                             if key in ROUTER_BASE_KEYS:
-                                raise SyntaxError, "BASE-only key '%s' in router '%s'" % (key, appname)
+                                raise SyntaxError("BASE-only key '%s' in router '%s'" % (key, appname))
                         router.update(routers[appname])
                     routers[appname] = router
                 if os.path.exists(abspath('applications', appname, routes)):
@@ -330,7 +330,7 @@ def compile_regex(k, v):
     if k.find('://') < 0:
         i = k.find(':/')
         if i < 0:
-            raise SyntaxError, "routes pattern syntax error: path needs leading '/' [%s]" % k0
+            raise SyntaxError("routes pattern syntax error: path needs leading '/' [%s]" % k0)
         k = r'%s:https?://[^:/]+:[a-z]+ %s' % (k[:i], k[i+1:])
     # $anything -> ?P<anything>.*
     for item in regex_anything.findall(k):
@@ -346,21 +346,21 @@ def compile_regex(k, v):
 def load_routers(all_apps):
     "load-time post-processing of routers"
 
-    for app in routers.keys():
+    for app in list(routers.keys()):
         # initialize apps with routers that aren't present, on behalf of unit tests
         if app not in all_apps:
             all_apps.append(app)
             router = Storage(routers.BASE)   # new copy
             if app != 'BASE':
-                for key in routers[app].keys():
+                for key in list(routers[app].keys()):
                     if key in ROUTER_BASE_KEYS:
-                        raise SyntaxError, "BASE-only key '%s' in router '%s'" % (key, app)
+                        raise SyntaxError("BASE-only key '%s' in router '%s'" % (key, app))
             router.update(routers[app])
             routers[app] = router
         router = routers[app]
-        for key in router.keys():
+        for key in list(router.keys()):
             if key not in ROUTER_KEYS:
-                raise SyntaxError, "unknown key '%s' in router '%s'" % (key, app)
+                raise SyntaxError("unknown key '%s' in router '%s'" % (key, app))
         if not router.controllers:
             router.controllers = set()
         elif not isinstance(router.controllers, str):
@@ -402,7 +402,7 @@ def load_routers(all_apps):
     else:
         routers.BASE.applications = set()
 
-    for app in routers.keys():
+    for app in list(routers.keys()):
         # set router name
         router = routers[app]
         router.name = app
@@ -424,7 +424,7 @@ def load_routers(all_apps):
     #
     domains = dict()
     if routers.BASE.domains:
-        for (domain, app) in [(d.strip(':'), a.strip('/')) for (d, a) in routers.BASE.domains.items()]:
+        for (domain, app) in [(d.strip(':'), a.strip('/')) for (d, a) in list(routers.BASE.domains.items())]:
             port = None
             if ':' in domain:
                 (domain, port) = domain.split(':')
@@ -435,7 +435,7 @@ def load_routers(all_apps):
             if ctlr and '/' in ctlr:
                 (ctlr, fcn) = ctlr.split('/')
             if app not in all_apps and app not in routers:
-                raise SyntaxError, "unknown app '%s' in domains" % app
+                raise SyntaxError("unknown app '%s' in domains" % app)
             domains[(domain, port)] = (app, ctlr, fcn)
     routers.BASE.domains = domains
 
@@ -558,7 +558,7 @@ def regex_url_in(request, environ):
     if thread.routes.routes_in:
         environ = regex_filter_in(environ)
 
-    for (key, value) in environ.items():
+    for (key, value) in list(environ.items()):
         request.env[key.lower().replace('.', '_')] = value
 
     path = request.env.path_info.replace('\\', '/')
@@ -654,7 +654,7 @@ def filter_url(url, method='get', remote='0.0.0.0', out=False, app=False, lang=N
     if k < 0:
         k = len(uri)
     (path_info, query_string) = (uri[:k], uri[k+1:])
-    path_info = urllib.unquote(path_info)   # simulate server
+    path_info = urllib.parse.unquote(path_info)   # simulate server
     e = {
          'REMOTE_ADDR': remote,
          'REQUEST_METHOD': method,
@@ -807,7 +807,7 @@ class MapUrlIn(object):
             prefixlen = len(prefix)
             if prefixlen > len(self.args):
                 return
-            for i in xrange(prefixlen):
+            for i in range(prefixlen):
                 if prefix[i] != self.args[i]:
                     return  # prefix didn't match
             self.args = List(self.args[prefixlen:]) # strip the prefix
@@ -993,10 +993,10 @@ class MapUrlIn(object):
             uri += '.' + self.extension
         if self.language:
             uri = '/%s%s' % (self.language, uri)
-        uri += self.args and urllib.quote('/' + '/'.join([str(x) for x in self.args])) or ''
+        uri += self.args and urllib.parse.quote('/' + '/'.join([str(x) for x in self.args])) or ''
         uri += (self.query and ('?' + self.query) or '')
         self.env['REQUEST_URI'] = uri
-        for (key, value) in self.env.items():
+        for (key, value) in list(self.env.items()):
             self.request.env[key.lower().replace('.', '_')] = value
 
     @property
@@ -1055,7 +1055,7 @@ class MapUrlOut(object):
             self.default_function = self.router.default_function
 
         if (self.router.exclusive_domain and self.domain_application and self.domain_application != self.application and not self.host):
-            raise SyntaxError, 'cross-domain conflict: must specify host'
+            raise SyntaxError('cross-domain conflict: must specify host')
 
         lang = request and request.uri_language
         if lang and self.languages and lang in self.languages:

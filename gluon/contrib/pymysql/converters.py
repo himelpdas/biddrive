@@ -2,8 +2,8 @@ import re
 import datetime
 import time
 
-from constants import FIELD_TYPE, FLAG
-from charset import charset_by_id
+from .constants import FIELD_TYPE, FLAG
+from .charset import charset_by_id
 
 try:
     set
@@ -22,7 +22,7 @@ def escape_item(val, charset):
         return escape_sequence(val, charset)
     if type(val) is dict:
         return escape_dict(val, charset)
-    if hasattr(val, "decode") and not isinstance(val, unicode):
+    if hasattr(val, "decode") and not isinstance(val, str):
         # deal with py3k bytes
         val = val.decode(charset)
     encoder = encoders[type(val)]
@@ -34,7 +34,7 @@ def escape_item(val, charset):
 
 def escape_dict(val, charset):
     n = {}
-    for k, v in val.items():
+    for k, v in list(val.items()):
         quoted = escape_item(v, charset)
         n[k] = quoted
     return n
@@ -47,7 +47,7 @@ def escape_sequence(val, charset):
     return tuple(n)
 
 def escape_set(val, charset):
-    val = map(lambda x: escape_item(x, charset), val)
+    val = [escape_item(x, charset) for x in val]
     return ','.join(val)
 
 def escape_bool(value):
@@ -110,7 +110,7 @@ def convert_datetime(connection, field, obj):
       True
 
     """
-    if not isinstance(obj, unicode):
+    if not isinstance(obj, str):
         obj = obj.decode(connection.charset)
     if ' ' in obj:
         sep = ' '
@@ -144,7 +144,7 @@ def convert_timedelta(connection, field, obj):
     """
     from math import modf
     try:
-        if not isinstance(obj, unicode):
+        if not isinstance(obj, str):
             obj = obj.decode(connection.charset)
         hours, minutes, seconds = tuple([int(x) for x in obj.split(':')])
         tdelta = datetime.timedelta(
@@ -203,7 +203,7 @@ def convert_date(connection, field, obj):
 
     """
     try:
-        if not isinstance(obj, unicode):
+        if not isinstance(obj, str):
             obj = obj.decode(connection.charset)
         return datetime.date(*[ int(x) for x in obj.split('-', 2) ])
     except ValueError:
@@ -230,7 +230,7 @@ def convert_mysql_timestamp(connection, field, timestamp):
       True
 
     """
-    if not isinstance(timestamp, unicode):
+    if not isinstance(timestamp, str):
         timestamp = timestamp.decode(connection.charset)
 
     if timestamp[4] == '-':
@@ -275,7 +275,7 @@ def convert_int(connection, field, data):
     return int(data)
 
 def convert_long(connection, field, data):
-    return long(data)
+    return int(data)
 
 def convert_float(connection, field, data):
     return float(data)
@@ -283,10 +283,10 @@ def convert_float(connection, field, data):
 encoders = {
         bool: escape_bool,
         int: escape_int,
-        long: escape_long,
+        int: escape_long,
         float: escape_float,
         str: escape_string,
-        unicode: escape_unicode,
+        str: escape_unicode,
         tuple: escape_sequence,
         list:escape_sequence,
         set:escape_sequence,
@@ -339,7 +339,7 @@ try:
     decoders[FIELD_TYPE.NEWDECIMAL] = convert_decimal
 
     def escape_decimal(obj):
-        return unicode(obj)
+        return str(obj)
     encoders[Decimal] = escape_decimal
 
 except ImportError:

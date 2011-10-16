@@ -21,9 +21,9 @@ caching will be provided by the GAE memcache
 """
 
 import time
-import portalocker
+from . import portalocker
 import shelve
-import thread
+import _thread
 import os
 import logging
 import re
@@ -109,7 +109,7 @@ class CacheAbstract(object):
         Auxiliary function called by `clear` to search and clear cache entries
         """
         r = re.compile(regex)
-        for (key, value) in storage.items():
+        for (key, value) in list(storage.items()):
             if r.match(str(key)):
                 del storage[key]
 
@@ -122,7 +122,7 @@ class CacheInRam(CacheAbstract):
     A mutex-lock mechanism avoid conflicts.
     """
 
-    locker = thread.allocate_lock()
+    locker = _thread.allocate_lock()
     meta_storage = {}
 
     def __init__(self, request=None):
@@ -149,7 +149,7 @@ class CacheInRam(CacheAbstract):
         else:
             self._clear(storage, regex)
 
-        if not CacheAbstract.cache_stats_name in storage.keys():
+        if not CacheAbstract.cache_stats_name in list(storage.keys()):
             storage[CacheAbstract.cache_stats_name] = {
                 'hit_total': 0,
                 'misses': 0,
@@ -195,7 +195,7 @@ class CacheInRam(CacheAbstract):
             if key in self.storage:
                 value = self.storage[key][1] + value
             self.storage[key] = (time.time(), value)
-        except BaseException, e:
+        except BaseException as e:
             self.locker.release()
             raise e
         self.locker.release()
@@ -243,7 +243,7 @@ class CacheOnDisk(CacheAbstract):
                 locker_locked = True
                 storage = shelve.open(self.shelve_name)
                 try:
-                    if not storage.has_key(CacheAbstract.cache_stats_name):
+                    if CacheAbstract.cache_stats_name not in storage:
                         storage[CacheAbstract.cache_stats_name] = {
                             'hit_total': 0,
                             'misses': 0,
@@ -275,7 +275,7 @@ class CacheOnDisk(CacheAbstract):
                 storage.clear()
             else:
                 self._clear(storage, regex)
-            if not CacheAbstract.cache_stats_name in storage.keys():
+            if not CacheAbstract.cache_stats_name in list(storage.keys()):
                 storage[CacheAbstract.cache_stats_name] = {
                     'hit_total': 0,
                     'misses': 0,
@@ -365,9 +365,9 @@ class Cache(object):
             the global request object
         """
         # GAE will have a special caching
-        import settings
+        from . import settings
         if settings.global_settings.web2py_runtime_gae:
-            from contrib.gae_memcache import MemcacheClient
+            from .contrib.gae_memcache import MemcacheClient
             self.ram=self.disk=MemcacheClient(request)
         else:
             # Otherwise use ram (and try also disk)

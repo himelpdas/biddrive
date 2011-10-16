@@ -17,7 +17,7 @@ __copyright__ = "Copyright (C) 2010 Mariano Reingart"
 __license__ = "LGPL 3.0"
 __version__ = "1.02c"
 
-from simplexml import SimpleXMLElement, TYPE_MAP, DateTime, Date, Decimal
+from .simplexml import SimpleXMLElement, TYPE_MAP, DateTime, Date, Decimal
 
 DEBUG = False
 
@@ -74,7 +74,7 @@ class SoapDispatcher(object):
                 name = method.get_local_name()
                 prefix = method.get_prefix()
 
-            if DEBUG: print "dispatch method", name
+            if DEBUG: print("dispatch method", name)
             function, returns_types, args_types, doc = self.methods[name]
 
             # de-serialize parameters (if type definitions given)
@@ -88,9 +88,9 @@ class SoapDispatcher(object):
             soap_fault_code = 'Server'
             # execute function
             ret = function(**args)
-            if DEBUG: print ret
+            if DEBUG: print(ret)
 
-        except Exception, e:
+        except Exception as e:
             import sys
             etype, evalue, etb = sys.exc_info()
             if DEBUG:
@@ -100,7 +100,7 @@ class SoapDispatcher(object):
             else:
                 detail = None
             fault = {'faultcode': "%s.%s" % (soap_fault_code, etype.__name__),
-                     'faultstring': unicode(evalue),
+                     'faultstring': str(evalue),
                      'detail': detail}
 
         # build response message
@@ -132,9 +132,9 @@ class SoapDispatcher(object):
             # serialize returned values (response) if type definition available
             if returns_types:
                 if not isinstance(ret, dict):
-                    res.marshall(returns_types.keys()[0], ret, )
+                    res.marshall(list(returns_types.keys())[0], ret, )
                 else:
-                    for k,v in ret.items():
+                    for k,v in list(ret.items()):
                         res.marshall(k, v)
             elif returns_types is None:
                 # merge xmlelement returned
@@ -146,7 +146,7 @@ class SoapDispatcher(object):
 
     def list_methods(self):
         "Return a list of aregistered operations"
-        return [(method, doc) for method, (function, returns, args, doc) in self.methods.items()]
+        return [(method, doc) for method, (function, returns, args, doc) in list(self.methods.items())]
 
     def help(self, method=None):
         "Generate sample request and response messages"
@@ -157,7 +157,7 @@ class SoapDispatcher(object):
 </soap:Envelope>"""  % {'method':method, 'namespace':self.namespace}
         request = SimpleXMLElement(xml, namespace=self.namespace, prefix=self.prefix)
         if args:
-            items = args.items()
+            items = list(args.items())
         elif args is None:
             items = [('value', None)]
         else:
@@ -171,7 +171,7 @@ class SoapDispatcher(object):
 </soap:Envelope>"""  % {'method':method, 'namespace':self.namespace}
         response = SimpleXMLElement(xml, namespace=self.namespace, prefix=self.prefix)
         if returns:
-            items = returns.items()
+            items = list(returns.items())
         elif args is None:
             items = [('value', None)]
         else:
@@ -204,7 +204,7 @@ class SoapDispatcher(object):
 """ % {'namespace': self.namespace, 'name': self.name, 'documentation': self.documentation}
         wsdl = SimpleXMLElement(xml)
 
-        for method, (function, returns, args, doc) in self.methods.items():
+        for method, (function, returns, args, doc) in list(self.methods.items()):
             # create elements:
 
             def parse_element(name, values, array=False, complex=False):
@@ -230,7 +230,7 @@ class SoapDispatcher(object):
                     e['name'] = k
                     if array:
                         e[:]={'minOccurs': "0", 'maxOccurs': "unbounded"}
-                    if v in TYPE_MAP.keys():
+                    if v in list(TYPE_MAP.keys()):
                         t='xsd:%s' % TYPE_MAP[v]
                     elif v is None:
                         t='xsd:anyType'
@@ -238,17 +238,17 @@ class SoapDispatcher(object):
                         n="ArrayOf%s%s" % (name, k)
                         l = []
                         for d in v:
-                            l.extend(d.items())
+                            l.extend(list(d.items()))
                         parse_element(n, l, array=True, complex=True)
                         t = "tns:%s" % n
                     elif isinstance(v, dict):
                         n="%s%s" % (name, k)
-                        parse_element(n, v.items(), complex=True)
+                        parse_element(n, list(v.items()), complex=True)
                         t = "tns:%s" % n
                     e.add_attribute('type', t)
 
-            parse_element("%s" % method, args and args.items())
-            parse_element("%sResponse" % method, returns and returns.items())
+            parse_element("%s" % method, args and list(args.items()))
+            parse_element("%sResponse" % method, returns and list(returns.items()))
 
             # create messages:
             for m,e in ('Input',''), ('Output','Response'):
@@ -261,7 +261,7 @@ class SoapDispatcher(object):
         # create ports
         portType = wsdl.add_child('wsdl:portType')
         portType['name'] = "%sPortType" % self.name
-        for method, (function, returns, args, doc) in self.methods.items():
+        for method, (function, returns, args, doc) in list(self.methods.items()):
             op = portType.add_child('wsdl:operation')
             op['name'] = method
             if doc:
@@ -278,7 +278,7 @@ class SoapDispatcher(object):
         soapbinding = binding.add_child('soap:binding')
         soapbinding['style'] = "document"
         soapbinding['transport'] = "http://schemas.xmlsoap.org/soap/http"
-        for method in self.methods.keys():
+        for method in list(self.methods.keys()):
             op = binding.add_child('wsdl:operation')
             op['name'] = method
             soapop = op.add_child('soap:operation')
@@ -304,13 +304,13 @@ class SoapDispatcher(object):
         return wsdl.as_xml(pretty=True)
 
 
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 class SOAPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         "User viewable help information and wsdl"
         args = self.path[1:].split("?")
-        print "serving", args
-        if self.path != "/" and args[0] not in self.server.dispatcher.methods.keys():
+        print("serving", args)
+        if self.path != "/" and args[0] not in list(self.server.dispatcher.methods.keys()):
             self.send_error(404, "Method not found: %s" % args[0])
         else:
             if self.path == "/":
@@ -352,7 +352,7 @@ if __name__=="__main__":
 
     def adder(p,c, dt=None):
         "Add several values"
-        print c[0]['d'],c[1]['d'],
+        print(c[0]['d'],c[1]['d'], end=' ')
         import datetime
         dt = dt + datetime.timedelta(365)
         return {'ab': p['a']+p['b'], 'dd': c[0]['d']+c[1]['d'], 'dt': dt}
@@ -378,7 +378,7 @@ if __name__=="__main__":
     if '--local' in sys.argv:
 
         wsdl=dispatcher.wsdl()
-        print wsdl
+        print(wsdl)
         testfile = open("C:/test.wsdl","w")
         try:
             testfile.write(wsdl)
@@ -394,7 +394,7 @@ if __name__=="__main__":
        </soap:Body>
     </soap:Envelope>"""
 
-        print dispatcher.dispatch(xml)
+        print(dispatcher.dispatch(xml))
 
         # dummy local test (modern soap dialect, SoapUI)
         xml = """
@@ -409,7 +409,7 @@ if __name__=="__main__":
    </soapenv:Body>
 </soapenv:Envelope>
     """
-        print dispatcher.dispatch(xml)
+        print(dispatcher.dispatch(xml))
 
         # echo local test (generic soap service)
         xml = """<?xml version="1.0" encoding="UTF-8"?>
@@ -423,7 +423,7 @@ if __name__=="__main__":
        </soap:Body>
     </soap:Envelope>"""
 
-        print dispatcher.dispatch(xml)
+        print(dispatcher.dispatch(xml))
 
 
         for method, doc in dispatcher.list_methods():
@@ -432,13 +432,13 @@ if __name__=="__main__":
             ##print response
 
     if '--serve' in sys.argv:
-        print "Starting server..."
+        print("Starting server...")
         httpd = HTTPServer(("", 8008), SOAPHandler)
         httpd.dispatcher = dispatcher
         httpd.serve_forever()
 
     if '--consume' in sys.argv:
-        from client import SoapClient
+        from .client import SoapClient
         client = SoapClient(
             location = "http://localhost:8008/",
             action = 'http://localhost:8008/', # SOAPAction
@@ -448,8 +448,8 @@ if __name__=="__main__":
             ns = False)
         response = client.Adder(p={'a':1,'b':2},dt='20100724',c=[{'d':'1.20'},{'d':'2.01'}])
         result = response.AddResult
-        print int(result.ab)
-        print str(result.dd)
+        print(int(result.ab))
+        print(str(result.dd))
 
 
 

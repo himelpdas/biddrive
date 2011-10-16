@@ -1,5 +1,5 @@
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import base64
 
 
@@ -15,11 +15,11 @@ def basic_auth(server="http://127.0.0.1"):
             server=server):
         key = base64.b64encode(username+':'+password)
         headers = {'Authorization': 'Basic ' + key}
-        request = urllib2.Request(server, None, headers)
+        request = urllib.request.Request(server, None, headers)
         try:
-            urllib2.urlopen(request)
+            urllib.request.urlopen(request)
             return True
-        except (urllib2.URLError, urllib2.HTTPError):
+        except (urllib.error.URLError, urllib.error.HTTPError):
             return False
     return basic_login_aux
 

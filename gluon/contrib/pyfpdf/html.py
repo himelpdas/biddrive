@@ -8,8 +8,8 @@ __license__ = "LGPL 3.0"
 
 # Inspired by tuto5.py and several examples from fpdf.org, html2fpdf, etc.
 
-from fpdf import FPDF
-from HTMLParser import HTMLParser
+from .fpdf import FPDF
+from html.parser import HTMLParser
 
 DEBUG = False
 
@@ -100,24 +100,24 @@ class HTML2FPDF(HTMLParser):
                 if not self.theader_out:
                     self.output_table_header()
                 self.box_shadow(w, h, bgcolor)
-                if DEBUG: print "td cell", self.pdf.x, w, txt, "*"
+                if DEBUG: print("td cell", self.pdf.x, w, txt, "*")
                 self.pdf.cell(w,h,txt,border,0,align)
         elif self.table is not None:
             # ignore anything else than td inside a table
             pass
         elif self.align:
-            if DEBUG: print "cell", txt, "*"
+            if DEBUG: print("cell", txt, "*")
             self.pdf.cell(0,self.h,txt,0,1,self.align[0].upper(), self.href)
         else:
             txt = txt.replace("\n"," ")
             if self.href:
                 self.put_link(self.href,txt)
             else:
-                if DEBUG: print "write", txt, "*"
+                if DEBUG: print("write", txt, "*")
                 self.pdf.write(self.h,txt)
 
     def box_shadow(self, w, h, bgcolor):
-        if DEBUG: print "box_shadow", w, h, bgcolor
+        if DEBUG: print("box_shadow", w, h, bgcolor)
         if bgcolor:
             fill_color = self.pdf.fill_color
             self.pdf.set_fill_color(*bgcolor)
@@ -163,7 +163,7 @@ class HTML2FPDF(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if DEBUG: print "STARTTAG", tag, attrs
+        if DEBUG: print("STARTTAG", tag, attrs)
         if tag=='b' or tag=='i' or tag=='u':
             self.set_style(tag,1)
         if tag=='a':
@@ -201,7 +201,7 @@ class HTML2FPDF(HTMLParser):
             self.pdf.ln(self.h+2)
             self.pdf.set_text_color(190,0,0)
             bullet = self.bullet[self.indent-1]
-            if not isinstance(bullet, basestring):
+            if not isinstance(bullet, str):
                 bullet += 1
                 self.bullet[self.indent-1] = bullet
                 bullet = "%s. " % bullet
@@ -221,7 +221,7 @@ class HTML2FPDF(HTMLParser):
                 self.pdf.set_font(self.font_face, size=int(size))
                 self.font_size = size
         if tag=='table':
-            self.table = dict([(k.lower(), v) for k,v in attrs.items()])
+            self.table = dict([(k.lower(), v) for k,v in list(attrs.items())])
             if not 'width' in self.table:
                 self.table['width'] = '100%'
             if self.table['width'][-1]=='%':
@@ -236,13 +236,13 @@ class HTML2FPDF(HTMLParser):
             self.tfoot = None
             self.pdf.ln()
         if tag=='tr':
-            self.tr = dict([(k.lower(), v) for k,v in attrs.items()])
+            self.tr = dict([(k.lower(), v) for k,v in list(attrs.items())])
             self.table_col_index = 0
             self.pdf.set_x(self.table_offset)
         if tag=='td':
-            self.td = dict([(k.lower(), v) for k,v in attrs.items()])
+            self.td = dict([(k.lower(), v) for k,v in list(attrs.items())])
         if tag=='th':
-            self.td = dict([(k.lower(), v) for k,v in attrs.items()])
+            self.td = dict([(k.lower(), v) for k,v in list(attrs.items())])
             self.th = True
             if self.td['width']:
                 self.table_col_width.append(self.td['width'])
@@ -269,7 +269,7 @@ class HTML2FPDF(HTMLParser):
 
     def handle_endtag(self, tag):
         #Closing tag
-        if DEBUG: print "ENDTAG", tag
+        if DEBUG: print("ENDTAG", tag)
         if tag=='h1' or tag=='h2' or tag=='h3' or tag=='h4':
             self.pdf.ln(6)
             self.set_font()
@@ -318,7 +318,7 @@ class HTML2FPDF(HTMLParser):
             self.tr = None
         if tag=='td' or tag=='th':
             if self.th:
-                if DEBUG: print "revert style"
+                if DEBUG: print("revert style")
                 self.set_style('B', False) # revert style
             self.table_col_index += int(self.td.get('colspan','1'))
             self.td = None
@@ -339,7 +339,7 @@ class HTML2FPDF(HTMLParser):
         if size:
             self.font_size = size
             self.h = size / 72.0*25.4
-            if DEBUG: print "H", self.h
+            if DEBUG: print("H", self.h)
         self.pdf.set_font(self.font_face or 'times','',12)
         self.pdf.set_font_size(self.font_size or 12)
         self.set_style('u', False)
@@ -356,7 +356,7 @@ class HTML2FPDF(HTMLParser):
         for s in ('b','i','u'):
             if self.style.get(s):
                 style+=s
-        if DEBUG: print "SET_FONT_STYLE", style
+        if DEBUG: print("SET_FONT_STYLE", style)
         self.pdf.set_font('',style)
 
     def set_text_color(self, r=None, g=0, b=0):

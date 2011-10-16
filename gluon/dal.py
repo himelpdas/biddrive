@@ -132,25 +132,27 @@ import sys
 import locale
 import os
 import types
-import cPickle
+import pickle
 import datetime
 import threading
 import time
-import cStringIO
+import io
 import csv
 import copy
 import socket
 import logging
-import copy_reg
+import copyreg
 import base64
 import shutil
 import marshal
 import decimal
 import struct
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import hashlib
 import uuid
 import glob
+import collections
+from functools import reduce
 
 CALLABLETYPES = (types.LambdaType, types.FunctionType, types.BuiltinFunctionType,
                  types.MethodType, types.BuiltinMethodType)
@@ -160,25 +162,25 @@ CALLABLETYPES = (types.LambdaType, types.FunctionType, types.BuiltinFunctionType
 # following checks allows running of dal without web2py as a standalone module
 ###################################################################################
 try:
-    from utils import web2py_uuid
+    from .utils import web2py_uuid
 except ImportError:
     import uuid
     def web2py_uuid(): return str(uuid.uuid4())
 
 try:
-    import portalocker
+    from . import portalocker
     have_portalocker = True
 except ImportError:
     have_portalocker = False
 
 try:
-    import serializers
+    from . import serializers
     have_serializers = True
 except ImportError:
     have_serializers = False
 
 try:
-    import validators
+    from . import validators
     have_validators = True
 except ImportError:
     have_validators = False
@@ -228,7 +230,7 @@ if not 'google' in drivers:
             logger.debug('no sqlite3 or pysqlite2.dbapi2 driver')
 
     try:
-        import contrib.pymysql as pymysql
+        from .contrib import pymysql
         drivers.append('pymysql')
     except ImportError:
         logger.debug('no pymysql driver')
@@ -356,7 +358,7 @@ if 'google' in drivers:
             value = super(GAEDecimalProperty, self).validate(value)
             if value is None or isinstance(value, decimal.Decimal):
                 return value
-            elif isinstance(value, basestring):
+            elif isinstance(value, str):
                 return decimal.Decimal(value)
             raise gae.BadValueError("Property %s must be a Decimal or string." % self.name)
 
@@ -501,7 +503,7 @@ class BaseAdapter(ConnectionPool):
                 portalocker.lock(fileobj,portalocker.LOCK_EX)
             else:
                 fileobj.close()
-                raise RuntimeError, "Unsupported file_open mode"
+                raise RuntimeError("Unsupported file_open mode")
         return fileobj
 
     def file_close(self, fileobj, unlock=True):
@@ -587,12 +589,12 @@ class BaseAdapter(ConnectionPool):
             elif field.type.startswith('list:reference'):
                 ftype = self.types[field.type[:14]]
             elif field.type.startswith('decimal'):
-                precision, scale = map(int,field.type[8:-1].split(','))
+                precision, scale = list(map(int,field.type[8:-1].split(',')))
                 ftype = self.types[field.type[:7]] % \
                     dict(precision=precision,scale=scale)
             elif not field.type in self.types:
-                raise SyntaxError, 'Field: unknown field type: %s for %s' % \
-                    (field.type, field.name)
+                raise SyntaxError('Field: unknown field type: %s for %s' % \
+                    (field.type, field.name))
             else:
                 ftype = self.types[field.type]\
                      % dict(length=field.length)
@@ -677,21 +679,21 @@ class BaseAdapter(ConnectionPool):
                 self.create_sequence_and_triggers(query,table)
                 table._db.commit()
             if table._dbt:
-                tfile = self.file_open(table._dbt, 'w')
-                cPickle.dump(sql_fields, tfile)
+                tfile = self.file_open(table._dbt, 'wb') #py3k! binary file
+                pickle.dump(sql_fields, tfile)
                 self.file_close(tfile)
                 if fake_migrate:
                     logfile.write('faked!\n')
                 else:
                     logfile.write('success!\n')
         else:
-            tfile = self.file_open(table._dbt, 'r')
+            tfile = self.file_open(table._dbt, 'rb') #py3k! binary file
             try:
-                sql_fields_old = cPickle.load(tfile)
+                sql_fields_old = pickle.load(tfile)
             except EOFError:
                 self.file_close(tfile)
                 self.file_close(logfile)
-                raise RuntimeError, 'File %s appears corrupted' % table._dbt
+                raise RuntimeError('File %s appears corrupted' % table._dbt)
             self.file_close(tfile)
             if sql_fields != sql_fields_old:
                 self.migrate_table(table,
@@ -717,11 +719,11 @@ class BaseAdapter(ConnectionPool):
                 v=dict(type='unkown',sql=v)
             return k.lower(),v
         ### make sure all field names are lower case to avoid conflicts
-        sql_fields = dict(map(fix,sql_fields.items()))
-        sql_fields_old = dict(map(fix,sql_fields_old.items()))
-        sql_fields_aux = dict(map(fix,sql_fields_aux.items()))
+        sql_fields = dict(list(map(fix,list(sql_fields.items()))))
+        sql_fields_old = dict(list(map(fix,list(sql_fields_old.items()))))
+        sql_fields_aux = dict(list(map(fix,list(sql_fields_aux.items()))))
 
-        keys = sql_fields.keys()
+        keys = list(sql_fields.keys())
         for key in sql_fields_old:
             if not key in keys:
                 keys.append(key)
@@ -792,21 +794,21 @@ class BaseAdapter(ConnectionPool):
                         if table._db._adapter.commit_on_alter_table:
                             table._db.commit()
                             tfile = self.file_open(table._dbt, 'w')
-                            cPickle.dump(sql_fields_current, tfile)
+                            pickle.dump(sql_fields_current, tfile)
                             self.file_close(tfile)
                             logfile.write('success!\n')
                     else:
                         logfile.write('faked!\n')
             elif metadata_change:
                 tfile = self.file_open(table._dbt, 'w')
-                cPickle.dump(sql_fields_current, tfile)
+                pickle.dump(sql_fields_current, tfile)
                 self.file_close(tfile)
 
         if metadata_change and \
                 not (query and self.dbengine in ('mysql','oracle','firebird')):
             table._db.commit()
             tfile = self.file_open(table._dbt, 'w')
-            cPickle.dump(sql_fields_current, tfile)
+            pickle.dump(sql_fields_current, tfile)
             self.file_close(tfile)
 
     def LOWER(self,first):
@@ -880,7 +882,7 @@ class BaseAdapter(ConnectionPool):
         query = self._insert(table,fields)
         try:
             self.execute(query)
-        except Exception, e:
+        except Exception as e:
             if isinstance(e,self.integrity_error_class()):
                 return None
             raise e
@@ -1093,15 +1095,15 @@ class BaseAdapter(ConnectionPool):
         if len(tablenames)==1:
             return tablenames[0]
         elif len(tablenames)<1:
-            raise RuntimeError, "No table selected"
+            raise RuntimeError("No table selected")
         else:
-            raise RuntimeError, "Too many tables selected"
+            raise RuntimeError("Too many tables selected")
 
     def _select(self, query, fields, attributes):
         for key in set(attributes.keys())-set(('orderby','groupby','limitby',
                                                'required','cache','left',
                                                'distinct','having', 'join')):
-            raise SyntaxError, 'invalid select attribute: %s' % key
+            raise SyntaxError('invalid select attribute: %s' % key)
         # ## if not fields specified take them all from the requested tables
         new_fields = []
         for item in fields:
@@ -1118,14 +1120,14 @@ class BaseAdapter(ConnectionPool):
                     fields.append(field)
         else:
             for field in fields:
-                if isinstance(field,basestring) and table_field.match(field):
+                if isinstance(field,str) and table_field.match(field):
                     tn,fn = field.split('.')
                     field = self.db[tn][fn]
                 for tablename in self.tables(field):
                     if not tablename in tablenames:
                         tablenames.append(tablename)
         if len(tablenames) < 1:
-            raise SyntaxError, 'Set: no tables selected'
+            raise SyntaxError('Set: no tables selected')
         sql_f = ', '.join(map(self.expand,fields))
         self._colnames = [c.strip() for c in sql_f.split(', ')]
         if query:
@@ -1165,7 +1167,7 @@ class BaseAdapter(ConnectionPool):
             [tables_to_merge.update(dict.fromkeys(self.tables(t))) for t in joinon]
             joinont = [t.first._tablename for t in joinon]
             [tables_to_merge.pop(t) for t in joinont if t in tables_to_merge]
-            important_tablenames = joint + joinont + tables_to_merge.keys()
+            important_tablenames = joint + joinont + list(tables_to_merge.keys())
             excluded = [t for t in tablenames if not t in important_tablenames ]
         def alias(t):
             return str(self.db[t])
@@ -1174,14 +1176,14 @@ class BaseAdapter(ConnectionPool):
             for t in ijoinon:
                 sql_t += ' %s %s' % (icommand, str(t))
         elif not inner_join and left:
-            sql_t = ', '.join([alias(t) for t in excluded + tables_to_merge.keys()])
+            sql_t = ', '.join([alias(t) for t in excluded + list(tables_to_merge.keys())])
             if joint:
                 sql_t += ' %s %s' % (command, ','.join([t for t in joint]))
             for t in joinon:
                 sql_t += ' %s %s' % (command, str(t))
         elif inner_join and left:
             sql_t = ','.join([alias(t) for t in excluded + \
-                                  tables_to_merge.keys() if t in iexcluded ])
+                                  list(tables_to_merge.keys()) if t in iexcluded ])
             for t in ijoinon:
                 sql_t += ' %s %s' % (icommand, str(t))
             if joint:
@@ -1346,7 +1348,7 @@ class BaseAdapter(ConnectionPool):
             return str(int(obj))
         elif fieldtype == 'double':
             return repr(float(obj))
-        if isinstance(obj, unicode):
+        if isinstance(obj, str):
             obj = obj.encode(self.db_codec)
         if fieldtype == 'blob':
             obj = base64.b64encode(str(obj))
@@ -1368,11 +1370,11 @@ class BaseAdapter(ConnectionPool):
             else:
                 obj = str(obj)
         if not isinstance(obj,str):
-            obj = str(obj)
-        try:
-            obj.decode(self.db_codec)
-        except:
-            obj = obj.decode('latin1').encode(self.db_codec)
+            obj = str(obj, self.db_codec) #py3k! encoding, not sure about if this will need conversion at all
+        ##try: 
+        ##    obj.decode(self.db_codec) #py3k! already str
+        ##except:
+        ##    obj = obj.decode('latin1').encode(self.db_codec) #py3k! already str
         return self.adapt(obj)
 
     def represent_exceptions(self, obj, fieldtype):
@@ -1415,7 +1417,7 @@ class BaseAdapter(ConnectionPool):
                         value = value.decode(db._db_codec)
                     except Exception:
                         pass
-                if isinstance(value, unicode):
+                if isinstance(value, str):
                     value = value.encode('utf-8')
                 if not tablename in new_row:
                     colset = new_row[tablename] = Row()
@@ -1445,11 +1447,11 @@ class BaseAdapter(ConnectionPool):
                 elif field_type == 'date' \
                         and (not isinstance(value, datetime.date)\
                                  or isinstance(value, datetime.datetime)):
-                    (y, m, d) = map(int, str(value)[:10].strip().split('-'))
+                    (y, m, d) = list(map(int, str(value)[:10].strip().split('-')))
                     colset[fieldname] = datetime.date(y, m, d)
                 elif field_type == 'time' \
                         and not isinstance(value, datetime.time):
-                    time_items = map(int,str(value)[:8].strip().split(':')[:3])
+                    time_items = list(map(int,str(value)[:8].strip().split(':')[:3]))
                     if len(time_items) == 3:
                         (h, mi, s) = time_items
                     else:
@@ -1457,8 +1459,8 @@ class BaseAdapter(ConnectionPool):
                     colset[fieldname] = datetime.time(h, mi, s)
                 elif field_type == 'datetime'\
                         and not isinstance(value, datetime.datetime):
-                    (y, m, d) = map(int,str(value)[:10].strip().split('-'))
-                    time_items = map(int,str(value)[11:19].strip().split(':')[:3])
+                    (y, m, d) = list(map(int,str(value)[:10].strip().split('-')))
+                    time_items = list(map(int,str(value)[11:19].strip().split(':')[:3]))
                     if len(time_items) == 3:
                         (h, mi, s) = time_items
                     else:
@@ -1509,8 +1511,8 @@ class BaseAdapter(ConnectionPool):
         for tablename in virtualtables:
             ### new style virtual fields
             table = db[tablename]
-            fields_virtual = [(f,v) for (f,v) in table.items() if isinstance(v,FieldVirtual)]
-            fields_lazy = [(f,v) for (f,v) in table.items() if isinstance(v,FieldLazy)]
+            fields_virtual = [(f,v) for (f,v) in list(table.items()) if isinstance(v,FieldVirtual)]
+            fields_lazy = [(f,v) for (f,v) in list(table.items()) if isinstance(v,FieldLazy)]
             if fields_virtual or fields_lazy:
                 for row in rowsobj.records:
                     box = row[tablename]
@@ -1585,7 +1587,7 @@ class SQLiteAdapter(BaseAdapter):
         else:
             dbpath = uri.split('://')[1]
             if dbpath[0] != '/':
-                dbpath = os.path.join(self.folder.decode(path_encoding).encode('utf8'),dbpath)
+                dbpath = os.path.join(self.folder,dbpath) #py3k! removed encode/decode
         if not 'check_same_thread' in driver_args:
             driver_args['check_same_thread'] = False
         if not 'detect_types' in driver_args:
@@ -1699,20 +1701,19 @@ class MySQLAdapter(BaseAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
-            raise SyntaxError, \
-                "Invalid URI string in DAL: %s" % self.uri
+            raise SyntaxError("Invalid URI string in DAL: %s" % self.uri)
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'Host name required'
+            raise SyntaxError('Host name required')
         db = m.group('db')
         if not db:
-            raise SyntaxError, 'Database name required'
+            raise SyntaxError('Database name required')
         port = int(m.group('port') or '3306')
         charset = m.group('charset') or 'utf8'
         driver_args.update(dict(db=db,
@@ -1797,19 +1798,19 @@ class PostgreSQLAdapter(BaseAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
         if not m:
-            raise SyntaxError, "Invalid URI string in DAL"
+            raise SyntaxError("Invalid URI string in DAL")
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'Host name required'
+            raise SyntaxError('Host name required')
         db = m.group('db')
         if not db:
-            raise SyntaxError, 'Database name required'
+            raise SyntaxError('Database name required')
         port = m.group('port') or '5432'
         sslmode = m.group('sslmode')
         if sslmode:
@@ -1861,19 +1862,19 @@ class JDBCPostgreSQLAdapter(PostgreSQLAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
         if not m:
-            raise SyntaxError, "Invalid URI string in DAL"
+            raise SyntaxError("Invalid URI string in DAL")
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'Host name required'
+            raise SyntaxError('Host name required')
         db = m.group('db')
         if not db:
-            raise SyntaxError, 'Database name required'
+            raise SyntaxError('Database name required')
         port = m.group('port') or '5432'
         msg = ('jdbc:postgresql://%s:%s/%s' % (host, port, db), user, password)
         def connect(msg=msg,driver_args=driver_args):
@@ -2086,32 +2087,30 @@ class MSSQLAdapter(BaseAdapter):
             try:
                 m = re.compile('^(?P<dsn>.+)$').match(uri)
                 if not m:
-                    raise SyntaxError, \
-                        'Parsing uri string(%s) has no result' % self.uri
+                    raise SyntaxError('Parsing uri string(%s) has no result' % self.uri)
                 dsn = m.group('dsn')
                 if not dsn:
-                    raise SyntaxError, 'DSN required'
-            except SyntaxError, e:
+                    raise SyntaxError('DSN required')
+            except SyntaxError as e:
                 logger.error('NdGpatch error')
                 raise e
             cnxn = 'DSN=%s' % dsn
         else:
             m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?(?P<urlargs>.*))?$').match(uri)
             if not m:
-                raise SyntaxError, \
-                    "Invalid URI string in DAL: %s" % uri
+                raise SyntaxError("Invalid URI string in DAL: %s" % uri)
             user = credential_decoder(m.group('user'))
             if not user:
-                raise SyntaxError, 'User required'
+                raise SyntaxError('User required')
             password = credential_decoder(m.group('password'))
             if not password:
                 password = ''
             host = m.group('host')
             if not host:
-                raise SyntaxError, 'Host name required'
+                raise SyntaxError('Host name required')
             db = m.group('db')
             if not db:
-                raise SyntaxError, 'Database name required'
+                raise SyntaxError('Database name required')
             port = m.group('port') or '1433'
             # Parse the optional url name-value arg pairs after the '?'
             # (in the form of arg1=value1&arg2=value2&...)
@@ -2121,7 +2120,7 @@ class MSSQLAdapter(BaseAdapter):
             argpattern = re.compile('(?P<argkey>[^=]+)=(?P<argvalue>[^&]*)')
             for argmatch in argpattern.finditer(urlargs):
                 argsdict[str(argmatch.group('argkey')).upper()] = argmatch.group('argvalue')
-            urlargs = ';'.join(['%s=%s' % (ak, av) for (ak, av) in argsdict.items()])
+            urlargs = ';'.join(['%s=%s' % (ak, av) for (ak, av) in list(argsdict.items())])
             cnxn = 'SERVER=%s;PORT=%s;DATABASE=%s;UID=%s;PWD=%s;%s' \
                 % (host, port, db, user, password, urlargs)
         def connect(cnxn=cnxn,driver_args=driver_args):
@@ -2244,26 +2243,26 @@ class FireBirdAdapter(BaseAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+?)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
-            raise SyntaxError, "Invalid URI string in DAL: %s" % uri
+            raise SyntaxError("Invalid URI string in DAL: %s" % uri)
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'Host name required'
+            raise SyntaxError('Host name required')
         port = int(m.group('port') or 3050)
         db = m.group('db')
         if not db:
-            raise SyntaxError, 'Database name required'
+            raise SyntaxError('Database name required')
         charset = m.group('charset') or 'UTF8'
         driver_args.update(dict(dsn='%s/%s:%s' % (host,port,db),
                                    user = credential_decoder(user),
                                    password = credential_decoder(password),
                                    charset = charset))
-        if adapter_args.has_key('driver_name'):
+        if 'driver_name' in adapter_args:
             if adapter_args['driver_name'] == 'kinterbasdb':
                 self.driver = kinterbasdb
             elif adapter_args['driver_name'] == 'firebirdsql':
@@ -2304,17 +2303,16 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<path>[^\?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
-            raise SyntaxError, \
-                "Invalid URI string in DAL: %s" % self.uri
+            raise SyntaxError("Invalid URI string in DAL: %s" % self.uri)
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         pathdb = m.group('path')
         if not pathdb:
-            raise SyntaxError, 'Path required'
+            raise SyntaxError('Path required')
         charset = m.group('charset')
         if not charset:
             charset = 'UTF8'
@@ -2326,7 +2324,7 @@ class FireBirdEmbeddedAdapter(FireBirdAdapter):
                                    charset=charset))
         #def connect(driver_args=driver_args):
         #    return kinterbasdb.connect(**driver_args)
-        if adapter_args.has_key('driver_name'):
+        if 'driver_name' in adapter_args:
             if adapter_args['driver_name'] == 'kinterbasdb':
                 self.driver = kinterbasdb
             elif adapter_args['driver_name'] == 'firebirdsql':
@@ -2413,20 +2411,19 @@ class InformixAdapter(BaseAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(uri)
         if not m:
-            raise SyntaxError, \
-                "Invalid URI string in DAL: %s" % self.uri
+            raise SyntaxError("Invalid URI string in DAL: %s" % self.uri)
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'Host name required'
+            raise SyntaxError('Host name required')
         db = m.group('db')
         if not db:
-            raise SyntaxError, 'Database name required'
+            raise SyntaxError('Database name required')
         user = credential_decoder(user)
         password = credential_decoder(password)
         dsn = '%s@%s' % (db,host)
@@ -2750,19 +2747,19 @@ class SAPDBAdapter(BaseAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:@/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^\?]+)(\?sslmode=(?P<sslmode>.+))?$').match(uri)
         if not m:
-            raise SyntaxError, "Invalid URI string in DAL"
+            raise SyntaxError("Invalid URI string in DAL")
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'Host name required'
+            raise SyntaxError('Host name required')
         db = m.group('db')
         if not db:
-            raise SyntaxError, 'Database name required'
+            raise SyntaxError('Database name required')
         def connect(user=user,password=password,database=db,
                     host=host,driver_args=driver_args):
             return self.driver.Connection(user,password,database,
@@ -2790,20 +2787,19 @@ class CubridAdapter(MySQLAdapter):
         uri = uri.split('://')[1]
         m = re.compile('^(?P<user>[^:@]+)(\:(?P<password>[^@]*))?@(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>[^?]+)(\?set_encoding=(?P<charset>\w+))?$').match(uri)
         if not m:
-            raise SyntaxError, \
-                "Invalid URI string in DAL: %s" % self.uri
+            raise SyntaxError("Invalid URI string in DAL: %s" % self.uri)
         user = credential_decoder(m.group('user'))
         if not user:
-            raise SyntaxError, 'User required'
+            raise SyntaxError('User required')
         password = credential_decoder(m.group('password'))
         if not password:
             password = ''
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'Host name required'
+            raise SyntaxError('Host name required')
         db = m.group('db')
         if not db:
-            raise SyntaxError, 'Database name required'
+            raise SyntaxError('Database name required')
         port = int(m.group('port') or '30000')
         charset = m.group('charset') or 'utf8'
         user=credential_decoder(user),
@@ -2826,7 +2822,7 @@ class DatabaseStoredFile:
 
     def __init__(self,db,filename,mode):
         if db._adapter.dbengine != 'mysql':
-            raise RuntimeError, "only MySQL can store metadata .table files in database for now"
+            raise RuntimeError("only MySQL can store metadata .table files in database for now")
         self.db = db
         self.filename = filename
         self.mode = mode
@@ -2848,7 +2844,7 @@ class DatabaseStoredFile:
                 finally:
                     datafile.close()
             elif mode in ('r','rw'):
-                raise RuntimeError, "File %s does not exist" % filename
+                raise RuntimeError("File %s does not exist" % filename)
 
     def read(self, bytes):
         data = self.data[self.p:self.p+bytes]
@@ -2918,7 +2914,7 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
 
         m = re.compile('^(?P<instance>.*)/(?P<db>.*)$').match(self.uri[len('google:sql://'):])
         if not m:
-            raise SyntaxError, "Invalid URI string in SQLDB: %s" % self._uri
+            raise SyntaxError("Invalid URI string in SQLDB: %s" % self._uri)
         instance = credential_decoder(m.group('instance'))
         db = credential_decoder(m.group('db'))
         driver_args['instance'] = instance
@@ -2941,8 +2937,8 @@ class NoSQLAdapter(BaseAdapter):
     def to_unicode(obj):
         if isinstance(obj, str):
             return obj.decode('utf8')
-        elif not isinstance(obj, unicode):
-            return unicode(obj)
+        elif not isinstance(obj, str):
+            return str(obj)
         return obj
 
     def represent(self, obj, fieldtype):
@@ -2951,7 +2947,7 @@ class NoSQLAdapter(BaseAdapter):
         if isinstance(fieldtype, SQLCustomType):
             return fieldtype.encoder(obj)
         if isinstance(obj, (Expression, Field)):
-            raise SyntaxError, "non supported on GAE"
+            raise SyntaxError("non supported on GAE")
         if self.dbengine=='google:datastore' in globals():
             if isinstance(fieldtype, gae.Property):
                 return obj
@@ -2966,13 +2962,13 @@ class NoSQLAdapter(BaseAdapter):
             if isinstance(obj, list) and not fieldtype.startswith('list'):
                 obj = [self.represent(o, fieldtype) for o in obj]
             elif fieldtype in ('integer','id'):
-                obj = long(obj)
+                obj = int(obj)
             elif fieldtype == 'double':
                 obj = float(obj)
             elif fieldtype.startswith('reference'):
                 if isinstance(obj, (Row, Reference)):
                     obj = obj['id']
-                obj = long(obj)
+                obj = int(obj)
             elif fieldtype == 'boolean':
                 if obj and not str(obj)[0].upper() == 'F':
                     obj = True
@@ -2980,14 +2976,14 @@ class NoSQLAdapter(BaseAdapter):
                     obj = False
             elif fieldtype == 'date':
                 if not isinstance(obj, datetime.date):
-                    (y, m, d) = map(int,str(obj).strip().split('-'))
+                    (y, m, d) = list(map(int,str(obj).strip().split('-')))
                     obj = datetime.date(y, m, d)
                 elif isinstance(obj,datetime.datetime):
                     (y, m, d) = (obj.year, obj.month, obj.day)
                     obj = datetime.date(y, m, d)
             elif fieldtype == 'time':
                 if not isinstance(obj, datetime.time):
-                    time_items = map(int,str(obj).strip().split(':')[:3])
+                    time_items = list(map(int,str(obj).strip().split(':')[:3]))
                     if len(time_items) == 3:
                         (h, mi, s) = time_items
                     else:
@@ -2995,8 +2991,8 @@ class NoSQLAdapter(BaseAdapter):
                     obj = datetime.time(h, mi, s)
             elif fieldtype == 'datetime':
                 if not isinstance(obj, datetime.datetime):
-                    (y, m, d) = map(int,str(obj)[:10].strip().split('-'))
-                    time_items = map(int,str(obj)[11:].strip().split(':')[:3])
+                    (y, m, d) = list(map(int,str(obj)[:10].strip().split('-')))
+                    time_items = list(map(int,str(obj)[11:].strip().split(':')[:3]))
                     while len(time_items)<3:
                         time_items.append(0)
                     (h, mi, s) = time_items
@@ -3004,9 +3000,9 @@ class NoSQLAdapter(BaseAdapter):
             elif fieldtype == 'blob':
                 pass
             elif fieldtype.startswith('list:string'):
-                return map(self.to_unicode,obj)
+                return list(map(self.to_unicode,obj))
             elif fieldtype.startswith('list:'):
-                return map(int,obj)
+                return list(map(int,obj))
             else:
                 obj = self.to_unicode(obj)
         return obj
@@ -3047,41 +3043,41 @@ class NoSQLAdapter(BaseAdapter):
 
 
     # these functions should never be called!
-    def OR(self,first,second): raise SyntaxError, "Not supported"
-    def AND(self,first,second): raise SyntaxError, "Not supported"
-    def AS(self,first,second): raise SyntaxError, "Not supported"
-    def ON(self,first,second): raise SyntaxError, "Not supported"
-    def STARTSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ENDSWITH(self,first,second=None): raise SyntaxError, "Not supported"
-    def ADD(self,first,second): raise SyntaxError, "Not supported"
-    def SUB(self,first,second): raise SyntaxError, "Not supported"
-    def MUL(self,first,second): raise SyntaxError, "Not supported"
-    def DIV(self,first,second): raise SyntaxError, "Not supported"
-    def LOWER(self,first): raise SyntaxError, "Not supported"
-    def UPPER(self,first): raise SyntaxError, "Not supported"
-    def EXTRACT(self,first,what): raise SyntaxError, "Not supported"
-    def AGGREGATE(self,first,what): raise SyntaxError, "Not supported"
-    def LEFT_JOIN(self): raise SyntaxError, "Not supported"
-    def RANDOM(self): raise SyntaxError, "Not supported"
-    def SUBSTRING(self,field,parameters):  raise SyntaxError, "Not supported"
-    def PRIMARY_KEY(self,key):  raise SyntaxError, "Not supported"
-    def LIKE(self,first,second): raise SyntaxError, "Not supported"
-    def drop(self,table,mode):  raise SyntaxError, "Not supported"
-    def alias(self,table,alias): raise SyntaxError, "Not supported"
-    def migrate_table(self,*a,**b): raise SyntaxError, "Not supported"
-    def distributed_transaction_begin(self,key): raise SyntaxError, "Not supported"
-    def prepare(self,key): raise SyntaxError, "Not supported"
-    def commit_prepared(self,key): raise SyntaxError, "Not supported"
-    def rollback_prepared(self,key): raise SyntaxError, "Not supported"
-    def concat_add(self,table): raise SyntaxError, "Not supported"
-    def constraint_name(self, table, fieldname): raise SyntaxError, "Not supported"
+    def OR(self,first,second): raise SyntaxError("Not supported")
+    def AND(self,first,second): raise SyntaxError("Not supported")
+    def AS(self,first,second): raise SyntaxError("Not supported")
+    def ON(self,first,second): raise SyntaxError("Not supported")
+    def STARTSWITH(self,first,second=None): raise SyntaxError("Not supported")
+    def ENDSWITH(self,first,second=None): raise SyntaxError("Not supported")
+    def ADD(self,first,second): raise SyntaxError("Not supported")
+    def SUB(self,first,second): raise SyntaxError("Not supported")
+    def MUL(self,first,second): raise SyntaxError("Not supported")
+    def DIV(self,first,second): raise SyntaxError("Not supported")
+    def LOWER(self,first): raise SyntaxError("Not supported")
+    def UPPER(self,first): raise SyntaxError("Not supported")
+    def EXTRACT(self,first,what): raise SyntaxError("Not supported")
+    def AGGREGATE(self,first,what): raise SyntaxError("Not supported")
+    def LEFT_JOIN(self): raise SyntaxError("Not supported")
+    def RANDOM(self): raise SyntaxError("Not supported")
+    def SUBSTRING(self,field,parameters):  raise SyntaxError("Not supported")
+    def PRIMARY_KEY(self,key):  raise SyntaxError("Not supported")
+    def LIKE(self,first,second): raise SyntaxError("Not supported")
+    def drop(self,table,mode):  raise SyntaxError("Not supported")
+    def alias(self,table,alias): raise SyntaxError("Not supported")
+    def migrate_table(self,*a,**b): raise SyntaxError("Not supported")
+    def distributed_transaction_begin(self,key): raise SyntaxError("Not supported")
+    def prepare(self,key): raise SyntaxError("Not supported")
+    def commit_prepared(self,key): raise SyntaxError("Not supported")
+    def rollback_prepared(self,key): raise SyntaxError("Not supported")
+    def concat_add(self,table): raise SyntaxError("Not supported")
+    def constraint_name(self, table, fieldname): raise SyntaxError("Not supported")
     def create_sequence_and_triggers(self, query, table, **args): pass
-    def log_execute(self,*a,**b): raise SyntaxError, "Not supported"
-    def execute(self,*a,**b): raise SyntaxError, "Not supported"
-    def represent_exceptions(self, obj, fieldtype): raise SyntaxError, "Not supported"
-    def lastrowid(self,table): raise SyntaxError, "Not supported"
-    def integrity_error_class(self): raise SyntaxError, "Not supported"
-    def rowslice(self,rows,minimum=0,maximum=None): raise SyntaxError, "Not supported"
+    def log_execute(self,*a,**b): raise SyntaxError("Not supported")
+    def execute(self,*a,**b): raise SyntaxError("Not supported")
+    def represent_exceptions(self, obj, fieldtype): raise SyntaxError("Not supported")
+    def lastrowid(self,table): raise SyntaxError("Not supported")
+    def integrity_error_class(self): raise SyntaxError("Not supported")
+    def rowslice(self,rows,minimum=0,maximum=None): raise SyntaxError("Not supported")
 
 
 class GAEF(object):
@@ -3166,7 +3162,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
                 ftype = self.types[field.type](**attr)
             elif not field.type in self.types\
                  or not self.types[field.type]:
-                raise SyntaxError, 'Field: unknown field type: %s' % field.type
+                raise SyntaxError('Field: unknown field type: %s' % field.type)
             else:
                 ftype = self.types[field.type](**attr)
             myfields[field.name] = ftype
@@ -3177,13 +3173,13 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
         elif isinstance(polymodel,Table):
             table._tableobj = classobj(table._tablename, (polymodel._tableobj, ), myfields)
         else:
-            raise SyntaxError, "polymodel must be None, True, a table or a tablename"
+            raise SyntaxError("polymodel must be None, True, a table or a tablename")
         return None
 
     def expand(self,expression,field_type=None):
         if isinstance(expression,Field):
             if expression.type in ('text','blob'):
-                raise SyntaxError, 'AppEngine does not index by: %s' % expression.type
+                raise SyntaxError('AppEngine does not index by: %s' % expression.type)
             return expression.name
         elif isinstance(expression, (Expression, Query)):
             if not expression.second is None:
@@ -3216,35 +3212,35 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
         if first.type != 'id':
             return [GAEF(first.name,'!=',self.represent(second,first.type),lambda a,b:a!=b)]
         else:
-            second = Key.from_path(first._tablename, long(second))
+            second = Key.from_path(first._tablename, int(second))
             return [GAEF(first.name,'!=',second,lambda a,b:a!=b)]
 
     def LT(self,first,second=None):
         if first.type != 'id':
             return [GAEF(first.name,'<',self.represent(second,first.type),lambda a,b:a<b)]
         else:
-            second = Key.from_path(first._tablename, long(second))
+            second = Key.from_path(first._tablename, int(second))
             return [GAEF(first.name,'<',second,lambda a,b:a<b)]
 
     def LE(self,first,second=None):
         if first.type != 'id':
             return [GAEF(first.name,'<=',self.represent(second,first.type),lambda a,b:a<=b)]
         else:
-            second = Key.from_path(first._tablename, long(second))
+            second = Key.from_path(first._tablename, int(second))
             return [GAEF(first.name,'<=',second,lambda a,b:a<=b)]
 
     def GT(self,first,second=None):
         if first.type != 'id' or second==0 or second == '0':
             return [GAEF(first.name,'>',self.represent(second,first.type),lambda a,b:a>b)]
         else:
-            second = Key.from_path(first._tablename, long(second))
+            second = Key.from_path(first._tablename, int(second))
             return [GAEF(first.name,'>',second,lambda a,b:a>b)]
 
     def GE(self,first,second=None):
         if first.type != 'id':
             return [GAEF(first.name,'>=',self.represent(second,first.type),lambda a,b:a>=b)]
         else:
-            second = Key.from_path(first._tablename, long(second))
+            second = Key.from_path(first._tablename, int(second))
             return [GAEF(first.name,'>=',second,lambda a,b:a>=b)]
 
     def INVERT(self,first):
@@ -3255,7 +3251,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
 
     def BELONGS(self,first,second=None):
         if not isinstance(second,(list, tuple)):
-            raise SyntaxError, "Not supported"
+            raise SyntaxError("Not supported")
         if first.type != 'id':
             return [GAEF(first.name,'in',self.represent(second,first.type),lambda a,b:a in b)]
         else:
@@ -3264,7 +3260,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
 
     def CONTAINS(self,first,second):
         if not first.type.startswith('list:'):
-            raise SyntaxError, "Not supported"
+            raise SyntaxError("Not supported")
         return [GAEF(first.name,'=',self.expand(second,first.type[5:]),lambda a,b:a in b)]
 
     def NOT(self,first):
@@ -3275,10 +3271,10 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
                  self.LE: self.GT,
                  self.GE: self.LT}
         if not isinstance(first,Query):
-            raise SyntaxError, "Not suported"
+            raise SyntaxError("Not suported")
         nop = nops.get(first.op,None)
         if not nop:
-            raise SyntaxError, "Not suported %s" % first.op.__name__
+            raise SyntaxError("Not suported %s" % first.op.__name__)
         first.op = nop
         return self.expand(first)
 
@@ -3301,7 +3297,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
             tablename = fields[0].tablename
             query = fields[0].table._id>0
         else:
-            raise SyntaxError, "Unable to determine a tablename"
+            raise SyntaxError("Unable to determine a tablename")
         query = self.filter_tenant(query,[tablename])
         tableobj = self.db[tablename]._tableobj
         items = tableobj.all()
@@ -3326,9 +3322,9 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
                 items = items.filter('%s %s' % (filter.name,filter.op),filter.value)
         if not isinstance(items,list):
             if attributes.get('left', None):
-                raise SyntaxError, 'Set: no left join in appengine'
+                raise SyntaxError('Set: no left join in appengine')
             if attributes.get('groupby', None):
-                raise SyntaxError, 'Set: no groupby in appengine'
+                raise SyntaxError('Set: no groupby in appengine')
             orderby = attributes.get('orderby', False)
             if orderby:
                 ### THIS REALLY NEEDS IMPROVEMENT !!!
@@ -3359,7 +3355,7 @@ class GoogleDatastoreAdapter(NoSQLAdapter):
 
     def count(self,query,distinct=None):
         if distinct:
-            raise RuntimeError, "COUNT DISTINCT not supported"
+            raise RuntimeError("COUNT DISTINCT not supported")
         (items, tablename, fields) = self.select_raw(query)
         # self.db['_lastsql'] = self._count(query)
         try:
@@ -3431,13 +3427,13 @@ class CouchDBAdapter(NoSQLAdapter):
                 'password': str,
                 'blob': str,
                 'upload': str,
-                'integer': long,
+                'integer': int,
                 'double': float,
                 'date': datetime.date,
                 'time': datetime.time,
                 'datetime': datetime.datetime,
-                'id': long,
-                'reference': long,
+                'id': int,
+                'reference': int,
                 'list:string': list,
                 'list:integer': list,
                 'list:reference': list,
@@ -3476,7 +3472,7 @@ class CouchDBAdapter(NoSQLAdapter):
         value = NoSQLAdapter.represent(self, obj, fieldtype)
         if fieldtype=='id':
             return repr(str(int(value)))
-        return repr(not isinstance(value,unicode) and value or value.encode('utf8'))
+        return repr(not isinstance(value,str) and value or value.encode('utf8'))
 
     def __init__(self,db,uri='couchdb://127.0.0.1:5984',
                  pool_size=0,folder=None,db_codec ='UTF-8',
@@ -3512,11 +3508,11 @@ class CouchDBAdapter(NoSQLAdapter):
 
     def _select(self,query,fields,attributes):
         if not isinstance(query,Query):
-            raise SyntaxError, "Not Supported"
+            raise SyntaxError("Not Supported")
         for key in set(attributes.keys())-set(('orderby','groupby','limitby',
                                                'required','cache','left',
                                                'distinct','having')):
-            raise SyntaxError, 'invalid select attribute: %s' % key
+            raise SyntaxError('invalid select attribute: %s' % key)
         new_fields=[]
         for item in fields:
             if isinstance(item,SQLALL):
@@ -3541,7 +3537,7 @@ class CouchDBAdapter(NoSQLAdapter):
 
     def select(self,query,fields,attributes):
         if not isinstance(query,Query):
-            raise SyntaxError, "Not Supported"
+            raise SyntaxError("Not Supported")
         fn, colnames = self._select(query,fields,attributes)
         tablename = colnames[0].split('.')[0]
         ctable = self.connection[tablename]
@@ -3550,7 +3546,7 @@ class CouchDBAdapter(NoSQLAdapter):
 
     def delete(self,tablename,query):
         if not isinstance(query,Query):
-            raise SyntaxError, "Not Supported"
+            raise SyntaxError("Not Supported")
         if query.first.type=='id' and query.op==self.EQ:
             id = query.second
             tablename = query.first.tablename
@@ -3571,7 +3567,7 @@ class CouchDBAdapter(NoSQLAdapter):
 
     def update(self,tablename,query,fields):
         if not isinstance(query,Query):
-            raise SyntaxError, "Not Supported"
+            raise SyntaxError("Not Supported")
         if query.first.type=='id' and query.op==self.EQ:
             id = query.second
             tablename = query.first.tablename
@@ -3598,9 +3594,9 @@ class CouchDBAdapter(NoSQLAdapter):
 
     def count(self,query,distinct=None):
         if distinct:
-            raise RuntimeError, "COUNT DISTINCT not supported"
+            raise RuntimeError("COUNT DISTINCT not supported")
         if not isinstance(query,Query):
-            raise SyntaxError, "Not Supported"
+            raise SyntaxError("Not Supported")
         tablename = self.get_table(query)
         rows = self.select(query,[self.db[tablename]._id],{})
         return len(rows)
@@ -3611,9 +3607,8 @@ def cleanup(text):
     """
 
     if re.compile('[^0-9a-zA-Z_]').findall(text):
-        raise SyntaxError, \
-            'only [0-9a-zA-Z_] allowed in table and field names, received %s' \
-            % text
+        raise SyntaxError('only [0-9a-zA-Z_] allowed in table and field names, received %s' \
+            % text)
     return text
 
 
@@ -3626,13 +3621,13 @@ class MongoDBAdapter(NoSQLAdapter):
                 'password': str,
                 'blob': str,
                 'upload': str,
-                'integer': long,
+                'integer': int,
                 'double': float,
                 'date': datetime.date,
                 'time': datetime.time,
                 'datetime': datetime.datetime,
-                'id': long,
-                'reference': long,
+                'id': int,
+                'reference': int,
                 'list:string': list,
                 'list:integer': list,
                 'list:reference': list,
@@ -3652,13 +3647,13 @@ class MongoDBAdapter(NoSQLAdapter):
 
         m = re.compile('^(?P<host>[^\:/]+)(\:(?P<port>[0-9]+))?/(?P<db>.+)$').match(self.uri[10:])
         if not m:
-            raise SyntaxError, "Invalid URI string in DAL: %s" % self.uri
+            raise SyntaxError("Invalid URI string in DAL: %s" % self.uri)
         host = m.group('host')
         if not host:
-            raise SyntaxError, 'mongodb: host name required'
+            raise SyntaxError('mongodb: host name required')
         dbname = m.group('db')
         if not dbname:
-            raise SyntaxError, 'mongodb: db name required'
+            raise SyntaxError('mongodb: db name required')
         port = m.group('port') or 27017
         driver_args.update(dict(host=host,port=port))
         def connect(dbname=dbname,driver_args=driver_args):
@@ -3673,16 +3668,16 @@ class MongoDBAdapter(NoSQLAdapter):
 
 
     def count(self,query):
-        raise RuntimeError, "Not implemented"
+        raise RuntimeError("Not implemented")
 
     def select(self,query,fields,attributes):
-        raise RuntimeError, "Not implemented"
+        raise RuntimeError("Not implemented")
 
     def delete(self,tablename, query):
-        raise RuntimeError, "Not implemented"
+        raise RuntimeError("Not implemented")
 
     def update(self,tablename,query,fields):
-        raise RuntimeError, "Not implemented"
+        raise RuntimeError("Not implemented")
 
 
 ########################################################################
@@ -3741,7 +3736,7 @@ def sqlhtml_validators(field):
             return id
         elif hasattr(r, '_format') and isinstance(r._format,str):
             return r._format % row
-        elif hasattr(r, '_format') and callable(r._format):
+        elif hasattr(r, '_format') and isinstance(r._format, collections.Callable):
             return r._format(row)
         else:
             return id
@@ -3872,9 +3867,9 @@ class Row(dict):
         return Row(dict(self))
 
     def as_dict(self,datetime_to_str=False):
-        SERIALIZABLE_TYPES = (str,unicode,int,long,float,bool,list)
+        SERIALIZABLE_TYPES = (str,str,int,int,float,bool,list)
         d = dict(self)
-        for k in copy.copy(d.keys()):
+        for k in copy.copy(list(d.keys())):
             v=d[k]
             if d[k] is None:
                 continue
@@ -3893,12 +3888,12 @@ class Row(dict):
 
 
 def Row_unpickler(data):
-    return Row(cPickle.loads(data))
+    return Row(pickle.loads(data))
 
 def Row_pickler(data):
-    return Row_unpickler, (cPickle.dumps(data.as_dict(datetime_to_str=False)),)
+    return Row_unpickler, (pickle.dumps(data.as_dict(datetime_to_str=False)),)
 
-copy_reg.pickle(Row, Row_pickler, Row_unpickler)
+copyreg.pickle(Row, Row_pickler, Row_unpickler)
 
 
 ################################################################################
@@ -3921,7 +3916,7 @@ def smart_query(fields,text):
             for ofield in field:
                 new_fields.append(ofield)
         else:
-            raise RuntimeError, "fields must be a list of fields"
+            raise RuntimeError("fields must be a list of fields")
     field_map = {}
     for field in fields:
         n = field.name.lower()
@@ -3984,13 +3979,13 @@ def smart_query(fields,text):
             elif item in field_map:
                 field = field_map[item]                
             else:
-                raise RuntimeError, "Invalid syntax"
+                raise RuntimeError("Invalid syntax")
         elif not field is None and op is None:
             op = item
         elif not op is None:
             if item.startswith('#'):
                 if not item[1:] in constants:
-                    raise RuntimeError, "Invalid syntax"
+                    raise RuntimeError("Invalid syntax")
                 value = constants[item[1:]]
             else:
                 value = item
@@ -4004,7 +3999,7 @@ def smart_query(fields,text):
             elif op == 'like': new_query = field.like(value)
             elif op == 'startswith': new_query = field.startswith(value)
             elif op == 'endswith': new_query = field.endswith(value)
-            else: raise RuntimeError, "Invalid operation"
+            else: raise RuntimeError("Invalid operation")
             if neg: new_query = ~new_query                
             if query is None:
                 query = new_query
@@ -4045,8 +4040,7 @@ class DAL(dict):
         instances = enumerate(instances)
         for (i, db) in instances:
             if not db._adapter.support_distributed_transaction():
-                raise SyntaxError, \
-                    'distributed transaction not suported by %s' % db._dbname
+                raise SyntaxError('distributed transaction not suported by %s' % db._dbname)
         for (i, db) in instances:
             db._adapter.distributed_transaction_begin(keys[i])
 
@@ -4059,15 +4053,14 @@ class DAL(dict):
         keys = ['%s.%i' % (thread_key, i) for (i,db) in instances]
         for (i, db) in instances:
             if not db._adapter.support_distributed_transaction():
-                raise SyntaxError, \
-                    'distributed transaction not suported by %s' % db._dbanme
+                raise SyntaxError('distributed transaction not suported by %s' % db._dbanme)
         try:
             for (i, db) in instances:
                 db._adapter.prepare(keys[i])
         except:
             for (i, db) in instances:
                 db._adapter.rollback_prepared(keys[i])
-            raise RuntimeError, 'failure to commit distributed transaction'
+            raise RuntimeError('failure to commit distributed transaction')
         else:
             for (i, db) in instances:
                 db._adapter.commit_prepared(keys[i])
@@ -4110,7 +4103,7 @@ class DAL(dict):
         if not decode_credentials:
             credential_decoder = lambda cred: cred
         else:
-            credential_decoder = lambda cred: urllib.unquote(cred)
+            credential_decoder = lambda cred: urllib.parse.unquote(cred)
         if folder:
             self.set_folder(folder)
         self._uri = uri
@@ -4135,7 +4128,7 @@ class DAL(dict):
                             uri = 'jdbc:'+uri
                         self._dbname = regex_dbname.match(uri).group()
                         if not self._dbname in ADAPTERS:
-                            raise SyntaxError, "Error in URI '%s' or database not supported" % self._dbname
+                            raise SyntaxError("Error in URI '%s' or database not supported" % self._dbname)
                         # notice that driver args or {} else driver_args
                         # defaults to {} global, not correct
                         args = (self,uri,pool_size,folder,
@@ -4146,24 +4139,25 @@ class DAL(dict):
                         break
                     except SyntaxError:
                         raise
-                    except Exception, error:
-                        sys.stderr.write('DEBUG_c: Exception %r' % ((Exception, error,),))
+                    except Exception as error_ex: #py3k!
+                        raise #py3k! testing 
+                        sys.stderr.write('DEBUG_c: Exception %r' % ((Exception, error_ex,),))
                 if connected:
                     break
                 else:
                     time.sleep(1)
             if not connected:
-                raise RuntimeError, "Failure to connect, tried %d times:\n%s" % (attempts, error)
+                raise RuntimeError("Failure to connect, tried %d times:\n%s" % (attempts, error))
         else:
             args = (self,'None',0,folder,db_codec)
             self._adapter = BaseAdapter(*args)
             migrate = fake_migrate = False
         adapter = self._adapter
-        self._uri_hash = hashlib.md5(adapter.uri).hexdigest()
+        self._uri_hash = hashlib.md5(adapter.uri.encode("utf8")).hexdigest() #py3k! 
         self.tables = SQLCallableList()
         self.check_reserved = check_reserved
         if self.check_reserved:
-            from reserved_sql_keywords import ADAPTERS as RSK
+            from .reserved_sql_keywords import ADAPTERS as RSK
             self.RSK = RSK
         self._migrate = migrate
         self._fake_migrate = fake_migrate
@@ -4177,10 +4171,10 @@ class DAL(dict):
         for filename in glob.glob(pattern):
             tfile = self._adapter.file_open(filename, 'r')
             try:
-                sql_fields = cPickle.load(tfile)
+                sql_fields = pickle.load(tfile)
                 name = filename[len(pattern)-7:-6]
                 mf = [(value['sortable'],Field(key,type=value['type'])) \
-                          for key, value in sql_fields.items()]
+                          for key, value in list(sql_fields.items())]
                 mf.sort(lambda a,b: cmp(a[0],b[0]))
                 self.define_table(name,*[item[1] for item in mf],
                                   **dict(migrate=migrate,fake_migrate=fake_migrate))
@@ -4199,10 +4193,10 @@ class DAL(dict):
         """
         for backend in self.check_reserved:
             if name.upper() in self.RSK[backend]:
-                raise SyntaxError, 'invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper())
+                raise SyntaxError('invalid table/column name "%s" is a "%s" reserved SQL keyword' % (name, backend.upper()))
 
     def __contains__(self, tablename):
-        if self.has_key(tablename):
+        if tablename in self.keys(): #py3k! avoid recursion
             return True
         else:
             return False
@@ -4359,14 +4353,14 @@ def index():
                         elif tokens[2]=='contains':
                             query = db[table][field].contains(args[i])
                         else:
-                            raise RuntimeError, "invalid pattern: %s" % pattern
+                            raise RuntimeError("invalid pattern: %s" % pattern)
                         if len(tokens)==4 and tokens[3]=='not':
                             query = ~query
                         elif len(tokens)>=4:
-                            raise RuntimeError, "invalid pattern: %s" % pattern
+                            raise RuntimeError("invalid pattern: %s" % pattern)
                         dbset=dbset(query)
                     else:
-                        raise RuntimeError, "missing relation in pattern: %s" % pattern
+                        raise RuntimeError("missing relation in pattern: %s" % pattern)
                 elif otable and re2.match(tag) and args[i]==tag[:tag.find('[')]:
                     # print 're2:'+tag
                     ref = tag[tag.find('[')+1:-1]
@@ -4445,8 +4439,8 @@ def index():
                     'sequence_name',
                     'polymodel',
                     'table_class']:
-                raise SyntaxError, 'invalid table "%s" attribute: %s' \
-                    % (tablename, key)
+                raise SyntaxError('invalid table "%s" attribute: %s' \
+                    % (tablename, key))
         migrate = self._migrate_enabled and args.get('migrate',
                                                      self._migrate)
         fake_migrate = self._fake_migrate_all or args.get('fake_migrate',
@@ -4458,15 +4452,15 @@ def index():
         primarykey=args.get('primarykey',None)
         polymodel=args.get('polymodel',None)
         if not isinstance(tablename,str):
-            raise SyntaxError, "missing table name"
+            raise SyntaxError("missing table name")
         tablename = cleanup(tablename)
         lowertablename = tablename.lower()
 
         if tablename.startswith('_') or hasattr(self,lowertablename) or \
                 regex_python_keywords.match(tablename):
-            raise SyntaxError, 'invalid table name: %s' % tablename
+            raise SyntaxError('invalid table name: %s' % tablename)
         elif lowertablename in self.tables:
-            raise SyntaxError, 'table already defined: %s' % tablename
+            raise SyntaxError('table already defined: %s' % tablename)
         elif self.check_reserved:
             self.check_reserved_keyword(tablename)
 
@@ -4502,7 +4496,10 @@ def index():
             yield self[tablename]
 
     def __getitem__(self, key):
-        return dict.__getitem__(self, str(key))
+        try:
+            return dict.__getitem__(self, str(key))
+        except KeyError:
+            raise AttributeError #py3k! hasattr compilance
 
     def __setitem__(self, key, value):
         dict.__setitem__(self, str(key), value)
@@ -4512,8 +4509,7 @@ def index():
 
     def __setattr__(self, key, value):
         if key[:1]!='_' and key in self:
-            raise SyntaxError, \
-                'Object %s exists and cannot be redefined' % key
+            raise SyntaxError('Object %s exists and cannot be redefined' % key)
         self[key] = value
 
     def __repr__(self):
@@ -4562,7 +4558,7 @@ def index():
             self._adapter.execute(query)
         if as_dict:
             if not hasattr(self._adapter.cursor,'description'):
-                raise RuntimeError, "database does not support executesql(...,as_dict=True)"
+                raise RuntimeError("database does not support executesql(...,as_dict=True)")
             # Non-DAL legacy db query, converts cursor results to dict.
             # sequence of 7-item sequences. each sequence tells about a column.
             # first item is always the field name according to Python Database API specs
@@ -4573,7 +4569,7 @@ def index():
             data = self._adapter.cursor.fetchall()
             # convert the list for each row into a dictionary so it's
             # easier to work with. row['field_name'] rather than row[0]
-            return [dict(zip(fields,row)) for row in data]
+            return [dict(list(zip(fields,row))) for row in data]
         # see if any results returned from database
         try:
             return self._adapter.cursor.fetchall()
@@ -4602,7 +4598,7 @@ def index():
             elif line == 'END':
                 return
             elif not line.startswith('TABLE ') or not line[6:] in self.tables:
-                raise SyntaxError, 'invalid file format'
+                raise SyntaxError('invalid file format')
             else:
                 tablename = line[6:]
                 self[tablename].import_from_csv_file(ifile, id_map, null,
@@ -4630,7 +4626,7 @@ class Reference(int):
         if not self._record:
             self._record = self._table[int(self)]
         if not self._record:
-            raise RuntimeError, "Using a recursive select but encountered a broken reference: %s %d"%(self._table, int(self))
+            raise RuntimeError("Using a recursive select but encountered a broken reference: %s %d"%(self._table, int(self)))
 
     def __getattr__(self, key):
         if key == 'id':
@@ -4669,7 +4665,7 @@ def Reference_pickler(data):
         marshal_dump = 'i%s' % struct.pack('<i', int(data))
     return (Reference_unpickler, (marshal_dump,))
 
-copy_reg.pickle(Reference, Reference_pickler, Reference_unpickler)
+copyreg.pickle(Reference, Reference_pickler, Reference_unpickler)
 
 
 class Table(dict):
@@ -4712,9 +4708,8 @@ class Table(dict):
         fieldnames,newfields=set(),[]
         if primarykey:
             if not isinstance(primarykey,list):
-                raise SyntaxError, \
-                    "primarykey must be a list of fields from table '%s'" \
-                    % tablename
+                raise SyntaxError("primarykey must be a list of fields from table '%s'" \
+                    % tablename)
             self._primarykey = primarykey
         elif not [f for f in fields if isinstance(f,Field) and f.type=='id']:
             field = Field('id', 'id')
@@ -4723,8 +4718,7 @@ class Table(dict):
             self._id = field
         for field in fields:
             if not isinstance(field, (Field, Table)):
-                raise SyntaxError, \
-                    'define_table argument is not a Field or Table: %s' % field
+                raise SyntaxError('define_table argument is not a Field or Table: %s' % field)
             elif isinstance(field, Field) and not field.name in fieldnames:
                 if hasattr(field, '_db'):
                     field = copy.copy(field)
@@ -4761,11 +4755,11 @@ class Table(dict):
             if db and db.check_reserved:
                 db.check_reserved_keyword(field.name)
             elif field.name in reserved:
-                raise SyntaxError, "field name %s not allowed" % field.name
+                raise SyntaxError("field name %s not allowed" % field.name)
 
             if field.name.lower() in lower_fieldnames:
-                raise SyntaxError, "duplicate field %s in table %s" \
-                    % (field.name, tablename)
+                raise SyntaxError("duplicate field %s in table %s" \
+                    % (field.name, tablename))
             else:
                 lower_fieldnames.add(field.name.lower())
 
@@ -4786,17 +4780,16 @@ class Table(dict):
         if hasattr(self,'_primarykey'):
             for k in self._primarykey:
                 if k not in self.fields:
-                    raise SyntaxError, \
-                        "primarykey must be a list of fields from table '%s " % tablename
+                    raise SyntaxError("primarykey must be a list of fields from table '%s " % tablename)
                 else:
                     self[k].notnull = True
 
     def update(self,*args,**kwargs):
-        raise RuntimeError, "Syntax Not Supported"
+        raise RuntimeError("Syntax Not Supported")
 
     def _validate(self,**vars):
         errors = Row()
-        for key,value in vars.items():
+        for key,value in list(vars.items()):
             value,error = self[key].validate(value)
             if error:
                 errors[key] = error
@@ -4810,7 +4803,7 @@ class Table(dict):
             if isinstance(field.type,str) and field.type[:10] == 'reference ':
                 ref = field.type[10:].strip()
                 if not ref.split():
-                    raise SyntaxError, 'Table: reference to nothing: %s' %ref
+                    raise SyntaxError('Table: reference to nothing: %s' %ref)
                 refs = ref.split('.')
                 rtablename = refs[0]
                 if not rtablename in self._db:
@@ -4820,33 +4813,30 @@ class Table(dict):
                 if len(refs)==2:
                     rfieldname = refs[1]
                     if not hasattr(rtable,'_primarykey'):
-                        raise SyntaxError,\
-                            'keyed tables can only reference other keyed tables (for now)'
+                        raise SyntaxError('keyed tables can only reference other keyed tables (for now)')
                     if rfieldname not in rtable.fields:
-                        raise SyntaxError,\
-                            "invalid field '%s' for referenced table '%s' in table '%s'" \
-                            % (rfieldname, rtablename, self._tablename)
+                        raise SyntaxError("invalid field '%s' for referenced table '%s' in table '%s'" \
+                            % (rfieldname, rtablename, self._tablename))
                 rtable._referenced_by.append((self._tablename, field.name))
         for referee in pr.get(self._tablename,[]):
             self._referenced_by.append((referee._tablename,referee.name))
 
     def _filter_fields(self, record, id=False):
-        return dict([(k, v) for (k, v) in record.items() if k
+        return dict([(k, v) for (k, v) in list(record.items()) if k
                      in self.fields and (self[k].type!='id' or id)])
 
     def _build_query(self,key):
         """ for keyed table only """
         query = None
-        for k,v in key.iteritems():
+        for k,v in key.items():
             if k in self._primarykey:
                 if query:
                     query = query & (self[k] == v)
                 else:
                     query = (self[k] == v)
             else:
-                raise SyntaxError, \
-                'Field %s is not part of the primary key of %s' % \
-                (k,self._tablename)
+                raise SyntaxError('Field %s is not part of the primary key of %s' % \
+                (k,self._tablename))
         return query
 
     def __getitem__(self, key):
@@ -4862,7 +4852,12 @@ class Table(dict):
         elif str(key).isdigit():
             return self._db(self._id == key).select(limitby=(0,1)).first()
         elif key:
-            return dict.__getitem__(self, str(key))
+            try:
+                return dict.__getitem__(self, str(key))
+            except KeyError: 
+                #import pdb; pdb.set_trace()
+                raise AttributeError #py3k! hasattr compilance
+                
 
     def __call__(self, key=DEFAULT, **kwargs):
         if key!=DEFAULT:
@@ -4873,11 +4868,11 @@ class Table(dict):
             else:
                 record = self._db(self._id == key).select(limitby=(0,1)).first()
             if record:
-                for k,v in kwargs.items():
+                for k,v in list(kwargs.items()):
                     if record[k]!=v: return None
             return record
         elif kwargs:
-            query = reduce(lambda a,b:a&b,[self[k]==v for k,v in kwargs.items()])
+            query = reduce(lambda a,b:a&b,[self[k]==v for k,v in list(kwargs.items())])
             return self._db(query).select(limitby=(0,1)).first()
         else:
             return None
@@ -4894,35 +4889,33 @@ class Table(dict):
                     query = self._build_query(key)
                     self._db(query).update(**self._filter_fields(value))
             else:
-                raise SyntaxError,\
-                    'key must have all fields from primary key: %s'%\
-                    (self._primarykey)
+                raise SyntaxError('key must have all fields from primary key: %s'%\
+                    (self._primarykey))
         elif str(key).isdigit():
             if key == 0:
                 self.insert(**self._filter_fields(value))
             elif not self._db(self._id == key)\
                     .update(**self._filter_fields(value)):
-                raise SyntaxError, 'No such record: %s' % key
+                raise SyntaxError('No such record: %s' % key)
         else:
             if isinstance(key, dict):
-                raise SyntaxError,\
-                    'value must be a dictionary: %s' % value
+                raise SyntaxError('value must be a dictionary: %s' % value)
             dict.__setitem__(self, str(key), value)
 
     def __delitem__(self, key):
         if isinstance(key, dict):
             query = self._build_query(key)
             if not self._db(query).delete():
-                raise SyntaxError, 'No such record: %s' % key
+                raise SyntaxError('No such record: %s' % key)
         elif not str(key).isdigit() or not self._db(self._id == key).delete():
-            raise SyntaxError, 'No such record: %s' % key
+            raise SyntaxError('No such record: %s' % key)
 
     def __getattr__(self, key):
         return self[key]
 
     def __setattr__(self, key, value):
         if key in self:
-            raise SyntaxError, 'Object exists and cannot be redefined: %s' % key
+            raise SyntaxError('Object exists and cannot be redefined: %s' % key)
         self[key] = value
 
     def __iter__(self):
@@ -4949,7 +4942,7 @@ class Table(dict):
         for name in fields:
             if not name in self.fields:
                 if name != 'id':
-                    raise SyntaxError, 'Field %s does not belong to the table' % name
+                    raise SyntaxError('Field %s does not belong to the table' % name)
             else:
                 new_fields.append((self[name],fields[name]))
                 new_fields_names.append(name)
@@ -4966,7 +4959,7 @@ class Table(dict):
                 except KeyError:
                     pass
             if not update and ofield.required and not ofield.name in new_fields_names:
-                raise SyntaxError,'Table: missing required field: %s' % ofield.name
+                raise SyntaxError('Table: missing required field: %s' % ofield.name)
         return new_fields
 
     def _insert(self, **fields):
@@ -5184,7 +5177,7 @@ class Expression(object):
 
         if stop < 0:
             length = '(%s - %d - %s)' % (self.len(), abs(stop) - 1, pos0)
-        elif stop == sys.maxint:
+        elif stop == sys.maxsize:
             length = self.len()
         else:
             length = '(%s - %s)' % (stop + 1, pos0)
@@ -5214,7 +5207,7 @@ class Expression(object):
         elif self.type in ['date','time','datetime','double']:
             result_type = 'double'
         else:
-            raise SyntaxError, "subtraction operation not supported for type"
+            raise SyntaxError("subtraction operation not supported for type")
         return Expression(self.db,self.db._adapter.SUB,self,other,
                           result_type)
     def __mul__(self, other):
@@ -5252,12 +5245,12 @@ class Expression(object):
 
     def startswith(self, value):
         if not self.type in ('string', 'text'):
-            raise SyntaxError, "startswith used with incompatible field type"
+            raise SyntaxError("startswith used with incompatible field type")
         return Query(self.db, self.db._adapter.STARTSWITH, self, value)
 
     def endswith(self, value):
         if not self.type in ('string', 'text'):
-            raise SyntaxError, "endswith used with incompatible field type"
+            raise SyntaxError("endswith used with incompatible field type")
         return Query(self.db, self.db._adapter.ENDSWITH, self, value)
 
     def contains(self, value, all=False):
@@ -5265,7 +5258,7 @@ class Expression(object):
             subqueries = [self.contains(str(v).strip()) for v in value if str(v).strip()]
             return reduce(all and AND or OR, subqueries)
         if not self.type in ('string', 'text') and not self.type.startswith('list:'):
-            raise SyntaxError, "contains used with incompatible field type"
+            raise SyntaxError("contains used with incompatible field type")
         return Query(self.db, self.db._adapter.CONTAINS, self, value)
 
     def with_alias(self,alias):
@@ -5410,7 +5403,7 @@ class Field(Expression):
         self.first = None
         self.second = None
         if not isinstance(fieldname,str):
-            raise SyntaxError, "missing field name"
+            raise SyntaxError("missing field name")
         if fieldname.startswith(':'):
             fieldname,readable,writable=fieldname[1:],False,False
         elif fieldname.startswith('.'):
@@ -5420,7 +5413,7 @@ class Field(Expression):
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_' or \
                 regex_python_keywords.match(fieldname):
-            raise SyntaxError, 'Field: invalid field name: %s' % fieldname
+            raise SyntaxError('Field: invalid field name: %s' % fieldname)
         if isinstance(type, Table):
             type = 'reference ' + type._tablename
         self.type = type  # 'string', 'integer'
@@ -5490,7 +5483,7 @@ class Field(Expression):
             elif self.db._adapter.folder:
                 path = os.path.join(self.db._adapter.folder, '..', 'uploads')
             else:
-                raise RuntimeError, "you must specify a Field(...,uploadfolder=...)"
+                raise RuntimeError("you must specify a Field(...,uploadfolder=...)")
             if self.uploadseparate:
                 path = os.path.join(path,"%s.%s" % (self._tablename, self.name),uuid_key[:2])
             if not os.path.exists(path):
@@ -5506,7 +5499,7 @@ class Field(Expression):
     def retrieve(self, name, path=None):
         if self.custom_retrieve:
             return self.custom_retrieve(name, path)
-        import http
+        from . import http
         if self.authorize or isinstance(self.uploadfield, str):
             row = self.db(self == name).select().first()
             if not row:
@@ -5516,18 +5509,18 @@ class Field(Expression):
         try:
             m = regex_content.match(name)
             if not m or not self.isattachment:
-                raise TypeError, 'Can\'t retrieve %s' % name
+                raise TypeError('Can\'t retrieve %s' % name)
             filename = base64.b16decode(m.group('name'), True)
             filename = regex_cleanup_fn.sub('_', filename)
         except (TypeError, AttributeError):
             filename = name
         if isinstance(self.uploadfield, str):  # ## if file is in DB
-            return (filename, cStringIO.StringIO(row[self.uploadfield] or ''))
+            return (filename, io.StringIO(row[self.uploadfield] or ''))
         elif isinstance(self.uploadfield,Field):
             blob_uploadfield_name = self.uploadfield.uploadfield
             query = self.uploadfield == name
             data = self.uploadfield.table(query)[blob_uploadfield_name]
-            return (filename, cStringIO.StringIO(data))
+            return (filename, io.StringIO(data))
         else:
             # ## if file is on filesystem
             if path:
@@ -5573,7 +5566,7 @@ class Field(Expression):
     def count(self):
         return Expression(self.db, self.db._adapter.AGGREGATE, self, 'COUNT', 'integer')
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
 
     def __str__(self):
@@ -5705,7 +5698,7 @@ class Set(object):
         tablename = self.db._adapter.get_table(self.query)
         fields = self.db[tablename]._listify(update_fields,update=True)
         if not fields:
-            raise SyntaxError, "No fields to update"
+            raise SyntaxError("No fields to update")
         self.delete_uploaded_files(update_fields)
         return self.db._adapter.update(tablename,self.query,fields)
 
@@ -5715,7 +5708,7 @@ class Set(object):
         response.errors = self.db[tablename]._validate(**update_fields)
         fields = self.db[tablename]._listify(update_fields,update=True)
         if not fields:
-            raise SyntaxError, "No fields to update"
+            raise SyntaxError("No fields to update")
         self.delete_uploaded_files(update_fields)
         if not response.errors:
             response.updated = self.db._adapter.update(tablename,self.query,fields)
@@ -5727,7 +5720,7 @@ class Set(object):
         table = self.db[self.db._adapter.tables(self.query)[0]]
         # ## mind uploadfield==True means file is not in DB
         if upload_fields:
-            fields = upload_fields.keys()
+            fields = list(upload_fields.keys())
         else:
             fields = table.fields
         fields = [f for f in fields if table[f].type == 'upload'
@@ -5761,9 +5754,9 @@ class Set(object):
 def update_record(pack, a=None):
     (colset, table, id) = pack
     b = a or dict(colset)
-    c = dict([(k,v) for (k,v) in b.items() if k in table.fields and table[k].type!='id'])
+    c = dict([(k,v) for (k,v) in list(b.items()) if k in table.fields and table[k].type!='id'])
     table._db(table._id==id).update(**c)
-    for (k, v) in c.items():
+    for (k, v) in list(c.items()):
         colset[k] = v
 
 class VirtualCommand(object):
@@ -5822,7 +5815,7 @@ class Rows(object):
         if not keyed_virtualfields:
             return self
         for row in self.records:
-            for (tablename,virtualfields) in keyed_virtualfields.items():
+            for (tablename,virtualfields) in list(keyed_virtualfields.items()):
                 attributes = dir(virtualfields)
                 if not tablename in row:
                     box = row[tablename] = Row()
@@ -5842,21 +5835,21 @@ class Rows(object):
         return self
 
     def __and__(self,other):
-        if self.colnames!=other.colnames: raise Exception, 'Cannot & incompatible Rows objects'
+        if self.colnames!=other.colnames: raise Exception('Cannot & incompatible Rows objects')
         records = self.records+other.records
         return Rows(self.db,records,self.colnames)
 
     def __or__(self,other):
-        if self.colnames!=other.colnames: raise Exception, 'Cannot | incompatible Rows objects'
+        if self.colnames!=other.colnames: raise Exception('Cannot | incompatible Rows objects')
         records = self.records
         records += [record for record in other.records \
                         if not record in records]
         return Rows(self.db,records,self.colnames)
 
-    def __nonzero__(self):
+    def __bool__(self):
         if len(self.records):
-            return 1
-        return 0
+            return True #py3k!
+        return False #py3k!
 
     def __len__(self):
         return len(self.records)
@@ -5866,9 +5859,9 @@ class Rows(object):
 
     def __getitem__(self, i):
         row = self.records[i]
-        keys = row.keys()
+        keys = list(row.keys())
         if self.compact and len(keys) == 1 and keys[0] != '_extra':
-            return row[row.keys()[0]]
+            return row[list(row.keys())[0]]
         return row
 
     def __iter__(self):
@@ -5876,7 +5869,7 @@ class Rows(object):
         iterator over records
         """
 
-        for i in xrange(len(self)):
+        for i in range(len(self)):
             yield self[i]
 
     def __str__(self):
@@ -5884,7 +5877,7 @@ class Rows(object):
         serializes the table into a csv file
         """
 
-        s = cStringIO.StringIO()
+        s = io.StringIO()
         self.export_to_csv_file(s)
         return s.getvalue()
 
@@ -6008,7 +6001,7 @@ class Rows(object):
             """
             if value is None:
                 return null
-            elif isinstance(value, unicode):
+            elif isinstance(value, str):
                 return value.encode('utf8')
             elif isinstance(value,Reference):
                 return int(value)
@@ -6042,7 +6035,7 @@ class Rows(object):
         serializes the table using sqlhtml.SQLTABLE (if present)
         """
 
-        import sqlhtml
+        from . import sqlhtml
         return sqlhtml.SQLTABLE(self).xml()
 
     def json(self, mode='object', default=None):
@@ -6051,7 +6044,7 @@ class Rows(object):
         """
         mode = mode.lower()
         if not mode in ['object', 'array']:
-            raise SyntaxError, 'Invalid JSON serialization mode: %s' % mode
+            raise SyntaxError('Invalid JSON serialization mode: %s' % mode)
 
         def inner_loop(record, col):
             (t, f) = col.split('.')
@@ -6083,14 +6076,14 @@ class Rows(object):
             return simplejson.dumps(items)
 
 def Rows_unpickler(data):
-    return cPickle.loads(data)
+    return pickle.loads(data)
 
 def Rows_pickler(data):
     return Rows_unpickler, \
-        (cPickle.dumps(data.as_list(storage_to_dict=True,
+        (pickle.dumps(data.as_list(storage_to_dict=True,
                                     datetime_to_str=False)),)
 
-copy_reg.pickle(Rows, Rows_pickler, Rows_unpickler)
+copyreg.pickle(Rows, Rows_pickler, Rows_unpickler)
 
 
 ################################################################################

@@ -15,9 +15,9 @@ Dependencies:
 import oauth2 as oauth
 import cgi
 
-from urllib2 import urlopen
-import urllib2
-from urllib import urlencode
+from urllib.request import urlopen
+import urllib.request, urllib.error, urllib.parse
+from urllib.parse import urlencode
 
 class OAuthAccount(object):
     """
@@ -142,7 +142,7 @@ class OAuthAccount(object):
         is, this function must be implemented for the specific
         provider.
         '''
-        raise NotImplementedError, "Must override get_user()"
+        raise NotImplementedError("Must override get_user()")
 
     def __oauth_login(self, next):
         '''This method redirects the user to the authenticating form

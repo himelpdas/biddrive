@@ -18,22 +18,22 @@ except ImportError:
 import struct
 import sys
 import os
-import ConfigParser
+import configparser
 
 try:
-    import cStringIO as StringIO
+    import io as StringIO
 except ImportError:
-    import StringIO
+    import io
 
-from charset import MBLENGTH, charset_by_name, charset_by_id
-from cursors import Cursor
-from constants import FIELD_TYPE, FLAG
-from constants import SERVER_STATUS
-from constants.CLIENT import *
-from constants.COMMAND import *
-from util import join_bytes, byte2int, int2byte
-from converters import escape_item, encoders, decoders
-from err import raise_mysql_exception, Warning, Error, \
+from .charset import MBLENGTH, charset_by_name, charset_by_id
+from .cursors import Cursor
+from .constants import FIELD_TYPE, FLAG
+from .constants import SERVER_STATUS
+from .constants.CLIENT import *
+from .constants.COMMAND import *
+from .util import join_bytes, byte2int, int2byte
+from .converters import escape_item, encoders, decoders
+from .err import raise_mysql_exception, Warning, Error, \
      InterfaceError, DataError, DatabaseError, OperationalError, \
      IntegrityError, InternalError, NotSupportedError, ProgrammingError
 
@@ -59,25 +59,25 @@ def dump_packet(data):
         if byte2int(data) >= 65 and byte2int(data) <= 122: #data.isalnum():
             return data
         return '.'
-    print "packet length %d" % len(data)
-    print "method call[1]: %s" % sys._getframe(1).f_code.co_name
-    print "method call[2]: %s" % sys._getframe(2).f_code.co_name
-    print "method call[3]: %s" % sys._getframe(3).f_code.co_name
-    print "method call[4]: %s" % sys._getframe(4).f_code.co_name
-    print "method call[5]: %s" % sys._getframe(5).f_code.co_name
-    print "-" * 88
-    dump_data = [data[i:i+16] for i in xrange(len(data)) if i%16 == 0]
+    print("packet length %d" % len(data))
+    print("method call[1]: %s" % sys._getframe(1).f_code.co_name)
+    print("method call[2]: %s" % sys._getframe(2).f_code.co_name)
+    print("method call[3]: %s" % sys._getframe(3).f_code.co_name)
+    print("method call[4]: %s" % sys._getframe(4).f_code.co_name)
+    print("method call[5]: %s" % sys._getframe(5).f_code.co_name)
+    print("-" * 88)
+    dump_data = [data[i:i+16] for i in range(len(data)) if i%16 == 0]
     for d in dump_data:
-        print ' '.join(map(lambda x:"%02X" % byte2int(x), d)) + \
+        print(' '.join(["%02X" % byte2int(x) for x in d]) + \
                 '   ' * (16 - len(d)) + ' ' * 2 + \
-                ' '.join(map(lambda x:"%s" % is_ascii(x), d))
-    print "-" * 88
-    print ""
+                ' '.join(["%s" % is_ascii(x) for x in d]))
+    print("-" * 88)
+    print("")
 
 def _scramble(password, message):
     if password == None or len(password) == 0:
         return int2byte(0)
-    if DEBUG: print 'password=' + password
+    if DEBUG: print('password=' + password)
     stage1 = sha_new(password).digest()
     stage2 = sha_new(stage1).digest()
     s = sha_new()
@@ -89,7 +89,7 @@ def _scramble(password, message):
 def _my_crypt(message1, message2):
     length = len(message1)
     result = struct.pack('B', length)
-    for i in xrange(length):
+    for i in range(length):
         x = (struct.unpack('B', message1[i:i+1])[0] ^ \
              struct.unpack('B', message2[i:i+1])[0])
         result += struct.pack('B', x)
@@ -100,13 +100,13 @@ SCRAMBLE_LENGTH_323 = 8
 
 class RandStruct_323(object):
     def __init__(self, seed1, seed2):
-        self.max_value = 0x3FFFFFFFL
+        self.max_value = 0x3FFFFFFF
         self.seed1 = seed1 % self.max_value
         self.seed2 = seed2 % self.max_value
 
     def my_rnd(self):
-        self.seed1 = (self.seed1 * 3L + self.seed2) % self.max_value
-        self.seed2 = (self.seed1 + self.seed2 + 33L) % self.max_value
+        self.seed1 = (self.seed1 * 3 + self.seed2) % self.max_value
+        self.seed2 = (self.seed1 + self.seed2 + 33) % self.max_value
         return float(self.seed1) / float(self.max_value)
 
 def _scramble_323(password, message):
@@ -117,28 +117,28 @@ def _scramble_323(password, message):
 
     rand_st = RandStruct_323(hash_pass_n[0] ^ hash_message_n[0],
                              hash_pass_n[1] ^ hash_message_n[1])
-    outbuf = StringIO.StringIO()
-    for _ in xrange(min(SCRAMBLE_LENGTH_323, len(message))):
+    outbuf = io.StringIO()
+    for _ in range(min(SCRAMBLE_LENGTH_323, len(message))):
         outbuf.write(int2byte(int(rand_st.my_rnd() * 31) + 64))
     extra = int2byte(int(rand_st.my_rnd() * 31))
     out = outbuf.getvalue()
-    outbuf = StringIO.StringIO()
+    outbuf = io.StringIO()
     for c in out:
         outbuf.write(int2byte(byte2int(c) ^ byte2int(extra)))
     return outbuf.getvalue()
 
 def _hash_password_323(password):
-    nr = 1345345333L
-    add = 7L
-    nr2 = 0x12345671L
+    nr = 1345345333
+    add = 7
+    nr2 = 0x12345671
 
     for c in [byte2int(x) for x in password if x not in (' ', '\t')]:
         nr^= (((nr & 63)+add)*c)+ (nr << 8) & 0xFFFFFFFF
         nr2= (nr2 + ((nr2 << 8) ^ nr)) & 0xFFFFFFFF
         add= (add + c) & 0xFFFFFFFF
 
-    r1 = nr & ((1L << 31) - 1L) # kill sign bits
-    r2 = nr2 & ((1L << 31) - 1L)
+    r1 = nr & ((1 << 31) - 1) # kill sign bits
+    r2 = nr2 & ((1 << 31) - 1)
 
     # pack
     return struct.pack(">LL", r1, r2)
@@ -181,7 +181,7 @@ def defaulterrorhandler(connection, cursor, errorclass, errorvalue):
     if not issubclass(errorclass, Error):
         raise Error(errorclass, errorvalue)
     else:
-        raise errorclass, errorvalue
+        raise errorclass(errorvalue)
 
 
 class MysqlPacket(object):
@@ -262,7 +262,7 @@ class MysqlPacket(object):
                'Expected=%s.  Actual=%s.  Position: %s.  Data Length: %s'
                % (size, len(result), self.__position, len(self.__data)))
       if DEBUG:
-        print error
+        print(error)
         self.dump()
       raise AssertionError(error)
     return result
@@ -327,7 +327,7 @@ class MysqlPacket(object):
       self.rewind()
       self.advance(1)  # field_count == error (we already know that)
       errno = unpack_uint16(self.read(2))
-      if DEBUG: print "errno = %d" % errno
+      if DEBUG: print("errno = %d" % errno)
       raise_mysql_exception(self.__data)
 
   def dump(self):
@@ -441,20 +441,20 @@ class Connection(object):
             use_unicode = True
 
         if compress or named_pipe:
-            raise NotImplementedError, "compress and named_pipe arguments are not supported"
+            raise NotImplementedError("compress and named_pipe arguments are not supported")
 
-        if ssl and (ssl.has_key('capath') or ssl.has_key('cipher')):
-            raise NotImplementedError, 'ssl options capath and cipher are not supported'
+        if ssl and ('capath' in ssl or 'cipher' in ssl):
+            raise NotImplementedError('ssl options capath and cipher are not supported')
 
         self.ssl = False
         if ssl:
             if not SSL_ENABLED:
-                raise NotImplementedError, "ssl module not found"
+                raise NotImplementedError("ssl module not found")
             self.ssl = True
             client_flag |= SSL
             for k in ('key', 'cert', 'ca'):
                 v = None
-                if ssl.has_key(k):
+                if k in ssl:
                     v = ssl[k]
                 setattr(self, k, v)
 
@@ -468,7 +468,7 @@ class Connection(object):
             if not read_default_group:
                 read_default_group = "client"
 
-            cfg = ConfigParser.RawConfigParser()
+            cfg = configparser.RawConfigParser()
             cfg.read(os.path.expanduser(read_default_file))
 
             def _config(key, default):
@@ -653,7 +653,7 @@ class Connection(object):
                 sock.connect(self.unix_socket)
                 sock.settimeout(t)
                 self.host_info = "Localhost via UNIX socket"
-                if DEBUG: print 'connected using unix_socket'
+                if DEBUG: print('connected using unix_socket')
             else:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 t = sock.gettimeout()
@@ -661,11 +661,11 @@ class Connection(object):
                 sock.connect((self.host, self.port))
                 sock.settimeout(t)
                 self.host_info = "socket %s:%d" % (self.host, self.port)
-                if DEBUG: print 'connected using socket'
+                if DEBUG: print('connected using socket')
             self.socket = sock
             self._get_server_information()
             self._request_authentication()
-        except socket.error, e:
+        except socket.error as e:
             raise OperationalError(2003, "Can't connect to MySQL server on %r (%d)" % (self.host, e.args[0]))
 
     def read_packet(self, packet_type=MysqlPacket):
@@ -692,7 +692,7 @@ class Connection(object):
         if not self.socket:
             self.errorhandler(None, InterfaceError, "(0, '')")
 
-        if isinstance(sql, unicode):
+        if isinstance(sql, str):
             sql = sql.encode(self.charset)
 
         buf = int2byte(command) + sql
@@ -726,7 +726,7 @@ class Connection(object):
             self.client_flag |= MULTI_RESULTS
 
         if self.user is None:
-            raise ValueError, "Did not specify a username"
+            raise ValueError("Did not specify a username")
 
         charset_id = charset_by_name(self.charset).id
         self.user = self.user.encode(self.charset)
@@ -904,7 +904,7 @@ class MySQLResult(object):
             if field.type_code in self.connection.decoders:
                 converter = self.connection.decoders[field.type_code]
 
-                if DEBUG: print "DEBUG: field=%s, converter=%s" % (field, converter)
+                if DEBUG: print("DEBUG: field=%s, converter=%s" % (field, converter))
                 data = packet.read_length_coded_string()
                 converted = None
                 if data != None:
@@ -922,7 +922,7 @@ class MySQLResult(object):
         """Read a column descriptor packet for each column in the result."""
         self.fields = []
         description = []
-        for i in xrange(self.field_count):
+        for i in range(self.field_count):
             field = self.connection.read_packet(FieldDescriptorPacket)
             self.fields.append(field)
             description.append(field.description())

@@ -7,16 +7,16 @@ Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
 License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 
-import storage
+from . import storage
 import os
 import re
 import tarfile
 import glob
 import time
 import datetime
-from http import HTTP
+from .http import HTTP
 from gzip import open as gzopen
-from settings import global_settings
+from .settings import global_settings
 
 
 __all__ = [
@@ -172,7 +172,7 @@ def _extractall(filename, path='.', members=None):
 
                         try:
                             os.makedirs(os.path.join(path,
-                                    tarinfo.name), 0777)
+                                    tarinfo.name), 0o777)
                         except EnvironmentError:
                             pass
                         directories.append(tarinfo)
@@ -192,7 +192,7 @@ def _extractall(filename, path='.', members=None):
                         self.chown(tarinfo, path)
                         self.utime(tarinfo, path)
                         self.chmod(tarinfo, path)
-                    except ExtractError, e:
+                    except ExtractError as e:
                         if self.errorlevel > 1:
                             raise
                         else:
@@ -272,7 +272,7 @@ def w2p_pack_plugin(filename, path, plugin_name):
     filename = abspath(filename)
     path = abspath(path)
     if not filename.endswith('web2py.plugin.%s.w2p' % plugin_name):
-        raise Exception, "Not a web2py plugin name"
+        raise Exception("Not a web2py plugin name")
     plugin_tarball = tarfile.open(filename, 'w:gz')
     try:
         app_dir = path
@@ -290,7 +290,7 @@ def w2p_unpack_plugin(filename, path, delete_tar=True):
     filename = abspath(filename)
     path = abspath(path)
     if not os.path.basename(filename).startswith('web2py.plugin.'):
-        raise Exception, "Not a web2py plugin"
+        raise Exception("Not a web2py plugin")
     w2p_unpack(filename,path,delete_tar)
 
 

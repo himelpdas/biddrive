@@ -447,11 +447,11 @@ if __name__ == '__main__':
     import sys
     import doctest
     if sys.argv[1:2]==['-h']:
-        print '<html><body>'+markmin2html(__doc__)+'</body></html>'
+        print('<html><body>'+markmin2html(__doc__)+'</body></html>')
     elif len(sys.argv)>1:
         fargv = open(sys.argv[1],'r')
         try:
-            print '<html><body>'+markmin2html(fargv.read())+'</body></html>'
+            print('<html><body>'+markmin2html(fargv.read())+'</body></html>')
         finally:
             fargv.close()
     else:

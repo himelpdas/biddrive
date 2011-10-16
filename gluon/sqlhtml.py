@@ -14,34 +14,36 @@ Holds:
 
 """
 
-from http import HTTP
-from html import XML, SPAN, TAG, A, DIV, CAT, UL, LI, TEXTAREA, BR, IMG, SCRIPT
-from html import FORM, INPUT, LABEL, OPTION, SELECT
-from html import TABLE, THEAD, TBODY, TR, TD, TH
-from html import URL
-from dal import DAL, Table, Row, CALLABLETYPES, smart_query
-from storage import Storage
-from utils import md5_hash
-from validators import IS_EMPTY_OR
+from .http import HTTP
+from .html import XML, SPAN, TAG, A, DIV, CAT, UL, LI, TEXTAREA, BR, IMG, SCRIPT
+from .html import FORM, INPUT, LABEL, OPTION, SELECT
+from .html import TABLE, THEAD, TBODY, TR, TD, TH
+from .html import URL
+from .dal import DAL, Table, Row, CALLABLETYPES, smart_query
+from .storage import Storage
+from .utils import md5_hash
+from .validators import IS_EMPTY_OR
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import re
-import cStringIO
+import io
+import collections
+from functools import reduce
 
 table_field = re.compile('[\w_]+\.[\w_]+')
 widget_class = re.compile('^\w*')
 
 def represent(field,value,record):
     f = field.represent
-    if not callable(f):
+    if not isinstance(f, collections.Callable):
         return str(value)
-    n = f.func_code.co_argcount-len(f.func_defaults or [])
+    n = f.__code__.co_argcount-len(f.__defaults__ or [])
     if n==1:
         return f(value)
     elif n==2:
         return f(value,record)
     else:
-        raise RuntimeError, "field representation must take 1 or 2 args"
+        raise RuntimeError("field representation must take 1 or 2 args")
 
 def safe_int(x):
     try:
@@ -216,8 +218,8 @@ class OptionsWidget(FormWidget):
             if hasattr(requires[0], 'options'):
                 options = requires[0].options()
             else:
-                raise SyntaxError, 'widget cannot determine options of %s' \
-                    % field
+                raise SyntaxError('widget cannot determine options of %s' \
+                    % field)
         opts = [OPTION(v, _value=k) for (k, v) in options]
 
         return SELECT(*opts, **attr)
@@ -303,8 +305,8 @@ class RadioWidget(OptionsWidget):
             if hasattr(requires[0], 'options'):
                 options = requires[0].options()
             else:
-                raise SyntaxError, 'widget cannot determine options of %s' \
-                    % field
+                raise SyntaxError('widget cannot determine options of %s' \
+                    % field)
         options = [(k, v) for k, v in options if str(v)]
         opts = []
         cols = attributes.get('cols',1)
@@ -367,8 +369,8 @@ class CheckboxesWidget(OptionsWidget):
             if hasattr(requires[0], 'options'):
                 options = requires[0].options()
             else:
-                raise SyntaxError, 'widget cannot determine options of %s' \
-                    % field
+                raise SyntaxError('widget cannot determine options of %s' \
+                    % field)
 
         options = [(k, v) for k, v in options if k != '']
         opts = []
@@ -460,7 +462,7 @@ class UploadWidget(FormWidget):
         inp = INPUT(**attr)
 
         if download_url and value:
-            if callable(download_url):
+            if isinstance(download_url, collections.Callable):
                 url = download_url(value)
             else:
                 url = download_url + '/' + value
@@ -503,7 +505,7 @@ class UploadWidget(FormWidget):
         inp = UploadWidget.GENERIC_DESCRIPTION
 
         if download_url and value:
-            if callable(download_url):
+            if isinstance(download_url, collections.Callable):
                 url = download_url(value)
             else:
                 url = download_url + '/' + value
@@ -744,7 +746,7 @@ class SQLFORM(FORM):
 
         # try to retrieve the indicated record using its id
         # otherwise ignore it
-        if record and isinstance(record, (int, long, str, unicode)):
+        if record and isinstance(record, (int, str)):
             if not str(record).isdigit():
                 raise HTTP(404, "Object not found")
             record = table._db(table._id == record).select().first()
@@ -891,9 +893,9 @@ class SQLFORM(FORM):
             for (rtable, rfield) in table._referenced_by:
                 if keyed:
                     rfld = table._db[rtable][rfield]
-                    query = urllib.quote('%s.%s==%s' % (db,rfld,record[rfld.type[10:].split('.')[1]]))
+                    query = urllib.parse.quote('%s.%s==%s' % (db,rfld,record[rfld.type[10:].split('.')[1]]))
                 else:
-                    query = urllib.quote('%s.%s==%s' % (db,table._db[rtable][rfield],record.id))
+                    query = urllib.parse.quote('%s.%s==%s' % (db,table._db[rtable][rfield],record.id))
                 lname = olname = '%s.%s' % (rtable, rfield)
                 if ofields and not olname in ofields:
                     continue
@@ -985,7 +987,7 @@ class SQLFORM(FORM):
                 for newrow in newrows:
                     table.append(newrow)
         else:
-            raise RuntimeError, 'formstyle not supported'
+            raise RuntimeError('formstyle not supported')
         return table
 
 
@@ -1082,7 +1084,7 @@ class SQLFORM(FORM):
             # - user not trying to upload a new file
             # - there is existing file and user is not trying to delete it
             # this is because removing the file may not pass validation
-            for key in self.errors.keys():
+            for key in list(self.errors.keys()):
                 if key in self.table \
                         and self.table[key].type == 'upload' \
                         and request_vars.get(key, None) in (None, '') \
@@ -1129,8 +1131,8 @@ class SQLFORM(FORM):
             return ret
 
         if record_id and str(record_id) != str(self.record_id):
-            raise SyntaxError, 'user is tampering with form\'s record_id: ' \
-                '%s != %s' % (record_id, self.record_id)
+            raise SyntaxError('user is tampering with form\'s record_id: ' \
+                '%s != %s' % (record_id, self.record_id))
 
         if record_id and dbio and not keyed:
             self.vars.id = self.record.id
@@ -1185,10 +1187,10 @@ class SQLFORM(FORM):
                     continue
                 elif hasattr(f, 'file'):
                     (source_file, original_filename) = (f.file, f.filename)
-                elif isinstance(f, (str, unicode)):
+                elif isinstance(f, str):
                     ### do not know why this happens, it should not
                     (source_file, original_filename) = \
-                        (cStringIO.StringIO(f), 'file.txt')
+                        (io.StringIO(f), 'file.txt')
                 newfilename = field.store(source_file, original_filename)
                 # this line is for backward compatibility only
                 self.vars['%s_newfilename' % fieldname] = newfilename
@@ -1239,7 +1241,7 @@ class SQLFORM(FORM):
                     elif not self.table[field.name].default is None:
                         fields[field.name] = self.table[field.name].default
             if keyed:
-                if reduce(lambda x, y: x and y, record_id.values()): # if record_id
+                if reduce(lambda x, y: x and y, list(record_id.values())): # if record_id
                     if fields:
                         qry = reduce(lambda x, y: x & y,
                             [self.table[k] == self.record[k] for k in self.table._primarykey])
@@ -1353,7 +1355,7 @@ class SQLFORM(FORM):
                       buttonview='icon magnifier',
                       )
         elif not isinstance(ui,dict):
-            raise RuntimeError,'SQLFORM.grid ui argument must be a dictionary'
+            raise RuntimeError('SQLFORM.grid ui argument must be a dictionary')
 
         from gluon import current, redirect
         db = query._db
@@ -1623,7 +1625,7 @@ class SQLFORM(FORM):
                 paginator.append(LI(self_link('<<',0)))
             if page>1:
                 paginator.append(LI(self_link('<',page-1)))
-            pages = range(max(0,page-5),min(page+5,npages-1))
+            pages = list(range(max(0,page-5),min(page+5,npages-1)))
             for p in pages:
                 if p == page:
                     paginator.append(LI(A(p+1,_onclick='return false'),
@@ -1673,7 +1675,7 @@ class SQLFORM(FORM):
                                       _disabled=True)
                     elif field.type=='upload':
                         if value:
-                            if callable(upload):
+                            if isinstance(upload, collections.Callable):
                                 value = A('File', _href=upload(value))
                             elif upload:
                                 value = A('File', 
@@ -1691,15 +1693,15 @@ class SQLFORM(FORM):
                         tr.append(TD(link['body'](row)))
                     else:
                         row_buttons.append(link(row))
-                if details and (not callable(details) or details(row)):
+                if details and (not isinstance(details, collections.Callable) or details(row)):
                     row_buttons.append(gridbutton(
                             'buttonview', 'View',
                             url(args=['view',tablename,id])))
-                if editable and (not callable(editable) or editable(row)):
+                if editable and (not isinstance(editable, collections.Callable) or editable(row)):
                     row_buttons.append(gridbutton(
                             'buttonedit', 'Edit',
                             url(args=['edit',tablename,id])))
-                if deletable and (not callable(deletable) or deletable(row)):
+                if deletable and (not isinstance(deletable, collections.Callable) or deletable(row)):
                     row_buttons.append(gridbutton(
                             'buttondelete', 'Delete',
                             callback=url(args=['delete',tablename,id]),
@@ -1998,7 +2000,7 @@ class SQLTABLE(TABLE):
                 elif fieldname in record:
                     r = record[fieldname]
                 else:
-                    raise SyntaxError, 'something wrong in Rows object'
+                    raise SyntaxError('something wrong in Rows object')
                 r_old = r
                 if not field:
                     pass
@@ -2018,13 +2020,13 @@ class SQLTABLE(TABLE):
                             if ref.find('.') >= 0:
                                 tref,fref = ref.split('.')
                                 if hasattr(sqlrows.db[tref],'_primarykey'):
-                                    href = '%s/%s?%s' % (linkto, tref, urllib.urlencode({fref:r}))
+                                    href = '%s/%s?%s' % (linkto, tref, urllib.parse.urlencode({fref:r}))
                         r = A(represent(field,r,record), _href=str(href))
                     elif field.represent:
                         r = represent(field,r,record)
                 elif linkto and hasattr(field._table,'_primarykey') and fieldname in field._table._primarykey:
                     # have to test this with multi-key tables
-                    key = urllib.urlencode(dict( [ \
+                    key = urllib.parse.urlencode(dict( [ \
                                 ((tablename in record \
                                       and isinstance(record, Row) \
                                       and isinstance(record[tablename], Row)) and
@@ -2046,7 +2048,7 @@ class SQLTABLE(TABLE):
                         r = ''
                 elif field.type in ['string','text']:
                     r = str(field.formatter(r))
-                    ur = unicode(r, 'utf8')
+                    ur = r #py3k! str(r, 'utf8')
                     if headers!={}: #new implement dict
                         if isinstance(headers[colname],dict):
                             if isinstance(headers[colname]['truncate'], int) \
@@ -2054,7 +2056,7 @@ class SQLTABLE(TABLE):
                                 r = ur[:headers[colname]['truncate'] - 3]
                                 r = r.encode('utf8') + '...'
                     elif not truncate is None and len(ur) > truncate:
-                        r = ur[:truncate - 3].encode('utf8') + '...'
+                        r = ur[:truncate - 3] + '...' #py3k! .encode('utf8')
 
                 attrcol = dict()#new implement dict
                 if headers!={}:

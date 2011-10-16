@@ -8,17 +8,17 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 
 import sys
-import cPickle
+import pickle
 import traceback
 import types
 import os
 import datetime
 import logging
 
-from utils import web2py_uuid
-from storage import Storage
-from http import HTTP
-from html import BEAUTIFY
+from .utils import web2py_uuid
+from .storage import Storage
+from .http import HTTP
+from .html import BEAUTIFY
 
 logger = logging.getLogger("web2py")
 
@@ -50,14 +50,14 @@ class TicketStorage(Storage):
     def _store_in_db(self, request, ticket_id, ticket_data):
         table = self._get_table(self.db, self.tablename, request.application)
         table.insert(ticket_id=ticket_id,
-                     ticket_data=cPickle.dumps(ticket_data),
+                     ticket_data=pickle.dumps(ticket_data),
                      created_datetime=request.now)
         logger.error('In FILE: %(layer)s\n\n%(traceback)s\n' % ticket_data)
 
     def _store_on_disk(self, request, ticket_id, ticket_data):
         ef = self._error_file(request, ticket_id, 'wb')
         try:
-            cPickle.dump(ticket_data, ef)
+            pickle.dump(ticket_data, ef)
         finally:
             ef.close()
 
@@ -91,13 +91,13 @@ class TicketStorage(Storage):
         if not self.db:
             ef = self._error_file(request, ticket_id, 'rb', app)
             try:
-                return cPickle.load(ef)
+                return pickle.load(ef)
             finally:
                 ef.close()
         table = self._get_table(self.db, self.tablename, app)
         rows = self.db(table.ticket_id == ticket_id).select()
         if rows:
-            return cPickle.loads(rows[0].ticket_data)
+            return pickle.loads(rows[0].ticket_data)
         return None
 
 
@@ -190,15 +190,18 @@ def restricted(code, environment=None, layer='Unknown'):
         if type(code) == types.CodeType:
             ccode = code
         else:
-            ccode = compile2(code,layer)
-        exec ccode in environment
+            with open(layer.replace(".html",".py"),"w") as f:
+                f.write(code)
+            ccode = compile2(code, layer.replace(".html",".py"))	
+        exec(ccode, environment)
     except HTTP:
         raise
-    except Exception, error:
+    except Exception as error:
         # XXX Show exception in Wing IDE if running in debugger
         if __debug__ and 'WINGDB_ACTIVE' in os.environ:
             etype, evalue, tb = sys.exc_info()
             sys.excepthook(etype, evalue, tb)
+        ##import pdb; pdb.set_trace() ##py3k!
         raise RestrictedError(layer, code, '', environment)
 
 def snapshot(info=None, context=5, code=None, environment=None):
@@ -208,7 +211,7 @@ def snapshot(info=None, context=5, code=None, environment=None):
     # if no exception info given, get current:
     etype, evalue, etb = info or sys.exc_info()
 
-    if type(etype) is types.ClassType:
+    if type(etype) is type:
         etype = etype.__name__
 
     # create a snapshot dict with some basic information
@@ -276,11 +279,11 @@ def snapshot(info=None, context=5, code=None, environment=None):
 
     # add all local values (of last frame) to the snapshot
     s['locals'] = {}
-    for name, value in locals.items():
+    for name, value in list(locals.items()):
         s['locals'][name] = pydoc.text.repr(value)
 
     # add web2py environment variables
-    for k,v in environment.items():
+    for k,v in list(environment.items()):
         if k in ('request', 'response', 'session'):
             s[k] = BEAUTIFY(v)
 

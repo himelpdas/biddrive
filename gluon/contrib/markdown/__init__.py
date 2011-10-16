@@ -1,10 +1,10 @@
-from markdown2 import *
+from .markdown2 import *
 from gluon.html import XML
 
 def WIKI(text, encoding="utf8", safe_mode='escape', html4tags=False, **attributes):
     if not text:
         test = ''
-    if attributes.has_key('extras'):
+    if 'extras' in attributes:
         extras = attributes['extras']
         del attributes['extras']
     else:

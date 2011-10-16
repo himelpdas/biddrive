@@ -46,12 +46,7 @@ class X509Auth(object):
             # Reordering the subject map to a usable Storage map
             # this allows us a cleaner syntax:
             # cn = self.subject.cn
-            self.subject = Storage(filter(None,
-                                          map(lambda x:
-                                                  (x,map(lambda y: 
-                                                         y.get_data().as_text(),
-                                                         subject.get_entries_by_nid(subject.nid[x]))),
-                                              subject.nid.keys())))
+            self.subject = Storage([_f for _f in [(x,[y.get_data().as_text() for y in subject.get_entries_by_nid(subject.nid[x])]) for x in list(subject.nid.keys())] if _f])
 
 
 

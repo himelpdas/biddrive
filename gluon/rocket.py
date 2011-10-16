@@ -56,7 +56,7 @@ else:
     def b(val):
         """ Convert string/unicode/bytes literals into bytes.  This allows for
         the same code to run on Python 2.x and 3.x. """
-        if isinstance(val, unicode):
+        if isinstance(val, str):
             return val.encode()
         else:
             return val
@@ -163,9 +163,9 @@ try:
     from io import StringIO
 except ImportError:
     try:
-        from cStringIO import StringIO
+        from io import StringIO
     except ImportError:
-        from StringIO import StringIO
+        from io import StringIO
 # Import Package Modules
 # package imports removed in monolithic build
 
@@ -195,7 +195,7 @@ class FileLikeSocket(object):
                 if (e.args[0] not in set()):
                     raise
 
-    def next(self):
+    def __next__(self):
         data = self.readline()
         if data == '':
             raise StopIteration
@@ -591,7 +591,7 @@ from threading import Lock
 try:
     from queue import Queue
 except ImportError:
-    from Queue import Queue
+    from queue import Queue
 
 # Import Package Modules
 # package imports removed in monolithic build
@@ -1146,7 +1146,7 @@ from threading import Thread
 from datetime import datetime
 
 try:
-    from urllib import unquote
+    from urllib.parse import unquote
 except ImportError:
     from urllib.parse import unquote
 
@@ -1154,9 +1154,9 @@ try:
     from io import StringIO
 except ImportError:
     try:
-        from cStringIO import StringIO
+        from io import StringIO
     except ImportError:
-        from StringIO import StringIO
+        from io import StringIO
 
 try:
     from ssl import SSLError
@@ -1399,7 +1399,7 @@ class Worker(Thread):
             raise BadRequest
 
         req = match.groupdict()
-        for k,v in req.items():
+        for k,v in list(req.items()):
             if not v:
                 req[k] = ""
             if k == 'path':
@@ -1686,7 +1686,7 @@ class FileSystemWorker(Worker):
 
         try:
             # Get our file path
-            headers = dict([(str(k.lower()), v) for k, v in self.read_headers(sock_file).items()])
+            headers = dict([(str(k.lower()), v) for k, v in list(self.read_headers(sock_file).items())])
             rpath = request.get('path', '').lstrip('/')
             filepath = os.path.join(self.root, rpath)
             filepath = os.path.abspath(filepath)
@@ -1810,7 +1810,7 @@ class WSGIWorker(Worker):
         environ = self.base_environ.copy()
 
         # Grab the headers
-        for k, v in self.read_headers(sock_file).items():
+        for k, v in list(self.read_headers(sock_file).items()):
             environ[str('HTTP_'+k)] = v
 
         # Add CGI Variables
@@ -1841,8 +1841,8 @@ class WSGIWorker(Worker):
                 peercert = conn.socket.getpeercert(binary_form=True)
                 environ['SSL_CLIENT_RAW_CERT'] = \
                     peercert and ssl.DER_cert_to_PEM_cert(peercert)
-            except Exception,e:
-                print e
+            except Exception as e:
+                print(e)
 
         if environ.get('HTTP_TRANSFER_ENCODING', '') == 'chunked':
             environ['wsgi.input'] = ChunkedReader(sock_file)
@@ -2067,7 +2067,7 @@ def demo():
     (options, args) = parser.parse_args()
     global static_folder
     static_folder = options.static
-    print 'Rocket running on %s:%s' % (options.ip, options.port)
+    print(('Rocket running on %s:%s' % (options.ip, options.port)))
     r=Rocket((options.ip,int(options.port)),'wsgi', {'wsgi_app':demo_app})
     r.start()
 

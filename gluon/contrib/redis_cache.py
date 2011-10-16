@@ -6,13 +6,13 @@ Released under web2py license because includes gluon/cache.py source code
 import redis
 from gluon import current
 from gluon.cache import CacheAbstract
-import cPickle as pickle
+import pickle as pickle
 import time
 import re
 
-import thread
+import _thread
 
-locker = thread.allocate_lock()
+locker = _thread.allocate_lock()
 
 def RedisCache(*args, **vars):
     """

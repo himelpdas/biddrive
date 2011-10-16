@@ -18,9 +18,9 @@ __license__ = "LGPL 3.0"
 __version__ = "0.04"
 
 
-import urllib
-from xmlrpclib import Transport, SafeTransport
-from cStringIO import StringIO
+import urllib.request, urllib.parse, urllib.error
+from xmlrpc.client import Transport, SafeTransport
+from io import StringIO
 import random
 import sys
 try:
@@ -29,7 +29,7 @@ except ImportError:
     try:
         import json                             # try stdlib (py2.6)
     except:
-        import simplejson as json               # try external module
+        from . import simplejson as json               # try external module
 
 
 class JSONRPCError(RuntimeError):
@@ -38,7 +38,7 @@ class JSONRPCError(RuntimeError):
         self.code = code
         self.message = message
     def __unicode__(self):
-        return u"%s: %s" % (self.code, self.message)
+        return "%s: %s" % (self.code, self.message)
     def __str__(self):
         return self.__unicode__().encode("ascii","ignore")        
 
@@ -87,10 +87,10 @@ class ServerProxy(object):
         self.timeout = None
         self.json_request = self.json_response = ''
 
-        type, uri = urllib.splittype(uri)
+        type, uri = urllib.parse.splittype(uri)
         if type not in ("http", "https"):
-            raise IOError, "unsupported JSON-RPC protocol"
-        self.__host, self.__handler = urllib.splithost(uri)
+            raise IOError("unsupported JSON-RPC protocol")
+        self.__host, self.__handler = urllib.parse.splithost(uri)
 
         if transport is None:
             if type == "https":
@@ -109,7 +109,7 @@ class ServerProxy(object):
         "JSON RPC communication (method invocation)"
 
         # build data sent to the service
-        request_id = random.randint(0, sys.maxint)
+        request_id = random.randint(0, sys.maxsize)
         data = {'id': request_id, 'method': method, 'params': args, }
         request = json.dumps(data)
 
@@ -143,5 +143,5 @@ if __name__ == "__main__":
     # basic tests:
     location = "http://www.web2py.com.ar/webservices/sample/call/jsonrpc"
     client = ServerProxy(location, verbose='--verbose' in sys.argv,)
-    print client.add(1, 2)
+    print(client.add(1, 2))
 

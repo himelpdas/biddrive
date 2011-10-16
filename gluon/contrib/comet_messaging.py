@@ -76,7 +76,7 @@ import tornado.web
 import hmac
 import sys
 import optparse
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import time
 
 listeners = {}
@@ -85,8 +85,8 @@ tokens = {}
 
 def comet_send(url,message,hmac_key=None,group='default'):
     sig = hmac_key and hmac.new(hmac_key,message).hexdigest() or ''
-    params = urllib.urlencode({'message': message, 'signature': sig, 'group':group})
-    f = urllib.urlopen(url, params)
+    params = urllib.parse.urlencode({'message': message, 'signature': sig, 'group':group})
+    f = urllib.request.urlopen(url, params)
     data= f.read()
     f.close()
     return data
@@ -100,7 +100,7 @@ class PostHandler(tornado.web.RequestHandler):
         if 'message' in self.request.arguments:
             message = self.request.arguments['message'][0]
             group = self.request.arguments.get('group',['default'])[0]
-            print '%s:MESSAGE to %s:%s' % (time.time(), group, message)
+            print(('%s:MESSAGE to %s:%s' % (time.time(), group, message)))
             if hmac_key:
                 signature = self.request.arguments['signature'][0]
                 if not hmac.new(hmac_key,message).hexdigest()==signature: return 'false'
@@ -142,7 +142,7 @@ class DistributeHandler(tornado.websocket.WebSocketHandler):
         for client in listeners.get(self.group,[]): client.write_message('+'+self.name)
         listeners[self.group].append(self)
         names[self] = self.name
-        print '%s:CONNECT to %s' % (time.time(), self.group)
+        print(('%s:CONNECT to %s' % (time.time(), self.group)))
     def on_message(self, message):
         pass
     def on_close(self):
@@ -150,7 +150,7 @@ class DistributeHandler(tornado.websocket.WebSocketHandler):
         del names[self]
         # notify clients that a member has left the groups
         for client in listeners.get(self.group,[]): client.write_message('-'+self.name)
-        print '%s:DISCONNECT from %s' % (time.time(), self.group)
+        print(('%s:DISCONNECT from %s' % (time.time(), self.group)))
 
 if __name__ == "__main__":
     usage = __doc__

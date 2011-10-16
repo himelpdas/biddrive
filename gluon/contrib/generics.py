@@ -2,7 +2,7 @@
 
 import re
 import os
-import cPickle
+import pickle
 import gluon.serializers
 from gluon import current
 from gluon.html import markmin_serializer, TAG, HTML, BODY, UL, XML

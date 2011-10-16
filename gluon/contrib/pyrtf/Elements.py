@@ -2,8 +2,8 @@ from    types       import  IntType, FloatType, LongType, StringTypes
 from    copy        import  deepcopy
 from    binascii    import  hexlify
 
-from    Constants   import  *
-from    Styles      import  *
+from    .Constants   import  *
+from    .Styles      import  *
 
 class UnhandledParamError( Exception ) :
     def __init__( self, param ) :
@@ -384,10 +384,10 @@ def _get_emf_dimensions( fin ):
     header.HeightDevMM = get_LONG()      # Height of reference device in millimeters
 
     if 0:
-        klist = header.__dict__.keys()
+        klist = list(header.__dict__.keys())
         klist.sort()
         for k in klist:
-            print "%20s:%s" % (k,header.__dict__[k])
+            print("%20s:%s" % (k,header.__dict__[k]))
 
     dw = header.FrameRight-header.FrameLeft
     dh = header.FrameBottom-header.FrameTop
@@ -414,9 +414,9 @@ class Image( RawCode ) :
 
         if hasattr( infile, 'read' ):
             fin = infile
-            if 'datatype' not in kwargs.keys():
-                msg = "If passing in a file object, you must also specify type='xxx' where xxx is one of %s" % self.PICT_TYPES.keys()
-                raise ValueError,msg
+            if 'datatype' not in list(kwargs.keys()):
+                msg = "If passing in a file object, you must also specify type='xxx' where xxx is one of %s" % list(self.PICT_TYPES.keys())
+                raise ValueError(msg)
             file_name = kwargs.pop('datatype')
         else:
             fin = file( infile, 'rb' )
@@ -722,7 +722,7 @@ def TEXT( *params, **kwargs ) :
         return Text( params[ 0 ], text_props )
 
     result = Inline( text_props )
-    apply( result.append, params )
+    result.append(*params)
     return result
 
 def B( *params ) :
@@ -732,7 +732,7 @@ def B( *params ) :
         return Text( params[ 0 ], text_props )
 
     result = Inline( text_props )
-    apply( result.append, params )
+    result.append(*params)
     return result
 
 def I( *params ) :
@@ -742,7 +742,7 @@ def I( *params ) :
         return Text( params[ 0 ], text_props )
 
     result = Inline( text_props )
-    apply( result.append, params )
+    result.append(*params)
     return result
 
 def U( *params ) :
@@ -752,6 +752,6 @@ def U( *params ) :
         return Text( params[ 0 ], text_props )
 
     result = Inline( text_props )
-    apply( result.append, params )
+    result.append(*params)
     return result
 

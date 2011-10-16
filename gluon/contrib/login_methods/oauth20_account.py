@@ -13,9 +13,9 @@ OAuth 2.0 Draft:  http://tools.ietf.org/html/draft-ietf-oauth-v2-10
 import time
 import cgi
 
-from urllib2 import urlopen
-import urllib2
-from urllib import urlencode
+from urllib.request import urlopen
+import urllib.request, urllib.error, urllib.parse
+from urllib.parse import urlencode
 
 class OAuthAccount(object):
     """
@@ -76,12 +76,12 @@ class OAuthAccount(object):
     def __build_url_opener(self, uri):
         """Build the url opener for managing HTTP Basic Athentication"""
         # Create an OpenerDirector with support for Basic HTTP Authentication...
-        auth_handler = urllib2.HTTPBasicAuthHandler()
+        auth_handler = urllib.request.HTTPBasicAuthHandler()
         auth_handler.add_password(None,
                                   uri,
                                   self.client_id,
                                   self.client_secret)
-        opener = urllib2.build_opener(auth_handler)
+        opener = urllib.request.build_opener(auth_handler)
         return opener
 
 
@@ -92,7 +92,7 @@ class OAuthAccount(object):
         Otherwise the token is fetched from the auth server.
 
         """
-        if self.session.token and self.session.token.has_key('expires'):
+        if self.session.token and 'expires' in self.session.token:
             expires = self.session.token['expires']
             # reuse token until expiration
             if expires == 0 or expires > time.time():
@@ -110,7 +110,7 @@ class OAuthAccount(object):
             opener = self.__build_url_opener(self.token_url)
             try:
                 open_url = opener.open(self.token_url, urlencode(data))
-            except urllib2.HTTPError, e:
+            except urllib.error.HTTPError as e:
                 raise Exception(e.read())
             finally:
                 del self.session.code # throw it away
@@ -118,10 +118,10 @@ class OAuthAccount(object):
             if open_url:
                 try:
                     tokendata = cgi.parse_qs(open_url.read())
-                    self.session.token = dict([(k,v[-1]) for k,v in tokendata.items()])
+                    self.session.token = dict([(k,v[-1]) for k,v in list(tokendata.items())])
                     # set expiration absolute time try to avoid broken
                     # implementations where "expires_in" becomes "expires"
-                    if self.session.token.has_key('expires_in'):
+                    if 'expires_in' in self.session.token:
                         exps = 'expires_in'
                     else:
                         exps = 'expires'
@@ -155,7 +155,7 @@ class OAuthAccount(object):
     def get_user(self):
         '''Returns the user using the Graph API.
         '''
-        raise NotImplementedError, "Must override get_user()"
+        raise NotImplementedError("Must override get_user()")
         if not self.accessToken():
             return None
 
