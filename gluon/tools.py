@@ -2436,7 +2436,7 @@ class Auth(object):
             raise HTTP(403,'ACCESS DENIED')
         return 'ACCESS DENIED'
 
-    def requires(self, condition, login=True):
+    def requires(self, condition, requires_login=True):
         """
         decorator that prevents access to action if not logged in
         """
@@ -2445,12 +2445,12 @@ class Auth(object):
 
             def f(*a, **b):
 
-                if login and self.settings.allow_basic_login_only and not self.basic():
+                if requires_login and self.settings.allow_basic_login_only and not self.basic():
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     return call_or_redirect(
                         self.settings.on_failed_authorization)
-                if login and not self.basic() and not self.is_logged_in():
+                if requires_login and not self.basic() and not self.is_logged_in():
                     if current.request.is_restful:
                         raise HTTP(403,"Not authorized")
                     elif current.request.ajax:
