@@ -28,14 +28,12 @@ import socket
 import tempfile
 import random
 import string
-import platform
 from fileutils import abspath, write_file, parse_version
 from settings import global_settings
 from admin import add_path_first, create_missing_folders, create_missing_app_folders
 from globals import current
 
 from custom_import import custom_import_install
-from contrib.simplejson import dumps
 
 #  Remarks:
 #  calling script has inserted path to script directory into sys.path

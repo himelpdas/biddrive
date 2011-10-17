@@ -12,10 +12,8 @@ import cPickle
 import traceback
 import types
 import os
-import datetime
 import logging
 
-from utils import web2py_uuid
 from storage import Storage
 from http import HTTP
 from html import BEAUTIFY
@@ -194,7 +192,7 @@ def restricted(code, environment=None, layer='Unknown'):
         exec ccode in environment
     except HTTP:
         raise
-    except Exception, error:
+    except Exception:
         # XXX Show exception in Wing IDE if running in debugger
         if __debug__ and 'WINGDB_ACTIVE' in os.environ:
             etype, evalue, tb = sys.exc_info()
@@ -203,7 +201,7 @@ def restricted(code, environment=None, layer='Unknown'):
 
 def snapshot(info=None, context=5, code=None, environment=None):
     """Return a dict describing a given traceback (based on cgitb.text)."""
-    import os, types, time, traceback, linecache, inspect, pydoc, cgitb
+    import os, types, time, linecache, inspect, pydoc, cgitb
 
     # if no exception info given, get current:
     etype, evalue, etb = info or sys.exc_info()

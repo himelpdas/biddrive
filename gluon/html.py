@@ -29,9 +29,6 @@ from storage import Storage
 from highlight import highlight
 from utils import web2py_uuid, hmac_hash
 
-import hmac
-import hashlib
-
 regex_crlf = re.compile('\r|\n')
 
 join = ''.join
