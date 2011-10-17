@@ -305,9 +305,12 @@ class Response(Storage):
         admin = URL("admin","default","design",
                     args=current.request.application)
         from gluon.dal import thread
-        dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]*1000)) \
-                               for row in i.db._timings]) \
-                       for i in thread.instances]        
+        if hasattr(thread,'instances'):
+            dbstats = [TABLE(*[TR(PRE(row[0]),'%.2fms' % (row[1]*1000)) \
+                                   for row in i.db._timings]) \
+                           for i in thread.instances]        
+        else:
+            dbstats = [] # if no db or on GAE
         u = web2py_uuid() 
         return DIV(
             BUTTON('design',_onclick="document.location='%s'" % admin),
