@@ -5472,12 +5472,6 @@ class Field(Expression):
         self.second = None
         if not isinstance(fieldname,str):
             raise SyntaxError, "missing field name"
-        if fieldname.startswith(':'):
-            fieldname,readable,writable=fieldname[1:],False,False
-        elif fieldname.startswith('.'):
-            fieldname,readable,writable=fieldname[1:],False,False
-        if '=' in fieldname:
-            fieldname,default = fieldname.split('=',1)
         self.name = fieldname = cleanup(fieldname)
         if hasattr(Table,fieldname) or fieldname[0] == '_' or \
                 regex_python_keywords.match(fieldname):

@@ -1303,13 +1303,16 @@ class SQLFORM(FORM):
         T = current.T
         search_options = search_options or {
             'string':['=','!=','<','>','<=','>=','starts with','contains'],
-            'string':['=','!=','<','>','<=','>=','starts with','contains'],
+            'text':['=','!=','<','>','<=','>=','starts with','contains'],
             'date':['=','!=','<','>','<=','>='],
             'time':['=','!=','<','>','<=','>='],
             'datetime':['=','!=','<','>','<=','>='],
             'integer':['=','!=','<','>','<=','>='],
             'double':['=','!=','<','>','<=','>='],
             'boolean':['=','!=']}
+        if fields[0]._db._adapter.dbengine=='google:datastore':
+            search_options['string'] = ['=','!=','<','>','<=','>=']
+            search_options['text'] = ['=','!=','<','>','<=','>=']
         criteria = []
         selectfields = {'':''}
         for field in fields:
