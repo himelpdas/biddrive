@@ -1672,10 +1672,6 @@ class SQLFORM(FORM):
 
         console.append(search_actions)
 
-        message = error or T('%(nrows)s records found') % dict(nrows=nrows)
-
-        console.append(DIV(message,_class='web2py_counter'))
-
         order = request.vars.order or ''
         if sortable:
             if order and not order=='None':
@@ -1729,25 +1725,34 @@ class SQLFORM(FORM):
                 if order: d['order']=order
                 if request.vars.keywords: d['keywords']=request.vars.keywords
                 return A(name,_href=url(vars=d),_class=trap_class())
-            if page>0:
+            NPAGES = 5 # window is 2*NPAGES
+            if page>NPAGES+1:
                 paginator.append(LI(self_link('<<',0)))
-            if page>1:
+            if page>NPAGES:
                 paginator.append(LI(self_link('<',page-1)))
-            pages = range(max(0,page-5),min(page+5,npages-1))
+            pages = range(max(0,page-NPAGES),min(page+NPAGES,npages))
             for p in pages:
                 if p == page:
                     paginator.append(LI(A(p+1,_onclick='return false'),
                                         _class=trap_class('current')))
                 else:
                     paginator.append(LI(self_link(p+1,p)))
-            if page<npages-2:
+            if page<npages-NPAGES:
                 paginator.append(LI(self_link('>',page+1)))
-            if page<npages-1:
+            if page<npages-NPAGES-1:
                 paginator.append(LI(self_link('>>',npages-1)))
         else:
             limitby = None
-        
-        rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)        
+
+        try:
+            rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)        
+        except SyntaxError:
+            rows = None
+            error = T("Query Not Supported")
+
+        message = error or T('%(nrows)s records found') % dict(nrows=nrows)
+        console.append(DIV(message,_class='web2py_counter'))
+
         if rows:
             htmltable = TABLE(THEAD(head))
             tbody = TBODY()
