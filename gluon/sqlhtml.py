@@ -1747,8 +1747,7 @@ class SQLFORM(FORM):
         else:
             limitby = None
         
-        rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)
-        if not searchable and not rows: return DIV(T('No records found'))
+        rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)        
         if rows:
             htmltable = TABLE(THEAD(head))
             tbody = TBODY()
