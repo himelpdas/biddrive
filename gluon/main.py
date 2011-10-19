@@ -503,7 +503,9 @@ def wsgibase(environ, responder):
                 # on success, commit database
                 # ##################################################
 
-                if response._custom_commit:
+                if response.do_not_commit is True:
+                    BaseAdapter.close_all_instances(None)
+                elif response._custom_commit:
                     response._custom_commit()
                 else:
                     BaseAdapter.close_all_instances('commit')

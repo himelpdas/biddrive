@@ -400,11 +400,12 @@ class ConnectionPool(object):
     @staticmethod
     def close_all_instances(action):
         """ to close cleanly databases in a multithreaded environment """
-        if not hasattr(thread,'instances'):
+        if not hasattr(thread, 'instances'):
             return
         while thread.instances:
             instance = thread.instances.pop()
-            getattr(instance,action)()
+            if action:
+                getattr(instance, action)()
             # ## if you want pools, recycle this connection
             really = True
             if instance.pool_size:
@@ -415,7 +416,7 @@ class ConnectionPool(object):
                     really = False
                 sql_locker.release()
             if really:
-                getattr(instance,'close')()
+                getattr(instance, 'close')()
         return
 
     def find_or_make_work_folder(self):
