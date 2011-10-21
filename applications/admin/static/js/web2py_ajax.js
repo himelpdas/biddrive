@@ -12,7 +12,7 @@ function ajax(u,s,t) {
         if(d){ query = d; }
     } else {
         pcs = [];
-        for(i=0; i<s.length; i++) {
+        if (s != null && s != undefined) for(i=0; i<s.length; i++) {
             q = jQuery("[name="+s[i]+"]").serialize();
             if(q){pcs.push(q);}
         }
