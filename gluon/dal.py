@@ -477,6 +477,7 @@ class BaseAdapter(ConnectionPool):
     commit_on_alter_table = False
     support_distributed_transaction = False
     uploads_in_blob = False
+    can_select_for_update = True
     types = {
         'boolean': 'CHAR(1)',
         'string': 'CHAR(%(length)s)',
@@ -1132,8 +1133,10 @@ class BaseAdapter(ConnectionPool):
     def _select(self, query, fields, attributes):
         for key in set(attributes.keys())-set(('orderby', 'groupby', 'limitby',
                                                'required', 'cache', 'left',
-                                               'distinct', 'having', 'join')):
+                                               'distinct', 'having', 'join', 'for_update')):
             raise SyntaxError, 'invalid select attribute: %s' % key
+        if self.can_select_with_update is False and 'for_update' in attributes.keys:
+            raise SyntaxError, 'invalid select attribute: for_update'
         # ## if no fields specified take them all from the requested tables
         new_fields = []
         for item in fields:
@@ -1173,6 +1176,7 @@ class BaseAdapter(ConnectionPool):
         orderby = attributes.get('orderby', False)
         having = attributes.get('having', False)
         limitby = attributes.get('limitby', False)
+        for_update = attributes.get('for_update', False)
         if distinct is True:
             sql_s += 'DISTINCT'
         elif distinct:
@@ -1239,7 +1243,10 @@ class BaseAdapter(ConnectionPool):
             if not orderby and tablenames:
                 sql_o += ' ORDER BY %s' % ', '.join(['%s.%s'%(t,x) for t in tablenames for x in ((hasattr(self.db[t], '_primarykey') and self.db[t]._primarykey) or [self.db[t]._id.name])])
             # oracle does not support limitby
-        return self.select_limitby(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
+        sql = self.select_limitby(sql_s, sql_f, sql_t, sql_w, sql_o, limitby)
+        if for_update and self.can_select_for_update is True:
+            sql = sql.rstrip(';') + ' FOR UPDATE;'
+        return sql
 
     def select_limitby(self, sql_s, sql_f, sql_t, sql_w, sql_o, limitby):
         if limitby:
@@ -1580,6 +1587,7 @@ class BaseAdapter(ConnectionPool):
 class SQLiteAdapter(BaseAdapter):
 
     driver = globals().get('sqlite3', None)
+    can_select_for_update = None    # support ourselves with BEGIN TRANSACTION
 
     def EXTRACT(self,field,what):
         return "web2py_extract('%s',%s)" % (what, self.expand(field))
@@ -1633,6 +1641,17 @@ class SQLiteAdapter(BaseAdapter):
 
     def lastrowid(self, table):
         return self.cursor.lastrowid
+
+    def _select(self, query, fields, attributes):
+        """
+        Simulate SELECT ... FOR UPDATE with BEGIN IMMEDIATE TRANSACTION.
+        Note that the entire database, rather than one record, is locked
+        (it will be locked eventually anyway by the following UPDATE).
+        """
+        sql = super(SQLiteAdapter, self)._select(query, fields, attributes)
+        if attributes.get('for_update', False):
+            sql = 'BEGIN IMMEDIATE TRANSACTION; ' + sql
+        return sql
 
 
 class JDBCSQLiteAdapter(SQLiteAdapter):
@@ -2968,6 +2987,7 @@ class GoogleSQLAdapter(UseDatabaseStoredFile,MySQLAdapter):
         self.execute("SET sql_mode='NO_BACKSLASH_ESCAPES';")
 
 class NoSQLAdapter(BaseAdapter):
+    can_select_for_update = False
 
     @staticmethod
     def to_unicode(obj):
@@ -4920,20 +4940,24 @@ class Table(dict):
             return dict.__getitem__(self, str(key))
 
     def __call__(self, key=DEFAULT, **kwargs):
+        for_update = kwargs.get('_for_update',False)
+        if '_for_update' in kwargs: del kwargs['_for_update']
         if not key is DEFAULT:
             if isinstance(key, Query):
-                record = self._db(key).select(limitby=(0,1)).first()
+                record = self._db(key).select(
+                    limitby=(0,1),for_update=for_update).first()
             elif not str(key).isdigit():
                 record = None
             else:
-                record = self._db(self._id == key).select(limitby=(0,1)).first()
+                record = self._db(self._id == key).select(
+                    limitby=(0,1),for_update=for_update).first()
             if record:
                 for k,v in kwargs.items():
                     if record[k]!=v: return None
             return record
         elif kwargs:
             query = reduce(lambda a,b:a&b,[self[k]==v for k,v in kwargs.items()])
-            return self._db(query).select(limitby=(0,1)).first()
+            return self._db(query).select(limitby=(0,1),for_update=for_update).first()
         else:
             return None
 
