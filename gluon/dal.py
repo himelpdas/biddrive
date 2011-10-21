@@ -1175,7 +1175,7 @@ class BaseAdapter(ConnectionPool):
         having = attributes.get('having', False)
         limitby = attributes.get('limitby', False)
         for_update = attributes.get('for_update', False)
-        if self.can_select_with_update is False and for_update is True:
+        if self.can_select_for_update is False and for_update is True:
             raise SyntaxError, 'invalid select attribute: for_update'
         if distinct is True:
             sql_s += 'DISTINCT'
