@@ -2462,9 +2462,7 @@ class Auth(object):
                         self.settings.on_failed_authentication,
                         self.settings.login_url+\
                             '?_next='+urllib.quote(next))
-                if condition and callable(condition):
-                    condition = condition()
-                if not condition:
+                if not condition and not (condition and callable(condition) and condition()):
                     current.session.flash = self.messages.access_denied
                     return call_or_redirect(
                         self.settings.on_failed_authorization)
