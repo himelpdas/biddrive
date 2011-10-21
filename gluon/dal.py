@@ -1135,8 +1135,6 @@ class BaseAdapter(ConnectionPool):
                                                'required', 'cache', 'left',
                                                'distinct', 'having', 'join', 'for_update')):
             raise SyntaxError, 'invalid select attribute: %s' % key
-        if self.can_select_with_update is False and 'for_update' in attributes.keys:
-            raise SyntaxError, 'invalid select attribute: for_update'
         # ## if no fields specified take them all from the requested tables
         new_fields = []
         for item in fields:
@@ -1177,6 +1175,8 @@ class BaseAdapter(ConnectionPool):
         having = attributes.get('having', False)
         limitby = attributes.get('limitby', False)
         for_update = attributes.get('for_update', False)
+        if self.can_select_with_update is False and for_update is True:
+            raise SyntaxError, 'invalid select attribute: for_update'
         if distinct is True:
             sql_s += 'DISTINCT'
         elif distinct:
