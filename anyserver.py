@@ -6,7 +6,7 @@ This file is part of the web2py Web Framework
 Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>
 License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 
-This file is based, althought a rewrite, on MIT code from the Bottle web framework.
+This file is based, although a rewrite, on MIT-licensed code from the Bottle web framework.
 """
 
 import os, sys, optparse, urllib
@@ -88,7 +88,7 @@ class Servers:
         from gevent import monkey; monkey.patch_all()
         from gevent import pywsgi
         from gevent.pool import Pool
-        pywsgi.WSGIServer(address, app, spawn = 'workers' in options and Pool(int(option.workers)) or 'default').serve_forever()
+        pywsgi.WSGIServer(address, app, spawn = 'workers' in options and Pool(int(options.workers)) or 'default').serve_forever()
 
     @staticmethod
     def bjoern(app,address, **options):
@@ -215,7 +215,7 @@ def mongrel2_handler(application,conn,debug=False):
         if debug: print "ENVIRON: %r\n" % environ
         
         # SimpleHandler needs file-like stream objects for
-        # requests, errors and reponses
+        # requests, errors and responses
         reqIO = StringIO.StringIO(req.body)
         errIO = StringIO.StringIO()
         respIO = StringIO.StringIO()
