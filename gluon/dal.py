@@ -3712,7 +3712,7 @@ class MongoDBAdapter(NoSQLAdapter):
         dbname = m.group('db')
         if not dbname:
             raise SyntaxError, 'mongodb: db name required'
-        port = m.group('port') or 27017
+        port = int(m.group('port') or 27017)
         driver_args.update(dict(host=host,port=port))
         def connect(dbname=dbname,driver_args=driver_args):
             return pymongo.Connection(**driver_args)[dbname]
