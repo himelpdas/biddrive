@@ -2518,10 +2518,8 @@ class CRYPT(object):
         self.error_message = error_message
 
     def __call__(self, value):
-        if not value and self.min_length>0:
-            value = web2py_uuid()
-        elif len(value)<self.min_length:
-            return ('',translate(self.error_message))
+        if len(value)<self.min_length:
+            return ('', translate(self.error_message))
         if self.key:
             return (hmac_hash(value, self.key, self.digest_alg), None)
         else:
