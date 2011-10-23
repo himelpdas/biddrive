@@ -2283,21 +2283,31 @@ class IS_DATETIME_IN_RANGE(IS_DATETIME):
 
 class IS_LIST_OF(Validator):
 
-    def __init__(self, other):
+    def __init__(self, other=None, minimum=0, maximum=100,
+                 error_message = None):
         self.other = other
-
+        self.mininum = minimum
+        self.maximum = maximum
+        self.error_message = error_message or "enter a value between %(min)g and %(max)g"
+        
     def __call__(self, value):
         ivalue = value
         if not isinstance(value, list):
             ivalue = [ivalue]
+        if not self.minimum is None and len(ivalue)<self.minimum:
+            return (ivalue, T(self.error_message) % dict(min=self.minimum,max=self.maximum))
+        if not self.maximum is None and len(ivalue)>self.maximum:
+            return (ivalue, T(self.error_message) % dict(min=self.minimum,max=self.maximum))
         new_value = []
-        for item in ivalue:
-            (v, e) = self.other(item)
-            if e:
-                return (value, e)
-            else:
-                new_value.append(v)
-        return (new_value, None)
+        if self.other:
+            for item in ivalue:
+                (v, e) = self.other(item)
+                if e:
+                    return (value, e)
+                else:
+                    new_value.append(v)
+            ivalue = new_value
+        return (ivalue, None)
 
 
 class IS_LOWER(Validator):
