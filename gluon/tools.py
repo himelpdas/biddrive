@@ -1151,7 +1151,7 @@ class Auth(object):
             logout=A(T('logout'),_href=action+'/logout')
             profile=A(T('profile'),_href=action+'/profile')
             password=A(T('password'),_href=action+'/change_password')
-            bar = SPAN(prefix,self.user.first_name,' [ ', logout, ']',_class='auth_navbar')
+            bar = SPAN(prefix,self.user.first_name,' [ ', logout, ' ]',_class='auth_navbar')
             if not 'profile' in self.settings.actions_disabled:
                 bar.insert(4, ' | ')
                 bar.insert(5, profile)
