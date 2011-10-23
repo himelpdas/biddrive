@@ -363,16 +363,16 @@ if 'google' in drivers:
 
         def get_value_for_datastore(self, model_instance):
             value = super(GAEDecimalProperty, self).get_value_for_datastore(model_instance)
-            if value:
-                return str(value)
-            else:
+            if value is None or value is '':
                 return None
+            else:
+                return str(value)
 
         def make_value_from_datastore(self, value):
-            if value:
-                return decimal.Decimal(value).quantize(self.round)
-            else:
+            if value is None or value is '':
                 return None
+            else:
+                return decimal.Decimal(value).quantize(self.round)
 
         def validate(self, value):
             value = super(GAEDecimalProperty, self).validate(value)
