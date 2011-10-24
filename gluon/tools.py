@@ -710,15 +710,19 @@ def addrow(form, a, b, c, style, _id, position=-1):
                                      DIV(c, _class='w2p_fc'),
                                      _id = _id))
     elif style == "table2cols":
-        form[0].insert(position, TR(LABEL(a),''))
-        form[0].insert(position+1, TR(b, _colspan=2, _id = _id))
+        form[0].insert(position, TR(TD(LABEL(a),_class='w2p_fl'),
+                                    TD(c,_class='w2p_fc')))
+        form[0].insert(position+1, TR(TD(b,_class='w2p_fw'),
+                                      _colspan=2, _id = _id))
     elif style == "ul":
         form[0].insert(position, LI(DIV(LABEL(a),_class='w2p_fl'),
                                     DIV(b, _class='w2p_fw'),
                                     DIV(c, _class='w2p_fc'),
                                     _id = _id))
     else:
-        form[0].insert(position, TR(LABEL(a),b,c,_id = _id))
+        form[0].insert(position, TR(TD(LABEL(a),_class='w2p_fl'),
+                                    TD(b,_class='w2p_fw'),
+                                    TD(c,_class='w2p_fc'),_id = _id))
 
 
 class Auth(object):
