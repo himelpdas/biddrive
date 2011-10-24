@@ -326,6 +326,16 @@ def delete():
         redirect(URL(sender))
     return dict(filename=filename, sender=sender)
 
+def enable():
+    app = get_app()
+    filename = os.path.join(apath(app, r=request),'DISABLED')
+    if os.path.exists(filename):
+        os.unlink(filename)
+        return SPAN(T('Disable'),_style='color:green')
+    else:
+        open(filename,'wb').write(time.ctime())
+        return SPAN(T('Enable'),_style='color:red')
+
 def peek():
     """ Visualize object code """
     app = get_app()

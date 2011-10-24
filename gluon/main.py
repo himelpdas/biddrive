@@ -413,7 +413,9 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 if not os.path.exists(request.folder):
-                    if request.application == rewrite.thread.routes.default_application and request.application != 'welcome':
+                    if request.application == \
+                            rewrite.thread.routes.default_application \
+                            and request.application != 'welcome':
                         request.application = 'welcome'
                         redirect(Url(r=request))
                     elif rewrite.thread.routes.error_handler:
@@ -426,6 +428,9 @@ def wsgibase(environ, responder):
                         raise HTTP(404, rewrite.thread.routes.error_message \
                                        % 'invalid request',
                                    web2py_error='invalid application')
+                elif not request.is_local and \
+                        os.path.exists(os.path.join(request.folder,'DISABLED')):
+                    raise HTTP(200, "<html><body><h1>Down for maintenance</h1></body></html>")
                 request.url = Url(r=request, args=request.args,
                                        extension=request.raw_extension)
 

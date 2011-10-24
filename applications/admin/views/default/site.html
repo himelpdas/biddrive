@@ -36,6 +36,7 @@
         {{pass}}
         {{if a!=request.application:}}
         {{=button(URL('uninstall',args=a), T("Uninstall"))}}
+    	{{=button_enable(URL('enable',args=a), a)}}
         {{pass}}
         </p>
       </li>
