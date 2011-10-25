@@ -3531,6 +3531,8 @@ class CouchDBAdapter(NoSQLAdapter):
         value = NoSQLAdapter.represent(self, obj, fieldtype)
         if fieldtype=='id':
             return repr(str(int(value)))
+        elif fieldtype in ('date','time','datetime','boolean'):
+            return serializers.json(value)
         return repr(not isinstance(value,unicode) and value or value.encode('utf8'))
 
     def __init__(self,db,uri='couchdb://127.0.0.1:5984',
@@ -3560,7 +3562,7 @@ class CouchDBAdapter(NoSQLAdapter):
     def insert(self,table,fields):
         id = uuid2int(web2py_uuid())
         ctable = self.connection[table._tablename]
-        values = dict((k.name,NoSQLAdapter.represent(self,v,k.type)) for k,v in fields)
+        values = dict((k.name,self.represent(v,k.type)) for k,v in fields)
         values['_id'] = str(id)
         ctable.save(values)
         return id
@@ -3634,7 +3636,7 @@ class CouchDBAdapter(NoSQLAdapter):
             try:
                 doc = ctable[str(id)]
                 for key,value in fields:
-                    doc[key.name] = NoSQLAdapter.represent(self,value,self.db[tablename][key.name].type)
+                    doc[key.name] = self.represent(value,self.db[tablename][key.name].type)
                 ctable.save(doc)
                 return 1
             except couchdb.http.ResourceNotFound:
@@ -3647,7 +3649,7 @@ class CouchDBAdapter(NoSQLAdapter):
             for row in rows:
                 doc = ctable[str(row.id)]
                 for key,value in fields:
-                    doc[key.name] = NoSQLAdapter.represent(self,value,table[key.name].type)
+                    doc[key.name] = self.represent(value,table[key.name].type)
                 ctable.save(doc)
             return len(rows)
 
