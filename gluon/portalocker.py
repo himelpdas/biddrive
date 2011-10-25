@@ -40,24 +40,26 @@ Author: Jonathan Feinberg <jdf@pobox.com>
 Version: $Id: portalocker.py,v 1.3 2001/05/29 18:47:55 Administrator Exp $
 """
 
-import os
 import logging
 import platform
+from settings import global_settings
 logger = logging.getLogger("web2py")
 
 os_locking = None
-try:
-    import fcntl
-    os_locking = 'posix'
-except:
-    pass
-try:
-    import win32con
-    import win32file
-    import pywintypes
-    os_locking = 'windows'
-except:
-    pass
+if global_settings.web2py_runtime_gae:
+	os_locking = 'gae'
+else:
+	try:
+		import fcntl
+		os_locking = 'posix'
+	except:
+		try:
+			import win32con
+			import win32file
+			import pywintypes
+			os_locking = 'windows'
+		except:
+			pass
 
 if os_locking == 'windows':
     LOCK_EX = win32con.LOCKFILE_EXCLUSIVE_LOCK
@@ -92,7 +94,7 @@ elif os_locking == 'posix':
 else:
     if platform.system() == 'Windows':
         logger.error('no file locking, you must install the win32 extensions from: http://sourceforge.net/projects/pywin32/files/')
-    else:
+    elif os_locking != 'gae':
         logger.debug('no file locking, this will cause problems')
 
     LOCK_EX = None
