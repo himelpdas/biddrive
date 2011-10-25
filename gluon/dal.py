@@ -126,6 +126,7 @@ DEFAULTLENGTH = {'string':512,
                  'upload':512,
                  'text':2**15,
                  'blob':2**31}
+TIMINGSSIZE = 100
 
 import re
 import sys
@@ -1341,6 +1342,7 @@ class BaseAdapter(ConnectionPool):
         t0 = time.time()
         ret = self.cursor.execute(*a, **b)
         self.db._timings.append((a[0],time.time()-t0))
+        del self.db._timings[:-TIMINGSSIZE]
         return ret
 
     def execute(self, *a, **b):
