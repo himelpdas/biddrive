@@ -379,8 +379,8 @@ class Scheduler(MetaScheduler):
             db.commit()
         except:
             db.rollback()
-        logging.debug('  grabbed %s tasks' % number_grabbed)
         if number_grabbed:
+            logging.debug('  grabbed %s tasks' % number_grabbed)
             grabbed = db(ts.assigned_worker_name==self.worker_name)\
                 (ts.status==ASSIGNED)
             task = grabbed.select(limitby=(0,1), orderby=ts.next_run_time).first()
