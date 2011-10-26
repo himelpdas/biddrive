@@ -22,7 +22,7 @@ from html import URL
 from dal import DAL, Table, Row, CALLABLETYPES, smart_query
 from storage import Storage
 from utils import md5_hash
-from validators import IS_EMPTY_OR
+from validators import IS_EMPTY_OR, IS_NOT_EMPTY, IS_LIST_OF
 
 import urllib
 import re
@@ -232,7 +232,8 @@ class ListWidget(StringWidget):
         _name = field.name
         if field.type=='list:integer': _class = 'integer'
         else: _class = 'string'
-        items=[LI(INPUT(_id=_id,_class=_class,_name=_name,value=v,hideerror=True)) \
+        requires = field.requires if isinstance(field.requires, (IS_NOT_EMPTY, IS_LIST_OF)) else None
+        items=[LI(INPUT(_id=_id, _class=_class, _name=_name, value=v, hideerror=True, requires=requires)) \
                    for v in value or ['']]
         script=SCRIPT("""
 // from http://refactormycode.com/codes/694-expanding-input-list-using-jquery
