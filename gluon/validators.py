@@ -2286,18 +2286,18 @@ class IS_LIST_OF(Validator):
     def __init__(self, other=None, minimum=0, maximum=100,
                  error_message = None):
         self.other = other
-        self.mininum = minimum
+        self.minimum = minimum
         self.maximum = maximum
-        self.error_message = error_message or "enter a value between %(min)g and %(max)g"
+        self.error_message = error_message or "enter between %(min)g and %(max)g values"
         
     def __call__(self, value):
         ivalue = value
         if not isinstance(value, list):
             ivalue = [ivalue]
         if not self.minimum is None and len(ivalue)<self.minimum:
-            return (ivalue, T(self.error_message) % dict(min=self.minimum,max=self.maximum))
+            return (ivalue, translate(self.error_message) % dict(min=self.minimum,max=self.maximum))
         if not self.maximum is None and len(ivalue)>self.maximum:
-            return (ivalue, T(self.error_message) % dict(min=self.minimum,max=self.maximum))
+            return (ivalue, translate(self.error_message) % dict(min=self.minimum,max=self.maximum))
         new_value = []
         if self.other:
             for item in ivalue:
