@@ -2067,7 +2067,9 @@ class SQLTABLE(TABLE):
                 (t,f) = c.split('.')
                 field = sqlrows.db[t][f]
                 headers[c] = field.label
-        if not headers is None:
+        if headers is None:
+            headers = {}
+        else:
             for c in columns:#new implement dict
                 if isinstance(headers.get(c, c), dict):
                     coldict = headers.get(c, c)
