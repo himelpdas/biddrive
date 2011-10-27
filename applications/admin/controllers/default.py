@@ -787,7 +787,7 @@ def delete_plugin():
             for folder in ['models','views','controllers','static','modules']:
                 path=os.path.join(apath(app,r=request),folder)
                 for item in os.listdir(path):
-                    if item.startswith(plugin_name):
+                    if item.rsplit('.',1)[0] == plugin_name:
                         filename=os.path.join(path,item)
                         if os.path.isdir(filename):
                             shutil.rmtree(filename)
