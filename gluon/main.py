@@ -312,7 +312,7 @@ def parse_get_post_vars(request, environ):
                 request.post_vars[key] = (len(pvalue)>1 and pvalue) or pvalue[0]
 
 
-def wsgibase(environ, responder, status = None):
+def wsgibase(environ, responder):
     """
     this is the gluon wsgi application. the first function called when a page
     is requested (static or dynamic). it can be called by paste.httpserver
@@ -350,7 +350,6 @@ def wsgibase(environ, responder, status = None):
     request.env.web2py_path = global_settings.applications_parent
     request.env.web2py_version = web2py_version
     request.env.update(global_settings)
-    if status: response.status = status # to handle redirect on error
     static_file = False
     try:
         try:
@@ -600,7 +599,7 @@ def wsgibase(environ, responder, status = None):
     http_response, new_environ = rewrite.try_rewrite_on_error(
         http_response, request, environ, ticket)
     if not http_response:
-        return wsgibase(new_environ,responder,status=response.status)
+        return wsgibase(new_environ,responder)
     if global_settings.web2py_crontype == 'soft':
         newcron.softcron(global_settings.applications_parent).start()
     return http_response.to(responder)
