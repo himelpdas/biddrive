@@ -2442,7 +2442,7 @@ class InformixAdapter(BaseAdapter):
                 obj = obj.isoformat()[:10]
             else:
                 obj = str(obj)
-            return "to_date('%s','yyyy-mm-dd')" % obj
+            return "to_date('%s','%%Y-%%m-%%d')" % obj
         elif fieldtype == 'datetime':
             if isinstance(obj, datetime.datetime):
                 obj = obj.isoformat()[:19].replace('T',' ')
@@ -2450,7 +2450,7 @@ class InformixAdapter(BaseAdapter):
                 obj = obj.isoformat()[:10]+' 00:00:00'
             else:
                 obj = str(obj)
-            return "to_date('%s','yyyy-mm-dd hh24:mi:ss')" % obj
+            return "to_date('%s','%%Y-%%m-%%d %%H:%%M:%%S')" % obj
         return None
 
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
