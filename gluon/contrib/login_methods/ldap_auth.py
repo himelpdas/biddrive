@@ -86,6 +86,12 @@ def ldap_auth(server='ldap', port=None,
                     username = "%s@%s" % (username, '.'.join(domain))
                 username_bare = username.split("@")[0]
                 con.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+                # In cases where ForestDnsZones and DomainDnsZones are found, 
+                # result will look like the following: 
+                # ['ldap://ForestDnsZones.domain.com/DC=ForestDnsZones,DC=domain,DC=com'] 
+                if not isinstance(result, dict): 
+                    # result should be a dict in the form {'sAMAccountName': [username_bare]} 
+                    return False 
                 if ldap_binddn:
                     # need to search directory with an admin account 1st
                     con.simple_bind_s(ldap_binddn, ldap_bindpw)
