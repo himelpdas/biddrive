@@ -2466,7 +2466,17 @@ class Auth(object):
                         self.settings.on_failed_authentication,
                         self.settings.login_url+\
                             '?_next='+urllib.quote(next))
-                if not condition and not (condition and callable(condition) and condition()):
+                
+                #Check condition variable.
+                #Since condition could be callable, following cases could occur: 
+                # 1. condition == True => ok
+                # 2. condition == False => failed
+                # 3. condition is NOT callable but it NOT None and NOT False and NOT 0 => failed
+                # 4. condition is callable -> condition() is True => ok
+                # 5. condition is callable -> condition() is False  => failed
+                # Note: Order is important! At the end condition has to be checked against True
+                # otherwise case 3 would be ok.
+                if not (callable(condition) and condition() == True) and not condition == True:
                     current.session.flash = self.messages.access_denied
                     return call_or_redirect(
                         self.settings.on_failed_authorization)
@@ -2482,7 +2492,7 @@ class Auth(object):
         """
         decorator that prevents access to action if not logged in
         """
-        return self.requires(self.is_logged_in())
+        return self.requires(self.is_logged_in)
 
     def requires_membership(self, role=None, group_id=None):
         """
