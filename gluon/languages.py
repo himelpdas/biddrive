@@ -250,9 +250,11 @@ class translator(object):
         self.t = {}  # ## no language by default
         return languages
 
-    def __call__(self, message, symbols={}, language=None):
+    def __call__(self, message, symbols={}, language=None, lazy=None):
+        if lazy is None:
+            lazy = self.lazy
         if not language:
-            if self.lazy:
+            if lazy:
                 return lazyT(message, symbols, self)
             else:
                 return self.translate(message, symbols)
@@ -262,7 +264,7 @@ class translator(object):
             except KeyError:
                 otherT = self.otherTs[language] = translator(self.request)
                 otherT.force(language)
-            return otherT(message,symbols)
+            return otherT(message, symbols, lazy=lazy)
 
     def translate(self, message, symbols):
         """
