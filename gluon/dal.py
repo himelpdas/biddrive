@@ -139,6 +139,7 @@ import threading
 import time
 import cStringIO
 import csv
+import cgi
 import copy
 import socket
 import logging
@@ -5551,7 +5552,10 @@ class Field(Expression):
     def store(self, file, filename=None, path=None):
         if self.custom_store:
             return self.custom_store(file,filename,path)
-        if not filename:
+        if isinstance(file, cgi.FieldStorage):
+            file = file.file
+            filename = filename or file.filename
+        elif not filename:
             filename = file.name
         filename = os.path.basename(filename.replace('/', os.sep)\
                                         .replace('\\', os.sep))
