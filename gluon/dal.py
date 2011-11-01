@@ -1190,6 +1190,7 @@ class BaseAdapter(ConnectionPool):
             ijoinon = [t for t in inner_join if isinstance(t, Expression)]
             ijoinont = [t.first._tablename for t in ijoinon]
             iexcluded = [t for t in tablenames if not t in ijoint + ijoinont]
+            print iexcluded
         if left:
             join = attributes['left']
             command = self.LEFT_JOIN()
