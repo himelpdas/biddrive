@@ -566,8 +566,8 @@ class Mail(object):
             if self.settings.server == 'logging':
                 logger.warn('email not sent\n%s\nFrom: %s\nTo: %s\nSubject: %s\n\n%s\n%s\n' % \
                                 ('-'*40,self.settings.sender,
-                                 subject,
-                                 ', '.join(to),text or html,'-'*40))
+                                 ', '.join(to),subject,
+                                 text or html,'-'*40))
             elif self.settings.server == 'gae':
                 xcc = dict()
                 if cc:
@@ -2492,7 +2492,7 @@ class Auth(object):
         """
         decorator that prevents access to action if not logged in
         """
-        return self.requires(self.is_logged_in)
+        return self.requires(True)
 
     def requires_membership(self, role=None, group_id=None):
         """
