@@ -35,7 +35,7 @@ class Storage(dict):
 
     """
     A Storage object is like a dictionary except `obj.foo` can be used
-    in addition to `obj['foo']`.
+    in addition to `obj['foo']`, and setting obj.foo = None deletes item foo.
 
         >>> o = Storage(a=1)
         >>> print o.a
@@ -55,23 +55,26 @@ class Storage(dict):
     """
 
     def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            return None
+        return super(Storage, self).get(key, None)
 
     def __setattr__(self, key, value):
-        if value is None:
-            if key in self:
-                del self[key]
-        else:
-            self[key] = value
+        self[key] = value
 
     def __delattr__(self, key):
         if key in self:
             del self[key]
         else:
             raise AttributeError, "missing key=%s" % key
+
+    def __getitem__(self, key):
+        return super(Storage, self).get(key, None)
+
+    def __setitem__(self, key, value):
+        if value is None:
+            if key in self:
+                del self[key]
+        else:
+            super(Storage, self).__setitem__(key, value)
 
     def __repr__(self):
         return '<Storage ' + dict.__repr__(self) + '>'
