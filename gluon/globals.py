@@ -216,7 +216,8 @@ class Response(Storage):
 
         the file content will be streamed at 100 bytes at the time
         """
-
+        if not request:
+            request = current.request
         if isinstance(stream, (str, unicode)):
             stream_file_or_304_or_206(stream,
                                       chunk_size=chunk_size,
@@ -238,6 +239,14 @@ class Response(Storage):
                     os.path.getsize(filename)
             except OSError:
                 pass
+
+        # Internet Explorer < 9.0 will not allow downloads over SSL unless caching is enabled
+        if request.is_https and isinstance(request.env.http_user_agent,str) and \
+                not re.search(r'Opera', request.env.http_user_agent) and \
+                re.search(r'MSIE [5-8][^0-9]', request.env.http_user_agent):
+            self.headers['Pragma'] = 'cache'
+            self.headers['Cache-Control'] = 'private'
+
         if request and request.env.web2py_use_wsgi_file_wrapper:
             wrapped = request.env.wsgi_file_wrapper(stream, chunk_size)
         else:
