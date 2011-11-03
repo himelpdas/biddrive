@@ -112,14 +112,16 @@ jQuery(document).ready(function(){
 
 
 {{elif request.function == 'ccache':}}
-<h2>Cache</h2>
+<h1>Cache</h1>
 <div class="wrapper">
 <div class="list">
     <div class="list-header">
-        Statistics
+        <h2>Statistics</h2>
     </div>
     <div class="content">
         <h3>Overview</h3>
+        <p>Number of entries: <strong>{{=total['entries']}}</strong>
+        {{if total['entries'] > 0:}}
         <p>
             Hit Ratio: 
             <strong>{{=total['ratio']}}%</strong> 
@@ -128,10 +130,13 @@ jQuery(document).ready(function(){
         </p>
         <p>
             Size of cache: 
+            {{if object_stats:}}
             <strong>{{=total['objects']}}</strong> items, 
             <strong>{{=total['bytes']}}</strong> bytes 
             {{if total['bytes'] > 524287:}}
                 (<strong>{{="%.0d" % (total['bytes'] / 1048576)}} MB</strong>)
+            {{pass}}
+            {{else:}} <strong>not available</strong> (requires the Python <a href="http://pypi.python.org/pypi/guppy/" target="_blank">guppy</a> library)
             {{pass}}
         </p>
         <p>
@@ -140,7 +145,16 @@ jQuery(document).ready(function(){
             <strong>{{="%02d" % total['oldest'][1]}}</strong> minutes 
             <strong>{{="%02d" % total['oldest'][2]}}</strong> seconds old.
         </p>
+        {{=BUTTON(T('Cache Keys'), _onclick='jQuery("#all_keys").toggle();')}}
+        <div class="hidden" id="all_keys">
+            {{=total['keys']}}
+        </div>
+        <br />
+        {{pass}}
+        
         <h3>RAM</h3>
+        <p>Number of entries: <strong>{{=ram['entries']}}</strong>
+        {{if ram['entries'] > 0:}}
         <p>
             Hit Ratio: 
             <strong>{{=ram['ratio']}}%</strong> 
@@ -149,10 +163,13 @@ jQuery(document).ready(function(){
         </p>
         <p>
             Size of cache: 
+            {{if object_stats:}}
             <strong>{{=ram['objects']}}</strong> items, 
             <strong>{{=ram['bytes']}}</strong> bytes 
             {{if ram['bytes'] > 524287:}}
                 (<strong>{{=ram['bytes'] / 1048576}} MB</strong>)
+            {{pass}}
+            {{else:}} <strong>not available</strong> (requires the Python <a href="http://pypi.python.org/pypi/guppy/" target="_blank">guppy</a> library)
             {{pass}}
         </p>
         <p>
@@ -161,7 +178,16 @@ jQuery(document).ready(function(){
             <strong>{{="%02d" % ram['oldest'][1]}}</strong> minutes 
             <strong>{{="%02d" % ram['oldest'][2]}}</strong> seconds old.
         </p>
+        {{=BUTTON(T('RAM Cache Keys'), _onclick='jQuery("#ram_keys").toggle();')}}
+        <div class="hidden" id="ram_keys">
+            {{=ram['keys']}}
+        </div>
+        <br />
+        {{pass}}
+        
         <h3>DISK</h3>
+        <p>Number of entries: <strong>{{=disk['entries']}}</strong>
+        {{if disk['entries'] > 0:}}
         <p>
             Hit Ratio: 
             <strong>{{=disk['ratio']}}%</strong> 
@@ -170,10 +196,13 @@ jQuery(document).ready(function(){
         </p>
         <p>
             Size of cache: 
+            {{if object_stats:}}
             <strong>{{=disk['objects']}}</strong> items, 
             <strong>{{=disk['bytes']}}</strong> bytes 
             {{if disk['bytes'] > 524287:}}
                 (<strong>{{=disk['bytes'] / 1048576}} MB</strong>)
+            {{pass}}
+            {{else:}} <strong>not available</strong> (requires the Python <a href="http://pypi.python.org/pypi/guppy/" target="_blank">guppy</a> library)
             {{pass}}
         </p>
         <p>
@@ -182,10 +211,16 @@ jQuery(document).ready(function(){
             <strong>{{="%02d" % disk['oldest'][1]}}</strong> minutes 
             <strong>{{="%02d" % disk['oldest'][2]}}</strong> seconds old.
         </p>
+        {{=BUTTON(T('Disk Cache Keys'), _onclick='jQuery("#disk_keys").toggle();')}}
+        <div class="hidden" id="disk_keys">
+            {{=disk['keys']}}
+        </div>
+        <br />
+        {{pass}}
     </div>
     
     <div class="list-header">
-    Manage Cache
+        <h2>Manage Cache</h2>
     </div>
     <div class="content">
     <p>

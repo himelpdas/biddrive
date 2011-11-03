@@ -327,16 +327,29 @@ def ccache():
     from gluon import portalocker
 
     ram = {
+        'entries': 0,
         'bytes': 0,
         'objects': 0,
         'hits': 0,
         'misses': 0,
         'ratio': 0,
-        'oldest': time.time()
+        'oldest': time.time(),
+        'keys': []
     }
     disk = copy.copy(ram)
     total = copy.copy(ram)
+    disk['keys'] = []
+    total['keys'] = []
 
+    def GetInHMS(seconds):
+        hours = math.floor(seconds / 3600)
+        seconds -= hours * 3600
+        minutes = math.floor(seconds / 60)
+        seconds -= minutes * 60
+        seconds = math.floor(seconds)
+
+        return (hours, minutes, seconds)
+        
     for key, value in cache.ram.storage.items():
         if isinstance(value, dict):
             ram['hits'] = value['hit_total'] - value['misses']
@@ -349,9 +362,10 @@ def ccache():
             if hp:
                 ram['bytes'] += hp.iso(value[1]).size
                 ram['objects'] += hp.iso(value[1]).count
-
-                if value[0] < ram['oldest']:
-                    ram['oldest'] = value[0]
+            ram['entries'] += 1
+            if value[0] < ram['oldest']:
+                ram['oldest'] = value[0]
+            ram['keys'].append((key, GetInHMS(time.time() - value[0])))
 
     locker = open(os.path.join(request.folder,
                                         'cache/cache.lock'), 'a')
@@ -370,17 +384,22 @@ def ccache():
                 if hp:
                     disk['bytes'] += hp.iso(value[1]).size
                     disk['objects'] += hp.iso(value[1]).count
-                    if value[0] < disk['oldest']:
-                        disk['oldest'] = value[0]
+                disk['entries'] += 1
+                if value[0] < disk['oldest']:
+                    disk['oldest'] = value[0]
+                disk['keys'].append((key, GetInHMS(time.time() - value[0])))
+            
     finally:
         portalocker.unlock(locker)
         locker.close()
         disk_storage.close()
 
+    total['entries'] = ram['entries'] + disk['entries']
     total['bytes'] = ram['bytes'] + disk['bytes']
     total['objects'] = ram['objects'] + disk['objects']
     total['hits'] = ram['hits'] + disk['hits']
     total['misses'] = ram['misses'] + disk['misses']
+    total['keys'] = ram['keys'] + disk['keys']
     try:
         total['ratio'] = total['hits'] * 100 / (total['hits'] + total['misses'])
     except (KeyError, ZeroDivisionError):
@@ -391,19 +410,19 @@ def ccache():
     else:
         total['oldest'] = ram['oldest']
 
-    def GetInHMS(seconds):
-        hours = math.floor(seconds / 3600)
-        seconds -= hours * 3600
-        minutes = math.floor(seconds / 60)
-        seconds -= minutes * 60
-        seconds = math.floor(seconds)
-
-        return (hours, minutes, seconds)
-
     ram['oldest'] = GetInHMS(time.time() - ram['oldest'])
     disk['oldest'] = GetInHMS(time.time() - disk['oldest'])
     total['oldest'] = GetInHMS(time.time() - total['oldest'])
 
+    def key_table(keys):
+        return TABLE(TR(TD(STRONG('Key')), TD(STRONG('Time in Cache (h:m:s)'))),
+            *[TR(TD(k[0]), TD('%02d:%02d:%02d' % k[1])) for k in keys], _class='cache-keys',
+            _style="border-collapse: separate; border-spacing: .5em;")
+    
+    ram['keys'] = key_table(ram['keys'])
+    disk['keys'] = key_table(disk['keys'])
+    total['keys'] = key_table(total['keys'])
+    
     return dict(form=form, total=total,
-                ram=ram, disk=disk)
+                ram=ram, disk=disk, object_stats=hp != False)
 
