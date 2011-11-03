@@ -55,10 +55,14 @@ class Storage(dict):
     """
 
     def __getattr__(self, key):
-        return super(Storage, self).get(key, None)
+        return dict.get(self, key, None)
 
     def __setattr__(self, key, value):
-        self[key] = value
+        if value is None:
+            if key in self:
+                del self[key]
+        else:
+            self[key] = value
 
     def __delattr__(self, key):
         if key in self:
@@ -67,14 +71,7 @@ class Storage(dict):
             raise AttributeError, "missing key=%s" % key
 
     def __getitem__(self, key):
-        return super(Storage, self).get(key, None)
-
-    def __setitem__(self, key, value):
-        if value is None:
-            if key in self:
-                del self[key]
-        else:
-            super(Storage, self).__setitem__(key, value)
+        return dict.get(self, key, None)
 
     def __repr__(self):
         return '<Storage ' + dict.__repr__(self) + '>'
