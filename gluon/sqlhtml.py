@@ -1286,7 +1286,7 @@ class SQLFORM(FORM):
                        **attributes)
 
     @staticmethod
-    def build_query(fields,keywords):
+    def build_query(fields,keywords):        
         key = keywords.strip()
         if key and not ' ' in key:
             SEARCHABLE_TYPES = ('string','text','list:string')
@@ -1607,7 +1607,9 @@ class SQLFORM(FORM):
         elif csv and len(request.args)>0 and request.args[-1]=='csv':
             if request.vars.keywords:
                 try:
-                    dbset=dbset(SQLFORM.build_query(fields,request.vars.keywords))
+                    dbset=dbset(SQLFORM.build_query(
+                            fields,
+                            request.vars.get('keywords','')))
                 except:
                     raise HTTP(400)
             check_authorization()
@@ -1672,7 +1674,8 @@ class SQLFORM(FORM):
                     buttonclass='buttonexport',
                     buttontext=T('Export'),
                     trap = False,
-                    buttonurl=url(args=['csv'],vars=dict(keywords=request.vars.keywords))))
+                    buttonurl=url(args=['csv'],
+                                  vars=dict(keywords=request.vars.keywords or ''))))
 
         console.append(search_actions)
 
@@ -1845,7 +1848,7 @@ class SQLFORM(FORM):
         return res
 
     @staticmethod
-    def smartgrid(table, constraints=None, links=None,
+    def smartgrid(table, constraints=None, links=None,args=None,
                   linked_tables=None, user_signature=True,
                   **kwargs):
         """
@@ -1879,20 +1882,21 @@ class SQLFORM(FORM):
         """
         from gluon import current, A, URL, DIV, H3, redirect
         request, T = current.request, current.T
+        if args is None: args = []
         db = table._db
         breadcrumbs = []
-        if request.args(0) != table._tablename:
-            request.args=[table._tablename]
+        if request.args(len(args)) != table._tablename:
+            request.args=args+[table._tablename]
         if links is None: links = {}
         if constraints is None: constraints = {}
         try:
-            args = 1
+            nargs = len(args)+1
             previous_tablename,previous_fieldname,previous_id = \
                 table._tablename,None,None
-            while len(request.args)>args:
-                key = request.args(args)
+            while len(request.args)>nargs:
+                key = request.args(nargs)
                 if '.' in key:
-                    id = request.args(args+1)
+                    id = request.args(nargs+1)
                     tablename,fieldname = key.split('.',1)
                     table = db[tablename]
                     field = table[fieldname]
@@ -1915,21 +1919,21 @@ class SQLFORM(FORM):
                     except TypeError:
                         name = id
                     breadcrumbs += [A(T(db[referee]._plural),_class=trap_class(),
-                                      _href=URL(args=request.args[:args])),' ',
+                                      _href=URL(args=request.args[:nargs])),' ',
                                     A(name,_class=trap_class(),
-                                      _href=URL(args=request.args[:args]+[
+                                      _href=URL(args=request.args[:nargs]+[
                                     'view',referee,id],user_signature=True)),
                                     ' > ']
-                    args+=2
+                    nargs+=2
                 else:
                     break
-            if args>1:
+            if nargs>len(args)+1:
                 query = (field == id)
                 if linked_tables is None or referee in linked_tables:
-                    field.represent = lambda id,r=None,referee=referee,rep=field.represent: A(rep(id),_class=trap_class(),_href=URL(args=request.args[:args]+['view',referee,id], user_signature=user_signature))
+                    field.represent = lambda id,r=None,referee=referee,rep=field.represent: A(rep(id),_class=trap_class(),_href=URL(args=request.args[:nargs]+['view',referee,id], user_signature=user_signature))
         except (KeyError,ValueError,TypeError):
             redirect(URL(args=table._tablename))
-        if args==1:
+        if nargs==len(args)+1:
             query = table.id>0
 
         # filter out data info for displayed table
@@ -1947,14 +1951,14 @@ class SQLFORM(FORM):
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
                 links.append(
-                    lambda row,t=T(db[tablename]._plural),args=args,args0=args0:\
+                    lambda row,t=T(db[tablename]._plural),nargs=nargs,args0=args0:\
                         A(SPAN(t),_class=trap_class(),_href=URL(
-                            args=request.args[:args]+[args0,row.id])))
-        grid=SQLFORM.grid(query,args=request.args[:args],links=links,
+                            args=request.args[:nargs]+[args0,row.id])))
+        grid=SQLFORM.grid(query,args=request.args[:nargs],links=links,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):
             breadcrumbs.append(A(T(table._plural),_class=trap_class(),
-                                 _href=URL(args=request.args[:args])))
+                                 _href=URL(args=request.args[:nargs])))
             grid.insert(0,DIV(H3(*breadcrumbs),_class='web2py_breadcrumbs'))
         return grid
 
