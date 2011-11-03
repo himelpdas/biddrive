@@ -47,9 +47,18 @@ tr.error_ticket:hover {
      onclick="uncheck()" type="button">
     <input value="{{=T('delete all checked')}}" type="submit"><br><br>
     
-    {{ if method == 'new': }}
+    {{ if 'new' in method: }}
+    {{base_url = 'db' in method and 'ticket' or 'ticketdb' }}
     <h3>{{=T('Click row to expand traceback')}}</h3>
-    <p class="controls"><a class="button" href="{{=URL(args=[app, 'old'])}}"><span>lists by ticket</span></a></p>
+    {{if 'db' in method:}}
+        source : db
+        <a class="button" href="{{=URL(args=[app, 'new'])}}"><span>switch to : filesystem</span></a>
+        <a class="button" href="{{=URL(args=[app, 'dbold'])}}"><span>lists by ticket</span></a>
+    {{else:}}
+        source : filesystem
+        <a class="button" href="{{=URL(args=[app, 'dbnew'])}}"><span>switch to : db</span></a>
+        <a class="button" href="{{=URL(args=[app, 'old'])}}"><span>lists by ticket</span></a>
+    {{pass}}
     <table id="trck_errors" class="sortable">
       <thead>
         <tr>
@@ -69,7 +78,7 @@ tr.error_ticket:hover {
           <td>{{=e['causer']}}</td>
           <td>{{=A(e['last_line'],_href="#",_onclick="collapse('%s');"%e['hash'])}}</td>
           <td>+</td>
-          <td>{{=A(T('details'),_href=URL('ticket',args=[app,e['ticket']]))}}</td>
+          <td>{{=A(T('details'),_href=URL(base_url,args=[app,e['ticket']]))}}</td>
         </tr>
         <tr id="{{=e['hash']}}" class="traceback">
           <td colspan="6">
@@ -83,7 +92,16 @@ tr.error_ticket:hover {
     </table>
     {{ else: }}
     <h3>{{=T('Click row to view a ticket')}}</h3>
-    <p class="controls"><a class="button" href="{{=URL(args=[app, 'new'])}}"><span>list by exception</span></a></p>
+    <p class="controls">
+    {{if 'db' in method:}}
+        source : db
+        <a class="button" href="{{=URL(args=[app, 'old'])}}"><span>switch to : filesystem</span></a>
+        <a class="button" href="{{=URL(args=[app, 'dbnew'])}}"><span>lists by exception</span></a>
+    {{else:}}
+        source : filesystem
+        <a class="button" href="{{=URL(args=[app, 'dbold'])}}"><span>switch to : db</span></a>
+        <a class="button" href="{{=URL(args=[app, 'new'])}}"><span>lists by exception</span></a>
+    {{pass}}
     <table class="sortable">
       <thead>
         <tr>
@@ -96,8 +114,13 @@ tr.error_ticket:hover {
         {{for ticket in tickets:}}
         <tr>
     <td><input type="checkbox" name="delete_{{=ticket}}"/></td>
+    {{if 'db' in method:}}
+    <td><a href="{{=URL('ticketdb',args=[app,ticket])}}">{{=ticket}}</a></td>
+    <td>{{=time.strftime('%Y-%m-%d %H:%M:%S',times[ticket].timetuple())}}</td>
+    {{else:}}
     <td><a href="{{=URL('ticket',args=[app,ticket])}}">{{=ticket}}</a></td>
     <td>{{=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(os.stat(os.path.join(request.folder,'../%s/errors/%s' % (app,ticket)))[stat.ST_CTIME]))}}</td>
+    {{pass}}
         </tr>
         {{pass}}
       </tbody>

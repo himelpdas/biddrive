@@ -1097,6 +1097,60 @@ def errors():
         decorated.sort(key=operator.itemgetter(0), reverse=True)
 
         return dict(errors = [x[1] for x in decorated], app=app, method=method)
+        
+    elif method == 'dbnew':
+        errors_path = apath('%s/errors' % app, r=request)
+        tk_db, tk_table = get_ticket_storage(app)
+        
+        delete_hashes = []
+        for item in request.vars:
+            if item[:7] == 'delete_':
+                delete_hashes.append(item[7:])
+
+        hash2error = dict()
+        
+        for fn in tk_db(tk_table.id>0).select():
+            try:
+                error = pickle.loads(fn.ticket_data)
+            except AttributeError:
+                tk_db(tk_table.id == fn.id).delete()
+                tk_db.commit()
+            
+            hash = hashlib.md5(error['traceback']).hexdigest()
+            
+            if hash in delete_hashes:
+                tk_db(tk_table.id == fn.id).delete()
+                tk_db.commit()
+            else:
+                try:
+                    hash2error['hash']['count'] += 1
+                except KeyError:
+                    error_lines = error['traceback'].split("\n")
+                    last_line = error_lines[-2]
+                    error_causer = os.path.split(error['layer'])[1]
+                    hash2error[hash] = dict(count=1, pickel=error,
+                                            causer=error_causer,
+                                            last_line=last_line,
+                                            hash=hash,ticket=fn.ticket_id)
+
+        decorated = [(x['count'], x) for x in hash2error.values()]
+        
+        decorated.sort(key=operator.itemgetter(0), reverse=True)
+        
+        return dict(errors = [x[1] for x in decorated], app=app, method=method)
+
+    elif method == 'dbold':
+        tk_db, tk_table = get_ticket_storage(app)
+        for item in request.vars:
+            if item[:7] == 'delete_':
+                tk_db(tk_table.ticket_id == item[7:]).delete()
+                tk_db.commit()
+        tickets_ = tk_db(tk_table.id>0).select(tk_table.ticket_id, tk_table.created_datetime, orderby=~tk_table.created_datetime)
+        tickets = [row.ticket_id for row in tickets_]
+        times = dict([(row.ticket_id, row.created_datetime) for row in tickets_]) 
+
+        return dict(app=app, tickets=tickets, method=method, times=times)
+
     else:
         for item in request.vars:
             if item[:7] == 'delete_':
@@ -1109,6 +1163,22 @@ def errors():
 
         return dict(app=app, tickets=tickets, method=method)
 
+def get_ticket_storage(app):
+    private_folder = apath('%s/private' % app, r=request)
+    db_string = open(os.path.join(private_folder, 'ticket_storage.txt')).read().replace('\r','').replace('\n','').strip()
+    tickets_table = 'web2py_ticket'
+    tablename = tickets_table + '_' + app
+    db_path = apath('%s/databases' % app, r=request)
+    from gluon import DAL
+    ticketsdb = DAL(db_string, folder=db_path, auto_import=True)
+    if not ticketsdb.get(tablename):
+        table = ticketsdb.define_table(
+                tablename,
+                Field('ticket_id', length=100),
+                Field('ticket_data', 'text'),
+                Field('created_datetime', 'datetime'),
+                )
+    return ticketsdb , ticketsdb.get(tablename)
 
 def make_link(path):
     """ Create a link from a path """
@@ -1183,6 +1253,29 @@ def ticket():
     e = RestrictedError()
     e.load(request, app, ticket)
 
+    return dict(app=app,
+                ticket=ticket,
+                output=e.output,
+                traceback=(e.traceback and TRACEBACK(e.traceback)),
+                snapshot=e.snapshot,
+                code=e.code,
+                layer=e.layer,
+                myversion=myversion)
+
+def ticketdb():
+    """ Ticket handler """
+
+    if len(request.args) != 2:
+        session.flash = T('invalid ticket')
+        redirect(URL('site'))
+
+    app = get_app()
+    myversion = request.env.web2py_version
+    ticket = request.args[1]
+    e = RestrictedError()
+    request.tickets_db = get_ticket_storage(app)[0]
+    e.load(request, app, ticket)
+    response.view = 'default/ticket.html'
     return dict(app=app,
                 ticket=ticket,
                 output=e.output,
