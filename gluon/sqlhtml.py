@@ -1423,6 +1423,8 @@ class SQLFORM(FORM):
              _class="web2py_grid",             
              formname='web2py_grid',
              search_widget='default',
+             ignore_rw = False,
+             formstyle = 'table3cols',
             ):
 
         # jQuery UI ThemeRoller classes (empty if ui is disabled)
@@ -1472,8 +1474,8 @@ class SQLFORM(FORM):
         session = current.session
         response = current.response        
         wenabled = (not user_signature or (session.auth and session.auth.user))
-        #create = wenabled and create
-        #editable = wenabled and editable
+        create = wenabled and create
+        editable = wenabled and editable
         deletable = wenabled and deletable
         if search_widget=='default':
             search_widget = SQLFORM.search_menu
@@ -1482,7 +1484,8 @@ class SQLFORM(FORM):
             b['user_signature'] = user_signature
             return URL(**b)
 
-        def gridbutton(buttonclass='buttonadd',buttontext='Add',buttonurl=url(args=[]),callback=None,delete=None,trap=True):
+        def gridbutton(buttonclass='buttonadd',buttontext='Add',
+                       buttonurl=url(args=[]),callback=None,delete=None,trap=True):
             if showbuttontext:
                 if callback:
                     return A(SPAN(_class=ui.get(buttonclass,'')), 
@@ -1554,12 +1557,12 @@ class SQLFORM(FORM):
             check_authorization()
             table = db[request.args[-1]]
             create_form = SQLFORM(
-                table,
-                _class='web2py_form'
-                ).process(next=referrer,
-                          onvalidation=onvalidation,
-                          onsuccess=oncreate,                          
-                          formname=formname)
+                table, ignore_rw = ignore_rw, formstyle = formstyle,
+                _class='web2py_form').process(
+                next=referrer,
+                onvalidation=onvalidation,
+                onsuccess=oncreate,                          
+                formname=formname)
             res = DIV(buttons(),create_form,formfooter,_class=_class)
             res.create_form = create_form
             res.edit_form = None
@@ -1822,6 +1825,7 @@ class SQLFORM(FORM):
                 tr.append(row_buttons)
                 tbody.append(tr)
             htmltable.append(tbody)
+            htmltable = DIV(htmltable,_style='overflow-x:scroll')
             if selectable:
                 htmltable = FORM(htmltable,INPUT(_type="submit"))
                 if htmltable.process(formname=formname).accepted:

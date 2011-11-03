@@ -17,6 +17,7 @@
 'Current session': 'Sessione (session) corrente',
 'DB Model': 'Modello di DB',
 'Database': 'Database',
+'Delete': 'Delete',
 'Delete:': 'Cancella:',
 'Description': 'Descrizione',
 'Documentation': 'Documentazione',
