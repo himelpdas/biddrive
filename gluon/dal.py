@@ -3010,21 +3010,24 @@ class NoSQLAdapter(BaseAdapter):
         if self.dbengine == 'google:datastore' in globals():
             if isinstance(fieldtype, gae.Property):
                 return obj
-        if fieldtype.startswith('list:'):
+        is_string = isinstance(fieldtype,str)
+        is_list = is_string and fieldtype.startswith('list:')
+        if is_list:
             if not obj:
                 obj = []
             if not isinstance(obj, (list, tuple)):
                 obj = [obj]
-        if obj == '' and  not fieldtype[:2] in ['st','te','pa','up']:
+        if obj == '' and not \
+                (is_string and fieldtype[:2] in ['st','te','pa','up']):
             return None
         if not obj is None:
-            if isinstance(obj, list) and not fieldtype.startswith('list'):
+            if isinstance(obj, list) and not is_list:
                 obj = [self.represent(o, fieldtype) for o in obj]
             elif fieldtype in ('integer','id'):
                 obj = long(obj)
             elif fieldtype == 'double':
                 obj = float(obj)
-            elif fieldtype.startswith('reference'):
+            elif is_string and fieldtype.startswith('reference'):
                 if isinstance(obj, (Row, Reference)):
                     obj = obj['id']
                 obj = long(obj)
@@ -3058,9 +3061,9 @@ class NoSQLAdapter(BaseAdapter):
                     obj = datetime.datetime(y, m, d, h, mi, s)
             elif fieldtype == 'blob':
                 pass
-            elif fieldtype.startswith('list:string'):
+            elif is_string and fieldtype.startswith('list:string'):
                 return map(self.to_unicode,obj)
-            elif fieldtype.startswith('list:'):
+            elif is_list:
                 return map(int,obj)
             else:
                 obj = self.to_unicode(obj)
