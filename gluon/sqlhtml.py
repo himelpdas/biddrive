@@ -1238,7 +1238,7 @@ class SQLFORM(FORM):
             for field in self.table:
                 if not field.name in fields and field.writable==False \
                         and field.update is None:
-                    if record_id:
+                    if record_id and self.record:
                         fields[field.name] = self.record[field.name]
                     elif not self.table[field.name].default is None:
                         fields[field.name] = self.table[field.name].default
