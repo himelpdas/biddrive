@@ -1451,12 +1451,12 @@ class Auth(object):
 
     def basic(self):
         if not self.settings.allow_basic_login:
-            return False
+            return (False,False,False)
         basic = current.request.env.http_authorization
         if not basic or not basic[:6].lower() == 'basic ':
-            return False
+            return (True, False, False)
         (username, password) = base64.b64decode(basic[6:]).split(':')
-        return self.login_bare(username, password)
+        return (True, True, self.login_bare(username, password))
 
     def login_bare(self, username, password):
         """
@@ -2449,23 +2449,22 @@ class Auth(object):
 
             def f(*a, **b):
 
-                if requires_login and self.settings.allow_basic_login_only and not self.basic():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    return call_or_redirect(
-                        self.settings.on_failed_authorization)
-                if requires_login and not self.basic() and not self.is_logged_in():
-                    if current.request.is_restful:
-                        raise HTTP(403,"Not authorized")
-                    elif current.request.ajax:
-                        return A('login',_href=self.settings.login_url)
-                    request = current.request
-                    next = self.here()
-                    current.session.flash = current.response.flash
-                    return call_or_redirect(
-                        self.settings.on_failed_authentication,
-                        self.settings.login_url+\
-                            '?_next='+urllib.quote(next))
+                basic_allowed,basic_accepted,user = self.basic() 
+                user = user or self.user
+                if requires_login:
+                    if not user:
+                        if self.settings.allow_basic_login_only or \
+                                basic_accepted or current.request.is_restful:
+                            raise HTTP(403,"Not authorized")
+                        elif current.request.ajax:
+                            return A('login',_href=self.settings.login_url)
+                        else:
+                            next = self.here()
+                            current.session.flash = current.response.flash
+                            return call_or_redirect(
+                                self.settings.on_failed_authentication,
+                                self.settings.login_url+\
+                                    '?_next='+urllib.quote(next))
                 
                 #Check condition variable.
                 #Since condition could be callable, following cases could occur: 
