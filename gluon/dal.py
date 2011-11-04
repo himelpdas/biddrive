@@ -153,6 +153,7 @@ import urllib
 import hashlib
 import uuid
 import glob
+import traceback
 
 CALLABLETYPES = (types.LambdaType, types.FunctionType, types.BuiltinFunctionType,
                  types.MethodType, types.BuiltinMethodType)
@@ -4211,13 +4212,14 @@ class DAL(dict):
                     except SyntaxError:
                         raise
                     except Exception, error:
+                        tb = traceback.format_exc()
                         sys.stderr.write('DEBUG_c: Exception %r' % ((Exception, error,),))
                 if connected:
                     break
                 else:
                     time.sleep(1)
             if not connected:
-                raise RuntimeError, "Failure to connect, tried %d times:\n%s" % (attempts, error)
+                raise RuntimeError, "Failure to connect, tried %d times:\n%s" % (attempts, tb)
         else:
             args = (self,'None',0,folder,db_codec)
             self._adapter = BaseAdapter(*args)

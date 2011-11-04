@@ -1439,7 +1439,7 @@ class Auth(object):
         keys['registration_key']=''
         if user:
             user.update_record(**table_user._filter_fields(keys))
-        elif check:
+        elif checks:
             if not 'first_name' in keys and 'first_name' in table_user.fields:
                 keys['first_name'] = keys.get('username',keys.get('email','anonymous')).split('@')[0]
             user_id = table_user.insert(**table_user._filter_fields(keys))
