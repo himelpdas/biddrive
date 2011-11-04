@@ -4213,7 +4213,7 @@ class DAL(dict):
                         raise
                     except Exception, error:
                         tb = traceback.format_exc()
-                        sys.stderr.write('DEBUG_c: Exception %r' % ((Exception, error,),))
+                        sys.stderr.write('DEBUG: connect attempt %i, connection error:\n%s' % (k, tb))
                 if connected:
                     break
                 else:
