@@ -5569,7 +5569,7 @@ class Field(Expression):
         encoded_filename = base64.b16encode(filename).lower()
         newfilename = '%s.%s.%s.%s' % \
             (self._tablename, self.name, uuid_key, encoded_filename)
-        newfilename = newfilename[:200] + '.' + extension
+        newfilename = newfilename[:(self.length - 1 - len(extension))] + '.' + extension
         if isinstance(self.uploadfield,Field):
             blob_uploadfield_name = self.uploadfield.uploadfield
             keys={self.uploadfield.name: newfilename,
