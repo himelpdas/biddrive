@@ -2050,6 +2050,8 @@ class MENU(DIV):
             self['li_class'] = 'web2py-menu-expand'
         if not 'li_active' in self.attributes:
             self['li_active'] = 'web2py-menu-active'
+        if not 'mobile' in self.attributes:
+            self['mobile'] = False
 
     def serialize(self, data, level=0):
         if level == 0:
@@ -2078,9 +2080,23 @@ class MENU(DIV):
             ul.append(li)
         return ul
 
-    def xml(self):
-        return self.serialize(self.data, 0).xml()
+    def serialize_mobile(self, data, select=None, prefix=''):
+        if not select:
+            select = SELECT()
+        for item in data:
+            if item[2]:
+                select.append(OPTION(prefix+item[0],_value=item[2],_selected=item[1]))
+            if len(item)>3 and len(item[3]):
+                self.serialize_mobile(item[3], select, prefix = prefix+item[0]+'/')
+        select['_onchange'] = 'window.location=this.value'
+        return select
 
+    def xml(self):
+        if self['mobile']:
+            return self.serialize_mobile(self.data, 0).xml()
+        else:
+            return self.serialize(self.data, 0).xml()
+    
 
 def embed64(
     filename = None,

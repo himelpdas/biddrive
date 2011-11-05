@@ -93,9 +93,12 @@ class Request(Storage):
     def user_agent(self):
         from gluon.contrib import user_agent_parser
         session = current.session
-        session._user_agent = session._user_agent or \
+        user_agent = session._user_agent = session._user_agent or \
             user_agent_parser.detect(self.env.http_user_agent)
-        return session._user_agent
+        user_agent = Storage(user_agent)
+        for key,value in user_agent.items():
+            if isinstance(value,dict): user_agent[key] = Storage(value)
+        return user_agent
 
     def restful(self):
         def wrapper(action,self=self):

@@ -11,7 +11,6 @@ Taken from http://pypi.python.org/pypi/httpagentparser (MIT license)
 Modified my Ross Peoples for web2py to better support iPhone and iPad.
 """
 import sys
-from storage import Storage
 
 class DetectorsHub(dict):
     _known_types = ['os', 'dist', 'flavor', 'browser']
@@ -60,7 +59,7 @@ class DetectorBase(object):
     skip_if_found = [] # strings if present stop processin
     can_register = False
     is_mobile = False
-    prefs = Storage() # dict(info_type = [name1, name2], ..)
+    prefs = dict() # dict(info_type = [name1, name2], ..)
     version_splitters = ["/", " "]
     _suggested_detectors = None
 
@@ -71,14 +70,14 @@ class DetectorBase(object):
 
     def detect(self, agent, result):
         if agent and self.checkWords(agent):
-            result[self.info_type] = Storage(name=self.name)
-            result[self.info_type].is_mobile = self.is_mobile
-            if not result.is_mobile:
-                result.is_mobile = result[self.info_type].is_mobile
+            result[self.info_type] = dict(name=self.name)
+            result[self.info_type]['is_mobile'] = self.is_mobile
+            if not result.get('is_mobile',None):
+                result['is_mobile'] = result[self.info_type]['is_mobile']
                 
             version = self.getVersion(agent)
             if version:
-                result[self.info_type].version = version
+                result[self.info_type]['version'] = version
             
             return True
         return False
@@ -120,7 +119,7 @@ class Browser(DetectorBase):
 
 class Macintosh(OS):
     look_for = 'Macintosh'
-    prefs = Storage(dist=None)
+    prefs = dict(dist=None)
     def getVersion(self, agent):
         pass
 
@@ -174,8 +173,8 @@ class Safari(Browser):
 
 class Linux(OS):
     look_for = 'Linux'
-    prefs = Storage(browser=["Firefox"],
-                    dist=["Ubuntu", "Android"], flavor=None)
+    prefs = dict(browser=["Firefox"],
+                 dist=["Ubuntu", "Android"], flavor=None)
 
     def getVersion(self, agent):
         pass
@@ -183,14 +182,14 @@ class Linux(OS):
 
 class Macintosh(OS):
     look_for = 'Macintosh'
-    prefs = Storage(dist=None, flavor=['MacOS'])
+    prefs = dict(dist=None, flavor=['MacOS'])
     def getVersion(self, agent):
         pass
 
 
 class MacOS(Flavor):
     look_for = 'Mac OS'
-    prefs = Storage(browser=['Firefox', 'Opera', "Microsoft Internet Explorer"])
+    prefs = dict(browser=['Firefox', 'Opera', "Microsoft Internet Explorer"])
 
     def getVersion(self, agent):
         version_end_chars = [';', ')']
@@ -204,8 +203,8 @@ class MacOS(Flavor):
 
 class Windows(OS):
     look_for = 'Windows'
-    prefs = Storage(browser=["Microsoft Internet Explorer", 'Firefox'],
-                    dict=None, flavor=None)
+    prefs = dict(browser=["Microsoft Internet Explorer", 'Firefox'],
+                 dict=None, flavor=None)
 
     def getVersion(self, agent):
         v = agent.split('Windows')[-1].split(';')[0].strip()
@@ -217,13 +216,13 @@ class Windows(OS):
 class Ubuntu(Dist):
     look_for = 'Ubuntu'
     version_splitters = ["/", " "]
-    prefs = Storage(browser=['Firefox'])
+    prefs = dict(browser=['Firefox'])
 
 
 class Debian(Dist):
     look_for = 'Debian'
     version_splitters = ["/", " "]
-    prefs = Storage(browser=['Firefox'])
+    prefs = dict(browser=['Firefox'])
 
 
 class Chrome(Browser):
@@ -233,7 +232,7 @@ class Chrome(Browser):
 class ChromeOS(OS):
     look_for = "CrOS"
     version_splitters = [" ", " "]
-    prefs = Storage(browser=['Chrome'])
+    prefs = dict(browser=['Chrome'])
     def getVersion(self, agent):
         vs = self.version_splitters
         return agent.split(self.look_for+vs[0])[-1].split(vs[1])[1].strip()[:-1]
@@ -275,8 +274,8 @@ class iPad(Dist):
 detectorshub = DetectorsHub()
 
 def detect(agent):
-    result = Storage()
-    prefs = Storage()
+    result = dict()
+    prefs = dict()
     _suggested_detectors = []
     for info_type in detectorshub:
         if not _suggested_detectors:
@@ -296,27 +295,9 @@ def detect(agent):
     return result
 
 
-class Result(Storage):
+class Result(dict):
     def __missing__(self, k):
         return ""
-
-"""
-THIS VERSION OF DETECT CAUSES IndexErrors.
-
-def detect(agent):
-    result = Result()
-    _suggested_detectors = []
-    for info_type in detectorshub:
-        detectors = _suggested_detectors or detectorshub[info_type]
-        for detector in detectors:
-            if detector.detect(agent, result):
-                if detector.prefs and not detector._suggested_detectors:
-                    _suggested_detectors = detectorshub.reorderByPrefs(
-                        detectors, detector.prefs.get(info_type))
-                    detector._suggested_detectors = _suggested_detectors
-                    break
-    return result
-"""
 
 def simple_detect(agent):
     """

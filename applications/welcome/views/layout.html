@@ -105,10 +105,9 @@
 
     <div id="statusbar"><!-- statusbar is menu zone -->
       {{block statusbar}} <!-- this is default statusbar -->
-      {{#------ superfish menu ------}}
-      {{=MENU(response.menu,_class='dropdown dropdown-horizontal')}}
-
-
+      <!-- Menu -->
+      {{=MENU(response.menu,_class='dropdown dropdown-horizontal',mobile=request.user_agent().is_mobile)}}
+      <!-- Menu END //-->
       <!-- AddToAny BEGIN -->
       <div style="padding: 7px; float:right;" class="a2a_kit a2a_default_style"><a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div><script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
       <!-- AddToAny END -->
