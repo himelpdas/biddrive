@@ -144,13 +144,14 @@ class IS_MATCH(Validator):
         ('', 'invalid expression')
     """
 
-    def __init__(self, expression, error_message='invalid expression', strict=True, search=False):
+    def __init__(self, expression, error_message='invalid expression',
+                 strict=False, search=False):
+        if strict or not search:
+            if not expression.startswith('^'):
+                expression = '^(%s)' % expression
         if strict:
             if not expression.endswith('$'):
                 expression = '(%s)$' % expression
-        if not search:
-            if not expression.startswith('^'):
-                expression = '^(%s)' % expression
         self.regex = re.compile(expression)
         self.error_message = error_message
 
