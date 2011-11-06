@@ -1618,7 +1618,7 @@ class SQLiteAdapter(BaseAdapter):
         self.db = db
         self.dbengine = "sqlite"
         self.uri = uri
-        self.pool_size = pool_size
+        self.pool_size = 0
         self.folder = folder
         self.db_codec = db_codec
         self.find_or_make_work_folder()
