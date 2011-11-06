@@ -5,13 +5,17 @@ from gluon.fileutils import read_file
 response.title = T('web2py Web Framework')
 response.keywords = T('web2py, Python, Web Framework')
 response.description = T('web2py Web Framework')
+response.generic_patterns = ['*']
 
 session.forget()
 
 @cache('index')
 def index():
     import urllib;
-    images = XML(urllib.urlopen('http://web2py.com/poweredby/default/images/4').read())
+    try:
+        images = XML(urllib.urlopen('http://web2py.com/poweredby/default/images').read())
+    except:
+        images = []
     tweets = None # XML(urllib.urlopen('http://twitter.com/web2py?format=json').read())
     return response.render(images=images,tweets=tweets)
 
