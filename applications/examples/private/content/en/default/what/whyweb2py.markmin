@@ -59,7 +59,7 @@ db.define_table('image',
 ``
 def index():
     form = SQLFORM(db.image)
-    if form.accepts(request.vars, session):
+    if form.process().accepted:
         response.flash = 'image uploaded'
     return dict(form = form)""",counter=None,_class='boxCode')}}
 ``:code_python
