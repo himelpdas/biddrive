@@ -93,7 +93,8 @@ def write_dict(filename, contents):
     try:
         fp = open(filename, 'w')
     except IOError:
-        logging.error('Unable to write to file %s' % filename)
+        if not is_gae:
+            logging.warning('Unable to write to file %s' % filename)
         return
     portalocker.lock(fp, portalocker.LOCK_EX)
     fp.write('# coding: utf8\n{\n')
