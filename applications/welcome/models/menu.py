@@ -5,7 +5,7 @@
 ## Customize your APP title, subtitle and menus here
 #########################################################################
 
-response.title = request.application
+response.title = ' '.join(word.capitalize() for word in request.application.split('_'))
 response.subtitle = T('customize me!')
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
