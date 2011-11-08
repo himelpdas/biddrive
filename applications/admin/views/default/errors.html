@@ -50,6 +50,7 @@ tr.error_ticket:hover {
     {{ if 'new' in method: }}
     {{base_url = 'db' in method and 'ticket' or 'ticketdb' }}
     <h3>{{=T('Click row to expand traceback')}}</h3>
+    <p class="controls">
     {{if 'db' in method:}}
         source : db
         <a class="button" href="{{=URL(args=[app, 'new'])}}"><span>switch to : filesystem</span></a>
@@ -59,6 +60,7 @@ tr.error_ticket:hover {
         <a class="button" href="{{=URL(args=[app, 'dbnew'])}}"><span>switch to : db</span></a>
         <a class="button" href="{{=URL(args=[app, 'old'])}}"><span>lists by ticket</span></a>
     {{pass}}
+    </p>
     <table id="trck_errors" class="sortable">
       <thead>
         <tr>
@@ -102,6 +104,7 @@ tr.error_ticket:hover {
         <a class="button" href="{{=URL(args=[app, 'dbold'])}}"><span>switch to : db</span></a>
         <a class="button" href="{{=URL(args=[app, 'new'])}}"><span>lists by exception</span></a>
     {{pass}}
+    </p>
     <table class="sortable">
       <thead>
         <tr>
