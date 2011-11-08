@@ -1142,7 +1142,7 @@ class Auth(object):
         else:
             raise HTTP(404)
 
-    def navbar(self, prefix='Welcome', action=None):
+    def navbar(self, prefix='Welcome', action=None, separators=(' [ ',' | ',' ] ')):
         request = current.request
         T = current.T
         if isinstance(prefix,str):
@@ -1151,35 +1151,36 @@ class Auth(object):
             action=URL(request.application,request.controller,'user')
         if prefix:
             prefix = prefix.strip()+' '
+        s1,s2,s3 = separators
         if self.user_id:
-            logout=A(T('logout'),_href=action+'/logout')
-            profile=A(T('profile'),_href=action+'/profile')
-            password=A(T('password'),_href=action+'/change_password')
-            bar = SPAN(prefix,self.user.first_name,' [ ', logout, ' ]',_class='auth_navbar')
+            logout=A(T('Logout'),_href=action+'/logout')
+            profile=A(T('Profile'),_href=action+'/profile')
+            password=A(T('Password'),_href=action+'/change_password')
+            bar = SPAN(prefix,self.user.first_name,s1, logout,s3,_class='auth_navbar')
             if not 'profile' in self.settings.actions_disabled:
-                bar.insert(4, ' | ')
+                bar.insert(4,s2)
                 bar.insert(5, profile)
             if not 'change_password' in self.settings.actions_disabled:
-                bar.insert(-1, ' | ')
+                bar.insert(-1,s2)
                 bar.insert(-1, password)
         else:
-            login=A(T('login'),_href=action+'/login')
-            register=A(T('register'),_href=action+'/register')
+            login=A(T('Login'),_href=action+'/login')
+            register=A(T('Register'),_href=action+'/register')
             retrieve_username=A(T('forgot username?'),
                             _href=action+'/retrieve_username')
-            lost_password=A(T('lost password?'),
+            lost_password=A(T('Lost password?'),
                             _href=action+'/request_reset_password')
-            bar = SPAN(' [ ',login,' ]',_class='auth_navbar')
+            bar = SPAN(s1,login,s2,_class='auth_navbar')
 
-            if not 'register' in self.settings.actions_disabled:
-                bar.insert(2, ' | ')
+            if not 'Register' in self.settings.actions_disabled:
+                bar.insert(2, s2)
                 bar.insert(3, register)
             if 'username' in self.settings.table_user.fields() and \
                     not 'retrieve_username' in self.settings.actions_disabled:
-                bar.insert(-1, ' | ')
+                bar.insert(-1, s2)
                 bar.insert(-1, retrieve_username)
             if not 'request_reset_password' in self.settings.actions_disabled:
-                bar.insert(-1, ' | ')
+                bar.insert(-1, s2)
                 bar.insert(-1, lost_password)
         return bar
 

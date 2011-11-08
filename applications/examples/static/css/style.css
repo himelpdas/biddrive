@@ -329,7 +329,7 @@ aside blockquote {
 
 #thumbnails a img {
   width:100px;
-  height:100px;
+  height:80px;
   float:left;
   margin:0 10px 0 0;
   border:3px solid #ccc

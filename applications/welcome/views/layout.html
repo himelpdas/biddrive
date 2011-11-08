@@ -69,54 +69,63 @@
     uncomment to load jquery-ui //-->
   </head>
   <body>
-
     <div class="topbar">
-      {{try:}}{{=auth.navbar(action=URL('default', 'user'))}}&nbsp;{{except:pass}}
-    </div>
-    <div class="flash">{{=response.flash or ''}}</div>
-    <div class="container header">      
-      <div class="sixteen columns">
-	<h1 class="remove-bottom" style="margin-top: 40px">
-	  {{=response.title or reqiest.application}}
-	</h1>
-	<h5>{{=response.subtitle or ''}}</h5>
+      <div class="container header">      
+	<div class="sixteen columns">
+	  {{='auth' in globals() and auth.navbar(separators=(' ',' ',' '))}}
+	</div>
       </div>
-      <div class="sixteen columns statusbar">
-	{{=MENU(response.menu,_class="dropdown",mobile=request.user_agent().is_mobile)}}
-	<!-- AddToAny BEGIN -->
-	<div style="padding: 7px; float:right;" class="a2a_kit a2a_default_style"><a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div><script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
-	<!-- AddToAny END -->
-      </div>
-      {{if left_sidebar_enabled:}}
-      <div class="four columns left-sidebar">
-	{{block left_sidebar}}
-	<h3>Left Sidebar</h3>
-	<p></p>
-	{{end}}
-      </div>
-      {{pass}}
-      <div class="{{=middle_columns}} columns center">
-	{{block center}}
-	{{include}}
-	{{end}}
-      </div>
-      {{if right_sidebar_enabled:}}
-      <div class="four columns">
-	{{block right_sidebar}}
-	<h3>Right Sidebar</h3>
-	<p></p>
-	{{end}}
-      </div>      
-      {{pass}}
-      <div class="sixteen columns footer">
-        {{block footer}} <!-- this is default footer -->
-        <a href="http://www.web2py.com/" style="float: left; padding-right: 6px;">
-          <img src="{{=URL('static','images/poweredby.png')}}"/>
-        </a>
-        {{=T('Copyright')}} &#169; 2011        
-        {{end}}	
-      </div>
-    </div><!-- container -->
+    </div><!-- topbar -->
+    <div class="flash">{{=response.flash or ''}}</div>   
+    <div class="main">
+      <div class="container">      
+	<div class="sixteen columns">
+	  <h1 class="remove-bottom" style="margin-top: 40px">
+	    {{=response.title or reqiest.application}}
+	  </h1>
+	  <h5>{{=response.subtitle or ''}}</h5>
+	</div>
+	<div class="sixteen columns statusbar">
+	  {{=MENU(response.menu,_class="dropdown",mobile=request.user_agent().is_mobile)}}
+	  <!-- AddToAny BEGIN -->
+	  <div style="padding: 7px; float:right;" class="a2a_kit a2a_default_style"><a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div><script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
+	  <!-- AddToAny END -->
+	</div>
+	{{if left_sidebar_enabled:}}
+	<div class="four columns left-sidebar">
+	  {{block left_sidebar}}
+	  <h3>Left Sidebar</h3>
+	  <p></p>
+	  {{end}}
+	</div>
+	{{pass}}
+	<div class="{{=middle_columns}} columns center">
+	  {{block center}}
+	  {{include}}
+	  {{end}}
+	</div>
+	{{if right_sidebar_enabled:}}
+	<div class="four columns">
+	  {{block right_sidebar}}
+	  <h3>Right Sidebar</h3>
+	  <p></p>
+	  {{end}}
+	</div>      
+	{{pass}}
+      </div><!-- container -->
+    </div><!-- main -->
+    <div class="footer">
+      <div class="container header">      
+	<div class="sixteen columns">
+          {{block footer}} <!-- this is default footer -->
+          <a href="http://www.web2py.com/" style="float: left; padding-right: 6px;">
+            <img src="{{=URL('static','images/poweredby.png')}}"/>
+          </a>
+          {{=T('Copyright')}} &#169; 2011        
+          {{end}}	
+	</div>
+      </div><!-- container -->
+    </div><!-- footer -->
     
     <!--[if lt IE 7 ]>
 	<script src="{{=URL('static','js/dd_belatedpng.js')}}"></script>

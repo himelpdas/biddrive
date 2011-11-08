@@ -5869,7 +5869,6 @@ def update_record(pack, a=None):
 class VirtualCommand(object):
     def __init__(self,method,row):
         self.method=method
-        #self.instance=instance
         self.row=row
     def __call__(self,*args,**kwargs):
         return self.method(self.row,*args,**kwargs)
