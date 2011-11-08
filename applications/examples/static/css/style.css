@@ -284,11 +284,11 @@ header h2 {
 
 aside {
   width:960px;
-  margin:0 auto;
   display:block;
   clear:both;
+  height: auto;
   padding-top:15px;
-  padding-bottom:15px;
+  padding-bottom:155px;
 }
 
 aside blockquote {
