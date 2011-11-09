@@ -5,6 +5,35 @@ body {
       background-color: #FFFFFF;      
 }
 
+th, td { padding: 0.1em 0.5em 0.1em 0.5em;}
+
+label {
+    white-space: nowrap;
+}
+
+label, b, th {
+    font-weight: bold;
+}
+
+/*
+fieldset { padding: 16px; border: 1px #DEDEDE solid;}
+fieldset legend {text-transform:uppercase; font-weight: bold;}
+*/
+fieldset { padding: 16px; border-top: 1px #DEDEDE solid;}
+fieldset legend {text-transform:uppercase; font-weight: bold; padding: 4px 16px 4px 16px; background: #f1f1f1;}
+
+
+td.w2p_fl, td.w2p_fw, td.w2p_fc { vertical-align:top; }
+td.w2p_fl { text-align:right; }
+td.w2p_fl,  td.w2p_fw {padding-right: 7px;}
+
+tr#submit_record__row {background: #FAFAFA; border-top: 1px solid #E5E5E5; padding: 5px;}
+
+/* Fix */
+#auth_user_remember__row label {display: inline;}
+#web2py_user_form td { vertical-align:top; }
+
+
 a, a:visited, a:hover { text-decoration: none; color:#0069D6}
 a:hover { text-decoration: underline }
 
@@ -69,10 +98,10 @@ div.error {
     padding-top: 5px;    
 }
 
-/* 
-*Grid 
+/*
+*Grid
 *
-* The default style for SQLFORM.grid even using jquery-ui or another ui framework
+* The default style for SQLFORM.grid even using jquery-iu or another ui framework
 * will look better with the declarations below
 * if needed to remove base.css consider keeping these following lines in some css file.
 */
@@ -84,21 +113,22 @@ div.error {
 .web2py_grid tbody td {
     padding: 5px 10px 5px;
     line-height: 13.5px;
-    vertical-align: top;
+    vertical-align: middle;
 }
 .web2py_grid input:focus,
 .web2py_grid textarea:focus,
-.web2py_grid select:focus {  
-        border: 1px solid #ffffff;  
-        -webkit-box-shadow: 0px 0px 6px #007eff;  
-        -moz-box-shadow: 0px 0px 5px #007eff;  
-        box-shadow: 0px 0px 5px #007eff;  
-    } 
+.web2py_grid select:focus {
+        border: 1px solid #ffffff;
+        -webkit-box-shadow: 0px 0px 6px #007eff;
+        -moz-box-shadow: 0px 0px 5px #007eff;
+        box-shadow: 0px 0px 5px #007eff;
+    }
 
 .web2py_grid thead th {
     padding-top: 9px;
     font-weight: bold;
     border-bottom: 1px solid #DDD;
+    border-right: 1px solid #DDD;
 }
 .web2py_grid tr.odd {background-color: #F9F9F9;}
 .web2py_grid tr:hover {background-color: #F5F5F5; }
@@ -109,8 +139,8 @@ div.error {
     font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
     color: #3C3C3D;
     text-shadow: 1px 1px 0 #FFFFFF;
-    background:#ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat;
     white-space: nowrap; overflow: visible; cursor: pointer;
+    background:#ECECEC;
     text-decoration: none; border: 1px solid #CACACA;
     -webkit-border-radius: 2px; -moz-border-radius: 2px;
     -webkit-background-clip: padding-box; border-radius: 2px;
@@ -118,10 +148,9 @@ div.error {
 }
 
 .web2py_console {
-    background-color: #f2f2f2; padding: 5px; border-bottom: 1px solid #DDD; 
+    /*background-color: #f2f2f2; padding: 5px; border-bottom: 1px solid #DDD; */
     min-height: 60px;
-    text-align: center;
-    position: relative;
+    /*text-align:center;*/
 }
 
 
@@ -143,16 +172,14 @@ div.error {
 .web2py_search_actions a,
 .web2py_console input[type=submit],
 .web2py_console input[type=button],
-.web2py_console button,
-a.button {
+.web2py_console button {
     line-height: 13.5px; margin-right: 5px; display: inline-block;
     padding: 3px 5px 3px 5px;
     font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
     font-size: 12px;
-    color: #3C3C3D !important;
-    font-weight:normal !important;
+    color: #3C3C3D;
     text-shadow: 1px 1px 0 #FFFFFF;
-    background:#ECECEC url('../images/css3buttons_backgrounds.png') 0 0 no-repeat;
+    background:#ECECEC;
     white-space: nowrap; overflow: visible;
     cursor: pointer; text-decoration: none;
     border: 1px solid #CACACA;
@@ -164,22 +191,13 @@ a.button {
 .web2py_search_actions a:hover,
 .web2py_console input[type=submit]:hover,
 .web2py_console input[type=button]:hover,
-.web2py_paginator ul li a:hover,
-a.button:hover {
-    color: #FFFFFF; 
-    /*border-color: #e5e4e4; text-decoration: none;
+.web2py_paginator ul li a:hover {
+    color: #FFFFFF; border-color: #388AD4; text-decoration: none;
     text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
-    background-position: 0 -40px;
-    background-color: #e5e4e4;
-    font-weight:normal !important;*/
-
-    border: 1px solid #fafafa;  
-    -webkit-box-shadow: 0px 0px 10px #007eff;  
-    -moz-box-shadow: 0px 0px 9px #007eff;  
-    box-shadow: 0px 0px 9px #007eff;  
+    background-position: 0 -40px; background-color: #2D7DC5;
 }
 .web2py_counter {
-    margin-top: 5px; 
+    margin-top: 5px;
     margin-right:5px;
     width:35%;
     float:right;
@@ -187,19 +205,20 @@ a.button:hover {
 }
 
 .web2py_table, .web2py_form {
-    
+
     border-left: 1px solid #CCC;
     border-right: 1px solid #CCC;
     border-bottom: 1px solid #CCC;
-    border-top: 1px solid #CCC;
 }
+/*Fix firefox problem*/
+.web2py_table {clear: both; display: block;}
 
 .web2py_paginator {
     padding: 5px;
     color: #333;
     text-align:right;
-    background-color: #f2f2f2; padding: 5px; border-bottom: 1px solid #DDD; 
-   
+    background-color: #f2f2f2; padding: 5px; border-bottom: 1px solid #DDD;
+
 }
 .web2py_paginator ul {
     list-style-type: none;
@@ -209,8 +228,8 @@ a.button:hover {
 .web2py_paginator ul li {
     display: inline;
 }
-.web2py_paginator ul li.current a {
-    font-weight: bold !important;
+.web2py_paginator .current {
+    font-weight: bold;
 }
 #w2p_query_panel {
         float:left;

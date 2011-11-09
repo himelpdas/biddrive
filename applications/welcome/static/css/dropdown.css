@@ -65,3 +65,7 @@ ul.dropdown ul ul {
 ul.dropdown li:hover > ul {
  visibility: visible;
 }
+
+ ul.dropdown li a { display: block; padding: 6px 15px; }
+ ul.dropdown li { padding: 0 !important; }
+ ul.dropdown-horizontal li.dir { padding-right: 10px !important; } /* space for the right arrow */
