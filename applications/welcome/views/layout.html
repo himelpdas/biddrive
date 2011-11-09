@@ -1,136 +1,148 @@
 <!DOCTYPE html>
-<html lang="{{=T.accepted_language or 'en'}}" class="no-js">
-  <!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
-  <!--[if lt IE 7 ]> <body class="ie6"> <![endif]-->
-  <!--[if IE 7 ]>    <body class="ie7"> <![endif]-->
-  <!--[if IE 8 ]>    <body class="ie8"> <![endif]-->
-  <!--[if IE 9 ]>    <body class="ie9"> <![endif]-->
-  <!--[if (gt IE 9)|!(IE)]><!--> <body> <!--<![endif]-->
-    <head>
-      
-      <meta charset="utf-8" />
-      <!-- www.phpied.com/conditional-comments-block-downloads/ -->
-    <!-- Always force latest IE rendering engine
-	 (even in intranet) & Chrome Frame
-	 Remove this if you use the .htaccess -->
-    <!--[if IE]>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-	<![endif]-->
-    
-    <title>{{=response.title or request.application}}</title>
-    
-    <!-- http://dev.w3.org/html5/markup/meta.name.html -->
-    <meta name="application-name" content="{{=request.application}}" />
-    
-    <!-- Speaking of Google, don't forget to set your site up:
-	 http://google.com/webmasters -->
-    <meta name="google-site-verification" content="" />
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="ie ie6 lte8 lte7 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
+<!--[if IE 7]>    <html class="ie ie7 lte8 lte7 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
+<!--[if IE 8]>    <html class="ie ie8 lte8 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="{{=T.accepted_language or 'en'}}"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8" />
+  <!-- www.phpied.com/conditional-comments-block-downloads/ -->
+  <!-- Always force latest IE rendering engine
+	   (even in intranet) & Chrome Frame
+	   Remove this if you use the .htaccess -->
+  <!--[if IE]>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <![endif]-->
+  
+  <title>{{=response.title or request.application}}</title>
+  
+  <!-- http://dev.w3.org/html5/markup/meta.name.html -->
+  <meta name="application-name" content="{{=request.application}}" />
+  
+  <!-- Speaking of Google, don't forget to set your site up:
+	   http://google.com/webmasters -->
+  <meta name="google-site-verification" content="" />
 
-    <!--  Mobile Viewport Fix
+  <!--  Mobile Viewport Fix
 	  j.mp/mobileviewport & davidbcalhoun.com/2010/viewport-metatag
 	  device-width: Occupy full width of the screen in its current orientation
 	  initial-scale = 1.0 retains dimensions instead of zooming out if page height > device height
-	  maximum-scale = 1.0 retains dimensions instead of zooming in if page width < device width
-      -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    
-    <!-- Place favicon.ico and apple-touch-icon.png in the root of your domain and delete these references -->
-    <link rel="shortcut icon" href="{{=URL('static','favicon.ico')}}" type="image/x-icon">
-    <link rel="apple-touch-icon" href="{{=URL('static','favicon.png')}}">
+	  user-scalable = yes allows the user to zoom in -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  
+  <!-- Place favicon.ico and apple-touch-icon.png in the root of your domain and delete these references -->
+  <link rel="shortcut icon" href="{{=URL('static','favicon.ico')}}" type="image/x-icon">
+  <link rel="apple-touch-icon" href="{{=URL('static','favicon.png')}}">
 
-    <!-- All JavaScript at the bottom, except for Modernizr which enables 
-	 HTML5 elements & feature detects -->
-    <script src="{{=URL('static','js/modernizr-1.7.min.js')}}"></script>    
+  <!-- All JavaScript at the bottom, except for Modernizr which enables 
+	   HTML5 elements & feature detects -->
+  <script src="{{=URL('static','js/modernizr-1.7.min.js')}}"></script>  
 
-    <!-- include stylesheets -->
-    <link rel="stylesheet" href="{{=URL('static','css/skeleton.css')}}">
-    <link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}">
-    <link rel="stylesheet" href="{{=URL('static','css/dropdown.css')}}">
-    <link rel="stylesheet" href="{{=URL('static','css/dropdown/themes/default/default.css')}}">
+  <!-- include stylesheets -->
+  <link rel="stylesheet" href="{{=URL('static','css/skeleton.css')}}">
+  <link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}">
+  <link rel="stylesheet" href="{{=URL('static','css/superfish.css')}}">
+  <script src="{{=URL('static','js/superfish.js')}}"></script>  
 
-    <!-- http://lwis.net/free-css-drop-down-menu/ -->
-    <!--[if lt IE 7]>
-    <script type="text/javascript" src="URL('static','js/jquery.dropdown.js')"></script>
-    <![endif]-->
-    
-    {{include 'web2py_ajax.html'}}
+  {{include 'web2py_ajax.html'}}
 
-    {{
-    # using sidebars need to know what sidebar you want to use
-    left_sidebar_enabled = globals().get('left_sidebar_enabled',False)
-    right_sidebar_enabled = globals().get('right_sidebar_enabled',False)
-    middle_columns = {0:'sixteen',1:'twelve',2:'eight'}[
-       (left_sidebar_enabled and 1 or 0)+(right_sidebar_enabled and 1 or 0)]
-    }}
+  {{
+  # using sidebars need to know what sidebar you want to use
+  left_sidebar_enabled = globals().get('left_sidebar_enabled',False)
+  right_sidebar_enabled = globals().get('right_sidebar_enabled',False)
+  middle_columns = {0:'sixteen',1:'twelve',2:'eight'}[
+     (left_sidebar_enabled and 1 or 0)+(right_sidebar_enabled and 1 or 0)]
+  }}
 
-    <!-- uncomment here to load jquery-ui
-    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/base/jquery-ui.css" type="text/css" media="all" />
-    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
-    uncomment to load jquery-ui //-->
-  </head>
-  <body>
+  <!-- uncomment here to load jquery-ui
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/base/jquery-ui.css" type="text/css" media="all" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
+  uncomment to load jquery-ui //-->
+</head>
+<body>
+  <div class="wrapper"><!-- for sticky footer -->
+  
     <div class="topbar">
-      <div class="container header">      
-	<div class="sixteen columns">
-	  {{='auth' in globals() and auth.navbar(separators=(' ',' ',' '))}}
-	</div>
+      <div class="container header">    
+        <div class="sixteen columns">
+          {{=MENU(response.menu, _class="sf-menu", mobile=request.user_agent().is_mobile)}}	  
+          {{='auth' in globals() and auth.navbar(separators=(' ',' | ',''))}}
+        </div>
       </div>
     </div><!-- topbar -->
-    <div class="flash">{{=response.flash or ''}}</div>   
+    
+    <div class="flash">{{=response.flash or ''}}</div>
+    
     <div class="main">
-      <div class="container">      
-	<div class="sixteen columns">
-	  <h1 class="remove-bottom" style="margin-top: 40px">
-	    {{=response.title or reqiest.application}}
-	  </h1>
-	  <h5>{{=response.subtitle or ''}}</h5>
-	</div>
-	<div class="sixteen columns statusbar">
-	  {{=MENU(response.menu,_class="dropdown",mobile=request.user_agent().is_mobile)}}
-	  <!-- AddToAny BEGIN -->
-	  <div style="padding: 7px; float:right;" class="a2a_kit a2a_default_style"><a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div><script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
-	  <!-- AddToAny END -->
-	</div>
-	{{if left_sidebar_enabled:}}
-	<div class="four columns left-sidebar">
-	  {{block left_sidebar}}
-	  <h3>Left Sidebar</h3>
-	  <p></p>
-	  {{end}}
-	</div>
-	{{pass}}
-	<div class="{{=middle_columns}} columns center">
-	  {{block center}}
-	  {{include}}
-	  {{end}}
-	</div>
-	{{if right_sidebar_enabled:}}
-	<div class="four columns">
-	  {{block right_sidebar}}
-	  <h3>Right Sidebar</h3>
-	  <p></p>
-	  {{end}}
-	</div>      
-	{{pass}}
+      <div class="container">   
+      
+        <div class="sixteen columns">
+          <h1 class="remove-bottom" style="margin-top: .5em;">
+          {{=response.title or reqiest.application}}
+          </h1>
+          <h5>{{=response.subtitle or ''}}</h5>
+	  <hr/>	  
+        </div>
+        
+        <div class="sixteen columns statusbar">
+          <!-- AddToAny BEGIN --
+          <div style="padding: 7px; float:right;" class="a2a_kit a2a_default_style">
+          <a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div>
+          <script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
+          !-- AddToAny END -->
+        </div>
+        
+        {{if left_sidebar_enabled:}}
+        <div class="four columns left-sidebar">
+          {{block left_sidebar}}
+          <h3>Left Sidebar</h3>
+          <p></p>
+          {{end}}
+        </div>
+        {{pass}}
+        
+        <div class="{{=middle_columns}} columns center">
+          {{block center}}
+          {{include}}
+          {{end}}
+        </div>
+        
+        {{if right_sidebar_enabled:}}
+        <div class="four columns">
+          {{block right_sidebar}}
+          <h3>Right Sidebar</h3>
+          <p></p>
+          {{end}}
+        </div>    
+        {{pass}}
+        
       </div><!-- container -->
     </div><!-- main -->
-    <div class="footer">
-      <div class="container header">      
-	<div class="sixteen columns">
-          {{block footer}} <!-- this is default footer -->
-          <a href="http://www.web2py.com/" style="float: left; padding-right: 6px;">
-            <img src="{{=URL('static','images/poweredby.png')}}"/>
-          </a>
-          {{=T('Copyright')}} &#169; 2011        
-          {{end}}	
-	</div>
-      </div><!-- container -->
-    </div><!-- footer -->
     
-    <!--[if lt IE 7 ]>
+    <div class="push"></div>
+  </div><!-- wrapper -->
+
+  <div class="footer">
+    <div class="container">    
+      <div class="sixteen columns">
+        {{block footer}} <!-- this is default footer -->
+        <div class="footer-content" >
+          {{=T('Copyright')}} &#169; 2011
+          <div style="float: right;">
+            <a href="http://www.web2py.com/" style="float: left; padding-right: 6px;">
+            <img style="padding-bottom: 0;" src="{{=URL('static','images/poweredby.png')}}"/>
+            </a>
+          </div>
+        </div>
+        {{end}}	
+      </div>
+    </div><!-- container -->
+  </div><!-- footer -->
+  
+  <!--[if lt IE 7 ]>
 	<script src="{{=URL('static','js/dd_belatedpng.js')}}"></script>
 	<script> DD_belatedPNG.fix('img, .png_bg'); //fix any <img> or .png_bg background-images </script>
 	<![endif]-->
-    {{if response.google_analytics_id:}}<script>/* http://mathiasbynens.be/notes/async-analytics-snippet */ var _gaq=[['_setAccount','{{=response.google_analytics_id}}'],['_trackPageview']];(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.src='//www.google-analytics.com/ga.js';s.parentNode.insertBefore(g,s)}(document,'script')) </script>{{pass}}
-  </body>
+  {{if response.google_analytics_id:}}<script>/* http://mathiasbynens.be/notes/async-analytics-snippet */ var _gaq=[['_setAccount','{{=response.google_analytics_id}}'],['_trackPageview']];(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.src='//www.google-analytics.com/ga.js';s.parentNode.insertBefore(g,s)}(document,'script')) </script>{{pass}}
+</body>
 </html>

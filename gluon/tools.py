@@ -1158,10 +1158,10 @@ class Auth(object):
             password=A(T('Password'),_href=action+'/change_password')
             bar = SPAN(prefix,self.user.first_name,s1, logout,s3,_class='auth_navbar')
             if not 'profile' in self.settings.actions_disabled:
-                bar.insert(4,s2)
+                bar.insert(4, s2)
                 bar.insert(5, profile)
             if not 'change_password' in self.settings.actions_disabled:
-                bar.insert(-1,s2)
+                bar.insert(-1, s2)
                 bar.insert(-1, password)
         else:
             login=A(T('Login'),_href=action+'/login')
@@ -1170,7 +1170,7 @@ class Auth(object):
                             _href=action+'/retrieve_username')
             lost_password=A(T('Lost password?'),
                             _href=action+'/request_reset_password')
-            bar = SPAN(s1,login,s2,_class='auth_navbar')
+            bar = SPAN(s1, login, s3, _class='auth_navbar')
 
             if not 'Register' in self.settings.actions_disabled:
                 bar.insert(2, s2)
