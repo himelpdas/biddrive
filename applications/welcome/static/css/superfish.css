@@ -63,8 +63,8 @@ ul.sf-menu li li li.sfHover ul {
 	text-decoration:none;
 }
 .sf-menu a, .sf-menu a:visited  { /* visited pseudo selector so IE6 applies text colour*/
-	color: #959595;
-	background-color: #232323;
+//	color: #959595;
+	background-color: transparent;
         font-weight: bold;
 }
 .sf-menu li {
@@ -88,9 +88,9 @@ ul.sf-menu li li li.sfHover ul {
         padding-bottom: 0.25em;
         color: #959595;
 }
-.sf-menu li:hover, .sf-menu a:focus, .sf-menu a:active, .sf-menu li.sfHover, .sf-menu a:hover {
-	background:		#959595;
-	color: #232323;
+.sf-menu li:hover, .sf-menu a:focus, .sf-menu a:active, .sf-menu li.sfHover, .sf-menu a:hover {	
+	color: #FFFFFF;
+	background-color: #959595;
 	outline:		0;
 }
 
