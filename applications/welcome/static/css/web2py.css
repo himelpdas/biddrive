@@ -3,6 +3,9 @@ html, body {
   height: 100%;
 }
 
+a.button:hover { 
+   text-decoration: none;
+}
 
 .wrapper {
   min-height: 100%;
