@@ -149,12 +149,12 @@
 	  border-radius: 3px;
 	  color: #444;
 	  display: inline-block;
-	  font-size: 11px;
+	  font-size: 1em; /** WEB2PY EDIT **/
 	  font-weight: bold;
 	  text-decoration: none;
 	  text-shadow: 0 1px rgba(255, 255, 255, .75);
 	  cursor: pointer;
-	  margin-bottom: 20px;
+	  margin-bottom: 5px; /** WEB2PY EDIT **/
 	  line-height: 21px;
 	  font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
@@ -276,9 +276,9 @@
 ================================================== */
 
 	form {
-		margin-bottom: 20px; }
+		margin-bottom: 5px; } /** WEB2PY EDIT **/
 	fieldset {
-		margin-bottom: 20px; }
+		margin-bottom: 5px; } /** WEB2PY EDIT **/
 	input[type="text"],
 	input[type="password"],
 	input[type="email"],
@@ -295,8 +295,8 @@
 		margin: 0;
 		width: 210px;
 		max-width: 100%;
-		display: block;
-		margin-bottom: 20px;
+		// display: block;  /** WEB@PY EDIT **/
+		margin-bottom: 0px; /** WEB2PY EDIT **/
 		background: #fff; }
 	select {
 		padding: 0; }
