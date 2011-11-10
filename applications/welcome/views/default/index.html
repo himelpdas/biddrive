@@ -3,7 +3,8 @@
 
 {{if 'message' in globals():}}
 <h3>{{=message}}</h3>
-<h4>{{=T("Readme")}}</h4>
+
+<h4/>{{=T('How did you get here?')}}</h4>
 <ol>
   <li>{{=T('You are successfully running web2py')}}</li>
   <li>{{=T('You visited the url')}} {{=A(request.env.path_info,_href=request.env.path_info)}}</li>
@@ -19,9 +20,9 @@
 {{pass}}
 
 {{block right_sidebar}}
-<h3>{{=T('Quick Links')}}</h3>
+{{=A(T("Administrative interface"), _href=URL('admin','default','index'),_class="button")}}
+<h4>{{=T("Don't know what to do?")}}</h4>
 <ul>
-  <li>{{=A(B(T("Administrative interface")), _href=URL('admin','default','index'))}}</li>
   <li>{{=A(T("Online examples"), _href=URL('examples','default','index'))}}</li>
   <li><a href="http://web2py.com">web2py.com</a></li>
   <li><a href="http://web2py.com/book">{{=T('Documentation')}}</a></li>

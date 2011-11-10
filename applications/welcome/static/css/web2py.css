@@ -76,7 +76,7 @@ div.flash {
     position: fixed;
     padding: 10px;
     top: 40px;
-    right: 10px;
+    right: 50px;
     min-width: 280px;
     opacity: 0.85;
     margin: 0px 0px 10px 10px;
@@ -127,6 +127,10 @@ div.error {
     background-color: #F5F5F5;
     margin-top: 1em;
     margin-bottom: 1em;
+    padding: 7px;
+    border: 1px solid #ddd;	
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
 }
 
 /*

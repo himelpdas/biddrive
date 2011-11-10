@@ -45,6 +45,12 @@
   <script src="{{=URL('static','js/jquery.js')}}"></script>  
   <script src="{{=URL('static','js/superfish.js')}}"></script>  
 
+
+  <!-- http://lwis.net/free-css-drop-down-menu/ -->
+  <!--[if lt IE 7]>
+  <script type="text/javascript" src="URL('static','js/jquery.dropdown.js')"></script>
+  <![endif]-->
+  
   {{include 'web2py_ajax.html'}}
 
   {{
@@ -64,9 +70,9 @@
   <div class="wrapper"><!-- for sticky footer -->
   
     <div class="topbar">
-      <div class="container">    
+      <div class="container header">    
         <div class="sixteen columns">
-          {{=MENU(response.menu, _class="sf-menu", mobile=request.user_agent().is_mobile)}}	  
+          {{=MENU(response.menu, _class="sf-menu", mobile=request.user_agent().is_mobile)}}
           {{='auth' in globals() and auth.navbar(separators=(' ',' | ',''))}}
         </div>
       </div>
@@ -74,26 +80,26 @@
     
     <div class="flash">{{=response.flash or ''}}</div>
     
-    <div class="container header">         
-      <div class="sixteen columns">
-        <h1 class="remove-bottom" style="margin-top: .5em;">
+    <div class="main">
+      <div class="container">         
+        <div class="sixteen columns">
+          <h1 class="remove-bottom" style="margin-top: .5em;">
           {{=response.title or reqiest.application}}
-        </h1>
-        <h5>{{=response.subtitle or ''}}</h5>
-	<hr/>	  
-      </div>
-      
-      <div class="sixteen columns statusbar">
-        <!-- AddToAny BEGIN --
-             <div style="padding: 7px; float:right;" class="a2a_kit a2a_default_style">
-               <a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div>
-             <script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
-             !-- AddToAny END -->
-      </div>      
-    </div>
-    
-    <div class="container main">         
-      <div class="sixteen columns">	
+          </h1>
+          <h5>{{=response.subtitle or ''}}</h5>
+        </div>
+        
+        <div class="sixteen columns statusbar">
+	  {{block statusbar}}
+	  /{{=request.application}}/{{=request.controller}}/{{=request.function}}
+	  {{end}}
+          <!-- AddToAny BEGIN -->
+          <div style="float:right;" class="a2a_kit a2a_default_style">
+          <a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div>
+          <script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
+          <!-- AddToAny END -->
+        </div>
+        
         {{if left_sidebar_enabled:}}
         <div class="four columns left-sidebar">
           {{block left_sidebar}}
@@ -102,13 +108,13 @@
           {{end}}
         </div>
         {{pass}}
-
+        
         <div class="{{=middle_columns}} columns center">
           {{block center}}
           {{include}}
           {{end}}
         </div>
-
+        
         {{if right_sidebar_enabled:}}
         <div class="four columns">
           {{block right_sidebar}}
@@ -116,15 +122,16 @@
           <p></p>
           {{end}}
         </div>    
-        {{pass}}        
-      </div><!-- columns -->
+        {{pass}}
+        
+      </div><!-- container -->
     </div><!-- main -->
     
     <div class="push"></div>
   </div><!-- wrapper -->
 
   <div class="footer">
-    <div class="container">    
+    <div class="container header">    
       <div class="sixteen columns">
         {{block footer}} <!-- this is default footer -->
         <div class="footer-content" >
@@ -141,7 +148,7 @@
   </div><!-- footer -->
   
   <!--[if lt IE 7 ]>
-      <script src="{{=URL('static','js/dd_belatedpng.js')}}"></script>
+	<script src="{{=URL('static','js/dd_belatedpng.js')}}"></script>
 	<script> DD_belatedPNG.fix('img, .png_bg'); //fix any <img> or .png_bg background-images </script>
 	<![endif]-->
   {{if response.google_analytics_id:}}<script>/* http://mathiasbynens.be/notes/async-analytics-snippet */ var _gaq=[['_setAccount','{{=response.google_analytics_id}}'],['_trackPageview']];(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.src='//www.google-analytics.com/ga.js';s.parentNode.insertBefore(g,s)}(document,'script')) </script>{{pass}}
