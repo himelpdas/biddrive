@@ -3656,7 +3656,7 @@ class Service(object):
                                  *args[1:], **dict(request.vars))
             if hasattr(s, 'as_list'):
                 s = s.as_list()
-            return serializers.xml(s)
+            return serializers.xml(s,quote=False)
         self.error()
 
     def serve_rss(self, args=None):
