@@ -1,52 +1,59 @@
+{{right_sidebar_enabled=True}}
 {{extend 'layout.html'}}
 
-<article class="product">
-  <a href="http://web2py.com/book"><img src="{{=URL('static','images/tablet.png')}}" alt="Tablet" /></a>
-  <h3>web2py<sup>TM</sup> Web Framework</h3>
-  <p>Free open source full-stack framework for rapid development of fast, scalable, <a href="http://www.web2py.com/book/default/chapter/01#security" target="_blank">secure</a> and portable database-driven web-based applications. Written and programmable in <a href="http://www.python.org" target="_blank">Python</a>. <a href="http://www.gnu.org/licenses/lgpl.html">LGPLv3 License</a></p>
-  <a class="big-button" href="{{=URL('download')}}">DOWNLOAD NOW (FREE)</a>
-  <div id="thumbnails" class="gallery">
-    <h3 class="feature-title">SITES POWERED BY WEB2PY</h3>
-    <a href="http://web2py.com/poweredby"><img id="img1" width="100px"/></a>
-    <a href="http://web2py.com/poweredby"><img id="img2" width="100px"/></a>
-    <a href="http://web2py.com/poweredby"><img id="img3" width="100px"/></a>
-    <a href="http://web2py.com/poweredby"><img id="img4" width="100px"/></a>
-  </div>
-  <script>
-    function showimages() {
-       var images = {{=images}};
-       rotation = Math.floor(Math.random()*(images.length-4));
-       for(var i=0; i<4; i++)
-          jQuery('#img'+(i+1)).attr('src',images[i+rotation]);
-    }
-    jQuery(function(){showimages();});
-  </script>
-</article>
-
-{{block sidebar}}
-<ul class="features-list clearfix">
-  <li>
-    <img src="{{=URL('static','images/system.png')}}" alt="System" />
-    <h3 class="feature-title"><a href="{{=URL('about')}}">BATTERIES INCLUDED</a></h3>
-    <p>Everything you need in one package including fast multi-threaded web server, SQL database and web-based interface. No third party dependencies but works with <a href={{=URL('what')}}>third party tools</a>.</p>
-  </li>
-  <li>
-    <img src="{{=URL('static','images/tools.png')}}" alt="Tools" />
-    <h3 class="feature-title"><a href="http://web2py.com/demo_admin">WEB-BASED IDE</a></h3>
-    <p>Create, modify, deploy and manage application from anywhere using your browser. One web2py instance can run multiple web sites using different databases. Try the <a href="http://web2py.com/demo_admin">interactive demo</a>.</p>
-  </li>
-  <li class="last">
-    <img src="{{=URL('static','images/search.png')}}" alt="Search" />
-    <h3 class="feature-title"><a href="{{=URL('documentation')}}">EXTENSIVE DOCUMENTATION</a></h3>
-    <p>Start with some <a href="{{=URL('examples')}}">quick examples</a>, then read the <a href="http://web2py.com/book">reference manual</a>, watch <a href="http://vimeo.com/album/178500">videos</a>, and join  <a href="http://web2py.com/examples/default/usergroups">user group</a> for discussion. Take advantage of the <a href="http://web2py.com/layouts">layouts</a> and <a href="http://dev.s-cubism.com/web2py_plugins">plugins</a> and <a href="http://web2pyslices.com"recipes</a></p>
-  </li>
-</ul>
-{{for k,quote in enumerate(quotes[:3]):}}
-<div class="third-column{{if k==2:}} last{{pass}}">
-  <blockquote>
-    <p>{{=quote[0]}}</p>
-  </blockquote>
-  <h3 class="user-title"><a href="{{=quote[2]}}">{{=quote[1]}}</a></h3>
+<h3>web2py<sup>TM</sup> Web Framework</h3>
+<p>Free open source full-stack framework for rapid development of fast, scalable, <a href="http://www.web2py.com/book/default/chapter/01#security" target="_blank">secure</a> and portable database-driven web-based applications. Written and programmable in <a href="http://www.python.org" target="_blank">Python</a>. <a href="http://www.gnu.org/licenses/lgpl.html">LGPLv3 License</a></p>
+<a class="button" href="{{=URL('download')}}">DOWNLOAD NOW</a>
+<div id="thumbnails" class="gallery">
+  <h3><a href="http://web2py.com/poweredby">SITES POWERED BY WEB2PY</a></h3>
+  <a href="http://web2py.com/poweredby"><img id="img1" width="100px"/></a>
+  <a href="http://web2py.com/poweredby"><img id="img2" width="100px"/></a>
+  <a href="http://web2py.com/poweredby"><img id="img3" width="100px"/></a>
+  <a href="http://web2py.com/poweredby"><img id="img4" width="100px"/></a>
 </div>
-{{pass}}
+<script>
+  function showimages() {
+    var images = {{=images}};
+    rotation = Math.floor(Math.random()*(images.length-4));
+    for(var i=0; i<4; i++)
+       jQuery('#img'+(i+1)).attr('src',images[i+rotation]);
+  };
+  jQuery(function(){showimages();});
+</script>
+
+{{block extra}}
+<div class="container">
+  <div class="sixteen columns">
+    <div class="five columns">
+      <h3><a href="{{=URL('about')}}">BATTERIES INCLUDED</a></h3>
+      <p>Everything you need in one package including fast multi-threaded web server, SQL database and web-based interface. No third party dependencies but works with <a href={{=URL('what')}}>third party tools</a>.</p>
+    </div>
+    <div class="five columns">
+      <h3><a href="http://web2py.com/demo_admin">WEB-BASED IDE</a></h3>
+      <p>Create, modify, deploy and manage application from anywhere using your browser. One web2py instance can run multiple web sites using different databases. Try the <a href="http://web2py.com/demo_admin">interactive demo</a>.</p>
+    </div>
+    <div class="five columns">
+      <h3><a href="{{=URL('documentation')}}">EXTENSIVE DOCS</a></h3>
+      <p>
+	Start with some <a href="{{=URL('examples')}}">quick examples</a>, then read the <a href="http://web2py.com/book">reference manual</a>, watch <a href="http://vimeo.com/album/178500">videos</a>, and join  <a href="http://web2py.com/examples/default/usergroups">user group</a> for discussion. Take advantage of the <a href="http://web2py.com/layouts">layouts</a> and <a href="http://dev.s-cubism.com/web2py_plugins">plugins</a> and <a href="http://web2pyslices.com">recipes</a>
+      </p>
+    </div>
+  </div>
+<div class="container">
+  <div class="sixteen columns">
+    <img src="{{=URL('static','images/shadow-bottom.png')}}" width="100%"/>
+    {{for k,quote in enumerate(quotes[:3]):}}
+    <div class="five columns">
+      <em>
+	<p>{{=quote[0]}}</p>
+      </em>
+      <span class="right"><a href="{{=quote[2]}}">{{=quote[1]}}</a></span>
+    </div>
+    {{pass}}
+  </div>
+</div>
+{{end}}
+
+{{block right_sidebar}}
+  <a href="http://web2py.com/book"><img src="{{=URL('static','images/tablet.png')}}" alt="Tablet" /></a>
 {{end}}

@@ -66,7 +66,7 @@ def index():
 
 ### In View
 
-``    
+``
 {{extend 'layout.html'}}
 <h1>Image upload form</h1>
 {{form}}

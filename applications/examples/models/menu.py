@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+response.menu = [
+    (T('Home'),False,URL('default','index')),
+    (T('About'),False,URL('default','what')),
+    (T('Download'),False,URL('default','download')),
+    (T('Staff'),False,URL('default','who')),
+    (T('Support'),False,URL('default','support')),
+    (T('Documentation'),False,URL('default','documentation'))]
+
 #########################################################################
 ## Changes the menu active item
 #########################################################################
