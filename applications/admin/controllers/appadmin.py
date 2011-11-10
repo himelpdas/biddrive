@@ -415,9 +415,11 @@ def ccache():
     total['oldest'] = GetInHMS(time.time() - total['oldest'])
 
     def key_table(keys):
-        return TABLE(TR(TD(B('Key')), TD(B('Time in Cache (h:m:s)'))),
-            *[TR(TD(k[0]), TD('%02d:%02d:%02d' % k[1])) for k in keys], _class='cache-keys',
-            _style="border-collapse: separate; border-spacing: .5em;")
+        return TABLE(
+            TR(TD(B('Key')), TD(B('Time in Cache (h:m:s)'))),
+            *[TR(TD(k[0]), TD('%02d:%02d:%02d' % k[1])) for k in keys], 
+            **dict(_class='cache-keys',
+                   _style="border-collapse: separate; border-spacing: .5em;"))
     
     ram['keys'] = key_table(ram['keys'])
     disk['keys'] = key_table(disk['keys'])
