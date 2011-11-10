@@ -1407,6 +1407,7 @@ class SQLFORM(FORM):
              create=True,
              csv=True,
              links=None,
+             links_in_grid=True,
              upload = '<default>',
              args=[],
              user_signature = True,
@@ -1517,7 +1518,7 @@ class SQLFORM(FORM):
         if not field_id:
             field_id = tables[0]._id
         columns = [str(field) for field in fields]
-        if not field_id in fields:
+        if not str(field_id) in [str(f) for f in fields]:
             fields.append(field_id)
         table = field_id.table
         tablename = table._tablename
@@ -1715,9 +1716,10 @@ class SQLFORM(FORM):
                             order=key)),_class=trap_class())
             head.append(TH(header, _class=ui.get('default','')))
             
-        for link in links or []:
-            if isinstance(link,dict): 
-                head.append(TH(link['header'], _class=ui.get('default','')))
+        if links_in_grid:
+            for link in links or []:
+                if isinstance(link,dict): 
+                    head.append(TH(link['header'], _class=ui.get('default','')))
 
         head.append(TH(_class=ui.get('default','')))
         
@@ -1772,10 +1774,6 @@ class SQLFORM(FORM):
                     classtr = 'odd'
                 numrec+=1
                 id = row[field_id]
-                if len(tables)>1 or row.get('_extra',None):
-                    rrow = row[field._tablename]
-                else:
-                    rrow = row
                 tr = TR(_class=classtr)
                 if selectable:
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
@@ -1787,9 +1785,12 @@ class SQLFORM(FORM):
                     value = row[field]
                     if field.represent:
                         try:
-                            value=field.represent(value,rrow)
+                            value=field.represent(value,row)
                         except KeyError:
-                            pass
+                            try:
+                                value=field.represent(value,row[field._tablename])
+                            except KeyError:
+                                pass
                     elif field.type=='boolean':
                         value = INPUT(_type="checkbox",_checked = value, 
                                       _disabled=True)
@@ -1808,11 +1809,12 @@ class SQLFORM(FORM):
                         value=field.formatter(value)
                     tr.append(TD(value))
                 row_buttons = TD(_class='row_buttons')
-                for link in links or []:
-                    if isinstance(link, dict):
-                        tr.append(TD(link['body'](row)))
-                    else:
-                        row_buttons.append(link(row))
+                if links_in_grid:
+                    for link in links or []:
+                        if isinstance(link, dict):
+                            tr.append(TD(link['body'](row)))
+                        else:
+                            row_buttons.append(link(row))
                 if details and (not callable(details) or details(row)):
                     row_buttons.append(gridbutton(
                             'buttonview', 'View',
@@ -1849,8 +1851,9 @@ class SQLFORM(FORM):
         return res
 
     @staticmethod
-    def smartgrid(table, constraints=None, links=None,args=None,
-                  linked_tables=None, user_signature=True,
+    def smartgrid(table, constraints=None, linked_tables=None,                  
+                  links=None, links_in_grid=True,
+                  args=None, user_signature=True,
                   **kwargs):
         """
         @auth.requires_login()
@@ -1956,6 +1959,7 @@ class SQLFORM(FORM):
                         A(SPAN(t),_class=trap_class(),_href=URL(
                             args=request.args[:nargs]+[args0,row.id])))
         grid=SQLFORM.grid(query,args=request.args[:nargs],links=links,
+                          links_in_grid=links_in_grid,
                           user_signature=user_signature,**kwargs)
         if isinstance(grid,DIV):
             breadcrumbs.append(A(T(table._plural),_class=trap_class(),
