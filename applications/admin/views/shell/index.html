@@ -73,6 +73,7 @@
         <textarea class="prompt" name="statement" id="statement"></textarea>
         <span>Type some Python code in here and hit Return (Enter) to execute it.</span>
       </div>
+      <div id="autoscroll" style="float:right;">autoscroll</div>
     </div>
   </form>
 </div>
@@ -85,6 +86,8 @@
     <li>Models are automatically imported in the shell.</li>
   </ul>
 </div>
+
+<script type="text/javascript" src="{{=URL('static', 'js/autoscroll.js')}}"></script>
 
 <script type="text/javascript">
 var bShellScrolling=0
