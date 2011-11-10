@@ -1,10 +1,35 @@
+/** there MUST stay **/
+body { margin: 0; padding:0; border: 0; }
+a { text-decoration:none}
+a:hover {text-decoration: underline}
+a.button {text-decoration: none}
+h1,h2,h3,h4,h5,h6 {margin: 0.5em 0 0.25em 0; display: block}
+        h1 { font-size: 4.00em;}
+        h2 { font-size: 3.00em;}
+        h3 { font-size: 2.00em;}
+        h4 { font-size: 1.50em;}
+        h5 { font-size: 1.25em;}
+        h6 { font-size: 1.12em;}
+right { float:right; text-align: right; }
+left { float:left; text-align: left; }
+center { width:100; text-align: center; vertical-align:middle;}
+label { white-space: nowrap; }
+th, label { font-weight: bold; }
+th, td { text-align: left; vertical-align: top; }
+form table tr td label { text-align: right; }
+p, table, ol, ul { margin: 0.5em 0 0.5em }
+li { margin-bottom: 0.5em; }
+span, input, select, textarea, button, label, a { display: inline }
+img { border: 0; }
+blockquote, blockquote p { font-style: italic; border: 0.5em 5em 0.5em 5em; }
+em { font-style: italic; }
+strong { font-weight: bold; }
+small { font-size: 0.8em; }
+/** end **/
+
 /* Sticky footer begin */
 html, body {
   height: 100%;
-}
-
-a.button:hover { 
-   text-decoration: none;
 }
 
 .wrapper {
@@ -34,25 +59,12 @@ body {
 .footer {
     background-color: #ECECEC;      
 }
+
 .header {
 	// background: <fill here for header image>;
 }
 
 
-th, td { padding: 0.1em 0.5em 0.1em 0.5em;}
-
-label {
-    white-space: nowrap;
-}
-
-label, b, th {
-    font-weight: bold;
-}
-
-/*
-fieldset { padding: 16px; border: 1px #DEDEDE solid;}
-fieldset legend {text-transform:uppercase; font-weight: bold;}
-*/
 fieldset { padding: 16px; border-top: 1px #DEDEDE solid;}
 fieldset legend {text-transform:uppercase; font-weight: bold; padding: 4px 16px 4px 16px; background: #f1f1f1;}
 
@@ -68,9 +80,7 @@ tr#submit_record__row {border-top: 1px solid #E5E5E5; padding: 5px;}
 #auth_user_remember__row label {display: inline;}
 #web2py_user_form td { vertical-align:top; }
 
-
-a, a:visited, a:hover { text-decoration: none; color:#0069D6}
-a:hover { text-decoration: underline }
+a, a:visited, a:hover { color:#0069D6}
 
 /*********** web2py specific ***********/
 div.flash {
