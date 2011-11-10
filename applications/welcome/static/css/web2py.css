@@ -16,6 +16,7 @@ html, body {
   padding: 1em 0;
   clear: both;
 }
+
 .footer-content {position: absolute; bottom: -6em; width: 100%;}
 
 .auth_navbar {  

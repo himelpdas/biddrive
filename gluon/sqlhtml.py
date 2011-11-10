@@ -1396,7 +1396,6 @@ class SQLFORM(FORM):
              field_id=None,
              left=None,
              headers={},
-             columns=None,
              orderby=None,
              searchable=True,
              sortable=True,
@@ -1517,6 +1516,9 @@ class SQLFORM(FORM):
                             [[field for field in table] for table in tables])
         if not field_id:
             field_id = tables[0]._id
+        columns = [str(field) for field in fields]
+        if not field_id in fields:
+            fields.append(field_id)
         table = field_id.table
         tablename = table._tablename
         referrer = session.get('_web2py_grid_referrer_'+formname, url())
@@ -1694,8 +1696,7 @@ class SQLFORM(FORM):
 
         head = TR(_class=ui.get('header',''))
         if selectable:
-            head.append(TH(_class=ui.get('default','')))
-        columns = columns and [str(field) for field in columns]
+            head.append(TH(_class=ui.get('default','')))        
         for field in fields:
             if columns and not str(field) in columns: continue
             if not field.readable: continue
@@ -1780,7 +1781,7 @@ class SQLFORM(FORM):
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
                                     value=request.vars.records))
                 for field in fields:
-                    if columns and not str(field) in columns: continue
+                    if not str(field) in columns: continue
                     if not field.readable: continue
                     if field.type=='blob': continue
                     value = row[field]
