@@ -1,4 +1,4 @@
-/** there MUST stay **/
+/** these MUST stay **/
 body { margin: 0; padding:0; border: 0; }
 a { text-decoration:none}
 a:hover {text-decoration: underline}
@@ -37,7 +37,7 @@ html, body {
   min-height: 100%;
   height: auto !important;
   height: 100%;
-  margin: 0 auto -8em; /* set last value to footer height plus vertical padding */
+  margin: 0 auto -8em; /* set last value to footer height plus footer vertical padding */
 }
 
 .footer, .push {
@@ -46,7 +46,7 @@ html, body {
   clear: both;
 }
 
-.footer-content {position: absolute; bottom: -6em; width: 100%;}
+.footer-content {position: relative; bottom: -4em; width: 100%;}
 
 .auth_navbar {  
     white-space: nowrap;  
@@ -70,12 +70,14 @@ fieldset { padding: 16px; border-top: 1px #DEDEDE solid;}
 fieldset legend {text-transform:uppercase; font-weight: bold; padding: 4px 16px 4px 16px; background: #f1f1f1;}
 
 
+td.w2p_fw {padding-bottom: 1em;}
 td.w2p_fl, td.w2p_fw, td.w2p_fc { vertical-align:top; }
 td.w2p_fl { text-align:right; }
 td.w2p_fl,  td.w2p_fw {padding-right: 7px;}
 td.w2p_fl, td.w2p_fc { padding-top: 4px; }
 
-tr#submit_record__row {border-top: 1px solid #E5E5E5; padding: 5px;}
+/* tr#submit_record__row {border-top: 1px solid #E5E5E5;} */
+#submit_record__row td {padding-top: .5em;}
 
 /* Fix */
 #auth_user_remember__row label {display: inline;}
@@ -83,13 +85,13 @@ tr#submit_record__row {border-top: 1px solid #E5E5E5; padding: 5px;}
 
 a, a:visited, a:hover { color:#0069D6}
 
-/*********** web2py specific ***********/
+/*********** web2py specific ***********/      
 div.flash {
     font-weight: bold;
     display: none;
     position: fixed;
     padding: 10px;
-    top: 40px;
+    top: 48px;
     right: 50px;
     min-width: 280px;
     opacity: 0.85;
@@ -99,6 +101,7 @@ div.flash {
     cursor: pointer;
     background: #000;
     border: 2px solid #fff;
+    border-radius: 5px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
     z-index: 2;
@@ -111,9 +114,8 @@ div.error {
 
 .topbar {
     width:100%;
-    color: #959595; text-align:right; vertical-align:middle; border: height:30px;
+    color: #959595; vertical-align:middle;
     padding: 0;
-    height: 31px;
     background-image: -khtml-gradient(linear, left top, left bottom, from(#333333), to(#222222));
     background-image: -moz-linear-gradient(top, #333333, #222222);
     background-image: -ms-linear-gradient(top, #333333, #222222);
@@ -131,6 +133,10 @@ div.error {
     color: #e1e1e1;
 }
 
+#navbar {float: right; padding: .4em 0;}
+
+#menu {padding-top: .2em;}
+
 .right {
        width:100%;
        text-align: right;
@@ -141,11 +147,39 @@ div.error {
     background-color: #F5F5F5;
     margin-top: 1em;
     margin-bottom: 1em;
-    padding: 7px;
-    border: 1px solid #ddd;	
+    padding: .5em 1em;
+    border: 1px solid #ddd;
+    border-radius: 5px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
 }
+
+.breadcrumb {
+  font-size: 1.12em;
+}
+.breadcrumb .divider {
+  padding: 0 .4em;
+  color: #bfbfbf;
+}
+
+/* #MEDIA QUERIES SECTION */
+    
+    /* All Mobile Sizes (devices and browser) */
+    @media only screen and (max-width: 767px) {
+
+        .topbar {text-align: center;}
+        #navbar, #menu {float: none;}
+        #navbar {font-size: 1.2em; padding: .6em 0 1.2em;}
+        #menu  {padding: 0 0 1.5em;}
+        #menu select {font-size: 1.2em; margin: 0; padding: 0;}
+
+        div.flash {top: 110px; right: 10px;}
+        
+        .breadcrumb {
+            font-size: 1em;
+        }
+
+    }
 
 /*
 *Grid
@@ -310,6 +344,3 @@ color: #222;
 	border-radius:2px;
 }
 .ie9 #query_panel {padding-bottom:2px;}
-
-input {
-}

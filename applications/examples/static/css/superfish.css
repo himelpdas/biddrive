@@ -24,7 +24,7 @@
 	position:		relative;
 }
 .sf-menu a {
-        padding: 5px;
+    padding:        5px;
 	display:		block;
 	position:		relative;
 }
@@ -66,7 +66,7 @@ ul.sf-menu li li li.sfHover ul {
 .sf-menu a, .sf-menu a:visited  { /* visited pseudo selector so IE6 applies text colour*/
 //	color: #959595;
 	background-color: transparent;
-        font-weight: bold;
+    font-weight: bold;
 }
 .sf-menu li {
 	background-color: transparent;
@@ -101,7 +101,7 @@ ul.sf-menu li li li.sfHover ul {
 	padding-right: 	2.25em;
 	min-width:		1px; /* trigger IE7 hasLayout so spans position accurately */
 }
-li li .sf-sub-indicator {
+.sf-sub-indicator {
 	position:		absolute;
 	display:		block;
 	right:			.75em;
@@ -112,7 +112,7 @@ li li .sf-sub-indicator {
 	overflow:		hidden;	
 	background:		url('../images/arrows-ffffff.png') no-repeat -10px -100px; /* 8-bit indexed alpha png. IE6 gets solid image only */
 }
-li li a > .sf-sub-indicator {  /* give all except IE6 the correct values */
+a > .sf-sub-indicator {  /* give all except IE6 the correct values */
 	top:			.8em;
 	background-position: 0 -100px; /* use translucent arrow for modern browsers*/
 }

@@ -297,7 +297,7 @@
 		width: 210px;
 		max-width: 100%;
 		// display: block;  /** WEB2PY EDIT **/
-		margin-bottom: 0px; /** WEB2PY EDIT **/
+		margin-bottom: 0; /** WEB2PY EDIT **/
 		background: #fff; }
 	select {
 		padding: 0; }

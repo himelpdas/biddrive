@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
-<!--[if lt IE 7]> <html class="ie ie6 lte8 lte7 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
-<!--[if IE 7]>    <html class="ie ie7 lte8 lte7 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
-<!--[if IE 8]>    <html class="ie ie8 lte8 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
-<!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="{{=T.accepted_language or 'en'}}"> <!--<![endif]-->
+<!--[if lt IE 7]><html class="ie ie6 ie-lte9 ie-lte8 ie-lte7 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
+<!--[if IE 7]><html class="ie ie7 ie-lte9 ie-lte8 ie-lte7 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
+<!--[if IE 8]><html class="ie ie8 ie-lte9 ie-lte8 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
+<!--[if IE 9]><html class="ie9 ie-lte9 no-js" lang="{{=T.accepted_language or 'en'}}"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html class="no-js" lang="{{=T.accepted_language or 'en'}}"> <!--<![endif]-->
 <head>
   <meta charset="utf-8" />
   <!-- www.phpied.com/conditional-comments-block-downloads/ -->
@@ -79,19 +80,22 @@
         
         <div class="sixteen columns statusbar">
 	  {{block statusbar}}
-	  {{=MENU(response.menu,_class='sf-menu')}}
-	  {{end}}
-          <!-- AddToAny BEGIN -->
-          <div style="float:right;padding-top:6px;" class="a2a_kit a2a_default_style">
-          <a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div>
-          <script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
-          <!-- AddToAny END -->
-        </div>
-	
-	<div class="sixteen columns announce">
-	  <a href="http://www.infoworld.com/d/open-source-software/bossie-awards-2011-the-best-open-source-application-development-software-171759-0&current=10&last=1#slideshowTop">2011 BOSSIE AWARD FOR OPEN SOURCE DEVELOPMENT SOFTWARE</a>
-        </div>
-
+	  {{is_mobile=request.user_agent().is_mobile}}
+          <div id="menu">{{=MENU(response.menu,_class='mobile-menu' if is_mobile else 'sf-menu',mobile=is_mobile)}}
+	    {{end}}
+            <!-- AddToAny BEGIN -->
+            <div style="float:right;padding-top:6px;" class="a2a_kit a2a_default_style">
+            <a class="a2a_dd" href="http://www.addtoany.com/share_save">Share</a></div>
+            <script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
+            <!-- AddToAny END -->
+          </div>
+	  
+	  <div class="sixteen columns announce">
+	    <a href="http://www.infoworld.com/d/open-source-software/bossie-awards-2011-the-best-open-source-application-development-software-171759-0&current=10&last=1#slideshowTop">2011 BOSSIE AWARD FOR OPEN SOURCE DEVELOPMENT SOFTWARE</a>
+          </div>
+	</div>
+      </div>
+      <div class="container mainbody">	
         <div class="sixteen columns">
           <div class="{{=middle_columns}} columns center">
             {{block center}}
