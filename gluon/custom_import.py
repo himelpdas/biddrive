@@ -11,7 +11,7 @@ import threading
 def custom_import_install(web2py_path):
         global _web2py_importer
         global _web2py_path
-        if _web2py_importer:
+	if _web2py_path == web2py_path:
             return  # Already installed
         _web2py_path = web2py_path
         _web2py_importer = _Web2pyImporter(web2py_path)

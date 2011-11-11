@@ -764,6 +764,7 @@ class HttpServer(object):
             global_settings.applications_parent = path
             os.chdir(path)
             [add_path_first(p) for p in (path, abspath('site-packages'), "")]
+            custom_import_install(web2py_path)
 
         save_password(password, port)
         self.pid_filename = pid_filename
