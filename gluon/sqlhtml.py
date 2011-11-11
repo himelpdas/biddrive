@@ -1510,14 +1510,14 @@ class SQLFORM(FORM):
                              _href=buttonurl,_title=buttontext,
                              _class=trap_class(ui.get('buttontext',''),trap))
         dbset = db(query)
-        tables = [db[tablename] for tablename in db._adapter.tables(
-                dbset.query)]
+        tablenames = db._adapter.tables(dbset.query)
+        tables = [db[tablename] for tablename in tablenames]
         if not fields:
             fields = reduce(lambda a,b:a+b,
                             [[field for field in table] for table in tables])
         if not field_id:
             field_id = tables[0]._id
-        columns = [str(field) for field in fields]
+        columns = [str(field) for field in fields if field._tablename in tablenames]        
         if not str(field_id) in [str(f) for f in fields]:
             fields.append(field_id)
         table = field_id.table
@@ -1754,12 +1754,12 @@ class SQLFORM(FORM):
         else:
             limitby = None
 
-        try:
-            rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*fields)        
+        try:            
+            table_fields = [f for f in fields if f._tablename in tablenames]
+            rows = dbset.select(left=left,orderby=orderby,limitby=limitby,*table_fields)
         except SyntaxError:
             rows = None
             error = T("Query Not Supported")
-
         message = error or T('%(nrows)s records found') % dict(nrows=nrows)
         console.append(DIV(message,_class='web2py_counter'))
 
@@ -1778,7 +1778,7 @@ class SQLFORM(FORM):
                 if selectable:
                     tr.append(INPUT(_type="checkbox",_name="records",_value=id,
                                     value=request.vars.records))
-                for field in fields:
+                for field in fields:                
                     if not str(field) in columns: continue
                     if not field.readable: continue
                     if field.type=='blob': continue
