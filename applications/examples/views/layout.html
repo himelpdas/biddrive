@@ -39,22 +39,19 @@
   <script src="{{=URL('static','js/modernizr-1.7.min.js')}}"></script>  
 
   <!-- include stylesheets -->
-  <link rel="stylesheet" href="{{=URL('static','css/skeleton.css')}}">
-  <link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}">
-  <link rel="stylesheet" href="{{=URL('static','css/examples.css')}}">
-  <link rel="stylesheet" href="{{=URL('static','css/superfish.css')}}">
-  <script src="{{=URL('static','js/jquery.js')}}"></script>  
-  <script src="{{=URL('static','js/superfish.js')}}"></script>  
+  {{
+  response.files.append(URL('static','css/skeleton.css'))
+  response.files.append(URL('static','css/web2py.css'))
+  response.files.append(URL('static','css/examples.css'))
+  response.files.append(URL('static','css/superfish.css'))
+  response.files.append(URL('static','js/superfish.js'))
+  }}
+
+  {{include 'web2py_ajax.html'}}
+
   <script type="text/javascript">
     jQuery(function(){jQuery('.sf-menu').superfish();});
   </script>
-
-  <!-- http://lwis.net/free-css-drop-down-menu/ -->
-  <!--[if lt IE 7]>
-  <script type="text/javascript" src="URL('static','js/jquery.dropdown.js')"></script>
-  <![endif]-->
-  
-  {{include 'web2py_ajax.html'}}
 
   {{
   # using sidebars need to know what sidebar you want to use
