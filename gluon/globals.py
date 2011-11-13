@@ -160,6 +160,23 @@ class Response(Storage):
         else:
             self.body.write(xmlescape(data))
 
+    def head(self):
+        from gluon import URL, SCRIPT
+        self.files.insert(0,URL('static','js/jquery.js'))
+        self.files.insert(1,URL('static','css/anytime.css'))
+        self.files.insert(2,URL('static','js/anytime.js'))
+        self.files.insert(3,URL('static','js/web2py.js'))
+        self.include_meta()
+        self.include_files()
+        self.write(SCRIPT("""
+        // These variables are used by the web2py_ajax_init
+        // function in web2py_ajax.js (which is loaded below).
+        var w2p_ajax_confirm_message = 
+            "{{=T('Are you sure you want to delete this object?')}}";
+        var w2p_ajax_date_format = "{{=T('%Y-%m-%d')}}";
+        var w2p_ajax_datetime_format = "{{=T('%Y-%m-%d %H:%M:%S')}}";
+        """))        
+
     def render(self, *a, **b):
         from compileapp import run_view_in
         if len(a) > 2:
