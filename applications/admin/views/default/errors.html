@@ -48,7 +48,7 @@ tr.error_ticket:hover {
     <input value="{{=T('delete all checked')}}" type="submit"><br><br>
     
     {{ if 'new' in method: }}
-    {{base_url = 'db' in method and 'ticket' or 'ticketdb' }}
+    {{base_url = 'db' in method and 'ticketdb' or 'ticket' }}
     <h3>{{=T('Click row to expand traceback')}}</h3>
     <p class="controls">
     {{if 'db' in method:}}

@@ -1165,7 +1165,10 @@ def errors():
 
 def get_ticket_storage(app):
     private_folder = apath('%s/private' % app, r=request)
-    db_string = open(os.path.join(private_folder, 'ticket_storage.txt')).read().replace('\r','').replace('\n','').strip()
+    try:
+        db_string = open(os.path.join(private_folder, 'ticket_storage.txt')).read().replace('\r','').replace('\n','').strip()
+    except IOError:
+        raise Exception, "No ticket_storage.txt found in /private folder"
     tickets_table = 'web2py_ticket'
     tablename = tickets_table + '_' + app
     db_path = apath('%s/databases' % app, r=request)
