@@ -1096,12 +1096,12 @@ class SQLFORM(FORM):
             if not self.errors:
                 ret = True
 
-        requested_delete = \
+        self.deleted = \
             request_vars.get(self.FIELDNAME_REQUEST_DELETE, False)
 
         self.custom.end = TAG[''](self.hidden_fields(), self.custom.end)
 
-        auch = record_id and self.errors and requested_delete
+        auch = record_id and self.errors and self.deleted
 
         # auch is true when user tries to delete a record
         # that does not pass validation, yet it should be deleted
@@ -1139,11 +1139,12 @@ class SQLFORM(FORM):
         if record_id and dbio and not keyed:
             self.vars.id = self.record.id
 
-        if requested_delete and self.custom.deletable:
+        if self.deleted and self.custom.deletable:
             if dbio:
                 if keyed:
                     qry = reduce(lambda x, y: x & y,
-                                 [self.table[k] == record_id[k] for k in self.table._primarykey])
+                                 [self.table[k] == record_id[k] \
+                                      for k in self.table._primarykey])
                 else:
                     qry = self.table._id == self.record.id
                 self.table._db(qry).delete()
