@@ -1339,11 +1339,11 @@ class SQLFORM(FORM):
                                 _class='w2p_query_row hidden'))
         criteria.insert(0,SELECT(
                 _id="w2p_query_fields",
-                _onchange="jQuery('.w2p_query_row').hide();"+\
-                    "jQuery('#w2p_field_'+jQuery(this).val().replace('.','-')).show();",
+                _onchange="jQuery('.w2p_query_row').hide();jQuery('#w2p_field_'+jQuery(this).val().replace('.','-')).show();",
                 *[OPTION(label, _value=selectfields[label]) for label in selectfields]))
         fadd = SCRIPT("""
-        jQuery('#w2p_query_panel input,#w2p_query_panel select').css('width','auto').css('float','left');
+        jQuery('#w2p_query_panel input,#w2p_query_panel select').css(
+               'width','auto').css('float','left');
         jQuery(function(){web2py_ajax_fields();});
         function w2p_build_query(aggregator,a){
           var b=a.replace('.','-');
@@ -1358,44 +1358,19 @@ class SQLFORM(FORM):
         }
         """)
         return CAT(
-            DIV(_id="w2p_query_panel",_style='position:absolute;z-index:1000',_class='hidden',*criteria),
+            DIV(_id="w2p_query_panel",
+                _style='position:absolute;z-index:1000',
+                _class='hidden',
+                *criteria),
             fadd,
             INPUT(
                 _value="query",_type="button",_id="w2p_query_trigger",
                 _onclick="jQuery('#w2p_query_fields').val('');jQuery('#w2p_query_panel').slideToggle();"))
             
     @staticmethod
-    def search_menu2(fields,search_options=None):
-        from gluon import current
-        T = current.T
-        search_options = search_options or {'string':['=','<','>','<=','>=','starts with','contains'],
-                                            'string':['=','<','>','<=','>=','starts with','contains'],
-                                            'date':['=','<','>','<=','>='],
-                                            'time':['=','<','>','<=','>='],
-                                            'datetime':['=','<','>','<=','>='],
-                                            'integer':['=','<','>','<=','>='],
-                                            'double':['=','<','>','<=','>=']}
-        menu = []
-        for field in fields:
-            options = search_options.get(field.type,None)
-            if options:
-                menu.append((T(field.label),False,False,[]))
-                for option in options:
-                    menu[-1][-1].append((T(option),False,False,
-                                         [(SPAN(INPUT(_type=field.type),
-                                                INPUT(_type="button",_value=T('add'),
-                                                      _onclick="w2p_build_search('"+field.name+" "+option+" ',this,event);")),
-                                           False,False)]))			    
-        menu = [(T('Query'),False,False,menu)]
-        return DIV(MENU(menu,_class='sf-menu'),
-                   SCRIPT("function w2p_build_search(a,b,e) { var s=a+'\\''+jQuery(b).prev().val()+'\\''; var k=jQuery('input#web2py_keywords'); var v=k.val(); k.val((v?(v+' and '):'')+s); e.preventDefault();}"),
-                   SCRIPT("jQuery(function(){jQuery('ul.sf-menu').superfish();});"))
- 
-    @staticmethod
     def grid(query,
              fields=None,
              field_id=None,
-             columns=None,
              left=None,
              headers={},
              orderby=None,
@@ -1519,8 +1494,8 @@ class SQLFORM(FORM):
                             [[field for field in table] for table in tables])
         if not field_id:
             field_id = tables[0]._id
-        if not columns:
-            columns = [str(field) for field in fields if field._tablename in tablenames]        
+        columns = [str(field) for field in fields \
+                       if field._tablename in tablenames]        
         if not str(field_id) in [str(f) for f in fields]:
             fields.append(field_id)
         table = field_id.table
@@ -1638,8 +1613,10 @@ class SQLFORM(FORM):
         error = None
         search_form = None
         if searchable:
+            sfields = reduce(lambda a,b:a+b,
+                             [[f for f in t if f.readable] for t in tables])
             form = FORM(
-                search_widget and search_widget([f for f in table if f.readable]) or '',
+                search_widget and search_widget(sfields) or '',
                 INPUT(_name='keywords',_value=request.vars.keywords,
                       _id='web2py_keywords'),
                 INPUT(_type='submit',_value=T('Search')),
@@ -1650,7 +1627,7 @@ class SQLFORM(FORM):
             console.append(form)
             keywords = request.vars.get('keywords','')
             try:
-                subquery = SQLFORM.build_query(fields, keywords)
+                subquery = SQLFORM.build_query(sfields, keywords)
             except RuntimeError:
                 subquery = None
                 error = T('Invalid query')
