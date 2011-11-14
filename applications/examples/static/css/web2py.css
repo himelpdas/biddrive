@@ -337,7 +337,7 @@ color: #222;
         border:1px solid #CFCFCF;
 	// bottom:3px;
         // left:187px;
-        top: 30px;
+        margin-top: 30px;
         min-width:550px;
 	min-height:16px;
         padding: 3px 3px;
