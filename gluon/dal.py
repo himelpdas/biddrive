@@ -5158,7 +5158,7 @@ class Table(dict):
                 value = bar_decode_integer(value)
             elif id_map and field.type.startswith('reference'):
                 try:
-                    value = id_map[field.type[9:].strip()][value]
+                    value = id_map[field.type[9:].strip()][int(value)]
                 except KeyError:
                     pass
             return (field.name, value)
