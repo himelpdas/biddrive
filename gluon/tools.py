@@ -91,7 +91,7 @@ class Mail(object):
         """
         Email attachment
 
-        Arguments::
+        Arguments:
 
             payload: path to file or file-like object with read() method
             filename: name of the attachment stored in message; if set to
@@ -109,7 +109,7 @@ class Mail(object):
         in example, attached image with content ID 'photo' may be used in
         html message as a source of img tag <img src="cid:photo" />.
 
-        Examples::
+        Examples:
 
             #Create attachment from text file:
             attachment = Mail.Attachment('/path/to/file.txt')
@@ -166,7 +166,7 @@ class Mail(object):
         """
         Main Mail object
 
-        Arguments::
+        Arguments:
 
             server: SMTP server address in address:port notation
             sender: sender email address
@@ -174,7 +174,7 @@ class Mail(object):
                    or None if no authentication is required
             tls: enables/disables encryption (True by default)
 
-        In Google App Engine use::
+        In Google App Engine use:
 
             server='gae'
 
@@ -211,7 +211,7 @@ class Mail(object):
                                   with can be a file name or a list of
                                   file names (PEM format)
 
-        Examples::
+        Examples:
 
             #Create Mail object with authentication data for remote server:
             mail = Mail('example.com:25', 'me@example.com', 'me:password')
@@ -250,7 +250,7 @@ class Mail(object):
         """
         Sends an email using data specified in constructor
 
-        Arguments::
+        Arguments:
 
             to: list or tuple of receiver addresses; will also accept single
                 object
@@ -277,7 +277,7 @@ class Mail(object):
             hdrs: dictionary of headers to refine the headers just before
                   sending mail, e.g. {'Return-Path' : 'bounces@example.org'}
 
-        Examples::
+        Examples:
 
             #Send plain text message to single address:
             mail.send('you@example.com',
@@ -743,7 +743,7 @@ class Auth(object):
     - role creation and assignment
     - user defined group/role based permission
 
-    Authentication Example::
+    Authentication Example:
 
         from contrib.utils import *
         mail=Mail()
@@ -772,39 +772,39 @@ class Auth(object):
     On registration a group with role=new_user.id is created
     and user is given membership of this group.
 
-    You can create a group with::
+    You can create a group with:
 
         group_id=auth.add_group('Manager', 'can access the manage action')
         auth.add_permission(group_id, 'access to manage')
 
     Here \"access to manage\" is just a user defined string.
-    You can give access to a user::
+    You can give access to a user:
 
         auth.add_membership(group_id, user_id)
 
     If user id is omitted, the logged in user is assumed
 
-    Then you can decorate any action::
+    Then you can decorate any action:
 
         @auth.requires_permission('access to manage')
         def manage():
             return dict()
 
-    You can restrict a permission to a specific table::
+    You can restrict a permission to a specific table:
 
         auth.add_permission(group_id, 'edit', db.sometable)
         @auth.requires_permission('edit', db.sometable)
 
-    Or to a specific record::
+    Or to a specific record:
 
         auth.add_permission(group_id, 'edit', db.sometable, 45)
         @auth.requires_permission('edit', db.sometable, 45)
 
-    If authorization is not granted calls::
+    If authorization is not granted calls:
 
         auth.settings.on_failed_authorization
 
-    Other options::
+    Other options:
 
         auth.settings.mailer=None
         auth.settings.expiration=3600 # seconds
@@ -1202,7 +1202,7 @@ class Auth(object):
         """
         to be called unless tables are defined manually
 
-        usages::
+        usages:
 
             # defines all needed tables and table files
             # 'myprefix_auth_user.table', ...
@@ -1411,7 +1411,7 @@ class Auth(object):
 
     def log_event(self, description, vars=None, origin='auth'):
         """
-        usage::
+        usage:
 
             auth.log_event(description='this happened', origin='auth')
         """
@@ -1566,7 +1566,7 @@ class Auth(object):
         """
         returns a login form
 
-        .. method:: Auth.login([next=DEFAULT [, onvalidation=DEFAULT
+        method: Auth.login([next=DEFAULT [, onvalidation=DEFAULT
             [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -1760,7 +1760,7 @@ class Auth(object):
         """
         logout and redirects to login
 
-        .. method:: Auth.logout ([next=DEFAULT[, onlogout=DEFAULT[,
+        method: Auth.logout ([next=DEFAULT[, onlogout=DEFAULT[,
             log=DEFAULT]]])
 
         """
@@ -1795,7 +1795,7 @@ class Auth(object):
         """
         returns a registration form
 
-        .. method:: Auth.register([next=DEFAULT [, onvalidation=DEFAULT
+        method: Auth.register([next=DEFAULT [, onvalidation=DEFAULT
             [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -1913,7 +1913,7 @@ class Auth(object):
         """
         action user to verify the registration email, XXXXXXXXXXXXXXXX
 
-        .. method:: Auth.verify_email([next=DEFAULT [, onvalidation=DEFAULT
+        method: Auth.verify_email([next=DEFAULT [, onvalidation=DEFAULT
             [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -1953,7 +1953,7 @@ class Auth(object):
         returns a form to retrieve the user username
         (only if there is a username field)
 
-        .. method:: Auth.retrieve_username([next=DEFAULT
+        method: Auth.retrieve_username([next=DEFAULT
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -2038,7 +2038,7 @@ class Auth(object):
         """
         returns a form to reset the user password (deprecated)
 
-        .. method:: Auth.reset_password_deprecated([next=DEFAULT
+        method: Auth.reset_password_deprecated([next=DEFAULT
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -2115,7 +2115,7 @@ class Auth(object):
         """
         returns a form to reset the user password
 
-        .. method:: Auth.reset_password([next=DEFAULT
+        method: Auth.reset_password([next=DEFAULT
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -2168,7 +2168,7 @@ class Auth(object):
         """
         returns a form to reset the user password
 
-        .. method:: Auth.reset_password([next=DEFAULT
+        method: Auth.reset_password([next=DEFAULT
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -2259,7 +2259,7 @@ class Auth(object):
         """
         returns a form that lets the user change password
 
-        .. method:: Auth.change_password([next=DEFAULT[, onvalidation=DEFAULT[,
+        method: Auth.change_password([next=DEFAULT[, onvalidation=DEFAULT[,
             onaccept=DEFAULT[, log=DEFAULT]]]])
         """
 
@@ -2326,7 +2326,7 @@ class Auth(object):
         """
         returns a form that lets the user change his/her profile
 
-        .. method:: Auth.profile([next=DEFAULT [, onvalidation=DEFAULT
+        method: Auth.profile([next=DEFAULT [, onvalidation=DEFAULT
             [, onaccept=DEFAULT [, log=DEFAULT]]]])
 
         """
@@ -2722,7 +2722,7 @@ class Auth(object):
         the current logged in user
         this method does not work on GAE because uses JOIN and IN
 
-        example::
+        example:
 
            db(auth.accessible_query('read', db.mytable)).select(db.mytable.ALL)
 
@@ -2741,9 +2741,13 @@ class Auth(object):
                            ._select(permission.record_id))
 
     @staticmethod
-    def archive(form,archive_table=None,current_record='current_record'):
+    def archive(form,
+                archive_table=None,
+                current_record='current_record',
+                archive_current=True,
+                fields=None):
         """
-        If you have a table (db.mytable) that needs full revision history you can just do::
+        If you have a table (db.mytable) that needs full revision history you can just do:
 
             form=crud.update(db.mytable,myrecord,onaccept=auth.archive)
             
@@ -2751,11 +2755,16 @@ class Auth(object):
 
             form=SQLFORM(db.mytable,myrecord).process(onaccept=auth.archive)
 
-        crud.archive will define a new table "mytable_archive" and store the
-        previous record in the newly created table including a reference
+        crud.archive will define a new table "mytable_archive" and store 
+        a copy of the current record (if archive_current=True) 
+        or a copy of the previous record (if archive_current=False) 
+        in the newly created table including a reference
         to the current record.
 
-        If you want to access such table you need to define it yourself in a model::
+        fields allows to specify extra fields that need to be archived.
+
+        If you want to access such table you need to define it yourself 
+        in a model:
 
             db.define_table('mytable_archive',
                 Field('current_record',db.mytable),
@@ -2763,7 +2772,7 @@ class Auth(object):
 
         Notice such table includes all fields of db.mytable plus one: current_record.
         crud.archive does not timestamp the stored record unless your original table
-        has a fields like::
+        has a fields like:
 
             db.define_table(...,
                 Field('saved_on','datetime',
@@ -2775,13 +2784,13 @@ class Auth(object):
         the record is archived.
 
         If you want to change the archive table name and the name of the reference field
-        you can do, for example::
+        you can do, for example:
 
             db.define_table('myhistory',
                 Field('parent_record',db.mytable),
                 db.mytable)
 
-        and use it as::
+        and use it as:
 
             form=crud.update(db.mytable,myrecord,
                              onaccept=lambda form:crud.archive(form,
@@ -2789,8 +2798,7 @@ class Auth(object):
                              current_record='parent_record'))
 
         """
-        old_record = form.record
-        if not old_record:
+        if archive_current and not form.record:
             return None
         table = form.table
         if not archive_table:
@@ -2801,10 +2809,16 @@ class Auth(object):
                 archive_table = table._db.define_table(archive_table_name,
                                                        Field(current_record,table),
                                                        table)
-        new_record = {current_record:old_record.id}
+        new_record = {current_record:form.vars.id}
         for fieldname in archive_table.fields:
-            if not fieldname in ['id',current_record] and fieldname in old_record:
-                new_record[fieldname]=old_record[fieldname]
+            if not fieldname in ['id',current_record]:
+                if archive_current and fieldname in form.vars:
+                    new_record[fieldname]=form.vars[fieldname]
+                elif form.record and fieldname in form.record:
+                    new_record[fieldname]=form.record[fieldname]
+        if fields:
+            for key,value in fields.items():
+                new_record[key] = value
         id = archive_table.insert(**new_record)
         return id
 
@@ -2931,7 +2945,7 @@ class Crud(object):
         formname=DEFAULT,
         ):
         """
-        .. method:: Crud.update(table, record, [next=DEFAULT
+        method: Crud.update(table, record, [next=DEFAULT
             [, onvalidation=DEFAULT [, onaccept=DEFAULT [, log=DEFAULT
             [, message=DEFAULT[, deletable=DEFAULT]]]]]])
 
@@ -3041,7 +3055,7 @@ class Crud(object):
         formname=DEFAULT,
         ):
         """
-        .. method:: Crud.create(table, [next=DEFAULT [, onvalidation=DEFAULT
+        method: Crud.create(table, [next=DEFAULT [, onvalidation=DEFAULT
             [, onaccept=DEFAULT [, log=DEFAULT[, message=DEFAULT]]]]])
         """
 
@@ -3097,7 +3111,7 @@ class Crud(object):
         message=DEFAULT,
         ):
         """
-        .. method:: Crud.delete(table, record_id, [next=DEFAULT
+        method: Crud.delete(table, record_id, [next=DEFAULT
             [, message=DEFAULT]])
         """
         if not (isinstance(table, self.db.Table) or table in self.db.tables) \
@@ -3399,7 +3413,7 @@ class Service(object):
 
     def run(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.run
@@ -3408,7 +3422,7 @@ class Service(object):
             def call():
                 return service()
 
-        Then call it with::
+        Then call it with:
 
             wget http://..../app/default/call/run/myfunction?a=3&b=4
 
@@ -3418,7 +3432,7 @@ class Service(object):
 
     def csv(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.csv
@@ -3427,7 +3441,7 @@ class Service(object):
             def call():
                 return service()
 
-        Then call it with::
+        Then call it with:
 
             wget http://..../app/default/call/csv/myfunction?a=3&b=4
 
@@ -3437,7 +3451,7 @@ class Service(object):
 
     def xml(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.xml
@@ -3446,7 +3460,7 @@ class Service(object):
             def call():
                 return service()
 
-        Then call it with::
+        Then call it with:
 
             wget http://..../app/default/call/xml/myfunction?a=3&b=4
 
@@ -3456,7 +3470,7 @@ class Service(object):
 
     def rss(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.rss
@@ -3467,7 +3481,7 @@ class Service(object):
             def call():
                 return service()
 
-        Then call it with::
+        Then call it with:
 
             wget http://..../app/default/call/rss/myfunction
 
@@ -3477,7 +3491,7 @@ class Service(object):
 
     def json(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.json
@@ -3486,7 +3500,7 @@ class Service(object):
             def call():
                 return service()
 
-        Then call it with::
+        Then call it with:
 
             wget http://..../app/default/call/json/myfunction?a=hello&b=world
 
@@ -3496,7 +3510,7 @@ class Service(object):
 
     def jsonrpc(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.jsonrpc
@@ -3505,7 +3519,7 @@ class Service(object):
             def call():
                 return service()
 
-        Then call it with::
+        Then call it with:
 
             wget http://..../app/default/call/jsonrpc/myfunction?a=hello&b=world
 
@@ -3515,7 +3529,7 @@ class Service(object):
 
     def xmlrpc(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.xmlrpc
@@ -3524,7 +3538,7 @@ class Service(object):
             def call():
                 return service()
 
-        The call it with::
+        The call it with:
 
             wget http://..../app/default/call/xmlrpc/myfunction?a=hello&b=world
 
@@ -3534,7 +3548,7 @@ class Service(object):
 
     def amfrpc(self, f):
         """
-        example::
+        example:
 
             service = Service()
             @service.amfrpc
@@ -3543,7 +3557,7 @@ class Service(object):
             def call():
                 return service()
 
-        The call it with::
+        The call it with:
 
             wget http://..../app/default/call/amfrpc/myfunction?a=hello&b=world
 
@@ -3553,7 +3567,7 @@ class Service(object):
 
     def amfrpc3(self, domain='default'):
         """
-        example::
+        example:
 
             service = Service()
             @service.amfrpc3('domain')
@@ -3562,7 +3576,7 @@ class Service(object):
             def call():
                 return service()
 
-        The call it with::
+        The call it with:
 
             wget http://..../app/default/call/amfrpc3/myfunction?a=hello&b=world
 
@@ -3580,7 +3594,7 @@ class Service(object):
 
     def soap(self, name=None, returns=None, args=None,doc=None):
         """
-        example::
+        example:
 
             service = Service()
             @service.soap('MyFunction',returns={'result':int},args={'a':int,'b':int,})
@@ -3589,7 +3603,7 @@ class Service(object):
             def call():
                 return service()
 
-        The call it with::
+        The call it with:
 
             from gluon.contrib.pysimplesoap.client import SoapClient
             client = SoapClient(wsdl="http://..../app/default/call/soap?WSDL")

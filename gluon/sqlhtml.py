@@ -1394,6 +1394,7 @@ class SQLFORM(FORM):
     def grid(query,
              fields=None,
              field_id=None,
+             columns=None,
              left=None,
              headers={},
              orderby=None,
@@ -1517,7 +1518,8 @@ class SQLFORM(FORM):
                             [[field for field in table] for table in tables])
         if not field_id:
             field_id = tables[0]._id
-        columns = [str(field) for field in fields if field._tablename in tablenames]        
+        if not columns:
+            columns = [str(field) for field in fields if field._tablename in tablenames]        
         if not str(field_id) in [str(f) for f in fields]:
             fields.append(field_id)
         table = field_id.table
