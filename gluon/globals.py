@@ -175,7 +175,7 @@ class Response(Storage):
             "{{=T('Are you sure you want to delete this object?')}}";
         var w2p_ajax_date_format = "{{=T('%Y-%m-%d')}}";
         var w2p_ajax_datetime_format = "{{=T('%Y-%m-%d %H:%M:%S')}}";
-        """))        
+        """))
 
     def render(self, *a, **b):
         from compileapp import run_view_in
