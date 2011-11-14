@@ -67,15 +67,12 @@ class DropboxAccount(object):
                         first_name = display_name[0],
                         last_name = display_name[-1],
                         registration_id = data.get('uid',None))
-            print token
-            print user
             if not user['registration_id'] and self.on_login_failure:
                 redirect(self.on_login_failure)   
             return user
         return None
 
     def login_form(self):
-        print 'login form'
         token = self.sess.obtain_request_token()
         current.session.dropbox_token = token
         dropbox_url = self.sess.build_authorize_url(token,self.login_url)
@@ -88,6 +85,7 @@ class DropboxAccount(object):
     def logout_url(self, next = "/"):
         current.session.dropbox_token=None
         current.session.auth=None
+        redirect('https://www.dropbox.com/logout')
         return next
 
 def use_dropbox(auth,filename='private/dropbox.key',**kwargs):
