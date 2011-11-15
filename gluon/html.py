@@ -227,7 +227,10 @@ def URL(
         controller = c
     if f:
         if not isinstance(f, str):
-            function = f.__name__
+            if hasattr(f,'__name__'):
+                function = f.__name__
+            else:
+                raise RuntimeError, 'Passing wrong arguemnts to URL'
         elif '.' in f:
             function, extension = f.split('.', 1)
         else:
