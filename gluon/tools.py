@@ -3041,7 +3041,7 @@ class Crud(object):
                 session.flash = response.flash
                 redirect(next)
         elif not request.extension in ('html','load'):
-            raise HTTP(401,serializers.json(form.errors))
+            raise HTTP(401,serializers.json(dict(errors=form.errors)))
         return form
 
     def create(
