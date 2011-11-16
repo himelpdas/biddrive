@@ -1870,7 +1870,7 @@ class SQLFORM(FORM):
         db = table._db
         breadcrumbs = []
         if request.args(len(args)) != table._tablename:
-            request.args=args+[table._tablename]
+            request.args[:]=args+[table._tablename]
         if links is None: links = {}
         if constraints is None: constraints = {}
         try:
