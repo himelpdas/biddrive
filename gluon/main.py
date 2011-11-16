@@ -765,6 +765,8 @@ class HttpServer(object):
             os.chdir(path)
             [add_path_first(p) for p in (path, abspath('site-packages'), "")]
             custom_import_install(web2py_path)
+            if os.path.exists("logging.conf"):
+                logging.config.fileConfig("logging.conf")
 
         save_password(password, port)
         self.pid_filename = pid_filename
