@@ -1177,7 +1177,7 @@ class Auth(object):
                             _href=action+'/request_reset_password')
             bar = SPAN(s1, login, s3, _class='auth_navbar')
 
-            if not 'Register' in self.settings.actions_disabled:
+            if not 'register' in self.settings.actions_disabled:
                 bar.insert(2, s2)
                 bar.insert(3, register)
             if 'username' in self.settings.table_user.fields() and \
