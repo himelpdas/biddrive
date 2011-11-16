@@ -1153,14 +1153,18 @@ class Auth(object):
         if isinstance(prefix,str):
             prefix = T(prefix)
         if not action:
-            action=URL(request.application,request.controller,'user')
+            action=self.url('user')
         if prefix:
             prefix = prefix.strip()+' '
         s1,s2,s3 = separators
+        if URL() == action:
+            next = ''
+        else:
+            next = '?_next='+urllib.quote(URL(args=request.args,vars=request.vars))
         if self.user_id:
-            logout=A(T('Logout'),_href=action+'/logout')
-            profile=A(T('Profile'),_href=action+'/profile')
-            password=A(T('Password'),_href=action+'/change_password')
+            logout=A(T('Logout'),_href=action+'/logout'+next)
+            profile=A(T('Profile'),_href=action+'/profile'+next)
+            password=A(T('Password'),_href=action+'/change_password'+next)
             bar = SPAN(prefix,self.user.first_name,s1, logout,s3,_class='auth_navbar')
             if not 'profile' in self.settings.actions_disabled:
                 bar.insert(4, s2)
@@ -1169,12 +1173,12 @@ class Auth(object):
                 bar.insert(-1, s2)
                 bar.insert(-1, password)
         else:
-            login=A(T('Login'),_href=action+'/login')
-            register=A(T('Register'),_href=action+'/register')
+            login=A(T('Login'),_href=action+'/login'+next)
+            register=A(T('Register'),_href=action+'/register'+next)
             retrieve_username=A(T('forgot username?'),
-                            _href=action+'/retrieve_username')
+                            _href=action+'/retrieve_username'+next)
             lost_password=A(T('Lost password?'),
-                            _href=action+'/request_reset_password')
+                            _href=action+'/request_reset_password'+next)
             bar = SPAN(s1, login, s3, _class='auth_navbar')
 
             if not 'register' in self.settings.actions_disabled:
