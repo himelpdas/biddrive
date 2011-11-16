@@ -230,7 +230,7 @@ def URL(
             if hasattr(f,'__name__'):
                 function = f.__name__
             else:
-                raise RuntimeError, 'Passing wrong arguemnts to URL'
+                raise SyntaxError, 'when calling URL, function or function name required'
         elif '.' in f:
             function, extension = f.split('.', 1)
         else:
