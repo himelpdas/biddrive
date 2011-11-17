@@ -87,6 +87,12 @@ class DropboxAccount(object):
         current.session.auth=None
         redirect('https://www.dropbox.com/logout')
         return next
+    def put(self,filename,file):
+        return json.loads(self.client.put_file(filename,file))['bytes']
+    def get(self,filename,file):
+        return self.client.get_file(filename)
+    def dir(self,path):
+        return json.loads(self.client.metadata(path))
 
 def use_dropbox(auth,filename='private/dropbox.key',**kwargs):
     path = os.path.join(current.request.folder,filename)
