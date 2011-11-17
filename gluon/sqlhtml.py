@@ -927,17 +927,19 @@ class SQLFORM(FORM):
                             widget,
                             col3.get(self.FIELDKEY_DELETE_RECORD, '')))
             self.custom.deletable = widget
+
         # when writable, add submit button
         self.custom.submit = ''
         if not readonly:
             if 'submit' in buttons:
-                widget = INPUT(_type='submit',
+                widget = self.custom.submit = INPUT(_type='submit',
                                _value=submit_button)
-                xfields.append(('submit_record'+SQLFORM.ID_ROW_SUFFIX,
-                                '', widget,col3.get('submit_button', '')))
-                self.custom.submit = widget
             elif buttons:
-                self.custom.submit = DIV(*buttons)
+                widget = self.custom.submit = DIV(*buttons)
+            if self.custom.submit:
+                xfields.append(('submit_record' + SQLFORM.ID_ROW_SUFFIX,
+                                '', widget, col3.get('submit_button', '')))
+
         # if a record is provided and found
         # make sure it's id is stored in the form
         if record:
