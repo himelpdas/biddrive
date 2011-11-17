@@ -1529,7 +1529,8 @@ class SQLFORM(FORM):
                                           url(args=args)))
             if record and links:
                 for link in links:
-                    buttons.append(link(record))
+                    if link(record):
+                        buttons.append(link(record))
             return buttons
         
         formfooter = DIV(
@@ -1797,7 +1798,8 @@ class SQLFORM(FORM):
                         if isinstance(link, dict):
                             tr.append(TD(link['body'](row)))
                         else:
-                            row_buttons.append(link(row))
+                            if link(row):
+                                row_buttons.append(link(row))
                 if details and (not callable(details) or details(row)):
                     row_buttons.append(gridbutton(
                             'buttonview', 'View',
