@@ -245,7 +245,7 @@ class Mail(object):
         bcc=None,
         reply_to=None,
         encoding='utf-8',
-        hdrs={}
+        headers={}
         ):
         """
         Sends an email using data specified in constructor
@@ -274,8 +274,8 @@ class Mail(object):
             reply_to: address to which reply should be composed
             encoding: encoding of all strings passed to this method (including
                       message bodies)
-            hdrs: dictionary of headers to refine the headers just before
-                  sending mail, e.g. {'Return-Path' : 'bounces@example.org'}
+            headers: dictionary of headers to refine the headers just before
+                     sending mail, e.g. {'Return-Path' : 'bounces@example.org'}
 
         Examples:
 
@@ -564,7 +564,7 @@ class Mail(object):
         payload['Subject'] = encode_header(subject.decode(encoding))
         payload['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000",
                                         time.gmtime())
-        for k,v in hdrs.iteritems():
+        for k,v in headers.iteritems():
             payload[k] = encode_header(v.decode(encoding))
         result = {}
         try:
