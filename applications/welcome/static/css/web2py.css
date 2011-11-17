@@ -72,6 +72,8 @@ fieldset legend {text-transform:uppercase; font-weight: bold; padding: 4px 16px 
 /* fix ie problem with menu */
 .ie-lte7 .header {z-index: 2; }
 
+.web2py_hscrollable {width:100%;overflow-x:scroll}
+
 td.w2p_fw {padding-bottom: 1em;}
 td.w2p_fl, td.w2p_fw, td.w2p_fc { vertical-align:top; }
 td.w2p_fl { text-align:right; }
