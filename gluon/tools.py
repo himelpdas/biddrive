@@ -1513,9 +1513,9 @@ class Auth(object):
             row = table(url=session._cas_service,user_id=self.user.id)
             if row:
                 row.update_record(created_on=request.now)
-                uuid = row.uuid
+                uuid = 'LT-'+row.uuid
             else:
-                uuid = web2py_uuid()
+                uuid = 'LT-'+web2py_uuid()
                 table.insert(url=session._cas_service, user_id=self.user.id,
                              uuid=uuid, created_on=request.now)
             url = session._cas_service
