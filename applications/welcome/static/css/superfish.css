@@ -37,12 +37,12 @@
 ul.sf-menu li:hover li ul,
 ul.sf-menu li.sfHover li ul {
 	top:			-999em;
-	z-index:		199;}
+}
 ul.sf-menu li li:hover ul,
 ul.sf-menu li li.sfHover ul {
 	left:			10em; /* match ul width */
 	top:			0;
-	z-index:		299;}
+}
 ul.sf-menu li li:hover li ul,
 ul.sf-menu li li.sfHover li ul {
 	top:			-999em;
