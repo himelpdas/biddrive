@@ -25,7 +25,6 @@ from serializers import json, custom_json
 import settings
 from utils import web2py_uuid
 from settings import global_settings
-
 import hashlib
 import portalocker
 import cPickle
@@ -38,6 +37,12 @@ import sys
 import traceback
 import threading
 
+try:
+    from gluon.contrib.minify import minify
+    have_minify = True
+except:
+    have_minify = False
+    
 regex_session_id = re.compile('^([\w\-]+/)?[\w\-\.]+$')
 
 __all__ = ['Request', 'Response', 'Session']
@@ -195,16 +200,78 @@ class Response(Storage):
             s += '<meta name="%s" content="%s" />' % (key,xmlescape(value))
         self.write(s,escape=False)
 
-    def include_files(self):
+    def include_files(self, 
+                      combine_css=False,
+                      combine_js=False,
+                      minify_css=False,
+                      minify_js=False,
+                      inline_css=False,
+                      inline_js=False,
+                      cache='default'):
+        """
+        Caching method for writing out files.
+        """
+
+        if cache == 'default': cache = (current.cache.ram, 60*5) # cache for 5 minutes by default
+
+        s = ''        
+        if cache and combine_css or combine_js:
+            cache_model, time_expire = cache
+            s = cache_model(
+                'response.files.minified', 
+                lambda: self._include_files(combine_css, combine_js, minify_css, minify_js, inline_css, inline_js),
+                time_expire=time_expire)
+        else:
+            s = self._include_files(combine_css, combine_js, minify_css, minify_js, inline_css, inline_js)
+            
+        self.write(s, escape=False)
+    
+    def _include_files(self, 
+                       combine_css=False,
+                       combine_js=False,
+                       minify_css=False,
+                       minify_js=False,
+                       inline_css=False,    # should not be used as it breaks image paths
+                       inline_js=False):
+        
         s = ''
-        for k,f in enumerate(self.files or []):
-            if not f in self.files[:k]:
-                filename = f.lower().split('?')[0]
-                if filename.endswith('.css'):
-                    s += '<link href="%s" rel="stylesheet" type="text/css" />' % f
-                elif filename.endswith('.js'):
-                    s += '<script src="%s" type="text/javascript"></script>' % f
-        self.write(s,escape=False)
+        if have_minify:
+            css, js = minify.minify(self.files, combine_css, combine_js, minify_css, minify_js)
+        else:
+            css = [f for f in self.files and f.lower().endswith('.css')]
+            js = [f for f in self.files and f.lower().endswith('.js')]
+
+        if isinstance(css, list):
+            for f in css:
+                s += '<link href="%s" rel="stylesheet" type="text/css" />' % f
+        elif isinstance(css, str):
+            if inline_css:
+                s += '<style type="text/css">%s</style>' % css
+            else:
+                name = 'web2py_generated.css'
+                url_path = '/' + '/'.join([current.request.application, 'static', 'css', name])
+                filename = os.path.join(os.getcwd(), current.request.folder, 'static', 'css', name)
+                fp = open(filename, 'w')
+                fp.write(css)
+                fp.close()                
+                s += '<link href="%s" rel="stylesheet" type="text/css" />' % url_path
+                
+        if isinstance(js, list):
+            for f in js:
+                s += '<script src="%s" type="text/javascript"></script>' % f
+        elif isinstance(js, str):
+            if inline_js:
+                s += '<script type="text/javascript">%s</script>' % js
+            else:
+                name = 'web2py_generated.js'
+                url_path = '/' + '/'.join([current.request.application, 'static', 'js', name])
+                filename = os.path.join(os.getcwd(), current.request.folder, 'static', 'js', name)
+                fp = open(filename, 'w')
+                fp.write(js)
+                fp.close()                
+                s += '<script src="%s" type="text/javascript"></script>' % url_path
+        
+        return s
     
     def stream(
         self,
