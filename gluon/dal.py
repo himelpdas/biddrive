@@ -5528,7 +5528,7 @@ class Field(Expression):
         self.uploadseparate = uploadseparate
         self.widget = widget
         if label is DEFAULT:
-            self.label = ' '.join(i.capitalize() for i in fieldname.split('_'))
+            self.label = fieldname.replace('_', ' ').title()
         else:
             self.label = label or ''
         self.comment = comment
@@ -5546,8 +5546,7 @@ class Field(Expression):
         self.custom_retrieve = custom_retrieve
         self.custom_delete = custom_delete
         if self.label is None:
-            self.label = ' '.join([x.capitalize() for x in
-                                  fieldname.split('_')])
+            self.label = fieldname.replace('_',' ').title()
         if requires is None:
             self.requires = []
         else:

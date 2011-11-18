@@ -2060,7 +2060,7 @@ class SQLTABLE(TABLE):
         if headers=='fieldname:capitalize':
             headers = {}
             for c in columns:
-                headers[c] = ' '.join([w.capitalize() for w in c.split('.')[-1].split('_')])
+                headers[c] = c.split('.')[-1].replace('_',' ').title()
         elif headers=='labels':
             headers = {}
             for c in columns:
