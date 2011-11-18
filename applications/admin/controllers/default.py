@@ -407,7 +407,7 @@ def edit():
 
     path = apath(filename, r=request)
 
-    if request.vars.revert and os.path.exists(path + '.bak'):
+    if ('revert' in request.vars) and os.path.exists(path + '.bak'):
         try:
             data = safe_read(path + '.bak')
             data1 = safe_read(path)
