@@ -156,12 +156,8 @@ div.error {
     -webkit-border-radius: 5px;
 }
 
-.breadcrumb {
-  font-size: 1.12em;
-}
-.breadcrumb .divider {
-  padding: 0 .4em;
-  color: #bfbfbf;
+.breadcrumbs {
+  font-size: 1.25em;
 }
 
 /* #MEDIA QUERIES SECTION */
@@ -176,10 +172,6 @@ div.error {
         #menu select {font-size: 1.2em; margin: 0; padding: 0;}
 
         div.flash {top: 110px; right: 10px;}
-        
-        .breadcrumb {
-            font-size: 1em;
-        }
 
     }
 
