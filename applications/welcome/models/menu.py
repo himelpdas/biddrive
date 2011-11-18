@@ -81,9 +81,9 @@ def _():
                         (T('Access Control'),False,'http://www.web2py.com/book/default/chapter/09'),
                         (T('Services'),False,'http://www.web2py.com/book/default/chapter/10'),
                         (T('Ajax Recipes'),False,'http://www.web2py.com/book/default/chapter/11'),
-                        (T('Deployment Recipes'),False,'http://www.web2py.com/book/default/chapter/12'),
-                        (T('Other Recipes'),False,'http://www.web2py.com/book/default/chapter/13'),
-                        (T('Components and Plugins'),False,'http://www.web2py.com/book/default/chapter/14'),
+                        (T('Components and Plugins'),False,'http://www.web2py.com/book/default/chapter/12'),
+                        (T('Deployment Recipes'),False,'http://www.web2py.com/book/default/chapter/13'),
+                        (T('Other Recipes'),False,'http://www.web2py.com/book/default/chapter/14'),
                         (T('Buy this book'),False,'http://stores.lulu.com/web2py'),
                         ]),
                 (T('Community'),False, None, [

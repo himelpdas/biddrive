@@ -94,7 +94,7 @@
         <div class="sixteen columns">
           <div class="statusbar">
             {{block statusbar}}
-            <span class="breadcrumbs">{{=request.function}}</span>
+            <span class="breadcrumbs">{{=request.function.replace('_', ' ').title()}}</span>
             {{end}}
             <!-- AddToAny BEGIN -->
             <div style="float:right; padding-top: .25em;" class="a2a_kit a2a_default_style">
