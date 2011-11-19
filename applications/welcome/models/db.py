@@ -22,6 +22,10 @@ else:
 ## none otherwise. a pattern can be 'controller/function.extension'
 response.generic_patterns = ['*'] if request.is_local else []
 
+## combine all css and js files into single files to improve performance.
+# response.combine_css = response.combine_js = True # test before using
+# response.minify_css = reponse.combine_js = True  # test before using
+
 #########################################################################
 ## Here is sample code if you need for
 ## - email capabilities
