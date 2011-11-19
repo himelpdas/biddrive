@@ -166,9 +166,14 @@ def try_rewrite_on_error(http_response, request, environ, ticket=None):
                     message = 'You are being redirected <a href="%s">here</a>'
                     return HTTP(303, message % url, Location=url), environ
                 else:
-                    path_info = '/' + path_info.lstrip('/') # add leading '/' if missing
-                    if path_info != environ['PATH_INFO']:
-                        # rewrite request, call wsgibase recursively, avoid loop
+                    error_raising_path = environ['PATH_INFO']
+                    # Rewrite routes_onerror path.
+                    path_info = '/' + path_info.lstrip('/') # add leading '/' if missing                    
+                    environ['PATH_INFO'] = path_info
+                    error_handling_path = url_in(request, environ)[1]['PATH_INFO']
+                    # Avoid infinite loop.
+                    if error_handling_path != error_raising_path:
+                        # wsgibase will be called recursively with the routes_onerror path.
                         environ['PATH_INFO'] = path_info
                         environ['QUERY_STRING'] = query_string
                         return None, environ
