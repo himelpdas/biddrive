@@ -71,11 +71,15 @@ class DowCommerce:
             self.error = False
             self.success = False
             self.declined = True
+        elif self.results['response'] == '3':
+            self.error = True
+            self.success = False
+            self.declined = False                
         else:
             self.error = True
             self.success = False
             self.declined = False
-            raise DowCommerce.DowCommerceError(self.responses)
+            raise DowCommerce.DowCommerceError(self.results)
 
     def setTransaction(self, creditcard, expiration, total, cvv=None, orderid=None, orderdescription=None,
                         ipaddress=None, tax=None, shipping=None, 
@@ -187,6 +191,9 @@ class DowCommerce:
         
     def getFullResponse(self):
         return self.results    
+        
+    def getResponseText(self):
+        return self.results['responsetext']    
 
 def test():
     import socket
