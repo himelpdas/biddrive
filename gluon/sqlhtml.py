@@ -1702,11 +1702,6 @@ class SQLFORM(FORM):
                             order=key)),_class=trap_class())
             head.append(TH(header, _class=ui.get('default','')))
             
-        if links_in_grid:
-            for link in links or []:
-                if isinstance(link,dict): 
-                    head.append(TH(link['header'], _class=ui.get('default','')))
-
         head.append(TH(_class=ui.get('default','')))
         
         paginator = UL()
