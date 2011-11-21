@@ -1484,8 +1484,8 @@ class Auth(object):
             userfield = 'email'
         passfield = self.settings.password_field
         user = self.db(table_user[userfield] == username).select().first()
-        password = table_user[passfield].validate(password)[0]
         if user:
+            password = table_user[passfield].validate(password)[0]
             if not user.registration_key and user[passfield] == password:
                 user = Storage(table_user._filter_fields(user, id=True))
                 session.auth = Storage(user=user, last_visit=request.now,
@@ -1493,6 +1493,12 @@ class Auth(object):
                                        hmac_key = web2py_uuid())
                 self.user = user
                 return user
+        else:
+            # user not in database try other login methods
+            for login_method in self.settings.login_methods:
+                if login_method != self and login_method(username, password):
+                    self.user = username
+                    return username
         return False
 
     def cas_login(
