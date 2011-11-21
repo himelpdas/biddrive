@@ -378,7 +378,7 @@ def wsgibase(environ, responder):
 
                 (static_file, environ) = rewrite.url_in(request, environ)
                 if static_file:
-                    if request.env.get('query_string', '')[:10] == 'attachment':
+                    if environ.get('QUERY_STRING', '')[:10] == 'attachment':
                         response.headers['Content-Disposition'] = 'attachment'
                     response.stream(static_file, request=request)
 
