@@ -227,7 +227,7 @@
 		
 		if( t.isSafari ){
 			t.editor_area.style.position	= "absolute";
-			a.style.marginLeft		="-3px";
+			// a.style.marginLeft		="-3px";
 			if( t.isSafari < 3.2 ) // Safari 3.0 (3.1?)
 				a.style.marginTop	="1px";
 		}
