@@ -427,7 +427,7 @@ class Session(Storage):
             if global_settings.db_sessions is True or masterapp in global_settings.db_sessions:
                 return
             response.session_new = False
-            client = request.client.replace(':', '.')
+            client = request.client and request.client.replace(':', '.')
             if response.session_id_name in request.cookies:
                 response.session_id = \
                     request.cookies[response.session_id_name].value
