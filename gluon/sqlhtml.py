@@ -1701,8 +1701,18 @@ class SQLFORM(FORM):
                             keywords=request.vars.keywords or '',
                             order=key)),_class=trap_class())
             head.append(TH(header, _class=ui.get('default','')))
-            
-        head.append(TH(_class=ui.get('default','')))
+
+        if links and links_in_grid:
+            for link in links:
+                if isinstance(link,dict): 
+                    head.append(TH(link['header'], _class=ui.get('default','')))
+        
+        # Include extra column for buttons if needed.
+        include_buttons_column = (details or editable or deletable or
+            (links and links_in_grid and
+             not all([isinstance(link, dict) for link in links])))
+        if include_buttons_column:
+            head.append(TH(_class=ui.get('default','')))
         
         paginator = UL()
         if paginate and paginate<nrows:
@@ -1790,27 +1800,28 @@ class SQLFORM(FORM):
                         value=field.formatter(value)
                     tr.append(TD(value))
                 row_buttons = TD(_class='row_buttons')
-                if links_in_grid:
-                    for link in links or []:
+                if links and links_in_grid:
+                    for link in links:
                         if isinstance(link, dict):
                             tr.append(TD(link['body'](row)))
                         else:
                             if link(row):
                                 row_buttons.append(link(row))
-                if details and (not callable(details) or details(row)):
-                    row_buttons.append(gridbutton(
-                            'buttonview', 'View',
-                            url(args=['view',tablename,id])))
-                if editable and (not callable(editable) or editable(row)):
-                    row_buttons.append(gridbutton(
-                            'buttonedit', 'Edit',
-                            url(args=['edit',tablename,id])))
-                if deletable and (not callable(deletable) or deletable(row)):
-                    row_buttons.append(gridbutton(
-                            'buttondelete', 'Delete',
-                            callback=url(args=['delete',tablename,id]),
-                            delete='tr'))
-                tr.append(row_buttons)
+                if include_buttons_column:
+                    if details and (not callable(details) or details(row)):
+                        row_buttons.append(gridbutton(
+                                'buttonview', 'View',
+                                url(args=['view',tablename,id])))
+                    if editable and (not callable(editable) or editable(row)):
+                        row_buttons.append(gridbutton(
+                                'buttonedit', 'Edit',
+                                url(args=['edit',tablename,id])))
+                    if deletable and (not callable(deletable) or deletable(row)):
+                        row_buttons.append(gridbutton(
+                                'buttondelete', 'Delete',
+                                callback=url(args=['delete',tablename,id]),
+                                delete='tr'))
+                    tr.append(row_buttons)
                 tbody.append(tr)
             htmltable.append(tbody)
             htmltable = DIV(htmltable,_style='width:100%;overflow-x:scroll')
