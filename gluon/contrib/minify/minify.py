@@ -2,77 +2,106 @@
 # -*- coding: utf-8 -*-
 
 """
-High-level CSS and JS minification class for web2py. Called by response.include_files()
+High-level CSS and JS minification class for web2py.
+Called by response.include_files()
 Created by: Ross Peoples <ross.peoples@gmail.com>
+Modified by: Massimo Di Pierro <massimo.dipierro@gmail.com>
 """
 
 import cssmin
 import jsmin
 import os
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+def read_binary_file(filename):
+    f = open(filename,'rb')
+    data = f.read()
+    f.close()
+    return data
 
-def minify(files, combine_css=True, combine_js=True, minify_css=True, minify_js=True):
+def write_binary_file(filename,data):
+    f =open(filename,'wb')
+    f.write(data)
+    f.close()
+
+def minify(files, path_info, folder, optimize_css, optimize_js,
+           ignore = ['/jquery.js', '/anytime.js']):
+
     """
-    Takes a list of CSS and JS files and combines them into a single CSS and JS file.
-    CSS and JS files can optionally be minified (remove whitespace, etc).
-    Returns a tuple: (css_string, js_string). If combine_js is False and combine_css
-    is False, then returns a tuple: (css_list, js_list).
-    """
-    
-    css_string = StringIO.StringIO()
-    js_string = StringIO.StringIO()
-    css_list = []
-    js_list = []
-    dont_minify = ['jquery.js', 'anytime.js']
-    for k,f in enumerate(files or []):
-        if not f in files[:k]:
-            filename = f.lower().split('?')[0]
-            path = filename.split('/')
-            path = os.sep.join(path[1:])
-            abs_filename = os.path.join(os.getcwd(), 'applications', path)
-            
-            if filename.endswith('.css'):
-                if combine_css:
-                    fp = open(abs_filename, 'r')
-                    contents = fp.read()
-                    fp.close()
-                    
-                    if minify_css:
-                        contents = cssmin.cssmin(contents)
-                        
-                    css_string.write(contents + '\n\n')
+    Input:
+    files: is a list of URLs to JS and CSS files (not repeated)
+    path_info: is the URL of a temp static folder
+    folder: is the application folder
+    optimize_css: is a string of the form 'concat|minify|inline'
+    optimize_js: is a string of the form 'concat|minify|inline'
+    (minify requires concat, inline requires concat also)
+
+    Returns a new list of:
+    - filename (absolute or relative, css or js, actual or temporary) or
+    - ('css:inline','...css..')
+    - ('js:inline','...js..')    
+    """    
+    concat_css = 'concat' in optimize_css
+    minify_css = 'minify' in optimize_css
+    inline_css = 'inline' in optimize_css
+    concat_js = 'concat' in optimize_js
+    minify_js = 'minify' in optimize_js
+    inline_js = 'inline' in optimize_js
+    static_path,temp = path_info.rsplit('/',1)
+    new_files = []
+    css = []
+    js = []
+    for k,filename in enumerate(files):
+        if not filename.startswith('/') or \
+                any(filename.endswith(x) for x in ignore):
+            new_files.append(filename)
+            continue
+
+        abs_filename = os.path.join(folder,'static',
+                                    filename[len(static_path)+1:])        
+
+        if filename.lower().endswith('.css'):
+            if concat_css:
+                contents = read_binary_file(abs_filename)
+                if minify_css:
+                    css.append(cssmin.cssmin(contents)+'\n\n')
                 else:
-                    css_list.append(filename)
-                
-            elif filename.endswith('.js'):
-                if combine_js:
-                    fp = open(abs_filename, 'r')
-                    contents = fp.read()
-                    fp.close()
-                    
-                    if minify_js and not filename.endswith('min.js') and not filename in dont_minify:
-                        contents = jsmin.jsmin(contents)
-                        
-                    js_string.write(contents + '\n\n')
+                    css.append(contents)
+            else:
+                css.append(filename)
+        elif filename.lower().endswith('.js'):
+            if concat_js:
+                contents = read_binary_file(abs_filename)            
+                if minify_js and not filename.endswith('.min.js'):
+                    js.append(jsmin.jsmin(contents))
                 else:
-                    js_list.append(filename)
-                    
-    return_css = css_list
-    return_js = js_list
-    
-    if combine_css:
-        return_css = css_string.getvalue()
-        css_string.close()
-        del css_string
-        
-    if combine_js:
-        return_js = js_string.getvalue()
-        js_string.close()
-        del js_string
-        
-    return (return_css, return_js)
+                    js.append(contents)
+            else:
+                js.append(filename)
+    if css and concat_css:
+        css = '\n\n'.join(contents for contents in css)
+        if inline_css:
+            css = ('css:inline',css)
+        else:
+            temppath = os.path.join(folder,'static',temp)
+            if not os.path.exists(temppath): os.mkdir(temppath)
+            tempfile = os.path.join(temppath,'compressed.css')
+            write_binary_file(tempfile,css)
+            css = path_info+'/compressed.css'
+        new_files.append(css)
+    else:
+        new_files += css    
+    if js and concat_js:
+        js = '\n\n'.join(contents for contents in js)
+        if inline_js:
+            js = ('js:inline',js)
+        else:
+            temppath = os.path.join(folder,'static',temp)
+            if not os.path.exists(temppath): os.mkdir(temppath)
+            tempfile = os.path.join(folder,'static',temp,'compressed.js')
+            write_binary_file(tempfile,js)
+            js = path_info+'/compressed.js'
+        new_files.append(js)
+    else:
+        new_files += js
+    return new_files
         

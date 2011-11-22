@@ -40,7 +40,7 @@ import threading
 try:
     from gluon.contrib.minify import minify
     have_minify = True
-except:
+except ImportError:
     have_minify = False
     
 regex_session_id = re.compile('^([\w\-]+/)?[\w\-\.]+$')
@@ -48,6 +48,11 @@ regex_session_id = re.compile('^([\w\-]+/)?[\w\-\.]+$')
 __all__ = ['Request', 'Response', 'Session']
 
 current = threading.local()  # thread-local storage for request-scope globals
+
+css_template = '<link href="%s" rel="stylesheet" type="text/css" />'
+js_template = '<script src="%s" type="text/javascript"></script>'
+css_inline = '<style type="text/css">\n%s\n</style>'
+js_inline = '<script type="text/javascript">\n%s\n</script>'
 
 class Request(Storage):
 
@@ -201,68 +206,44 @@ class Response(Storage):
         self.write(s,escape=False)
 
     def include_files(self):
+
+        
         """
         Caching method for writing out files. 
         By default, caches in ram for 5 minutes. To change,
         response.cache_includes = (cache_method, time_expire). 
         Example: (cache.disk, 60) # caches to disk for 1 minute.
         """
+        from gluon import URL
 
-        cache = self.cache_includes or \
-            (current.cache.ram, 60*5) # cache for 5 minutes by default
-        s = ''        
-        if cache and (self.combine_css or self.combine_js):
-            cache_model, time_expire = cache
-            s = cache_model(
-                'response.files.minified', 
-                lambda: self._include_files(),
-                time_expire=time_expire)
-        else:
-            s = self._include_files()            
-        self.write(s, escape=False)
-    
-    def _include_files(self):
+        files = []
+        for item in self.files:
+            if not item in files: files.append(item)
+        if have_minify and (self.optimize_css or self.optimize_js):
+            # cache for 5 minutes by default
+            cache = self.cache_includes or (current.cache.ram, 60*5)
+            def call_minify():                
+                return minify.minify(files,URL('static','temp'),
+                                     current.request.folder,
+                                     self.optimize_css,self.optimize_js)
+            if cache:
+                cache_model, time_expire = cache
+                files = cache_model('response.files.minified',call_minify,
+                                    time_expire)
+            else:
+                files = call_minify()
         s = ''
-        if have_minify:
-            css, js = minify.minify(self.files, 
-                                    self.combine_css, self.combine_js,
-                                    self.minify_css, self.minify_js)
-        else:
-            css = [f for f in self.files and f.lower().endswith('.css')]
-            js = [f for f in self.files and f.lower().endswith('.js')]
+        for item in files:            
+            if isinstance(item,str):
+                f = item.lower()
+                if f.endswith('.css'):  s += css_template % item
+                elif f.endswith('.js'): s += js_template % item
+            elif isinstance(item,(list,tuple)):
+                f = item[0]
+                if f=='css:inline':     s += css_inline % item[1]
+                elif f=='js:inline':    s += js_inline % item[1]
+        self.write(s, escape=False)
 
-        if isinstance(css, list):
-            for f in css:
-                s += '<link href="%s" rel="stylesheet" type="text/css" />' % f
-        elif isinstance(css, str):
-            if self.inline_css:
-                s += '<style type="text/css">%s</style>' % css
-            else:
-                from html import URL
-                name = 'web2py_generated.css'
-                url_path = ULR('static', 'css/'+name)
-                filename = os.path.join(current.request.folder, 'static', 'css', name)
-                fp = open(filename, 'wb')
-                fp.write(css)
-                fp.close()                
-                s += '<link href="%s" rel="stylesheet" type="text/css" />' % url_path
-                
-        if isinstance(js, list):
-            for f in js:
-                s += '<script src="%s" type="text/javascript"></script>' % f
-        elif isinstance(js, str):
-            if self.inline_js:
-                s += '<script type="text/javascript">%s</script>' % js
-            else:
-                name = 'web2py_generated.js'
-                url_path = ULR('static', 'js/'+name)
-                filename = os.path.join(current.request.folder, 'static', 'js', name)
-                fp = open(filename, 'wb')
-                fp.write(js)
-                fp.close()                
-                s += '<script src="%s" type="text/javascript"></script>' % url_path      
-        return s
-    
     def stream(
         self,
         stream,

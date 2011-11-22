@@ -21,10 +21,9 @@ else:
 ## by default give a view/generic.extension to all actions from localhost
 ## none otherwise. a pattern can be 'controller/function.extension'
 response.generic_patterns = ['*'] if request.is_local else []
-
-## combine all css and js files into single files to improve performance.
-# response.combine_css = response.combine_js = True # test before using
-# response.minify_css = reponse.combine_js = True  # test before using
+## (optional) optimize handling of static files
+# response.optimize_css = 'concat|minify|inline'
+# response.optimize_js = 'concat|minify|inline'
 
 #########################################################################
 ## Here is sample code if you need for
