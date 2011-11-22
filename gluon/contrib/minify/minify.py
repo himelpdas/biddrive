@@ -23,6 +23,9 @@ def write_binary_file(filename,data):
     f.write(data)
     f.close()
 
+def fix_links(css,static_path):    
+    return css.replace('../',static_path+'/')
+
 def minify(files, path_info, folder, optimize_css, optimize_js,
            ignore = ['/jquery.js', '/anytime.js']):
 
@@ -63,7 +66,7 @@ def minify(files, path_info, folder, optimize_css, optimize_js,
             if concat_css:
                 contents = read_binary_file(abs_filename)
                 if minify_css:
-                    css.append(cssmin.cssmin(contents)+'\n\n')
+                    css.append(cssmin.cssmin(contents))
                 else:
                     css.append(contents)
             else:
@@ -80,7 +83,7 @@ def minify(files, path_info, folder, optimize_css, optimize_js,
     if css and concat_css:
         css = '\n\n'.join(contents for contents in css)
         if inline_css:
-            css = ('css:inline',css)
+            css = ('css:inline',fix_links(css,static_path))
         else:
             temppath = os.path.join(folder,'static',temp)
             if not os.path.exists(temppath): os.mkdir(temppath)
@@ -91,7 +94,7 @@ def minify(files, path_info, folder, optimize_css, optimize_js,
     else:
         new_files += css    
     if js and concat_js:
-        js = '\n\n'.join(contents for contents in js)
+        js = '\n'.join(contents for contents in js)
         if inline_js:
             js = ('js:inline',js)
         else:
