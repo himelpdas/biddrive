@@ -10,13 +10,7 @@ session.forget()
 
 @cache('index')
 def index():
-    import urllib;
-    try:
-        images = XML(urllib.urlopen('http://web2py.com/poweredby/default/images').read())
-    except:
-        images=[]
-    tweets = None # XML(urllib.urlopen('http://twitter.com/web2py?format=json').read())
-    return response.render(images=images,tweets=tweets)
+    return response.render()
 
 @cache('what')
 def what():
