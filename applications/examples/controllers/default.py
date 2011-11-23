@@ -76,5 +76,5 @@ def examples():
 @cache('changelog')
 def changelog():
     import os
-    filename = os.path.join(request.env.gluon_parent, 'README')
+    filename = os.path.join(request.env.gluon_parent, 'CHANGELOG')
     return response.render(dict(changelog=MARKMIN(read_file(filename))))
