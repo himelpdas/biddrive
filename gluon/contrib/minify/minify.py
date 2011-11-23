@@ -27,7 +27,8 @@ def fix_links(css,static_path):
     return css.replace('../',static_path+'/')
 
 def minify(files, path_info, folder, optimize_css, optimize_js,
-           ignore = ['/jquery.js', '/anytime.js']):
+           ignore_concat = [],
+           ignore_minity = ['/jquery.js', '/anytime.js']):
 
     """
     Input:
@@ -55,7 +56,7 @@ def minify(files, path_info, folder, optimize_css, optimize_js,
     js = []
     for k,filename in enumerate(files):
         if not filename.startswith('/') or \
-                any(filename.endswith(x) for x in ignore):
+                any(filename.endswith(x) for x in ignore_concat):
             new_files.append(filename)
             continue
 
@@ -74,7 +75,8 @@ def minify(files, path_info, folder, optimize_css, optimize_js,
         elif filename.lower().endswith('.js'):
             if concat_js:
                 contents = read_binary_file(abs_filename)            
-                if minify_js and not filename.endswith('.min.js'):
+                if minify_js and not filename.endswith('.min.js') and \
+                        not any(filename.endswith(x) for x in ignore_minify):
                     js.append(jsmin.jsmin(contents))
                 else:
                     js.append(contents)
