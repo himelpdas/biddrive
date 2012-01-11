@@ -254,7 +254,6 @@ if not 'google' in drivers:
         drivers.append('pg8000')
     except ImportError:
         logger.debug('no pg8000 driver')
-        raise
 
     try:
         import cx_Oracle
