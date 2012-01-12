@@ -1775,7 +1775,8 @@ class Auth(object):
             session.auth = Storage(
                 user = user,
                 last_visit = request.now,
-                expiration = self.settings.long_expiration,
+                expiration = request.vars.get("remember",False) and \
+                    self.settings.long_expiration or self.settings.expiration,
                 remember = request.vars.has_key("remember"),
                 hmac_key = web2py_uuid()
                 )
@@ -2517,16 +2518,11 @@ class Auth(object):
                                 self.settings.login_url+\
                                     '?_next='+urllib.quote(next))
 
-                #Check condition variable.
-                #Since condition could be callable, following cases could occur:
-                # 1. condition == True => ok
-                # 2. condition == False => failed
-                # 3. condition is NOT callable but it NOT None and NOT False and NOT 0 => failed
-                # 4. condition is callable -> condition() is True => ok
-                # 5. condition is callable -> condition() is False  => failed
-                # Note: Order is important! At the end condition has to be checked against True
-                # otherwise case 3 would be ok.
-                if not (callable(condition) and condition() == True) and not condition == True:
+                if callable(condition):
+                    flag = condition()
+                else:
+                    flag = condition
+                if not flag:
                     current.session.flash = self.messages.access_denied
                     return call_or_redirect(
                         self.settings.on_failed_authorization)
