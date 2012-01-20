@@ -702,7 +702,7 @@ class SQLFORM(FORM):
         labels = None,
         col3 = {},
         submit_button = 'Submit',
-        delete_label = 'Check to delete:',
+        delete_label = 'Check to delete',
         showid = True,
         readonly = False,
         comments = True,
@@ -801,12 +801,12 @@ class SQLFORM(FORM):
                 self.custom.inpval.id = ''
                 widget = ''
                 if record:
-                    if showid and 'id' in fields and field.readable:
-                        v = record['id']
+                    if showid and field.name in record and field.readable:
+                        v = record[field.name]
                         widget = SPAN(v, _id=field_id)
                         self.custom.dspval.id = str(v)
                         xfields.append((row_id,label, widget,comment))
-                    self.record_id = str(record['id'])
+                    self.record_id = str(record[field.name])
                 self.custom.widget.id = widget
                 continue
 
@@ -919,7 +919,7 @@ class SQLFORM(FORM):
                             )
             xfields.append((self.FIELDKEY_DELETE_RECORD+SQLFORM.ID_ROW_SUFFIX,
                             LABEL(
-                                delete_label,
+                                delete_label,separator,
                                 _for=self.FIELDKEY_DELETE_RECORD,
                                 _id=self.FIELDKEY_DELETE_RECORD+SQLFORM.ID_LABEL_SUFFIX),
                             widget,
@@ -944,7 +944,7 @@ class SQLFORM(FORM):
             if not self['hidden']:
                 self['hidden'] = {}
             if not keyed:
-                self['hidden']['id'] = record['id']
+                self['hidden']['id'] = record[table._id.name]
 
         (begin, end) = self._xml()
         self.custom.begin = XML("<%s %s>" % (self.tag, begin))
@@ -1292,7 +1292,7 @@ class SQLFORM(FORM):
     @staticmethod
     def build_query(fields,keywords):
         key = keywords.strip()
-        if key and not ' ' in key:
+        if key and not ' ' in key and not '"' in key and not "'" in key:
             SEARCHABLE_TYPES = ('string','text','list:string')
             parts = [field.contains(key) for field in fields if field.type in SEARCHABLE_TYPES]
         else:
@@ -1564,7 +1564,7 @@ class SQLFORM(FORM):
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             form = SQLFORM(table,record,upload=upload,ignore_rw=ignore_rw,
-                           readonly=True,_class='web2py_form')
+                           formstyle=formstyle, readonly=True,_class='web2py_form')
             res = DIV(buttons(edit=editable,record=record),form,
                       formfooter,_class=_class)
             res.create_form = None
@@ -1576,8 +1576,10 @@ class SQLFORM(FORM):
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             edit_form = SQLFORM(table,record,upload=upload,ignore_rw=ignore_rw,
-                                deletable=deletable,
-                                _class='web2py_form')
+                                formstyle=formstyle,deletable=deletable,
+                                _class='web2py_form',
+                                submit_button = T('Submit'),
+                                delete_label = T('Check to delete'))
             edit_form.process(formname=formname,
                               onvalidation=onvalidation,
                               onsuccess=onupdate,
@@ -1778,6 +1780,7 @@ class SQLFORM(FORM):
                     if not field.readable: continue
                     if field.type=='blob': continue
                     value = row[field]
+                    maxlength = maxtextlengths.get(str(field),maxtextlength)
                     if field.represent:
                         try:
                             value=field.represent(value,row)
@@ -1798,8 +1801,8 @@ class SQLFORM(FORM):
                                           _href='%s/%s' % (upload, value))
                         else:
                             value = ''
-                    elif isinstance(value,str) and len(value)>maxtextlength:
-                        value=value[:maxtextlengths.get(str(field),maxtextlength)]+'...'
+                    elif isinstance(value,str) and len(value)>maxlength:
+                        value=value[:maxlength]+'...'
                     else:
                         value=field.formatter(value)
                     tr.append(TD(value))
@@ -1953,12 +1956,13 @@ class SQLFORM(FORM):
                 else:
                     del kwargs[key]
         for tablename,fieldname in table._referenced_by:
+            id_field_name = db[tablename]._id.name
             if linked_tables is None or tablename in linked_tables:
                 args0 = tablename+'.'+fieldname
                 links.append(
                     lambda row,t=T(db[tablename]._plural),nargs=nargs,args0=args0:\
                         A(SPAN(t),_class=trap_class(),_href=URL(
-                            args=request.args[:nargs]+[args0,row.id])))
+                            args=request.args[:nargs]+[args0,row[id_field_name]])))
         grid=SQLFORM.grid(query,args=request.args[:nargs],links=links,
                           links_in_grid=links_in_grid,
                           user_signature=user_signature,**kwargs)
