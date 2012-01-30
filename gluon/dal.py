@@ -1930,7 +1930,7 @@ class PostgreSQLAdapter(BaseAdapter):
     def __init__(self,db,uri,pool_size=0,folder=None,db_codec ='UTF-8',
                  credential_decoder=lambda x:x, driver_args={},
                  adapter_args={}):
-        if not self.drivers.get('psycopg2') and not self.drivers.get('psycopg2'):
+        if not self.drivers.get('psycopg2') and not self.drivers.get('pg8000'):
             raise RuntimeError, "Unable to import any drivers (psycopg2 or pg8000)"
         self.db = db
         self.dbengine = "postgres"
@@ -1970,7 +1970,7 @@ class PostgreSQLAdapter(BaseAdapter):
             if self.drivers.get('psycopg2'):
                 self.driver = self.drivers['psycopg2']
             elif self.drivers.get('pg8000'):
-                self.driver = drivers['pg8000']
+                self.driver = drivers.get('pg8000')
         elif library == "postgres:psycopg2":
             self.driver = self.drivers.get('psycopg2')
         elif library == "postgres:pg8000":
