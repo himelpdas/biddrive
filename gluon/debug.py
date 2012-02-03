@@ -155,3 +155,6 @@ web_debugger = WebDebugger(front_conn)                          # frontend
 qdb_debugger = qdb.Qdb(pipe=child_conn, redirect_stdio=False)   # backend
 dbg = qdb_debugger
 
+import gluon.main
+gluon.main.global_settings.debugging = True
+
