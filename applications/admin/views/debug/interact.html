@@ -103,6 +103,14 @@
             <div class="help">
               <ul>
                 <li>You need to set up and reach a breakpoint to use the debugger!</li>
+                <li>To run under debugger, copy in your model/controller:</li>
+                {{=CODE("from gluon.debug import qdb_debugger\n"
+                        "qdb_debugger.do_debug() # start debugging!\n",
+                        counter=None)}}</li>
+                <li>To set a breakpoint programatically, write:
+                {{=CODE("from gluon.debug import qdb_debugger\n"
+                        "qdb_debugger.set_trace() # stop here!\n",
+                        counter=None)}}</li>
               </ul>
             </div>
     {{pass}}
@@ -120,6 +128,7 @@
             {{=sp_button(URL('cont'), T("continue"))}}
             {{=sp_button(URL('stop'), T("stop"))}}
         {{pass}}
+            {{=button(URL('breakpoints'), T("breakpoints"))}}
     </span>
 
     <div class="box">

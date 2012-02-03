@@ -6,7 +6,7 @@ import gluon.dal
 import gluon.html
 import gluon.validators
 import code, thread
-from gluon.debug import communicate, web_debugger
+from gluon.debug import communicate, web_debugger, qdb_debugger
 import pydoc
 
 
@@ -71,7 +71,7 @@ def interact():
         f_globals = {}
 
     return dict(app=app, data="", 
-                filename=filename, lines=lines, lineno=lineno, 
+                filename=web_debugger.filename, lines=lines, lineno=lineno, 
                 f_globals=f_globals, f_locals=f_locals)
 
 def step():
@@ -106,4 +106,47 @@ def execute():
         output =  T("Exception %s") % str(e)
     k = len(session['debug_commands:'+app]) - 1
     return '[%i] %s%s\n' % (k + 1, command, output)
+
+
+def breakpoints():
+    "Add or remove breakpoints"
+
+    # Get all .py files
+    files = listdir(apath('', r=request), '.*\.py$')
+    files = [filename for filename in files 
+             if filename and 'languages' not in filename 
+                and not filename.startswith("admin")
+                and not filename.startswith("examples")]
+
+    form = SQLFORM.factory(
+        Field('filename', requires=IS_IN_SET(files), label=T("Filename")),
+        Field('lineno', 'integer', label=T("Line number"),
+              requires=IS_NOT_EMPTY()),
+        Field('temporary', 'boolean', label=T("Temporary"), 
+              comment=T("deleted after first hit")),
+        Field('condition', 'string', label=T("Condition"),
+              comment=T("honored only if the expression evaluates to true")),
+        )
+
+    if form.accepts(request.vars, session):
+        filename = os.path.join(request.env['applications_parent'], 
+                                'applications', form.vars.filename)
+        ok = qdb_debugger.do_set_breakpoint(filename, 
+                                            form.vars.lineno,
+                                            form.vars.temporary,
+                                            form.vars.condition)
+        response.flash = T("Set Breakpoint on %s at %s: %s") % (
+                            filename, form.vars.lineno, ok)
+
+    for item in request.vars:
+        if item[:7] == 'delete_':
+            qdb_debugger.do_clear(item[7:])
+
+    breakpoints = [{'number': bp[0], 'filename': os.path.basename(bp[1]),
+                    'path': bp[1], 'lineno': bp[2], 
+                    'temporary': bp[3], 'enabled': bp[4], 'hits': bp[5], 
+                    'condition': bp[6]}  
+                    for bp in qdb_debugger.do_list_breakpoint()]
+
+    return dict(breakpoints=breakpoints, form=form)
 
