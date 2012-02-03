@@ -131,12 +131,12 @@ def breakpoints():
     if form.accepts(request.vars, session):
         filename = os.path.join(request.env['applications_parent'], 
                                 'applications', form.vars.filename)
-        ok = qdb_debugger.do_set_breakpoint(filename, 
+        err = qdb_debugger.do_set_breakpoint(filename, 
                                             form.vars.lineno,
                                             form.vars.temporary,
                                             form.vars.condition)
         response.flash = T("Set Breakpoint on %s at %s: %s") % (
-                            filename, form.vars.lineno, ok)
+                            filename, form.vars.lineno, err or T('sucessful'))
 
     for item in request.vars:
         if item[:7] == 'delete_':

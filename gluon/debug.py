@@ -148,6 +148,7 @@ parent_queue, child_queue = Queue.Queue(), Queue.Queue()
 front_conn = qdb.QueuePipe("parent", parent_queue, child_queue)
 child_conn = qdb.QueuePipe("child", child_queue, parent_queue)
 
-web_debugger = WebDebugger(front_conn)
-qdb_debugger = qdb.Qdb(pipe=child_conn, redirect_stdio=False)
+web_debugger = WebDebugger(front_conn)                          # frontend
+qdb_debugger = qdb.Qdb(pipe=child_conn, redirect_stdio=False)   # backend
+dbg = qdb_debugger
 

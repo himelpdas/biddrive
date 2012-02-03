@@ -87,7 +87,7 @@
 
         
         <h3>{{=T("Interactive console")}}</h3>
-          <textarea id="output" readonly="readonly">web2py Debugger {{=request.env.web2py_version}}{{=data}}</textarea>
+          <textarea id="output" readonly="readonly">{{=data}}</textarea>
 
           <form id="form" action="{{=URL(r=request,f='execute',args=app)}}" method="get">
             <div id="shellwrapper">
@@ -102,15 +102,16 @@
           <h3 class="not_paused">{{=T("No Interaction yet")}}</h3>
             <div class="help">
               <ul>
-                <li>You need to set up and reach a breakpoint to use the debugger!</li>
+                <li>You need to set up and reach a {{=A("breakpoint", _href=URL('breakpoints'))}} to use the debugger!</li>
                 <li>To run under debugger, copy in your model/controller:</li>
-                {{=CODE("from gluon.debug import qdb_debugger\n"
-                        "qdb_debugger.do_debug() # start debugging!\n",
+                {{=CODE("from gluon.debug import dbg\n"
+                        "dbg.do_debug() # start debugging!\n",
                         counter=None)}}</li>
                 <li>To set a breakpoint programatically, write:
-                {{=CODE("from gluon.debug import qdb_debugger\n"
-                        "qdb_debugger.set_trace() # stop here!\n",
+                {{=CODE("from gluon.debug import dbg\n"
+                        "dbg.set_trace() # stop here!\n",
                         counter=None)}}</li>
+                <li>Please {{=A("refresh", _href=URL('interact'))}} this page to see if a breakpoint was hit and debug interaction is required.</li>
               </ul>
             </div>
     {{pass}}
