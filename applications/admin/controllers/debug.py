@@ -135,8 +135,8 @@ def breakpoints():
                                             form.vars.lineno,
                                             form.vars.temporary,
                                             form.vars.condition)
-        response.flash = T("Set Breakpoint on %s at %s: %s") % (
-                            filename, form.vars.lineno, err or T('sucessful'))
+        response.flash = T("Set Breakpoint on %s at line %s: %s") % (
+                            filename, form.vars.lineno, err or T('successful'))
 
     for item in request.vars:
         if item[:7] == 'delete_':
@@ -149,4 +149,41 @@ def breakpoints():
                     for bp in qdb_debugger.do_list_breakpoint()]
 
     return dict(breakpoints=breakpoints, form=form)
+
+
+def toggle_breakpoint():
+    "Set or clear a breakpoint"
+    
+    lineno = None
+    ok = None
+    try:
+        filename = os.path.join(request.env['applications_parent'], 
+                                'applications', request.vars.filename)
+        start = 0
+        sel_start = int(request.vars.sel_start)
+        for lineno, line in enumerate(request.vars.data.split("\n")):
+            if sel_start <= start:
+                break
+            start += len(line) + 1
+        else:
+            lineno = None
+        if lineno is not None:
+            for bp in qdb_debugger.do_list_breakpoint():
+                no, bp_filename, bp_lineno, temporary, enabled, hits, cond = bp
+                if filename == bp_filename and lineno == bp_lineno:
+                    err = qdb_debugger.do_clear_breakpoint(filename, lineno)
+                    response.flash = T("Removed Breakpoint on %s at line %s", ( 
+                                        filename, lineno))
+                    ok = False
+                    break
+            else:
+                err = qdb_debugger.do_set_breakpoint(filename, lineno)
+                response.flash = T("Set Breakpoint on %s at line %s: %s") % (
+                                    filename, lineno, err or T('successful'))
+                ok = True
+        else:
+            response.flash = T("Unable to determine the line number!")
+    except Exception, e:
+        session.flash = str(e)
+    return response.json({'ok': ok, 'lineno': lineno})
 
