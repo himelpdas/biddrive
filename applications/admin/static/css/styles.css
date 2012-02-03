@@ -930,6 +930,12 @@ ul#snapshot > li {
   background-image: url(../images/dim_bullet.gif);
 }
 
+/* Debug */
+
+.debug h3.not_paused {
+  background-image: url(../images/red_bullet.gif);
+}
+
 /* Footer */
 
 #footer {
