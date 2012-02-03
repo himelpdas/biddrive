@@ -70,6 +70,10 @@
 
     {{if filename:}}
         <h3>{{=T("Interaction at %s line %s") % (filename, lineno)}}</h3>
+
+        {{if exception:}}
+              <h3 class="exception">{{=T("Exception %s", exception['title'])}}</h3>
+        {{pass}}
         
         <h5>Code listing</h5>
         {{if lines:}}
@@ -131,6 +135,15 @@
         {{pass}}
             {{=button(URL('breakpoints'), T("breakpoints"))}}
     </span>
+
+    {{if exception:}}
+        <div class="box">
+          <h3>Exception {{=exception['extype']}}: {{=exception['exvalue']}}</h3>
+          <div class="formfield">
+               {{=CODE((exception['request']), counter=None)}}
+          </div>
+        </div>
+    {{pass}}
 
     <div class="box">
       <h3>Locals</h3>

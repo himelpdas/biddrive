@@ -106,6 +106,7 @@ class WebDebugger(qdb.Frontend):
     def clear_interaction(self):
         self.filename = None
         self.lineno = None
+        self.exception_info = None
 
     # redefine Frontend methods:
     
@@ -119,7 +120,9 @@ class WebDebugger(qdb.Frontend):
         self.lineno = lineno
 
     def exception(self, title, extype, exvalue, trace, request):
-        pass # just pass
+        self.exception_info = {'title': title, 
+                               'extype': extype, 'exvalue': exvalue,
+                               'trace': trace, 'request': request}
 
     @check_interaction
     def do_continue(self):

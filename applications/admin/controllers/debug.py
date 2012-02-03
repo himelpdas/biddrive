@@ -70,9 +70,14 @@ def interact():
         f_locals = {}
         f_globals = {}
 
+    if web_debugger.exception_info:
+        response.flash = T('Unhandled exception "Post-Mortem" debug mode. '
+                           'An error ticket will be issued!')
+
     return dict(app=app, data="", 
                 filename=web_debugger.filename, lines=lines, lineno=lineno, 
-                f_globals=f_globals, f_locals=f_locals)
+                f_globals=f_globals, f_locals=f_locals, 
+                exception=web_debugger.exception_info)
 
 def step():
     web_debugger.do_step()
