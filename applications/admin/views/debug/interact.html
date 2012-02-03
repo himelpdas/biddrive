@@ -74,7 +74,8 @@
         <h5>Code listing</h5>
         {{if lines:}}
         <pre>{{=CODE('\n'.join([x[1] for x in sorted(lines.items(),key=lambda x: x[0])]),
-                language='python', link=None, counter=min(lines.keys()), highlight_line=lineno)}}</pre>
+                language='python', link=None, counter=min(lines.keys()), 
+                highlight_line=lineno, context_lines=10)}}</pre>
         {{pass}}
 
         <div class="help">
