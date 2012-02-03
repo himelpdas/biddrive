@@ -71,8 +71,8 @@ def interact():
         f_globals = {}
 
     if web_debugger.exception_info:
-        response.flash = T('Unhandled exception "Post-Mortem" debug mode. '
-                           'An error ticket will be issued!')
+        response.flash = T('"User Exception" debug mode. '
+                           'An error ticket could be issued!')
 
     return dict(app=app, data="", 
                 filename=web_debugger.filename, lines=lines, lineno=lineno, 
