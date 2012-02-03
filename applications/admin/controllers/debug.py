@@ -69,6 +69,7 @@ def interact():
     else:
         f_locals = {}
         f_globals = {}
+        response.headers['refresh'] = "3"
 
     if web_debugger.exception_info:
         response.flash = T('"User Exception" debug mode. '
