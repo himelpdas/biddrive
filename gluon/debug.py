@@ -132,6 +132,7 @@ class WebDebugger(qdb.Frontend):
     def do_step(self):
         qdb.Frontend.do_step(self)
 
+    @check_interaction
     def do_return(self):
         qdb.Frontend.do_return(self)
 
