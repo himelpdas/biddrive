@@ -6552,8 +6552,8 @@ class Table(dict):
         elif str(key).isdigit():
             if key == 0:
                 self.insert(**self._filter_fields(value))
-            elif not self._db(self._id == key)\
-                    .update(**self._filter_fields(value)):
+            elif self._db(self._id == key)\
+                    .update(**self._filter_fields(value)) is None:
                 raise SyntaxError, 'No such record: %s' % key
         else:
             if isinstance(key, dict):
@@ -7769,7 +7769,7 @@ def Rows_unpickler(data):
 
 def Rows_pickler(data):
     return Rows_unpickler, \
-        (cPickle.dumps(data.as_list(storage_to_dict=True,
+        (cPickle.dumps(data.as_list(storage_to_dict=False,
                                     datetime_to_str=False)),)
 
 copy_reg.pickle(Rows, Rows_pickler, Rows_unpickler)
