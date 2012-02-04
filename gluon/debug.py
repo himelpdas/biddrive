@@ -10,6 +10,7 @@ License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 
 import logging
+import os
 import pdb
 import Queue
 import sys
@@ -85,14 +86,32 @@ def communicate(command=None):
 # New debugger implementation using qdb and a web UI
 
 import gluon.contrib.qdb as qdb
+from gluon import portalocker
+
+
+def lock(name=''):
+    from gluon.globals import current
+    locker = open(os.path.join(current.request.folder, 'debug_%s.lock' % name), 
+                  'a')
+    portalocker.lock(locker, portalocker.LOCK_EX)
+    return locker
+
+
+def unlock(locker):
+    portalocker.unlock(locker)
+    locker.close()
 
 
 def check_interaction(fn):
     "Decorator to clean and prevent interaction when not available"
     def check_fn(self, *args, **kwargs):
-        if self.filename:
-            self.clear_interaction()
-            fn(self, *args, **kwargs)
+        locker = lock('interact')
+        try:
+            if self.filename:
+                self.clear_interaction()
+                fn(self, *args, **kwargs)
+        finally:
+            unlock(locker)
     return check_fn
 
       
@@ -111,13 +130,21 @@ class WebDebugger(qdb.Frontend):
     # redefine Frontend methods:
     
     def run(self):
-        while self.pipe.poll():
-            qdb.Frontend.run(self)
+        locker = lock('run')
+        try:
+            while self.pipe.poll():
+                qdb.Frontend.run(self)
+        finally:
+            unlock(locker)
 
     def interaction(self, filename, lineno, line):
         # store current status
-        self.filename = filename
-        self.lineno = lineno
+        locker = lock('interact')
+        try:
+            self.filename = filename
+            self.lineno = lineno
+        finally:
+            unlock(locker)
 
     def exception(self, title, extype, exvalue, trace, request):
         self.exception_info = {'title': title, 
