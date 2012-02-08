@@ -491,9 +491,9 @@ def wsgibase(environ, responder):
                 # ##################################################
 
                 if global_settings.debugging and request.application != "admin":
-                    from gluon.debug import dbg
+                    import gluon.debug
                     # activate the debugger and wait to reach application code
-                    dbg.do_debug(mainpyfile=request.folder)
+                    gluon.debug.dbg.do_debug(mainpyfile=request.folder)
 
                 serve_controller(request, response, session)
 
