@@ -14,7 +14,13 @@ def index():
     example action using the internationalization operator T and flash
     rendered by views/default/index.html or views/generic.html
     """
-    response.flash = "Welcome to web2py!"
+    from gluon.debug import dbg
+    #dbg.do_debug(wait_breakpoint=False)
+    #dbg._wait_for_mainpyfile = ""
+    #dbg._wait_for_breakpoint = 0
+    dbg.set_trace()
+    print "SET_TRACE!"
+    response.flash = "Welcome to web2py!123"
     return dict(message=T('Hello World'))
 
 def user():
