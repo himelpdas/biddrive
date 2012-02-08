@@ -33,6 +33,7 @@ class Qdb(bdb.Bdb):
         self.pipe = pipe # for communication
         self._wait_for_mainpyfile = False
         self._wait_for_breakpoint = False
+        self.mainpyfile = ""
         self._lineno = None     # last listed line numbre
         # replace system standard input and output (send them thru the pipe)
         if redirect_stdio:
@@ -169,6 +170,14 @@ class Qdb(bdb.Bdb):
         self._wait_for_breakpoint = wait_breakpoint
         sys.settrace(self.trace_dispatch)
 
+    def set_trace(self, frame=None):
+        # start debugger interaction immediatelly
+        if frame is None:
+            frame = sys._getframe().f_back
+        self._wait_for_mainpyfile = frame.f_code.co_filename
+        self._wait_for_breakpoint = 0
+        bdb.Bdb.set_trace(self, frame)
+
     # Command definitions, called by interaction()
 
     def do_continue(self):
@@ -220,7 +229,7 @@ class Qdb(bdb.Bdb):
             line = linecache.getline(filename, lineno,
                                      self.frame.f_globals)
             if not line:
-                lines.append((filename, lineno, breakpoint, current, "<EOF>\n"))
+                lines.append((filename, lineno, '', current, "<EOF>\n"))
                 break
             else:
                 breakpoint = "B" if lineno in breaklist else ""
