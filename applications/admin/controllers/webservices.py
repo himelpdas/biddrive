@@ -56,6 +56,15 @@ def write_file(filename, data, binary=False):
         f.close()
 
 
+@service.jsonrpc
+def hash_file(filename):
+    data = read_file(filename)
+    file_hash = md5_hash(data)
+    path = apath(filename, r=request)
+    saved_on = os.stat(path)[stat.ST_MTIME]
+    size = os.path.getsize(path)
+    return dict(saved_on=saved_on, file_hash=file_hash, size=size)
+
 
 @service.jsonrpc
 def attach_debugger(host='localhost', port=6000, authkey='secret password'):
