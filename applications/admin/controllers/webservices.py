@@ -11,7 +11,6 @@ import base64
 service = Service(globals())
 
 
-
 @service.jsonrpc
 def login():
     "dummy function to test credentials"
@@ -27,16 +26,10 @@ def list_apps():
 
 
 @service.jsonrpc
-def list_apps():
-    "list installed applications"
-    regex = re.compile('^\w+$')
-    apps = [f for f in os.listdir(apath(r=request)) if regex.match(f)]
-    return apps
-
-@service.jsonrpc
-def list_files(app):
-    files = listdir(apath('%s/' % app, r=request), '.*\.py$')
+def list_files(app, pattern='.*\.py$'):
+    files = listdir(apath('%s/' % app, r=request), pattern)
     return [x.replace('\\','/') for x in files]
+
 
 @service.jsonrpc
 def read_file(filename):
@@ -47,6 +40,7 @@ def read_file(filename):
     finally:
         f.close()
     return data
+
 
 @service.jsonrpc
 def write_file(filename, data):
