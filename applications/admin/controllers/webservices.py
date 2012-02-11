@@ -7,6 +7,10 @@ import platform
 import time
 import base64
 import os
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 
 service = Service(globals())
@@ -33,24 +37,28 @@ def list_files(app, pattern='.*\.py$'):
 
 
 @service.jsonrpc
-def read_file(filename, binary=False):
+def read_file(filename, b64=False):
     """ Visualize object code """
     f = open(apath(filename, r=request), "rb")
     try:
         data = f.read()
-        if not binary:
+        if not b64:
             data = data.replace('\r','')
+        else:
+            data = base64.b64encode(data)
     finally:
         f.close()
     return data
 
 
 @service.jsonrpc
-def write_file(filename, data, binary=False):
+def write_file(filename, data, b64=False):
     f = open(apath(filename, r=request), "wb")
     try:
-        if not binary:
+        if not b64:
             data = data.replace('\r\n', '\n').strip() + '\n'
+        else:
+            data = base64.b64decode(data)
         f.write(data)
     finally:
         f.close()
@@ -65,6 +73,14 @@ def hash_file(filename):
     size = os.path.getsize(path)
     return dict(saved_on=saved_on, file_hash=file_hash, size=size)
 
+
+@service.jsonrpc
+def install(app_name, filename, data, overwrite=True):
+    f = StringIO(base64.b64decode(data))
+    installed = app_install(app_name, f, request, filename,
+                            overwrite=overwrite)
+
+    return installed
 
 @service.jsonrpc
 def attach_debugger(host='localhost', port=6000, authkey='secret password'):
