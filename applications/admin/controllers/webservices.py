@@ -90,30 +90,43 @@ def attach_debugger(host='localhost', port=6000, authkey='secret password'):
 
     if isinstance(authkey, unicode):
         authkey = authkey.encode('utf8')
-
-    # TODO: proper locking and cleanup
-    
+   
     if gluon.debug.web_debugger:
         # remove the web debugger
         gluon.debug.web_debugger = None
 
-    elif hasattr(gluon.debug, 'qdb_listener'):
-        # stop current debugger
-        gluon.debug.qdb_listener.close()
-        gluon.debug.qdb_listener = None
-        gluon.debug.qdb_debugger = None
-        
-    # create a remote debugger server and wait for connection
-    address = (host, port)     # family is deduced to be 'AF_INET'
-    gluon.debug.qdb_listener = Listener(address, authkey=authkey)
-    conn = gluon.debug.qdb_listener.accept()
-
-    # create the backend
-    gluon.debug.qdb_debugger = qdb.Qdb(conn)
-    gluon.debug.dbg = gluon.debug.qdb_debugger
-    
+    if not hasattr(gluon.debug, 'qdb_listener'):
+        # create a remote debugger server and wait for connection
+        address = (host, port)     # family is deduced to be 'AF_INET'
+        gluon.debug.qdb_listener = Listener(address, authkey=authkey)
+        gluon.debug.qdb_connection = gluon.debug.qdb_listener.accept()
+        # create the backend
+        gluon.debug.qdb_debugger = qdb.Qdb(gluon.debug.qdb_connection)
+        gluon.debug.dbg = gluon.debug.qdb_debugger
+        # welcome message (this should be displayed on the frontend)
+        print 'debugger connected to', gluon.debug.qdb_listener.last_accepted
     return True     # connection successful!
-            
+
+
+@service.jsonrpc
+def detach_debugger():
+    import gluon.contrib.qdb as qdb
+    import gluon.debug
+    # stop current debugger
+    if gluon.debug.qdb_debugger:
+        try:
+            gluon.debug.qdb_debugger.do_quit()
+        except:
+            pass
+    if hasattr(gluon.debug, 'qdb_listener'):
+        if gluon.debug.qdb_connection:
+            gluon.debug.qdb_connection.close()
+            del gluon.debug.qdb_connection
+        if gluon.debug.qdb_listener:
+            gluon.debug.qdb_listener.close()
+            del gluon.debug.qdb_listener
+    gluon.debug.qdb_debugger = None
+    return True
 
 def call():
     "Entry point. Prevents access to action if not admin password is present"
