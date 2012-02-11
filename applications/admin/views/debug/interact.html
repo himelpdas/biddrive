@@ -102,6 +102,15 @@
               </div>
             </div>
           </form>
+    {{elif request.env.get('wsgi_multiprocess') or not request.env.get('wsgi_multithread'):}}
+          <h3 class="not_paused">{{=T("Unsupported webserver working mode: %s") % request.env.get('server_software', '')}}</h3>
+            <div class="help">
+                <li><b>WARNING: </b>This debugger may not work properly if you don't have a threaded webserver or you're using multiple daemon processes.</li>
+                <li>In development, use the default Rocket webserver that is currently supported by this debugger.</li>
+                <li>On production, you'll have to configure your webserver to use one process and multiple threads to use this debugger.</li>
+              </ul>
+            </div>
+            {{#=BEAUTIFY(request.env)}}
     {{else:}}
           <h3 class="not_paused">{{=T("No Interaction yet")}}</h3>
             <div class="help">
