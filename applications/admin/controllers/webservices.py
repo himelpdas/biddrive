@@ -6,6 +6,7 @@ import shutil
 import platform
 import time
 import base64
+import os
 
 
 service = Service(globals())
@@ -32,23 +33,28 @@ def list_files(app, pattern='.*\.py$'):
 
 
 @service.jsonrpc
-def read_file(filename):
+def read_file(filename, binary=False):
     """ Visualize object code """
     f = open(apath(filename, r=request), "rb")
     try:
-        data = f.read().replace('\r','')
+        data = f.read()
+        if not binary:
+            data = data.replace('\r','')
     finally:
         f.close()
     return data
 
 
 @service.jsonrpc
-def write_file(filename, data):
+def write_file(filename, data, binary=False):
     f = open(apath(filename, r=request), "wb")
     try:
-        f.write(data.replace('\r\n', '\n').strip() + '\n')
+        if not binary:
+            data = data.replace('\r\n', '\n').strip() + '\n'
+        f.write(data)
     finally:
         f.close()
+
 
 
 @service.jsonrpc
