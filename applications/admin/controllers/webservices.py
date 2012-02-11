@@ -6,10 +6,10 @@ import shutil
 import platform
 import time
 import base64
+import os
 
 
 service = Service(globals())
-
 
 
 @service.jsonrpc
@@ -27,34 +27,43 @@ def list_apps():
 
 
 @service.jsonrpc
-def list_apps():
-    "list installed applications"
-    regex = re.compile('^\w+$')
-    apps = [f for f in os.listdir(apath(r=request)) if regex.match(f)]
-    return apps
-
-@service.jsonrpc
-def list_files(app):
-    files = listdir(apath('%s/' % app, r=request), '.*\.py$')
+def list_files(app, pattern='.*\.py$'):
+    files = listdir(apath('%s/' % app, r=request), pattern)
     return [x.replace('\\','/') for x in files]
 
+
 @service.jsonrpc
-def read_file(filename):
+def read_file(filename, binary=False):
     """ Visualize object code """
     f = open(apath(filename, r=request), "rb")
     try:
-        data = f.read().replace('\r','')
+        data = f.read()
+        if not binary:
+            data = data.replace('\r','')
     finally:
         f.close()
     return data
 
+
 @service.jsonrpc
-def write_file(filename, data):
+def write_file(filename, data, binary=False):
     f = open(apath(filename, r=request), "wb")
     try:
-        f.write(data.replace('\r\n', '\n').strip() + '\n')
+        if not binary:
+            data = data.replace('\r\n', '\n').strip() + '\n'
+        f.write(data)
     finally:
         f.close()
+
+
+@service.jsonrpc
+def hash_file(filename):
+    data = read_file(filename)
+    file_hash = md5_hash(data)
+    path = apath(filename, r=request)
+    saved_on = os.stat(path)[stat.ST_MTIME]
+    size = os.path.getsize(path)
+    return dict(saved_on=saved_on, file_hash=file_hash, size=size)
 
 
 @service.jsonrpc
