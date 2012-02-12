@@ -20,12 +20,12 @@ import sys
 import traceback
 import cmd
 import pydoc
-
+import threading
 
 class Qdb(bdb.Bdb):
     "Qdb Debugger Backend"
 
-    def __init__(self, pipe, redirect_stdio=True):
+    def __init__(self, pipe, redirect_stdio=True, allow_interruptions=False):
         bdb.Bdb.__init__(self)
         self.frame = None
         self.i = 1  # sequential RPC call id
@@ -39,8 +39,46 @@ class Qdb(bdb.Bdb):
         if redirect_stdio:
             sys.stdin = self
             sys.stdout = self
+        if allow_interruptions:
+            # fake breakpoint to prevent removing trace_dispatch on set_continue
+            self.breaks[None] = []
+        self.allow_interruptions = allow_interruptions
+
+    def pull_actions(self):
+        # receive a remote procedure call from the frontend:
+        request = self.pipe.recv()
+        response = {'version': '1.1', 'id': request.get('id'), 
+                    'result': None, 
+                    'error': None}
+        try:
+            # dispatch message (JSON RPC like)
+            method = getattr(self, request['method'])
+            response['result'] = method.__call__(*request['args'], 
+                                        **request.get('kwargs', {}))
+        except Exception, e:
+            response['error'] = {'code': 0, 'message': str(e)}
+        # send the result for normal method calls, not for notifications
+        if request.get('id'):
+            self.pipe.send(response)
 
     # Override Bdb methods
+
+    def trace_dispatch(self, frame, event, arg):
+        # check for non-interaction rpc (set_breakpoint, interrupt)
+        while self.allow_interruptions and self.pipe.poll():
+            self.pull_actions()
+        # process the frame (see Bdb.trace_dispatch)
+        if self.quitting:
+            return # None
+        if event == 'line':
+            return self.dispatch_line(frame)
+        if event == 'call':
+            return self.dispatch_call(frame, arg)
+        if event == 'return':
+            return self.dispatch_return(frame, arg)
+        if event == 'exception':
+            return self.dispatch_exception(frame, arg)
+        return self.trace_dispatch
 
     def user_call(self, frame, argument_list):
         """This method is called when there is the remote possibility
@@ -48,7 +86,6 @@ class Qdb(bdb.Bdb):
         if self._wait_for_mainpyfile or self._wait_for_breakpoint:
             return
         if self.stop_here(frame):
-            print '--Call--'
             self.interaction(frame, None)
    
     def user_line(self, frame):
@@ -141,19 +178,7 @@ class Qdb(bdb.Bdb):
                 self.pipe.send({'method': 'interaction', 'id': None,
                                 'args': (filename, self.frame.f_lineno, line)})
 
-                # receive a remote procedure call from the frontend:
-                request = self.pipe.recv()
-                response = {'version': '1.1', 'id': request.get('id'), 
-                            'result': None, 
-                            'error': None}
-                try:
-                    # dispatch message (JSON RPC like)
-                    method = getattr(self, request['method'])
-                    response['result'] = method.__call__(*request['args'], 
-                                                **request.get('kwargs', {}))
-                except Exception, e:
-                    response['error'] = {'code': 0, 'message': str(e)}
-                self.pipe.send(response)
+                self.pull_actions()
 
         finally:
             self.waiting = False
@@ -195,6 +220,9 @@ class Qdb(bdb.Bdb):
     def do_next(self):
         self.set_next(self.frame)
         self.waiting = False
+
+    def interrupt(self):
+        self.set_step()
 
     def do_quit(self):
         self.set_quit()
@@ -399,6 +427,22 @@ class Frontend(object):
         self.i = 1
         self.pipe = pipe
         self.notifies = []
+        self.read_lock = threading.RLock()
+        self.write_lock = threading.RLock()
+
+    def recv(self):
+        self.read_lock.acquire()
+        try:
+            return self.pipe.recv()
+        finally:
+            self.read_lock.release()
+
+    def send(self, data):
+        self.write_lock.acquire()
+        try:
+            return self.pipe.send(data)
+        finally:
+            self.write_lock.release()
 
     def interaction(self, filename, lineno, line):
         raise NotImplementedError
@@ -420,7 +464,7 @@ class Frontend(object):
         if self.pipe:
             if not self.notifies:
                 # wait for a message...
-                request = self.pipe.recv()
+                request = self.recv()
             else:
                 # process an asyncronus notification received earlier 
                 request = self.notifies.pop(0)
@@ -441,17 +485,17 @@ class Frontend(object):
                 response = {'version': '1.1', 'id': request.get('id'), 
                         'result': result, 
                         'error': None}
-                self.pipe.send(response)
+                self.send(response)
             return True
 
     def call(self, method, *args):
         "Actually call the remote method (inside the thread)"
         req = {'method': method, 'args': args, 'id': self.i}
-        self.pipe.send(req)
+        self.send(req)
         self.i += 1  # increment the id
         while 1:
             # wait until command acknowledge (response match the request)
-            res = self.pipe.recv()
+            res = self.recv()
             if 'id' not in res or not res['id']:
                 # notification received!
                 self.notifies.append(res)
@@ -531,6 +575,12 @@ class Frontend(object):
     def do_exec(self, statement):
         return self.call('do_exec', statement)
 
+    def interrupt(self):
+        "Immediately stop at the first possible occasion (outside interaction)"
+        # this is a notification!, do not expect a response
+        req = {'method': 'interrupt', 'args': ()}
+        self.send(req)
+
 
 class Cli(Frontend, cmd.Cmd):
     "Qdb Front-end command line interface"
@@ -543,7 +593,11 @@ class Cli(Frontend, cmd.Cmd):
     
     def run(self):
         while 1:
-            Frontend.run(self)
+            try:
+                Frontend.run(self)
+            except KeyboardInterrupt:
+                print "Interupting..."
+                self.interrupt()
 
     def interaction(self, filename, lineno, line):
         print "> %s(%d)\n-> %s" % (filename, lineno, line),
@@ -597,7 +651,7 @@ class Cli(Frontend, cmd.Cmd):
             for name, value in env[key].items():
                 print "%-12s = %s" % (name, value)
 
-    def do_list_breakpoint(self):
+    def do_list_breakpoint(self, arg=None):
         "List all breakpoints"
         breaks = Frontend.do_list_breakpoint(self)
         print "Num File                          Line Temp Enab Hits Cond"
@@ -722,7 +776,7 @@ def main(host='localhost', port=6000, authkey='secret password'):
     print 'qdb debugger backend: connected to', listener.last_accepted
 
     # create the backend
-    qdb = Qdb(conn)
+    qdb = Qdb(conn, redirect_stdio=True, allow_interruptions=True)
     try:
         print "running", mainpyfile
         qdb._runscript(mainpyfile)
