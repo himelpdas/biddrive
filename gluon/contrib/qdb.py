@@ -5,7 +5,7 @@
 
 __author__ = "Mariano Reingart (reingart@gmail.com)"
 __copyright__ = "Copyright (C) 2011 Mariano Reingart"
-__license__ = "GPL 3.0"
+__license__ = "web2py license"
 
 # remote debugger queue-based (jsonrpc-like interface):
 # - bidirectional communication (request - response calls in both ways)
