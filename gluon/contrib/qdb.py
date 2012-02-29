@@ -5,7 +5,8 @@
 
 __author__ = "Mariano Reingart (reingart@gmail.com)"
 __copyright__ = "Copyright (C) 2011 Mariano Reingart"
-__license__ = "LGPL license"
+__license__ = "LGPL 3.0"
+__version__ = "1.01b"
 
 # remote debugger queue-based (jsonrpc-like interface):
 # - bidirectional communication (request - response calls in both ways)
@@ -14,6 +15,7 @@ __license__ = "LGPL license"
 # based on idle, inspired by pythonwin implementation, taken many code from pdb
 
 import bdb
+import inspect
 import linecache
 import os
 import sys
@@ -25,8 +27,9 @@ import threading
 class Qdb(bdb.Bdb):
     "Qdb Debugger Backend"
 
-    def __init__(self, pipe, redirect_stdio=True, allow_interruptions=False):
-        bdb.Bdb.__init__(self)
+    def __init__(self, pipe, redirect_stdio=True, allow_interruptions=False,
+                 skip=[__name__]):
+        bdb.Bdb.__init__(self, skip=skip)
         self.frame = None
         self.i = 1  # sequential RPC call id
         self.waiting = False
@@ -39,14 +42,21 @@ class Qdb(bdb.Bdb):
         if redirect_stdio:
             sys.stdin = self
             sys.stdout = self
+            sys.stderr = self
         if allow_interruptions:
             # fake breakpoint to prevent removing trace_dispatch on set_continue
             self.breaks[None] = []
         self.allow_interruptions = allow_interruptions
+        self.burst = 0          # do not send notifications ("burst" mode)
+        self.params = {}        # optional parameters for interaction
 
     def pull_actions(self):
         # receive a remote procedure call from the frontend:
+        # returns True if action processed
+        #         None when 'run' notification is received (see 'startup')
         request = self.pipe.recv()
+        if request.get("method") == 'run':
+            return None
         response = {'version': '1.1', 'id': request.get('id'), 
                     'result': None, 
                     'error': None}
@@ -60,6 +70,7 @@ class Qdb(bdb.Bdb):
         # send the result for normal method calls, not for notifications
         if request.get('id'):
             self.pipe.send(response)
+        return True
 
     # Override Bdb methods
 
@@ -120,7 +131,6 @@ class Qdb(bdb.Bdb):
 
     def run(self, code, interp=None, *args, **kwargs):
         try:
-            self.interp = interp
             return bdb.Bdb.run(self, code, *args, **kwargs)
         finally:
             pass
@@ -148,6 +158,10 @@ class Qdb(bdb.Bdb):
         self.mainpyfile = self.canonic(filename)
         self._user_requested_quit = 0
         statement = 'imp.load_source("__main__", "%s")' % filename
+        # notify and wait frontend to set initial params and breakpoints
+        self.pipe.send({'method': 'startup', 'args': (__version__, )})
+        while self.pull_actions() is not None:
+            pass
         self.run(statement)
 
     # General interaction function
@@ -175,8 +189,16 @@ class Qdb(bdb.Bdb):
                 else:
                     line = ""
                 # send the notification (debug event) - DOESN'T WAIT RESPONSE
-                self.pipe.send({'method': 'interaction', 'id': None,
-                                'args': (filename, self.frame.f_lineno, line)})
+                self.burst -= 1
+                if self.burst < 0:
+                    kwargs = {}
+                    if self.params.get('call_stack'):
+                        kwargs['call_stack'] = self.do_where()
+                    if self.params.get('environment'):
+                        kwargs['environment'] = self.do_environment()
+                    self.pipe.send({'method': 'interaction', 'id': None,
+                                'args': (filename, self.frame.f_lineno, line),
+                                'kwargs': kwargs})
 
                 self.pull_actions()
 
@@ -293,9 +315,12 @@ class Qdb(bdb.Bdb):
         if err:
             print '*** DO_CLEAR failed', err
 
-    def do_inspect(self, arg):
-        return eval(arg, self.frame.f_globals,
+    def do_eval(self, arg, safe=True):
+        ret = eval(arg, self.frame.f_globals,
                     self.frame_locals)
+        if safe:
+            ret = pydoc.cram(repr(ret), 255)
+        return ret
 
     def do_exec(self, arg):
         locals = self.frame_locals
@@ -324,11 +349,80 @@ class Qdb(bdb.Bdb):
         "return current frame local and global environment"
         env = {'locals': {}, 'globals': {}}
         # converts the frame global and locals to a short text representation:
-        for name, value in self.frame_locals.items():
-            env['locals'][name] = pydoc.text.repr(value)
-        for name, value in self.frame.f_globals.items():
-            env['globals'][name] = pydoc.text.repr(value)
+        if self.frame:
+            for name, value in self.frame_locals.items():
+                env['locals'][name] = pydoc.cram(repr(value), 255), repr(type(value))
+            for name, value in self.frame.f_globals.items():
+                env['globals'][name] = pydoc.cram(repr(value), 20), repr(type(value))
         return env
+
+    def get_autocomplete_list(self, expression):
+        "Return list of auto-completion options for expression"
+        try:
+            obj = self.do_eval(expression)
+        except:
+            return []
+        else:
+            return dir(obj)
+    
+    def get_call_tip(self, expression):
+        "Return list of auto-completion options for expression"
+        try:
+            obj = self.do_eval(expression)
+        except Exception, e:
+            return ('', '', str(e)) 
+        else:
+            name = ''
+            try:
+                name = obj.__name__
+            except AttributeError:
+                pass
+            argspec = ''
+            drop_self = 0
+            f = None
+            try:
+                if inspect.isbuiltin(obj):
+                    pass
+                elif inspect.ismethod(obj):
+                    # Get the function from the object
+                    f = obj.im_func
+                    drop_self = 1
+                elif inspect.isclass(obj):
+                    # Get the __init__ method function for the class.
+                    if hasattr(obj, '__init__'):
+                        f = obj.__init__.im_func
+                    else:
+                        for base in object.__bases__:
+                            if hasattr(base, '__init__'):
+                                f = base.__init__.im_func
+                                break
+                    if f is not None:
+                        drop_self = 1
+                elif callable(obj):
+                    # use the obj as a function by default
+                    f = obj
+                    # Get the __call__ method instead.
+                    f = obj.__call__.im_func
+                    drop_self = 0
+            except AttributeError:
+                pass
+            if f:
+                argspec = apply(inspect.formatargspec, inspect.getargspec(f))
+            doc = ''
+            if callable(obj):
+                try:
+                    doc = inspect.getdoc(obj)
+                except:
+                    pass
+            return (name, argspec[1:-1], doc.strip())
+
+    def set_burst(self, val):
+        "Set burst mode -multiple command count- (shut up notifications)"
+        self.burst = val
+
+    def set_params(self, params):
+        "Set parameters for interaction"
+        self.params.update(params)
 
     def displayhook(self, obj):
         """Custom displayhook for the do_exec which prevents
@@ -444,7 +538,10 @@ class Frontend(object):
         finally:
             self.write_lock.release()
 
-    def interaction(self, filename, lineno, line):
+    def startup(self):
+        self.send({'method': 'run', 'args': (), 'id': None})
+
+    def interaction(self, filename, lineno, line, *kwargs):
         raise NotImplementedError
     
     def exception(self, title, extype, exvalue, trace, request):
@@ -468,13 +565,19 @@ class Frontend(object):
             else:
                 # process an asyncronus notification received earlier 
                 request = self.notifies.pop(0)
+            return self.process_message(request)
+    
+    def process_message(self, request):
+        if request:
             result = None
             if request.get("error"):
                 # it is not supposed to get an error here
                 # it should be raised by the method call
                 raise RPCError(res['error']['message'])
             elif request.get('method') == 'interaction':
-                self.interaction(*request.get("args"))
+                self.interaction(*request.get("args"), **request.get("kwargs"))
+            elif request.get('method') == 'startup':
+                self.startup()
             elif request.get('method') == 'exception':
                 self.exception(*request['args'])
             elif request.get('method') == 'write':
@@ -494,15 +597,14 @@ class Frontend(object):
         self.send(req)
         self.i += 1  # increment the id
         while 1:
-            # wait until command acknowledge (response match the request)
+            # wait until command acknowledge (response id match the request)
             res = self.recv()
             if 'id' not in res or not res['id']:
-                # notification received!
-                self.notifies.append(res)
+                # nested notification received (i.e. write)! process it!
+                self.process_message(res)
             elif 'result' not in res:
-                print "DEBUGGER wrong packet received: expecting result", res
-                # protocol state is unknown, this should not happen
-                self.notifies.append(res)
+                # nested request received (i.e. readline)! process it!
+                self.process_message(res)
             elif long(req['id']) != long(res['id']):
                 print "DEBUGGER wrong packet received: expecting id", req['id'], res['id']
                 # protocol state is unknown
@@ -540,9 +642,9 @@ class Frontend(object):
         "Quit from the debugger. The program being executed is aborted."
         self.call('do_quit')
     
-    def do_inspect(self, expr):
+    def do_eval(self, expr):
         "Inspect the value of the expression"
-        return self.call('do_inspect', expr)
+        return self.call('do_eval', expr)
 
     def do_environment(self):
         "List all the locals and globals variables (string representation)"
@@ -575,10 +677,24 @@ class Frontend(object):
     def do_exec(self, statement):
         return self.call('do_exec', statement)
 
+    def get_autocomplete_list(self, expression):
+        return self.call('get_autocomplete_list', expression)
+
+    def get_call_tip(self, expression):
+        return self.call('get_call_tip', expression)
+        
     def interrupt(self):
         "Immediately stop at the first possible occasion (outside interaction)"
         # this is a notification!, do not expect a response
         req = {'method': 'interrupt', 'args': ()}
+        self.send(req)
+
+    def set_burst(self, value):
+        req = {'method': 'set_burst', 'args': (value, )}
+        self.send(req)
+        
+    def set_params(self, params):
+        req = {'method': 'set_params', 'args': (params, )}
         self.send(req)
 
 
@@ -628,9 +744,9 @@ class Cli(Frontend, cmd.Cmd):
     do_j = Frontend.do_jump
     do_q = Frontend.do_quit
 
-    def do_inspect(self, args):
+    def do_eval(self, args):
         "Inspect the value of the expression"
-        print Frontend.do_inspect(self, args)
+        print Frontend.do_eval(self, args)
  
     def do_list(self, args):
         "List source code for the current file"
@@ -672,7 +788,7 @@ class Cli(Frontend, cmd.Cmd):
 
     do_b = do_set_breakpoint
     do_l = do_list
-    do_p = do_inspect
+    do_p = do_eval
     do_w = do_where
     do_e = do_environment
 

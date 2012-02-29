@@ -116,10 +116,6 @@
             <div class="help">
               <ul>
                 <li>You need to set up and reach a {{=A("breakpoint", _href=URL('breakpoints'))}} to use the debugger!</li>
-                <li>To run under debugger programatically, copy in your model/controller:</li>
-                {{=CODE("from gluon.debug import dbg\n"
-                        "dbg.do_debug() # start debugging!\n",
-                        counter=None)}}</li>
                 <li>To set a breakpoint programatically, write:
                 {{=CODE("from gluon.debug import dbg\n"
                         "dbg.set_trace() # stop here!\n",
