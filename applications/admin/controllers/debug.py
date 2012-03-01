@@ -58,10 +58,10 @@ def interact():
         lines = {}
 
     if filename:
-        web_debugger.set_burst(2)
-        env = web_debugger.do_environment()
+        env = web_debugger.context['environment']
         f_locals = env['locals']
         f_globals = {}
+        # filter web2py helpers:
         for name, value in env['globals'].items():
             if name not in gluon.html.__all__ and \
                name not in gluon.validators.__all__ and \

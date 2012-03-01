@@ -115,6 +115,7 @@ class WebDebugger(qdb.Frontend):
         self.filename = None
         self.lineno = None
         self.exception_info = None
+        self.context = None
 
     # redefine Frontend methods:
     
@@ -126,12 +127,13 @@ class WebDebugger(qdb.Frontend):
         finally:
             run_lock.release()
 
-    def interaction(self, filename, lineno, line):
+    def interaction(self, filename, lineno, line, **context):
         # store current status
         interact_lock.acquire()
         try:
             self.filename = filename
             self.lineno = lineno
+            self.context = context
         finally:
             interact_lock.release()
 
@@ -171,6 +173,9 @@ child_conn = qdb.QueuePipe("child", child_queue, parent_queue)
 web_debugger = WebDebugger(front_conn)                          # frontend
 qdb_debugger = qdb.Qdb(pipe=child_conn, redirect_stdio=False, skip=None)   # backend
 dbg = qdb_debugger
+
+# enable getting context (stack, globals/locals) at interaction
+qdb_debugger.set_params(dict(call_stack=True, environment=True))
 
 import gluon.main
 gluon.main.global_settings.debugging = True
