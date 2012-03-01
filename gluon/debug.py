@@ -162,13 +162,17 @@ class WebDebugger(qdb.Frontend):
     def do_quit(self):
         qdb.Frontend.do_quit(self)
 
-    @check_interaction
     def do_exec(self, statement):
-        # avoid spurious interaction notifications:
-        self.set_burst(2)
-        # execute the statement in the remote debugger:
-        return qdb.Frontend.do_exec(self, statement)
-
+        interact_lock.acquire()
+        try:
+            # check to see if we're inside interaction
+            if self.filename:
+                # avoid spurious interaction notifications:
+                self.set_burst(2)
+                # execute the statement in the remote debugger:
+                return qdb.Frontend.do_exec(self, statement)
+        finally:
+            interact_lock.release()
         
 # create the connection between threads:
 
