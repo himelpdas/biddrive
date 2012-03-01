@@ -98,7 +98,7 @@ def check_interaction(fn):
         try:
             if self.filename:
                 self.clear_interaction()
-                return fn(self, *args, **kwargs)
+                fn(self, *args, **kwargs)
         finally:
             interact_lock.release()
     return check_fn
@@ -115,7 +115,6 @@ class WebDebugger(qdb.Frontend):
         self.filename = None
         self.lineno = None
         self.exception_info = None
-        self.context = None
 
     # redefine Frontend methods:
     
@@ -127,13 +126,12 @@ class WebDebugger(qdb.Frontend):
         finally:
             run_lock.release()
 
-    def interaction(self, filename, lineno, line, **context):
+    def interaction(self, filename, lineno, line):
         # store current status
         interact_lock.acquire()
         try:
             self.filename = filename
             self.lineno = lineno
-            self.context = context
         finally:
             interact_lock.release()
 
@@ -162,18 +160,8 @@ class WebDebugger(qdb.Frontend):
     def do_quit(self):
         qdb.Frontend.do_quit(self)
 
-    def do_exec(self, statement):
-        interact_lock.acquire()
-        try:
-            # check to see if we're inside interaction
-            if self.filename:
-                # avoid spurious interaction notifications:
-                self.set_burst(2)
-                # execute the statement in the remote debugger:
-                return qdb.Frontend.do_exec(self, statement)
-        finally:
-            interact_lock.release()
-        
+
+
 # create the connection between threads:
 
 parent_queue, child_queue = Queue.Queue(), Queue.Queue()
@@ -183,9 +171,6 @@ child_conn = qdb.QueuePipe("child", child_queue, parent_queue)
 web_debugger = WebDebugger(front_conn)                          # frontend
 qdb_debugger = qdb.Qdb(pipe=child_conn, redirect_stdio=False, skip=None)   # backend
 dbg = qdb_debugger
-
-# enable getting context (stack, globals/locals) at interaction
-qdb_debugger.set_params(dict(call_stack=True, environment=True))
 
 import gluon.main
 gluon.main.global_settings.debugging = True
