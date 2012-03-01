@@ -98,7 +98,7 @@ def check_interaction(fn):
         try:
             if self.filename:
                 self.clear_interaction()
-                fn(self, *args, **kwargs)
+                return fn(self, *args, **kwargs)
         finally:
             interact_lock.release()
     return check_fn
@@ -162,8 +162,14 @@ class WebDebugger(qdb.Frontend):
     def do_quit(self):
         qdb.Frontend.do_quit(self)
 
+    @check_interaction
+    def do_exec(self, statement):
+        # avoid spurious interaction notifications:
+        self.set_burst(2)
+        # execute the statement in the remote debugger:
+        return qdb.Frontend.do_exec(self, statement)
 
-
+        
 # create the connection between threads:
 
 parent_queue, child_queue = Queue.Queue(), Queue.Queue()
