@@ -10,6 +10,14 @@ WEB2PY_VERSION_URL = WEB2PY_URL+'/examples/default/version'
 
 ## Default editor
 TEXT_EDITOR = 'ace' or 'edit_area' or 'amy'
+## Editor Color scheme (only for ace)
+TEXT_EDITOR_THEME = (
+    "chrome", "clouds", "clouds_midnight", "cobalt", "crimson_editor", "dawn", 
+    "dreamweaver", "eclipse", "idle_fingers", "kr_theme", "merbivore",
+    "merbivore_soft", "monokai", "mono_industrial", "pastel_on_dark", 
+    "solarized_dark", "solarized_light", "textmate", "tomorrow",
+    "tomorrow_night", "tomorrow_night_blue", "tomorrow_night_bright",
+    "tomorrow_night_eighties", "twilight", "vibrant_ink")[0]
 
 ### edit_area
 # The default font size, measured in 'points'. The value must be an integer > 0

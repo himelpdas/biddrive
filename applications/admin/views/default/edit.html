@@ -9,7 +9,8 @@
 {{include 'default/amy_ajax.html'}}
 {{elif TEXT_EDITOR == 'ace':}}
 <script src="{{=URL(r=request,c='static',f='ace/src/ace.js')}}" type="text/javascript" charset="utf-8"></script>
-<script src="{{=URL(r=request,c='static',f='ace/src/theme-twilight.js')}}" type="text/javascript" charset="utf-8"></script>
+<script src="{{=URL(r=request,c='static',f='ace/src/theme-%s.js' % TEXT_EDITOR_THEME)}}" type="text/javascript" charset="utf-8"></script>
+<script>var theme = "ace/theme/{{=TEXT_EDITOR_THEME}}";</script>
     {{if filetype == 'python':}}
         <script src="{{=URL(r=request,c='static',f='ace/src/mode-python.js')}}" type="text/javascript" charset="utf-8"></script>
         <script>
@@ -102,7 +103,7 @@ jQuery(document).ready(function(){
 <script>
 window.onload = function() {
     var editor = ace.edit("editor");
-    editor.setTheme("ace/theme/twilight");
+    editor.setTheme(theme);
     editor.getSession().setMode(new mode());
     window.ace_editor = editor;
 };
