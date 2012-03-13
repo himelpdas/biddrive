@@ -9,7 +9,7 @@ WEB2PY_VERSION_URL = WEB2PY_URL+'/examples/default/version'
 # browser.
 
 ## Default editor
-TEXT_EDITOR = 'edit_area' or 'amy'
+TEXT_EDITOR = 'ace' or 'edit_area' or 'amy'
 
 ### edit_area
 # The default font size, measured in 'points'. The value must be an integer > 0
