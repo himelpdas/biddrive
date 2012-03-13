@@ -10,7 +10,32 @@
 {{elif TEXT_EDITOR == 'ace':}}
 <script src="{{=URL(r=request,c='static',f='ace/src/ace.js')}}" type="text/javascript" charset="utf-8"></script>
 <script src="{{=URL(r=request,c='static',f='ace/src/theme-twilight.js')}}" type="text/javascript" charset="utf-8"></script>
-<script src="{{=URL(r=request,c='static',f='ace/src/mode-python.js')}}" type="text/javascript" charset="utf-8"></script>
+    {{if filetype == 'python':}}
+        <script src="{{=URL(r=request,c='static',f='ace/src/mode-python.js')}}" type="text/javascript" charset="utf-8"></script>
+        <script>
+            var mode = require("ace/mode/python").Mode;
+        </script>
+    {{elif filetype in ('html', 'load'):}}
+        <script src="{{=URL(r=request,c='static',f='ace/src/mode-html.js')}}" type="text/javascript" charset="utf-8"></script>
+        <script>
+            var mode = require("ace/mode/html").Mode;
+        </script>
+    {{elif filetype == 'js':}}
+        <script src="{{=URL(r=request,c='static',f='ace/src/mode-javascript.js')}}" type="text/javascript" charset="utf-8"></script>
+        <script>
+            var mode = require("ace/mode/javascript").Mode;
+        </script>
+    {{elif filetype == 'css':}}
+        <script src="{{=URL(r=request,c='static',f='ace/src/mode-css.js')}}" type="text/javascript" charset="utf-8"></script>
+        <script>
+            var mode = require("ace/mode/css").Mode;
+        </script>
+    {{else:}}
+        <script src="{{=URL(r=request,c='static',f='ace/src/mode-text.js')}}" type="text/javascript" charset="utf-8"></script>
+        <script>
+            var mode = require("ace/mode/text").Mode;
+        </script>
+    {{pass}}
 <script language="Javascript" type="text/javascript" src="{{=URL('static','js/ajax_editor.js')}}"></script>
 {{else:}}
 <script language="Javascript" type="text/javascript" src="{{=URL(r=request,c='static',f='edit_area/edit_area_full.js')}}"></script><script language="Javascript" type="text/javascript">
@@ -78,14 +103,7 @@ jQuery(document).ready(function(){
 window.onload = function() {
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/twilight");
-    var mode = require("ace/mode/python").Mode;
     editor.getSession().setMode(new mode());
-    //   var textarea = jQuery('textarea[name="data"]').hide();
- //   editor.getSession().setValue(textarea.val());
- //   editor.getSession().on('change', function(){
- //       textarea.val(editor.getSession().getValue());
- //   });
-//    jQuery('#ace_editor').css('visibility', 'visible');
     window.ace_editor = editor;
 };
 </script>
