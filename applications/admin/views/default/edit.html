@@ -123,6 +123,17 @@ window.onload = function() {
     if (keybinding) {
         editor.setKeyboardHandler(keybinding);
     }
+	editor.commands.addCommand({
+		name: 'saveFile',
+		bindKey: {
+			win: 'Ctrl-S',
+			mac: 'Command-S',
+			sender: 'editor|cli'
+		},
+		exec: function(env, args, request) {
+			doClickSave();
+		}
+	});
     window.ace_editor = editor;
 };
 </script>
