@@ -39,6 +39,14 @@ function getData() {
     return data;
 }
 
+function doHighlight(highlight) {
+	try {
+		window.ace_editor.gotoLine(highlight.lineno);
+	} catch(e) {
+		editAreaLoader.setSelectionRange('body', highlight.start, highlight.end);
+	}					
+}
+
 function doClickSave() {
     var data = getData();
     var dataForPost = prepareMultiPartPOST(new Array(
@@ -80,7 +88,7 @@ function doClickSave() {
 			    jQuery("input[name='file_hash']").val(json.file_hash);
 			    jQuery("input[name='saved_on']").val(json.saved_on);
 			    if (json.highlight) {
-			        editAreaLoader.setSelectionRange('body', json.highlight.start, json.highlight.end);
+					doHighlight(json.highlight);
 			    } else {
 			        jQuery("input[name='saved_on']").attr('style','background-color:#99FF99');
 			        jQuery(".flash").delay(1000).fadeOut('slow');

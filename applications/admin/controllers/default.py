@@ -482,7 +482,7 @@ def edit():
                 offset = e.offset - (len(e.text) - len(e.text.splitlines()[-1]))
             else:
                 offset = 0
-            highlight = {'start': start, 'end': start + offset + 1}
+            highlight = {'start': start, 'end': start + offset + 1, 'lineno': e.lineno}
             try:
                 ex_name = e.__class__.__name__
             except:
