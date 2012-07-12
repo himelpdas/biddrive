@@ -104,7 +104,7 @@
             </div>
           </form>
     {{elif request.env.get('wsgi_multiprocess') or not request.env.get('wsgi_multithread'):}}
-          <h3 class="not_paused">{{=T("Unsupported webserver working mode: %s") % request.env.get('server_software', '')}}</h3>
+          <h3 class="not_paused">{{=T("Unsupported webserver working mode: %s", request.env.get('server_software', ''))}}</h3>
             <div class="help">
                 <li><b>{{=T("WARNING:")}} </b>{{=T("This debugger may not work properly if you don't have a threaded webserver or you're using multiple daemon processes.")}}</li>
                 <li>{{=T("In development, use the default Rocket webserver that is currently supported by this debugger.")}}</li>
@@ -144,7 +144,7 @@
 
     {{if exception:}}
         <div class="box">
-          <h3>Exception {{=exception['extype']}}: {{=exception['exvalue']}}</h3>
+          <h3>{{=T('Exception %(extype)s: %(exvalue)s', dict(extype=exception['extype'], exvalue=exception['exvalue']))}}</h3>
           <div class="formfield">
                {{=CODE((exception['request']), counter=None)}}
           </div>
@@ -152,13 +152,13 @@
     {{pass}}
 
     <div class="box">
-      <h3>Locals</h3>
+      <h3>{{=T('Locals##debug')}}</h3>
       <div class="formfield">
 	{{=BEAUTIFY(f_locals)}}
       </div>
     </div>
     <div class="box">
-      <h3>Globals</h3>
+      <h3>{{=T('Globals##debug')}}</h3>
       <div class="formfield">
 	{{=BEAUTIFY(f_globals)}}
       </div>
