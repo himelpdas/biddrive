@@ -64,6 +64,7 @@
 }
 
 </style>
+<script src="{{=URL('static', 'js/autoscroll.js')}}"></script>
 
 <div class="applist f60">
   <div class="applist_inner">
@@ -97,6 +98,7 @@
           <form id="form" action="{{=URL(r=request,f='execute',args=app)}}" method="get">
             <div id="shellwrapper">
               <div id="caret">&gt;&gt;&gt;</div>
+              <div id="autoscroll" style="cursor:pointer;float:right;">autoscroll</div>
               <div class="tooltip">
                 <textarea class="prompt" name="statement" id="statement"></textarea>
                 <span>{{=T("Type python statement in here and hit Return (Enter) to execute it.")}}</span>
