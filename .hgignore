@@ -47,6 +47,8 @@ applications/*/uploads/*
 applications/examples/static/epydoc
 applications/examples/static/sphinx
 applications/admin/cron/cron.master
+applications/admin/private/hosts.deny
+cron.master
 
 syntax: re
 ^applications/(?!(admin|examples|welcome|__init__)).*$
