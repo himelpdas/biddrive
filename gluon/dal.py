@@ -5565,7 +5565,8 @@ class IMAPAdapter(NoSQLAdapter):
     subject     string
     mime        string         The mime header declaration
     email       string         The complete RFC822 message**
-    attachments list:string    Each non text decoded part as string
+    attachments <type list>    Each non text part as dict
+    encoding    string         The main detected encoding
 
     *At the application side it is measured as the length of the RFC822
     message string
@@ -5841,16 +5842,22 @@ class IMAPAdapter(NoSQLAdapter):
         else:
             return None
 
+    @staticmethod
+    def header_represent(f, r):
+        from email.header import decode_header
+        text, encoding = decode_header(f)[0]
+        return text
+
     def encode_text(self, text, charset, errors="replace"):
         """ convert text for mail to unicode"""
         if text is None:
             text = ""
         else:
             if isinstance(text, str):
-                if charset is not None:
-                    text = unicode(text, charset, errors)
-                else:
+                if charset is None:
                     text = unicode(text, "utf-8", errors)
+                else:
+                    text = unicode(text, charset, errors)
             else:
                 raise Exception("Unsupported mail text type %s" % type(text))
         return text.encode("utf-8")
@@ -5951,13 +5958,19 @@ class IMAPAdapter(NoSQLAdapter):
                             Field("subject", "string", writable=False),
                             Field("mime", "string", writable=False),
                             Field("email", "string", writable=False, readable=False),
-                            Field("attachments", "list:string", writable=False, readable=False),
+                            Field("attachments", list, writable=False, readable=False),
+                            Field("encoding")
                             )
 
             # Set a special _mailbox attribute for storing
             # native mailbox names
             self.db[name].mailbox = \
                 self.connection.mailbox_names[name]
+
+            # decode quoted printable
+            self.db[name].to.represent = self.db[name].cc.represent = \
+            self.db[name].bcc.represent = self.db[name].sender.represent = \
+            self.db[name].subject.represent = self.header_represent
 
         # Set the db instance mailbox collections
         self.db.mailboxes = self.connection.mailbox_names
@@ -5981,12 +5994,11 @@ class IMAPAdapter(NoSQLAdapter):
             query = self.common_filter(query, [self.get_query_mailbox(query),])
 
         import email
-        import email.header
-        decode_header = email.header.decode_header
         # get records from imap server with search + fetch
         # convert results to a dictionary
         tablename = None
         fetch_results = list()
+
         if isinstance(query, Query):
             tablename = self.get_table(query)
             mailbox = self.connection.mailbox_names.get(tablename, None)
@@ -6059,11 +6071,11 @@ class IMAPAdapter(NoSQLAdapter):
         else:
             allfields = False
         if allfields:
-            fieldnames = ["%s.%s" % (tablename, field) for field in self.search_fields.keys()]
+            colnames = ["%s.%s" % (tablename, field) for field in self.search_fields.keys()]
         else:
-            fieldnames = ["%s.%s" % (tablename, field.name) for field in fields]
+            colnames = ["%s.%s" % (tablename, field.name) for field in fields]
 
-        for k in fieldnames:
+        for k in colnames:
             imapfields_dict[k] = k
 
         imapqry_list = list()
@@ -6087,59 +6099,58 @@ class IMAPAdapter(NoSQLAdapter):
             # pending: search flags states trough the email message
             # instances for correct output
 
-            if "%s.id" % tablename in fieldnames:
+            # preserve subject encoding (ASCII/quoted printable)
+
+            if "%s.id" % tablename in colnames:
                 item_dict["%s.id" % tablename] = n
-            if "%s.created" % tablename in fieldnames:
+            if "%s.created" % tablename in colnames:
                 item_dict["%s.created" % tablename] = self.convert_date(message["Date"])
-            if "%s.uid" % tablename in fieldnames:
+            if "%s.uid" % tablename in colnames:
                 item_dict["%s.uid" % tablename] = uid
-            if "%s.sender" % tablename in fieldnames:
+            if "%s.sender" % tablename in colnames:
                 # If there is no encoding found in the message header
                 # force utf-8 replacing characters (change this to
                 # module's defaults). Applies to .sender, .to, .cc and .bcc fields
-                item_dict["%s.sender" % tablename] = self.encode_text(message["From"], charset)
-            if "%s.to" % tablename in fieldnames:
-                item_dict["%s.to" % tablename] = self.encode_text(message["To"], charset)
-            if "%s.cc" % tablename in fieldnames:
+                item_dict["%s.sender" % tablename] = message["From"]
+            if "%s.to" % tablename in colnames:
+                item_dict["%s.to" % tablename] = message["To"]
+            if "%s.cc" % tablename in colnames:
                 if "Cc" in message.keys():
-                    item_dict["%s.cc" % tablename] = self.encode_text(message["Cc"], charset)
+                    item_dict["%s.cc" % tablename] = message["Cc"]
                 else:
                     item_dict["%s.cc" % tablename] = ""
-            if "%s.bcc" % tablename in fieldnames:
+            if "%s.bcc" % tablename in colnames:
                 if "Bcc" in message.keys():
-                    item_dict["%s.bcc" % tablename] = self.encode_text(message["Bcc"], charset)
+                    item_dict["%s.bcc" % tablename] = message["Bcc"]
                 else:
                     item_dict["%s.bcc" % tablename] = ""
-            if "%s.deleted" % tablename in fieldnames:
+            if "%s.deleted" % tablename in colnames:
                 item_dict["%s.deleted" % tablename] = "\\Deleted" in flags
-            if "%s.draft" % tablename in fieldnames:
+            if "%s.draft" % tablename in colnames:
                 item_dict["%s.draft" % tablename] = "\\Draft" in flags
-            if "%s.flagged" % tablename in fieldnames:
+            if "%s.flagged" % tablename in colnames:
                 item_dict["%s.flagged" % tablename] = "\\Flagged" in flags
-            if "%s.recent" % tablename in fieldnames:
+            if "%s.recent" % tablename in colnames:
                 item_dict["%s.recent" % tablename] = "\\Recent" in flags
-            if "%s.seen" % tablename in fieldnames:
+            if "%s.seen" % tablename in colnames:
                 item_dict["%s.seen" % tablename] = "\\Seen" in flags
-            if "%s.subject" % tablename in fieldnames:
-                subject = message["Subject"]
-                decoded_subject = decode_header(subject)
-                text = decoded_subject[0][0]
-                encoding = decoded_subject[0][1]
-                if encoding in (None, ""):
-                    encoding = charset
-                item_dict["%s.subject" % tablename] = self.encode_text(text, encoding)
-            if "%s.answered" % tablename in fieldnames:
+            if "%s.subject" % tablename in colnames:
+                item_dict["%s.subject" % tablename] = message["Subject"]
+            if "%s.answered" % tablename in colnames:
                 item_dict["%s.answered" % tablename] = "\\Answered" in flags
-            if "%s.mime" % tablename in fieldnames:
+            if "%s.mime" % tablename in colnames:
                 item_dict["%s.mime" % tablename] = message.get_content_type()
+            if "%s.encoding" % tablename in colnames:
+                item_dict["%s.encoding" % tablename] = charset
 
             # Here goes the whole RFC822 body as an email instance
             # for controller side custom processing
             # The message is stored as a raw string
             # >> email.message_from_string(raw string)
             # returns a Message object for enhanced object processing
-            if "%s.email" % tablename in fieldnames:
-                item_dict["%s.email" % tablename] = self.encode_text(raw_message, charset)
+            if "%s.email" % tablename in colnames:
+                # WARNING: no encoding performed (raw message)
+                item_dict["%s.email" % tablename] = raw_message
 
             # Size measure as suggested in a Velocity Reviews post
             # by Tim Williams: "how to get size of email attachment"
@@ -6147,18 +6158,31 @@ class IMAPAdapter(NoSQLAdapter):
             # To retrieve the server size for representation would add a new
             # fetch transaction to the process
             for part in message.walk():
-                if "%s.attachments" % tablename in fieldnames:
-                    if not "text" in part.get_content_maintype():
-                        attachments.append(part.get_payload(decode=True))
-                if "%s.content" % tablename in fieldnames:
-                    if "text" in part.get_content_maintype():
-                        payload = self.encode_text(part.get_payload(decode=True), charset)
-                        content.append(payload)
-                if "%s.size" % tablename in fieldnames:
+                maintype = part.get_content_maintype()
+                if ("%s.attachments" % tablename in colnames) or \
+                   ("%s.content" % tablename in colnames):
+                    if "%s.attachments" % tablename in colnames:
+                        if not ("text" in maintype):
+                            payload = part.get_payload(decode=True)
+                            if payload:
+                                attachment = {
+                                    "payload": payload,
+                                    "filename": part.get_filename(),
+                                    "encoding": part.get_content_charset(),
+                                    "mime": part.get_content_type(),
+                                    "disposition": part["Content-Disposition"]}
+                                attachments.append(attachment)
+                    if "%s.content" % tablename in colnames:
+                        payload = part.get_payload(decode=True)
+                        part_charset = self.get_charset(part)
+                        if "text" in maintype:
+                            if payload:
+                                content.append(self.encode_text(payload, part_charset))
+                if "%s.size" % tablename in colnames:
                     if part is not None:
                         size += len(str(part))
             item_dict["%s.content" % tablename] = bar_encode(content)
-            item_dict["%s.attachments" % tablename] = bar_encode(attachments)
+            item_dict["%s.attachments" % tablename] = attachments
             item_dict["%s.size" % tablename] = size
             imapqry_list.append(item_dict)
 
@@ -6166,12 +6190,12 @@ class IMAPAdapter(NoSQLAdapter):
         # creation (sends an array or lists)
         for item_dict in imapqry_list:
             imapqry_array_item = list()
-            for fieldname in fieldnames:
+            for fieldname in colnames:
                 imapqry_array_item.append(item_dict[fieldname])
             imapqry_array.append(imapqry_array_item)
 
         # parse result and return a rows object
-        colnames = fieldnames
+        colnames = colnames
         processor = attributes.get('processor',self.parse)
         return processor(imapqry_array, fields, colnames)
 
@@ -7351,15 +7375,21 @@ def index():
                     ref = tag[tag.find('[')+1:-1]
                     if '.' in ref and otable:
                         table,field = ref.split('.')
-                        # print table,field
+                        selfld = '_id'
+                        if db[table][field].type.startswith('reference '):
+                            refs = [ x.name for x in db[otable] if x.type == db[table][field].type ]
+                        else:
+                            refs = [ x.name for x in db[table]._referenced_by if x.tablename==otable ]
+                        if refs:
+                            selfld = refs[0]
                         if nested_select:
                             try:
-                                dbset=db(db[table][field].belongs(dbset._select(db[otable]._id)))
+                                dbset=db(db[table][field].belongs(dbset._select(db[otable][selfld])))
                             except ValueError:
                                 return Row({'status':400,'pattern':pattern,
                                             'error':'invalid path','response':None})
                         else:
-                            items = [item.id for item in dbset.select(db[otable]._id)]
+                            items = [item.id for item in dbset.select(db[otable][selfld])]
                             dbset=db(db[table][field].belongs(items))
                     else:
                         table = ref
@@ -8174,7 +8204,7 @@ class Table(object):
         return fields
 
     def _insert(self, **fields):
-        fields = self._default(fields)
+        fields = self._defaults(fields)
         return self._db._adapter._insert(self, self._listify(fields))
 
     def insert(self, **fields):
@@ -9573,6 +9603,22 @@ class Rows(object):
         :param storage_to_dict: when True returns a dict, otherwise a list(default True)
         :param datetime_to_str: convert datetime fields as strings (default True)
         """
+
+        # test for multiple rows
+        multi = False
+        f = self.first()
+        if f:
+            multi = any([isinstance(v, f.__class__) for v in f.values()])
+            if (not "." in key) and multi:
+                # No key provided, default to int indices
+                def new_key():
+                    i = 0
+                    while True:
+                        yield i
+                        i += 1
+                key_generator = new_key()
+                key = lambda r: key_generator.next()
+
         rows = self.as_list(compact, storage_to_dict, datetime_to_str, custom_types)
         if isinstance(key,str) and key.count('.')==1:
             (table, field) = key.split('.')
