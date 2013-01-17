@@ -272,7 +272,7 @@ class Mail(object):
         cc=None,
         bcc=None,
         reply_to=None,
-        sender='%(sender)s',
+        sender=None,
         encoding='utf-8',
         raw=False,
         headers={}
@@ -360,9 +360,11 @@ class Mail(object):
                 text = encode_header(text)
             return text
 
+        sender = sender or self.settings.sender
+
         if not isinstance(self.settings.server, str):
             raise Exception('Server address not specified')
-        if not isinstance(self.settings.sender, str):
+        if not isinstance(sender, str):
             raise Exception('Sender address not specified')
 
         if not raw:
@@ -458,11 +460,11 @@ class Mail(object):
                 c.set_armor(1)
                 c.signers_clear()
                 # search for signing key for From:
-                for sigkey in c.op_keylist_all(self.settings.sender, 1):
+                for sigkey in c.op_keylist_all(sender, 1):
                     if sigkey.can_sign:
                         c.signers_add(sigkey)
                 if not c.signers_enum(0):
-                    self.error = 'No key for signing [%s]' % self.settings.sender
+                    self.error = 'No key for signing [%s]' % sender
                     return False
                 c.set_passphrase_cb(lambda x, y, z: sign_passphrase)
                 try:
@@ -619,7 +621,6 @@ class Mail(object):
             # no cryptography process as usual
             payload = payload_in
 
-        sender = sender % dict(sender=self.settings.sender)
         payload['From'] = encoded_or_raw(sender.decode(encoding))
         origTo = to[:]
         if to:
@@ -655,16 +656,16 @@ class Mail(object):
                 attachments = attachments and [(a.my_filename, a.my_payload) for a in attachments if not raw]
                 if attachments:
                     result = mail.send_mail(
-                        sender=self.settings.sender, to=origTo,
+                        sender=sender, to=origTo,
                         subject=subject, body=text, html=html,
                         attachments=attachments, **xcc)
                 elif html and (not raw):
                     result = mail.send_mail(
-                        sender=self.settings.sender, to=origTo,
+                        sender=sender, to=origTo,
                         subject=subject, body=text, html=html, **xcc)
                 else:
                     result = mail.send_mail(
-                        sender=self.settings.sender, to=origTo,
+                        sender=sender, to=origTo,
                         subject=subject, body=text, **xcc)
             else:
                 smtp_args = self.settings.server.split(':')
@@ -679,7 +680,7 @@ class Mail(object):
                 if self.settings.login:
                     server.login(*self.settings.login.split(':', 1))
                 result = server.sendmail(
-                    self.settings.sender, to, payload.as_string())
+                    sender, to, payload.as_string())
                 server.quit()
         except Exception, e:
             logger.warn('Mail.send failure:%s' % e)
@@ -881,6 +882,7 @@ class Auth(object):
         profile_fields=None,
         email_case_sensitive=True,
         username_case_sensitive=True,
+        update_fields = ['email'],
     )
         # ## these are messages that can be customized
     default_messages = dict(
@@ -1254,6 +1256,9 @@ class Auth(object):
     def navbar(self, prefix='Welcome', action=None,
                separators=(' [ ', ' | ', ' ] '), user_identifier=DEFAULT,
                referrer_actions=DEFAULT, mode='default'):
+        def Anr(*a,**b):
+            b['_rel']='nofollow'
+            return A(*a,**b)
         referrer_actions = [] if not referrer_actions else referrer_actions
         request = current.request
         asdropdown = (mode == 'dropdown')
@@ -1284,19 +1289,19 @@ class Auth(object):
                 user_identifier = user_identifier % self.user
             if not user_identifier:
                 user_identifier = ''
-            logout = A(T('Logout'), _href='%s/logout?_next=%s' %
+            logout = Anr(T('Logout'), _href='%s/logout?_next=%s' %
                       (action, urllib.quote(self.settings.logout_next)))
-            profile = A(T('Profile'), _href=href('profile'))
-            password = A(T('Password'), _href=href('change_password'))
+            profile = Anr(T('Profile'), _href=href('profile'))
+            password = Anr(T('Password'), _href=href('change_password'))
             bar = SPAN(
                 prefix, user_identifier, s1, logout, s3, _class='auth_navbar')
 
             if asdropdown:
-                logout = LI(A(I(_class='icon-off'), ' ' + T('Logout'), _href='%s/logout?_next=%s' %
+                logout = LI(Anr(I(_class='icon-off'), ' ' + T('Logout'), _href='%s/logout?_next=%s' %
                               (action, urllib.quote(self.settings.logout_next))))  # the space before T('Logout') is intentional. It creates a gap between icon and text
-                profile = LI(A(I(_class='icon-user'), ' ' +
+                profile = LI(Anr(I(_class='icon-user'), ' ' +
                              T('Profile'), _href=href('profile')))
-                password = LI(A(I(_class='icon-lock'), ' ' +
+                password = LI(Anr(I(_class='icon-lock'), ' ' +
                               T('Password'), _href=href('change_password')))
                 bar = UL(logout, _class='dropdown-menu')
                          # logout will be the last item in list
@@ -1310,21 +1315,21 @@ class Auth(object):
                     bar.insert(-1, s2)
                 bar.insert(-1, password)
         else:
-            login = A(T('Login'), _href=href('login'))
-            register = A(T('Register'), _href=href('register'))
-            retrieve_username = A(
+            login = Anr(T('Login'), _href=href('login'))
+            register = Anr(T('Register'), _href=href('register'))
+            retrieve_username = Anr(
                 T('Forgot username?'), _href=href('retrieve_username'))
-            lost_password = A(
+            lost_password = Anr(
                 T('Lost password?'), _href=href('request_reset_password'))
             bar = SPAN(s1, login, s3, _class='auth_navbar')
 
             if asdropdown:
-                login = LI(A(I(_class='icon-off'), ' ' + T('Login'), _href=href('login')))  # the space before T('Login') is intentional. It creates a gap between icon and text
-                register = LI(A(I(_class='icon-user'),
+                login = LI(Anr(I(_class='icon-off'), ' ' + T('Login'), _href=href('login')))  # the space before T('Login') is intentional. It creates a gap between icon and text
+                register = LI(Anr(I(_class='icon-user'),
                               ' ' + T('Register'), _href=href('register')))
-                retrieve_username = LI(A(I(_class='icon-edit'), ' ' + T(
+                retrieve_username = LI(Anr(I(_class='icon-edit'), ' ' + T(
                     'Forgot username?'), _href=href('retrieve_username')))
-                lost_password = LI(A(I(_class='icon-lock'), ' ' + T(
+                lost_password = LI(Anr(I(_class='icon-lock'), ' ' + T(
                     'Lost password?'), _href=href('request_reset_password')))
                 bar = UL(login, _class='dropdown-menu')
                          # login will be the last item in list
@@ -1347,10 +1352,10 @@ class Auth(object):
         if asdropdown:
             bar.insert(-1, LI('', _class='divider'))
             if self.user_id:
-                bar = LI(A(prefix, user_identifier, _href='#'),
+                bar = LI(Anr(prefix, user_identifier, _href='#'),
                          bar, _class='dropdown')
             else:
-                bar = LI(A(T('Login'), _href='#'),
+                bar = LI(Anr(T('Login'), _href='#'),
                          bar, _class='dropdown')
         return bar
 
@@ -2047,7 +2052,8 @@ class Auth(object):
                             if not self in self.settings.login_methods:
                                 # do not store password in db
                                 form.vars[passfield] = None
-                            user = self.get_or_create_user(form.vars)
+                            user = self.get_or_create_user(
+                                form.vars, self.settings.update_fields)
                             break
                     if not user:
                         # alternates have failed, maybe because service inaccessible
@@ -2067,7 +2073,8 @@ class Auth(object):
                                 if not self in self.settings.login_methods:
                                     # do not store password in db
                                     form.vars[passfield] = None
-                                user = self.get_or_create_user(form.vars)
+                                user = self.get_or_create_user(
+                                    form.vars, self.settings.update_fields)
                                 break
                 if not user:
                     self.log_event(self.messages.login_failed_log,
@@ -2087,7 +2094,8 @@ class Auth(object):
             if cas_user:
                 cas_user[passfield] = None
                 user = self.get_or_create_user(
-                    table_user._filter_fields(cas_user))
+                    table_user._filter_fields(cas_user),
+                    self.settings.update_fields)
             elif hasattr(cas, 'login_form'):
                 return cas.login_form()
             else:
@@ -3309,14 +3317,17 @@ class Auth(object):
              restrict_search=False,
              resolve=True,
              extra=None,
-             menugroups=None):
+             menu_groups=None,
+             templates=None):
+
         if not hasattr(self, '_wiki'):
             self._wiki = Wiki(self, render=render,
                               manage_permissions=manage_permissions,
                               force_prefix=force_prefix,
                               restrict_search=restrict_search,
                               env=env, extra=extra or {},
-                              menugroups=menugroups)
+                              menu_groups=menu_groups,
+                              templates=templates)
         else:
             self._wiki.env.update(env or {})
         # if resolve is set to True, process request as wiki call
@@ -4694,15 +4705,19 @@ class Expose(object):
 class Wiki(object):
     everybody = 'everybody'
     rows_page = 25
-
-    def markmin_render(self, page):
-        html = MARKMIN(page.body, extra=self.extra,
+    def markmin_base(self,body):
+        return MARKMIN(body, extra=self.extra,
                        url=True, environment=self.env,
                        autolinks=lambda link: expand_one(link, {})).xml()
-        html += DIV(_class='w2p_wiki_tags',
-                    *[A(t.strip(), _href=URL(args='_search', vars=dict(q=t)))
-                      for t in page.tags or [] if t.strip()]).xml()
-        return html
+
+    def render_tags(self, tags):
+        return DIV(
+            _class='w2p_wiki_tags',
+            *[A(t.strip(), _href=URL(args='_search', vars=dict(q=t)))
+              for t in tags or [] if t.strip()])
+
+    def markmin_render(self, page):
+        return self.markmin_base(page.body) + self.render_tags(page.tags).xml()
 
     def html_render(self, page):
         html = page.body
@@ -4712,6 +4727,7 @@ class Wiki(object):
         html = replace_autolinks(html, lambda link: expand_one(link, {}))
         # @{component:name} -> <script>embed component name</script>
         html = replace_components(html, self.env)
+        html = html + self.render_tags(page.tags).xml()
         return html
 
     @staticmethod
@@ -4726,7 +4742,9 @@ class Wiki(object):
 
     def __init__(self, auth, env=None, render='markmin',
                  manage_permissions=False, force_prefix='',
-                 restrict_search=False, extra=None, menugroups=None):
+                 restrict_search=False, extra=None,
+                 menu_groups=None, templates=None):
+        db = auth.db
         self.env = env or {}
         self.env['component'] = Wiki.component
         if render == 'markmin':
@@ -4735,7 +4753,7 @@ class Wiki(object):
             render = self.html_render
         self.render = render
         self.auth = auth
-        self.menugroups = menugroups
+        self.menu_groups = menu_groups
         if self.auth.user:
             self.force_prefix = force_prefix % self.auth.user
         else:
@@ -4744,14 +4762,17 @@ class Wiki(object):
         perms = self.manage_permissions = manage_permissions
         self.restrict_search = restrict_search
         self.extra = extra or {}
-        db = auth.db
+        if templates is None and not manage_permissions:
+            templates = db.auth_wiki.tags.contains('template')&\
+                db.auth_wiki.can_read.contains('everybody')
+        self.templates = templates
         table_definitions = [
             ('wiki_page', {
                     'args':[
                         Field('slug',
                               requires=[IS_SLUG(),
                                         IS_NOT_IN_DB(db, 'wiki_page.slug')],
-                              readable=False, writable=False),
+                              writable=False),
                         Field('title', unique=True),
                         Field('body', 'text', notnull=True),
                         Field('tags', 'list:string'),
@@ -4853,11 +4874,11 @@ class Wiki(object):
         return True
 
     def can_see_menu(self):
-        if self.menugroups is None:
+        if self.menu_groups is None:
             return True
         if self.auth.user:
             groups = self.auth.user_groups.values()
-            if any(t in self.menugroups for t in groups):
+            if any(t in self.menu_groups for t in groups):
                 return True
         return False
 
@@ -4960,7 +4981,7 @@ class Wiki(object):
                     slug.startswith(self.force_prefix)):
                 current.session.flash = 'slug must have "%s" prefix' \
                     % self.force_prefix
-                redirect(URL(args=('_edit', self.force_prefix + slug)))
+                redirect(URL(args=('_create')))
             db.wiki_page.can_read.default = [Wiki.everybody]
             db.wiki_page.can_edit.default = [auth.user_group_role()]
             db.wiki_page.title.default = title_guess
@@ -4983,20 +5004,19 @@ class Wiki(object):
             redirect(URL(args=slug))
         script = """
         $(function() {
-            if (!$('#wiki_page_body').length) return;
-            var pagecontent = $('#wiki_page_body');
+            if (!jQuery('#wiki_page_body').length) return;
+            var pagecontent = jQuery('#wiki_page_body');
             pagecontent.css('font-family',
                             'Monaco,Menlo,Consolas,"Courier New",monospace');
-            var prevbutton = $('<button class="btn nopreview">Preview</button>');
-            var mediabutton = $('<button class="btn nopreview">Media</button>');
-            var preview = $('<div id="preview"></div>').hide();
-            var previewmedia = $('<div id="previewmedia"></div>');
-            var table = $('form');
-            var bodylabel = $('#wiki_page_body__label');
-            preview.insertBefore(pagecontent);
-            prevbutton.insertAfter(bodylabel);
-            mediabutton.insertBefore(table);
-            previewmedia.insertBefore(table);
+            var prevbutton = jQuery('<button class="btn nopreview">Preview</button>');
+            var mediabutton = jQuery('<button class="btn nopreview">Media</button>');
+            var preview = jQuery('<div id="preview"></div>').hide();
+            var previewmedia = jQuery('<div id="previewmedia"></div>');
+            var form = pagecontent.closest('form');
+            preview.insertBefore(form);
+            prevbutton.insertBefore(form);
+            mediabutton.insertBefore(form);
+            previewmedia.insertBefore(form);
             mediabutton.toggle(function() {
                 web2py_component('%(urlmedia)s', 'previewmedia');
             }, function() {
@@ -5007,12 +5027,12 @@ class Wiki(object):
                 if (prevbutton.hasClass('nopreview')) {
                     prevbutton.addClass('preview').removeClass(
                         'nopreview').html('Edit Source');
-                    web2py_ajax_page('post', '%(url)s', {body : $('#wiki_page_body').val()}, 'preview');
-                    pagecontent.fadeOut('fast', function() {preview.fadeIn()});
+                    web2py_ajax_page('post', '%(url)s', {body : jQuery('#wiki_page_body').val()}, 'preview');
+                    form.fadeOut('fast', function() {preview.fadeIn()});
                 } else {
                     prevbutton.addClass(
                         'nopreview').removeClass('preview').html('Preview');
-                    preview.fadeOut('fast', function() {pagecontent.fadeIn()});
+                    preview.fadeOut('fast', function() {form.fadeIn()});
                 }
             })
         })
@@ -5036,7 +5056,7 @@ class Wiki(object):
         csv = True
         create = True
         if current.request.vars.embedded:
-            script = "var c = $('#wiki_page_body'); c.val(c.val() + $('%s').text()); return false;"
+            script = "var c = jQuery('#wiki_page_body'); c.val(c.val() + jQuery('%s').text()); return false;"
             fragment = self.auth.db.wiki_media.id.represent
             csv = False
             create = False
@@ -5061,38 +5081,49 @@ class Wiki(object):
         slugs=db(db.wiki_page.id>0).select(db.wiki_page.id,db.wiki_page.slug)
         options=[OPTION(row.slug,_value=row.id) for row in slugs]
         options.insert(0, OPTION('',_value=''))
-        form = SQLFORM.factory(Field("slug", default=current.request.args(1),
-                                     requires=(IS_SLUG(),
-                                     IS_NOT_IN_DB(db,db.wiki_page.slug))),
-                               Field("from_template", "reference wiki_page",
-                                     requires=IS_EMPTY_OR(IS_IN_DB(db, db.wiki_page, '%(slug)s')),
-                                     comment=current.T("Choose Template or empty for new Page")),
-                                     _class="well span6")
-        form.element("[type=submit]").attributes["_value"] = current.T("Create Page from Slug")
+        fields = [Field("slug", default=current.request.args(1) or 
+                        self.force_prefix,
+                        requires=(IS_SLUG(), IS_NOT_IN_DB(db,db.wiki_page.slug))),]
+        if self.templates:
+            fields.append(
+                Field("from_template", "reference wiki_page",
+                      requires=IS_EMPTY_OR(IS_IN_DB(db(self.templates), 
+                                                    '%(slug)s')),
+                      comment=current.T(
+                        "Choose Template or empty for new Page")))
+        form = SQLFORM.factory(*fields, _class="well span6")
+        form.element("[type=submit]").attributes["_value"] = \
+            current.T("Create Page from Slug")
 
         if form.process().accepted:
-             # form.vars.from_template = 0 if not form.vars.from_template else form.vars.from_template
-             redirect(URL(args=('_edit',form.vars.slug,form.vars.from_template or 0))) # added param
+             form.vars.from_template = 0 if not form.vars.from_template \
+                 else form.vars.from_template
+             redirect(URL(args=('_edit', form.vars.slug,form.vars.from_template or 0))) # added param
         return dict(content=form)
 
     def pages(self):
         if not self.can_manage():
             return self.not_authorized()
-        self.auth.db.wiki_page.id.represent = lambda id, row: SPAN(
-            '@////%s' % row.slug)
+        self.auth.db.wiki_page.slug.represent = lambda slug, row: SPAN(
+            '@////%s' % slug)
         self.auth.db.wiki_page.title.represent = lambda title, row: \
             A(title, _href=URL(args=row.slug))
+        wiki_table = self.auth.db.wiki_page
         content = SQLFORM.grid(
-            self.auth.db.wiki_page,
+            wiki_table,
+            fields = [wiki_table.slug,
+                      wiki_table.title, wiki_table.tags, 
+                      wiki_table.can_read, wiki_table.can_edit],
             links=[
                 lambda row:
-                    A('edit', _href=URL(args=('_edit', row.slug))),
+                    A('edit', _href=URL(args=('_edit', row.slug)),_class='btn'),
                 lambda row:
-                    A('media', _href=URL(args=('_editmedia', row.slug)))],
+                    A('media', _href=URL(args=('_editmedia', row.slug)),_class='btn')],
             details=False, editable=False, deletable=False, create=False,
             orderby=self.auth.db.wiki_page.title,
             args=['_pages'],
             user_signature=False)
+
         return dict(content=content)
 
     def media(self, id):

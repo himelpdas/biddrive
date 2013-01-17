@@ -540,20 +540,25 @@ class UploadWidget(FormWidget):
 
             requires = attr["requires"]
             if requires == [] or isinstance(requires, IS_EMPTY_OR):
-                inp = DIV(inp, '[',
-                          A(current.T(
-                              UploadWidget.GENERIC_DESCRIPTION), _href=url),
-                          '|',
-                          INPUT(_type='checkbox',
-                                _name=field.name + cls.ID_DELETE_SUFFIX,
-                                _id=field.name + cls.ID_DELETE_SUFFIX),
-                          LABEL(current.T(cls.DELETE_FILE),
-                                _for=field.name + cls.ID_DELETE_SUFFIX),
-                          ']', br, image)
+                inp = DIV(inp, 
+                          SPAN('[',
+                               A(current.T(
+                                UploadWidget.GENERIC_DESCRIPTION), _href=url),
+                               '|',
+                               INPUT(_type='checkbox',
+                                     _name=field.name + cls.ID_DELETE_SUFFIX,
+                                     _id=field.name + cls.ID_DELETE_SUFFIX),
+                               LABEL(current.T(cls.DELETE_FILE),
+                                     _for=field.name + cls.ID_DELETE_SUFFIX,
+                                     _style='display:inline'),
+                               ']', _style='white-space:nowrap'), 
+                          br, image)
             else:
-                inp = DIV(inp, '[',
-                          A(cls.GENERIC_DESCRIPTION, _href=url),
-                          ']', br, image)
+                inp = DIV(inp, 
+                          SPAN('[',
+                               A(cls.GENERIC_DESCRIPTION, _href=url),
+                               ']', _style='white-space:nowrap'), 
+                          br, image)
         return inp
 
     @classmethod
@@ -765,7 +770,7 @@ def formstyle_ul(form, fields):
 
 def formstyle_bootstrap(form, fields):
     ''' bootstrap format form layout '''
-    form['_class'] += ' form-horizontal'
+    form.add_class('form-horizontal')
     parent = FIELDSET()
     for id, label, controls, help in fields:
         # wrappers
@@ -1150,7 +1155,7 @@ class SQLFORM(FORM):
 #                 </block>
 
         # when deletable, add delete? checkbox
-        self.custom.deletable = ''
+        self.custom.delete = self.custom.deletable = ''
         if record and deletable:
             #add secondary css class for cascade delete warning
             css = 'delete'
@@ -1172,7 +1177,8 @@ class SQLFORM(FORM):
                  _id=self.FIELDKEY_DELETE_RECORD + SQLFORM.ID_LABEL_SUFFIX),
                  widget,
                  col3.get(self.FIELDKEY_DELETE_RECORD, '')))
-            self.custom.deletable = widget
+            self.custom.delete = self.custom.deletable = widget
+            
 
         # when writable, add submit button
         self.custom.submit = ''
@@ -1617,7 +1623,7 @@ class SQLFORM(FORM):
             'integer': ['=', '!=', '<', '>', '<=', '>=', 'in', 'not in'],
             'double': ['=', '!=', '<', '>', '<=', '>='],
             'id': ['=', '!=', '<', '>', '<=', '>=', 'in', 'not in'],
-            'reference': ['=', '!=', '<', '>', '<=', '>=', 'in', 'not in'],
+            'reference': ['=', '!='],
             'boolean': ['=', '!=']}
         if fields[0]._db._adapter.dbengine == 'google:datastore':
             search_options['string'] = ['=', '!=', '<', '>', '<=', '>=']
@@ -1635,15 +1641,33 @@ class SQLFORM(FORM):
                     field.label, str) and T(field.label) or field.label
                 selectfields.append(OPTION(label, _value=str(field)))
                 operators = SELECT(*[OPTION(T(option), _value=option) for option in options])
+                _id = "%s_%s" % (value_id,name)
                 if field.type == 'boolean':
+                    value_input = SQLFORM.widgets.boolean.widget(field,field.default,_id=_id)
+                elif field.type == 'double':
+                    value_input = SQLFORM.widgets.double.widget(field,field.default,_id=_id)
+                elif field.type == 'time':
+                    value_input = SQLFORM.widgets.time.widget(field,field.default,_id=_id)
+                elif field.type == 'date':
+                    value_input = SQLFORM.widgets.date.widget(field,field.default,_id=_id)
+                elif field.type == 'datetime':
+                    value_input = SQLFORM.widgets.datetime.widget(field,field.default,_id=_id)
+                elif (field.type.startswith('reference ') or 
+                      field.type.startswith('list:reference ')) and \
+                      hasattr(field.requires,'options'):
                     value_input = SELECT(
-                        OPTION(T("True"), _value="T"),
-                        OPTION(T("False"), _value="F"),
-                        _id="%s_%s" % (value_id,name))
+                        *[OPTION(v, _value=k)
+                          for k,v in field.requires.options()],
+                         **dict(_id=_id))
+                elif field.type == 'integer' or \
+                        field.type.startswith('reference ') or \
+                        field.type.startswith('list:integer') or \
+                        field.type.startswith('list:reference '):
+                    value_input = SQLFORM.widgets.integer.widget(field,field.default,_id=_id)
                 else:
-                    value_input = INPUT(_type='text',
-                                        _id="%s_%s" % (value_id,name),
-                                        _class=field.type)
+                    value_input = INPUT(
+                        _type='text', _id=_id, _class=field.type)
+                        
                 new_button = INPUT(
                     _type="button", _value=T('New'), _class="btn",
                     _onclick="%s_build_query('new','%s')" % (prefix,field))
@@ -1967,6 +1991,7 @@ class SQLFORM(FORM):
             csv=(ExporterCSV, 'CSV'),
             xml=(ExporterXML, 'XML'),
             html=(ExporterHTML, 'HTML'),
+            json=(ExporterJSON, 'JSON'),
             tsv_with_hidden_cols=
                 (ExporterTSV, 'TSV (Excel compatible, hidden cols)'),
             tsv=(ExporterTSV, 'TSV (Excel compatible)'))
@@ -2278,7 +2303,7 @@ class SQLFORM(FORM):
                     elif not isinstance(value, DIV):
                         value = field.formatter(value)
                     trcols.append(TD(value))
-                row_buttons = TD(_class='row_buttons')
+                row_buttons = TD(_class='row_buttons',_nowrap=True)
                 if links and links_in_grid:
                     toadd = []
                     for link in links:
@@ -2914,10 +2939,9 @@ class ExporterCSV(ExportClass):
 
     def export(self):
         if self.rows:
-            return str(self.rows)
+            return self.rows.as_csv()
         else:
             return ''
-
 
 class ExporterHTML(ExportClass):
     label = 'HTML'
@@ -2928,18 +2952,10 @@ class ExporterHTML(ExportClass):
         ExportClass.__init__(self, rows)
 
     def export(self):
-        out = cStringIO.StringIO()
-        out.write('<html>\n<body>\n<table>\n')
         if self.rows:
-            colnames = [a.split('.') for a in self.rows.colnames]
-            for row in self.rows.records:
-                out.write('<tr>\n')
-                for col in colnames:
-                    out.write('<td>' + str(row[col[0]][col[1]]) + '</td>\n')
-                out.write('</tr>\n')
-        out.write('</table>\n</body>\n</html>')
-        return str(out.getvalue())
-
+            return self.rows.xml()
+        else:
+            return '<html>\n<body>\n<table>\n</table>\n</body>\n</html>'
 
 class ExporterXML(ExportClass):
     label = 'XML'
@@ -2950,15 +2966,22 @@ class ExporterXML(ExportClass):
         ExportClass.__init__(self, rows)
 
     def export(self):
-        out = cStringIO.StringIO()
-        out.write('<rows>\n')
         if self.rows:
-            colnames = [a.split('.') for a in self.rows.colnames]
-            for row in self.rows.records:
-                out.write('<row>\n')
-                for col in colnames:
-                    out.write(
-                        '<%s>' % col + str(row[col[0]][col[1]]) + '</%s>\n' % col)
-                out.write('</row>\n')
-        out.write('</rows>')
-        return str(out.getvalue())
+            return self.rows.as_xml()
+        else:
+            return '<rows></rows>'
+
+class ExporterJSON(ExportClass):
+    label = 'JSON'
+    file_ext = "json"
+    content_type = "application/json"
+
+    def __init__(self, rows):
+        ExportClass.__init__(self, rows)
+
+    def export(self):
+        if self.rows:
+            return self.rows.as_json()
+        else:
+            return 'null'
+
