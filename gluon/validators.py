@@ -706,7 +706,7 @@ class IS_INT_IN_RANGE(Validator):
         self.minimum = self.maximum = None
         if minimum is None:
             if maximum is None:
-                self.error_message = self.translate(
+                self.error_message = translate(
                     error_message or 'enter an integer')
             else:
                 self.maximum = int(maximum)
