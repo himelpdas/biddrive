@@ -168,7 +168,7 @@ jQuery(document).on('click', '#themes a', function (e) {
 	{{for dir in dirs:}}
 	<li class="nav-header component" onclick="collapse('{{="%s_files" % dir['name']}}');">{{=dir['name']}}</li>
 	<li id="{{="%s_files" % dir['name']}}">
-		<ul class="nav nav-list">	
+		<ul class="nav nav-list small-font">	
 		{{for f in listfiles(app, dir['name'], regexp=dir['reg'] ):}}
 		{{id="%s__" % dir['name'] + f.replace('.','__')}}
 		{{current_file = request.args(len(request.args) - 1)}} 
