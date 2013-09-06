@@ -45,7 +45,7 @@ routes_in = (
     ('/favicon.ico', '/examples/static/favicon.ico'),
     ('/robots.txt', '/examples/static/robots.txt'),
     # do other stuff
-    ((r'.*http://otherdomain.com.* (?P<any>.*)', r'/app/ctr\g<any>')),
+    ((r'.*http://otherdomain\.com.* (?P<any>.*)', r'/app/ctr\g<any>')),
     # remove the BASE prefix
     (BASE + '/$anything', '/$anything'),
 )
@@ -62,7 +62,7 @@ routes_out = (
     # do not reroute static files
     ('/$app/static/$anything', BASE + '/$app/static/$anything'),
     # do other stuff
-    (r'.*http://otherdomain.com.* /app/ctr(?P<any>.*)', r'\g<any>'),
+    (r'.*http://otherdomain\.com.* /app/ctr(?P<any>.*)', r'\g<any>'),
     (r'/app(?P<any>.*)', r'\g<any>'),
     # restore the BASE prefix
     ('/$anything', BASE + '/$anything'),
