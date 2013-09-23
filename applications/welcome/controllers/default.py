@@ -16,8 +16,8 @@ def index():
     rendered by views/default/index.html or views/generic.html
 
     if you need a simple wiki simple replace the two lines below with:
-    """
     return auth.wiki()
+    """
     response.flash = T("Welcome to web2py!")
     return dict(message=T('Hello World'))
 
