@@ -4,6 +4,7 @@
 # recreated by Vladyslav Kozlovskyy
 # license MIT/BSD/GPL
 import re
+import urllib
 from cgi import escape
 from string import maketrans
 try:
@@ -466,7 +467,7 @@ You can use Google charts to render the formula:
 
 ``
 LATEX = '<img src="http://chart.apis.google.com/chart?cht=tx&chl=%s" />'
-markmin2html(text,{'latex':lambda code: LATEX % code.replace('"','\\\\"')})
+markmin2html(text,{'latex':lambda code: LATEX % urllib.quote(code)})
 ``
 
 ### Code with syntax highlighting
@@ -1382,7 +1383,7 @@ def render(text,
                                    % (id_prefix+d,b,d) \
                                    for d in escape(code).split(','))+']'
         elif b=='latex':
-            return LATEX % code.replace('"','\"').replace('\n',' ')
+            return LATEX % urllib.quote(code)
         elif b in html_colors:
             return '<span style="color: %s">%s</span>' \
                   % (b, render(code, {}, {}, 'br', URL, environment, latex,
