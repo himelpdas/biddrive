@@ -780,7 +780,7 @@ def render(text,
     'xaaax'
 
     >>> print render(r"$$\int_a^b sin(x)dx$$")
-    <img src="http://chart.apis.google.com/chart?cht=tx&chl=\\int_a^b sin(x)dx" />
+    <img src="http://chart.apis.google.com/chart?cht=tx&chl=%5Cint_a%5Eb%20sin%28x%29dx" />
 
     >>> markmin2html(r"use backslash: \[\[[[mess\[[ag\]]e link]]\]]")
     '<p>use backslash: [[<a href="link">mess[[ag]]e</a>]]</p>'
