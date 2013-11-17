@@ -5552,10 +5552,7 @@ class MongoDBAdapter(NoSQLAdapter):
         if not isinstance(arg, (int, long)):
             raise TypeError("object_id argument must be of type " +
                             "ObjectId or an objectid representable integer")
-        if arg == 0:
-            hexvalue = "".zfill(24)
-        else:
-            hexvalue = hex(arg)[2:].replace("L", "")
+        hexvalue = hex(arg)[2:].rstrip('L').zfill(24)
         return self.ObjectId(hexvalue)
 
     def parse_reference(self, value, field_type):
