@@ -67,97 +67,30 @@
 </head>
 
 <body>
-  <!-- Navbar ================================================== -->
-  <div class="navbar navbar-fixed-top"> {{#navbar-fixed-top keeps the content within container}}
-    <div class="flash">{{=response.flash or ''}}</div>
-    <div class="navbar-inner">
-      <div class="container">
-        {{is_mobile=request.user_agent().is_mobile}}
-        <!-- the next tag is necessary for bootstrap menus, do not remove -->
-        <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse" style="{{='display:none;' if not is_mobile else ''}}">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        {{=response.logo or ''}}
-        <ul id="navbar" class="nav pull-right">{{='auth' in globals() and auth.navbar(mode="dropdown") or ''}}</ul>
-        <div class="{{='nav-collapse' if is_mobile else 'nav'}}">
-          {{if response.menu:}}
-          {{=MENU(response.menu, _class='mobile-menu nav' if is_mobile else 'nav',mobile=is_mobile,li_class='dropdown',ul_class='dropdown-menu')}}
-          {{pass}}
-        </div><!--/.nav-collapse -->
-      </div>
-    </div>
-  </div><!--/top navbar -->
-
-    <!-- Hero ===================================================== -->
-	<div class="container">
-	<!-- Main hero unit for a primary marketing message or call to action -->
-		<div class="hero-unit">
-			<h1>Hello, world!</h1>
-			<p>This is a template for a simple marketing or informational website. It includes a large callout called the hero unit and three supporting pieces of content. Use it as a starting point to create something more unique.</p>
-			<p><a href="#" class="btn btn-primary btn-large">Learn more &raquo;</a></p>
-		</div>
-		  <!-- Example row of columns -->
-		  <div class="row">
-			<div class="span4">
-			  <h2>Heading</h2>
-			  <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-			  <p><a class="btn" href="#">View details &raquo;</a></p>
-			</div>
-			<div class="span4">
-			  <h2>Heading</h2>
-			  <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-			  <p><a class="btn" href="#">View details &raquo;</a></p>
-		   </div>
-			<div class="span4">
-			  <h2>Heading</h2>
-			  <p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-			  <p><a class="btn" href="#">View details &raquo;</a></p>
-			</div>
+	<!-- Navbar ================================================== -->
+	 <div class="navbar navbar-fixed-top"> {{#navbar-fixed-top keeps the content within container}}
+		<div class="flash">{{=response.flash or ''}}</div>
+		<div class="navbar-inner">
+		  <div class="container">
+			{{is_mobile=request.user_agent().is_mobile}}
+			<!-- the next tag is necessary for bootstrap menus, do not remove -->
+			<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse" style="{{='display:none;' if not is_mobile else ''}}">
+			  <span class="icon-bar"></span>
+			  <span class="icon-bar"></span>
+			  <span class="icon-bar"></span>
+			</button>
+			{{=response.logo or ''}}
+			<ul id="navbar" class="nav pull-right">{{='auth' in globals() and auth.navbar(mode="dropdown") or ''}}</ul>
+			<div class="{{='nav-collapse' if is_mobile else 'nav'}}">
+			  {{if response.menu:}}
+			  {{=MENU(response.menu, _class='mobile-menu nav' if is_mobile else 'nav',mobile=is_mobile,li_class='dropdown',ul_class='dropdown-menu')}}
+			  {{pass}}
+			</div><!--/.nav-collapse -->
 		  </div>
-	</div>
-	
-  <div class="container">
-    <!-- Masthead ================================================== -->
-    <header class="mastheader row" id="header">
-      {{if response.title:}}
-        <div class="span12">
-            <div class="page-header">
-                <h1>
-                    {{=response.title}}
-                    <small>{{=response.subtitle or ''}}</small>
-                </h1>
-            </div>
-        </div>
-	{{pass}}
-    </header>
+		</div>
+	 </div><!--/top navbar -->
 
-    <section id="main" class="main row">
-        {{if left_sidebar_enabled:}}
-        <div class="span3 left-sidebar">
-            {{block left_sidebar}}
-            <h3>Left Sidebar</h3>
-            <p></p>
-            {{end}}
-        </div>
-        {{pass}}
-
-        <div class="{{=middle_columns}}">
-            {{block center}}
-            {{include}}
-            {{end}}
-        </div>
-
-        {{if right_sidebar_enabled:}}
-        <div class="span3">
-            {{block right_sidebar}}
-            <h3>Right Sidebar</h3>
-            <p></p>
-            {{end}}
-        </div>
-        {{pass}}
-    </section><!--/main-->
+ {{include}}
 
     <!-- Footer ================================================== -->
     <div class="row">

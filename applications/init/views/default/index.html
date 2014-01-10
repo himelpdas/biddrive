@@ -1,35 +1,56 @@
-{{left_sidebar_enabled,right_sidebar_enabled=False,('message' in globals())}}
 {{extend 'layout.html'}}
-
-{{if 'message' in globals():}}
-<h3>{{=message}}</h3>
-
-<h4>{{=T('How did you get here?')}}</h4>
-<ol>
-  <li>{{=T('You are successfully running web2py')}}</li>
-  <li>{{=XML(T('You visited the url %s', A(request.env.path_info,_href=request.env.path_info)))}}</li>
-  <li>{{=XML(T('Which called the function %s located in the file %s',
-             (A(request.function+'()',_href='#'),
-              A('web2py/applications/%(application)s/controllers/%(controller)s.py'%request,
-               _href=URL('admin','default','peek', args=(request.application,'controllers',request.controller+'.py'))))))}}</li>
-  <li>{{=XML(T('The output of the file is a dictionary that was rendered by the view %s',
-           A('web2py/applications/%(application)s/views/%(controller)s/index.html'%request,
-           _href=URL('admin','default','peek',args=(request.application,'views',request.controller,'index.html')))))}}</li>
-  <li>{{=T('You can modify this application and adapt it to your needs')}}</li>
-</ol>
-{{elif 'content' in globals():}}
-{{=content}}
-{{else:}}
-{{=BEAUTIFY(response._vars)}}
-{{pass}}
-
-{{block right_sidebar}}
-{{=A(T("Administrative Interface"), _href=URL('admin','default','index'), _class='btn',
-     _style='margin-top: 1em;')}}
-<h6>{{=T("Don't know what to do?")}}</h6>
-<ul>
-  <li>{{=A(T("Online examples"), _href=URL('examples','default','index'))}}</li>
-  <li><a href="http://web2py.com">web2py.com</a></li>
-  <li><a href="http://web2py.com/book">{{=T('Documentation')}}</a></li>
-</ul>
-{{end}}
+<!-- Hero ===================================================== -->
+<div class="container">
+<!-- Main hero unit for a primary marketing message or call to action -->
+	<div id="hero"class="hero-unit">
+		<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
+			<div id="heroleft" class="span4">
+				<div class="row-fluid">
+					<p>Request by model or features:</p>
+				</div>
+				{{counter = 0}}
+				{{for eachbrand in brandlist:}}
+					{{if counter == 0:}}
+						<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
+					{{pass}}
+							<div class="span4">
+								<p><a href="#">{{=eachbrand}}</a></p>
+							</div>
+					{{counter += 1}}
+					{{if counter == 3:}}
+						</div>
+						{{counter = 0}}
+					{{pass}}
+				{{pass}}
+				{{if len(brandlist) % 3 != 0:}} {{#make sure to close row-fluid div if counter didn't reach 3}}
+						</div>
+				{{pass}}
+			</div>
+			<div class="span8">
+				<img src="http://placehold.it/1024x768" alt="background" />
+			</div>
+		</div>
+	</div>
+	<script>
+		$("#hero").hide();
+		$("#hero").slideDown(1000);
+	</script>
+	  <!-- Example row of columns -->
+	  <div class="row">
+		<div class="span4">
+		  <h2>Heading</h2>
+		  <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+		  <p><a class="btn" href="#">View details &raquo;</a></p>
+		</div>
+		<div class="span4">
+		  <h2>Heading</h2>
+		  <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+		  <p><a class="btn" href="#">View details &raquo;</a></p>
+	   </div>
+		<div class="span4">
+		  <h2>Heading</h2>
+		  <p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+		  <p><a class="btn" href="#">View details &raquo;</a></p>
+		</div>
+	  </div>
+</div>
