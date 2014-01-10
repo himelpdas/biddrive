@@ -43,7 +43,7 @@
   {{
   response.files.insert(0,URL('static','css/web2py.css'))
   response.files.insert(1,URL('static','css/bootstrap.min.css'))
-  response.files.insert(2,URL('static','css/bootstrap-responsive.min.css'))
+  #response.files.insert(2,URL('static','css/bootstrap-responsive.min.css'))
   response.files.insert(3,URL('static','css/web2py_bootstrap.css'))
   response.files.insert(4,URL('static','css/_custom.css'))
   }}
@@ -90,17 +90,27 @@
 		</div>
 	 </div><!--/top navbar -->
 
+<div class="container">
+	 
  {{include}}
 
     <!-- Footer ================================================== -->
     <div class="row">
         <footer class="footer span12" id="footer">
-            <div class="footer-content">
+            <div class="row">
                 {{block footer}} <!-- this is default footer -->
-                <div class="copyright pull-left">{{=T('Copyright')}} &#169; {{=request.now.year}}</div>
-                <div id="poweredBy" class="pull-right">
+                <div class="copyright span4 text-center">{{=T('Copyright')}} &#169; {{=request.now.year}}</div>
+				<div class="span4 text-center">
+					<address>
+						<strong>Carbid, Inc.</strong><br>
+						66 Auto ave<br>
+						New York, NY 11106<br>
+						<abbr title="Phone">P:</abbr> (123) 456-7890
+					</address>
+				</div>
+                <div id="poweredBy" class="span4 text-center">
                     {{=T('Powered by')}}
-                    <a href="http://www.web2py.com/">web2py</a>
+                    <a href="http://www.himeldas.com/">Himel</a>
                 </div>
                 {{end}}
             </div>

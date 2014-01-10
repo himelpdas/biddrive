@@ -5,9 +5,11 @@
 ## Customize your APP title, subtitle and menus here
 #########################################################################
 
-response.logo = A(B('Car',SPAN('b'),'id'),XML('&trade;&nbsp;'),
+APP_NAME="carbid"
+
+response.logo = A(B(APP_NAME.capitalize() ),XML('&trade;&nbsp;'),
                   _class="brand",_href=URL() )
-response.title = request.application.replace('_',' ').title()
+response.title = APP_NAME.capitalize() or request.application.replace('_',' ').title()
 response.subtitle = ''
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
@@ -24,7 +26,8 @@ response.google_analytics_id = None
 #########################################################################
 
 response.menu = [
-    (T('Home'), False, URL('default', 'index'), [])
+    (T('Used cars'), False, URL('default', 'index'), []),
+    (T('How %s works' % APP_NAME), False, URL('default', 'index'), [])
 ]
 
 DEVELOPMENT_MENU = False
