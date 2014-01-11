@@ -8,7 +8,7 @@
 APP_NAME="carbid"
 
 response.logo = A(B(APP_NAME.capitalize() ),XML('&trade;&nbsp;'),
-                  _class="brand",_href=URL() )
+                  _class="brand",_href=URL('index') )
 response.title = APP_NAME.capitalize() or request.application.replace('_',' ').title()
 response.subtitle = ''
 

@@ -39,7 +39,15 @@ def user():
 		@auth.requires_permission('read','table name',record_id)
 	to decorate functions that need access control
 	"""
-	response.title = "Login"
+
+	if request.args:
+		if request.args[0] == "register":
+			response.title = "Join us"
+		if request.args[0] == "login":
+			response.title = "Welcome back"
+		if request.args[0] == "request_reset_password":
+			response.title = "Forgot something?"
+
 	return dict(form=auth())
 
 @cache.action()
