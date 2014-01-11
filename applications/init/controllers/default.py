@@ -19,7 +19,7 @@ def index():
 	return auth.wiki()
 	"""
 	response.flash = T("%s is under heavy construction!"%APP_NAME.capitalize() )
-	brandlist=('Acura', 'Audi', 'BMW', 'Buick', 'Cadillac', 'Chevrolet', 'Chrysler', 'Dodge', 'FIAT', 'Ford', 'GMC', 'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Land Rover', 'Lexus', 'Lincoln', 'Mazda', 'Mercedes Benz', 'MINI', 'Mitsubishi', 'Nissan', 'Porsche', 'Ram', 'Scion', 'Smart', 'Subaru', 'Toyota', 'Volkswagen', 'Volvo')
+	brandlist=('Acura', 'Audi', 'BMW', 'Buick', 'Cadillac', 'Chevrolet', 'Chrysler', 'Dodge', 'FIAT', 'Ford', 'GMC', 'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Land Rover', 'Lexus', 'Lincoln', 'Mazda', 'Mercedes-Benz', 'MINI', 'Mitsubishi', 'Nissan', 'Porsche', 'Ram', 'Scion', 'Smart', 'Subaru', 'Toyota', 'Volkswagen', 'Volvo')
 	bg_images = db(db.index_bg_image.id > 0).select()
 	hero_images = db(db.index_hero_image.id > 0).select()
 	return dict(brandlist=brandlist, bg_images=bg_images, hero_images=hero_images)
@@ -47,6 +47,8 @@ def user():
 			response.title = "Welcome back"
 		if request.args[0] == "request_reset_password":
 			response.title = "Forgot something?"
+	if auth.is_logged_in():
+		response.title='Hey, %s!' % auth.user.first_name
 
 	return dict(form=auth())
 
