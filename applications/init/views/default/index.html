@@ -102,9 +102,7 @@
 <script>
  $.backstretch(
  	[
-	{{for eachimage in bg_images:}}
-		"{{=URL('download', args=eachimage.image) }}",
-	{{pass}}
+		"{{=URL('download', args=bg_images[0].image) }}",
 	],
 	{duration: 5000, fade: 1000}
 );
