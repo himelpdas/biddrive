@@ -23,6 +23,12 @@ def index():
 	bg_images = db(db.index_bg_image.id > 0).select()
 	hero_images = db(db.index_hero_image.id > 0).select()
 	return dict(brandlist=brandlist, bg_images=bg_images, hero_images=hero_images)
+	
+def how_it_works():
+	return dict()
+	
+def hello_dealers():
+	return dict()
 
 def user():
 	"""
