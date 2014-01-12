@@ -6,6 +6,8 @@
 #########################################################################
 
 APP_NAME="carbid"
+EDMUNDS_KEY ="qmnpjbhe9p5g5cw3yv2vaehv"
+EDMUNDS_SECRET="zA6vs797nVgqGaSK58QJe2KW"
 
 response.logo = A(B(APP_NAME.capitalize() ),XML('&trade;&nbsp;'),
                   _class="brand",_href=URL('index') )

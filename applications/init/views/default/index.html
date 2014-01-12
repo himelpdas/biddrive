@@ -10,7 +10,7 @@
 						Let the dealers bid on you!
 					</h2>
 					<h5>
-						<i  id="hand" class="icon-hand-down"></i>Submit by make and model or by type and features.
+						<i  id="hand" class="icon-hand-down"></i>Request by make and model or by type and features.
 					</h5>
 					<script>
 						$('#hand').css({'position':'relative'});
@@ -23,13 +23,13 @@
 									//
 								}
 							).animate({
-										'margin-top': "+=7px",
-									},
-									500,
-									function() {
-										upanddown();
-									}
-								);
+									'margin-top': "+=7px",
+								},
+								500,
+								function() {
+									upanddown();
+								}
+							);
 						}
 						upanddown();
 					</script>
@@ -42,23 +42,34 @@
 					</ul>
 					<div class="tab-content">
 						<div class="tab-pane active" id="tab1">
+					{{counter = 0}}
+					{{for each_brand in brands_list:}}
+						{{if counter == 0:}}
+							<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
+						{{pass}}
+								<div class="span4">
+									<h4>
+										<a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
+										<script>
+											$('#{{=each_brand}}_switch').click(
+												function(evt){
+													$('.vehicle_content').hide();
+													$('#slogan_image').hide();
+													$("#{{=each_brand}}_content").show();
+												}
+											);
+										</script>
+									</h4>
+								</div>
+						{{counter += 1}}
+						{{if counter == 3:}}
+							</div>
 							{{counter = 0}}
-							{{for eachbrand in brandlist:}}
-								{{if counter == 0:}}
-									<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
-								{{pass}}
-										<div class="span4">
-											<h4><a href="#">{{=eachbrand}}</a></h4>
-										</div>
-								{{counter += 1}}
-								{{if counter == 3:}}
-									</div>
-									{{counter = 0}}
-								{{pass}}
-							{{pass}}
-							{{if len(brandlist) % 3 != 0:}} {{#make sure to close row-fluid div if counter didn't reach 3}}
-									<{{="/"}}div> {{#to not confuse highlighting in IDEs}}}
-							{{pass}}
+						{{pass}}
+					{{pass}}
+					{{if len(brands_list) % 3 != 0:}} {{#make sure to close row-fluid div if counter didn't reach 3}}
+							<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
+					{{pass}}
 						</div>
 						<div class="tab-pane" id="tab2">
 							<div class="row-fluid">
@@ -89,17 +100,42 @@
 			</div>
 			<div class="span8">
 				<div class="row-fluid">
-				<!--separator-->
+				<!--$separator-->
 				<ul class="nav nav-list">
 					<li class="divider"></li>
 				</ul>	
-				<!--separator-->
-					<img src="{{=URL('download', args=hero_images[0].image)}}" alt="background"  class="img-polaroid"/>
-				<!--separator-->
+				<!--#separator-->
+					<div id="slogan_image">
+						<img src="{{=URL('download', args=hero_images[0].image)}}" alt="background"  class="img-polaroid"/>
+					</div>
+			{{for each_make in all_makes['makes']:}}
+				{{if each_make['name'] in brands_list:}}
+					<div class="vehicle_content" id="{{=each_make['name']}}_content" style="display:none;">
+					{{counter = 0}}
+					{{for model_dict in each_make["models"]:}}
+						{{if counter == 0:}}
+							<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
+						{{pass}}
+								<div class="span4 center">
+									<p><div  style="background-image: url(http://placehold.it/170x85&text={{=model_dict['niceName']}});width:170px;height:85px;"></div>{{=model_dict['niceName']}}</p>
+								</div>
+						{{counter += 1}}
+						{{if counter == 3:}}
+							</div>
+							{{counter = 0}}
+						{{pass}}
+					{{pass}}
+					{{if len(each_make["models"]) % 3 != 0:}} {{#make sure to close row-fluid div if counter didn't reach 2}}
+							<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
+					{{pass}}
+					</div>
+				{{pass}}
+			{{pass}}
+				<!--$separator-->
 				<ul class="nav nav-list">
 					<li class="divider"></li>
 				</ul>
-				<!--separator-->
+				<!--#separator-->
 				</div>
 			</div>
 		</div>

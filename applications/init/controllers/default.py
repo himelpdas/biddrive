@@ -19,10 +19,14 @@ def index():
 	return auth.wiki()
 	"""
 	response.flash = T("%s is under heavy construction!"%APP_NAME.capitalize() )
-	brandlist=('Acura', 'Audi', 'BMW', 'Buick', 'Cadillac', 'Chevrolet', 'Chrysler', 'Dodge', 'FIAT', 'Ford', 'GMC', 'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Land Rover', 'Lexus', 'Lincoln', 'Mazda', 'Mercedes-Benz', 'MINI', 'Mitsubishi', 'Nissan', 'Porsche', 'Ram', 'Scion', 'Smart', 'Subaru', 'Toyota', 'Volkswagen', 'Volvo')
+	brands_list=('Acura', 'Audi', 'BMW', 'Buick', 'Cadillac', 'Chevrolet', 'Chrysler', 'Dodge', 'FIAT', 'Ford', 'GMC', 'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Land Rover', 'Lexus', 'Lincoln', 'Mazda', 'Mercedes-Benz', 'MINI', 'Mitsubishi', 'Nissan', 'Porsche', 'Ram', 'Scion', 'Smart', 'Subaru', 'Toyota', 'Volkswagen', 'Volvo')
 	bg_images = db(db.index_bg_image.id > 0).select()
 	hero_images = db(db.index_hero_image.id > 0).select()
-	return dict(brandlist=brandlist, bg_images=bg_images, hero_images=hero_images)
+	
+	all_makes_json = "https://api.edmunds.com/api/vehicle/v2/makes?state=new&year=2014&view=basic&fmt=json&api_key=%s"%EDMUNDS_KEY
+	all_makes = json.loads(fetch(all_makes_json)) #equivalent to urllib.urlopen(all_makes_json).read()
+
+	return dict(brands_list=brands_list, bg_images=bg_images, hero_images=hero_images, all_makes = all_makes)
 	
 def how_it_works():
 	return dict()
