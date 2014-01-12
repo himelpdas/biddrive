@@ -27,7 +27,8 @@ response.google_analytics_id = None
 
 response.menu = [
     (T('Used cars'), False, URL('default', 'index'), []),
-    (T('How %s works' % APP_NAME), False, URL('default', 'index'), [])
+    (T('How %s works' % APP_NAME), False, URL('default', 'how_it_works'), []),
+	(T('Dealers!'), False, URL('default', 'hello_dealers' ), []),
 ]
 
 DEVELOPMENT_MENU = False
