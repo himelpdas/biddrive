@@ -10,8 +10,29 @@
 						Let the dealers bid on you!
 					</h2>
 					<h5>
-						<i class="icon-hand-down"></i>Submit by make and model or by type and features.
+						<i  id="hand" class="icon-hand-down"></i>Submit by make and model or by type and features.
 					</h5>
+					<script>
+						$('#hand').css({'position':'relative'});
+						function upanddown() {
+							 $( "#hand" ).animate({
+									'margin-top': "-=7px",
+								},
+								500,
+								function() {
+									//
+								}
+							).animate({
+										'margin-top': "+=7px",
+									},
+									500,
+									function() {
+										upanddown();
+									}
+								);
+						}
+						upanddown();
+					</script>
 				</div>
 				<!--$Tabs-->
 				<div class="tabbable"> <!-- Only required for left/right tabs -->
