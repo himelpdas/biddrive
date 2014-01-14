@@ -109,7 +109,7 @@
 				</div>
 		{{for each_make in all_makes['makes']:}}
 			{{if each_make['name'] in brands_list:}}
-				<div class="vehicle_content" id="{{=each_make['name']}}_content" style="display:none;">
+				<div class="vehicle_content" id="{{=each_make['name']}}_content" style="display:none;"> {{#display:none to show slogan image image first}}
 				{{counter = 0}}
 				{{for model_dict in each_make["models"]:}}
 					{{if counter == 0:}}
@@ -233,15 +233,15 @@
 	</h1>
 </div><br>
 
-
-<!--background stuff-
+{{#if we want a background image}}
+<!--
 <script src="{{=URL('static','js/jquery.backstretch.min.js')}}"></script>
 <script>
-$.backstretch(
-[
-	"{{=URL('download', args=bg_images[0].image) }}",
-],
-{duration: 5000, fade: 1000}
-);
+	$.backstretch(
+		[
+			"{{=URL('download', args=bg_images[0].image) }}",
+		],
+		{duration: 5000, fade: 1000}
+	);	
 </script>
 -->
