@@ -1,0 +1,19 @@
+{{max=3}}
+{{counter = 0}}
+{{for each_model in make_details["models"]:}}
+	{{if counter == 0:}}
+		<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
+	{{pass}}
+			<div class="span4 center">
+				<p><img class="img-polaroid" style="height:85px;width:170px;" src="{{='http://media.ed.edmunds-media.com'+make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}</p>
+			</div>
+	{{counter += 1}}
+	{{if counter == max:}}
+		</div>
+		{{counter = 0}}
+	{{pass}}
+{{pass}}
+{{if len(make_details["models"]) % max != 0:}} {{#make sure to close row-fluid div if counter didn't reach 2}}
+		<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
+{{pass}}
+</div>

@@ -49,12 +49,13 @@
 							<div class="span4">
 								<h4>
 									<a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
+									{{#http://bit.ly/1ftT48Q | http://bit.ly/1kzp39Z}}
 									<script>
 										$('#{{=each_brand}}_switch').click(
 											function(evt){
-												$('.vehicle_content').hide();
 												$('#slogan_image').hide();
-												$("#{{=each_brand}}_content").show();
+												$('#vehicle_content').load( "{{=URL('vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
+												$('#vehicle_content').show();
 											}
 										);
 									</script>
@@ -107,29 +108,9 @@
 				<div id="slogan_image">
 					<img src="{{=URL('download', args=hero_images[0].image)}}" alt="background"  class="img-polaroid"/>
 				</div>
-		{{for each_make in all_makes['makes']:}}
-			{{if each_make['name'] in brands_list:}}
-				<div class="vehicle_content" id="{{=each_make['name']}}_content" style="display:none;"> {{#display:none to show slogan image image first}}
-				{{counter = 0}}
-				{{for model_dict in each_make["models"]:}}
-					{{if counter == 0:}}
-						<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
-					{{pass}}
-							<div class="span4 center">
-								<p><div  style="background-image: url(http://placehold.it/170x85&text={{=model_dict['niceName']}});width:170px;height:85px;"><img class="img-polaroid" style="opacity:0.20;" src="http://placehold.it/170x85/00000&text=%20"></div>{{=model_dict['niceName']}}</p>
-							</div>
-					{{counter += 1}}
-					{{if counter == 3:}}
-						</div>
-						{{counter = 0}}
-					{{pass}}
-				{{pass}}
-				{{if len(each_make["models"]) % 3 != 0:}} {{#make sure to close row-fluid div if counter didn't reach 2}}
-						<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
-				{{pass}}
+				<div id="vehicle_content" style="display:none;"> {{#display:none to show slogan image image first}}
+					<!--loading icon-->
 				</div>
-			{{pass}}
-		{{pass}}
 			<!--$separator-->
 			<ul class="nav nav-list">
 				<li class="divider"></li>

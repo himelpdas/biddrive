@@ -5,7 +5,7 @@
  
  /*http://bit.ly/1dHcTCI*/
  /*http://bit.ly/1dHdp3H*/
- .vehicle_content{
+ #vehicle_content{
  	height:550px;
 	overflow-y: auto;
 	overflow-x: hidden;

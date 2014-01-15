@@ -22,9 +22,29 @@ def index():
 	bg_images = db(db.index_bg_image.id > 0).select()
 	hero_images = db(db.index_hero_image.id > 0).select()
 	
-	all_makes = vehicle('makes', api_key=EDMUNDS_KEY, state='new', year='2014', view='basic', fmt='json')
+	return dict(brands_list=brands_list, bg_images=bg_images, hero_images=hero_images)
+	
+def vehicle_content():
+	if not request.args:
+		return dict() #maybe 404
+	#get_vehicle_make
+	#get stupid fucking styleid
+	#finally get bitch ass pics
+	make_details = ed.make_call('/api/vehicle/v2/%s'%request.args[0])
+	make_photos = {}
+	for each_model in make_details['models']:
+		first_image="http://placehold.it/170x85&text=Image%20Unavailable"
+		try:
+			 model_styles = ed.make_call('/api/vehicle/v2/%s/%s/2014/styles'%(request.args[0], each_model['niceName']))
+			 style_id = model_styles["styles"][0]["id"]
+			 model_photos = ed.make_call('/v1/api/vehiclephoto/service/findphotosbystyleid', comparator='simple', styleId=style_id)
+			 first_image = model_photos[0]['photoSrcs'][1]
+		except: #indexError
+			pass
+		finally:
+			make_photos.update({each_model['niceName']:first_image})
 
-	return dict(brands_list=brands_list, bg_images=bg_images, hero_images=hero_images, all_makes = all_makes)
+	return dict(make_details=make_details, make_photos=make_photos)
 	
 def how_it_works():
 	return dict()
