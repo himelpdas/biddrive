@@ -4,11 +4,11 @@ from edmunds import Edmunds
 
 ed = Edmunds(EDMUNDS_KEY)
 
-def ed_cache(URI):
+def ed_cache(URI, function, time_expire=60*60*24):
 	response = cache.ram(
 		URI, #to make sure the same URI doesn't get called twice
-		lambda: ed,
-		time_expire=60*60*24,
+		function,
+		time_expire,
 	)
 	return response
 	

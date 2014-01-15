@@ -37,8 +37,14 @@ def vehicle_content():
 		try:
 			 model_styles = ed.make_call('/api/vehicle/v2/%s/%s/2014/styles'%(request.args[0], each_model['niceName']))
 			 style_id = model_styles["styles"][0]["id"]
-			 model_photos = ed.make_call('/v1/api/vehiclephoto/service/findphotosbystyleid', comparator='simple', styleId=style_id)
-			 first_image = 'http://media.ed.edmunds-media.com'+model_photos[0]['photoSrcs'][1]
+			 #
+			 findphotosbystyleid = '/v1/api/vehiclephoto/service/findphotosbystyleid'
+			 model_photos = ed.make_call(findphotosbystyleid, comparator='simple', styleId=style_id)
+			 first_image = ed_cache(
+			 		style_id, #must be unique for each corresponding image 
+			 		lambda:  'http://media.ed.edmunds-media.com'+model_photos[0]['photoSrcs'][-1],  #errors will not be cached! :)
+			 		60*60*24*7,
+				)
 		except: #indexError
 			pass
 		finally:
