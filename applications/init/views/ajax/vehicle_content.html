@@ -5,7 +5,7 @@
 		<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
 	{{pass}}
 			<div class="span4 center">
-				<p><img class="img-polaroid" style="height:85px;width:170px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}</p>
+				<p><a href="{{=URL('init','default','request_for',args=['2014', request.args[0], each_model['niceName'] ] ) }}"><img class="img-polaroid" style="height:85px;width:170px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}</a></p>
 			</div>
 	{{counter += 1}}
 	{{if counter == max:}}

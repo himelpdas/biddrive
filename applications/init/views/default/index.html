@@ -55,7 +55,7 @@
 											function(evt){
 												$('#slogan_image').hide();
 												$('#vehicle_content').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="background"  />')
-												$('#vehicle_content').load( "{{=URL('vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
+												$('#vehicle_content').load( "{{=URL('ajax','vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
 												$('#vehicle_content').show();
 											}
 										);
