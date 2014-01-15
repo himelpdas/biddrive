@@ -54,6 +54,7 @@
 										$('#{{=each_brand}}_switch').click(
 											function(evt){
 												$('#slogan_image').hide();
+												$('#vehicle_content').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="background"  />')
 												$('#vehicle_content').load( "{{=URL('vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
 												$('#vehicle_content').show();
 											}
@@ -109,7 +110,7 @@
 					<img src="{{=URL('download', args=hero_images[0].image)}}" alt="background"  class="img-polaroid"/>
 				</div>
 				<div id="vehicle_content" style="display:none;"> {{#display:none to show slogan image image first}}
-					<i class="fa fa-cog fa-spin"></i>
+					{{#loading image}}}
 				</div>
 			<!--$separator-->
 			<ul class="nav nav-list">
