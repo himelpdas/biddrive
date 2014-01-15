@@ -38,7 +38,7 @@ def vehicle_content():
 			 model_styles = ed.make_call('/api/vehicle/v2/%s/%s/2014/styles'%(request.args[0], each_model['niceName']))
 			 style_id = model_styles["styles"][0]["id"]
 			 model_photos = ed.make_call('/v1/api/vehiclephoto/service/findphotosbystyleid', comparator='simple', styleId=style_id)
-			 first_image = model_photos[0]['photoSrcs'][1]
+			 first_image = 'http://media.ed.edmunds-media.com'+model_photos[0]['photoSrcs'][1]
 		except: #indexError
 			pass
 		finally:
