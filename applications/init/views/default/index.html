@@ -54,7 +54,7 @@
 										$('#{{=each_brand}}_switch').click(
 											function(evt){
 												$('#slogan_image').hide();
-												$('#vehicle_content').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="background"  />')
+												$('#vehicle_content').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="loading..."  />')
 												$('#vehicle_content').load( "{{=URL('ajax','vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
 												$('#vehicle_content').show();
 											}

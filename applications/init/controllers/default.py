@@ -25,10 +25,21 @@ def index():
 	return dict(brands_list=brands_list, bg_images=bg_images, hero_images=hero_images)
 	
 def request_for():
-	if not request.args[0]:
+	if not request.args:
 		session.flash('Invalid Request!')
 		redirect(URL())
-	return dict(args=request.args)
+	year = request.args[0]
+	make = request.args[1]
+	model = request.args[2]
+
+	#put in class
+	styles_URI = '/api/vehicle/v2/%s/%s/%s/styles'%(make, model, year)
+	model_styles = ed_cache(
+		styles_URI,
+		lambda: ed.make_call(styles_URI),
+	)
+	
+	return dict(args=request.args, model_styles=model_styles)
 
 def how_it_works():
 	return dict()

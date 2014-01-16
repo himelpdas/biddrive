@@ -10,3 +10,7 @@
 	overflow-y: auto;
 	overflow-x: hidden;
  }
+ 
+ #poweredBy{
+ 	margin-top:-15px
+ }
