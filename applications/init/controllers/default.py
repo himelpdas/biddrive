@@ -24,13 +24,16 @@ def index():
 	
 	return dict(brands_list=brands_list, bg_images=bg_images, hero_images=hero_images)
 	
-def request_for():
+def request_by_make():
 	if not request.args:
 		session.flash('Invalid Request!')
 		redirect(URL())
 	year = request.args[0]
 	make = request.args[1]
 	model = request.args[2]
+	
+	response.title="Request an auction"
+	response.subtitle="for a %s %s %s."%(year, make, model)
 
 	#put in class
 	styles_URI = '/api/vehicle/v2/%s/%s/%s/styles'%(make, model, year)
