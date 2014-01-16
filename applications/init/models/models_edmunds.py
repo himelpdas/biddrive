@@ -12,4 +12,6 @@ def ed_cache(URI, function, time_expire=60*60*24):
 	)
 	return response
 	
+YEAR='2012'
+	
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()

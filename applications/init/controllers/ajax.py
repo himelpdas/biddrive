@@ -13,7 +13,7 @@ def vehicle_content():
 	for each_model in make_details['models']:
 		first_image="http://placehold.it/170x85&text=Image%20Unavailable"
 		try:
-			styles_URI = '/api/vehicle/v2/%s/%s/2014/styles'%(request.args[0], each_model['niceName'])
+			styles_URI = '/api/vehicle/v2/%s/%s/%s/styles'%(request.args[0], each_model['niceName'], YEAR)
 			model_styles = ed_cache(
 				styles_URI,
 				lambda: ed.make_call(styles_URI),
