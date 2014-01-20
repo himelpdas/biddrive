@@ -42,7 +42,20 @@ def request_by_make():
 		lambda: ed.make_call(styles_URI),
 	)
 	
-	return dict(args=request.args, model_styles=model_styles)
+	trims = []
+	
+	for each_style in model_styles["styles"]:
+		trims.append(
+			[each_style['id'], each_style['name']]
+		)
+		
+	trims.sort()
+	
+	db.auction_request.trim_choices.requires = IS_IN_SET(trims,multiple=True)
+	
+	form = SQLFORM(db.auction_request)
+	
+	return dict(args=request.args, model_styles=model_styles, trims=trims, form=form)
 
 def how_it_works():
 	return dict()
