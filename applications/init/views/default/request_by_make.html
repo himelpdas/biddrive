@@ -1,2 +1,9 @@
  {{extend 'page_layout.html'}}
  {{=BEAUTIFY(response._vars)}}
+ <script>
+ 	function load_color_preference(){
+		$('#auction_request_color_preference').load( "{{=URL('ajax','color_preference')}}{{='/'}}"+$('#auction_request_trim_choices').val() ); //IMPLEMNT FAIL$().html
+	}
+ 	$('#auction_request_trim_choices').change(load_color_preference);
+	load_color_preference();
+ </script>

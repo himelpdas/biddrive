@@ -22,6 +22,7 @@ def ed_cache(URI, function, time_expire=60*60*24):
 	return response
 	
 YEAR='2013'
+STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
 	
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
@@ -46,10 +47,8 @@ db.define_table('auction_request',
 		requires=IS_NOT_EMPTY(),
 	),
 	Field('color_preference', 
-		requires=IS_IN_SET([
-			['white', 'White'], ['black', 'Black'], ['silver', 'Silver'], ['blue', 'Blue'], ['gray', 'Gray'], ['red', 'Red'], ['beige', 'Beige / Brown'], ['green', 'Green'],  ['yellow', 'Yellow / Gold'], 
-		], zero=None),
-		widget = SQLFORM.widgets.checkboxes.widget,
+		requires=IS_NOT_EMPTY(),
+		#widget = SQLFORM.widgets.checkboxes.widget,
 	),	
 	Field('zip_code', 
 		requires=[
