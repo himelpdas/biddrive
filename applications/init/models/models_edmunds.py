@@ -8,7 +8,7 @@ def ed_cache(URI, function, time_expire=60*60*24):
 	#will call ram >> disk >> API
 	def disk():
 		response = cache.disk(
-			URI,
+			repr(URI), #<type 'exceptions.TypeError'> String or Integer object expected for key, unicode found
 			function,
 			time_expire*7,
 		)
@@ -44,7 +44,6 @@ db.define_table('auction_request',
 	),
 	Field('trim_choices', 
 		requires=IS_NOT_EMPTY(),
-		widget = SQLFORM.widgets.checkboxes.widget,
 	),
 	Field('color_preference', 
 		requires=IS_IN_SET([

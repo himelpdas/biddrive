@@ -51,7 +51,7 @@ def request_by_make():
 		
 	trims.sort()
 	
-	db.auction_request.trim_choices.requires = IS_IN_SET(trims,multiple=True)
+	db.auction_request.trim_choices.requires = IS_IN_SET(trims, zero=None)
 	
 	form = SQLFORM(db.auction_request)
 	

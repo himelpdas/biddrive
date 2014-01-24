@@ -25,9 +25,9 @@ def vehicle_content():
 			first_image = ed_cache(
 				style_id, #must be unique for each corresponding image 
 			 	lambda:  'http://media.ed.edmunds-media.com'+model_photos[0]['photoSrcs'][-1],  #errors will not be cached! :)
-			 	60*60*24*7,
+			 	60*60*24,
 			)
-		except: #indexError
+		except (IndexError, KeyError): #indexError
 			pass
 		finally:
 			make_photos.update({each_model['niceName']:first_image})
