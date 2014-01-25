@@ -27,8 +27,19 @@ STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
 db.define_table('auction_request',
+	Field('owner_id', db.auth_user,
+		readable=False,
+		writable=False,
+		notnull=True,
+		default=auth.user_id,
+	),
+	Field('temp_id',
+		readable=False,
+		writable=False,
+		notnull=True,
+		default=auth.user_id, #none if not logged in
+	),
 	Field('year', 
-		#requires = IS_INT_IN_RANGE(2000, datetime.date.today().year+1, error_message='invalid year!')
 		readable=False,
 		writable=False,
 		notnull=True

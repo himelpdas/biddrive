@@ -47,7 +47,7 @@ def color_preference():
 	)
 	style_color_codes = []
 	for each_color in style_colors['colors']:
-		style_color_codes.append(each_color['id'])
+		style_color_codes.append(each_color['name'])
 	session.style_color_codes = style_color_codes
 	return dict(style_colors=style_colors)
 	
