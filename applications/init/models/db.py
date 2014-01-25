@@ -11,7 +11,7 @@
 
 if not request.env.web2py_runtime_gae:
     ## if NOT running on Google App Engine use SQLite or other DB
-    db = DAL('sqlite://storage6.sqlite',pool_size=1,) #check_reserved=['all'])
+    db = DAL('sqlite://storage11.sqlite',pool_size=1, adapter_args=dict(foreign_keys=False)) #check_reserved=['all']) #http://bit.ly/1fkDk3w
 else:
     ## connect to Google BigTable (optional 'google:datastore://namespace')
     db = DAL('google:datastore')

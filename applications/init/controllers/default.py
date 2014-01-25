@@ -39,7 +39,7 @@ def request_by_make():
 	db.auction_request.make.default=make
 	db.auction_request.model.default=model
 	
-	db.auction_request.temp_id.default=session.guest_temp_id=uuid.uuid4()
+	db.auction_request.temp_id.default=session.guest_temp_id=repr(uuid.uuid4())
 
 	#put in class
 	styles_URI = STYLES_URI%(make, model, year)
@@ -68,7 +68,7 @@ def request_by_make():
 	if form.process().accepted: #change error message
 		session.flash = 'form accepted'
 		redirect(
-			URL('auction.html')
+			URL('my_auctions.html')
 		)
 		
 	response.title="Request an auction"
@@ -77,11 +77,17 @@ def request_by_make():
 	return dict(model_styles=model_styles, trims=trims, form=form)
 	
 @auth.requires_login()
-def auction():
-	guest_auction_requests = db((db.auction_request.id == None) & (db.auction_request.temp_id == session.guest_temp_id)).select()
+def my_auctions():
+	guest_auction_requests = db((db.auction_request.owner_id == None) & (db.auction_request.temp_id == session.guest_temp_id)).select()
 	for each_guest_auction_request in guest_auction_requests:
-		each_guest_auction_request.owner_id=auth.user_id
-		each_guest_auction_request.update_record()
+		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id
+	
+	my_auctions = db(db.auction_request.owner_id == auth.user_id).select()
+	response.title="My auctions"
+	return dict(guest_temp_id=session.guest_temp_id, my_auctions=my_auctions)
+	
+@auth.requires_login()
+def auction():
 	response.title="Auction"
 	return dict()
 
