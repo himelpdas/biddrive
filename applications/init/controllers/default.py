@@ -9,7 +9,6 @@
 ## - call exposes all registered services (none by default)
 #########################################################################
 
-#test update 
 def index():
 	"""
 	example action using the internationalization operator T and flash
