@@ -10,7 +10,7 @@ EDMUNDS_KEY ="qmnpjbhe9p5g5cw3yv2vaehv"
 EDMUNDS_SECRET="zA6vs797nVgqGaSK58QJe2KW"
 
 response.logo = A(B(APP_NAME.capitalize() ),XML('&trade;&nbsp;'),
-                  _class="brand",_href=URL('index') )
+                  _class="brand",_href=URL('default', 'index.html') )
 response.title = APP_NAME.capitalize() or request.application.replace('_',' ').title()
 response.subtitle = ''
 
@@ -28,7 +28,7 @@ response.google_analytics_id = None
 #########################################################################
 
 response.menu = [
-    (T('Used cars'), False, URL('default', 'index'), []),
+    #(T('Used cars'), False, URL('default', 'index'), []),
     (T('How %s works' % APP_NAME), False, URL('default', 'how_it_works'), []),
 	(T('Dealers!'), False, URL('default', 'hello_dealers' ), []),
 ]

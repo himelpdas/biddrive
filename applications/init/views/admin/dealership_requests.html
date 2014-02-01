@@ -1,0 +1,51 @@
+{{extend 'page_layout.html'}}
+<h3>
+	<div class="row-fluid"  style="text-align:center;">
+		{{for each_verification in ['approved', 'rejected', 'awaiting']: }}
+			{{if not each_verification == verification:}}
+			<div class="span6">
+				<a href='{{=URL(args=[each_verification])}}'>Show All {{=each_verification.capitalize()}}</a>
+			</div>
+			{{pass}}
+		{{pass}}
+	</div>
+<h3>
+<hr class="featurette-divider">
+<h4>
+	<div class="row-fluid" style="text-align:center;">
+		<div class="span1">ID</div>
+		<div class="span1">Verification</div>
+		<div class="span1">Dealership</div>
+		<div class="span1">Phone</div>
+		<div class="span1">Owner</div>
+		<div class="span1">Adderess Line 1</div>
+		<div class="span1">Adderess Line 2</div>
+		<div class="span1">City</div>
+		<div class="span1">State</div>
+		<div class="span1">Zip Code</div>
+		<div class="span1">Country</div>
+		<div class="span1">Submitted On</div>
+	</div>
+</h4>
+<hr class="featurette-divider">
+{{for each_dealership_info in dealership_requests:}}
+	<h4>
+		<a href='{{=URL("admin","dealership_form", args=[each_dealership_info.id])}}'>
+			<div class="row-fluid" style="text-align:center;">
+				<div class="span1">#{{=each_dealership_info.id}}</div>
+				<div class="span1">{{=each_dealership_info.verification}}</div>
+				<div class="span1">{{=each_dealership_info.dealership_name.capitalize()}}</div>
+				<div class="span1">{{=each_dealership_info.phone.replace('-',' ')}}</div>
+				<div class="span1">{{=each_dealership_info.owner_id.first_name.capitalize()}} {{=each_dealership_info.owner_id.last_name.capitalize()}} ({{=each_dealership_info.owner_id}})</div>
+				<div class="span1">{{=each_dealership_info.address_line_1}}</div>
+				<div class="span1">{{=each_dealership_info.address_line_2 or 'None'}}</div>
+				<div class="span1">{{=each_dealership_info.city}}</div>
+				<div class="span1">{{=each_dealership_info.state}}</div>
+				<div class="span1">{{=each_dealership_info.zip_code}}</div>
+				<div class="span1">{{=each_dealership_info.country}}</div>
+				<div class="span1">{{=each_dealership_info.created_on}}</div>
+			</div>
+		</a>
+	</h4>
+	<hr class="featurette-divider">
+{{pass}}
