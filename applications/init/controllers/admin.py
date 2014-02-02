@@ -31,11 +31,12 @@ def dealership_form():
 	db.dealership_info.changed_on.readable = True
 	db.dealership_info.changed_by.readable = True
 	db.dealership_info.owner_id.readable = True
+	db.dealership_info.owner_id.writable = True
 		
 	form = SQLFORM(db.dealership_info, record)
 	
 	if form.process().accepted:
-		membership = dict(user_id = form.vars.owner_id, role = "dealers")
+		membership = dict(user_id = form.vars.owner_id, role = "dealers") #user_id = form.vars.owner_id will not work unless writable set to True.
 		if form.vars.verification == "approved":
 			auth.add_membership(**membership) #unpack keyword args
 		else:

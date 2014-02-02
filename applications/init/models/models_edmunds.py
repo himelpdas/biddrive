@@ -18,6 +18,12 @@ if auth.user_id:
 				(T('User Management'), False, URL('admin', 'user_management.html'), []),
 			]),
 		)
+	if auth.has_membership(user_id = auth.user_id, role = "dealers"):
+		response.menu.append(
+			(T('Dealer Portal'), False, URL('dealer', 'index.html'), [
+				(T('Auction Requests'), False, URL('dealer', 'auction_requests.html'), []),
+			]),
+		)
 
 def ed_cache(URI, function, time_expire=60*60*24):
 	#will call ram >> disk >> API
@@ -145,10 +151,11 @@ db.define_table('auction_request',
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),
-			IS_MATCH(
-				'^\d{5}(-\d{4})?$',
-        		error_message='not a zip code'
-			),
+			IS_IN_DB(db,'zipgeo.zip_code'),
+			#IS_MATCH(
+			#	'^\d{5}(-\d{4})?$',
+        	#	error_message='not a zip code'
+			#),
 		]
 	),
 	Field('radius', 
