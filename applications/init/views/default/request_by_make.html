@@ -1,5 +1,17 @@
- {{extend 'page_layout.html'}}
- {{=BEAUTIFY(response._vars)}}
+  {{extend 'page_layout.html'}}
+ {{#=BEAUTIFY(response._vars)}}
+
+{{=form}}
+
+<pre>
+{{for each_style in model_styles['styles']:}}
+	{{=each_style['MPG']}}
+{{pass}}
+</pre>
+<br><br><br><br>
+
+{{=model_styles}}
+
  <script>
  	function load_color_preference(){
 		$('#auction_request_color_preference').load( "{{=URL('ajax','color_preference')}}{{='/'}}"+$('#auction_request_trim_choices').val() ); //IMPLEMNT FAIL$().html
