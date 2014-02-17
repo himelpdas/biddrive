@@ -452,7 +452,7 @@ header {
   height: 580px;
   background: #262626;
   z-index: 1;
-  margin-bottom: 40px; }
+  margin-bottom: 0px; }
   #feature_slider h1 {
     font-weight: 100;
     color: #ccc;
@@ -545,7 +545,7 @@ header {
       position: absolute;
       top: 150px;
       left: 13%;
-      width: 500px;
+      width: 540px;
       display: none;
       z-index: 10;
       height: 100%;
@@ -683,6 +683,8 @@ a.navbar-brand {
   #showcase .features_op1_row .feature .text {
     margin: 12px auto 0;
     width: 87%; }
+  #showcase .features_op1_row .feature .text img {
+    text-align: center; }    
     #showcase .features_op1_row .feature .text h3 {
       text-transform: uppercase;
       letter-spacing: 4px;
