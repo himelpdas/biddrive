@@ -40,14 +40,13 @@ def vehicle_content():
 def color_preference():
 	if not request.args:
 		return dict() #maybe 404
-	colors_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'%request.args[0]
-	style_colors = ed_cache(
-		colors_URI,
-		lambda: ed.make_call(colors_URI),
-	)
+	style_colors = ed_call(COLORS_URI%request.args[0])
 	style_color_codes = []
 	for each_color in style_colors['colors']:
-		style_color_codes.append(each_color['name'])
+		style_color_codes.append([
+			each_color['id'],
+			each_color['name']
+		])
 	session.style_color_codes = style_color_codes
 	return dict(style_colors=style_colors)
 	

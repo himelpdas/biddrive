@@ -1,0 +1,109 @@
+{{extend 'page_layout.html'}}
+{{#=BEAUTIFY(response._vars}}
+{{#year make model should be done via filters}}
+{{sortby = request.vars['sortby']}}
+<div class= "row-fluid">
+	<div class="span4">
+			
+	</div>
+	<div class="span4">
+	
+	</div>
+	<div class="span4">
+		<div class="btn-group">
+			<a class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+				Sort by
+				<span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+				<!-- dropdown menu links -->
+				{{for each_make in BRANDS_LIST:}}
+					<li><a href="#">{{=each_make}}</a></li>
+				{{pass}}
+			</ul>
+		</div>
+	</div>
+</div>
+{{#COLUMNS}}
+<hr class="featurette-divider">
+<h4>
+	<div class="row-fluid" style="text-align:center;">
+		{{for each_column in columns:}}
+			<div class="span{{=each_column[2]}}">
+				{{if sortby in each_column[1]:}}
+					{{sort_pair = each_column[1][:]}}{{#create copy}}
+					{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
+					<a href = "{{=URL(vars=dict(sortby=sort_pair[0] ) ) }}">
+						{{=each_column[0]}}
+					</a>
+				&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
+				{{else:}}
+					<a href = "{{=URL(vars=dict(sortby = each_column[1][0]) ) }}">
+						{{=each_column[0]}}
+					</a>
+				{{pass}}
+			</div>
+		{{pass}}
+		{{"""}}
+			<!--
+			<div class="span1">
+				{{if request.vars['sortby'] in ['nearest', 'farthest']:}}
+					<u>
+						Zip Code
+					</u>
+				<i class="fa fa-caret-{{if request.vars['sortby']=='nearest':}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
+				{{else:}}
+					Zip Code
+				{{pass}}
+			</div>
+			-->
+		{{"""}}
+	</div>
+</h4>
+<hr class="featurette-divider">
+{{#ROWS}}
+<h5>
+{{for each_request in auction_requests:}}
+	<div class="row-fluid" style="text-align:center;">
+		<div class = "span1">
+			{{=each_request.id}}
+		</div>
+		<div class = "span1">
+			{{=each_request.year}}
+		</div>
+		<div class = "span1">
+			{{=each_request.make}}
+		</div>		
+		<div class = "span1">
+			{{=each_request.model}}
+		</div>
+		<div class = "span2">
+			{{=each_request.trim_name}}
+		</div>
+		<div class = "span2">
+			{{for each_name in each_request.color_names:}}
+				{{for each_color in json.loads(each_request.trim_data)['colors'][1]['options']:}}
+					{{if each_color['name'] == each_name:}}
+						{{color_hex = each_color['colorChips']['primary']['hex']}}
+					{{pass}}
+				{{pass}}
+				<p><i class="fa fa-dot-circle-o" style="color:#{{=color_hex}}"></i>&nbsp;{{=each_name}}</p>
+			{{pass}}
+		</div>
+		<div class = "span1">
+			{{=each_request.zip_code}}
+		</div>
+		<div class = "span1">
+			{{=human(each_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
+			{{#=each_request.expires}}
+		</div>
+		<div class = "span1">
+			{{=random.choice(range(100))}}
+		</div>
+		<div class = "span1">
+			${{=random.choice(range(15000,30000))}}
+		</div>
+	</div>
+	<hr class="featurette-divider">
+{{pass}}
+</h5>

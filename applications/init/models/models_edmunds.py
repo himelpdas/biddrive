@@ -25,11 +25,12 @@ if auth.user_id:
 			]),
 		)
 
-def ed_cache(URI, function, time_expire=60*60*24):
+def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure data is ok
 	#will call ram >> disk >> API
+	URI = repr(URI)
 	def disk():
 		response = cache.disk(
-			repr(URI), #<type 'exceptions.TypeError'> String or Integer object expected for key, unicode found
+			URI, #<type 'exceptions.TypeError'> String or Integer object expected for key, unicode found
 			function,
 			time_expire*7,
 		)
@@ -40,10 +41,24 @@ def ed_cache(URI, function, time_expire=60*60*24):
 		disk,
 		time_expire,
 	)
+	"""
+	if 'error' in response or 'status' in response:
+		cache.ram(URI, None)
+		cache.disk(URI, None)
+		if http_raise:
+			raise HTTP(response['code'], response['message']) 
+	"""
 	return response
+	
+def ed_call(URI):
+	"""fewer arguments than ed_cache"""
+	return ed_cache(URI, lambda: ed.make_call(URI))
 	
 YEAR='2013'
 STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
+STYLE_URI = "/api/vehicle/v2/styles/%s?view=full&fmt=json"
+COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
+COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 	
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
@@ -86,11 +101,14 @@ db.define_table('dealership_info',
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),
-			IS_MATCH(
-				'^\d{5}(-\d{4})?$',
-        		error_message='not a zip code'
-			),
+			IS_IN_DB(db,'zipgeo.zip_code'),
 		]
+	),
+	Field('longitude', 'float',
+		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().longitude,
+	),
+	Field('latitude', 'float',
+		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().latitude,
 	),
 	Field('country',
 		requires=IS_IN_SET([
@@ -141,13 +159,28 @@ db.define_table('auction_request',
 		readable=False,
 		writable=False,
 	),
-	Field('trim_choices', 
+	Field('trim_choices', #change to trim
 		requires=IS_NOT_EMPTY(),
+	),	
+	Field('trim_data',
+		readable=False,
+		writable=False,
+		compute = lambda row: json.dumps(ed_call(STYLE_URI%row['trim_choices'])), #no need to error check because subsequent compute fields will raise native exceptions
 	),
-	Field('color_preference', 
+	Field('trim_name', 
+		readable=False,
+		writable=False,
+		compute = lambda row: json.loads(row['trim_data'])['name'], 
+	),
+	Field('color_preference', 'list:string', #otherwise queries will return string not list!
 		requires=IS_NOT_EMPTY(), #IS_IN_SET in default controller completely overrides this, but leave here for admin
 		#widget = SQLFORM.widgets.checkboxes.widget,
 	),	
+	Field('color_names', 'list:string',
+		readable=False,
+		writable=False,
+		compute = lambda row: [ each_color['name'] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], #make a list of color names based on ids in color_preference field
+	),
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),
@@ -157,6 +190,12 @@ db.define_table('auction_request',
         	#	error_message='not a zip code'
 			#),
 		]
+	),
+	Field('longitude', 'float',
+		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().longitude,
+	),
+	Field('latitude', 'float',
+		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().latitude,
 	),
 	Field('radius', 
 		requires=IS_IN_SET([
@@ -170,6 +209,11 @@ db.define_table('auction_request',
 	),
 	Field('changed_on', 'datetime', 
 		update=request.now,
+		readable=False,
+		writable=False,
+	),
+	Field('expires', 'datetime',
+		default = request.now + datetime.timedelta(days = AUCTION_DAYS_EXPIRE),
 		readable=False,
 		writable=False,
 	),
