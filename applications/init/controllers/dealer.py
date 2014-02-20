@@ -24,7 +24,7 @@ def auction_requests():
 		query &= db.auction_request.year==year #move top
 	color = request.vars['color']
 	if color:
-		query &= db.auction_request.color_preference.contains(color)
+		query &= db.auction_request.color_names.contains(color)
 	#####sorting#####
 	sortby = request.vars['sortby']
 	orderby = ~db.auction_request.expires #TEMP

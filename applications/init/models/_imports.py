@@ -5,6 +5,7 @@ import uuid
 from gluon.contrib import simplejson as json
 from gluon.tools import fetch
 from ago import human
+import simplecolor
 
 from math import *
 

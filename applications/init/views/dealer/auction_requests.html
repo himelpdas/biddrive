@@ -81,7 +81,9 @@
 			{{=each_request.trim_name}}
 		</div>
 		<div class = "span2">
-			{{for each_name in each_request.color_names:}}
+			{{color_names=each_request.color_names}}
+			{{color_names.sort()}}
+			{{for each_name in color_names:}}
 				{{for each_color in json.loads(each_request.trim_data)['colors'][1]['options']:}}
 					{{if each_color['name'] == each_name:}}
 						{{color_hex = each_color['colorChips']['primary']['hex']}}

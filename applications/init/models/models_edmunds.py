@@ -181,6 +181,11 @@ db.define_table('auction_request',
 		writable=False,
 		compute = lambda row: [ each_color['name'] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], #make a list of color names based on ids in color_preference field
 	),
+	Field('simple_color_names','list:string',
+		readable=False,
+		writable =False,
+		compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], 
+	),
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),
