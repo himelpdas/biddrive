@@ -55,10 +55,15 @@ def ed_call(URI):
 	return ed_cache(URI, lambda: ed.make_call(URI))
 	
 YEAR='2013'
+MAKES_URI = '/api/vehicle/v2/makes?state=new&year=%s&view=full'
+MAKE_URI = '/api/vehicle/v2/%s?state=new&year=%s'
 STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
 STYLE_URI = "/api/vehicle/v2/styles/%s?view=full&fmt=json"
 COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
 COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
+
+BRANDS_LIST = OD()
+map(lambda model: BRANDS_LIST.update({model['name']:model['niceName']}),ed_call(MAKES_URI%YEAR)['makes']) #TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
 	
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
@@ -104,10 +109,10 @@ db.define_table('dealership_info',
 			IS_IN_DB(db,'zipgeo.zip_code'),
 		]
 	),
-	Field('longitude', 'float',
+	Field('longitude', 'double',
 		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().longitude,
 	),
-	Field('latitude', 'float',
+	Field('latitude', 'double',
 		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().latitude,
 	),
 	Field('country',
@@ -196,13 +201,13 @@ db.define_table('auction_request',
 			#),
 		]
 	),
-	Field('longitude', 'float',
+	Field('longitude', 'double',
 		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().longitude,
 	),
-	Field('latitude', 'float',
+	Field('latitude', 'double',
 		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().latitude,
 	),
-	Field('radius', 
+	Field('radius', 'double', #must be float or haversine will fail
 		requires=IS_IN_SET([
 			[10, '10 miles'], [25, '25 miles'], [50, '50 miles'], [85, '85 miles'], [130, '130 miles'], [185, '185 miles'], [250, '250 miles'],  
 		], zero=None)

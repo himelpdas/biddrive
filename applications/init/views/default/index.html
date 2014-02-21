@@ -58,20 +58,20 @@
 						<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
 					{{pass}}
 							<div class="span4">
-								<h4>
-									<a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
+								<span class="vehicle_switches">
+									<a id="{{=brands_list[each_brand]}}_switch" href="#">{{=each_brand}}</a>
 									{{#http://bit.ly/1ftT48Q | http://bit.ly/1kzp39Z}}
 									<script>
-										$('#{{=each_brand}}_switch').click(
+										$('#{{=brands_list[each_brand]}}_switch').click(
 											function(evt){
 												$('#slogan_image').hide();
 												$('#vehicle_content').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="loading..."  />')
-												$('#vehicle_content').load( "{{=URL('ajax','vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
+												$('#vehicle_content').load( "{{=URL('ajax','vehicle_content', args=[brands_list[each_brand]])}}" ); //IMPLEMNT FAIL
 												$('#vehicle_content').show();
 											}
 										);
 									</script>
-								</h4>
+								</span>
 							</div>
 					{{counter += 1}}
 					{{if counter == 3:}}

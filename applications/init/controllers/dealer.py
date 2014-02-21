@@ -11,20 +11,57 @@ def auction_requests():
 	>>> query &= db.person.id>3
 	>>> query |= db.person.name=='John'
 	"""
-	query = (db.auction_request.id>0) & (db.auction_request.expires >= request.now) #WITHIN TIME AND RADIUS ONLY
+	query = (db.auction_request.id>0) & (db.auction_request.expires >= request.now) #WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
 	#####filtering#####
+	#build query and filter menu
 	make = request.vars['make']
-	if make:
+	models_list = {}
+	if make in BRANDS_LIST:
 		query &= db.auction_request.make==make
+		for each_model in ed_call(MAKE_URI%(make, YEAR))['models']:
+			models_list.update(
+				{each_model ['niceName'] : each_model ['name'] }
+			)
+		models_list = OD(sorted(models_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
+	else:
+		make = None #simpler for view
+	#
 	model = request.vars['model']
-	if model:
+	model_styles = []
+	styles_list = {}
+	if model in models_list:
 		query &= db.auction_request.model==model
+		model_styles+=(ed_call( STYLES_URI%(make, model, YEAR))['styles'])
+		for each_style in model_styles:
+			styles_list.update(
+				{str(each_style['id']) : each_style['name']} #json returns int but request.vars returns string, make them compatible
+			)
+		styles_list = OD(sorted(styles_list.items(), key=lambda x: x[1])) #what it does is it passes key, value tuple to sorted function, which determines the key to sort with a function that gets passed each element in the dict
+	else:
+		model = None
+	#
+	trim = str(request.vars['trim'])
+	colors_list = {}
+	if trim in styles_list:
+		query &= db.auction_request.trim_choices==trim
+		for each_style in model_styles:
+			if trim == str(each_style['id']):
+				for each_color in each_style['colors'][1]['options']:
+						colors_list.update({str(each_color['id']) : each_color['name']})
+		colors_list = OD(sorted(colors_list.items(), key=lambda x: x[1])) 
+	else:
+		trim = None
+	#
+	color = str(request.vars['color'])
+	if color in colors_list:
+		query &= db.auction_request.color_preference.contains(color)
+	else:
+		color = None
+	#
 	year = request.vars['year']
 	if year:
 		query &= db.auction_request.year==year #move top
 	color = request.vars['color']
-	if color:
-		query &= db.auction_request.color_names.contains(color)
 	#####sorting#####
 	sortby = request.vars['sortby']
 	orderby = ~db.auction_request.expires #TEMP
@@ -50,7 +87,9 @@ def auction_requests():
 		orderby = db.auction_request.expires #not using ID because expires can be changed by admin
 		
 	auction_requests = db(query).select(orderby=orderby)
-	
+	#####in memory filterting#####
+	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
+	auction_requests = auction_requests.exclude(lambda row: row['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.latitude, row.longitude) )#remove requests not in range
 	#####in memory sorting#####
 	if sortby == "colors-most" or sortby == "colors-least":
 		reverse = False
@@ -59,24 +98,16 @@ def auction_requests():
 		auction_requests = auction_requests.sort(lambda row: len(row.color_preference), reverse=reverse)#the sort function takes a rows object and applies a function with each row as the argument. Then it compares the returned numerical value of each row and sorts it 
 	
 	if sortby == 'closest' or sortby == 'farthest':
-		def nearest_requests(row): # move to virtual field
-			#my_zip = db(db.dealership_info.owner_id == auth.user_id).select().first().zip_code #todo- how move to computated field any table that has zip code #infact move edmunds shit to custom model validators
-			auction_request  = row
-			#my_coordinates = db(db.zipgeo.zip_code==my_zip).select().first()
-			my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
-			#auction_request_coordinates =  db(db.zipgeo.zip_code==auction_request_zip).select().first()
-			#return calcDist(my_coordinates.latitude, my_coordinates.longitude, row.latitude, row.longitude)
-			return calcDist(my_info.latitude, my_info.longitude, row.latitude, row.longitude)
 		reverse = False
 		if sortby == "farthest":
 			reverse = True
-		auction_requests = auction_requests.sort(nearest_requests, reverse=reverse) #returns new
+		auction_requests = auction_requests.sort(lambda row: calcDist(my_info.latitude, my_info.longitude, row.latitude, row.longitude), reverse=reverse) #returns new
 	
 	columns = [ #keep len 12
 		[
-			'Auction#', 
-			['id-up','id-down'], #[caret up, caret down
-			1
+			'Auction#', #title
+			['id-up','id-down'], #caret up, caret down
+			1 #span
 		],
 		[
 			'Year', 
@@ -104,7 +135,7 @@ def auction_requests():
 			2
 		],
 		[
-			'Zip Code', 
+			'Area', 
 			['closest','farthest'],
 			1
 		],
@@ -125,6 +156,9 @@ def auction_requests():
 		],
 	]
 
-	response.title = "Auction requests"
-	response.subtitle = "showing %s results."%len(auction_requests)
-	return dict(auction_requests=auction_requests, columns = columns)
+	response.title = "Auction requests."
+	area=db(db.zipgeo.zip_code == db(db.dealership_info.owner_id == auth.user_id).select().first().zip_code).select().first() #OPT put in compute or virtual field
+	city = area.city
+	state = area.state_abbreviation
+	response.subtitle = "Showing %s results within 250 miles of %s, %s."% (len(auction_requests), city, state)
+	return dict(auction_requests=auction_requests, columns = columns, brands_list=BRANDS_LIST, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)

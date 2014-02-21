@@ -6,6 +6,7 @@ from gluon.contrib import simplejson as json
 from gluon.tools import fetch
 from ago import human
 import simplecolor
+from collections import OrderedDict as OD #http://bit.ly/OhPhQr
 
 from math import *
 

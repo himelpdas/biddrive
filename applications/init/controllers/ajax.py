@@ -4,11 +4,7 @@ def vehicle_content():
 	#get_vehicle_make
 	#get stupid fucking styleid
 	#finally get bitch ass pics
-	make_URI = '/api/vehicle/v2/%s?state=new&year=%s'%(request.args[0], YEAR)
-	make_details = ed_cache(
-		make_URI,
-		lambda: ed.make_call(make_URI),
-	)
+	make_details = ed_call(MAKE_URI%(request.args[0], YEAR))
 	make_photos = {}
 	for each_model in make_details['models']:
 		first_image="http://placehold.it/162x81&text=Image%20Unavailable"
