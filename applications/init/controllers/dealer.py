@@ -105,7 +105,7 @@ def auction_requests():
 	
 	columns = [ #keep len 12
 		[
-			'Auction#', #title
+			'', #title
 			['id-up','id-down'], #caret up, caret down
 			1 #span
 		],
@@ -155,10 +155,15 @@ def auction_requests():
 			1
 		],
 	]
-
-	response.title = "Auction requests."
+	#
+	response.title = "Auction requests"
 	area=db(db.zipgeo.zip_code == db(db.dealership_info.owner_id == auth.user_id).select().first().zip_code).select().first() #OPT put in compute or virtual field
 	city = area.city
 	state = area.state_abbreviation
-	response.subtitle = "Showing %s results within 250 miles of %s, %s."% (len(auction_requests), city, state)
+	number = len(auction_requests)
+	plural = ''
+	if not number or number > 1:
+		plural = 's'
+	response.subtitle = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
+	#
 	return dict(auction_requests=auction_requests, columns = columns, brands_list=BRANDS_LIST, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)

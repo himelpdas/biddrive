@@ -137,11 +137,18 @@
 </h4>
 <hr class="featurette-divider">
 {{#ROWS}}
-<h5>
+<h4>
 {{for each_request in auction_requests:}}
 	<div class="row-fluid" style="text-align:center;">
 		<div class = "span1">
-			{{=each_request.id}}
+			<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-large btn-primary btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
+			<script> {{#always add id to id attr when theres more than one}}
+				$('#to-agreement-button-{{=each_request.id}}').click(
+					function(){
+						$('#to-auction-url').attr("href", "{{=URL('auction',args=[each_request.id])}}");
+					}
+				);
+			</script>
 		</div>
 		<div class = "span1">
 			{{=each_request.year}}
@@ -185,16 +192,16 @@
 	</div>
 	<hr class="featurette-divider">
 {{pass}}
-</h5>
+</h4>
 {{#MODALS}}
 <div id="{{=request.function}}_alerts" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 	<div class="modal-header">
 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h2 id="myModalLabel"><i class="fa fa-exclamation-circle"></i> Set Alerts</h2>
+		<h2 id="myModalLabel"><i class="fa fa-exclamation-circle"></i> Set Alerts  (Cost per alert)</h2>
 	</div>
 	<div class="modal-body">
 		<h2>
-			How would you like to be alerted? (Credits per alert)
+			How would you like to be alerted?
 		</h2>
 		<div class="btn-group" data-toggle="buttons-checkbox">
 			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-envelope"></i> Email (1 credit)</button>
@@ -205,5 +212,24 @@
 	<div class="modal-footer">
 		<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 		<button class="btn btn-primary">Save changes</button>
+	</div>
+</div>
+
+<div id="{{=request.function}}_agreement" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		<h2 id="myModalLabel"><i class="fa fa-thumbs-o-up"></i> Agreement</h2>
+	</div>
+	<div class="modal-body">
+		<h2>
+			You must agree to the following to join this auction:
+		</h2>
+		<pre>
+			"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
+		</pre>
+	</div>
+	<div class="modal-footer">
+		<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>&nbsp;
+		<a id="to-auction-url" href="{{=URL('auction')}}"><button class="btn btn-primary">I Agree</button></a>
 	</div>
 </div>
