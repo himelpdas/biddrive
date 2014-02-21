@@ -63,7 +63,7 @@ COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
 COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 
 BRANDS_LIST = OD()
-map(lambda model: BRANDS_LIST.update({model['name']:model['niceName']}),ed_call(MAKES_URI%YEAR)['makes']) #TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
+map(lambda model: BRANDS_LIST.update({model['niceName']:model['name']}),ed_call(MAKES_URI%YEAR)['makes']) #TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
 	
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 

@@ -3,7 +3,7 @@
 {{#year make model should be done via filters}}
 
 {{#FILTERS}}
-<div class= "row-fluid" style="text-align:center;">
+<div class= "row-fluid">
 	<div class="span2">
 		<div class="btn-group">
 			<a class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
@@ -15,7 +15,7 @@
 					<li><a id = "all_filter" href="{{=URL(vars=dict(sortby=sortby))}}">All Brands</a></li>
 					 <li class="divider"></li>
 				{{for each_make in brands_list:}}
-					<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(make=each_make, sortby=sortby))}}">{{=each_make}}</a></li>
+					<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(make=each_make, sortby=sortby))}}">{{=brands_list[each_make]}}</a></li>
 				{{pass}}
 			</ul>
 		</div>
@@ -69,7 +69,7 @@
 		</div>
 	</div>
 
-	<div class="span2">
+	<div class="span3">
 		<div class="btn-group">
 			{{if trim:}}{{#can't have colors with out trims}}
 				<a class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
@@ -93,9 +93,9 @@
 		</div>
 	</div>
 	
-	<div class="span2">
-		<a class="btn btn-large  btn-info">
-			<i class="fa fa-exclamation-circle"></i> Set Alert
+	<div class="span1">
+		<a class="btn btn-large btn-info" href="#{{=request.function}}_alerts" data-toggle="modal">
+			<i class="fa fa-exclamation-circle"></i>
 		</a>
 	</div>
 </div>
@@ -147,7 +147,7 @@
 			{{=each_request.year}}
 		</div>
 		<div class = "span1">
-			{{=each_request.make}}
+			{{=brands_list[each_request.make]}}
 		</div>		
 		<div class = "span1">
 			{{each_model = each_request.model}} 
@@ -186,3 +186,24 @@
 	<hr class="featurette-divider">
 {{pass}}
 </h5>
+{{#MODALS}}
+<div id="{{=request.function}}_alerts" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		<h2 id="myModalLabel"><i class="fa fa-exclamation-circle"></i> Set Alerts</h2>
+	</div>
+	<div class="modal-body">
+		<h2>
+			How would you like to be alerted? (Credits per alert)
+		</h2>
+		<div class="btn-group" data-toggle="buttons-checkbox">
+			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-envelope"></i> Email (1 credit)</button>
+			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-mobile-phone"></i> SMS 3 (credits)</button>
+			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-phone"></i>Call (5 credits)</button>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+		<button class="btn btn-primary">Save changes</button>
+	</div>
+</div>
