@@ -6,7 +6,7 @@
 <div class= "row-fluid">
 	<div class="span2">
 		<div class="btn-group">
-			<a class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+			<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
 				{{if make in brands_list:}}{{=brands_list[make]}}{{else:}}All Brands{{pass}}
 				<span class="caret"></span>
 			</a>
@@ -24,7 +24,7 @@
 	<div class="span2">
 		<div class="btn-group">
 		{{if make:}}
-			<a class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+			<a id="model_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
 				{{if model in models_list:}}{{=models_list[model]}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
 				<span class="caret"></span>
 			</a>
@@ -37,7 +37,7 @@
 				{{pass}}
 			</ul>
 		{{else:}}
-			<a class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
+			<a  id="model_dropdown" class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
 				All Models
 				<span class="caret"></span>
 			</a>
@@ -48,7 +48,7 @@
 	<div class="span4">
 		<div class="btn-group">
 			{{if model:}}{{#can't have trims with out model}}
-				<a class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+				<a id="trim_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
 					{{if trim in styles_list:}}{{=styles_list[trim]}}{{else:}}All Trims{{pass}}{{#the key is the id#, the value is the name}}
 					<span class="caret"></span>
 				</a>
@@ -61,7 +61,7 @@
 					{{pass}}
 				</ul>
 			{{else:}}
-				<a class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
+				<a   id="trim_dropdown" class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
 					All Trims
 					<span class="caret"></span>
 				</a>
@@ -72,7 +72,7 @@
 	<div class="span3">
 		<div class="btn-group">
 			{{if trim:}}{{#can't have colors with out trims}}
-				<a class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+				<a id="color_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
 					{{if color in colors_list:}}{{=colors_list[color]}}{{else:}}All Colors{{pass}}{{#the key is the id#, the value is the name}}
 					<span class="caret"></span>
 				</a>
@@ -85,7 +85,7 @@
 					{{pass}}
 				</ul>
 			{{else:}}
-				<a class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
+				<a  id="color_dropdown" class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
 					All Colors
 					<span class="caret"></span>
 				</a>
@@ -203,6 +203,16 @@
 		<h2>
 			How would you like to be alerted?
 		</h2>
+			<h4>
+				Reminder for: <span id="alert_description"></span>
+			</h4>
+		<script>
+			make = $("#make_dropdown").text()
+			model = $("#model_dropdown").text()
+			trim = $("#trim_dropdown").text()
+			color = $("#color_dropdown").text()
+			$("#alert_description").text(make+'-'+model+'-'+trim+'-'+color);
+		</script>
 		<div class="btn-group" data-toggle="buttons-checkbox">
 			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-envelope"></i> Email (1 credit)</button>
 			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-mobile-phone"></i> SMS 3 (credits)</button>
