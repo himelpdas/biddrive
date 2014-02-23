@@ -32,8 +32,6 @@ def dealership_form():
 	db.dealership_info.changed_by.readable = True
 	db.dealership_info.owner_id.readable = True
 	db.dealership_info.owner_id.writable = True
-	db.dealership_info.expires.readable = True
-	db.dealership_info.expires.writable = True
 		
 	form = SQLFORM(db.dealership_info, record)
 	
