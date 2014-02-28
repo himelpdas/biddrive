@@ -71,7 +71,7 @@ def request_by_make():
 			guest_msg='' #user is logged in no need for guest msg
 		session.flash = 'Auction submitted!%s' % guest_msg
 		redirect(
-			URL('my_auctions.html')
+			URL('auction.html')
 		)
 		
 	response.title="Request an auction"
@@ -90,7 +90,7 @@ def my_auctions():
 	return dict(guest_temp_id=session.guest_temp_id, my_auctions=my_auctions)
 	
 @auth.requires_login()
-def auction():
+def auction(): #make sure only allow one active auction per user
 	if not request.args:  #make decorator http://bit.ly/1i2wbHz
 		session.flash='No request ID!'
 		redirect(URL('my_auctions.html'))
@@ -105,7 +105,7 @@ def auction():
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
 	
-	return dict()
+	return dict(auction_request=auction_request)
 
 def how_it_works():
 	return dict()

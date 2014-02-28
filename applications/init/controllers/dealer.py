@@ -167,3 +167,21 @@ def auction_requests():
 	response.subtitle = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, brands_list=BRANDS_LIST, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
+	
+@auth.requires_login() #make dealer only
+def auction():
+	if not request.args:  #make decorator http://bit.ly/1i2wbHz
+		session.flash='No request ID!'
+		redirect(URL('my_auctions.html'))
+	
+	auction_request_id = request.args[0]
+	
+	auction_request = db(db.auction_request.id == auction_request_id).select().first()
+	if not auction_request:
+		session.flash="Invalid request ID!"
+		redirect(URL('my_auctions.html'))
+	
+	response.title="Auction"
+	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
+	
+	return dict()

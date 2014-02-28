@@ -2,10 +2,22 @@
  {{=BEAUTIFY(response._vars)}}
  <script>
  	function load_color_preference(){
-		$('#auction_request_color_preference')
-		.fadeTo(500, 0.2)
-		.load( "{{=URL('ajax','color_preference')}}{{='/'}}"+$('#auction_request_trim_choices').val() )
-		.fadeTo(500, 1.0); //IMPLEMNT FAIL$().html
+		$('#auction_request_color_preference').fadeTo(500, 0.2).load(
+			//url
+			"{{=URL('ajax','color_preference')}}{{='/'}}"+$('#auction_request_trim_choices').val() ,
+			//callback
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Sorry but there was an error: ";
+					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+				}
+				else {
+					$('#auction_request_color_preference').fadeTo(250, 1.0); 
+				}
+			}
+		//close load
+		);
+	//close main function
 	}
  	$('#auction_request_trim_choices').change(load_color_preference);
 	load_color_preference(); //remove during testing
