@@ -4,8 +4,12 @@
 	{{if counter == 0:}}
 		<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
 	{{pass}}
-			<div class="span4 center">
-				<p><a href="{{=URL('init','default','request_by_make',args=[YEAR, request.args[0], each_model['niceName'] ] ) }}"><img class="img-polaroid" style="height:81px;width:162px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}</a></p>
+			<div class="col-xs-4">
+				<p>
+					<a href="{{=URL('init','default','request_by_make',args=[YEAR, request.args[0], each_model['niceName'] ] ) }}">
+						<img class="img-responsive" style="height:81px;width:162px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}
+					</a>
+				</p>
 			</div>
 	{{counter += 1}}
 	{{if counter == max:}}
@@ -17,4 +21,3 @@
 		<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
 {{pass}}
 </div>
-asdf
