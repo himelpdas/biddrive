@@ -1,23 +1,21 @@
 {{max=3}}
 {{counter = 0}}
 {{for each_model in make_details["models"]:}}
-	{{if counter == 0:}}
 		<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
+<<<<<<< local
+=======
 	{{pass}}
+>>>>>>> other
 			<div class="col-xs-4">
+<<<<<<< local
+				<a href="{{=URL('init','default','request_by_make',args=[YEAR, request.args[0], each_model['niceName'] ] ) }}"><img class="img-thumbnail" style="height:81px;width:162px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}</a>
+=======
 				<p>
 					<a href="{{=URL('init','default','request_by_make',args=[YEAR, request.args[0], each_model['niceName'] ] ) }}">
 						<img class="img-responsive" style="height:81px;width:162px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}
 					</a>
 				</p>
+>>>>>>> other
 			</div>
-	{{counter += 1}}
-	{{if counter == max:}}
-		</div>
-		{{counter = 0}}
-	{{pass}}
-{{pass}}
-{{if len(make_details["models"]) % max != 0:}} {{#make sure to close row-fluid div if counter didn't reach 2}}
-		<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
 {{pass}}
 </div>
