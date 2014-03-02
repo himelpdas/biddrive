@@ -2,20 +2,14 @@
 {{counter = 0}}
 {{for each_model in make_details["models"]:}}
 		<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
-<<<<<<< local
-=======
 	{{pass}}
->>>>>>> other
+
 			<div class="col-xs-4">
-<<<<<<< local
-				<a href="{{=URL('init','default','request_by_make',args=[YEAR, request.args[0], each_model['niceName'] ] ) }}"><img class="img-thumbnail" style="height:81px;width:162px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}</a>
-=======
 				<p>
 					<a href="{{=URL('init','default','request_by_make',args=[YEAR, request.args[0], each_model['niceName'] ] ) }}">
 						<img class="img-responsive" style="height:81px;width:162px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['niceName']}}
 					</a>
 				</p>
->>>>>>> other
 			</div>
 {{pass}}
 </div>

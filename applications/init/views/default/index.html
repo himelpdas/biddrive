@@ -37,37 +37,7 @@
                     <div class="col-xs-6">
                         <div class="tab-content" style="width: 500px">
                             <div class="tab-pane active" id="make" style="margin-top: 5px">
-<<<<<<< local
-				{{counter = 0}}
-				{{for each_brand in brands_list:}}
-					{{if counter == 0:}}
-						<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
-					{{pass}}
-							<div class="col-xs-4 car-make">
-								
-									<a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
-									{{#http://bit.ly/1ftT48Q | http://bit.ly/1kzp39Z}}
-									<script>
-										$('#{{=each_brand}}_switch').click(
-											function(evt){
-												//$('#slogan_image').hide();
-												$('#models').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="loading..."  />')
-												$('#models').load( "{{=URL('ajax','vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
-											}
-										);
-									</script>
-								
-							</div>
-					{{counter += 1}}
-					{{if counter == 3:}}
-						</div>
-						{{counter = 0}}
-					{{pass}}
-				{{pass}}
-				{{if len(brands_list) % 3 != 0:}} {{#make sure to close row-fluid div if counter didn't reach 3}}
-						<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
-				{{pass}}
-=======
+
 
                             	<div class="row-fluid">
 									{{counter = 0}}
@@ -202,7 +172,6 @@
                                     </div>
                                 </div>-->                     
                             </div>
->>>>>>> other
 
                             <div class="tab-pane" id="type" style="margin-top: 5px">
                                 <div class="row-fluid">
@@ -250,9 +219,7 @@
                         </div>
                     </div>
                     <div class="col-xs-6 nano" style="display:none; max-height: 300px; overflow: auto" id="models">
-<<<<<<< local
-                       
-=======
+
                         <div class="row-fluid" style="overflow: visible">
                             <!--
                             <div class="col-xs-4">
@@ -302,7 +269,7 @@
                             </div>
                             -->
                         </div>
->>>>>>> other
+
                     </div>                    
                 </div>
 
