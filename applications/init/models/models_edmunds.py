@@ -45,7 +45,7 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 	if 'error' in response or 'status' in response:
 		cache.ram(URI, None)
 		cache.disk(URI, None)
-		raise HTTP(response['code'], response['message']) 
+		#raise HTTP(response['code'], response['message']) 
 
 	return response
 	
@@ -63,7 +63,25 @@ COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 
 BRANDS_LIST = OD()
 map(lambda model: BRANDS_LIST.update({model['niceName']:model['name']}),ed_call(MAKES_URI%YEAR)['makes']) #FIXED#TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
-	
+
+def findPhotosByStyleID(style_id):
+	findphotosbystyleid_URI = '/v1/api/vehiclephoto/service/findphotosbystyleid'
+	return ed_cache( #cannot use ed_call
+		'photos'+str(style_id), #must be unique for each corresponding image 
+		lambda: ed.make_call(findphotosbystyleid_URI, comparator='simple', styleId=style_id)  #errors will not be cached! :)
+	)
+
+def getStylesByMakeModelYear(make, model, year):
+	if int(year) in range(datetime.date.today().year-1, datetime.date.today().year+2):
+		return ed_call(STYLES_URI%(make, model, year))['styles'] #(make, model, year)
+
+def getStyleByMakeModelYearStyleID(make, model, year, style_id):
+	styles = getStylesByMakeModelYear(make, model, year)
+	for each_style in styles:
+		if int(each_style['id']) == int(style_id):
+			return each_style
+			#else None
+
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
 db.define_table('dealership_info',
@@ -167,11 +185,13 @@ db.define_table('auction_request',
 		requires=IS_NOT_EMPTY(),
 	),	
 	Field('trim_data',
+		required=True,
 		readable=False,
 		writable=False,
-		compute = lambda row: json.dumps(ed_call(STYLE_URI%row['trim_choices'])), #no need to error check because subsequent compute fields will raise native exceptions
+		compute = lambda row: json.dumps(getStyleByMakeModelYearStyleID(row['make'],row['model'],row['year'],row['trim_choices'])), #no need to error check because subsequent compute fields will raise native exceptions
 	),
-	Field('trim_name', 
+	Field('trim_name',
+		required=True,
 		readable=False,
 		writable=False,
 		compute = lambda row: json.loads(row['trim_data'])['name'], 
@@ -181,15 +201,17 @@ db.define_table('auction_request',
 		#widget = SQLFORM.widgets.checkboxes.widget,
 	),	
 	Field('color_names', 'list:string',
+		required=True, #tells the DAL that no insert should be allowed on this table if a value for this field is not explicitly specified.
 		readable=False,
 		writable=False,
 		compute = lambda row: [ each_color['name'] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], #make a list of color names based on ids in color_preference field
 	),
 	Field('simple_color_names','list:string',
+		required=True,
 		readable=False,
 		writable =False,
 		compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], 
-	), #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips
+	), #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS #FIXED WITH required=True
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),

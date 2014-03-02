@@ -29,9 +29,6 @@ def request_by_make():
 		redirect(URL('index.html'))
 		
 	year = request.args[0] 
-	if not int(year) in range(datetime.date.today().year-1, datetime.date.today().year+2):
-		session.flash='Invalid Year!'
-		redirect(URL('index.html'))
 	make = request.args[1] #VALIDATE
 	model = request.args[2]
 	db.auction_request.year.default=year
@@ -39,16 +36,16 @@ def request_by_make():
 	db.auction_request.model.default=model
 	#db.auction_request.created_on.default=request.now #moved to model
 	
-	db.auction_request.temp_id.default=session.guest_temp_id=repr(uuid.uuid4())
-
-	#put in class
-	styles_URI = STYLES_URI%(make, model, year)
-	model_styles = ed_cache(
-		styles_URI,
-		lambda: ed.make_call(styles_URI),
-	)
+	model_styles = getStylesByMakeModelYear(make, model, year)
+	
+	if not model_styles:
+		session.flash='Invalid Year!'
+		redirect(URL('index.html'))
+	
+	db.auction_request.temp_id.default=session.guest_temp_id=repr(uuid.uuid4()) #needed to save non logged in users form submission
+	
 	trims = []
-	for each_style in model_styles["styles"]:
+	for each_style in model_styles:
 		trims.append(
 			[each_style['id'], each_style['name']]
 		)	
@@ -77,7 +74,7 @@ def request_by_make():
 	response.title="Request an auction"
 	response.subtitle="for a %s %s %s."%(year, make, model)
 
-	return dict(model_styles=model_styles, trims=trims, form=form)
+	return dict(model_styles=model_styles, trims=trims, form=form, year=year, make=make, model=model)
 	
 @auth.requires_login()
 def my_auctions():
