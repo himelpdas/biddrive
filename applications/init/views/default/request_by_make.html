@@ -2,7 +2,8 @@
  {{=BEAUTIFY(response._vars)}}
  <script>
  	function load_color_preference(){
-		$('#auction_request_color_preference').fadeTo(500, 0.2).load(
+		$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
+		$('#auction_request_color_preference').load(
 			//url
 			"{{=URL('ajax','color_preference')}}{{='/'}}"+$('#auction_request_trim_choices').val() ,
 			//callback
@@ -12,13 +13,15 @@
 					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
 				}
 				else {
-					$('#auction_request_color_preference').fadeTo(250, 1.0); 
+					$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
+					$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
 				}
 			}
-		//close load
+		//close load call
 		);
 	//close main function
 	}
- 	$('#auction_request_trim_choices').change(load_color_preference);
-	load_color_preference(); //remove during testing
+ 	$('#auction_request_trim_choices').change(load_color_preference); //change color preference options when you change trim dropdown
+	$("#auction_request_color_preference").multiSelect('refresh'); //initialize multiselect
+	load_color_preference(); //first ajax call based on initial trim selection //remove during testing
  </script>

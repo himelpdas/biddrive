@@ -45,8 +45,7 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 	if 'error' in response or 'status' in response:
 		cache.ram(URI, None)
 		cache.disk(URI, None)
-		if http_raise:
-			raise HTTP(response['code'], response['message']) 
+		raise HTTP(response['code'], response['message']) 
 
 	return response
 	
