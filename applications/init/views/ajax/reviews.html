@@ -5,6 +5,18 @@
 	<div id="review_{{counter}}" class="row-fluid review">
 		<div class="span4">
 			<h5>{{=each_review['title']}} by <i>{{=each_review['author']['authorName']}}</i><h5>
+			<p>{{#implements half and full stars}}
+				{{integer_and_decimal=map(lambda number: int(number), str(float(each_review['averageRating'])).split('.'))}} {{#make sure always float before split}}
+				{{integer = integer_and_decimal[0]}}{{decimal = integer_and_decimal[1]}}
+				{{for each in range(integer) :}}
+					<i class="fa fa-star"></i>&nbsp;
+				{{pass}}
+				{{if decimal >= 375 and decimal < 875 :}}
+					<i class="fa fa-star-half"></i>&nbsp;
+				{{elif decimal >= 875:}}
+					<i class="fa fa-star"></i>
+				{{pass}}
+			</p>
 		</div>
 		<div class="span8">
 			<p>
