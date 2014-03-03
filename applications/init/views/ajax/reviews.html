@@ -1,0 +1,25 @@
+{{counter = 0}}
+{{limit = 5}} {{# ZAKI change this value to the limit number of reviews you want}}
+{{for each_review in reviews:}}
+	{{counter+=1}}
+	<div id="review_{{counter}}" class="row-fluid review">
+		<div class="span4">
+			<h5>{{=each_review['title']}} by <i>{{=each_review['author']['authorName']}}</i><h5>
+		</div>
+		<div class="span8">
+			<p>
+				{{=each_review['text']}}
+			</p>
+		</div>
+	</div>
+	{{if counter == limit:}}
+		{{break}}
+	{{pass}}
+{{pass}}
+{{if not reviews:}}
+	<div id="review_0" class="row-fluid review">
+		<div class="span12">
+			<h4>No reviews found!</h4>
+		</div>
+	</div>
+{{pass}}

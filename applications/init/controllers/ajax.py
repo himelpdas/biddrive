@@ -46,8 +46,8 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 	style_id = request.args[3]
 	style = getStyleByMakeModelYearStyleID(make, model, year, style_id)
 	stats = dict(
-		mpg_city = ['City MPG' , style['MPG']['city']],
-		mpg_hwy = ['Highway MPG' , style['MPG']['highway']],
+		mpg_city = ['MPG City' , style['MPG']['city']],
+		mpg_hwy = ['MPG Highway' , style['MPG']['highway']],
 		fuel = ['Fuel Type' , style['engine']['fuelType'].capitalize()],
 		hp = ['Horsepower' , style['engine']['horsepower']],
 		torque = ['Torque' , style['engine']['torque']],
@@ -58,5 +58,12 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 		speed = ['Transmission speed' , style['transmission']['numberOfSpeeds']],
 		base_msrp = ['Base MSRP ($)' , style['price']['baseMSRP']],
 	)
+	stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
 	return dict(stats = stats, make = make, model = model, year = year, style_id = style_id)
-	
+
+def reviews():
+	reviews = ed_call(REVIEWS_URI%request.args[0])
+	if 'reviews' in reviews:
+		return dict(reviews = reviews['reviews'])
+	else:
+		return dict(reviews = {})

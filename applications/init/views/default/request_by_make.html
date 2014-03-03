@@ -5,11 +5,16 @@
 	<div class="span6">
 		 {{=form}}
 	</div>
+	<h3>Stats</h3>
 	<div class="span6">
 		 <div id = "trim_stats">
 			...loading
 		 </div>
 	</div>
+ </div>
+ <h3>Reviews</h3>
+ <div id="reviews">
+	...loading
  </div>
  <script>
  	function load_color_preference(){
@@ -40,6 +45,19 @@
 				}
 				else {
 					$(this).slideDown(200); //fade back in
+				}
+			}
+		);
+		//display reviews
+		$('#reviews').slideUp(600).load(
+			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading reviews: ";
+					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+				}
+				else {
+					$(this).slideDown(300); //fade back in
 				}
 			}
 		);

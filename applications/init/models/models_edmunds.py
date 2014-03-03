@@ -42,7 +42,7 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 		time_expire,
 	)
 
-	if 'error' in response or 'status' in response:
+	if 'error' in response or 'status' in response or 'errorType' in response:
 		cache.ram(URI, None)
 		cache.disk(URI, None)
 		#raise HTTP(response['code'], response['message']) 
@@ -60,6 +60,7 @@ STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
 STYLE_URI = "/api/vehicle/v2/styles/%s?view=full&fmt=json"
 COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
 COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
+REVIEWS_URI = "/api/vehiclereviews/v2/styles/%s?sortby=created:ADESC&pagenum=1&pagesize=10"
 
 BRANDS_LIST = OD()
 map(lambda model: BRANDS_LIST.update({model['niceName']:model['name']}),ed_call(MAKES_URI%YEAR)['makes']) #FIXED#TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
