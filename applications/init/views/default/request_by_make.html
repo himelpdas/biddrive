@@ -5,14 +5,14 @@
 	<div class="span6">
 		 {{=form}}
 	</div>
-	<h3>Stats</h3>
 	<div class="span6">
+		<h3>Stats &nbsp;<i id="stats_spinner" class="fa fa-spin"></i></h3>
 		 <div id = "trim_stats">
 			...loading
 		 </div>
 	</div>
  </div>
- <h3>Reviews</h3>
+ <h3>Reviews &nbsp;<i id="reviews_spinner" class="fa fa-spin"></i></h3>
  <div id="reviews">
 	...loading
  </div>
@@ -36,6 +36,7 @@
 		//close load call
 		);
 		//display trim stats
+		$('#stats_spinner').toggleClass("fa-spinner");
 		$('#trim_stats').slideUp(400).load(
 			"{{=URL('ajax','style_details', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
 			function( response, status, xhr ) {
@@ -45,10 +46,12 @@
 				}
 				else {
 					$(this).slideDown(200); //fade back in
+					$('#stats_spinner').toggleClass("fa-spinner");
 				}
 			}
 		);
 		//display reviews
+		$('#reviews_spinner').toggleClass("fa-spinner");
 		$('#reviews').slideUp(600).load(
 			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
 			function( response, status, xhr ) {
@@ -58,6 +61,7 @@
 				}
 				else {
 					$(this).slideDown(300); //fade back in
+					$('#reviews_spinner').toggleClass("fa-spinner");
 				}
 			}
 		);
