@@ -1,10 +1,28 @@
   {{extend 'page_layout.html'}}
  {{#=BEAUTIFY(response._vars)}}
 
-{{=form}}
+{{=form.custom.begin}}
+	Trim: <div>{{=form.custom.widget.trim_choices}}</div> {{#add your own ids and classes}}
+	{{if form.errors['trim_choices']:}}
+		<pre>{{=form.errors['trim_choices']}}</pre> {{#change to whatever element you like}}
+	{{pass}}
+	Colors: <div>{{=form.custom.widget.color_preference}}</div>
+	{{if form.errors['color_preference']:}}
+		<pre>{{=form.errors['color_preference']}}</pre>
+	{{pass}}
+	Zip Code: <div>{{=form.custom.widget.zip_code}}</div>
+	{{if form.errors['zip_code']:}}
+		<pre>{{=form.errors['zip_code']}}</pre>
+	{{pass}}
+	Radius: <div>{{=form.custom.widget.radius}}</div>
+	{{if form.errors['radius']:}}
+		<pre>{{=form.errors['radius']}}</pre>
+	{{pass}}
+	{{=form.custom.submit}}
+{{=form.custom.end}}
 
 <pre>
-{{for each_style in model_styles['styles']:}}
+{{for each_style in model_styles:}}
 	{{=each_style['MPG']}}
 {{pass}}
 </pre>
