@@ -1,12 +1,12 @@
 #hero {
     background-color: rgba(250 250, 250, 1.0);
-	height:565px;
+	height:555px;
  }
  
  /*http://bit.ly/1dHcTCI*/
  /*http://bit.ly/1dHdp3H*/
  #vehicle_content{
- 	height:550px;
+ 	height:540px;
 	overflow-y: auto;
 	overflow-x: hidden;
  }
@@ -14,3 +14,7 @@
  #poweredBy{
  	margin-top:-15px
  }
+ 
+.navbar {
+	background-color:#1D7471;
+}

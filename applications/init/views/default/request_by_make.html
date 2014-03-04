@@ -1,4 +1,4 @@
-  {{extend 'page_layout.html'}}
+ {{extend 'page_layout.html'}}
  {{#=BEAUTIFY(response._vars)}}
 
 {{=form}}
@@ -14,8 +14,56 @@
 
  <script>
  	function load_color_preference(){
-		$('#auction_request_color_preference').load( "{{=URL('ajax','color_preference')}}{{='/'}}"+$('#auction_request_trim_choices').val() ); //IMPLEMNT FAIL$().html
+		$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
+		$('#auction_request_color_preference').load(
+			//url
+			"{{=URL('ajax','color_preference', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):
+			//callback
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading colors: ";
+					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+				}
+				else {
+					$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
+					$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
+				}
+			}
+		//close load call
+		);
+		//display trim stats
+		$('#stats_spinner').toggleClass("fa-spinner");
+		$('#trim_stats').slideUp(400).load(
+			"{{=URL('ajax','style_details', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading stats: ";
+					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+				}
+				else {
+					$(this).slideDown(200); //fade back in
+					$('#stats_spinner').toggleClass("fa-spinner");
+				}
+			}
+		);
+		//display reviews
+		$('#reviews_spinner').toggleClass("fa-spinner");
+		$('#reviews').slideUp(600).load(
+			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading reviews: ";
+					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+				}
+				else {
+					$(this).slideDown(300); //fade back in
+					$('#reviews_spinner').toggleClass("fa-spinner");
+				}
+			}
+		);
+	//close main function
 	}
- 	$('#auction_request_trim_choices').change(load_color_preference);
-	load_color_preference(); //remove during testing
+ 	$('#auction_request_trim_choices').change(load_color_preference); //change color preference options when you change trim dropdown
+	$("#auction_request_color_preference").multiSelect('refresh'); //initialize multiselect
+	load_color_preference(); //first ajax call based on initial trim selection //remove during testing
  </script>

@@ -3,7 +3,6 @@
 {{for each_model in make_details["models"]:}}
 		<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
 	{{pass}}
-
 			<div class="col-xs-4">
 				<p>
 					<a href="{{=URL('init','default','request_by_make',args=[YEAR, request.args[0], each_model['niceName'] ] ) }}">

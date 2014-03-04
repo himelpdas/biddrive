@@ -1,3 +1,3 @@
-{{for each_color in style_colors['colors']:}}
-	<option value="{{=each_color['name']}}">{{=each_color['name']}}</option>
+{{for each_color in style_colors:}}
+	<option value="{{=each_color['id']}}">{{=each_color['name']}}</option>{{#using names as values NOT safe! Use IDs instead}}
 {{pass}}

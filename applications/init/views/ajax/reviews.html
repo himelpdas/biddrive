@@ -1,0 +1,37 @@
+{{counter = 0}}
+{{limit = 5}} {{# ZAKI change this value to the limit number of reviews you want}}
+{{for each_review in reviews:}}
+	{{counter+=1}}
+	<div id="review_{{counter}}" class="row-fluid review">
+		<div class="span4">
+			<h5>{{=each_review['title']}} by <i>{{=each_review['author']['authorName']}}</i><h5>
+			<p>{{#implements half and full stars}}
+				{{integer_and_decimal=map(lambda number: int(number), str(float(each_review['averageRating'])).split('.'))}} {{#make sure always float before split}}
+				{{integer = integer_and_decimal[0]}}{{decimal = integer_and_decimal[1]}}
+				{{for each in range(integer) :}}
+					<i class="fa fa-star"></i>&nbsp;
+				{{pass}}
+				{{if decimal >= 375 and decimal < 875 :}}
+					<i class="fa fa-star-half"></i>&nbsp;
+				{{elif decimal >= 875:}}
+					<i class="fa fa-star"></i>
+				{{pass}}
+			</p>
+		</div>
+		<div class="span8">
+			<p>
+				{{=each_review['text']}}
+			</p>
+		</div>
+	</div>
+	{{if counter == limit:}}
+		{{break}}
+	{{pass}}
+{{pass}}
+{{if not reviews:}}
+	<div id="review_0" class="row-fluid review">
+		<div class="span12">
+			<h4>No reviews found!</h4>
+		</div>
+	</div>
+{{pass}}
