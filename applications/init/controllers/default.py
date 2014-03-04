@@ -62,7 +62,7 @@ def request_by_make():
 	db.auction_request.color_preference.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	form = SQLFORM(db.auction_request)
-	if form.process().accepted: #change error message
+	if form.process(hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = ' Register or login to view it.'
 		if auth.user_id:
 			guest_msg='' #user is logged in no need for guest msg

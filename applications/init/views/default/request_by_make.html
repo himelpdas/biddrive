@@ -3,7 +3,25 @@
  
  <div class="row-fluid">
 	<div class="span6">
-		 {{=form}}
+		{{=form.custom.begin}}
+			Trim: <div>{{=form.custom.widget.trim_choices}}</div> {{#add your own ids and classes}}
+			{{if form.errors['trim_choices']:}}
+				<pre>{{=form.errors['trim_choices']}}</pre> {{#change to whatever element you like}}
+			{{pass}}
+			Colors: <div>{{=form.custom.widget.color_preference}}</div>
+			{{if form.errors['color_preference']:}}
+				<pre>{{=form.errors['color_preference']}}</pre>
+			{{pass}}
+			Zip Code: <div>{{=form.custom.widget.zip_code}}</div>
+			{{if form.errors['zip_code']:}}
+				<pre>{{=form.errors['zip_code']}}</pre>
+			{{pass}}
+			Radius: <div>{{=form.custom.widget.radius}}</div>
+			{{if form.errors['radius']:}}
+				<pre>{{=form.errors['radius']}}</pre>
+			{{pass}}
+			{{=form.custom.submit}}
+		{{=form.custom.end}}
 	</div>
 	<div class="span6">
 		<h3>Stats &nbsp;<i id="stats_spinner" class="fa fa-spin"></i></h3>
