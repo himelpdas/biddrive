@@ -1,16 +1,152 @@
- {{extend 'page_layout.html'}}
+ {{extend 'layout.html'}}
  {{#=BEAUTIFY(response._vars)}}
 
-{{=form}}
+    <div class="container" style="margin-top:100px">
+        <div class="row">
+            <div class="col-xs-4">
+                <img class="img-responsive img-rounded" src="http://media.ed.edmunds-media.com/bmw/3-series/2014/oem/2014_bmw_3-series_sedan_activehybrid-3_fq_oem_1_500.jpg">
+            </div>
+            <div class="col-xs-4">
+                
+                <div>
+                    <i class="fa fa-quote-left"></i>
+                    The BMW 3 Series is a compact executive car manufactured by the German automaker BMW since May 1975. 
+                    <span class="pull-right">— Edmunds.com</span>
+                </div>
 
-<pre>
-{{for each_style in model_styles['styles']:}}
+                <div style="margin-top: 20px">
+                    <i class="fa fa-quote-left"></i>
+                    It is BMW's best-selling model, accounting for around 30% of the BMW brand's annual total sales.
+                    <span class="pull-right">— Wikipedia</span>
+                </div>
+
+            </div>
+            <div class="col-xs-4">
+                <div class="row-fluid" id="trim_stats">
+                	<!--
+                    <div class="col-xs-4" style="margin-bottom: 5px">
+                        MPG
+                    </div>
+                    <div class="col-xs-8" style="margin-bottom: 5px">
+                        <strong>24 cty / 36 highway</strong>
+                    </div>
+
+                    <div class="col-xs-4" style="margin-bottom: 5px">
+                        Engine
+                    </div>
+                    <div class="col-xs-8" style="margin-bottom: 5px">
+                        <strong>2.0 L Inline 4-cylinder</strong>
+                    </div>
+
+                    <div class="col-xs-4" style="margin-bottom: 5px">
+                        Drivetrain
+                    </div>
+                    <div class="col-xs-8" style="margin-bottom: 5px">
+                        <strong>Rear wheel drive</strong>
+                    </div> 
+
+                    <div class="col-xs-4" style="margin-bottom: 5px">
+                        Transmission
+                    </div>
+                    <div class="col-xs-8" style="margin-bottom: 5px">
+                        <strong>8-speed shiftable</strong>
+                        <div class="clearfix"></div>
+                        <strong>Automatic</strong>
+                    </div> -->
+                </div>
+            </div>            
+        </div>
+
+        <div class="row" style="margin-top: 50px">
+            <div class="col-xs-6">
+            
+            <h3>1. Please tell us more</h3>
+
+            {{=form}}
+
+                <!--form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <label for="inputEmail3" class="col-sm-3 control-label">Trim Choices</label>
+                        <div class="col-sm-9">
+                            <select class="form-control">
+                                <option>EX-L</option>
+                                <option>Touring</option>
+                                <option>LX</option>
+                                <option>EX</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputPassword3" class="col-sm-3 control-label">Color</label>
+                        <div class="col-sm-9">
+                            <select class="form-control" multiple="multiple">
+                                <option>Blue</option>
+                                <option>Black</option>
+                                <option>Beige</option>
+                                <option>Green</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputPassword3" class="col-sm-3 control-label">Zip Code</label>
+                        <div class="col-sm-9">
+                            <input type="password" class="form-control" id="inputPassword3" placeholder="10010">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputEmail3" class="col-sm-3 control-label">Radius</label>
+                        <div class="col-sm-9">
+                            <select class="form-control">
+                                <option>10 Miles</option>
+                                <option>25 Miles</option>
+                                <option>50 Miles</option>
+                                <option>100 Miles</option>
+                                <option>150 Miles</option>
+                                <option>200 Miles</option>
+                                <option>250 Miles</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10 ">
+                            <button type="submit" class="btn btn-default pull-right">Go!</button>
+                        </div>
+                    </div>
+                </form>-->
+
+
+
+            </div>
+
+            <div class="col-xs-6">
+            <h3>2. How far do you want to go</h3>
+                <div class="google-maps">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3023.033335357391!2d-73.989363!3d40.739291999999956!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a3d09a2193%3A0xa56803f07f37cb0f!2s902+Broadway!5e0!3m2!1sen!2sus!4v1393710586552" width="100%" height="250" frameborder="0" style="border:0"></iframe>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<!-- {{=form}} -->
+<!--<pre>
+{{for each_style in model_styles:}}
 	{{=each_style['MPG']}}
 {{pass}}
-</pre>
-<br><br><br><br>
+</pre>-->
 
-{{=model_styles}}
+
+<!--<i id="stats_spinner" class="fa fa-spin"></i>
+<div id="trim_stats">
+	loading...
+</div>-->
+
+<pre>{{=model_styles}}</pre>
 
  <script>
  	function load_color_preference(){

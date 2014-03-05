@@ -1,4 +1,14 @@
 {{extend 'layout.html'}}
+    <script type="text/javascript">
+        $(window).scroll(function() {
+            if ($(".navbar").offset().top>515) {
+                $(".navbar-fixed-top").removeClass("navbar-homepage");
+            }
+            else {
+                $(".navbar-fixed-top").addClass("navbar-homepage");
+            }
+        });    
+    </script>
     <section id="feature_slider" style="background-image: url(http://i.imgur.com/IKOzzNH.jpg); background-position: center;">
         <!-- 
             Each slide is composed by <img> and .info

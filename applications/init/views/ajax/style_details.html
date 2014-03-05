@@ -1,5 +1,11 @@
+{{del stats["v"]}}
+
 {{for each_stat in stats:}}
-	<h5 id="{{=style_id}}_{{=each_stat}}" class="{{=each_stat}}">
-		{{=stats[each_stat][0]}} : {{=stats[each_stat][1]}}
-	</h5>
+    <div class="col-xs-4" style="margin-bottom: 5px">
+        {{=stats[each_stat][0]}}
+    </div>
+    <div class="col-xs-8" style="margin-bottom: 5px">
+        <strong>{{=stats[each_stat][1]}}</strong>
+    </div>
+    <div style="clear:both"></div>
 {{pass}}
