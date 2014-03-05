@@ -3,7 +3,7 @@
 <div id="myCarousel" class="carousel slide">
 	<ol class="carousel-indicators">
 	{{for each_photo in photos:}}
-		<li data-target="#myCarousel" data-slide-to="{{=counter}}{{counter+=1}}"{{if not active:}} class="active"{{pass}}></li>
+		<li data-target="#myCarousel" data-slide-to="{{=counter}}{{counter+=1}}"{{if not active:}} class="active"{{active=True}}{{pass}}></li>
 	{{pass}}
 	{{active=False}}
 	</ol>
