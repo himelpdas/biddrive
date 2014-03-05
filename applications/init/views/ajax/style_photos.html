@@ -1,0 +1,19 @@
+{{active=False}}
+{{counter = 0}}
+<div id="myCarousel" class="carousel slide">
+	<ol class="carousel-indicators">
+	{{for each_photo in photos:}}
+		<li data-target="#myCarousel" data-slide-to="{{=counter}}{{counter+=1}}"{{if not active:}} class="active"{{pass}}></li>
+	{{pass}}
+	{{active=False}}
+	</ol>
+	<!-- Carousel items -->
+	<div class="carousel-inner">
+	{{for each_photo in photos:}}
+		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><img src="{{=IMG_PREFIX + each_photo}}"/></div>
+	{{pass}}
+	</div>
+  <!-- Carousel nav -->
+  <a class="carousel-control left" href="#myCarousel" data-slide="prev">&lsaquo;</a>
+  <a class="carousel-control right" href="#myCarousel" data-slide="next">&rsaquo;</a>
+</div>

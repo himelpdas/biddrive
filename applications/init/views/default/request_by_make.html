@@ -24,16 +24,24 @@
 		{{=form.custom.end}}
 	</div>
 	<div class="span6">
-		<h3>Stats &nbsp;<i id="stats_spinner" class="fa fa-spin"></i></h3>
-		 <div id = "trim_stats">
+		{{#style_photos}}
+		<div id="style_photos" class="row-fluid">
 			...loading
-		 </div>
+		</div>
+		{{#style_details}}
+		<div class="row-fluid">
+			<h3>Stats &nbsp;<i id="stats_spinner" class="fa fa-spin"></i></h3>
+			<div id = "trim_stats">
+				...loading
+			</div>
+		</div>
 	</div>
  </div>
  <h3>Reviews &nbsp;<i id="reviews_spinner" class="fa fa-spin"></i></h3>
  <div id="reviews">
 	...loading
  </div>
+ 
  <script>
  	function load_color_preference(){
 		$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
@@ -80,6 +88,19 @@
 				else {
 					$(this).slideDown(300); //fade back in
 					$('#reviews_spinner').toggleClass("fa-spinner");
+				}
+			}
+		);
+		// display images
+		$('#style_photos').html('<img src="http://placehold.it/815x543&text=loading..."/>').load(
+			"{{=URL('ajax','style_photos')}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading photos: ";
+					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+				}
+				else {
+					//$('#reviews_spinner').toggleClass("fa-spinner");
 				}
 			}
 		);

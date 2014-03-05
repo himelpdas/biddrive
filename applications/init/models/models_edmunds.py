@@ -61,6 +61,7 @@ STYLE_URI = "/api/vehicle/v2/styles/%s?view=full&fmt=json"
 COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
 COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 REVIEWS_URI = "/api/vehiclereviews/v2/styles/%s?sortby=created:ADESC&pagenum=1&pagesize=10"
+IMG_PREFIX = "http://media.ed.edmunds-media.com/"
 
 BRANDS_LIST = OD()
 map(lambda model: BRANDS_LIST.update({model['niceName']:model['name']}),ed_call(MAKES_URI%YEAR)['makes']) #FIXED#TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code

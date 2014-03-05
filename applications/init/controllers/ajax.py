@@ -12,7 +12,7 @@ def vehicle_content():
 			model_styles = ed_call(STYLES_URI%(request.args[0], each_model['niceName'], YEAR))
 			style_id = model_styles["styles"][0]["id"]
 			#
-			model_photos = findPhotosByStyleID(style_id)
+			model_photos = findPhotosByStyleID(style_id) #style is not important so call it model
 			photo = model_photos[0]['photoSrcs'][-1] #get any photo
 			for each_photo in model_photos[0]['photoSrcs']:
 				if each_photo.split('.')[-2].split('_')[-1] == '150':  #but change to proper ratio if found
@@ -67,3 +67,13 @@ def reviews():
 		return dict(reviews = reviews['reviews'])
 	else:
 		return dict(reviews = {})
+		
+def style_photos():
+	style_id = request.args[0]
+	style_photos = findPhotosByStyleID(style_id)
+	photos = []
+	for each_photo_set in style_photos:
+		for each_photo in each_photo_set['photoSrcs']:
+			if each_photo.split('.')[-2].split('_')[-1] == '815': #get the desired ratio
+				photos.append(each_photo)
+	return dict(photos=photos)
