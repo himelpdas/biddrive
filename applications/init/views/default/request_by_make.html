@@ -3,6 +3,11 @@
  
  <div class="row-fluid">
 	<div class="span6">
+		{{form.element('select', _name = 'trim_choices')['_class']+=' form-control'}}
+		{{form.element('select', _name = 'color_preference')['_class']+=' form-control'}}
+		{{form.element('input', _name = 'zip_code')['_class']+=' form-control'}}
+		{{form.element('select', _name = 'radius')['_class']+=' form-control'}}
+		{{form.element('input', _type = 'submit')['_class']=' btn btn-primary'}}
 		{{=form.custom.begin}}
 			Trim: <div>{{=form.custom.widget.trim_choices}}</div> {{#add your own ids and classes}}
 			{{if form.errors['trim_choices']:}}

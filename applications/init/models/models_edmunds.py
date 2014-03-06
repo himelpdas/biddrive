@@ -190,7 +190,7 @@ db.define_table('auction_request',
 		required=True,
 		readable=False,
 		writable=False,
-		compute = lambda row: json.dumps(getStyleByMakeModelYearStyleID(row['make'],row['model'],row['year'],row['trim_choices'])), #no need to error check because subsequent compute fields will raise native exceptions
+		compute = lambda row: json.dumps(getStyleByMakeModelYearStyleID(row['make'],row['model'],row['year'],row['trim_choices'])), #FIX compute in controller only!! Since compute runs on update as well edmunds may not return data during UUID to ID conversion #no need to error check because subsequent compute fields will raise native exceptions
 	),
 	Field('trim_name',
 		required=True,
