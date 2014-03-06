@@ -1,47 +1,134 @@
- {{extend 'page_layout.html'}}
+
+ {{extend 'layout.html'}}
+
  {{#=BEAUTIFY(response._vars)}}
- 
- <div class="row-fluid">
-	<div class="span6">
-		{{=form.custom.begin}}
-			Trim: <div>{{=form.custom.widget.trim_choices}}</div> {{#add your own ids and classes}}
-			{{if form.errors['trim_choices']:}}
-				<pre>{{=form.errors['trim_choices']}}</pre> {{#change to whatever element you like}}
-			{{pass}}
-			Colors: <div>{{=form.custom.widget.color_preference}}</div>
-			{{if form.errors['color_preference']:}}
-				<pre>{{=form.errors['color_preference']}}</pre>
-			{{pass}}
-			Zip Code: <div>{{=form.custom.widget.zip_code}}</div>
-			{{if form.errors['zip_code']:}}
-				<pre>{{=form.errors['zip_code']}}</pre>
-			{{pass}}
-			Radius: <div>{{=form.custom.widget.radius}}</div>
-			{{if form.errors['radius']:}}
-				<pre>{{=form.errors['radius']}}</pre>
-			{{pass}}
-			{{=form.custom.submit}}
-		{{=form.custom.end}}
-	</div>
-	<div class="span6">
-		{{#style_photos}}
-		<div id="style_photos" class="row-fluid">
-			...loading
-		</div>
-		{{#style_details}}
-		<div class="row-fluid">
-			<h3>Stats &nbsp;<i id="stats_spinner" class="fa fa-spin"></i></h3>
-			<div id = "trim_stats">
-				...loading
-			</div>
-		</div>
-	</div>
- </div>
- <h3>Reviews &nbsp;<i id="reviews_spinner" class="fa fa-spin"></i></h3>
- <div id="reviews">
-	...loading
- </div>
- 
+
+
+
+    <div class="container" style="margin-top:100px">
+        <div class="row" style="background: rgba(0,0,0,.1); padding:10px; border-radius: 5px">
+            <div class="col-xs-5" id="style_photos">
+
+            </div>
+            <div class="col-xs-7" id="reviews">
+                
+                <div>
+                    <i class="fa fa-quote-left"></i>
+                    The BMW 3 Series is a compact executive car manufactured by the German automaker BMW since May 1975. 
+                    <span class="pull-right">— Edmunds.com</span>
+                </div>
+
+                <div style="margin-top: 20px">
+                    <i class="fa fa-quote-left"></i>
+                    It is BMW's best-selling model, accounting for around 30% of the BMW brand's annual total sales.
+                    <span class="pull-right">— Wikipedia</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="row" style="margin-top: 50px">
+            <div class="col-xs-7">
+
+                {{ form.element("select", _name = "trim_choices")["_class"] += " form-control" }}
+                {{ form.element("select", _name = "color_preference")["_class"] += " form-control" }}
+                {{ form.element("select", _name = "radius")["_class"] += " form-control" }}
+                {{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
+                {{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+
+                {{=form.custom.begin}} 
+                    <div class="form-group">
+                        <label for="inputEmail3" class="col-sm-3 control-label">Trim Choices</label>
+                        <div class="col-sm-9">
+
+                            {{=form.custom.widget.trim_choices}}
+
+                            {{if form.errors['trim_choices']:}}
+                            	<small style="text-alert">{{=form.errors['trim_choices']}}</small>
+                            {{pass}}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputPassword3" class="col-sm-3 control-label">Color</label>
+                        <div class="col-sm-9">
+                            {{=form.custom.widget.color_preference}}
+
+							{{if form.errors['color_preference']:}}
+								<pre>{{=form.errors['color_preference']}}</pre>
+							{{pass}}                            
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputPassword3" class="col-sm-3 control-label">Zip Code</label>
+                        <div class="col-sm-9">
+                            <!--<input type="password" class="form-control" id="inputPassword3" placeholder="10010">-->
+                            {{=form.custom.widget.zip_code}}
+
+							{{if form.errors['zip_code']:}}
+								<pre>{{=form.errors['zip_code']}}</pre>
+							{{pass}}                            
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputEmail3" class="col-sm-3 control-label">Radius</label>
+                        <div class="col-sm-9">
+                            {{=form.custom.widget.radius}}
+
+							{{if form.errors['radius']:}}
+								<pre>{{=form.errors['radius']}}</pre>
+							{{pass}}
+
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10 ">
+                            {{=form.custom.submit}}
+                        </div>
+                    </div>
+                {{=form.custom.end}}
+                
+
+
+
+            </div>
+
+            <div class="col-xs-5">
+            	<h5>Trim Specific Details</h5>
+            	<div id="trim_stats"></div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+<!--
+
+
+
+
+
+<pre>
+{{for each_style in model_styles:}}
+	{{=each_style['MPG']}}
+{{pass}}
+</pre>
+<br><br><br><br>
+
+{{=model_styles}}
+-->
+
  <script>
  	function load_color_preference(){
 		$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
@@ -92,7 +179,7 @@
 			}
 		);
 		// display images
-		$('#style_photos').html('<img src="http://placehold.it/815x543&text=loading..."/>').load(
+		$('#style_photos').html('<img src="http://placehold.it/815x543&text=loading..." class="img-responsive"/>').load(
 			"{{=URL('ajax','style_photos')}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
@@ -108,5 +195,6 @@
 	}
  	$('#auction_request_trim_choices').change(load_color_preference); //change color preference options when you change trim dropdown
 	$("#auction_request_color_preference").multiSelect('refresh'); //initialize multiselect
+	
 	load_color_preference(); //first ajax call based on initial trim selection //remove during testing
  </script>
