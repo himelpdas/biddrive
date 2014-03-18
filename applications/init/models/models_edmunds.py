@@ -1,9 +1,5 @@
 #do caching and db stuff here!
 
-from edmunds import Edmunds
-
-ed = Edmunds(EDMUNDS_KEY)
-
 if not db(db.auth_group.role == "dealers").select().first(): #cache!!
 	auth.add_group('dealers', 'only accounts that submitted an admin-verified dealership application may join this group.')
 
@@ -24,65 +20,6 @@ if auth.user_id:
 				(T('Auction Requests'), False, URL('dealer', 'auction_requests.html'), []),
 			]),
 		)
-
-def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure data is ok
-	#will call ram >> disk >> API
-	URI = repr(URI)
-	def disk():
-		response = cache.disk(
-			URI, #<type 'exceptions.TypeError'> String or Integer object expected for key, unicode found
-			function,
-			time_expire*7,
-		)
-		return response
-	#
-	response = cache.ram(
-		URI, #to make sure the same URI doesn't get called twice
-		disk,
-		time_expire,
-	)
-
-	if 'error' in response or 'status' in response or 'errorType' in response:
-		cache.ram(URI, None)
-		cache.disk(URI, None)
-		#raise HTTP(response['code'], response['message']) 
-
-	return response
-	
-def ed_call(URI):
-	"""fewer arguments than ed_cache"""
-	return ed_cache(URI, lambda: ed.make_call(URI))
-	
-YEAR='2013'
-MAKES_URI = '/api/vehicle/v2/makes?state=new&year=%s&view=full'
-MAKE_URI = '/api/vehicle/v2/%s?state=new&year=%s'
-STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
-STYLE_URI = "/api/vehicle/v2/styles/%s?view=full&fmt=json"
-COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
-COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
-REVIEWS_URI = "/api/vehiclereviews/v2/styles/%s?sortby=created:ADESC&pagenum=1&pagesize=10"
-IMG_PREFIX = "http://media.ed.edmunds-media.com/"
-
-BRANDS_LIST = OD()
-map(lambda model: BRANDS_LIST.update({model['niceName']:model['name']}),ed_call(MAKES_URI%YEAR)['makes']) #FIXED#TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
-
-def findPhotosByStyleID(style_id):
-	findphotosbystyleid_URI = '/v1/api/vehiclephoto/service/findphotosbystyleid'
-	return ed_cache( #cannot use ed_call
-		'photos'+str(style_id), #must be unique for each corresponding image 
-		lambda: ed.make_call(findphotosbystyleid_URI, comparator='simple', styleId=style_id)  #errors will not be cached! :)
-	)
-
-def getStylesByMakeModelYear(make, model, year):
-	if int(year) in range(datetime.date.today().year-1, datetime.date.today().year+2):
-		return ed_call(STYLES_URI%(make, model, year))['styles'] #(make, model, year)
-
-def getStyleByMakeModelYearStyleID(make, model, year, style_id):
-	styles = getStylesByMakeModelYear(make, model, year)
-	for each_style in styles:
-		if int(each_style['id']) == int(style_id):
-			return each_style
-			#else None
 
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
@@ -183,15 +120,15 @@ db.define_table('auction_request',
 		readable=False,
 		writable=False,
 	),
-	Field('trim_choices', #change to trim
+	Field('trim_choices', #change to trim_choice #trim and style are the same
 		requires=IS_NOT_EMPTY(),
 	),	
-	Field('trim_data',
-		required=True,
+	Field('trim_data', #maybe get rid of this field.
+		required=True, #prevents None insertions! since compute is runned on insertion/update it may be possible that a failed update will result in a None. This can happen when edmunds cache fails and returns None
 		readable=False,
 		writable=False,
 		compute = lambda row: json.dumps(getStyleByMakeModelYearStyleID(row['make'],row['model'],row['year'],row['trim_choices'])), #FIX compute in controller only!! Since compute runs on update as well edmunds may not return data during UUID to ID conversion #no need to error check because subsequent compute fields will raise native exceptions
-	),
+	),#move compute to controller to prevent updating of error json returned by edmunds
 	Field('trim_name',
 		required=True,
 		readable=False,
@@ -213,7 +150,7 @@ db.define_table('auction_request',
 		readable=False,
 		writable =False,
 		compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], 
-	), #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS #FIXED WITH required=True
+	), #FIXED WITH required=True #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),
@@ -250,6 +187,99 @@ db.define_table('auction_request',
 		readable=False,
 		writable=False,
 	),
+	Field('image_limit', 'integer', #returns no such column error #need to add column because migrate issues #SQLITE makes it hard to add/rm columns #SQLITE DATABASE BROWSER #http://goo.gl/SbdnfH #http://goo.gl/Qua42R #ALTER TABLE auction_request ADD COLUMN image_limit INTEGER # UPDATE auction_request SET image_limit = 5
+		required = True,
+		readable=False,
+		writable=False,
+		default = 5, #raise limit when purchase made
+	)
 	#Field user ID
 	#Block dealers
+)
+db.define_table('auction_request_offer',
+	Field('auction_request', db.auction_request,
+		readable=False,
+		writable=False,
+		required=True,
+	), 
+	Field('bid', 'double',
+		requires = IS_NOT_EMPTY(),
+	),
+	Field('interior_options',
+		#requires is_in_set like trim above
+		requires=IS_NOT_EMPTY(),
+	),
+	Field('exterior_options',
+		#requires is_in_set like trim above
+		requires=IS_NOT_EMPTY(),
+	),
+	Field('mechanical_options',
+		#requires is_in_set like trim above
+		requires=IS_NOT_EMPTY(),
+	),
+	Field('package_options',
+		#requires is_in_set like trim above
+		requires=IS_NOT_EMPTY(),
+	),
+	Field('fees_options',
+		#requires is_in_set like trim above
+		requires=IS_NOT_EMPTY(),
+	),
+	Field('summary', 'text',
+		requires=IS_NOT_EMPTY(),
+	),
+	Field('exterior_image', 'upload',
+		requires=[IS_NOT_EMPTY(), IS_IMAGE()]
+	), 
+	Field('interior_image', 'upload',
+		requires=[IS_NOT_EMPTY(), IS_IMAGE()]
+	), 
+	#ext
+	Field('front_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	Field('rear_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	Field('tire_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	#int
+	Field('dashboard_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	Field('passenger_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	Field('trunk_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	#misc
+	Field('underhood_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	Field('roof_image', 'upload',
+		requires=IS_IMAGE()
+	), 
+	Field('other_image', 'upload',
+		requires=IS_IMAGE()
+	),
+)
+
+#continue work here
+db.define_table('auction_request_offer_image',
+	Field('auction_request_offer', 'reference auction_request'), #use temp ID in URL to mask id number# USE HAS PERMISSION INSTEAD
+	Field('file', 'upload',
+		required=True,
+	), 
+	Field('description',
+		requires=IS_NOT_EMPTY(),
+		#can be None so required unnecessary
+	),
+	Field('type',
+		requires = IS_IN_SET(
+			['Vehicle', 'Exterior', 'Interior', 'Accessories', 'Imperfection'],
+			zero=None
+		),
+	),
 )

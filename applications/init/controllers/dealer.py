@@ -169,6 +169,94 @@ def auction_requests():
 	return dict(auction_requests=auction_requests, columns = columns, brands_list=BRANDS_LIST, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 	
 @auth.requires_login() #make dealer only
+def pre_auction():
+	if not request.args:  #make decorator http://bit.ly/1i2wbHz
+		session.flash='No request ID!'
+		redirect(URL('my_auctions.html'))
+	auction_request_id = request.args[0]
+	auction_request_rows = db(db.auction_request.id == auction_request_id).select()
+	if not auction_request_rows:
+		session.flash='Invalid request ID!'
+		redirect(URL('my_auctions.html'))
+	auction_request = auction_request_rows.last()
+	trim_data = json.loads(auction_request.trim_data)
+	options = trim_data['options']
+	#return dict(offer_form=None, options=options) #uncomment for testing
+	interior_options = []
+	exterior_options = []
+	mechanical_options = []
+	package_options = []
+	fees_options = []
+	for each_option_type in options:
+		if each_option_type['category'] == 'Interior':
+			interior_options = each_option_type['options']
+		if each_option_type['category'] == 'Exterior':
+			exterior_options = each_option_type['options']
+		if each_option_type['category'] == 'Mechanical':
+			mechanical_options = each_option_type['options']
+		if each_option_type['category'] == 'Package':
+			package_options = each_option_type['options']
+		if each_option_type['category'] == 'Additional Fees':
+			fees_options = each_option_type['options']
+	#return dict(offer_form=None, options=options, interior_options=interior_options, mechanical_options=mechanical_options) #uncomment for testing
+	#USEFUL #interior_options = options.get('interior') or [] #returns None, but get blank [] instead
+	interior_options_names = []
+	exterior_options_names = []
+	mechanical_options_names = []
+	package_options_names = []
+	fees_options_names = []
+	
+	msrp_by_id = {'base':trim_data['price']['baseMSRP']}
+
+	for each_option in interior_options:
+		interior_options_names.append([each_option['id'],each_option['name']]) ##never safe to use names in forms stick to standard ids
+		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+	interior_options_names.sort(key=lambda each:each[1])
+	db.auction_request_offer.interior_options.requires = IS_IN_SET(interior_options_names, multiple=True)
+	db.auction_request_offer.interior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	
+	
+	for each_option in exterior_options:
+		exterior_options_names.append([each_option['id'],each_option['name']])
+		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+	exterior_options_names.sort(key=lambda each:each[1])
+	db.auction_request_offer.exterior_options.requires = IS_IN_SET(exterior_options_names, multiple=True)
+	db.auction_request_offer.exterior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	
+	for each_option in mechanical_options:
+		mechanical_options_names.append([each_option['id'],each_option['name']])
+		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+	mechanical_options_names.sort(key=lambda each:each[1])
+	db.auction_request_offer.mechanical_options.requires = IS_IN_SET(mechanical_options_names, multiple=True)
+	db.auction_request_offer.mechanical_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	
+	for each_option in package_options:
+		package_options_names.append([each_option['id'],each_option['name']])
+		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+	package_options_names.sort(key=lambda each:each[1])
+	db.auction_request_offer.package_options.requires = IS_IN_SET(package_options_names, multiple=True)
+	db.auction_request_offer.package_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	
+	for each_option in fees_options:
+		fees_options_names.append([each_option['id'],each_option['name']])
+		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+	fees_options_names.sort(key=lambda each:each[1])
+	db.auction_request_offer.fees_options.requires = IS_IN_SET(fees_options_names, multiple=True)
+	db.auction_request_offer.fees_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	
+	#db.auction_request_offer.
+	
+	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
+	
+	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
+		session.flash = 'success!'
+		redirect(
+			URL('auction.html')
+		)
+	
+	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id)
+
+@auth.requires_login() #make dealer only
 def auction():
 	if not request.args:  #make decorator http://bit.ly/1i2wbHz
 		session.flash='No request ID!'

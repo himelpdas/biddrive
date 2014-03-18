@@ -69,7 +69,7 @@ def request_by_make():
 			guest_msg='' #user is logged in no need for guest msg
 		session.flash = 'Auction submitted!%s' % guest_msg
 		redirect(
-			URL('auction.html')
+			URL('auction.html', args=form.vars.id) #http://goo.gl/twPSTK
 		)
 		
 	response.title="Request an auction"
