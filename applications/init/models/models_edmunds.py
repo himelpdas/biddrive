@@ -229,40 +229,40 @@ db.define_table('auction_request_offer',
 		requires=IS_NOT_EMPTY(),
 	),
 	Field('exterior_image', 'upload',
-		requires=[IS_NOT_EMPTY(), IS_IMAGE()]
+		requires=[IS_NOT_EMPTY(), IS_IMAGE()] #change message
 	), 
 	Field('interior_image', 'upload',
 		requires=[IS_NOT_EMPTY(), IS_IMAGE()]
 	), 
 	#ext
 	Field('front_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	Field('rear_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	Field('tire_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	#int
 	Field('dashboard_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	Field('passenger_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	Field('trunk_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	#misc
 	Field('underhood_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	Field('roof_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	), 
 	Field('other_image', 'upload',
-		requires=IS_IMAGE()
+		requires=IS_EMPTY_OR(IS_IMAGE())
 	),
 )
 

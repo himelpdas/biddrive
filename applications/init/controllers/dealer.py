@@ -168,16 +168,27 @@ def auction_requests():
 	#
 	return dict(auction_requests=auction_requests, columns = columns, brands_list=BRANDS_LIST, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 	
+def authorize_auction_for_dealer(): #add permission and charge entry fee upon dealer agreement of terms and fees
+	auction_request_id = request.args[0]
+	if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
+		auth.add_membership('request_by_make_authorized_dealers_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
+		redirect(URL('pre_auction.html', args=[auction_request_id]))
+	raise HTTP(404 , "Invalid auction request!")
+	
 @auth.requires_login() #make dealer only
+@auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
 def pre_auction():
 	if not request.args:  #make decorator http://bit.ly/1i2wbHz
 		session.flash='No request ID!'
 		redirect(URL('my_auctions.html'))
 	auction_request_id = request.args[0]
-	auction_request_rows = db(db.auction_request.id == auction_request_id).select()
+	auction_request_rows = db(db.auction_request.id == auction_request_id).select() #ALWAYS verify existence of vars/args in database.
 	if not auction_request_rows:
 		session.flash='Invalid request ID!'
 		redirect(URL('my_auctions.html'))
+	
+	db.auction_request_offer.auction_request.default = auction_request_id
+	
 	auction_request = auction_request_rows.last()
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
@@ -254,8 +265,8 @@ def pre_auction():
 			URL('auction.html')
 		)
 	
-	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id)
-
+	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
+	
 @auth.requires_login() #make dealer only
 def auction():
 	if not request.args:  #make decorator http://bit.ly/1i2wbHz

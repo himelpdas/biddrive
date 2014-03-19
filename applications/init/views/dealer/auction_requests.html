@@ -145,7 +145,7 @@
 			<script> {{#always add id to id attr when theres more than one}}
 				$('#to-agreement-button-{{=each_request.id}}').click(
 					function(){
-						$('#to-auction-url').attr("href", "{{=URL('pre_auction',args=[each_request.id])}}");
+						$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
 					}
 				);
 			</script>
@@ -243,6 +243,6 @@
 	</div>
 	<div class="modal-footer">
 		<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>&nbsp;
-		<a id="to-auction-url" href="{{=URL('pre_auction')}}{{#maybe make error redirect}}"><button class="btn btn-primary">I Agree</button></a>
+		<a id="to-auction-url" href="{{=URL('authorize_auction_for_dealer')}}{{#maybe make error redirect}}"><button class="btn btn-primary">I Agree</button></a>
 	</div>
 </div>

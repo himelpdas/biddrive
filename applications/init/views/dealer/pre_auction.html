@@ -23,7 +23,7 @@
 	{{pass}}
 
 	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; {{#ok to use name instead of id because there is no character limitations like at get url}}
-	$('.ms-container').ready().click(function(){
+	$('.ms-container').click(function(){
 		var msrp = msrp_by_id['base'];
 		var list = $(".ms-selected").map(function(){return $(this).children().text();}).get(); {{#map runs a function on each element}}
 		list.map( function(item) {
