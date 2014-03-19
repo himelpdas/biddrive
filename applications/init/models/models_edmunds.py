@@ -187,15 +187,23 @@ db.define_table('auction_request',
 		readable=False,
 		writable=False,
 	),
+	#virtual fields are not sortable in db use #EDIT USE METHOD INSTESD, which is calculated on demand instead of on on select in queries
+	Field.Method('lowest_offer',
+		lambda row: db(db.auction_request_offer.auction_request == row.auction_request.id).select(orderby = ~db.auction_request_offer.bid).first()
+	),
+	Field.Method('number_of_bids',
+		lambda row: len(db(db.auction_request_offer.auction_request == row.auction_request.id).select())
+	),
+	#Field user ID
+	#Block dealers
+)
+"""
 	Field('image_limit', 'integer', #returns no such column error #need to add column because migrate issues #SQLITE makes it hard to add/rm columns #SQLITE DATABASE BROWSER #http://goo.gl/SbdnfH #http://goo.gl/Qua42R #ALTER TABLE auction_request ADD COLUMN image_limit INTEGER # UPDATE auction_request SET image_limit = 5
 		required = True,
 		readable=False,
 		writable=False,
 		default = 5, #raise limit when purchase made
-	)
-	#Field user ID
-	#Block dealers
-)
+"""	
 db.define_table('auction_request_offer',
 	Field('auction_request', db.auction_request,
 		readable=False,

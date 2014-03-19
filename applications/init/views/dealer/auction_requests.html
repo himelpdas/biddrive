@@ -108,7 +108,7 @@
 				{{if sortby in each_column[1]:}}
 					{{sort_pair = each_column[1][:]}}{{#create copy}}
 					{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
-					<a href = "{{=URL(vars=dict(sortby=sort_pair[0] ) ) }}">
+					<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, make=make ) ) }}">
 						{{=each_column[0]}}
 					</a>
 				&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
@@ -184,10 +184,10 @@
 			{{#=each_request.expires}}
 		</div>
 		<div class = "span1">
-			{{=random.choice(range(100))}}
+			{{=each_request.number_of_bids()}}
 		</div>
 		<div class = "span1">
-			${{=random.choice(range(15000,30000))}}
+			${{=each_request.lowest_offer().bid if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
 		</div>
 	</div>
 	<hr class="featurette-divider">

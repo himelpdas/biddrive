@@ -102,6 +102,25 @@ def auction_requests():
 		if sortby == "farthest":
 			reverse = True
 		auction_requests = auction_requests.sort(lambda row: calcDist(my_info.latitude, my_info.longitude, row.latitude, row.longitude), reverse=reverse) #returns new
+		
+	if sortby == 'highest' or sortby == 'lowest':
+		reverse = True
+		def lowest_offer(row): #prevents multiple queries via Field.Method calls in lambda
+			offer = row.lowest_offer()
+			if offer: 
+				return offer.bid
+			return 0
+		if sortby == 'lowest':
+			reverse = False
+		auction_requests = auction_requests.sort(lowest_offer, reverse = reverse)
+		
+	if sortby == 'most' or sortby == 'least':
+		reverse = True
+		if sortby == 'most':
+			reverse = False
+		auction_requests = auction_requests.sort(lambda row: row.number_of_bids(), reverse=reverse)
+		
+	#sort virtual fields http://goo.gl/skbNJ6
 	
 	columns = [ #keep len 12
 		[
@@ -168,6 +187,7 @@ def auction_requests():
 	#
 	return dict(auction_requests=auction_requests, columns = columns, brands_list=BRANDS_LIST, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 	
+@auth.requires(request.args(0))
 def authorize_auction_for_dealer(): #add permission and charge entry fee upon dealer agreement of terms and fees
 	auction_request_id = request.args[0]
 	if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
@@ -176,11 +196,12 @@ def authorize_auction_for_dealer(): #add permission and charge entry fee upon de
 	raise HTTP(404 , "Invalid auction request!")
 	
 @auth.requires_login() #make dealer only
+@auth.requires(request.args(0))
 @auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
 def pre_auction():
-	if not request.args:  #make decorator http://bit.ly/1i2wbHz
-		session.flash='No request ID!'
-		redirect(URL('my_auctions.html'))
+	#if not request.args:  #make decorator http://bit.ly/1i2wbHz
+	#	session.flash='No request ID!'
+	#	redirect(URL('my_auctions.html'))
 	auction_request_id = request.args[0]
 	auction_request_rows = db(db.auction_request.id == auction_request_id).select() #ALWAYS verify existence of vars/args in database.
 	if not auction_request_rows:
@@ -262,17 +283,14 @@ def pre_auction():
 	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		session.flash = 'success!'
 		redirect(
-			URL('auction.html')
+			URL('auction.html', args=[auction_request_id])
 		)
 	
 	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
 	
 @auth.requires_login() #make dealer only
+@auth.requires(request.args(0))
 def auction():
-	if not request.args:  #make decorator http://bit.ly/1i2wbHz
-		session.flash='No request ID!'
-		redirect(URL('my_auctions.html'))
-	
 	auction_request_id = request.args[0]
 	
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
