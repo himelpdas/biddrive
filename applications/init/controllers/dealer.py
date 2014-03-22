@@ -198,6 +198,7 @@ def authorize_auction_for_dealer(): #add permission and charge entry fee upon de
 @auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
 @auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
+@auth.requires(not db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.id == int(request.args[0]))).select()) #make sure dealer did not make an offer already
 def pre_auction():
 	#if not request.args:  #make decorator http://bit.ly/1i2wbHz
 	#	session.flash='No request ID!'
@@ -276,7 +277,10 @@ def pre_auction():
 	db.auction_request_offer.fees_options.requires = IS_IN_SET(fees_options_names, multiple=True)
 	db.auction_request_offer.fees_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
-	#db.auction_request_offer.
+	colors = zip(auction_request.color_preference, auction_request.color_names) #color_preference means color_ids please do sitewide replace
+	colors.sort(key = lambda each: each[1])
+	
+	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
 	
 	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
@@ -288,6 +292,17 @@ def pre_auction():
 	
 	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
 	
+	
+def __get_option_from_ID(trim_data, option_type, option_id):
+	options_data = trim_data['options']
+	options = []
+	for each_option_type in options_data:
+		if each_option_type['category'] == option_type:
+			options = each_option_type['options']
+	for each_option in options:
+		if int(each_option['id']) == int(option_id):
+			return each_option 
+	
 @auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
 def auction():
@@ -298,7 +313,138 @@ def auction():
 		session.flash="Invalid request ID!"
 		redirect(URL('my_auctions.html'))
 	
+	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
+	
+	colors=OD()
+	color_names=auction_request.color_names
+	color_names.sort()
+	for each_name in color_names:
+		for each_color in json.loads(auction_request.trim_data)['colors'][1]['options']:
+			if each_color['name'] == each_name:
+				color_hex = each_color['colorChips']['primary']['hex']
+				colors.update({each_name : color_hex})
+	
+	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
+	lowest_offer = "No bids!"
+	if lowest_offer_row:
+		lowest_offer = '$%s'%int(lowest_offer_row.bid)
+	
+	auction_request_info = dict(
+		id = str(auction_request.id),
+		year = auction_request.year,
+		make = auction_request.make,
+		model = auction_request.model,
+		trim_name = auction_request.trim_name,
+		trim_data = auction_request.trim_data,
+		colors = colors,
+		city = auction_request_area.city,
+		state = auction_request_area.state_abbreviation,
+		distance = 'N/A',
+		ends_on = str(auction_request.expires),
+		ends_in_seconds = (auction_request.expires - request.now).total_seconds(),
+		ends_in_human = human(auction_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}'),
+		bids = auction_request.number_of_bids(),
+		best_price = lowest_offer,
+	)
+	
+	auction_request_offers = db(db.auction_request_offer.auction_request == auction_request_id).select()
+	
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
 	
-	return dict()
+	"""
+	response.view = 'generic.html'
+	return dict(auction_request_info = auction_request_info['trim_data'])
+	"""
+	
+	auction_request_offers_info = []
+	trim_data = json.loads(auction_request_info['trim_data'])
+	for each_offer in auction_request_offers:
+		#options
+		interior_options = []
+		exterior_options = []
+		mechanical_options = []
+		package_options = []
+		fees_options = []
+		
+		for each_option in each_offer.interior_options:
+			interior_options.append(__get_option_from_ID(trim_data, 'Interior', each_option))
+		for each_option in each_offer.exterior_options:
+			exterior_options.append(__get_option_from_ID(trim_data, 'Exterior', each_option))
+		for each_option in each_offer.mechanical_options:
+			mechanical_options.append(__get_option_from_ID(trim_data, 'Mechanical', each_option))
+		for each_option in each_offer.package_options:
+			package_options.append(__get_option_from_ID(trim_data, 'Package', each_option))
+		for each_option in each_offer.fees_options:
+			fees_options.append(__get_option_from_ID(trim_data, 'Additional Fees', each_option))
+			
+		each_offer_dict = {
+			'id' : each_offer.id,
+			'bid' : int(each_offer.bid),
+			'color' : each_offer.color,
+			'summary' : each_offer.summary,
+			'interior_options' : interior_options,
+			'exterior_options' : exterior_options,
+			'mechanical_options' : mechanical_options,
+			'package_options' : package_options,
+			'fees_options' : fees_options,
+			'exterior_image' : each_offer.exterior_image,
+			'interior_image' : each_offer.interior_image,
+			'front_image' : each_offer.front_image,
+			'rear_image' : each_offer.rear_image,
+			'tire_image' : each_offer.tire_image,
+			'dashboard_image' : each_offer.dashboard_image,
+			'passenger_image' : each_offer.passenger_image,
+			'trunk_image' : each_offer.trunk_image,
+			'underhood_image' : each_offer.underhood_image,
+			'roof_image' : each_offer.roof_image,
+			'other_image' : each_offer.other_image,
+		}
+		auction_request_offers_info.append(each_offer_dict)
+	
+	#only want bid field
+	db.auction_request_offer.color.readable = False
+	db.auction_request_offer.color.writable = False
+	db.auction_request_offer.summary.readable = False
+	db.auction_request_offer.summary.writable = False
+	db.auction_request_offer.interior_options.readable = False
+	db.auction_request_offer.interior_options.writable = False
+	db.auction_request_offer.exterior_options.readable = False
+	db.auction_request_offer.exterior_options.writable = False
+	db.auction_request_offer.mechanical_options.readable = False
+	db.auction_request_offer.mechanical_options.writable = False
+	db.auction_request_offer.package_options.readable = False
+	db.auction_request_offer.package_options.writable = False
+	db.auction_request_offer.fees_options.readable = False
+	db.auction_request_offer.fees_options.writable = False
+	db.auction_request_offer.exterior_image.readable = False
+	db.auction_request_offer.exterior_image.writable = False
+	db.auction_request_offer.interior_image.readable = False
+	db.auction_request_offer.interior_image.writable = False
+	db.auction_request_offer.front_image.readable = False
+	db.auction_request_offer.front_image.writable = False
+	db.auction_request_offer.rear_image.readable = False
+	db.auction_request_offer.rear_image.writable = False
+	db.auction_request_offer.tire_image.readable = False
+	db.auction_request_offer.tire_image.writable = False
+	db.auction_request_offer.dashboard_image.readable = False
+	db.auction_request_offer.dashboard_image.writable = False
+	db.auction_request_offer.passenger_image.readable = False
+	db.auction_request_offer.passenger_image.writable = False
+	db.auction_request_offer.trunk_image.readable = False
+	db.auction_request_offer.trunk_image.writable = False
+	db.auction_request_offer.underhood_image.readable = False
+	db.auction_request_offer.underhood_image.writable = False
+	db.auction_request_offer.roof_image.readable = False
+	db.auction_request_offer.roof_image.writable = False
+	db.auction_request_offer.other_image.readable = False
+	db.auction_request_offer.other_image.writable = False
+
+	db.auction_request_offer.auction_request.default = auction_request_id
+	
+	bid_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
+	
+	if bid_form.process(hideerror = False).accepted:
+		response.flash = 'success!'
+
+	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, bid_form=bid_form)

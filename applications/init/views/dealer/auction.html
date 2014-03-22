@@ -1,2 +1,48 @@
- {{extend 'page_layout.html'}}
- {{=BEAUTIFY(response._vars)}}
+{{extend 'page_layout.html'}}
+{{#=BEAUTIFY(response._vars)}}
+ 
+{{=auction_request_info['id']}}
+{{=auction_request_info['year']}}
+{{=auction_request_info['make']}}
+{{=auction_request_info['model']}}
+{{=auction_request_info['trim_name']}}
+{{#=auction_request_info['trim_data']}}
+{{=auction_request_info['colors']}}
+{{=auction_request_info['city']}}
+{{=auction_request_info['state']}}
+{{=auction_request_info['distance']}}
+{{=auction_request_info['ends_on']}}
+{{=auction_request_info['ends_in_seconds']}}
+{{=auction_request_info['ends_in_human']}}
+{{=auction_request_info['bids']}}
+{{=auction_request_info['best_price']}}
+
+<ul class="nav nav-list">
+  <li class="divider"></li>
+</ul>
+ 
+{{for each_offer in auction_request_offers_info:}}
+	{{=each_offer['id']}}
+	{{=each_offer['bid']}}
+	{{=each_offer['color']}}
+	{{=each_offer['summary']}}
+	{{=each_offer['interior_options']}}
+	{{=each_offer['exterior_options']}}
+	{{=each_offer['mechanical_options']}}
+	{{=each_offer['package_options']}}
+	{{=each_offer['fees_options']}}
+	{{=each_offer['exterior_image']}}
+	{{=each_offer['interior_image']}}
+	{{=each_offer['front_image']}}
+	{{=each_offer['rear_image']}}
+	{{=each_offer['tire_image']}}
+	{{=each_offer['dashboard_image']}}
+	{{=each_offer['passenger_image']}}
+	{{=each_offer['trunk_image']}}
+	{{=each_offer['underhood_image']}}
+	{{=each_offer['roof_image']}}
+	{{=each_offer['other_image']}}
+	<br><br>
+{{pass}}
+
+{{=bid_form}}

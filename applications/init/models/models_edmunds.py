@@ -189,7 +189,7 @@ db.define_table('auction_request',
 	),
 	#virtual fields are not sortable in db use #EDIT USE METHOD INSTESD, which is calculated on demand instead of on on select in queries
 	Field.Method('lowest_offer',
-		lambda row: db(db.auction_request_offer.auction_request == row.auction_request.id).select(orderby = ~db.auction_request_offer.bid).first()
+		lambda row: db(db.auction_request_offer.auction_request == row.auction_request.id).select(orderby = ~db.auction_request_offer.bid).last()
 	),
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer.auction_request == row.auction_request.id).select())
@@ -210,26 +210,32 @@ db.define_table('auction_request_offer',
 		writable=False,
 		required=True,
 	), 
+	Field('owner_id', db.auth_user,
+		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',)
+	),
 	Field('bid', 'double',
 		requires = IS_NOT_EMPTY(),
 	),
-	Field('interior_options',
+	Field('color',
+		requires=IS_NOT_EMPTY(),
+	),
+	Field('interior_options', 'list:string',
 		#requires is_in_set like trim above
 		requires=IS_NOT_EMPTY(),
 	),
-	Field('exterior_options',
+	Field('exterior_options', 'list:string',
 		#requires is_in_set like trim above
 		requires=IS_NOT_EMPTY(),
 	),
-	Field('mechanical_options',
+	Field('mechanical_options', 'list:string',
 		#requires is_in_set like trim above
 		requires=IS_NOT_EMPTY(),
 	),
-	Field('package_options',
+	Field('package_options', 'list:string',
 		#requires is_in_set like trim above
 		requires=IS_NOT_EMPTY(),
 	),
-	Field('fees_options',
+	Field('fees_options', 'list:string',
 		#requires is_in_set like trim above
 		requires=IS_NOT_EMPTY(),
 	),

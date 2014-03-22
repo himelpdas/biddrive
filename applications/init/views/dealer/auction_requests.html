@@ -187,7 +187,13 @@
 			{{=each_request.number_of_bids()}}
 		</div>
 		<div class = "span1">
-			${{=each_request.lowest_offer().bid if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
+			{{#='$' + str(int(each_request.lowest_offer().bid)) if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
+			{{lowest_offer = each_request.lowest_offer()}} {{#one db call instead of two like above}}
+			{{if lowest_offer:}}
+				{{=lowest_offer.bid}}
+			{{else:}}
+				No bids!
+			{{pass}}
 		</div>
 	</div>
 	<hr class="featurette-divider">
