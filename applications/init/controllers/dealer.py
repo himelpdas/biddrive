@@ -194,7 +194,7 @@ def authorize_auction_for_dealer(): #add permission and charge entry fee upon de
 		auth.add_membership('request_by_make_authorized_dealers_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
 		redirect(URL('pre_auction.html', args=[auction_request_id]))
 	raise HTTP(404 , "Invalid auction request!")
-	
+
 @auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
 @auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
@@ -210,6 +210,9 @@ def pre_auction():
 		redirect(URL('my_auctions.html'))
 	
 	db.auction_request_offer.auction_request.default = auction_request_id
+	db.auction_request_offer.owner_id.default = auth.user_id
+	db.auction_request_offer.owner_id.readable = False
+	db.auction_request_offer.owner_id.writable = False
 	
 	auction_request = auction_request_rows.last()
 	trim_data = json.loads(auction_request.trim_data)
