@@ -189,10 +189,10 @@ db.define_table('auction_request',
 	),
 	#virtual fields are not sortable in db use #EDIT USE METHOD INSTESD, which is calculated on demand instead of on on select in queries
 	Field.Method('lowest_offer',
-		lambda row: db(db.auction_request_offer.auction_request == row.auction_request.id).select(orderby = ~db.auction_request_offer.bid).last()
+		lambda row: db(db.auction_request_offer_bid.auction_request == row.auction_request.id).select(orderby = ~db.auction_request_offer_bid.bid).last()
 	),
 	Field.Method('number_of_bids',
-		lambda row: len(db(db.auction_request_offer.auction_request == row.auction_request.id).select())
+		lambda row: len(db(db.auction_request_offer_bid.auction_request  ==row.auction_request.id).select())
 	),
 	#Field user ID
 	#Block dealers
@@ -212,9 +212,6 @@ db.define_table('auction_request_offer',
 	), 
 	Field('owner_id', db.auth_user,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',)
-	),
-	Field('bid', 'double',
-		requires = IS_NOT_EMPTY(),
 	),
 	Field('color',
 		requires=IS_NOT_EMPTY(),
@@ -281,19 +278,44 @@ db.define_table('auction_request_offer',
 )
 
 #continue work here
-db.define_table('auction_request_offer_image',
-	Field('auction_request_offer', 'reference auction_request'), #use temp ID in URL to mask id number# USE HAS PERMISSION INSTEAD
-	Field('file', 'upload',
-		required=True,
-	), 
-	Field('description',
-		requires=IS_NOT_EMPTY(),
-		#can be None so required unnecessary
+db.define_table('auction_request_offer_bid', #find bids by using minimum 2/3 of owner_id, auction_request, and/or auction_request_offer
+	Field('owner_id', db.auth_user,
+		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',),
+		required = True,
+		readable=False,
+		writable=False,
 	),
-	Field('type',
-		requires = IS_IN_SET(
-			['Vehicle', 'Exterior', 'Interior', 'Accessories', 'Imperfection'],
-			zero=None
-		),
+	Field('auction_request', 'reference auction_request',
+		required = True,
+		readable=False,
+		writable=False,
+	), #OLD #use temp ID in URL to mask id number# USE HAS PERMISSION INSTEAD
+	Field('auction_request_offer', 'reference auction_request_offer',
+		required = True,
+		readable=False,
+		writable=False,
 	),
+	Field('bid', 'integer',
+		requires = IS_NOT_EMPTY(),
+	),
+	Field('created_on', 'datetime', 
+		default=request.now,
+		readable=False,
+		writable=False,
+	),
+	Field('changed_on', 'datetime', 
+		update=request.now,
+		readable=False,
+		writable=False,
+	),
+	Field('created_by', db.auth_user, 
+		default=auth.user_id, #DO NOT CONFUSE auth.user_id with db.auth_user #<type 'exceptions.TypeError'> long() argument must be a string or a number, not 'Table'
+		readable=False,
+		writable=False,
+	),
+	Field('changed_by', db.auth_user,
+		update=auth.user_id,
+		readable=False,
+		writable=False,
+	)
 )

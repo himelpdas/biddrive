@@ -198,12 +198,14 @@ def authorize_auction_for_dealer(): #add permission and charge entry fee upon de
 @auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
 @auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
-@auth.requires(not db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.id == request.args(0))).select()) #make sure dealer did not make an offer already
+#@auth.requires(not db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == request.args(0))).select()) #make sure dealer did not make an offer already
 def pre_auction():
+	auction_request_id = request.args[0]
+	if db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select(): #make sure dealer did not make an offer already... if so redirect him to auction
+		redirect(URL('auction',args=[auction_request_id]))
 	#if not request.args:  #make decorator http://bit.ly/1i2wbHz
 	#	session.flash='No request ID!'
 	#	redirect(URL('my_auctions.html'))
-	auction_request_id = request.args[0]
 	auction_request_rows = db(db.auction_request.id == auction_request_id).select() #ALWAYS verify existence of vars/args in database.
 	if not auction_request_rows:
 		session.flash='Invalid request ID!'
@@ -310,12 +312,29 @@ def __get_option_from_ID(trim_data, option_type, option_id):
 @auth.requires(request.args(0))
 def auction():
 	auction_request_id = request.args[0]
-	
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
 		session.flash="Invalid request ID!"
 		redirect(URL('my_auctions.html'))
 	
+	#create offer form
+	my_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
+	
+	if not my_offer: #somehow he never made an offer
+		session.flash="You are not a part of this auction!"
+		redirect(URL('my_auctions.html'))
+	auction_request_offer_id = my_offer.id
+	
+	db.auction_request_offer_bid.auction_request.default = auction_request_id
+	db.auction_request_offer_bid.auction_request_offer.default = auction_request_offer_id
+	db.auction_request_offer_bid.owner_id.default = auth.user_id
+	
+	bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
+	
+	if bid_form.process(hideerror = False).accepted:
+		response.flash = 'Your new bid is %s!'%bid_form.vars.bid
+	
+	#auction request info
 	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
 	
 	colors=OD()
@@ -350,10 +369,8 @@ def auction():
 		best_price = lowest_offer,
 	)
 	
+	#auction request offers
 	auction_request_offers = db(db.auction_request_offer.auction_request == auction_request_id).select()
-	
-	response.title="Auction"
-	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
 	
 	"""
 	response.view = 'generic.html'
@@ -381,9 +398,14 @@ def auction():
 		for each_option in each_offer.fees_options:
 			fees_options.append(__get_option_from_ID(trim_data, 'Additional Fees', each_option))
 			
+		bids = db((db.auction_request_offer_bid.owner_id == each_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
+		number_of_bids = len(bids)
+		last_bid_price = '$%s'%bids.last().bid if bids.last() else "No Bids!" 
+		
 		each_offer_dict = {
 			'id' : each_offer.id,
-			'bid' : int(each_offer.bid),
+			'last_bid_price' : last_bid_price,
+			'number_of_bids' : number_of_bids,
 			'color' : each_offer.color,
 			'summary' : each_offer.summary,
 			'interior_options' : interior_options,
@@ -404,50 +426,13 @@ def auction():
 			'other_image' : each_offer.other_image,
 		}
 		auction_request_offers_info.append(each_offer_dict)
-	
-	#only want bid field
-	db.auction_request_offer.color.readable = False
-	db.auction_request_offer.color.writable = False
-	db.auction_request_offer.summary.readable = False
-	db.auction_request_offer.summary.writable = False
-	db.auction_request_offer.interior_options.readable = False
-	db.auction_request_offer.interior_options.writable = False
-	db.auction_request_offer.exterior_options.readable = False
-	db.auction_request_offer.exterior_options.writable = False
-	db.auction_request_offer.mechanical_options.readable = False
-	db.auction_request_offer.mechanical_options.writable = False
-	db.auction_request_offer.package_options.readable = False
-	db.auction_request_offer.package_options.writable = False
-	db.auction_request_offer.fees_options.readable = False
-	db.auction_request_offer.fees_options.writable = False
-	db.auction_request_offer.exterior_image.readable = False
-	db.auction_request_offer.exterior_image.writable = False
-	db.auction_request_offer.interior_image.readable = False
-	db.auction_request_offer.interior_image.writable = False
-	db.auction_request_offer.front_image.readable = False
-	db.auction_request_offer.front_image.writable = False
-	db.auction_request_offer.rear_image.readable = False
-	db.auction_request_offer.rear_image.writable = False
-	db.auction_request_offer.tire_image.readable = False
-	db.auction_request_offer.tire_image.writable = False
-	db.auction_request_offer.dashboard_image.readable = False
-	db.auction_request_offer.dashboard_image.writable = False
-	db.auction_request_offer.passenger_image.readable = False
-	db.auction_request_offer.passenger_image.writable = False
-	db.auction_request_offer.trunk_image.readable = False
-	db.auction_request_offer.trunk_image.writable = False
-	db.auction_request_offer.underhood_image.readable = False
-	db.auction_request_offer.underhood_image.writable = False
-	db.auction_request_offer.roof_image.readable = False
-	db.auction_request_offer.roof_image.writable = False
-	db.auction_request_offer.other_image.readable = False
-	db.auction_request_offer.other_image.writable = False
 
-	db.auction_request_offer.auction_request.default = auction_request_id
-	
-	bid_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
-	
-	if bid_form.process(hideerror = False).accepted:
-		response.flash = 'success!'
-
+	#title stuff
+	response.title="Auction"
+	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
 	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, bid_form=bid_form)
+	
+@auth.requires_membership('dealers')
+def my_auctions():
+	my_offers = db(db.auction_request_offer.owner_id == auth.user_id).select()
+	return dict(my_offers = my_offers)
