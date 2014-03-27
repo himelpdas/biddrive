@@ -813,3 +813,34 @@ a.navbar-brand { text-shadow: 1px 1px 1px #000 }
     #showcase .features_op1_row .last { margin-bottom: 0 }
 }
 .brand { text-shadow: 1px 1px 1px #000 }
+
+.text-uppercase {
+    text-transform: uppercase;
+}
+.text-xs {
+    font-size: 10px;
+}
+.text-sm {
+    font-size: 12px;
+}
+.text-md {
+    font-size: 14px;
+}
+.text-lg {
+    font-size: 16px;
+}
+.text-xl {
+    font-size: 18px;
+}
+.text-bold {
+    font-weight: bold;
+}
+.text-ital {
+    font-style: italic;
+}
+
+.overflow-hidden {
+    overflow: hidden;
+    text-overflow: ellipsis;  
+    white-space: nowrap
+}
