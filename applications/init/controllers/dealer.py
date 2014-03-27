@@ -383,7 +383,6 @@ def auction():
 		colors = colors,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
-		distance = 'N/A',
 		ends_on = str(auction_request.expires),
 		ends_in_seconds = (auction_request.expires - request.now).total_seconds(),
 		ends_in_human = human(auction_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}'),
