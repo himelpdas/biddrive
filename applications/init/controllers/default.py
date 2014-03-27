@@ -20,8 +20,12 @@ def index():
 
 	bg_images = db(db.index_bg_image.id > 0).select()
 	hero_images = db(db.index_hero_image.id > 0).select()
+	
+	year = datetime.date.today().year
+	if request.args(0):
+		year = request.args[0]
 		
-	return dict(brands_list=BRANDS_LIST, bg_images=bg_images, hero_images=hero_images)
+	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
 	
 def request_by_make():
 	if not request.args:
@@ -61,15 +65,16 @@ def request_by_make():
 	db.auction_request.color_preference.requires = [IS_IN_SET(style_color_codes, multiple=True, zero=None), IS_NOT_EMPTY(error_message='pick at least one color')]
 	db.auction_request.color_preference.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
-	form = SQLFORM(db.auction_request, _class = "form-horizontal")
-
+	form = SQLFORM(db.auction_request, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
+	
 	if form.process(hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = ' Register or login to view it.'
 		if auth.user_id:
 			guest_msg='' #user is logged in no need for guest msg
 		session.flash = 'Auction submitted!%s' % guest_msg
+		auth.add_group('request_by_make_authorized_dealers_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
-			URL('auction.html')
+			URL('auction.html', args=form.vars.id) #http://goo.gl/twPSTK
 		)
 		
 	response.title="Request an auction"
@@ -154,6 +159,8 @@ def user():
 			response.title = "Forgot something?"
 	if auth.is_logged_in():
 		response.title='Hey, %s!' % auth.user.first_name
+
+
 
 	return dict(form=auth())
 

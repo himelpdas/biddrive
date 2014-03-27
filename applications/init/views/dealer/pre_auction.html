@@ -1,0 +1,35 @@
+{{extend 'page_layout.html'}}
+{{#=BEAUTIFY(response._vars)}}
+{{#"""}}
+<div class="row-fluid">
+	<div class = "span6">
+		{{=offer_form}}
+	</div>
+	<div class= "span6">
+		<h4>
+			Calculated MSRP
+		</h4>
+		<h3>
+			$<span id='msrp'>{{=int(msrp_by_id['base'])}}</span>
+		</h3>
+	</div>
+</div>
+{{#=BEAUTIFY(options)}}
+{{#'''}}
+<script>
+	{{offer_types = ['interior','exterior','mechanical','package','fees',]}}
+	{{for each_offer_type in offer_types:}}
+		$("#auction_request_offer_{{=each_offer_type}}_options").multiSelect('refresh'); //initialize multiselect
+	{{pass}}
+
+	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; {{#ok to use name instead of id because there is no character limitations like at get url}}
+	$('.ms-container').click(function(){
+		var msrp = msrp_by_id['base'];
+		var list = $(".ms-selected").map(function(){return $(this).children().text();}).get(); {{#map runs a function on each element}}
+		list.map( function(item) {
+			msrp = msrp + msrp_by_id[item];
+		});
+		$('#msrp').html(msrp);
+	});
+</script>{{#http://goo.gl/IpBLpn http://goo.gl/cB089T http://goo.gl/IpBLpn http://goo.gl/WvuDbj http://goo.gl/HwI81Q}}
+{{#"""}}

@@ -1,0 +1,4 @@
+{{extend 'page_layout.html'}}
+{{for each_offer in my_offers:}}
+	{{=each_offer.auction_request.summary}}
+{{pass}}
