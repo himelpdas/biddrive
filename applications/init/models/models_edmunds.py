@@ -18,6 +18,7 @@ if auth.user_id:
 		response.menu.append(
 			(T('Dealer Portal'), False, URL('dealer', 'index.html'), [
 				(T('Auction Requests'), False, URL('dealer', 'auction_requests.html'), []),
+				(T('My Auctions'), False, URL('dealer', 'my_auctions.html'), []),
 			]),
 		)
 

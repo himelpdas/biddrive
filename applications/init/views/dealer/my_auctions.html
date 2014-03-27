@@ -1,4 +1,5 @@
 {{extend 'page_layout.html'}}
-{{for each_offer in my_offers:}}
-	{{=each_offer.auction_request.summary}}
+{{#=BEAUTIFY(my_offers)}}
+{{for each_offer in my_offer_summaries:}}
+	{{=each_offer}}
 {{pass}}

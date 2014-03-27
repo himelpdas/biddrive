@@ -501,4 +501,15 @@ def auction():
 @auth.requires_membership('dealers')
 def my_auctions():
 	my_offers = db(db.auction_request_offer.owner_id == auth.user_id).select()
-	return dict(my_offers = my_offers)
+	my_offer_summaries = []
+	for each_offer in my_offers:
+		auction_request = db(db.auction_request.id == each_offer.auction_request).select().first()
+		each_offer_dict = {
+			'year':auction_request.year,
+			'make':auction_request.make,
+			'model':auction_request.model,
+			'trim':auction_request.trim_name,
+			'color':each_offer.color,
+		}
+		my_offer_summaries.append(each_offer_dict)
+	return dict(my_offer_summaries = my_offer_summaries)
