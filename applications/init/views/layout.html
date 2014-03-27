@@ -65,13 +65,17 @@
 						</li>
 					{{pass}}
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i> Sign in <b class="caret"></b></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i> {{if auth.is_logged_in():}}Hello, {{=auth.user.first_name.capitalize()}}!{{else:}}Sign in{{pass}} <b class="caret"></b></a>
                         <ul class="dropdown-menu">
 							{{auth_next=dict(_next = '/%s/%s/%s'%(request.application, request.controller, request.function))}}
-                            <li><a href="{{=URL('user', args=['register'], vars=auth_next)}}"><i class="fa fa-user"></i> Sign up</a></li>
-                            <li><a href="{{=URL('user', args=['request_reset_password'], vars=auth_next)}}"><i class="fa fa-lock"></i> Lost password?</a></li>
+                            <li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'], vars=auth_next)}}"><i class="fa fa-user"></i> {{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>
+                            <li><a href="{{=URL('default', 'user', args=['change_password' if auth.is_logged_in() else 'request_reset_password'], vars=auth_next)}}"><i class="fa fa-lock"></i> {{if auth.is_logged_in():}}Password{{else:}}Lost password?{{pass}}</a></li>
 							<li class="divider"></li>
-							<li><a href="{{=URL('user', args=['login'], vars=auth_next)}}"><i class="fa fa-key"></i> Log in</a></li>
+							{{if auth.is_logged_in():}}
+								<li><a href="{{=URL('default', 'user', args=['logout'])}}"><i class="fa fa-power-off"></i> Log out</a></li>
+							{{else:}}
+								<li><a href="{{=URL('default', 'user', args=['login'], vars=auth_next)}}"><i class="fa fa-key"></i> Log in</a></li>
+							{{pass}}
                         </ul>
                     </li>
                 </ul>
