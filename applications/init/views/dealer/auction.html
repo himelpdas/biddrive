@@ -1,6 +1,8 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
- 
+
+<link rel="stylesheet" href="{{=URL('static','css/flipclock.css')}}"> {{#http://goo.gl/oYyk49}}
+<script src="{{=URL('static','js/flipclock.min.js')}}"></script>
 
 <div class="clock"></div>
 
