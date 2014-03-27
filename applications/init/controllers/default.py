@@ -160,6 +160,8 @@ def user():
 	if auth.is_logged_in():
 		response.title='Hey, %s!' % auth.user.first_name
 
+
+
 	return dict(form=auth())
 
 @cache.action()

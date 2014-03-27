@@ -1,257 +1,363 @@
 {{extend 'layout.html'}}
-<!-- Hero ===================================================== -->
-<!-- Main hero unit for a primary marketing message or call to action -->
-<div id="hero"class="hero-unit">
-	<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
-		<div id="heroleft" class="span4">
-			<div class="row-fluid">
-				<h2>
-					Let the dealers bid on you!
-				</h2>
-				<h5>
-					<i id="hand" class="icon-hand-down"></i>Request by make and model or by type and features.
-				</h5>
-				<script>
-					$('#hand').css({'position':'relative'});
-					function upanddown() {
-						 $( "#hand" ).animate({
-								'margin-top': "-=7px",
-							},
-							500,
-							function() {
-								//
-							}
-						).animate({
-								'margin-top': "+=7px",
-							},
-							500,
-							function() {
-								upanddown();
-							}
-						);
-					}
-					upanddown();
-				</script>
-			</div>
-			<!--$Year-->
-			<div class= "row-fluid">
-				<div class="btn-group pull-right">
-					<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-						{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
-						<span class="caret"></span>
-					</a>
-					<ul class="dropdown-menu">
-						<!-- dropdown menu links -->
-							{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
-					</ul>
-				</div>
-			</div>
-			<ul class="nav nav-list">
-				<li class="divider"></li>
-			</ul>
-			<!--#Year-->
-			<!--$Tabs-->
-			<div class="tabbable"> <!-- Only required for left/right tabs -->
-				<ul class="nav nav-tabs">
-					<li class="active"><a href="#tab1" data-toggle="tab">Make</a></li>
-					<li><a href="#tab2" data-toggle="tab">Type</a></li>
-					<li class="dropdown pull-right">
-						<a class="dropdown-toggle" href="#" data-toggle="dropdown">
-							<i class="fa fa-question-circle"></i>
-						</a>
- 						<ul class="dropdown-menu">
-							<li><a tabindex="-1" href="#"><i class="fa fa-magic"></i> {{=APP_NAME.capitalize()}} Wizard</a></li>
-							<li class="divider"></li>
-							<li><a tabindex="-1" href="#"><i class="fa fa-arrow-circle-o-right"></i> Edmunds Reviews</a></li>
-							<li><a tabindex="-1" href="#"><i class="fa fa-arrow-circle-o-right"></i> Visit a Dealership</a></li>
-						</ul>
-					</li>
-				</ul>
-				<div class="tab-content">
-					<div class="tab-pane active" id="tab1">
-				{{counter = 0}}
-				{{for each_brand in brands_list:}}
-					{{if counter == 0:}}
-						<div class="row-fluid"> {{#http://bit.ly/1eu4NPH}}
-					{{pass}}
-							<div class="span4">
-								<span class="vehicle_switches">
-									<a id="{{=each_brand}}_switch" href="#">{{=brands_list[each_brand]}}</a>
-									{{#http://bit.ly/1ftT48Q | http://bit.ly/1kzp39Z}}
-									<script>
-										$('#{{=each_brand}}_switch').click(
-											function(evt){
-												$('#slogan_image').hide();
-												$('#vehicle_content').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="loading..."  />')
-												$('#vehicle_content').load( "{{=URL('ajax','vehicle_content', args=[each_brand, year])}}" ); //IMPLEMNT FAIL
-												$('#vehicle_content').show();
-											}
-										);
-									</script>
-								</span>
-							</div>
-					{{counter += 1}}
-					{{if counter == 3:}}
-						</div>
-						{{counter = 0}}
-					{{pass}}
-				{{pass}}
-				{{if len(brands_list) % 3 != 0:}} {{#make sure to close row-fluid div if counter didn't reach 3}}
-						<{{="/"}}div> {{#to not confuse highlighting in IDEs}}
-				{{pass}}
-					</div>
-					<div class="tab-pane" id="tab2">
-						<div class="row-fluid">
-							<div class="span6">
-								<p><img class="img-polaroid" src="http://placehold.it/120x60&text=Compact" alt="" /></p>
-							</div>
-							<div class="span6">
-								<p><img class="img-polaroid"src="http://placehold.it/120x60&text=Convertible" alt="" /></p>
-							</div>
-						</div>							
-						<div class="row-fluid">
-							<div class="span6">
-								<p><img class="img-polaroid" src="http://placehold.it/120x60&text=Mid-sized" alt="" /></p>
-							</div>
-							<div class="span6">
-								<p><img class="img-polaroid" src="http://placehold.it/120x60&text=Micro" alt="" /></p>
-							</div>
-						</div>							
-						<div class="row-fluid">
-							<div class="span6">
-								<p><img class="img-polaroid" src="http://placehold.it/120x60&text=SUV" alt="" /></p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<!--#Tabs-->
-		<div class="span8">
-			<div class="row-fluid">
-			<!--$separator-->
-			<ul class="nav nav-list">
-				<li class="divider"></li>
-			</ul>	
-			<!--#separator-->
-				<div id="slogan_image">
-					<img src="{{if hero_images :}}{{=URL('download', args=hero_images[0].image)}}{{pass}}" alt="background"  class="img-polaroid"/>
-				</div>
-				<div id="vehicle_content" style="display:none;"> {{#display:none to show slogan image image first}}
-					{{#loading image}}
-				</div>
-			<!--$separator-->
-			<ul class="nav nav-list">
-				<li class="divider"></li>
-			</ul>
-			<!--#separator-->
-			</div>
-		</div>
-	</div>
-</div>
-<script>
-	$("#hero").hide();
-	$("#hero").slideDown(1000);
-</script>
+    <section id="feature_slider" style="background-image: url(http://i.imgur.com/IKOzzNH.jpg); background-position: center;">
+        <!-- 
+            Each slide is composed by <img> and .info
+            - .info's position is customized with css in index.css
+            - each <img> parallax effect is declared by the following params inside its class:
+            
+            example: class="asset left-472 sp600 t120 z3"
+            left-472 means left: -472px from the center
+            sp600 is speed transition
+            t120 is top to 120px
+            z3 is z-index to 3
+            Note: Maintain this order of params
 
-<hr class="featurette-divider">
+            For the backgrounds, you can combine from the bgs folder :D
+        -->
 
-<div class="hero">
-	<div class="row-fluid text-center">
-		<div class="span4">
-		  <img src="http://placehold.it/160x160" class="img-circle">
-		  <h2>Heading 1</h2>
-		</div>
-		<div class="span4">
-		  <img src="http://placehold.it/160x160" class="img-circle">
-		  <h2>Heading 2</h2>
-		</div>
-		<div class="span4">
-		  <img src="http://placehold.it/160x160" class="img-circle">
-		  <h2>Heading 3</h2>
-		</div>
-	</div>	
-</div>
+        <article class="slide active" id="showcasing" style="display: block;">
+            <div class="info" style="display: block;">
+                <div class="main-slogan">
+                    Reverse-Auction Market Place
+                </div>
 
-<hr class="featurette-divider">
+                <!--
+                <a href="#make" data-toggle="tab" class="pull-left search-type browse" style="display:none">Search by Make</a>
+                <a href="#type" data-toggle="tab" class="pull-left search-type browse">Search by Type</a>
+                -->
+                
+                <script type="text/javascript">
+                    $('.browse').click(function(e) {
+                        $('.browse').toggle();
+                    });
+                </script>
 
-<div id="myCarousel" class="carousel slide">
-	<ol class="carousel-indicators">
-		<li data-target="#myCarousel" data-slide-to="0" class="active"></li>
-		<li data-target="#myCarousel" data-slide-to="1"></li>
-		<li data-target="#myCarousel" data-slide-to="2"></li>		
-	</ol>
-<!-- Carousel items -->
-<div class="carousel-inner">
-	<div class="active item"><img src="http://placehold.it/940x470"></div>
-	<div class="item"><img src="http://placehold.it/940x470"></div>
-	<div class="item"><img src="http://placehold.it/940x470"></div>
-</div>
-<!-- Carousel nav -->
-	<a class="carousel-control left" href="#myCarousel" data-slide="prev">&lsaquo;</a>
-	<a class="carousel-control right" href="#myCarousel" data-slide="next">&rsaquo;</a>
-</div>
+                <div class='clearfix'></div>
+                    
+                <!-- Tab panes -->
+                <div class="row-fluid">
+                    <div class="col-xs-6">
+                        <div class="tab-content" style="width: 500px">
+                            <div class="tab-pane active" id="make" style="margin-top: 5px">
 
-<hr class="featurette-divider">	
+            <!--$Year-->
+            <div class= "row-fluid">
+                <div class="btn-group pull-right">
+                    <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+                        {{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <!-- dropdown menu links -->
+                            {{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
+                    </ul>
+                </div>
+            </div>
+            <ul class="nav nav-list">
+                <li class="divider"></li>
+            </ul>
+            <!--#Year-->
+                                <div class="row-fluid">
+                                    {{counter = 0}}
+                                    {{for each_brand in brands_list:}}
+                                        <div class="col-xs-4 car-make">
+                                            <a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
+                                            <script>
+                                                $('#{{=each_brand}}_switch').click(
+                                                    function(evt){
+                                                        //$('#slogan_image').hide();
+                                                        $(this).closest('article').find('h2').hide();
+                                                        //$('#models').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="loading..."  />');
 
-<div id="hero2" class="hero">
-	<div class="row-fluid">
-		<div class="span4">
-			<blockquote>
-				<h1 class="lead">
-					"{{if hero_images :}}{{=hero_images[0].description}}{{pass}}"
-				</h1>
-				<small>
-					{{if hero_images :}}<a href="{{=hero_images[0].URL}} ">{{=hero_images[0].author}}</a>{{pass}}
-				</small>
-			</blockquote>
-		</div>			
-		<div class="span4">
-			<blockquote>
-				<h1 class="lead">
-					"Carbid is simply amazing..."
-				</h1>
-				<small>
-					{{if hero_images :}}<a href="{{=hero_images[0].URL}} ">Julie Summers</a>{{pass}}
-				</small>
-			</blockquote>
-		</div>
-		<div class="span4">
-			<blockquote>
-				<h1 class="lead">
-					"I love my new car!"
-				</h1>
-				<small>
-					{{if hero_images :}}<a href="{{=hero_images[0].URL}} ">Tim Ho</a>{{pass}}
-				</small>
-			</blockquote>
-		</div>
-	</div>
-</div>
+                                                        $('#models').load( "{{=URL('ajax','vehicle_content', args=[each_brand, year])}}" );
+                                                        $('#models').show();
+                                                    }
+                                                );
+                                            </script>
 
-<hr class="featurette-divider">
+                                            <script type="text/javascript">
+                                                $('.car-make a').click(function(e) {
+                                                    //$(this).closest('article').find('h2').hide();
+                                                    $(this).closest('.info').animate({'width' : '1050px'});
+                                                    $('#models').fadeIn();
+                                                });
+                                                //$(".nano").nanoScroller();
+                                            </script>
 
-<div class="hero">
-	<img class="img-polaroid" src="http://placehold.it/1000x235&text=Chart%20Graphic">
-</div>
+                                        </div>
+                                    {{pass}}
+                                </div>
+                   
+                            </div>
 
-<hr class="featurette-divider">
+                            <div class="tab-pane" id="type" style="margin-top: 5px">
+                                <div class="row-fluid">
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=Compact" />
+                                    </div>
 
-<div id="hero2" class="hero text-center">
-	<h1>In 2014, we saved our users $21,000,000! Now that's a lot of mullah...
-		<a class="btn btn-large btn-primary" href="#">Let's Begin!</a>{{#http://bit.ly/1daQRMm}}
-	</h1>
-</div><br>
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=Mid-Sized" />
+                                    </div>
 
-{{#if we want a background image}}
-<!--
-<script src="{{=URL('static','js/jquery.backstretch.min.js')}}"></script>
-<script>
-	$.backstretch(
-		[
-			{{if bg_images :}}"{{=URL('download', args=bg_images[0].image) }}"{{pass}},
-		],
-		{duration: 5000, fade: 1000}
-	);	
-</script>
--->
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=Large" />
+                                    </div>
+
+                                    <div class="clear-fix" style="margin:5px;">&nbsp;</div>
+
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=SUV" />
+                                    </div>
+
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=Mini Van" />
+                                    </div>                                
+
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=Convertible" />
+                                    </div>
+
+                                    <div class="clear-fix" style="margin:5px;">&nbsp;</div>
+
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=Off-road" />
+                                    </div>
+
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=hatchback" />
+                                    </div>                                
+
+                                    <div class="col-xs-4">
+                                        <img class="img-thumbnail" src="http://placehold.it/120x60&text=station wagon" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-6 nano" style="display:none; max-height: 300px; overflow: auto" id="models">
+                        <div class="row-fluid" style="overflow: visible">
+                            <!--
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+
+                            <div class="clear-fix" style="margin:5px;">&nbsp;</div>
+
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+
+                            <div class="clear-fix" style="margin:5px;">&nbsp;</div>
+
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+
+                            <div class="clear-fix" style="margin:5px;">&nbsp;</div>
+
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            <div class="col-xs-4">
+                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
+                            </div>
+                            -->
+                        </div>
+                    </div>                    
+                </div>
+
+
+
+            </div>
+            <h2>You win when dealers compete.</h2>
+        </article>       
+    </section>
+
+    <div id="showcase">
+        <div class="container">
+            <div class="row feature_wrapper">
+                <!-- Features Row -->
+                <div class="features_op1_row">
+                    <!-- Feature -->
+                    <div class="col-sm-3 feature">
+                        <div class="img_box">
+                            <i class="fa fa-road fa-3x" style="color: red;"></i>
+                        </div>
+                        <div class="text">
+                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center">Step 1</h3>
+                            <p>
+                                Select your desired car by Make or Type.
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Feature -->
+                    <div class="col-sm-3 feature">
+                        <div class="img_box">
+                            <i class="fa fa-rocket fa-3x" style="color: blue;"></i>
+                        </div>
+                        <div class="text">
+                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center">Step 2</h3>
+                            <p>
+                                Choose your car features, and dealer radius.  The more detailed the car, the better the offers
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Feature -->
+                    <div class="col-sm-3 feature">
+                        <div class="img_box">
+                            <i class="fa fa-tags fa-3x" style="color: green;"></i>
+                        </div>
+                        <div class="text">
+                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center">Step 3</h3>
+                            <p>
+                                Watch dealers compete in a reverse-auction for your business
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Feature -->
+                    <div class="col-sm-3 feature">
+                        <div class="img_box">
+                            <i class="fa fa-umbrella fa-3x" style="color: orange;"></i>
+                        </div>
+                        <div class="text">
+                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center">Step 4</h3>
+                            <p>
+                                Connect to the winning dealer and buy! 
+                            </p>
+                        </div>
+                    </div>                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="features">
+        <div class="container">
+            <div class="row feature">
+                <div class="col-sm-6">
+                    <img src="http://i.imgur.com/6JB4lkF.png" class="img-responsive" />
+                </div>
+                <div class="col-sm-6 info">
+                    <h3>
+                        <i class="fa fa-tint"></i>
+                        Step One Details
+                    </h3>
+                    <p>
+                        Select the Car you want to buy.  Choose by make or type. Enter your zip code.
+                    </p>
+                </div>
+            </div>
+            <div class="row feature">
+                <div class="col-sm-6 pic-right">
+                    <img src="http://i.imgur.com/6JB4lkF.png" class="pull-right img-responsive" />
+                </div>
+                <div class="col-sm-6 info info-left">
+                    <h3>
+                        <i class="fa fa-thumb-tack"></i>
+                        Step Two Details
+                    </h3>
+                    <p>
+                        Configure your car.  Tell us the make, color, trim or any special features you would like.  Choose one, or multiple car makes.  The more specific you are, the better the dealer offers will be.  
+                    </p>
+                </div>
+            </div>
+            <div class="row feature">
+                <div class="col-sm-6">
+                    <img src="http://i.imgur.com/6JB4lkF.png" class="img-responsive" />
+                </div>
+                <div class="col-sm-6 info">
+                    <h3>
+                        <i class="fa fa-star"></i>
+                        Step Three Details
+                    </h3>
+                    <p>
+                        Answer a short questionnaire that the dealers will use to calculate rebates.  This questionarre is designed to save you money!:  trading in?  need financing?  These answers will help dealers give you the best offers.  You will stay anonymous. 
+                    </p>
+                </div>
+            </div>
+            <div class="row feature">
+                <div class="col-sm-6 pic-right">
+                    <img src="http://i.imgur.com/6JB4lkF.png" class="pull-right img-responsive" />
+                </div>
+                <div class="col-sm-6 info info-left">
+                    <h3>
+                        <i class="fa fa-puzzle-piece"></i>
+                        Step Four Details
+                    </h3>
+                    <p>
+                        We will contact area dealers in our network--alerting them that a buyer is ready to enter an auction.  If they have a car that matches yours they can enter it in the auction--with an offer.  Once the first dealer offer is made, the clock starts.  Its a 72 hour auction.
+                    </p>
+                </div>
+            </div> 
+
+
+            <div class="row feature">
+                <div class="col-sm-6">
+                    <img src="http://i.imgur.com/6JB4lkF.png" class="img-responsive" />
+                </div>
+                <div class="col-sm-6 info">
+                    <h3>
+                        <i class="fa fa-star"></i>
+                        I see there are more than 4 steps
+                    </h3>
+                    <p>
+                        Sit and watch as dealers compete--and prices decrease.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row feature">
+                <div class="col-sm-6 pic-right">
+                    <img src="http://i.imgur.com/6JB4lkF.png" class="pull-right img-responsive" />
+                </div>
+                <div class="col-sm-6 info info-left">
+                    <h3>
+                        <i class="fa fa-puzzle-piece"></i>
+                        Some more details...
+                    </h3>
+                    <p>
+                        You can select the winner at any time.  You can select any offer as the winning offer.  We realize that the lowest priced offer is not always the best offer.
+                    </p>
+                </div>
+            </div> 
+
+            <div class="row feature">
+                <div class="col-sm-6">
+                    <img src="http://i.imgur.com/6JB4lkF.png" class="img-responsive" />
+                </div>
+                <div class="col-sm-6 info">
+                    <h3>
+                        <i class="fa fa-star"></i>
+                        I suggest we shorten this a bit
+                    </h3>
+                    <p>
+                        In order to lock in the guaranteed offer of the winning dealer, contact the dealer within 24 hours. 
+                    </p>
+                </div>
+            </div>                        
+
+
+        </div>
+    </div>

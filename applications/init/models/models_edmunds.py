@@ -197,6 +197,7 @@ db.define_table('auction_request',
 	#Field user ID
 	#Block dealers
 )
+
 """
 	Field('image_limit', 'integer', #returns no such column error #need to add column because migrate issues #SQLITE makes it hard to add/rm columns #SQLITE DATABASE BROWSER #http://goo.gl/SbdnfH #http://goo.gl/Qua42R #ALTER TABLE auction_request ADD COLUMN image_limit INTEGER # UPDATE auction_request SET image_limit = 5
 		required = True,

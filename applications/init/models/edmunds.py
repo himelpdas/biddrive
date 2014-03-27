@@ -6,7 +6,8 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 	#will call ram >> disk >> API
 	URI = repr(URI)
 	def disk():
-		response = cache.disk(
+		#response = cache.disk(
+		response = cache.ram(	
 			URI, #<type 'exceptions.TypeError'> String or Integer object expected for key, unicode found
 			function,
 			time_expire*7,
