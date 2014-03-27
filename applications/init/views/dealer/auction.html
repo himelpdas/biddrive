@@ -1,6 +1,16 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
  
+
+<div class="clock"></div>
+
+<script type="text/javascript">
+	var clock = $('.clock').FlipClock({{=auction_request_info['ends_in_seconds']}}, {
+		clockFace: 'DailyCounter',
+		countdown: true
+	});
+</script>
+ 
 {{=auction_request_info['id']}}
 {{=auction_request_info['year']}}
 {{=auction_request_info['make']}}
@@ -21,10 +31,28 @@
   <li class="divider"></li>
 </ul>
  
+<div class= "row-fluid">
+	<div class="span2">
+		<div class="btn-group">
+			<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+				{{sortby = request.vars['sortby']}}
+				{{=sortby.capitalize() if sortby else "Sort bids"}}
+				<span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+				<!-- dropdown menu links -->
+					{{for each in sortlist:}}<li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each.replace('-',' ').capitalize()}}</a></li>{{pass}}
+			</ul>
+		</div>
+	</div>
+</div>
+ 
 {{for each_offer in auction_request_offers_info:}}
 	<pre>dealer id: {{=each_offer['id']}}</pre>
 	<pre>last bid price: {{=each_offer['last_bid_price']}}</pre>
 	<pre>bids by this user: {{=each_offer['number_of_bids']}}</pre>
+	<pre>MSRP: {{=each_offer['msrp']}}</pre>
+	<pre>{{=each_offer['msrp_discount']}} off!</pre>
 	{{=each_offer['color']}}
 	{{=each_offer['summary']}}
 	{{=each_offer['interior_options']}}
@@ -50,4 +78,4 @@
 
 {{pass}}
 
-{{=bid_form}}
+{{if not auction_request_expired:}}{{=bid_form}}{{pass}}

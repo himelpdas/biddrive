@@ -33,6 +33,23 @@
 					upanddown();
 				</script>
 			</div>
+			<!--$Year-->
+			<div class= "row-fluid">
+				<div class="btn-group pull-right">
+					<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+						{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu">
+						<!-- dropdown menu links -->
+							{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
+					</ul>
+				</div>
+			</div>
+			<ul class="nav nav-list">
+				<li class="divider"></li>
+			</ul>
+			<!--#Year-->
 			<!--$Tabs-->
 			<div class="tabbable"> <!-- Only required for left/right tabs -->
 				<ul class="nav nav-tabs">
@@ -66,7 +83,7 @@
 											function(evt){
 												$('#slogan_image').hide();
 												$('#vehicle_content').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="loading..."  />')
-												$('#vehicle_content').load( "{{=URL('ajax','vehicle_content', args=[each_brand])}}" ); //IMPLEMNT FAIL
+												$('#vehicle_content').load( "{{=URL('ajax','vehicle_content', args=[each_brand, year])}}" ); //IMPLEMNT FAIL
 												$('#vehicle_content').show();
 											}
 										);
@@ -108,8 +125,8 @@
 					</div>
 				</div>
 			</div>
-			<!--#Tabs-->
 		</div>
+		<!--#Tabs-->
 		<div class="span8">
 			<div class="row-fluid">
 			<!--$separator-->

@@ -188,7 +188,7 @@ db.define_table('auction_request',
 		writable=False,
 	),
 	#virtual fields are not sortable in db use #EDIT USE METHOD INSTESD, which is calculated on demand instead of on on select in queries
-	Field.Method('lowest_offer',
+	Field.Method('lowest_offer', #of all the bids find the lowest
 		lambda row: db(db.auction_request_offer_bid.auction_request == row.auction_request.id).select(orderby = ~db.auction_request_offer_bid.bid).last()
 	),
 	Field.Method('number_of_bids',
@@ -275,10 +275,25 @@ db.define_table('auction_request_offer',
 	Field('other_image', 'upload',
 		requires=IS_EMPTY_OR(IS_IMAGE())
 	),
+	Field.Method('latest_bid', #this offers latest bid
+		lambda row: db((db.auction_request_offer_bid.auction_request == row.auction_request_offer.auction_request) & (row.auction_request_offer.id == db.auction_request_offer_bid.auction_request_offer)).select().first() #get the bid that has this auction request, and auction request offer
+	),#continue
+	Field.Method('MSRP',
+		lambda row, auction_request=None: getMsrp(
+			auction_request or db(db.auction_request.id == row.auction_request_offer.auction_request).select().first().trim_data,
+			{
+				'Interior':row.auction_request_offer.interior_options,
+				'Exterior':row.auction_request_offer.exterior_options,
+				'Mechanical':row.auction_request_offer.mechanical_options,
+				'Package':row.auction_request_offer.package_options,
+				'Additional Fees':row.auction_request_offer.fees_options,
+			}
+		)
+	),
 )
 
 #continue work here
-db.define_table('auction_request_offer_bid', #find bids by using minimum 2/3 of owner_id, auction_request, and/or auction_request_offer
+db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/3 of owner_id, auction_request, and/or auction_request_offer
 	Field('owner_id', db.auth_user,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',),
 		required = True,
@@ -297,6 +312,9 @@ db.define_table('auction_request_offer_bid', #find bids by using minimum 2/3 of 
 	),
 	Field('bid', 'integer',
 		requires = IS_NOT_EMPTY(),
+	),
+	Field.Method('MSRP_discount',
+		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,
 	),
 	Field('created_on', 'datetime', 
 		default=request.now,

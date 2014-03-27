@@ -4,6 +4,25 @@
 
 {{#FILTERS}}
 <div class= "row-fluid">
+
+	<div class="span2">
+		<div class="btn-group">
+			<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+				{{all_years = "%s - %s"%(years_list[0],years_list[-1])}}
+				{{if year in years_list:}}{{=year}} models{{else:}}{{=all_years}}{{pass}}
+				<span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+				<!-- dropdown menu links -->
+					<li><a id = "all_filter" href="{{=URL(vars=dict(sortby=sortby))}}">{{=all_years}}</a></li>
+					 <li class="divider"></li>
+				{{for each_year in years_list:}}
+					<li><a id = "{{=each_year}}_year_filter" href="{{=URL(vars=dict(year=each_year, sortby=sortby))}}">{{=each_year}} models</a></li>
+				{{pass}}
+			</ul>
+		</div>
+	</div>
+
 	<div class="span2">
 		<div class="btn-group">
 			<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
@@ -12,10 +31,10 @@
 			</a>
 			<ul class="dropdown-menu">
 				<!-- dropdown menu links -->
-					<li><a id = "all_filter" href="{{=URL(vars=dict(sortby=sortby))}}">All Brands</a></li>
+					<li><a id = "all_makes_filter" href="{{=URL(vars=dict(year=year ,sortby=sortby))}}">All Brands</a></li>
 					 <li class="divider"></li>
 				{{for each_make in brands_list:}}
-					<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(make=each_make, sortby=sortby))}}">{{=brands_list[each_make]}}</a></li>
+					<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(make=each_make, year=year ,sortby=sortby))}}">{{=brands_list[each_make]}}</a></li>
 				{{pass}}
 			</ul>
 		</div>
@@ -30,10 +49,10 @@
 			</a>
 			<ul class="dropdown-menu">
 				<!-- dropdown menu links -->
-					<li><a id = "all_models_filter" href="{{=URL(vars=dict(make=make, sortby=sortby))}}">All Models</a></li>
+					<li><a id = "all_models_filter" href="{{=URL(vars=dict(make=make, year=year ,sortby=sortby))}}">All Models</a></li>
 					 <li class="divider"></li>
 				{{for each_model in models_list:}}
-					<li><a id = "{{=each_model}}_model__filter" href="{{=URL(vars=dict(model=each_model, make=make, sortby=sortby))}}">{{=models_list[each_model]}}</a></li>
+					<li><a id = "{{=each_model}}_model__filter" href="{{=URL(vars=dict(model=each_model, make=make, year=year ,sortby=sortby))}}">{{=models_list[each_model]}}</a></li>
 				{{pass}}
 			</ul>
 		{{else:}}
@@ -45,7 +64,7 @@
 		</div>
 	</div>
 
-	<div class="span4">
+	<div class="span3">
 		<div class="btn-group">
 			{{if model:}}{{#can't have trims with out model}}
 				<a id="trim_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
@@ -54,10 +73,10 @@
 				</a>
 				<ul class="dropdown-menu">
 					<!-- dropdown menu links -->
-						<li><a id = "all_styles_filter" href="{{=URL(vars=dict(make = make, model = model, sortby=sortby))}}">All Trims</a></li>
+						<li><a id = "all_styles_filter" href="{{=URL(vars=dict(make = make, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
 						 <li class="divider"></li>
 					{{for each_trim in styles_list:}}
-						<li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, make=make, sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
+						<li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
 					{{pass}}
 				</ul>
 			{{else:}}
@@ -69,7 +88,7 @@
 		</div>
 	</div>
 
-	<div class="span3">
+	<div class="span2">
 		<div class="btn-group">
 			{{if trim:}}{{#can't have colors with out trims}}
 				<a id="color_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
@@ -78,10 +97,10 @@
 				</a>
 				<ul class="dropdown-menu">
 					<!-- dropdown menu links -->
-						<li><a id = "all_colors_filter" href="{{=URL(vars=dict(make = make, model = model, trim=trim, sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
+						<li><a id = "all_colors_filter" href="{{=URL(vars=dict(make = make, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
 						 <li class="divider"></li>
 					{{for each_color in colors_list:}}
-						<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, make=make, sortby=sortby))}}">{{=colors_list[each_color]}}</a></li>
+						<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=colors_list[each_color]}}</a></li>
 					{{pass}}
 				</ul>
 			{{else:}}

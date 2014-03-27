@@ -10,7 +10,7 @@
 	<!-- Carousel items -->
 	<div class="carousel-inner">
 	{{for each_photo in photos:}}
-		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><img src="{{=IMG_PREFIX + each_photo}}"/></div>
+		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><img src="{{=each_photo}}"/></div>
 	{{pass}}
 	</div>
   <!-- Carousel nav -->

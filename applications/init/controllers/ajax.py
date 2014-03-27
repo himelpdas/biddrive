@@ -4,12 +4,16 @@ def vehicle_content():
 	#get_vehicle_make
 	#get stupid fucking styleid
 	#finally get bitch ass pics
-	make_details = ed_call(MAKE_URI%(request.args[0], YEAR))
+	year = datetime.date.today().year
+	if request.args(1):
+		year = request.args[1]
+	
+	make_details = ed_call(MAKE_URI%(request.args[0], year))
 	make_photos = {}
 	for each_model in make_details['models']:
 		first_image="http://placehold.it/162x81&text=Image%20Unavailable"
 		try:
-			model_styles = ed_call(STYLES_URI%(request.args[0], each_model['niceName'], YEAR))
+			model_styles = ed_call(STYLES_URI%(request.args[0], each_model['niceName'], year))
 			style_id = model_styles["styles"][0]["id"]
 			#
 			model_photos = findPhotosByStyleID(style_id) #style is not important so call it model
@@ -18,18 +22,21 @@ def vehicle_content():
 				if each_photo.split('.')[-2].split('_')[-1] == '150':  #but change to proper ratio if found
 					photo = each_photo
 			first_image = 'http://media.ed.edmunds-media.com'+photo  #errors will not be cached! :)
-		except (IndexError, KeyError): #indexError
+		except (IndexError, KeyError, TypeError): #indexError
 			pass
 		finally:
 			make_photos.update({each_model['niceName']:first_image})
 
-	return dict(make_details=make_details, make_photos=make_photos)
+	return dict(make_details=make_details, make_photos=make_photos, year=year)
 	
 def color_preference(): #TODO get all data from single call make/model/year
 	if not request.args:
 		return dict() #maybe 404
 	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3])
-	style_colors=style['colors'][1]['options']
+	try:
+		style_colors=style['colors'][1]['options']
+	except IndexError: 
+		style_colors = {}
 	style_color_codes = []
 	for each_color in style_colors:
 		style_color_codes.append([
@@ -46,8 +53,8 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 	style_id = request.args[3]
 	style = getStyleByMakeModelYearStyleID(make, model, year, style_id)
 	stats = dict(
-		mpg_city = ['MPG City' , style['MPG']['city']],
-		mpg_hwy = ['MPG Highway' , style['MPG']['highway']],
+		mpg_city = ['MPG City' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
+		mpg_hwy = ['MPG Highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
 		fuel = ['Fuel Type' , style['engine']['fuelType'].capitalize()],
 		hp = ['Horsepower' , style['engine']['horsepower']],
 		torque = ['Torque' , style['engine']['torque']],
@@ -63,7 +70,7 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 
 def reviews():
 	reviews = ed_call(REVIEWS_URI%request.args[0])
-	if 'reviews' in reviews:
+	if reviews and 'reviews' in reviews:
 		return dict(reviews = reviews['reviews'])
 	else:
 		return dict(reviews = {})
@@ -75,5 +82,7 @@ def style_photos():
 	for each_photo_set in style_photos:
 		for each_photo in each_photo_set['photoSrcs']:
 			if each_photo.split('.')[-2].split('_')[-1] == '815': #get the desired ratio
-				photos.append(each_photo)
+				photos.append(IMG_PREFIX + each_photo)
+	if not photos:
+		photos.append("http://placehold.it/815x543&text=Image%20Unavailable")
 	return dict(photos=photos)

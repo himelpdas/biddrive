@@ -14,14 +14,29 @@ def auction_requests():
 	query = (db.auction_request.id>0) & (db.auction_request.expires >= request.now) #WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
 	#####filtering#####
 	#build query and filter menu
+	#year
+	year = request.vars['year']
+	year_range_string = map(lambda each_year: str(each_year),YEAR_RANGE) #vars come back as strings, so make YEAR_RANGE strings for easy comparison
+	if not year in year_range_string: #get all years and makes if year not specified
+		year=None
+		brands_list = OD() #TEMP
+		for each_year in year_range_string:
+			brands_list.update(getBrandsList(each_year)) #doesn't matter if each_year is int or str because getBrandsList uses string formatting
+		year_list = year_range_string #USE YEAR_LIST INSTEAD OF YEAR
+	else:
+		brands_list = getBrandsList(year)
+		year_list = [year]
+	brands_list = OD(sorted(brands_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
+		
 	make = request.vars['make']
 	models_list = {}
-	if make in BRANDS_LIST:
+	if make in brands_list: #TEMP
 		query &= db.auction_request.make==make
-		for each_model in ed_call(MAKE_URI%(make, YEAR))['models']:
-			models_list.update(
-				{each_model ['niceName'] : each_model ['name'] }
-			)
+		for each_year in year_list:
+			for each_model in ed_call(MAKE_URI%(make, each_year))['models']:
+				models_list.update(
+					{each_model ['niceName'] : each_model ['name'] }
+				)
 		models_list = OD(sorted(models_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
 	else:
 		make = None #simpler for view
@@ -31,10 +46,11 @@ def auction_requests():
 	styles_list = {}
 	if model in models_list:
 		query &= db.auction_request.model==model
-		model_styles+=(ed_call( STYLES_URI%(make, model, YEAR))['styles'])
+		for each_year in year_list:
+			model_styles+=(ed_call( STYLES_URI%(make, model, each_year))['styles'])
 		for each_style in model_styles:
 			styles_list.update(
-				{str(each_style['id']) : each_style['name']} #json returns int but request.vars returns string, make them compatible
+				{str(each_style['id']) : '%s (%s)'%(each_style['name'], each_style['year']['year']) if not year else each_style['name']} #json returns int but request.vars returns string, make them compatible
 			)
 		styles_list = OD(sorted(styles_list.items(), key=lambda x: x[1])) #what it does is it passes key, value tuple to sorted function, which determines the key to sort with a function that gets passed each element in the dict
 	else:
@@ -60,7 +76,7 @@ def auction_requests():
 	#
 	year = request.vars['year']
 	if year:
-		query &= db.auction_request.year==year #move top
+		query &= ((db.auction_request.year>=year_list[0]) & (db.auction_request.year<=year_list[-1]))#move top
 	color = request.vars['color']
 	#####sorting#####
 	sortby = request.vars['sortby']
@@ -81,6 +97,10 @@ def auction_requests():
 		orderby = db.auction_request.trim_name
 	if sortby == "trim-down":
 		orderby = ~db.auction_request.trim_name
+	if sortby == "year-up":
+		orderby = db.auction_request.year
+	if sortby == "year-down":
+		orderby = ~db.auction_request.year
 	if sortby == "newest":
 		orderby = ~db.auction_request.expires
 	if sortby == "oldest":
@@ -185,7 +205,7 @@ def auction_requests():
 		plural = 's'
 	response.subtitle = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
 	#
-	return dict(auction_requests=auction_requests, columns = columns, brands_list=BRANDS_LIST, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
+	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 	
 @auth.requires(request.args(0))
 def authorize_auction_for_dealer(): #add permission and charge entry fee upon dealer agreement of terms and fees
@@ -317,6 +337,8 @@ def auction():
 		session.flash="Invalid request ID!"
 		redirect(URL('my_auctions.html'))
 	
+	auction_request_expired = auction_request.expires < request.now
+	
 	#create offer form
 	my_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
 	
@@ -331,7 +353,7 @@ def auction():
 	
 	bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
 	
-	if bid_form.process(hideerror = False).accepted:
+	if not auction_request_expired and bid_form.process(hideerror = False).accepted:
 		response.flash = 'Your new bid is %s!'%bid_form.vars.bid
 	
 	#auction request info
@@ -371,6 +393,48 @@ def auction():
 	
 	#auction request offers
 	auction_request_offers = db(db.auction_request_offer.auction_request == auction_request_id).select()
+
+	#in memory sorting	
+	sortby = request.vars['sortby']
+	sortlist = []
+	#Price
+	pricechoices = ["price-up", "price-down"]; sortlist.extend(pricechoices)
+	if sortby in pricechoices:
+		reverse = False
+		if sortby == "price-down":
+			reverse = True
+		auction_request_offers = auction_request_offers.sort(lambda row: row.latest_bid(), reverse=reverse)
+	#MSRP
+	msrpchoices = ["retail-price-up", "retail-price-down"]; sortlist.extend(msrpchoices)
+	if sortby in msrpchoices:
+		reverse = False
+		if sortby == "retail-price-down":
+			reverse = True
+		auction_request_offers = auction_request_offers.sort(lambda row: row.MSRP(), reverse=reverse)
+	#Discount (%off)
+	discountchoices = ["discount-up", "discount-down"]; sortlist.extend(discountchoices)
+	if sortby in discountchoices:
+		reverse = False
+		if sortby == "discount-down":
+			reverse = True
+		def msrp_discount(row):
+			latest_bid = row.latest_bid()
+			if latest_bid:
+				return latest_bid.MSRP_discount()
+			return 0
+		auction_request_offers = auction_request_offers.sort(msrp_discount, reverse=reverse)
+	
+	#Distance
+	distancechoices = ["distance-up", "distance-down"]; sortlist.extend(distancechoices)
+	if sortby in distancechoices:
+		reverse = False
+		if sortby == "distance-down":
+			reverse = True
+		def distance_to_auction_request(row):
+			offer_owner_info = db(db.dealership_info.id == row.owner_id).select().last()
+			return calcDist(offer_owner_info.latitude, offer_owner_info.longitude, auction_request.latitude, auction_request.longitude)
+			
+		auction_request_offers = auction_request_offers.sort(distance_to_auction_request, reverse=reverse) #returns new
 	
 	"""
 	response.view = 'generic.html'
@@ -400,11 +464,12 @@ def auction():
 			
 		bids = db((db.auction_request_offer_bid.owner_id == each_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
 		number_of_bids = len(bids)
-		last_bid_price = '$%s'%bids.last().bid if bids.last() else "No Bids!" 
+		msrp = each_offer.MSRP()
+		last_bid = bids.last()
 		
 		each_offer_dict = {
 			'id' : each_offer.id,
-			'last_bid_price' : last_bid_price,
+			'last_bid_price' : '$%s'%last_bid.bid if last_bid else "No Bids!",
 			'number_of_bids' : number_of_bids,
 			'color' : each_offer.color,
 			'summary' : each_offer.summary,
@@ -424,13 +489,15 @@ def auction():
 			'underhood_image' : each_offer.underhood_image,
 			'roof_image' : each_offer.roof_image,
 			'other_image' : each_offer.other_image,
+			'msrp': '$%s'%msrp,
+			'msrp_discount': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) #(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
 		}
 		auction_request_offers_info.append(each_offer_dict)
 
 	#title stuff
 	response.title="Auction"
-	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, bid_form=bid_form)
+	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
+	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired)
 	
 @auth.requires_membership('dealers')
 def my_auctions():
