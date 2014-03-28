@@ -504,12 +504,13 @@ def my_auctions():
 	my_offer_summaries = []
 	for each_offer in my_offers:
 		auction_request = db(db.auction_request.id == each_offer.auction_request).select().first()
+		color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		each_offer_dict = {
 			'year':auction_request.year,
 			'make':auction_request.make,
 			'model':auction_request.model,
 			'trim':auction_request.trim_name,
-			'color':each_offer.color,
+			'color':color_names[each_offer.color],
 		}
 		my_offer_summaries.append(each_offer_dict)
 	return dict(my_offer_summaries = my_offer_summaries)
