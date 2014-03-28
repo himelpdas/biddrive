@@ -566,6 +566,8 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 }
 #feature_slider .slide#showcasing .car-make a { color: #fff }
 #feature_slider .slide#showcasing .car-make a:hover { text-decoration: underline }
+#feature_slider .slide#showcasing .car-make-year a { color: #000; text-transform: uppercase;  }
+#feature_slider .slide#showcasing .car-make-year a:hover { text-decoration: none }
 #feature_slider .slide#showcasing .info h2 {
     color: #fff;
     font-size: 50px;
