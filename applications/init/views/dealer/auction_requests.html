@@ -18,6 +18,8 @@
 				    	<span class="caret"></span>
 				  	</button>
 					<ul class="dropdown-menu" role="menu">
+						<li><a id = "all_filter" href="{{=URL(vars=dict(sortby=sortby))}}">{{=all_years}}</a></li>
+						 <li class="divider"></li>
 						{{for each_year in years_list:}}
 							<li><a id = "{{=each_year}}_year_filter" href="{{=URL(vars=dict(year=each_year, sortby=sortby))}}">{{=each_year}} models</a></li>
 						{{pass}}
@@ -189,7 +191,7 @@
 								{{color_hex = each_color['colorChips']['primary']['hex']}}
 							{{pass}}
 						{{pass}}
-						<i class="fa fa-dot-circle-o" rel="tooltip" style="color:#{{=color_hex}}" data-toggle="tooltip" data-placement="bottom" title="{{=each_name}}"></i>
+						<i class="fa fa-square" rel="tooltip" style="color:#{{=color_hex}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;" data-toggle="tooltip" data-placement="bottom" title="{{=each_name}}"></i>{{#add border so that whites can show}} {{#http://goo.gl/2j2bP}} {{#http://goo.gl/R9EI3h}}
 					{{pass}}
 				</td>
 

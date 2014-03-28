@@ -53,17 +53,21 @@
             <div class="collapse navbar-collapse navbar-ex1-collapse" role="navigation">
                 <ul class="nav navbar-nav navbar-right">
 					{{for each_item in response.menu:}}
-						{{sub_items = each_item[3]}}
-						<li {{if sub_items:}}class="dropdown"{{pass}}>
-							<a href="{{=each_item[2]}}" {{if sub_items:}}class="dropdown-toggle" data-toggle="dropdown"{{pass}}>{{=each_item[0]}}{{if sub_items:}} <b class="caret"></b>{{pass}}</a>
-							{{if sub_items:}}
-								<ul class="dropdown-menu">
-									{{for each_sub_item in sub_items:}}
-										<li><a href="{{=each_sub_item[2]}}">{{=each_sub_item[0]}}</a></li>
-									{{pass}}
-								</ul>
-							{{pass}}
-						</li>
+						{{if len(each_item) == 4:}} {{#if/then fix for appadmin as menu items provided by appadmin controller are of different lengths than that of menu.py}}
+							{{sub_items = each_item[3]}}
+							<li {{if sub_items:}}class="dropdown"{{pass}}>
+								<a href="{{=each_item[2]}}" {{if sub_items:}}class="dropdown-toggle" data-toggle="dropdown"{{pass}}>{{=each_item[0]}}{{if sub_items:}} <b class="caret"></b>{{pass}}</a>
+								{{if sub_items:}}
+									<ul class="dropdown-menu">
+										{{for each_sub_item in sub_items:}}
+											<li><a href="{{=each_sub_item[2]}}">{{=each_sub_item[0]}}</a></li>
+										{{pass}}
+									</ul>
+								{{pass}}
+							</li>
+						{{else:}}
+							<li><a href="{{=each_item[2]}}">{{=each_item[0]}}</a></li>
+						{{pass}}
 					{{pass}}
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i> {{if auth.is_logged_in():}}Hello, {{=auth.user.first_name.capitalize()}}!{{else:}}Sign in{{pass}} <b class="caret"></b></a>
