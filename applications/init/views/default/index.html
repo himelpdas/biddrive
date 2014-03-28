@@ -1,20 +1,5 @@
 {{extend 'layout.html'}}
     <section id="feature_slider" style="background-image: url(http://i.imgur.com/IKOzzNH.jpg); background-position: center;">
-        <!-- 
-            Each slide is composed by <img> and .info
-            - .info's position is customized with css in index.css
-            - each <img> parallax effect is declared by the following params inside its class:
-            
-            example: class="asset left-472 sp600 t120 z3"
-            left-472 means left: -472px from the center
-            sp600 is speed transition
-            t120 is top to 120px
-            z3 is z-index to 3
-            Note: Maintain this order of params
-
-            For the backgrounds, you can combine from the bgs folder :D
-        -->
-
         <article class="slide active" id="showcasing" style="display: block;">
             <div class="info" style="display: block;">
                 <div class="main-slogan">
@@ -31,33 +16,36 @@
                         $('.browse').toggle();
                     });
                 </script>
-
-                <div class='clearfix'></div>
                     
-                <!-- Tab panes -->
-                <div class="row-fluid">
-                    <div class="col-xs-6">
-                        <div class="tab-content" style="width: 500px">
-                            <div class="tab-pane active" id="make" style="margin-top: 5px">
+                <!-- Tab panes -->                
+                <div class="row">
 
-            <!--$Year-->
-            <div class= "row-fluid">
-                <div class="btn-group pull-right">
-                    <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-                        {{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
-                        <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <!-- dropdown menu links -->
-                            {{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
-                    </ul>
-                </div>
-            </div>
-            <ul class="nav nav-list">
-                <li class="divider"></li>
-            </ul>
-            <!--#Year-->
-                                <div class="row-fluid">
+
+                    <div class="col-xs-6">
+                        <div class="tab-content" style="width: 530px">
+                            <div class="tab-pane active" id="make" style="margin-top: -55px">
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-12 car-make-year">
+                                        <!--Year-->
+                                        <div class= "pull-right">
+                                            <div class="btn-group pull-right">
+                                                <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+                                                    {{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
+                                                    <span class="caret"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    <!-- dropdown menu links -->
+                                                        {{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <ul class="nav nav-list">
+                                            <li class="divider"></li>
+                                        </ul>
+                                        <!--/Year-->
+                                    </div>
+
                                     {{counter = 0}}
                                     {{for each_brand in brands_list:}}
                                         <div class="col-xs-4 car-make">
@@ -67,9 +55,9 @@
                                                     function(evt){
                                                         //$('#slogan_image').hide();
                                                         $(this).closest('article').find('h2').hide();
-                                                        //$('#models').html('<img src="{{=URL('static/images', 'loading_vehicle_content.gif')}}" alt="loading..."  />');
+                                                        $('#models').html('<i class="fa fa-spinner fa-spin"></i>');
 
-                                                        $('#models').load( "{{=URL('ajax','vehicle_content', args=[each_brand, year])}}" );
+                                                        $('#models').load( "{{=URL('ajax','vehicle_content', args=[each_brand, year])}}");
                                                         $('#models').show();
                                                     }
                                                 );
@@ -77,9 +65,10 @@
 
                                             <script type="text/javascript">
                                                 $('.car-make a').click(function(e) {
-                                                    //$(this).closest('article').find('h2').hide();
+
                                                     $(this).closest('.info').animate({'width' : '1050px'});
                                                     $('#models').fadeIn();
+
                                                 });
                                                 //$(".nano").nanoScroller();
                                             </script>
@@ -136,55 +125,7 @@
                         </div>
                     </div>
                     <div class="col-xs-6 nano" style="display:none; max-height: 300px; overflow: auto" id="models">
-                        <div class="row-fluid" style="overflow: visible">
-                            <!--
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-
-                            <div class="clear-fix" style="margin:5px;">&nbsp;</div>
-
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-
-                            <div class="clear-fix" style="margin:5px;">&nbsp;</div>
-
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-
-                            <div class="clear-fix" style="margin:5px;">&nbsp;</div>
-
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-thumbnail" src="http://placehold.it/120x60&text=model">
-                            </div>
-                            -->
-                        </div>
+                        <!-- content loaded via ajax -->
                     </div>                    
                 </div>
 

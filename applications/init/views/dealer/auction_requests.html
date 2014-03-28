@@ -3,271 +3,290 @@
 {{#year make model should be done via filters}}
 
 {{#FILTERS}}
-<div class= "row-fluid">
 
-	<div class="span2">
-		<div class="btn-group">
-			<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-				{{all_years = "%s - %s"%(years_list[0],years_list[-1])}}
-				{{if year in years_list:}}{{=year}} models{{else:}}{{=all_years}}{{pass}}
-				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu">
-				<!-- dropdown menu links -->
-					<li><a id = "all_filter" href="{{=URL(vars=dict(sortby=sortby))}}">{{=all_years}}</a></li>
-					 <li class="divider"></li>
-				{{for each_year in years_list:}}
-					<li><a id = "{{=each_year}}_year_filter" href="{{=URL(vars=dict(year=each_year, sortby=sortby))}}">{{=each_year}} models</a></li>
-				{{pass}}
-			</ul>
-		</div>
-	</div>
+<div class="panel panel-default">
+	 <div class="panel-heading text-uppercase">Filters</div>
+	 <div class="panel-body">
+	 	<div class="row">
+	 		
+	 		<!-- year dropdown -->
+	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
+				<div class="btn-group">
+				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" id="make_dropdown">
+						{{all_years = "%s - %s"%(years_list[0],years_list[-1])}}
+						{{if year in years_list:}}{{=year}} models{{else:}}{{=all_years}}{{pass}}
+				    	<span class="caret"></span>
+				  	</button>
+					<ul class="dropdown-menu" role="menu">
+						{{for each_year in years_list:}}
+							<li><a id = "{{=each_year}}_year_filter" href="{{=URL(vars=dict(year=each_year, sortby=sortby))}}">{{=each_year}} models</a></li>
+						{{pass}}
+					</ul>
+				</div>
+	 		</div>
 
-	<div class="span2">
-		<div class="btn-group">
-			<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-				{{if make in brands_list:}}{{=brands_list[make]}}{{else:}}All Brands{{pass}}
-				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu">
-				<!-- dropdown menu links -->
-					<li><a id = "all_makes_filter" href="{{=URL(vars=dict(year=year ,sortby=sortby))}}">All Brands</a></li>
-					 <li class="divider"></li>
-				{{for each_make in brands_list:}}
-					<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(make=each_make, year=year ,sortby=sortby))}}">{{=brands_list[each_make]}}</a></li>
-				{{pass}}
-			</ul>
-		</div>
-	</div>
+	 		<!-- Brands dropdown -->
+	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
+				<div class="btn-group">
+				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" id="make_dropdown">
+						{{if make in brands_list:}}{{=brands_list[make]}}{{else:}}All Brands{{pass}}
+				    	<span class="caret"></span>
+				  	</button>
+					<ul class="dropdown-menu" role="menu">
+						<li><a id = "all_makes_filter" href="{{=URL(vars=dict(year=year ,sortby=sortby))}}">All Brands</a></li>
+						<li class="divider"></li>
+						{{for each_make in brands_list:}}
+							<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(make=each_make, year=year ,sortby=sortby))}}">{{=brands_list[each_make]}}</a></li>
+						{{pass}}
+					</ul>
+				</div>
+	 		</div>
 
-	<div class="span2">
-		<div class="btn-group">
-		{{if make:}}
-			<a id="model_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-				{{if model in models_list:}}{{=models_list[model]}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
-				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu">
-				<!-- dropdown menu links -->
-					<li><a id = "all_models_filter" href="{{=URL(vars=dict(make=make, year=year ,sortby=sortby))}}">All Models</a></li>
-					 <li class="divider"></li>
-				{{for each_model in models_list:}}
-					<li><a id = "{{=each_model}}_model__filter" href="{{=URL(vars=dict(model=each_model, make=make, year=year ,sortby=sortby))}}">{{=models_list[each_model]}}</a></li>
-				{{pass}}
-			</ul>
-		{{else:}}
-			<a  id="model_dropdown" class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
-				All Models
-				<span class="caret"></span>
-			</a>
-		{{pass}}
-		</div>
-	</div>
-
-	<div class="span3">
-		<div class="btn-group">
-			{{if model:}}{{#can't have trims with out model}}
-				<a id="trim_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-					{{if trim in styles_list:}}{{=styles_list[trim]}}{{else:}}All Trims{{pass}}{{#the key is the id#, the value is the name}}
-					<span class="caret"></span>
-				</a>
-				<ul class="dropdown-menu">
-					<!-- dropdown menu links -->
-						<li><a id = "all_styles_filter" href="{{=URL(vars=dict(make = make, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
-						 <li class="divider"></li>
-					{{for each_trim in styles_list:}}
-						<li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
+	 		<!-- Models dropdown -->
+	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
+				<div class="btn-group">
+					{{if make:}}
+						<a id="model_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#">
+							{{if model in models_list:}}{{=models_list[model]}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
+							<span class="caret"></span>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a id = "all_models_filter" href="{{=URL(vars=dict(make=make, year=year ,sortby=sortby))}}">All Models</a></li>
+							 <li class="divider"></li>
+							{{for each_model in models_list:}}
+								<li><a id = "{{=each_model}}_model__filter" href="{{=URL(vars=dict(model=each_model, make=make, year=year ,sortby=sortby))}}">{{=models_list[each_model]}}</a></li>
+							{{pass}}
+						</ul>
+					{{else:}}
+						<a  id="model_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
+							All Models
+							<span class="caret"></span>
+						</a>
 					{{pass}}
-				</ul>
-			{{else:}}
-				<a   id="trim_dropdown" class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
-					All Trims
-					<span class="caret"></span>
-				</a>
-			{{pass}}
-		</div>
-	</div>
+				</div>
+	 		</div>
 
-	<div class="span2">
-		<div class="btn-group">
-			{{if trim:}}{{#can't have colors with out trims}}
-				<a id="color_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-					{{if color in colors_list:}}{{=colors_list[color]}}{{else:}}All Colors{{pass}}{{#the key is the id#, the value is the name}}
-					<span class="caret"></span>
-				</a>
-				<ul class="dropdown-menu">
-					<!-- dropdown menu links -->
-						<li><a id = "all_colors_filter" href="{{=URL(vars=dict(make = make, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
-						 <li class="divider"></li>
-					{{for each_color in colors_list:}}
-						<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=colors_list[each_color]}}</a></li>
+	 		<!-- Trims dropdown -->
+	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
+				<div class="btn-group">
+					{{if model:}}
+						<a id="trim_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
+							{{if trim in styles_list:}}{{=styles_list[trim]}}{{else:}}All Trims{{pass}}{{#the key is the id#, the value is the name}}
+							<span class="caret"></span>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a id = "all_styles_filter" href="{{=URL(vars=dict(make = make, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
+							<li class="divider"></li>
+							{{for each_trim in styles_list:}}
+								<li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
+							{{pass}}
+						</ul>
+					{{else:}}
+						<a id="trim_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
+							All Trims
+							<span class="caret"></span>
+						</a>
 					{{pass}}
-				</ul>
-			{{else:}}
-				<a  id="color_dropdown" class="btn btn-large dropdown-toggle disabled" data-toggle="dropdown" href="#">
-					All Colors
-					<span class="caret"></span>
+				</div>
+	 		</div>
+
+	 		<!-- Colors dropdown -->
+	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
+				<div class="btn-group">
+					{{if trim:}}
+						<a id="color_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
+							{{if color in colors_list:}}{{=colors_list[color]}}{{else:}}All Colors{{pass}}
+							{{#the key is the id#, the value is the name}}
+							<span class="caret"></span>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a id = "all_colors_filter" href="{{=URL(vars=dict(make = make, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
+							 <li class="divider"></li>
+							{{for each_color in colors_list:}}
+								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=colors_list[each_color]}}</a></li>
+							{{pass}}
+						</ul>
+					{{else:}}
+						<a  id="color_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
+							All Colors
+							<span class="caret"></span>
+						</a>
+					{{pass}}
+				</div>
+	 		</div>
+
+	 		<!-- modal summon button -->
+			<div style="margin-left:15px; margin-right:15px; display:inline-block">
+				<a class="btn btn-info" href="#{{=request.function}}_alerts" data-toggle="modal" data-target="#{{=request.function}}_alerts">
+					<i class="fa fa-exclamation-circle"></i>
 				</a>
-			{{pass}}
-		</div>
-	</div>
-	
-	<div class="span1">
-		<a class="btn btn-large btn-info" href="#{{=request.function}}_alerts" data-toggle="modal">
-			<i class="fa fa-exclamation-circle"></i>
-		</a>
-	</div>
+			</div>	 		 		
+
+	 	</div>
+	 </div>
 </div>
-{{#COLUMNS}}
-<hr class="featurette-divider">
-<h4>
-	<div class="row-fluid" style="text-align:center;">
-		{{for each_column in columns:}}
-			<div class="span{{=each_column[2]}}">
-				{{if sortby in each_column[1]:}}
-					{{sort_pair = each_column[1][:]}}{{#create copy}}
-					{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
-					<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, make=make ) ) }}">
-						{{=each_column[0]}}
-					</a>
-				&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
-				{{else:}}
-					<a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, make=make) ) }}">
-						{{=each_column[0]}}
-					</a>
-				{{pass}}
-			</div>
-		{{pass}}
-		{{"""}}
-			<!--
-			<div class="span1">
-				{{if request.vars['sortby'] in ['nearest', 'farthest']:}}
-					<u>
-						Zip Code
-					</u>
-				<i class="fa fa-caret-{{if request.vars['sortby']=='nearest':}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
-				{{else:}}
-					Zip Code
-				{{pass}}
-			</div>
-			-->
-		{{"""}}
-	</div>
-</h4>
-<hr class="featurette-divider">
-{{#ROWS}}
-<h4>
-{{for each_request in auction_requests:}}
-	<div class="row-fluid" style="text-align:center;">
-		<div class = "span1">
-			<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-large btn-primary btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
-			<script> {{#always add id to id attr when theres more than one}}
-				$('#to-agreement-button-{{=each_request.id}}').click(
-					function(){
-						$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
-					}
-				);
-			</script>
-		</div>
-		<div class = "span1">
-			{{=each_request.year}}
-		</div>
-		<div class = "span1">
-			{{=brands_list[each_request.make]}}
-		</div>		
-		<div class = "span1">
-			{{each_model = each_request.model}} 
-			{{if len(each_model) < 4:}}{{=each_model.upper()}}{{else:}}{{=each_model.capitalize()}}{{pass}}
-		</div>
-		<div class = "span2">
-			{{=each_request.trim_name}}
-		</div>
-		<div class = "span2">
-			{{color_names=each_request.color_names}}
-			{{color_names.sort()}}
-			{{for each_name in color_names:}}
-				{{for each_color in json.loads(each_request.trim_data)['colors'][1]['options']:}}
-					{{if each_color['name'] == each_name:}}
-						{{color_hex = each_color['colorChips']['primary']['hex']}}
+
+
+<table class="table table-hover ">
+	<thead>
+		<tr>
+			{{for each_column in columns:}}
+				<th>
+					{{if sortby in each_column[1]:}}
+						{{sort_pair = each_column[1][:]}}{{#create copy}}
+						{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
+						<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, make=make ) ) }}">
+							{{=each_column[0]}}
+						</a>
+					&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
+					{{else:}}
+						<a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, make=make) ) }}">
+							{{=each_column[0]}}
+						</a>
 					{{pass}}
-				{{pass}}
-				<p><i class="fa fa-dot-circle-o" style="color:#{{=color_hex}}"></i>&nbsp;{{=each_name}}</p>
+				</th>
 			{{pass}}
-		</div>
-		<div class = "span1">
-			{{area=db(db.zipgeo.zip_code == each_request.zip_code).select().first()}}
-			{{=area.city}}, {{=area.state_abbreviation}}
-		</div>
-		<div class = "span1">
-			{{=human(each_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
-			{{#=each_request.expires}}
-		</div>
-		<div class = "span1">
-			{{=each_request.number_of_bids()}}
-		</div>
-		<div class = "span1">
-			{{#='$' + str(int(each_request.lowest_offer().bid)) if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
-			{{lowest_offer = each_request.lowest_offer()}} {{#one db call instead of two like above}}
-			{{if lowest_offer:}}
-				{{=lowest_offer.bid}}
-			{{else:}}
-				No bids!
-			{{pass}}
-		</div>
-	</div>
-	<hr class="featurette-divider">
-{{pass}}
-</h4>
+		</tr>
+	</thead>
+
+	<tbody>
+		{{for each_request in auction_requests:}}
+			<tr>
+				<td>
+					<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
+					<script> {{#always add id to id attr when theres more than one}}
+						$('#to-agreement-button-{{=each_request.id}}').click(
+							function(){
+								$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
+							}
+						);
+					</script>
+				</td>
+
+				<td>
+					{{=each_request.year}}
+				</td>
+
+				<td>
+					{{=brands_list[each_request.make]}}
+				</td>
+
+				<td>
+					{{each_model = each_request.model}} 
+					{{if len(each_model) < 4:}}{{=each_model.upper()}}{{else:}}{{=each_model.capitalize()}}{{pass}}
+				</td>
+
+				<td>
+					{{=each_request.trim_name}}
+				</td>
+
+				<td>
+					{{color_names=each_request.color_names}}
+					{{color_names.sort()}}
+					{{for each_name in color_names:}}
+						{{for each_color in json.loads(each_request.trim_data)['colors'][1]['options']:}}
+							{{if each_color['name'] == each_name:}}
+								{{color_hex = each_color['colorChips']['primary']['hex']}}
+							{{pass}}
+						{{pass}}
+						<i class="fa fa-dot-circle-o" rel="tooltip" style="color:#{{=color_hex}}" data-toggle="tooltip" data-placement="bottom" title="{{=each_name}}"></i>
+					{{pass}}
+				</td>
+
+				<td>
+					{{area=db(db.zipgeo.zip_code == each_request.zip_code).select().first()}}
+					{{=area.city}}, {{=area.state_abbreviation}}
+				</td>
+
+				<td>
+					{{=human(each_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
+					{{#=each_request.expires}}
+				</td>
+
+				<td>
+					{{=each_request.number_of_bids()}}
+				</td>
+
+				<td>
+					{{#='$' + str(int(each_request.lowest_offer().bid)) if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
+					{{lowest_offer = each_request.lowest_offer()}} {{#one db call instead of two like above}}
+					{{if lowest_offer:}}
+						{{=lowest_offer.bid}}
+					{{else:}}
+						No bids!
+					{{pass}}
+				</td>
+			</tr>
+		{{pass}}
+	</tbody>
+</table>
+
+
 {{#MODALS}}
-<div id="{{=request.function}}_alerts" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-	<div class="modal-header">
-		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h2 id="myModalLabel"><i class="fa fa-exclamation-circle"></i> Set Alerts  (Cost per alert)</h2>
-	</div>
-	<div class="modal-body">
-		<h2>
-			How would you like to be alerted?
-		</h2>
-			<h4>
-				Reminder for: <span id="alert_description"></span>
-			</h4>
-		<script>
-			make = $("#make_dropdown").text()
-			model = $("#model_dropdown").text()
-			trim = $("#trim_dropdown").text()
-			color = $("#color_dropdown").text()
-			$("#alert_description").text(make+'-'+model+'-'+trim+'-'+color);
-		</script>
-		<div class="btn-group" data-toggle="buttons-checkbox">
-			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-envelope"></i> Email (1 credit)</button>
-			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-mobile-phone"></i> SMS 3 (credits)</button>
-			<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-phone"></i>Call (5 credits)</button>
-		</div>
-	</div>
-	<div class="modal-footer">
-		<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-		<button class="btn btn-primary">Save changes</button>
-	</div>
+<!--  {{request.function}}_alerts modal -->
+<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="{{=request.function}}_alerts">
+	<div class="modal-dialog">
+    	<div class="modal-content">
+      		<div class="modal-header">
+        		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        		<h4 class="modal-title"> <i class="fa fa-exclamation-circle"></i> Set Alerts  (Cost per alert) </h4>
+      		</div>
+
+      		<div class="modal-body">
+				<h2>
+					How would you like to be alerted?
+				</h2>
+					<h5>
+						Reminder for: <span id="alert_description"></span>
+					</h5>
+				<script>
+					make = $("#make_dropdown").text()
+					model = $("#model_dropdown").text()
+					trim = $("#trim_dropdown").text()
+					color = $("#color_dropdown").text()
+					$("#alert_description").text(make+'-'+model+'-'+trim+'-'+color);
+				</script>
+				<div class="btn-group" data-toggle="buttons-checkbox">
+					<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-envelope"></i> Email (1 credit)</button>
+					<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-mobile-phone"></i> SMS 3 (credits)</button>
+					<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-phone"></i>Call (5 credits)</button>
+				</div>
+      		</div>
+
+      		<div class="modal-footer">
+				<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+				<button class="btn btn-primary">Save changes</button>
+      		</div>
+    	</div>
+  	</div>
 </div>
 
-<div id="{{=request.function}}_agreement" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-	<div class="modal-header">
-		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h2 id="myModalLabel"><i class="fa fa-thumbs-o-up"></i> Agreement</h2>
-	</div>
-	<div class="modal-body " style="max-height:450px;">
-		<h2>
-			You must agree to the following to join this auction:
-		</h2>
-		<p>
-			"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-		</p>
-		<p>
-			"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-		</p>
-	</div>
-	<div class="modal-footer">
-		<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>&nbsp;
-		<a id="to-auction-url" href="{{=URL('authorize_auction_for_dealer')}}{{#maybe make error redirect}}"><button class="btn btn-primary">I Agree</button></a>
+
+
+<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="{{=request.function}}_agreement">
+	<div class="modal-dialog">
+    	<div class="modal-content">
+      		<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				<h4><i class="fa fa-thumbs-o-up"></i> Agreement</h4>
+			</div>
+
+			<div class="modal-body" style="max-height: 400px; overflow-y: scroll">
+				<h5>
+					You must agree to the following to join this auction:
+				</h5>
+				<p>
+					"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
+				</p>
+				<p>
+					"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
+				</p>
+			</div>
+
+      		<div class="modal-footer">
+				<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+				<a id="to-auction-url" href="{{=URL('authorize_auction_for_dealer')}}{{#maybe make error redirect}}" class="btn btn-primary">I Agree</a>
+      		</div>
+		</div>
 	</div>
 </div>

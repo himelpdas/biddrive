@@ -23,6 +23,9 @@ $(function () {
             }
         }, this), 0);
     });
+
+
+    $('*[rel=tooltip]').tooltip();
 });
 
 var portfolioItem = {

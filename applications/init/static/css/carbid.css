@@ -566,6 +566,8 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 }
 #feature_slider .slide#showcasing .car-make a { color: #fff }
 #feature_slider .slide#showcasing .car-make a:hover { text-decoration: underline }
+#feature_slider .slide#showcasing .car-make-year a { color: #000; text-transform: uppercase;  }
+#feature_slider .slide#showcasing .car-make-year a:hover { text-decoration: none }
 #feature_slider .slide#showcasing .info h2 {
     color: #fff;
     font-size: 50px;
@@ -813,3 +815,34 @@ a.navbar-brand { text-shadow: 1px 1px 1px #000 }
     #showcase .features_op1_row .last { margin-bottom: 0 }
 }
 .brand { text-shadow: 1px 1px 1px #000 }
+
+.text-uppercase {
+    text-transform: uppercase;
+}
+.text-xs {
+    font-size: 10px;
+}
+.text-sm {
+    font-size: 12px;
+}
+.text-md {
+    font-size: 14px;
+}
+.text-lg {
+    font-size: 16px;
+}
+.text-xl {
+    font-size: 18px;
+}
+.text-bold {
+    font-weight: bold;
+}
+.text-ital {
+    font-style: italic;
+}
+
+.overflow-hidden {
+    overflow: hidden;
+    text-overflow: ellipsis;  
+    white-space: nowrap
+}
