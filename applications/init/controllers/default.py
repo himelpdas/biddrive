@@ -74,7 +74,7 @@ def request_by_make():
 		session.flash = 'Auction submitted!%s' % guest_msg
 		auth.add_group('request_by_make_authorized_dealers_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
-			URL('auction.html', args=form.vars.id) #http://goo.gl/twPSTK
+			URL('dealer','auction.html', args=form.vars.id) #http://goo.gl/twPSTK
 		)
 		
 	response.title="Request an auction"
@@ -83,7 +83,7 @@ def request_by_make():
 	return dict(model_styles=model_styles, trims=trims, form=form, year=year, make=make, model=model)
 	
 @auth.requires_login()
-def my_auctions():
+def my_auctions(): #FIX GUEST AUCTIONS
 	guest_auction_requests = db((db.auction_request.owner_id == None) & (db.auction_request.temp_id == session.guest_temp_id)).select()
 	for each_guest_auction_request in guest_auction_requests:
 		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id

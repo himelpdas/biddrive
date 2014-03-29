@@ -330,32 +330,44 @@ def __get_option_from_ID(trim_data, option_type, option_id):
 	
 @auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
+#auth requires is admin or is part of this auction
 def auction():
 	auction_request_id = request.args[0]
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
 		session.flash="Invalid request ID!"
-		redirect(URL('my_auctions.html'))
+		redirect(URL('default','index.html'))
 	
 	auction_request_expired = auction_request.expires < request.now
-	
+
 	#create offer form
+	is_owner = auction_request.owner_id == auth.user.id #TODO add restriction that prevents dealers from creating an auction
 	my_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
 	
-	if not my_offer: #somehow he never made an offer
+	is_participant = False
+	if my_offer:
+		is_participant = True
+	if is_owner:
+		is_participant = True
+	if not is_participant: #somehow he never made an offer
 		session.flash="You are not a part of this auction!"
-		redirect(URL('my_auctions.html'))
-	auction_request_offer_id = my_offer.id
-	
-	db.auction_request_offer_bid.auction_request.default = auction_request_id
-	db.auction_request_offer_bid.auction_request_offer.default = auction_request_offer_id
-	db.auction_request_offer_bid.owner_id.default = auth.user_id
-	
-	bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
-	
-	if not auction_request_expired and bid_form.process(hideerror = False).accepted:
-		response.flash = 'Your new bid is %s!'%bid_form.vars.bid
-	
+		redirect(URL('default','index.html'))
+
+	#only allow form functionality to show for dealers as long as auction is active
+	bid_form = None
+	authorized_dealer = auth.has_membership(role='request_by_make_authorized_dealers_#%s'%auction_request_id)
+	if authorized_dealer and not auction_request_expired: 
+		if authorized_dealer:
+			my_auction_request_offer_id = my_offer.id
+			db.auction_request_offer_bid.auction_request.default = auction_request_id
+			db.auction_request_offer_bid.auction_request_offer.default = my_auction_request_offer_id
+			db.auction_request_offer_bid.owner_id.default = auth.user_id
+
+			bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
+
+		if bid_form.process(hideerror = False).accepted:
+			response.flash = 'Your new bid is %s!'%bid_form.vars.bid
+
 	#auction request info
 	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
 	
@@ -496,7 +508,7 @@ def auction():
 	#title stuff
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired)
+	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired)
 	
 @auth.requires_membership('dealers')
 def my_auctions():
