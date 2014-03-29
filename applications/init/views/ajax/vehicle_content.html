@@ -1,8 +1,19 @@
-<div class="row-fluid">
+<div class="row">
+	{{counter = 0}}
 	{{for each_model in make_details["models"]:}}
-		<div class="col-xs-4">
-			<a href="{{=URL('init','default','request_by_make',args=[year, request.args[0], each_model['niceName'] ] ) }}"><img class="img-polaroid" style="height:81px;width:162px;" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['name']}}</a>
+		<div class="col-xs-4" style="text-align:center">
+			<a href="{{=URL('init','default','request_by_make',args=[year, request.args[0], each_model['niceName'] ] ) }}">
+				<img class="img-responsive" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['name']}}
+			</a>
 		</div>
+		
+		{{counter += 1}}
+		
+		{{if counter % 3 == 0:}}
+			<div style="clear:both"></div>
+		{{pass}}
+
+		
 	{{pass}}
 
 </div>
