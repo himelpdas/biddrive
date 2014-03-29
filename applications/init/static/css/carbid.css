@@ -453,7 +453,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 -------------------------------------------------- */
 #feature_slider {
     height: 720px;
-    height: 580px;
+    height: 620px;
     background: #262626;
     z-index: 1;
     margin-bottom: 0px;
@@ -510,11 +510,11 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 #feature_slider #pagination li:hover a { opacity: 1 }
 #feature_slider .slide {
     width: 100%;
-    /*height: 720px;*/
-    height: 520px;
+    /*height: 720px;
+    height: 520px;*/
     position: absolute;
     display: none;
-    overflow: hidden;
+    /*overflow: hidden;*/
     z-index: 1;
     -webkit-background-size: cover !important;
     -moz-background-size: cover !important;
@@ -527,15 +527,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
     font-size: 24px;
     text-shadow: 1px 1px 1px #000;
 }
-#feature_slider h2 {
-    position: absolute;
-    top: 275px;
-    left: 55%;
-    font-size: 24px;
-    color: #fff;
-    font-size: 36px;
-    text-shadow: 1px 1px 1px #000;
-}
+
 #feature_slider a.search-type {
     margin-top: -20px;
     font-size: 12px;
@@ -547,6 +539,18 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 #feature_slider .slide.previous { z-index: 1 }
 #feature_slider .slide.active { z-index: 2 }
 #feature_slider .slide.hidden { display: none }
+#feature_slider .slide#showcasing .pre-info {
+    position: absolute;
+    top: 120px;
+    left: 13%;
+    width: 540px;
+    display: none;
+    z-index: 10;
+    height: 100%;
+    padding: 10px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.4);
+}
 #feature_slider .slide#showcasing .info {
     position: absolute;
     top: 150px;
@@ -564,8 +568,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
     font-size: 12px;
     text-transform: uppercase;
 }
-#feature_slider .slide#showcasing .car-make a { color: #fff }
-#feature_slider .slide#showcasing .car-make a:hover { text-decoration: underline }
+
 #feature_slider .slide#showcasing .car-make-year a { color: #000; text-transform: uppercase;  }
 #feature_slider .slide#showcasing .car-make-year a:hover { text-decoration: none }
 #feature_slider .slide#showcasing .info h2 {
