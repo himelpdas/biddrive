@@ -67,6 +67,14 @@ def request_by_make():
 	
 	form = SQLFORM(db.auction_request, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
+	#form dependant values
+	if request.post_vars: #doesn't matter if values are un-validated here, since arguments here used the same variables in the forms, if a variable is weird from create won't succeed.
+		trim_data = getStyleByMakeModelYearStyleID(make,model,year,request.post_vars.trim_choices) 
+		db.auction_request.trim_data.default = json.dumps(trim_data)
+		db.auction_request.trim_name.default = trim_data['name'] 
+		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.trim_choices ] #make a list of color names based on ids in color_preference field
+		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.trim_choices ]
+		
 	if form.process(hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = ' Register or login to view it.'
 		if auth.user_id:
