@@ -30,7 +30,7 @@
 						</th>
 
 						<td style="border-top: none">
-							John D.
+							{{=auction_request_info['first_name']}} {{=auction_request_info['last_init']}}
 						</td>
 					</tr>
 
@@ -40,7 +40,7 @@
 						</th>
 
 						<td>
-							{{=auction_request_info['city']}}, {{=auction_request_info['state']}} 10010
+							{{=auction_request_info['city']}}, {{=auction_request_info['state']}} {{=auction_request_info['zip_code']}}
 						</td>
 					</tr>
 
@@ -51,7 +51,7 @@
 
 						<td>
 							<div>
-								<strong style="width: 40px; display:inline-block">Car:</strong> {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}
+								<strong style="width: 40px; display:inline-block">Car:</strong> {{=auction_request_info['year']}} {{=auction_request_info['make'].upper()}} {{=auction_request_info['model'].upper()}}
 							</div>
 
 							<div>
@@ -66,7 +66,7 @@
 						</th>
 						<td>
 							{{for each_color in auction_request_info['colors']:}}
-								<div>{{=each_color}}</div>
+								<div><i class="fa fa-square" style="color:#{{=each_color[1]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" title="{{=each_color[0]}}"></i> {{=each_color[0]}}</div>
 							{{pass}}
 						</td>
 					</tr>
@@ -80,7 +80,7 @@
 						</th>
 
 						<td style="border-top: none">
-							4
+							{{=auction_request_info['number_of_dealers']}}
 						</td>
 					</tr>
 
@@ -90,7 +90,7 @@
 						</th>
 
 						<td>
-							{{=auction_request_info['bids']}}
+							{{=auction_request_info['number_of_bids']}}
 						</td>
 					</tr>
 
@@ -100,7 +100,7 @@
 						</th>
 
 						<td>
-							${{=auction_request_info['best_price']}}
+							{{=auction_request_info['best_price']}}
 						</td>
 					</tr>
 
@@ -205,7 +205,7 @@
 {{=auction_request_info['ends_on']}}
 {{=auction_request_info['ends_in_seconds']}}
 {{=auction_request_info['ends_in_human']}}
-<!--{{=auction_request_info['bids']}}
+<!--{{=auction_request_info['number_of_bids']}}
 {{=auction_request_info['best_price']}}-->
 
 <ul class="nav nav-list">

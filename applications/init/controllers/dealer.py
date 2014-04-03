@@ -370,23 +370,30 @@ def auction():
 
 	#auction request info
 	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
+	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
 	
-	colors=OD()
+	colors=[]
 	color_names=auction_request.color_names
 	color_names.sort()
 	for each_name in color_names:
 		for each_color in json.loads(auction_request.trim_data)['colors'][1]['options']:
 			if each_color['name'] == each_name:
 				color_hex = each_color['colorChips']['primary']['hex']
-				colors.update({each_name : color_hex})
+				colors.append([each_name, color_hex])
 	
 	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
 	lowest_offer = "No bids!"
 	if lowest_offer_row:
 		lowest_offer = '$%s'%int(lowest_offer_row.bid)
 	
+	#auction request offers (rows)
+	auction_request_offers = db(db.auction_request_offer.auction_request == auction_request_id).select()
+	
+	#auction requests info
 	auction_request_info = dict(
 		id = str(auction_request.id),
+		first_name =auction_request_user.first_name,
+		last_init =auction_request_user.last_name[:1]+'.',
 		year = auction_request.year,
 		make = auction_request.make,
 		model = auction_request.model,
@@ -395,15 +402,14 @@ def auction():
 		colors = colors,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
+		zip_code =  auction_request_area.zip_code,
 		ends_on = str(auction_request.expires),
 		ends_in_seconds = (auction_request.expires - request.now).total_seconds(),
 		ends_in_human = human(auction_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}'),
-		bids = auction_request.number_of_bids(),
+		number_of_bids = auction_request.number_of_bids(),
+		number_of_dealers = len(auction_request_offers),
 		best_price = lowest_offer,
 	)
-	
-	#auction request offers
-	auction_request_offers = db(db.auction_request_offer.auction_request == auction_request_id).select()
 
 	#in memory sorting	
 	sortby = request.vars['sortby']
