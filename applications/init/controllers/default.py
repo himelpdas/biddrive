@@ -67,6 +67,14 @@ def request_by_make():
 	
 	form = SQLFORM(db.auction_request, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
+	#form dependant values
+	if request.post_vars: #doesn't matter if values are un-validated here, since arguments here used the same variables in the forms, if a variable is weird from create won't succeed.
+		trim_data = getStyleByMakeModelYearStyleID(make,model,year,request.post_vars.trim_choices) 
+		db.auction_request.trim_data.default = json.dumps(trim_data)
+		db.auction_request.trim_name.default = trim_data['name'] 
+		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.color_preference ] #make a list of color names based on ids in color_preference field
+		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.color_preference ]
+		
 	if form.process(hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = ' Register or login to view it.'
 		if auth.user_id:
@@ -74,7 +82,7 @@ def request_by_make():
 		session.flash = 'Auction submitted!%s' % guest_msg
 		auth.add_group('request_by_make_authorized_dealers_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
-			URL('auction.html', args=form.vars.id) #http://goo.gl/twPSTK
+			URL('dealer','auction.html', args=form.vars.id) #http://goo.gl/twPSTK
 		)
 		
 	response.title="Request an auction"
@@ -83,7 +91,7 @@ def request_by_make():
 	return dict(model_styles=model_styles, trims=trims, form=form, year=year, make=make, model=model)
 	
 @auth.requires_login()
-def my_auctions():
+def my_auctions(): #FIX GUEST AUCTIONS
 	guest_auction_requests = db((db.auction_request.owner_id == None) & (db.auction_request.temp_id == session.guest_temp_id)).select()
 	for each_guest_auction_request in guest_auction_requests:
 		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id
