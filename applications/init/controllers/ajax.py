@@ -60,6 +60,10 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 	year = request.args[2] 
 	style_id = request.args[3]
 	style = getStyleByMakeModelYearStyleID(make, model, year, style_id)
+	style_colors = color_preference()
+	colors=[]
+	for each_color in style_colors['style_colors']:
+		colors.append([each_color['name'], each_color['colorChips']['primary']['hex']])
 	stats = dict(
 		mpg_city = ['MPG City' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
 		mpg_hwy = ['MPG Highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
@@ -70,8 +74,9 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 		drive = ['Drive' , style['drivenWheels'].capitalize()],
 		body = ['Body type' , style['submodel']['body']],
 		trans = ['Transmission type' , style['transmission']['transmissionType'].capitalize().replace('_', ' ')],
-		speed = ['Transmission speed' , style['transmission']['numberOfSpeeds']],
-		base_msrp = ['Base MSRP ($)' , style['price']['baseMSRP']],
+		speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
+		base_msrp = ['Base MSRP ($)', style['price']['baseMSRP']],
+		colors=['Colors', colors]
 	)
 	stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
 	return dict(stats = stats, make = make, model = model, year = year, style_id = style_id)

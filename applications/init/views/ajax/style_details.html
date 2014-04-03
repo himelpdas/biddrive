@@ -5,8 +5,16 @@
 	</div>
 	<div class="col-xs-6">
 		<strong>
-			{{=stats[each_stat][1]}}
+			{{if not each_stat == 'colors':}}
+				{{=stats[each_stat][1]}}
+			{{else:}}
+				{{for each_color in stats[each_stat][1]:}}
+					<i class="fa fa-square" rel="tooltip" style="color:#{{=each_color[1]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_color[0]}}"></i>
+				{{pass}}
+			{{pass}}
 		</strong>
 	</div>
 {{pass}}
-</div>
+<script>
+	$("[data-toggle=tooltip]").tooltip({container: 'body'});
+</script>{{#http://goo.gl/mcwC7O http://goo.gl/2TRR1R}}
