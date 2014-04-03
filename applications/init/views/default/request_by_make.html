@@ -38,8 +38,10 @@
         <div class="col-xs-5" id="style_photos">
 
         </div>
-        <div class="col-xs-7" id="reviews">
-            
+        <div class="col-xs-7" id="loading_reviews">
+			<h4><i class="fa fa-spin fa-spinner"></i> Loading...</h4>
+		</div>
+		<div class="col-xs-7" id="reviews">
             <div>
                 <i class="fa fa-quote-left"></i>
                 The BMW 3 Series is a compact executive car manufactured by the German automaker BMW since May 1975. 
@@ -79,7 +81,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-3 control-label">Color</label>
+                    <label for="inputPassword3" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin"></i> Color</label>
                     <div class="col-sm-9">
                         {{=form.custom.widget.color_preference}}
 
@@ -127,7 +129,7 @@
         </div>
 
         <div class="col-xs-5">
-        	<h5>Trim Specific Details</h5>
+        	<h5>Trim Specific Details <i id="stats_spinner" class="fa fa-spin"></i></h5>
         	<div id="trim_stats"></div>
 
         </div>
@@ -137,6 +139,7 @@
  <script type="text/javascript">
  	function load_color_preference(){
 		$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
+		$('#colors_spinner').toggleClass("fa-spinner");
 		$('#auction_request_color_preference').load(
 			//url
 			"{{=URL('ajax','color_preference', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):
@@ -148,6 +151,7 @@
 				}
 				else {
 					$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
+					$('#colors_spinner').toggleClass("fa-spinner");
 					$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
 				}
 			}
@@ -169,7 +173,7 @@
 			}
 		);
 		//display reviews
-		$('#reviews_spinner').toggleClass("fa-spinner");
+		$('#loading_reviews').slideDown();
 		$('#reviews').slideUp(600).load(
 			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
 			function( response, status, xhr ) {
@@ -178,8 +182,8 @@
 					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
 				}
 				else {
+					$('#loading_reviews').slideUp();
 					$(this).slideDown(300); //fade back in
-					$('#reviews_spinner').toggleClass("fa-spinner");
 				}
 			}
 		);
