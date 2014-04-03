@@ -523,6 +523,7 @@ def my_auctions():
 			'model':auction_request.model,
 			'trim':auction_request.trim_name,
 			'color':color_names[each_offer.color],
+			'best_price': 'N/A',
 		}
 		my_offer_summaries.append(each_offer_dict)
 	return dict(my_offer_summaries = my_offer_summaries)

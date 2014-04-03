@@ -11,7 +11,7 @@ def vehicle_content():
 	make_details = ed_call(MAKE_URI%(request.args[0], year))
 	make_photos = {}
 	for each_model in make_details['models']:
-		first_image="http://placehold.it/162x81&text=Image%20Unavailable"
+		first_image="http://placehold.it/150x100&text=Image%20Unavailable"
 		try:
 			model_styles = ed_call(STYLES_URI%(request.args[0], each_model['niceName'], year))
 			style_id = model_styles["styles"][0]["id"]

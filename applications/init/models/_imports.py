@@ -21,7 +21,7 @@ def calcDist(lat_A, long_A, lat_B, long_B):
 
 	return distance
 	
-APP_NAME="BidDrive"
+APP_NAME="BidDrive(Alpha)"
 EDMUNDS_KEY ="qmnpjbhe9p5g5cw3yv2vaehv"
 EDMUNDS_SECRET="zA6vs797nVgqGaSK58QJe2KW"
 AUCTION_DAYS_EXPIRE = 3
