@@ -133,7 +133,7 @@
 	<thead>
 		<tr>
 			{{for each_column in columns:}}
-				<th>
+				<th style="min-width: 80px">
 					{{if sortby in each_column[1]:}}
 						{{sort_pair = each_column[1][:]}}{{#create copy}}
 						{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
