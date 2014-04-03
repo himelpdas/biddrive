@@ -844,6 +844,10 @@ a.navbar-brand { text-shadow: 1px 1px 1px #000 }
     font-style: italic;
 }
 
+.text-light {
+    opacity: 0.6;
+}
+
 .overflow-hidden {
     overflow: hidden;
     text-overflow: ellipsis;  

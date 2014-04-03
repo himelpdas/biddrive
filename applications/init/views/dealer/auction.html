@@ -1,19 +1,199 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
 
+<!-- clock
 <link rel="stylesheet" href="{{=URL('static','css/flipclock.css')}}"> {{#http://goo.gl/oYyk49}}
 <script src="{{=URL('static','js/flipclock.min.js')}}"></script>
 
 <div class="clock"></div>
-
 <script type="text/javascript">
 	var clock = $('.clock').FlipClock({{=auction_request_info['ends_in_seconds']}}, {
 		clockFace: 'DailyCounter',
 		countdown: true
 	});
 </script>
+-->
+<div class="panel panel-default">
+	<div class= "panel-heading text-uppercase text-md">
+		Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
+		
+		<span class="pull-right text-xs text-light"> Auction ID: {{=auction_request_info['id']}}</span>
+	</div>
+
+	<div class="panel-body">
+		<div class="row">
+			<div class="col-xs-6">
+				<table class="table table-hover text-sm">
+					<tr>
+						<th style="border-top: none">
+							Name
+						</th>
+
+						<td style="border-top: none">
+							John D.
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							Location
+						</th>
+
+						<td>
+							{{=auction_request_info['city']}}, {{=auction_request_info['state']}} 10010
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							Auction Info
+						</th>
+
+						<td>
+							<div>
+								<strong style="width: 40px; display:inline-block">Car:</strong> {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}
+							</div>
+
+							<div>
+								<strong style="width: 40px; display:inline-block">Trim:</strong> {{=auction_request_info['trim_name']}}
+							</div>
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							Colors
+						</th>
+						<td>
+							{{for each_color in auction_request_info['colors']:}}
+								<div>{{=each_color}}</div>
+							{{pass}}
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="col-xs-6">
+				<table class="table table-hover text-sm">
+					<tr>
+						<th style="border-top: none">
+							No. Dealers:
+						</th>
+
+						<td style="border-top: none">
+							4
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							No. bids:
+						</th>
+
+						<td>
+							{{=auction_request_info['bids']}}
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							Lowest bid:
+						</th>
+
+						<td>
+							${{=auction_request_info['best_price']}}
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							Favorite price:
+						</th>
+
+						<td>
+							$ 00,000
+						</td>
+					</tr>
+
+					<tr>
+						<td>
+							<strong style="display: block">Stock photo:</strong>
+							<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">
+						</td>
+						<td>
+							<strong style="display: block">Favorite photo:</strong>
+							<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">						
+						</td>
+					</tr>
+				</table>
+
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Price</th>
+			<th>Image</th>
+			<th>Color</th>
+			<th>Dealer</th>
+			<th>&nbsp; <!-- Fav. button --> </th>
+		</tr>
+	</thead>
+	
+	<tbody>
+	<!--
+		{{for each_offer in auction_request_offers_info:}}
+			<pre>dealer id: {{=each_offer['id']}}</pre>
+			<pre>last bid price: {{=each_offer['last_bid_price']}}</pre>
+			<pre>bids by this user: {{=each_offer['number_of_bids']}}</pre>
+			<pre>MSRP: {{=each_offer['msrp']}}</pre>
+			<pre>{{=each_offer['msrp_discount']}} off!</pre>
+			{{=each_offer['color']}}
+			{{=each_offer['summary']}}
+			{{=each_offer['interior_options']}}
+			{{=each_offer['exterior_options']}}
+			{{=each_offer['mechanical_options']}}
+			{{=each_offer['package_options']}}
+			{{=each_offer['fees_options']}}
+			{{=each_offer['exterior_image']}}
+			{{=each_offer['interior_image']}}
+			{{=each_offer['front_image']}}
+			{{=each_offer['rear_image']}}
+			{{=each_offer['tire_image']}}
+			{{=each_offer['dashboard_image']}}
+			{{=each_offer['passenger_image']}}
+			{{=each_offer['trunk_image']}}
+			{{=each_offer['underhood_image']}}
+			{{=each_offer['roof_image']}}
+			{{=each_offer['other_image']}}
+
+		{{pass}}	
+		-->
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td>
+				<button class="btn btn-default pull-right" rel="tooltip" title="Expand Bid">
+					<i class="fa fa-plus"></i>
+				</button>
+				
+				<button class="btn btn-default pull-right" rel="tooltip" title="Favorite this bid" style="margin-right:10px">
+					<i class="fa fa-heart"></i>
+				</button>
+			</td>
+		</tr>
+
+	</tbody>
+</table>
+
+<hr><hr><hr>
  
-{{=auction_request_info['id']}}
+<!--{{=auction_request_info['id']}}
 {{=auction_request_info['year']}}
 {{=auction_request_info['make']}}
 {{=auction_request_info['model']}}
@@ -21,12 +201,12 @@
 {{#=auction_request_info['trim_data']}}
 {{=auction_request_info['colors']}}
 {{=auction_request_info['city']}}
-{{=auction_request_info['state']}}
+{{=auction_request_info['state']}}-->
 {{=auction_request_info['ends_on']}}
 {{=auction_request_info['ends_in_seconds']}}
 {{=auction_request_info['ends_in_human']}}
-{{=auction_request_info['bids']}}
-{{=auction_request_info['best_price']}}
+<!--{{=auction_request_info['bids']}}
+{{=auction_request_info['best_price']}}-->
 
 <ul class="nav nav-list">
   <li class="divider"></li>
@@ -48,35 +228,6 @@
 	</div>
 </div>
  
-{{for each_offer in auction_request_offers_info:}}
-	<pre>dealer id: {{=each_offer['id']}}</pre>
-	<pre>last bid price: {{=each_offer['last_bid_price']}}</pre>
-	<pre>bids by this user: {{=each_offer['number_of_bids']}}</pre>
-	<pre>MSRP: {{=each_offer['msrp']}}</pre>
-	<pre>{{=each_offer['msrp_discount']}} off!</pre>
-	{{=each_offer['color']}}
-	{{=each_offer['summary']}}
-	{{=each_offer['interior_options']}}
-	{{=each_offer['exterior_options']}}
-	{{=each_offer['mechanical_options']}}
-	{{=each_offer['package_options']}}
-	{{=each_offer['fees_options']}}
-	{{=each_offer['exterior_image']}}
-	{{=each_offer['interior_image']}}
-	{{=each_offer['front_image']}}
-	{{=each_offer['rear_image']}}
-	{{=each_offer['tire_image']}}
-	{{=each_offer['dashboard_image']}}
-	{{=each_offer['passenger_image']}}
-	{{=each_offer['trunk_image']}}
-	{{=each_offer['underhood_image']}}
-	{{=each_offer['roof_image']}}
-	{{=each_offer['other_image']}}
 
-	<ul class="nav nav-list">
-	  <li class="divider"></li>
-	</ul>
-
-{{pass}}
 
 {{if not auction_request_expired:}}{{=bid_form}}{{pass}}
