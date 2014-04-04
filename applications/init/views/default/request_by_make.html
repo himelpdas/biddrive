@@ -1,7 +1,7 @@
+{{extend 'page_layout.html'}}
 
- {{extend 'page_layout.html'}}
-
- {{#=BEAUTIFY(response._vars)}}
+{{#=BEAUTIFY(response._vars)}}
+{{"""}}
 <!--
 
 		{{form.element('select', _name = 'trim_choices')['_class']+=' form-control'}}
@@ -30,32 +30,18 @@
 		{{=form.custom.end}}
 
 -->
+{{"""}}
 
-
-
-
-    <div class="row" style="background: rgba(0,0,0,.1); padding:10px; border-radius: 5px">
+    <div class="row" style="background: rgba(0,0,0,.1); padding:10px; border-radius: 5px;">
         <div class="col-xs-5" id="style_photos">
-
+			...
         </div>
         <div class="col-xs-7" id="loading_reviews">
 			<h4><i class="fa fa-spin fa-spinner"></i> Loading...</h4>
 		</div>
 		<div class="col-xs-7" id="reviews">
-            <div>
-                <i class="fa fa-quote-left"></i>
-                The BMW 3 Series is a compact executive car manufactured by the German automaker BMW since May 1975. 
-                <span class="pull-right">— Edmunds.com</span>
-            </div>
-
-            <div style="margin-top: 20px">
-                <i class="fa fa-quote-left"></i>
-                It is BMW's best-selling model, accounting for around 30% of the BMW brand's annual total sales.
-                <span class="pull-right">— Wikipedia</span>
-            </div>
-
+			...
         </div>
-
     </div>
 
     <div class="row" style="margin-top: 50px">

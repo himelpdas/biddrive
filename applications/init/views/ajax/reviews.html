@@ -13,7 +13,7 @@
 	{{counter=0}}
 	{{for each_review in reviews:}}
 		<div class="item {{if not counter:}}active{{pass}}">
-			<div id="review_{{counter}}" class="review">
+			<div id="review{{=counter}}" class="review">
 				<div>
 					<p>{{#implements half and full stars}}
 						{{integer_and_decimal=map(lambda number: int(number), str(float(each_review['averageRating'])).split('.'))}} {{#make sure always float before split}}
@@ -31,7 +31,29 @@
 				</div>
 				<div>
 					<p>
-						{{=each_review['text']}}
+						{{review=each_review['text']}}{{initial = 600}}
+						{{review_initial = review[:initial]}}{{review_remainder = review[initial:]}}
+						{{=review_initial}}<span id="review_remainder{{=counter}}">{{=review_remainder}}</span>
+						{{if review_remainder:}}
+						<span id="review_text_more{{=counter}}">...<a id ="review_text_more_switch{{=counter}}" href="#">[more]</a></span>
+						<span id="review_text_less{{=counter}}"><a id ="review_text_less_switch{{=counter}}" href="#">&nbsp;[less]</a></span>
+							<script>
+								$("#review_remainder{{=counter}}").hide();
+								$("#review_text_less{{=counter}}").hide();
+								$("#review_text_more_switch{{=counter}}").click(function(){
+									$("#review_remainder{{=counter}}").show();
+									$("#review_text_more{{=counter}}").hide();
+									$("#review_text_less{{=counter}}").show();
+									$('#carousel-example-generic').carousel('pause');
+								});
+								$("#review_text_less_switch{{=counter}}").click(function(){
+									$("#review_remainder{{=counter}}").hide();
+									$("#review_text_more{{=counter}}").show();
+									$("#review_text_less{{=counter}}").hide();
+									$('#carousel-example-generic').carousel('cycle');
+								});
+							</script>
+						{{pass}}
 					</p>
 				</div>
 			</div>
