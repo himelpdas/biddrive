@@ -1,17 +1,15 @@
-{{active=False}}
-{{counter = 0}}
-<div id="myCarousel" class="carousel slide">
-	<ol class="carousel-indicators">
-	
-	{{active=False}}
-	</ol>
+<div id="photos_carousel" class="carousel slide">
 	<!-- Carousel items -->
 	<div class="carousel-inner">
+	{{active=False}}
 	{{for each_photo in photos:}}
 		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><img src="{{=each_photo}}"/></div>
 	{{pass}}
 	</div>
   <!-- Carousel nav -->
-  <a class="carousel-control left" href="#myCarousel" data-slide="prev">&lsaquo;</a>
-  <a class="carousel-control right" href="#myCarousel" data-slide="next">&rsaquo;</a>
+  <a class="carousel-control left" href="#photos_carousel" data-slide="prev">&lsaquo;</a>
+  <a class="carousel-control right" href="#photos_carousel" data-slide="next">&rsaquo;</a>
 </div>
+<script>
+	$('#photos_carousel').carousel()
+</script>
