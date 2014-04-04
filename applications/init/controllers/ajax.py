@@ -67,16 +67,18 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 	stats = dict(
 		mpg_city = ['MPG City' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
 		mpg_hwy = ['MPG Highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
-		fuel = ['Fuel Type' , style['engine']['fuelType'].capitalize()],
-		hp = ['Horsepower' , style['engine']['horsepower']],
-		torque = ['Torque' , style['engine']['torque']],
+		fuel_type = ['Fuel Type' , style['engine']['fuelType'].capitalize()],
+		hp = ['Horsepower' , style['engine']['horsepower'] if 'engine' in style and 'horsepower' in style['engine'] else 'N/A'],
+		torque = ['Torque' , style['engine']['torque'] if 'engine' in style and 'torque' in style['engine'] else 'N/A'],
 		v =  ['Cylinders' , style['engine']['cylinder']],
 		drive = ['Drive' , style['drivenWheels'].capitalize()],
 		body = ['Body type' , style['submodel']['body']],
 		trans = ['Transmission type' , style['transmission']['transmissionType'].capitalize().replace('_', ' ')],
 		speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
-		base_msrp = ['Base MSRP ($)', style['price']['baseMSRP']],
+		base_msrp = ['Base MSRP', '$%0.0f'%style['price']['baseMSRP']],
 		colors=['Colors', colors],
+		manufacturer_code = ['Manufacturer Code', style['manufacturerCode'] if 'manufacturerCode' in style else 'N/A'],
+		fuel = ['Fuel', style['engine']['type'].capitalize()],
 		doors = ['Doors' , style['numOfDoors']],
 	)
 	stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
