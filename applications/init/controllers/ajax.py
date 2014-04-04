@@ -65,22 +65,22 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 	for each_color in style_colors['style_colors']:
 		colors.append([each_color['name'], each_color['colorChips']['primary']['hex']])
 	stats = dict(
-		mpg_city = ['MPG City' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
-		mpg_hwy = ['MPG Highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
-		fuel_type = ['Fuel Type' , style['engine']['fuelType'].capitalize()],
-		hp = ['Horsepower' , style['engine']['horsepower'] if 'engine' in style and 'horsepower' in style['engine'] else 'N/A'],
-		torque = ['Torque' , style['engine']['torque'] if 'engine' in style and 'torque' in style['engine'] else 'N/A'],
-		v =  ['Cylinders' , style['engine']['cylinder']],
-		drive = ['Drive' , style['drivenWheels'].capitalize()],
+		mpg_city = ['MPG city' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
+		mpg_hwy = ['MPG highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
+		fuel_type = ['Fuel type' , style['engine']['fuelType'].capitalize()],
+		hp = ['Engine horsepower' , style['engine']['horsepower'] if 'engine' in style and 'horsepower' in style['engine'] else 'N/A'],
+		torque = ['Engine torque' , style['engine']['torque'] if 'engine' in style and 'torque' in style['engine'] else 'N/A'],
+		v =  ['Engine cylinders' , style['engine']['cylinder']],
+		drive = ['Wheel drive' , style['drivenWheels'].capitalize()],
 		body = ['Vehicle type' , style['submodel']['body']],
 		trans = ['Transmission type' , style['transmission']['transmissionType'].capitalize().replace('_', ' ')],
 		speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
 		base_msrp = ['Base MSRP', '$%0.0f'%style['price']['baseMSRP']],
-		estimate = ['%s Estimate'%APP_NAME.replace('(Alpha)', ''), '$%0.0f'%(int(style['price']['baseMSRP'])-random.randrange(3000,6000),)],
-		colors=['Colors', colors],
-		manufacturer_code = ['Manufacturer Code', style['manufacturerCode'] if 'manufacturerCode' in style else 'N/A'],
+		estimate = ['%s estimate'%APP_NAME.replace('(Alpha)', ''), '$%0.0f'%(int(style['price']['baseMSRP'])-random.randrange(3000,6000),)],
+		colors=['Color options', colors],
+		manufacturer_code = ['Code', style['manufacturerCode'] if 'manufacturerCode' in style else 'N/A'],
 		fuel = ['Fuel', style['engine']['type'].capitalize()],
-		doors = ['Doors' , style['numOfDoors']],
+		doors = ['Vehicle doors' , style['numOfDoors']],
 	)
 	stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
 	return dict(stats = stats, make = make, model = model, year = year, style_id = style_id)
