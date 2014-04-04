@@ -76,7 +76,8 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 		trans = ['Transmission type' , style['transmission']['transmissionType'].capitalize().replace('_', ' ')],
 		speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
 		base_msrp = ['Base MSRP ($)', style['price']['baseMSRP']],
-		colors=['Colors', colors]
+		colors=['Colors', colors],
+		doors = ['Doors' , style['numOfDoors']],
 	)
 	stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
 	return dict(stats = stats, make = make, model = model, year = year, style_id = style_id)
