@@ -1,5 +1,46 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(my_offers)}}
+
 {{for each_offer in my_offer_summaries:}}
-	{{=each_offer}}
+<pre>
+	<pre>Year: {{=each_offer['year']}}</pre>
+	<pre>Make: {{=each_offer['make']}}</pre>
+	<pre>Model: {{=each_offer['model']}}</pre>
+	<pre>Trim: {{=each_offer['trim']}}</pre>
+	<pre>Color: {{=each_offer['color']}}</pre>
+	<pre>Auction Best Price: {{=each_offer['auction_best_price']}}</pre>
+	<pre>My Last Bid Price: {{=each_offer['my_last_bid_price']}}</pre>
+	<pre>My Last Bid Time: {{=each_offer['my_last_bid_time']}}</pre>
+	<pre>Auction Bids: {{=each_offer['auction_bids']}}</pre>{{#total bids in auction}}
+	<pre>Number of Bids: {{=each_offer['number_of_bids']}}</pre>{{#number of bids made by this dealer}}
+	<pre>Offer ID: {{=each_offer['my_offer_id']}}</pre>
+	<pre>Auction ID: {{=each_offer['auction_id']}}</pre>
+	<pre>Auction URL: <a href="{{=each_offer['auction_url']}}">Auction #{{=each_offer['auction_id']}}</a></pre>
+</pre>
+{{pass}}
+
+{{#pagination}}
+{{#prev/next may or may not appear based on content}}
+{{#previous page}}
+{{if page:}}
+	<a href="{{=URL(args=[page-1])}}">previous</a>
+{{pass}}
+
+{{#next page}}
+{{if len(my_offer_summaries)>items_per_page:}}
+	<a href="{{=URL(args=[page+1])}}">next</a>
+{{pass}}
+
+{{#items per page}}
+{{for each_limit in limits_list:}}
+	{{_vars = dict(show=each_limit)}}
+	<a href="{{=URL(vars=_vars)}}">{{=each_limit}} per page</a>
+{{pass}}
+
+{{#sorting}}
+{{for each_pair in sorting:}}
+	{{for each_sort in each_pair:}}
+		{{_vars.update(dict(sortby=each_sort))}}
+		<a href="{{=URL(vars=_vars)}}">{{=each_sort.capitalize()}}</a>
+	{{pass}}
 {{pass}}

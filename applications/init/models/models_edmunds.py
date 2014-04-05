@@ -9,16 +9,20 @@ if not db(db.auth_group.role == "admins").select().first(): #cache!!
 if auth.user_id:
 	if auth.has_membership(user_id = auth.user_id, role = "admins"):
 		response.menu.append(
-			(T('Admin Portal'), False, URL('admin', 'index.html'), [
+			(T('Admin Portal'), False, URL('admin', 'dealership_requests.html'), [
 				(T('Dealership Requests'), False, URL('admin', 'dealership_requests.html'), []),
 				(T('User Management'), False, URL('admin', 'user_management.html'), []),
 			]),
 		)
 	if auth.has_membership(user_id = auth.user_id, role = "dealers"):
 		response.menu.append(
-			(T('Dealer Portal'), False, URL('dealer', 'index.html'), [
-				(T('Auction Requests'), False, URL('dealer', 'auction_requests.html'), []),
-				(T('My Auctions'), False, URL('dealer', 'my_auctions.html'), []),
+			(T('Dealer Portal'), False, URL('dealer', 'auction_requests') if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]), [
+				(T('Alerts'), False, URL('dealer', 'reminders'), []),
+				(T('Auction Requests'), False, URL('dealer', 'auction_requests'), []),
+				(T('Billing'), False, URL('dealer', 'billing'), []),
+				(T('Dealer Info'), False, URL('dealer', 'dealer_info'), []),
+				(T('Messages'), False, URL('dealer', 'messages'), []),
+				(T('My Auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
 
@@ -195,6 +199,9 @@ db.define_table('auction_request',
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer_bid.auction_request  ==row.auction_request.id).select())
 	),
+	Field.Method('expired',
+		lambda row: row.auction_request.expires < request.now
+	),
 	#Field user ID
 	#Block dealers
 )
@@ -291,6 +298,9 @@ db.define_table('auction_request_offer',
 				'Additional Fees':row.auction_request_offer.fees_options,
 			}
 		)
+	),
+	Field.Method('number_of_bids',
+		lambda row: len(db(db.auction_request_offer_bid.auction_request_offer == row.auction_request_offer.id).select())
 	),
 )
 

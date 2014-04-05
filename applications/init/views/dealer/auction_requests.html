@@ -105,7 +105,7 @@
 							<li><a id = "all_colors_filter" href="{{=URL(vars=dict(make = make, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
 							 <li class="divider"></li>
 							{{for each_color in colors_list:}}
-								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=colors_list[each_color]}}</a></li>
+								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, make=make, year=year ,sortby=sortby))}}"><i class="fa fa-square" rel="tooltip" style="color:#{{=colors_list[each_color][1]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;"></i> {{=colors_list[each_color][0]}}</a></li>
 							{{pass}}
 						</ul>
 					{{else:}}

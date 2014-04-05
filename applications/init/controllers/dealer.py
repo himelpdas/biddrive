@@ -62,9 +62,11 @@ def auction_requests():
 		query &= db.auction_request.trim_choices==trim
 		for each_style in model_styles:
 			if trim == str(each_style['id']):
-				for each_color in each_style['colors'][1]['options']:
-						colors_list.update({str(each_color['id']) : each_color['name']})
-		colors_list = OD(sorted(colors_list.items(), key=lambda x: x[1])) 
+				safe_style_colors = each_style['colors']
+				colorChipsErrorFix(safe_style_colors)
+				for each_color in safe_style_colors[1]['options']:
+					colors_list.update( {str(each_color['id']) : [each_color['name'], each_color['colorChips']['primary']['hex'] ],} )
+		colors_list = OD(sorted(colors_list.items(), key=lambda x: x[1])) #FIXED#TODO: ADD LOGIC TO PREVENT STUPID COLORCHIPS ERROR 
 	else:
 		trim = None
 	#
@@ -352,7 +354,9 @@ def auction():
 	if not is_participant: #somehow he never made an offer
 		session.flash="You are not a part of this auction!"
 		redirect(URL('default','index.html'))
-
+	
+	session.last_auction_visited = auction_request_id #for instant access to last auction visited when portal button pressed
+	
 	#only allow form functionality to show for dealers as long as auction is active
 	bid_form = None
 	authorized_dealer = auth.has_membership(role='request_by_make_authorized_dealers_#%s'%auction_request_id)
@@ -482,7 +486,7 @@ def auction():
 		bids = db((db.auction_request_offer_bid.owner_id == each_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
 		number_of_bids = len(bids)
 		msrp = each_offer.MSRP()
-		last_bid = bids.last()
+		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
 		
 		each_offer_dict = {
 			'id' : each_offer.id,
@@ -518,19 +522,87 @@ def auction():
 	
 @auth.requires_membership('dealers')
 def my_auctions():
-	my_offers = db(db.auction_request_offer.owner_id == auth.user_id).select()
+
+	def paginate(page, show): #adapted from web2py book
+		"""	{{#in view}}
+			{{for i,row in enumerate(rows):}}
+				{{if i==items_per_page: break}}
+				{{=row.value}}<br />
+			{{pass}}
+			{{#main}}
+			{{if page:}}
+				<a href="{{=URL(args=[page-1])}}">previous</a>
+			{{pass}}
+
+			{{if len(rows)>items_per_page:}}
+				<a href="{{=URL(args=[page+1])}}">next</a>
+			{{pass}}
+		"""
+		limits_list = [5,10,15,25,40,60]
+		if page: page=int(page)
+		else: page=0
+		items_per_page=limits_list[0] if not show else int(show)
+		limitby=(page*items_per_page,(page+1)*items_per_page+1)
+		return dict(page=page,items_per_page=items_per_page, limitby=limitby, limits_list=limits_list)
+	
+	paging = paginate(request.args(0),request.vars['show'])
+	
+	sortby = request.vars['sortby']
+	sorting = [["make-up", "make-down"], ["model-up", "model-down"], ["trim-up", "trim-down"], ["year-up", "year-down"], ["expiring-up", "expiring-down"]]
+	orderby = ~db.auction_request.expires
+	#DB LEVEL SORTING 
+	if sortby == "make-up":
+		orderby = db.auction_request.make #this query causes referencing of two tables, so a join has occured
+	if sortby == "make-down":
+		orderby = ~db.auction_request.make
+	if sortby == "model-up":
+		orderby = db.auction_request.model
+	if sortby == "model-down":
+		orderby = ~db.auction_request.model
+	if sortby == "trim-up":
+		orderby = db.auction_request.trim_name
+	if sortby == "trim-down":
+		orderby = ~db.auction_request.trim_name
+	if sortby == "year-up":
+		orderby = db.auction_request.year
+	if sortby == "year-down":
+		orderby = ~db.auction_request.year
+	if sortby == "expiring-up":
+		orderby = ~db.auction_request.expires
+	if sortby == "expiring-down":
+		orderby = db.auction_request.expires #not using ID because expires can be changed by admin
+	
+	join =[db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id)] #about joins http://goo.gl/iuQp6P #joins are much faster than insorting
+	#in a join if a row from tableA doesn't match with a row from tableB, the join is skipped. To force this to happen you must use a left join. (use left instead of join argument) 
+	
+	my_offers = db(db.auction_request_offer.owner_id == auth.user_id).select(join=join, orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
 	my_offer_summaries = []
 	for each_offer in my_offers:
-		auction_request = db(db.auction_request.id == each_offer.auction_request).select().first()
-		color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+		auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() #make sure not abandoned or expired!
+		#auction_request.expired()
+		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.color_preference, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+		#get this dealers last bid on this auction
+		my_last_bid = each_offer.auction_request_offer.latest_bid()
+		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
+		my_last_bid_time = my_last_bid.created_on if my_last_bid else "N/A"
+		#get the best price for this auction
+		auction_best_bid = auction_request.lowest_offer()
+		auction_best_price = '$%s'%auction_best_bid.bid if auction_best_bid else "No Bids!"
 		each_offer_dict = {
 			'year':auction_request.year,
 			'make':auction_request.make,
 			'model':auction_request.model,
 			'trim':auction_request.trim_name,
-			'color':color_names[each_offer.color],
-			'best_price': auction_request.lowest_offer(),
-			'my_last_bid': each_offer.latest_bid(),
+			'color': color_names[each_offer.auction_request_offer.color],
+			'auction_best_price': auction_best_price,
+			'my_last_bid_price': my_last_bid_price,
+			'my_last_bid_time': my_last_bid_time,
+			'auction_bids':each_offer.auction_request.number_of_bids(),
+			'number_of_bids':each_offer.auction_request_offer.number_of_bids(),
+			'auction_id':each_offer.auction_request.id,
+			'my_offer_id':each_offer.auction_request_offer.id,
+			'auction_url':URL('auction', args=[each_offer.auction_request.id]),
 		}
 		my_offer_summaries.append(each_offer_dict)
-	return dict(my_offer_summaries = my_offer_summaries)
+	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
+	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, **paging)

@@ -102,3 +102,10 @@ def getMsrp(trim_data, option_ids={}):
 				if int(each_option['id']) == int(each_choice):
 					price+=int(each_option['price']['baseMSRP'])
 	return price
+	
+def colorChipsErrorFix(style_colors): #experimental
+	for each_color in style_colors:
+		if each_color['category'] == 'Exterior':
+			for counter,each_option in enumerate(each_color['options']):
+				if not 'colorChips' in each_option:
+					del each_color['options'][counter]

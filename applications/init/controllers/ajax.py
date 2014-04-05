@@ -34,16 +34,17 @@ def color_preference(): #TODO get all data from single call make/model/year
 		return dict() #maybe 404
 	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3])
 	style_colors=style['colors']#[1]['options']
-	try: #make sure color data is safe for the multiselect form submission in request_by_make
-		for each_color in style_colors:
+	#make sure color data is safe for the multiselect form submission in request_by_make
+		"""
+		for each_color in style_colors:#replacced with colorChipsErrorFix()
 			if each_color['category'] == 'Exterior':
-				counter=0
+				counter=0#USE ENUMERATE
 				for each_option in each_color['options']:
 					if not 'colorChips' in each_option:
 						del each_color['options'][counter]
 					counter+=1
-	except (IndexError, KeyError, TypeError): 
-		style_colors = {}
+		"""
+	colorChipsErrorFix(style_colors)
 	style_colors = style['colors'][1]['options']
 	style_color_codes = []
 	for each_color in style_colors:
