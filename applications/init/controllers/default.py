@@ -79,7 +79,8 @@ def request_by_make():
 	"""
 	
 	def computations(form):
-		trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim_choices) 
+		trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim_choices)
+		colorChipsErrorFix(trim_data['colors']) #make sure all db entries are safe. protect trim_data from this error
 		db.auction_request.trim_data.default = json.dumps(trim_data)
 		db.auction_request.trim_name.default = trim_data['name'] 
 		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in form.vars.color_preference ] #make a list of color names based on ids in color_preference field

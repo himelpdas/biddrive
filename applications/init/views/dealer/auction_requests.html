@@ -3,9 +3,10 @@
 {{#year make model should be done via filters}}
 
 {{"""}}
-TODO LIST: 
+ISSUES_ZAKI: 
 Add a filter icon for #filter input
-Long drop downs like brands get too vertical.
+Long drop downs like brands get too vertical
+The alerts modal looks clumsy
 Get rid of dummies and lorem ipsums
 {{"""}}
 
@@ -13,7 +14,7 @@ Get rid of dummies and lorem ipsums
 <div class="panel panel-default">
 	<div class="panel-heading text-uppercase">
 		Filters
-		<div class="pull-right form-group"><input id="sifter" type="text" class="input-small form-control" placeholder="Sift through results..." style="height: 20px; font-size: 16px; line-height: 20px;"></div> {{#http://goo.gl/cC4lEn http://goo.gl/Y0w9wi http://goo.gl/LYpoNj}}
+		<div class="pull-right form-group"><input id="sifter" type="text" class="input-small form-control" placeholder="Sift through words..." style="height: 20px; font-size: 16px; line-height: 20px;"></div> {{#http://goo.gl/cC4lEn http://goo.gl/Y0w9wi http://goo.gl/LYpoNj}}
 	</div>
 	<div class="panel-body">
 	 	<div class="row">
@@ -191,7 +192,7 @@ Get rid of dummies and lorem ipsums
 					{{=each_request.trim_name}}
 				</td>
 
-				<td class="jcorgFilterTextChild">
+				<td>
 					{{color_names=each_request.color_names}}
 					{{color_names.sort()}}
 					{{for each_name in color_names:}}
@@ -229,7 +230,7 @@ Get rid of dummies and lorem ipsums
 				</td>
 			</tr>
 			<script>
-				$("#sifter").jcOnPageFilter({caseSensitive:false, hideNegatives:true}); {{#http://goo.gl/LYpoNj}}
+				$("#sifter").jcOnPageFilter({caseSensitive:false, hideNegatives:true, highlightColor:'lightgreen'}); {{#http://goo.gl/LYpoNj}}
 			</script>
 		{{pass}}
 	</tbody>

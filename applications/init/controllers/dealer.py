@@ -340,6 +340,7 @@ def auction():
 		session.flash="Invalid request ID!"
 		redirect(URL('default','index.html'))
 	
+	trim_data = json.loads(auction_request.trim_data)
 	auction_request_expired = auction_request.expires < request.now
 
 	#create offer form
@@ -380,10 +381,8 @@ def auction():
 	color_names=auction_request.color_names
 	color_names.sort()
 	for each_name in color_names:
-		for each_color in json.loads(auction_request.trim_data)['colors'][1]['options']:
-			if each_color['name'] == each_name:
-				color_hex = each_color['colorChips']['primary']['hex']
-				colors.append([each_name, color_hex])
+		color_hex=getColorHexByNameOrID(each_name, trim_data)
+		colors.append([each_name, color_hex])
 	
 	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
 	lowest_offer = "No bids!"
@@ -402,7 +401,7 @@ def auction():
 		make = auction_request.make,
 		model = auction_request.model,
 		trim_name = auction_request.trim_name,
-		trim_data = auction_request.trim_data,
+		trim_data = trim_data,
 		colors = colors,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
@@ -463,7 +462,7 @@ def auction():
 	"""
 	
 	auction_request_offers_info = []
-	trim_data = json.loads(auction_request_info['trim_data'])
+	#trim_data = json.loads(auction_request_info['trim_data'])
 	for each_offer in auction_request_offers:
 		#options
 		interior_options = []

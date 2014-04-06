@@ -109,3 +109,22 @@ def colorChipsErrorFix(style_colors): #experimental
 			for counter,each_option in enumerate(each_color['options']):
 				if not 'colorChips' in each_option:
 					del each_color['options'][counter]
+					
+def getColorHexByNameOrID(identifier, trim_data):
+	name_or_id="id"
+	try: int(identifier)
+	except ValueError:
+		name_or_id="name"
+	try:
+		trim_data = json.loads(trim_data)
+	except TypeError:
+		try: trim_data.keys()
+		except: raise Exception("Trim_data variable corrupt!")
+	color_hex=None
+	for each_color in trim_data['colors'][1]['options']:
+		if each_color[name_or_id] == identifier:
+			color_hex = each_color['colorChips']['primary']['hex']
+			break
+	if not color_hex:
+		raise Exception("Couldn't find color hex by name or ID!")
+	return color_hex
