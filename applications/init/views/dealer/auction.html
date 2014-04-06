@@ -135,11 +135,11 @@
 <table class="table">
 	<thead>
 		<tr>
-			<th>Price</th>
-			<th>Image</th>
-			<th>Color</th>
-			<th>Dealer</th>
-			<th>&nbsp; <!-- Fav. button --> </th>
+			<th style="width: 20%">Price</th>
+			<th style="width: 20%">Image</th>
+			<th style="width: 20%">Color</th>
+			<th style="width: 20%">Dealer</th>
+			<th style="width: 20%">&nbsp; <!-- Fav. button --> </th>
 		</tr>
 	</thead>
 	
@@ -158,6 +158,7 @@
 			{{=each_offer['mechanical_options']}}
 			{{=each_offer['package_options']}}
 			{{=each_offer['fees_options']}}
+
 			{{=each_offer['exterior_image']}}
 			{{=each_offer['interior_image']}}
 			{{=each_offer['front_image']}}
@@ -171,27 +172,136 @@
 			{{=each_offer['other_image']}}
 
 		{{pass}}	
-		-->
-		<tr>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td>
-				<button class="btn btn-default pull-right" rel="tooltip" title="Expand Bid">
-					<i class="fa fa-plus"></i>
-				</button>
+	-->
+		{{for each_offer in auction_request_offers_info:}}
+			<tr>
+				<td>{{=each_offer['last_bid_price']}}</td>
+				<td> <img src="{{=URL('download', args=each_offer['exterior_image']) }}" style="width: 100px" class="img-responsive"> </td>
+				<td>{{=each_offer['color']}}</td>
+				<td></td>
+				<td>
+					<button class="btn btn-default pull-right" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expands_{{each_offer['id']}}">
+						<i class="fa fa-plus"></i>
+					</button>
+					
+					<button class="btn btn-default pull-right" rel="tooltip" title="Favorite this bid" style="margin-right:10px">
+						<i class="fa fa-heart"></i>
+					</button>
+				</td>
+			</tr>
+
+			<tr class="collapse" id="expands_{{each_offer['id']}}">
 				
-				<button class="btn btn-default pull-right" rel="tooltip" title="Favorite this bid" style="margin-right:10px">
-					<i class="fa fa-heart"></i>
-				</button>
-			</td>
-		</tr>
+				<td colspan="5" style="border-top :none; width: 100%"> 
+
+					<!-- Nav tabs -->
+					<ul class="nav nav-tabs">
+						<li class="active"><a href="#dd_{{=each_offer['id']}}" data-toggle="tab">Information</a></li>
+						<li><a href="#ques_{{each_offer['id']}}" data-toggle="tab">Question</a></li>
+					</ul>
+
+					<!-- Tab panes -->
+					<div class="tab-content">
+						<div class="tab-pane active" id="dd_{{=each_offer['id']}}">
+							asdf
+						</div>
+						<div class="tab-pane" id="ques_{{each_offer['id']}}">
+							<form role="form">
+								<textarea class="form-control"></textarea>
+							</form>
+
+						</div>
+					</div>
+				</td>
+
+			</tr>
+
+		{{pass}}
 
 	</tbody>
 </table>
 
-<hr><hr><hr>
+
+<div class="row" style="border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 10px">
+	<div class="col-xs-2">
+		Price
+	</div>
+
+	<div class="col-xs-2">
+		Image
+	</div>
+
+	<div class="col-xs-3">
+		Color
+	</div>
+
+	<div class="col-xs-3">
+		Dealer Distance
+	</div>
+
+
+	<div class="col-xs-2">
+		&nbsp;
+	</div>	
+</div>
+
+{{for each_offer in auction_request_offers_info:}}
+	<div class="row">
+		<div class="col-xs-2">
+			{{=each_offer['last_bid_price']}}
+		</div>
+
+		<div class="col-xs-2">
+			<img src="{{=URL('download', args=each_offer['exterior_image']) }}" style="width: 100px" class="img-responsive">
+		</div>
+
+		<div class="col-xs-3">
+			{{=each_offer['color']}}
+		</div>
+
+		<div class="col-xs-3">
+			5 Miles away <small><em>(Astoria, NY)</em></small>
+		</div>
+
+		<div class="col-xs-2">
+			<button class="btn btn-default pull-right" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{each_offer['id']}}">
+				<i class="fa fa-plus"></i>
+			</button>
+			
+			<button class="btn btn-default pull-right" rel="tooltip" title="Favorite this bid" style="margin-right:10px">
+				<i class="fa fa-heart"></i>
+			</button>
+		</div>
+
+		<!-- || -->
+		<div class="col-xs-12 collapse" id="expand_{{each_offer['id']}}">
+
+
+			<!-- Nav tabs -->
+			<ul class="nav nav-tabs">
+				<li class="active"><a href="#dd_{{=each_offer['id']}}" data-toggle="tab">Information</a></li>
+				<li><a href="#ques_{{each_offer['id']}}" data-toggle="tab">Question</a></li>
+			</ul>
+
+			<!-- Tab panes -->
+			<div class="tab-content">
+				<div class="tab-pane active" id="dd_{{=each_offer['id']}}">
+					asdf
+				</div>
+				<div class="tab-pane" id="ques_{{each_offer['id']}}">
+					<form role="form">
+						<textarea class="form-control"></textarea>
+					</form>
+
+				</div>
+			</div>
+
+		
+		</div>
+	</div>
+{{pass}}
+
+
  
 <!--{{=auction_request_info['id']}}
 {{=auction_request_info['year']}}
@@ -202,12 +312,14 @@
 {{=auction_request_info['colors']}}
 {{=auction_request_info['city']}}
 {{=auction_request_info['state']}}-->
-{{=auction_request_info['ends_on']}}
-{{=auction_request_info['ends_in_seconds']}}
-{{=auction_request_info['ends_in_human']}}
+{{#=auction_request_info['ends_on']}}
+{{#=auction_request_info['ends_in_seconds']}}
+{{#=auction_request_info['ends_in_human']}}
 <!--{{=auction_request_info['number_of_bids']}}
 {{=auction_request_info['best_price']}}-->
 
+
+<!--
 <ul class="nav nav-list">
   <li class="divider"></li>
 </ul>
@@ -221,7 +333,7 @@
 				<span class="caret"></span>
 			</a>
 			<ul class="dropdown-menu">
-				<!-- dropdown menu links -->
+				<!-- dropdown menu links 
 					{{for each in sortlist:}}<li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each.replace('-',' ').capitalize()}}</a></li>{{pass}}
 			</ul>
 		</div>
@@ -230,4 +342,4 @@
  
 
 
-{{if bid_form:}}{{=bid_form}}{{pass}}
+{{if bid_form:}}{{=bid_form}}{{pass}}-->
