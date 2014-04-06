@@ -2,11 +2,20 @@
 {{#=BEAUTIFY(response._vars}}
 {{#year make model should be done via filters}}
 
-{{#FILTERS}}
+{{"""}}
+TODO LIST: 
+Add a filter icon for #filter input
+Long drop downs like brands get too vertical.
+Get rid of dummies and lorem ipsums
+{{"""}}
 
+{{#FILTERS}}
 <div class="panel panel-default">
-	 <div class="panel-heading text-uppercase">Filters</div>
-	 <div class="panel-body">
+	<div class="panel-heading text-uppercase">
+		Filters
+		<div class="pull-right form-group"><input id="sifter" type="text" class="input-small form-control" placeholder="Sift through results..." style="height: 20px; font-size: 16px; line-height: 20px;"></div> {{#http://goo.gl/cC4lEn http://goo.gl/Y0w9wi http://goo.gl/LYpoNj}}
+	</div>
+	<div class="panel-body">
 	 	<div class="row">
 	 		
 	 		<!-- year dropdown -->
@@ -153,7 +162,7 @@
 
 	<tbody>
 		{{for each_request in auction_requests:}}
-			<tr>
+			<tr class="jcorgFilterTextParent">
 				<td>
 					<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
 					<script> {{#always add id to id attr when theres more than one}}
@@ -165,24 +174,24 @@
 					</script>
 				</td>
 
-				<td>
+				<td class="jcorgFilterTextChild">
 					{{=each_request.year}}
 				</td>
 
-				<td>
+				<td class="jcorgFilterTextChild">
 					{{=brands_list[each_request.make]}}
 				</td>
 
-				<td>
+				<td class="jcorgFilterTextChild">
 					{{each_model = each_request.model}} 
 					{{if len(each_model) < 4:}}{{=each_model.upper()}}{{else:}}{{=each_model.capitalize()}}{{pass}}
 				</td>
 
-				<td>
+				<td class="jcorgFilterTextChild">
 					{{=each_request.trim_name}}
 				</td>
 
-				<td>
+				<td class="jcorgFilterTextChild">
 					{{color_names=each_request.color_names}}
 					{{color_names.sort()}}
 					{{for each_name in color_names:}}
@@ -195,7 +204,7 @@
 					{{pass}}
 				</td>
 
-				<td>
+				<td class="jcorgFilterTextChild">
 					{{area=db(db.zipgeo.zip_code == each_request.zip_code).select().first()}}
 					{{=area.city}}, {{=area.state_abbreviation}}
 				</td>
@@ -219,6 +228,9 @@
 					{{pass}}
 				</td>
 			</tr>
+			<script>
+				$("#sifter").jcOnPageFilter({caseSensitive:false, hideNegatives:true}); {{#http://goo.gl/LYpoNj}}
+			</script>
 		{{pass}}
 	</tbody>
 </table>
