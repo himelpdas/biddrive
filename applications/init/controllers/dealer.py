@@ -340,6 +340,7 @@ def auction():
 		session.flash="Invalid request ID!"
 		redirect(URL('default','index.html'))
 	
+	trim_data = json.loads(auction_request.trim_data)
 	auction_request_expired = auction_request.expires < request.now
 
 	#create offer form
@@ -380,10 +381,8 @@ def auction():
 	color_names=auction_request.color_names
 	color_names.sort()
 	for each_name in color_names:
-		for each_color in json.loads(auction_request.trim_data)['colors'][1]['options']:
-			if each_color['name'] == each_name:
-				color_hex = each_color['colorChips']['primary']['hex']
-				colors.append([each_name, color_hex])
+		color_hex=getColorHexByNameOrID(each_name, trim_data)
+		colors.append([each_name, color_hex])
 	
 	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
 	lowest_offer = "No bids!"
@@ -402,7 +401,7 @@ def auction():
 		make = auction_request.make,
 		model = auction_request.model,
 		trim_name = auction_request.trim_name,
-		trim_data = auction_request.trim_data,
+		trim_data = trim_data,
 		colors = colors,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
@@ -463,7 +462,7 @@ def auction():
 	"""
 	
 	auction_request_offers_info = []
-	trim_data = json.loads(auction_request_info['trim_data'])
+	#trim_data = json.loads(auction_request_info['trim_data'])
 	for each_offer in auction_request_offers:
 		#options
 		interior_options = []
@@ -572,13 +571,13 @@ def my_auctions():
 	if sortby == "expiring-down":
 		orderby = db.auction_request.expires #not using ID because expires can be changed by admin
 	
-	join =[db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id)] #about joins http://goo.gl/iuQp6P #joins are much faster than insorting
+	join =[db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id)] #about joins http://goo.gl/iuQp6P #joins are much faster than sorting. Instead of two separate queries, join them and access their variables at once
 	#in a join if a row from tableA doesn't match with a row from tableB, the join is skipped. To force this to happen you must use a left join. (use left instead of join argument) 
 	
 	my_offers = db(db.auction_request_offer.owner_id == auth.user_id).select(join=join, orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
 	my_offer_summaries = []
 	for each_offer in my_offers:
-		auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() #make sure not abandoned or expired!
+		#auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() don't needed #make sure not abandoned or expired!
 		#auction_request.expired()
 		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.color_preference, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		#get this dealers last bid on this auction
@@ -586,13 +585,13 @@ def my_auctions():
 		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
 		my_last_bid_time = my_last_bid.created_on if my_last_bid else "N/A"
 		#get the best price for this auction
-		auction_best_bid = auction_request.lowest_offer()
+		auction_best_bid = each_offer.auction_request.lowest_offer()
 		auction_best_price = '$%s'%auction_best_bid.bid if auction_best_bid else "No Bids!"
 		each_offer_dict = {
-			'year':auction_request.year,
-			'make':auction_request.make,
-			'model':auction_request.model,
-			'trim':auction_request.trim_name,
+			'year':each_offer.auction_request.year,
+			'make':each_offer.auction_request.make,
+			'model':each_offer.auction_request.model,
+			'trim':each_offer.auction_request.trim_name,
 			'color': color_names[each_offer.auction_request_offer.color],
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
