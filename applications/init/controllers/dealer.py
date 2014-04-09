@@ -600,6 +600,7 @@ def my_auctions():
 			'number_of_bids':each_offer.auction_request_offer.number_of_bids(),
 			'auction_id':each_offer.auction_request.id,
 			'my_offer_id':each_offer.auction_request_offer.id,
+			'new_messages':0,
 			'auction_url':URL('auction', args=[each_offer.auction_request.id]),
 		}
 		my_offer_summaries.append(each_offer_dict)

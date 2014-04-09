@@ -95,7 +95,7 @@ def reviews():
 		
 def style_photos():
 	style_id = request.args[0]
-	style_photos = findPhotosByStyleID(style_id)
+	style_photos = findPhotosByStyleID(style_id) or [] #some models doesn't return an image ex. 2014 Kia cadenza.
 	photos = []
 	for each_photo_set in style_photos:
 		for each_photo in each_photo_set['photoSrcs']:
