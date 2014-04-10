@@ -396,8 +396,8 @@ def auction():
 		lowest_offer = '$%s'%int(lowest_offer_row.bid)
 	
 	#auction request offers (rows)
-	auction_request_offers = db(db.auction_request_offer.auction_request == auction_request_id).select()
-	
+	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
+
 	#auction requests info
 	auction_request_info = dict(
 		id = str(auction_request.id),
@@ -423,6 +423,7 @@ def auction():
 	#in memory sorting	
 	sortby = request.vars['sortby']
 	sortlist = []
+	
 	#Price
 	pricechoices = ["price-up", "price-down"]; sortlist.extend(pricechoices)
 	if sortby in pricechoices:
@@ -430,6 +431,7 @@ def auction():
 		if sortby == "price-down":
 			reverse = True
 		auction_request_offers = auction_request_offers.sort(lambda row: row.latest_bid(), reverse=reverse)
+		
 	#MSRP
 	msrpchoices = ["retail-price-up", "retail-price-down"]; sortlist.extend(msrpchoices)
 	if sortby in msrpchoices:
@@ -437,6 +439,7 @@ def auction():
 		if sortby == "retail-price-down":
 			reverse = True
 		auction_request_offers = auction_request_offers.sort(lambda row: row.MSRP(), reverse=reverse)
+		
 	#Discount (%off)
 	discountchoices = ["discount-up", "discount-down"]; sortlist.extend(discountchoices)
 	if sortby in discountchoices:
@@ -454,15 +457,16 @@ def auction():
 	distancechoices = ["distance-up", "distance-down"]; sortlist.extend(distancechoices)
 	
 	def distance_to_auction_request(row): #will reuse so keep outside of if statement #CACHE this using db.dealership_info.id and row.owner_id 
-		offer_owner_info = db(db.dealership_info.id == row.owner_id).select().last()
-		return calcDist(offer_owner_info.latitude, offer_owner_info.longitude, auction_request.latitude, auction_request.longitude)
+		#offer_owner_info = db(db.dealership_info.id == row.owner_id).select().last()
+		return calcDist(row.dealership_info.latitude, row.dealership_info.longitude, auction_request.latitude, auction_request.longitude)
 		
 	if sortby in distancechoices:
 		reverse = False
 		if sortby == "distance-down":
 			reverse = True
 		auction_request_offers = auction_request_offers.sort(distance_to_auction_request, reverse=reverse) #returns new
-	#
+		
+	###########END SORTING#############
 	"""
 	response.view = 'generic.html'
 	return dict(auction_request_info = auction_request_info['trim_data'])
@@ -478,58 +482,62 @@ def auction():
 		package_options = []
 		fees_options = []
 		
-		for each_option in each_offer.interior_options:
+		for each_option in each_offer.auction_request_offer.interior_options:
 			interior_options.append(__get_option_from_ID(trim_data, 'Interior', each_option))
-		for each_option in each_offer.exterior_options:
+		for each_option in each_offer.auction_request_offer.exterior_options:
 			exterior_options.append(__get_option_from_ID(trim_data, 'Exterior', each_option))
-		for each_option in each_offer.mechanical_options:
+		for each_option in each_offer.auction_request_offer.mechanical_options:
 			mechanical_options.append(__get_option_from_ID(trim_data, 'Mechanical', each_option))
-		for each_option in each_offer.package_options:
+		for each_option in each_offer.auction_request_offer.package_options:
 			package_options.append(__get_option_from_ID(trim_data, 'Package', each_option))
-		for each_option in each_offer.fees_options:
+		for each_option in each_offer.auction_request_offer.fees_options:
 			fees_options.append(__get_option_from_ID(trim_data, 'Additional Fees', each_option))
 			
 		#pricing stuff
-		bids = db((db.auction_request_offer_bid.owner_id == each_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
+		bids = db((db.auction_request_offer_bid.owner_id == each_offer.auction_request_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
 		number_of_bids = len(bids)
-		msrp = each_offer.MSRP()
+		msrp = each_offer.auction_request_offer.MSRP()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
+		last_bid_price = last_bid.bid if last_bid else None
 		
 		#dealer stuff
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
 		this_dealer_distance = distance_to_auction_request(each_offer)
 		
 		#color stuff
-		this_color = color_names[each_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
+		this_color = color_names[each_offer.auction_request_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
 		
 		#message stuff
 		
 		each_offer_dict = {
-			'id' : each_offer.id,
-			'dealer_id' : each_offer.owner_id,
-			'last_bid_price' : '$%s'%last_bid.bid if last_bid else None,
+			'id' : each_offer.auction_request_offer.id,
+			'dealer_first_name':each_offer.auth_user.first_name,
+			'dealer_id' : each_offer.auction_request_offer.owner_id,
+			'last_bid_price' : last_bid_price,
+			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,
 			'color' : this_color,
-			'summary' : each_offer.summary,
+			'summary' : each_offer.auction_request_offer.summary,
 			'interior_options' : interior_options,
 			'exterior_options' : exterior_options,
 			'mechanical_options' : mechanical_options,
 			'package_options' : package_options,
 			'fees_options' : fees_options,
-			'exterior_image' : each_offer.exterior_image,
-			'interior_image' : each_offer.interior_image,
-			'front_image' : each_offer.front_image,
-			'rear_image' : each_offer.rear_image,
-			'tire_image' : each_offer.tire_image,
-			'dashboard_image' : each_offer.dashboard_image,
-			'passenger_image' : each_offer.passenger_image,
-			'trunk_image' : each_offer.trunk_image,
-			'underhood_image' : each_offer.underhood_image,
-			'roof_image' : each_offer.roof_image,
-			'other_image' : each_offer.other_image,
+			'exterior_image' : each_offer.auction_request_offer.exterior_image,
+			'interior_image' : each_offer.auction_request_offer.interior_image,
+			'front_image' : each_offer.auction_request_offer.front_image,
+			'rear_image' : each_offer.auction_request_offer.rear_image,
+			'tire_image' : each_offer.auction_request_offer.tire_image,
+			'dashboard_image' : each_offer.auction_request_offer.dashboard_image,
+			'passenger_image' : each_offer.auction_request_offer.passenger_image,
+			'trunk_image' : each_offer.auction_request_offer.trunk_image,
+			'underhood_image' : each_offer.auction_request_offer.underhood_image,
+			'roof_image' : each_offer.auction_request_offer.roof_image,
+			'other_image' : each_offer.auction_request_offer.other_image,
 			'msrp': '$%s'%msrp,
 			'offer_distance_to_auction_request': '%0.2f'%this_dealer_distance,
-			'msrp_discount': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) #(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
+			'msrp_discount_percent': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
+			'msrp_discount_dollars':'$%s'%(int(msrp) - int(msrp if not last_bid_price else last_bid_price),),
 		}
 		auction_request_offers_info.append(each_offer_dict)
 
