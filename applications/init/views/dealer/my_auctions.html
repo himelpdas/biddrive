@@ -1,9 +1,11 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(my_offers)}}
 
+
+<!--
 {{for each_offer in my_offer_summaries:}}
 <pre>
-	<pre>Year: {{=each_offer['year']}}</pre>
+<pre>Year: {{=each_offer['year']}}</pre>
 	<pre>Make: {{=each_offer['make']}}</pre>
 	<pre>Model: {{=each_offer['model']}}</pre>
 	<pre>Trim: {{=each_offer['trim']}}</pre>
@@ -11,13 +13,91 @@
 	<pre>Auction Best Price: {{=each_offer['auction_best_price']}}</pre>
 	<pre>My Last Bid Price: {{=each_offer['my_last_bid_price']}}</pre>
 	<pre>My Last Bid Time: {{=each_offer['my_last_bid_time']}}</pre>
-	<pre>Auction Bids: {{=each_offer['auction_bids']}}</pre>{{#total bids in auction}}
+	<pre>Auction Bids: {{=each_offer['auction_bids']}}</pre>{{#total bids in auction}} 
 	<pre>Number of Bids: {{=each_offer['number_of_bids']}}</pre>{{#number of bids made by this dealer}}
 	<pre>Offer ID: {{=each_offer['my_offer_id']}}</pre>
 	<pre>Auction ID: {{=each_offer['auction_id']}}</pre>
 	<pre>Auction URL: <a href="{{=each_offer['auction_url']}}">Auction #{{=each_offer['auction_id']}}</a></pre>
 </pre>
 {{pass}}
+-->
+<div class="row">
+	<div class="col-xs-12">
+		<h3>Bids made by you</h3>
+	</div>
+</div>
+
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<td colspan="4">
+				<div class="pull-right">
+					{{#items per page}}
+					<div class="btn-group">
+					  	<button type="button" class="btn btn-default btn-sm dropdown-toggle text-uppercase text-sm" data-toggle="dropdown">
+						    Per Page <i class="fa fa-caret-down"></i></span>
+					  	</button>
+					  	<ul class="dropdown-menu" role="menu">
+							{{for each_limit in limits_list:}}
+								{{_vars = dict(show=each_limit)}}
+								<li><a href="{{=URL(vars=_vars)}}">{{=each_limit}} per page</a></li>
+							{{pass}}
+						</ul>
+					</div>
+
+					{{#sorting}}
+					<div class="btn-group">
+					  	<button type="button" class="btn btn-default btn-sm dropdown-toggle text-uppercase text-sm" data-toggle="dropdown">
+						    Sort By <i class="fa fa-caret-down"></i></span>
+					  	</button>
+					  	<ul class="dropdown-menu" role="menu">
+							{{for each_pair in sorting:}}
+								{{for each_sort in each_pair:}}
+									{{_vars.update(dict(sortby=each_sort))}}
+									<li><a href="{{=URL(vars=_vars)}}">{{=each_sort.capitalize()}}</a></li>
+								{{pass}}
+							{{pass}}
+						</ul>
+					</div>					
+				
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>Car</th>
+			<th>Bids made</th>
+			<th>Best price</th>
+			<th>&nbsp;</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{for each_offer in my_offer_summaries:}}
+			<tr>
+				<td>
+					<div>{{=each_offer['year']}} {{=each_offer['make']}} {{=each_offer['model']}}</div>
+					<div><small>{{=each_offer['trim']}}</small></div>
+				</td>
+				<td>
+					<div>{{=each_offer['auction_bids']}} </div>
+					<div>
+						<small>
+							{{=each_offer['number_of_bids']}} by you. 
+							{{#needs some logic here}}
+							{{=each_offer['my_last_bid_price']}} on {{=each_offer['my_last_bid_time']}}
+						</small>
+					</div>
+				</td>
+				<td>{{=each_offer['auction_best_price']}}</td>
+				<td> 
+					<a class="btn btn-default" href="{{=each_offer['auction_url']}}"><i class="fa fa-arrow-right"></i></a> 
+					{{#=each_offer['my_offer_id']}}
+					{{#=each_offer['auction_id']}}
+				</td>
+
+			</tr>
+		{{pass}}
+	</tbody>
+</table>
 
 {{#pagination}}
 {{#prev/next may or may not appear based on content}}
@@ -29,18 +109,4 @@
 {{#next page}}
 {{if len(my_offer_summaries)>items_per_page:}}
 	<a href="{{=URL(args=[page+1])}}">next</a>
-{{pass}}
-
-{{#items per page}}
-{{for each_limit in limits_list:}}
-	{{_vars = dict(show=each_limit)}}
-	<a href="{{=URL(vars=_vars)}}">{{=each_limit}} per page</a>
-{{pass}}
-
-{{#sorting}}
-{{for each_pair in sorting:}}
-	{{for each_sort in each_pair:}}
-		{{_vars.update(dict(sortby=each_sort))}}
-		<a href="{{=URL(vars=_vars)}}">{{=each_sort.capitalize()}}</a>
-	{{pass}}
 {{pass}}
