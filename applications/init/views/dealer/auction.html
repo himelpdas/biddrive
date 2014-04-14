@@ -1,6 +1,5 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
-
 <!-- clock
 <link rel="stylesheet" href="{{=URL('static','css/flipclock.css')}}"> {{#http://goo.gl/oYyk49}}
 <script src="{{=URL('static','js/flipclock.min.js')}}"></script>
@@ -138,7 +137,7 @@
 			{{=each_offer['last_bid_price']}}
 			{{=each_offer['number_of_bids']}}
 			{{=each_offer['msrp']}}
-			{{=each_offer['msrp_discount']}} 
+			{{=each_offer['msrp_discount_percent']}} 
 			{{=each_offer['color']}}
 			{{=each_offer['summary']}}
 			{{=each_offer['interior_options']}}
@@ -162,20 +161,17 @@
 		{{pass}}	
 	-->
 
-
-
-
 {{for each_offer in auction_request_offers_info:}}
 	<div class="panel panel-default">
 		<div class="panel-heading">
-			<span> Bid from <strong>Astoria, NY</strong> </span>
+			<span><strong>{{=each_offer['last_bid_price'] or 'Awaiting'}} bid</strong> from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>Astoria, NY</strong></span>
 
 			<span class="pull-right">
 				<button class="btn btn-default btn-xs"><i class="fa fa-heart"></i></button>
 				<button class="btn btn-default btn-xs" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{each_offer['id']}}"><i class="fa fa-plus"></i></button>
 			</span>
 
-			<span class="pull-right text-sm text-light text-uppercase margin-right-10"> Bid ID: {{=each_offer['id']}} | Dealer ID: 00</span>
+			<span class="text-center text-sm text-light text-uppercase margin-right-10"> Bid ID: {{=each_offer['id']}} | Dealer ID: 00</span>
 		</div>
 		<div class="panel-body">
 			<div class="col-xs-4">
@@ -184,47 +180,47 @@
 				  	<!-- IMAGE SLIDER -->
 				  	<div class="carousel-inner">
 				    	<div class="item active">
-				     		<img src="http://placehold.it/400x200" alt="{{=each_offer['exterior_image']}}" class="img-responsive">
+				     		<img src="http://placehold.it/600x400" alt="{{=each_offer['exterior_image']}}" class="img-responsive">
 				    	</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['interior_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['interior_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['front_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['front_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['rear_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['rear_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['tire_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['tire_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['dashboard_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['dashboard_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['passenger_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['passenger_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['trunk_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['trunk_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['underhood_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['underhood_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['roof_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['roof_image']}}" class="img-responsive">
 						</div>
 
 						<div class="item">
-							<img src="http://placehold.it/400x200" alt="{{=each_offer['other_image']}}" class="img-responsive">
+							<img src="http://placehold.it/600x400" alt="{{=each_offer['other_image']}}" class="img-responsive">
 						</div>						
 				  	</div>
 
@@ -241,34 +237,64 @@
 			<div class="col-xs-4">
 				<div class="row">
 					<div class="col-xs-4 text-bold">
-						Bid:
+						MSRP:
 					</div>
 					<div class="col-xs-8">
-						{{=each_offer['last_bid_price']}} 
-						<small class="text-light">(MSRP: {{=each_offer['msrp']}})</small>
+						{{=each_offer['msrp']}}
 					</div>	
 
 					<div class="col-xs-4 text-bold">
-						Area:
+						Savings-%:
 					</div>
 					<div class="col-xs-8">
-						Astoria, NY
-						<small class="text-light">(5 Miles away)</small>
+						{{=each_offer['msrp_discount_dollars']}} <small>	{{=each_offer['msrp_discount_percent']}} off</small>
+					</div>
+
+					<div class="col-xs-4 text-bold">
+						Distance:
+					</div>
+					<div class="col-xs-8">
+						{{=each_offer['offer_distance_to_auction_request']}} miles away
 					</div>
 
 					<div class="col-xs-4 text-bold">
 						Color:
 					</div>
+
 					<div class="col-xs-8">
-						<i class="fa fa-square"></i>
 						{{=each_offer['color']}}
 					</div>
+					
+					<div class="col-xs-4 text-bold">
+						Bids:
+					</div>
+
+					<div class="col-xs-8">
+						{{=each_offer['number_of_bids']}}
+					</div>
+					
+					<div class="col-xs-4 text-bold">
+						Dealer ID:
+					</div>
+
+					<div class="col-xs-8">
+						{{=each_offer['dealer_id']}}
+					</div>
+
+					<div class="col-xs-4 text-bold">
+						Rating:
+					</div>
+
+					<div class="col-xs-8">
+						<i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i>
+					</div>
+
 				</div>
 			</div>
 
 			<div class="col-xs-4">
-				<div class="text-strong">Description:</div>
-				<div></div>
+				<div class="text-bold">Description:</div>
+				<div>{{=each_offer['summary']}}</div>
 
 			</div>
 			<div class="col-xs-12 collapse text-sm" id="expand_{{each_offer['id']}}">
@@ -284,41 +310,51 @@
 				<div class="tab-content">
 					<div class="tab-pane active" id="dd_{{=each_offer['id']}}">
 						
-						<div class="col-xs-1 text-bold">
-							Exterior:
-						</div>
-						<div class="col-xs-2">
-							{{=each_offer['exterior_options']}}
-						</div>
-
-						<div class="col-xs-1 text-bold">
-							Interior:
-						</div>
-						<div class="col-xs-2">
-							{{=each_offer['interior_options']}}
+						<div class="col-xs-3">
+							<div class="text-bold">
+								Exterior:
+							</div>
+							<ul>
+							{{for each_option in each_offer['exterior_options']:}}
+								<li>{{=each_option['name']}}
+							{{pass}}
+							</ul>
 						</div>
 
-						<div class="col-xs-1 text-bold">
-							Mechanical:
-						</div>
-						<div class="col-xs-2">
-							{{=each_offer['mechanical_options']}}
+						<div class="col-xs-3">
+							<div class="text-bold">
+								Interior:
+							</div>
+							<ul>
+							{{for each_option in each_offer['interior_options']:}}
+								<li>{{=each_option['name']}}
+							{{pass}}
+							</ul>
 						</div>
 
-						<div class="col-xs-1 text-bold">
-							Package:
+						<div class="col-xs-3">
+							<div class="text-bold">
+								Mechanical:
+							</div>
+							<ul>
+							{{for each_option in each_offer['mechanical_options']:}}
+								<li>{{=each_option['name']}}
+							{{pass}}
+							</ul>
 						</div>
-						<div class="col-xs-2">
-							{{=each_offer['package_options']}}
+
+						<div class="col-xs-3">
+							<div class="text-bold">
+								Package:
+							</div>
+							<ul>
+							{{for each_option in each_offer['package_options']:}}
+								<li>{{=each_option['name']}}
+							{{pass}}
+							</ul>
 						</div>
 
 						<div class="clearfix"></div>
-						<div class="col-xs-1 text-bold">
-							Fees:
-						</div>
-						<div class="col-xs-2">
-							{{=each_offer['fees_options']}}
-						</div>
 
 					</div>
 					<div class="tab-pane" id="ques_{{each_offer['id']}}">
