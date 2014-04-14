@@ -1,5 +1,5 @@
 {{extend 'page_layout.html'}}
 {{for each_message in messages:}}
-	<div class="{{if each_message.is_owner:}}pull-right{{pass}}">{{=each_message.auth_user.first_name}} wrote: {{=each_message.auction_request_offer_message.message}}</div>
+	<div class="row-fluid" {{if each_message.is_owner:}}style="text-align:right;"{{pass}}>{{=each_message.auth_user.first_name}} wrote: {{=each_message.auction_request_offer_message.message}}</div>
 {{pass}}
 {{=message_form}}

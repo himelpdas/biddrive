@@ -343,15 +343,15 @@ def auction():
 	auction_request_id = request.args[0]
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
-		session.flash="Invalid request ID!"
-		redirect(URL('default','index.html'))
+		session.flash="Invalid auction ID!"
+		redirect(URL('my_auctions.html'))
 	
 	trim_data = json.loads(auction_request.trim_data)
 	auction_request_expired = auction_request.expires < request.now
 
 	#create offer form
 	is_owner = auction_request.owner_id == auth.user.id #TODO add restriction that prevents dealers from creating an auction
-	my_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
+	my_offer = is_dealer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
 	
 	is_participant = False
 	if my_offer:
@@ -548,11 +548,10 @@ def auction():
 	#title stuff
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired)
+	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_dealer = is_dealer, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired)
 	
 @auth.requires_membership('dealers')
 def my_auctions():
-
 	def paginate(page, show): #adapted from web2py book
 		"""	{{#in view}}
 			{{for i,row in enumerate(rows):}}

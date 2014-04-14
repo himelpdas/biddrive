@@ -1,4 +1,28 @@
 {{extend 'layout.html'}}
     <div class="container" style="margin-top:100px"> 
+		{{alert_headers = [response.flash, session.flash]}}
+		{{for each in alert_headers:}}
+			{{if each:}}
+				{{if each[:1] == "$":}} {{#if first letter dollar sign then activate success div}}
+					<div class="alert_headers alert alert-success">{{=each[1:]}} {{# "$"}}
+				{{elif each[:1] == "!":}}
+					<div class="alert_headers alert alert-warning">{{=each[1:]}} {{# "!"}}
+				{{elif each[:1] == "@":}}
+					<div class="alert_headers alert alert-danger">{{=each[1:]}} {{# "@"}}
+				{{else:}}
+					<div class="alert_headers alert alert-info">{{=each}} {{# "%"}}
+				{{pass}}
+				<i class="fa fa-times-circle-o pull-right"></i>
+				</div>
+			{{pass}}
+		{{pass}}
+		{{response.flash = session.flash = None}}
+		<script>
+			$('.alert_headers').hide();
+			$('.alert_headers').slideDown();
+			$('.alert_headers').click(function(){
+				$(this).slideUp();
+			});
+		</script>
         {{include}}
     </div>

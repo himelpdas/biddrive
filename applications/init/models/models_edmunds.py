@@ -215,12 +215,12 @@ db.define_table('auction_request',
 """	
 from smartthumb import * #http://goo.gl/tiSyz
 import os
-def resize_offer_image_upload(image, side=400, center=True):
+def resize_offer_image_upload(image, side=720, center=True):
 	os_slash = '\\' if os.name == 'nt' else '/'
 	return SMARTHUMB(
 		open(request.folder + '%suploads%s%s'%(os_slash,os_slash,image), 'rb' ), #MAKE SURE BINARY MODE http://goo.gl/Z36WjY #get the file that was just uploaded# make sure test for windows as windows use / vs \
 		uuid.uuid4(),
-		(side*1.5, side),
+		(side*1.5, side), #1080,720
 		center,
 	)
 db.define_table('auction_request_offer',

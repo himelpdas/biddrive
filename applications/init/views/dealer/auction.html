@@ -363,7 +363,7 @@
 					<div class="tab-pane" id="ques_{{each_offer['id']}}">
 						<form role="form" class="row margin-top-10">
 							<div class="col-xs-6">
-								<div>Ask the buyer a question:</div>
+								<div>Ask the {{if is_dealer:}}buyer{{elif is_owner:}}dealer{{pass}} a question:</div>
 								<textarea class="form-control"></textarea>
 							</div>
 						</form>
