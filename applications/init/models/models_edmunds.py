@@ -20,8 +20,8 @@ if auth.user_id:
 				(T('Alerts'), False, URL('dealer', 'reminders'), []),
 				(T('Auction Requests'), False, URL('dealer', 'auction_requests'), []),
 				(T('Billing'), False, URL('dealer', 'billing'), []),
-				(T('Dealer Info'), False, URL('dealer', 'dealer_info'), []),
-				(T('Messages'), False, URL('dealer', 'messages'), []),
+				(T('Dealership Info'), False, URL('dealer', 'dealer_info'), []),
+				#(T('Messages'), False, URL('dealer', 'messages'), []),
 				(T('My Auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
@@ -213,6 +213,16 @@ db.define_table('auction_request',
 		writable=False,
 		default = 5, #raise limit when purchase made
 """	
+from smartthumb import * #http://goo.gl/tiSyz
+import os
+def resize_offer_image_upload(image, side=400, center=True):
+	os_slash = '\\' if os.name == 'nt' else '/'
+	return SMARTHUMB(
+		open(request.folder + '%suploads%s%s'%(os_slash,os_slash,image), 'rb' ), #MAKE SURE BINARY MODE http://goo.gl/Z36WjY #get the file that was just uploaded# make sure test for windows as windows use / vs \
+		uuid.uuid4(),
+		(side*1.5, side),
+		center,
+	)
 db.define_table('auction_request_offer',
 	Field('auction_request', db.auction_request,
 		readable=False,
@@ -248,42 +258,155 @@ db.define_table('auction_request_offer',
 	Field('summary', 'text',
 		requires=IS_NOT_EMPTY(),
 	),
+	###################IMGS#####################
 	Field('exterior_image', 'upload',
-		requires=[IS_NOT_EMPTY(), IS_IMAGE()] #change message
+		requires=[IS_NOT_EMPTY(), 
+			IS_IMAGE( #http://goo.gl/r3UizI
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		]
 	), 
+    Field('exterior_image_compressed', 'list:string', compute = 
+		#required = True, #or fails will be silent!! DEBUG IN SHELL
+        lambda row: 
+            [resize_offer_image_upload(row['exterior_image']),resize_offer_image_upload(row['exterior_image'], side=1080)] #[small, big] NOTE IF ROW.FIELD DOESN'T WORK, TRY ROW.TABLE.FIELD!
+    ),
 	Field('interior_image', 'upload',
-		requires=[IS_NOT_EMPTY(), IS_IMAGE()]
+		requires=[IS_NOT_EMPTY(), 
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		]
 	), 
+    Field('interior_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row['interior_image']),resize_offer_image_upload(row['interior_image'], side=1080)] #[small, big]
+    ),
 	#ext
 	Field('front_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
-	), 
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)
+	),
+    Field('front_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['front_image']),resize_offer_image_upload(row.auction_request_offer['front_image'], side=1080)] #[small, big]
+    ),
 	Field('rear_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)
 	), 
+    Field('rear_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['rear_image']),resize_offer_image_upload(row.auction_request_offer['rear_image'], side=1080)] #[small, big]
+    ),
 	Field('tire_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('tire_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['tire_image']),resize_offer_image_upload(row.auction_request_offer['tire_image'], side=1080)] #[small, big]
+    ),
 	#int
 	Field('dashboard_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('dashboard_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['dashboard_image']),resize_offer_image_upload(row.auction_request_offer['dashboard_image'], side=1080)] #[small, big]
+    ),
 	Field('passenger_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('passenger_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['passenger_image']),resize_offer_image_upload(row.auction_request_offer['passenger_image'], side=1080)] #[small, big]
+    ),
 	Field('trunk_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('trunk_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['trunk_image']),resize_offer_image_upload(row.auction_request_offer['trunk_image'], side=1080)] #[small, big]
+    ),
 	#misc
 	Field('underhood_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('underhood_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['underhood_image']),resize_offer_image_upload(row.auction_request_offer['underhood_image'], side=1080)] #[small, big]
+    ),
 	Field('roof_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('roof_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['roof_image']),resize_offer_image_upload(row.auction_request_offer['roof_image'], side=1080)] #[small, big]
+    ),
 	Field('other_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	),
+    Field('other_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['other_image']),resize_offer_image_upload(row.auction_request_offer['other_image'], side=1080)] #[small, big]
+    ),
+	###################IMGS#####################
 	Field.Method('latest_bid', #this offers latest bid
 		lambda row: db((db.auction_request_offer_bid.auction_request == row.auction_request_offer.auction_request) & (row.auction_request_offer.id == db.auction_request_offer_bid.auction_request_offer)).select().first() #get the bid that has this auction request, and auction request offer
 	),#continue
