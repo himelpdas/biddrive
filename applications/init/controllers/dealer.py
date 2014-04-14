@@ -269,37 +269,43 @@ def pre_auction():
 	msrp_by_id = {'base':trim_data['price']['baseMSRP']}
 
 	for each_option in interior_options:
-		interior_options_names.append([each_option['id'],each_option['name']]) ##never safe to use names in forms stick to standard ids
-		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+		if 'price' in each_option and 'baseMSRP' in each_option['price']:
+			interior_options_names.append([each_option['id'],each_option['name']]) ##never safe to use names in forms stick to standard ids
+			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP'] 
+			
 	interior_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.interior_options.requires = IS_IN_SET(interior_options_names, multiple=True)
 	db.auction_request_offer.interior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
-	
-	for each_option in exterior_options:
-		exterior_options_names.append([each_option['id'],each_option['name']])
-		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+	#now make a price dict for calculation
+	for each_option in exterior_options: #FIXED front and rear splash guard 2014 buick enclave has no msrp and causes page to fail. so if price doesn't exist don't add it
+		if 'price' in each_option and 'baseMSRP' in each_option['price']:
+			exterior_options_names.append([each_option['id'],each_option['name']])
+			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
 	exterior_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.exterior_options.requires = IS_IN_SET(exterior_options_names, multiple=True)
 	db.auction_request_offer.exterior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	for each_option in mechanical_options:
-		mechanical_options_names.append([each_option['id'],each_option['name']])
-		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+		if 'price' in each_option and 'baseMSRP' in each_option['price']:
+			mechanical_options_names.append([each_option['id'],each_option['name']])
+			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
 	mechanical_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.mechanical_options.requires = IS_IN_SET(mechanical_options_names, multiple=True)
 	db.auction_request_offer.mechanical_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	for each_option in package_options:
-		package_options_names.append([each_option['id'],each_option['name']])
-		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+		if 'price' in each_option and 'baseMSRP' in each_option['price']: 
+			package_options_names.append([each_option['id'],each_option['name']])
+			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
 	package_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.package_options.requires = IS_IN_SET(package_options_names, multiple=True)
 	db.auction_request_offer.package_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	for each_option in fees_options:
-		fees_options_names.append([each_option['id'],each_option['name']])
-		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+		if 'price' in each_option and 'baseMSRP' in each_option['price']: 
+			fees_options_names.append([each_option['id'],each_option['name']])
+			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
 	fees_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.fees_options.requires = IS_IN_SET(fees_options_names, multiple=True)
 	db.auction_request_offer.fees_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
@@ -378,10 +384,10 @@ def auction():
 	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
 	
 	colors=[]
-	color_names=auction_request.color_names
-	color_names.sort()
-	for each_name in color_names:
-		color_hex=getColorHexByNameOrID(each_name, trim_data)
+	color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+	color_names = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
+	for id, each_name in color_names.items(): #just get names here for auction_request_info
+		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
 		colors.append([each_name, color_hex])
 	
 	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
@@ -390,8 +396,8 @@ def auction():
 		lowest_offer = '$%s'%int(lowest_offer_row.bid)
 	
 	#auction request offers (rows)
-	auction_request_offers = db(db.auction_request_offer.auction_request == auction_request_id).select()
-	
+	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
+
 	#auction requests info
 	auction_request_info = dict(
 		id = str(auction_request.id),
@@ -417,6 +423,7 @@ def auction():
 	#in memory sorting	
 	sortby = request.vars['sortby']
 	sortlist = []
+	
 	#Price
 	pricechoices = ["price-up", "price-down"]; sortlist.extend(pricechoices)
 	if sortby in pricechoices:
@@ -424,6 +431,7 @@ def auction():
 		if sortby == "price-down":
 			reverse = True
 		auction_request_offers = auction_request_offers.sort(lambda row: row.latest_bid(), reverse=reverse)
+		
 	#MSRP
 	msrpchoices = ["retail-price-up", "retail-price-down"]; sortlist.extend(msrpchoices)
 	if sortby in msrpchoices:
@@ -431,6 +439,7 @@ def auction():
 		if sortby == "retail-price-down":
 			reverse = True
 		auction_request_offers = auction_request_offers.sort(lambda row: row.MSRP(), reverse=reverse)
+		
 	#Discount (%off)
 	discountchoices = ["discount-up", "discount-down"]; sortlist.extend(discountchoices)
 	if sortby in discountchoices:
@@ -446,16 +455,18 @@ def auction():
 	
 	#Distance
 	distancechoices = ["distance-up", "distance-down"]; sortlist.extend(distancechoices)
+	
+	def distance_to_auction_request(row): #will reuse so keep outside of if statement #CACHE this using db.dealership_info.id and row.owner_id 
+		#offer_owner_info = db(db.dealership_info.id == row.owner_id).select().last()
+		return calcDist(row.dealership_info.latitude, row.dealership_info.longitude, auction_request.latitude, auction_request.longitude)
+		
 	if sortby in distancechoices:
 		reverse = False
 		if sortby == "distance-down":
 			reverse = True
-		def distance_to_auction_request(row):
-			offer_owner_info = db(db.dealership_info.id == row.owner_id).select().last()
-			return calcDist(offer_owner_info.latitude, offer_owner_info.longitude, auction_request.latitude, auction_request.longitude)
-			
 		auction_request_offers = auction_request_offers.sort(distance_to_auction_request, reverse=reverse) #returns new
-	
+		
+	###########END SORTING#############
 	"""
 	response.view = 'generic.html'
 	return dict(auction_request_info = auction_request_info['trim_data'])
@@ -471,46 +482,66 @@ def auction():
 		package_options = []
 		fees_options = []
 		
-		for each_option in each_offer.interior_options:
+		for each_option in each_offer.auction_request_offer.interior_options:
 			interior_options.append(__get_option_from_ID(trim_data, 'Interior', each_option))
-		for each_option in each_offer.exterior_options:
+		for each_option in each_offer.auction_request_offer.exterior_options:
 			exterior_options.append(__get_option_from_ID(trim_data, 'Exterior', each_option))
-		for each_option in each_offer.mechanical_options:
+		for each_option in each_offer.auction_request_offer.mechanical_options:
 			mechanical_options.append(__get_option_from_ID(trim_data, 'Mechanical', each_option))
-		for each_option in each_offer.package_options:
+		for each_option in each_offer.auction_request_offer.package_options:
 			package_options.append(__get_option_from_ID(trim_data, 'Package', each_option))
-		for each_option in each_offer.fees_options:
+		for each_option in each_offer.auction_request_offer.fees_options:
 			fees_options.append(__get_option_from_ID(trim_data, 'Additional Fees', each_option))
 			
-		bids = db((db.auction_request_offer_bid.owner_id == each_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
+		#pricing stuff
+		bids = db((db.auction_request_offer_bid.owner_id == each_offer.auction_request_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
 		number_of_bids = len(bids)
-		msrp = each_offer.MSRP()
+		msrp = each_offer.auction_request_offer.MSRP()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
+		last_bid_price = last_bid.bid if last_bid else None
+		
+		#dealer stuff
+		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
+		this_dealer_distance = distance_to_auction_request(each_offer)
+		
+		#color stuff
+		this_color = color_names[each_offer.auction_request_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
+		
+		#message stuff
 		
 		each_offer_dict = {
-			'id' : each_offer.id,
-			'last_bid_price' : '$%s'%last_bid.bid if last_bid else "No Bids!",
+			'id' : each_offer.auction_request_offer.id,
+			'dealer_first_name':each_offer.auth_user.first_name,
+			'dealer_id' : each_offer.auction_request_offer.owner_id,
+			'last_bid_price' : last_bid_price,
+			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,
-			'color' : each_offer.color,
-			'summary' : each_offer.summary,
+			'color' : this_color,
+			'summary' : each_offer.auction_request_offer.summary,
 			'interior_options' : interior_options,
 			'exterior_options' : exterior_options,
 			'mechanical_options' : mechanical_options,
 			'package_options' : package_options,
 			'fees_options' : fees_options,
-			'exterior_image' : each_offer.exterior_image,
-			'interior_image' : each_offer.interior_image,
-			'front_image' : each_offer.front_image,
-			'rear_image' : each_offer.rear_image,
-			'tire_image' : each_offer.tire_image,
-			'dashboard_image' : each_offer.dashboard_image,
-			'passenger_image' : each_offer.passenger_image,
-			'trunk_image' : each_offer.trunk_image,
-			'underhood_image' : each_offer.underhood_image,
-			'roof_image' : each_offer.roof_image,
-			'other_image' : each_offer.other_image,
+			#'exterior_image' : each_offer.auction_request_offer.exterior_image,
+			#'interior_image' : each_offer.auction_request_offer.interior_image,
+			'exterior_image_s' : each_offer.auction_request_offer.exterior_image_compressed[0],
+			'exterior_image_l' : each_offer.auction_request_offer.exterior_image_compressed[1],
+			'interior_image_s' : each_offer.auction_request_offer.interior_image_compressed[0],
+			'interior_image_l' : each_offer.auction_request_offer.interior_image_compressed[1],
+			'front_image' : each_offer.auction_request_offer.front_image,
+			'rear_image' : each_offer.auction_request_offer.rear_image,
+			'tire_image' : each_offer.auction_request_offer.tire_image,
+			'dashboard_image' : each_offer.auction_request_offer.dashboard_image,
+			'passenger_image' : each_offer.auction_request_offer.passenger_image,
+			'trunk_image' : each_offer.auction_request_offer.trunk_image,
+			'underhood_image' : each_offer.auction_request_offer.underhood_image,
+			'roof_image' : each_offer.auction_request_offer.roof_image,
+			'other_image' : each_offer.auction_request_offer.other_image,
 			'msrp': '$%s'%msrp,
-			'msrp_discount': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) #(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
+			'offer_distance_to_auction_request': '%0.2f'%this_dealer_distance,
+			'msrp_discount_percent': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
+			'msrp_discount_dollars':'$%s'%(int(msrp) - int(msrp if not last_bid_price else last_bid_price),),
 		}
 		auction_request_offers_info.append(each_offer_dict)
 
@@ -571,7 +602,7 @@ def my_auctions():
 	if sortby == "expiring-down":
 		orderby = db.auction_request.expires #not using ID because expires can be changed by admin
 	
-	join =[db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id)] #about joins http://goo.gl/iuQp6P #joins are much faster than sorting. Instead of two separate queries, join them and access their variables at once
+	join =db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id) #[db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id)] #about joins http://goo.gl/iuQp6P #joins are much faster than sorting. Instead of two separate queries, join them and access their variables at once
 	#in a join if a row from tableA doesn't match with a row from tableB, the join is skipped. To force this to happen you must use a left join. (use left instead of join argument) 
 	
 	my_offers = db(db.auction_request_offer.owner_id == auth.user_id).select(join=join, orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
@@ -600,6 +631,7 @@ def my_auctions():
 			'number_of_bids':each_offer.auction_request_offer.number_of_bids(),
 			'auction_id':each_offer.auction_request.id,
 			'my_offer_id':each_offer.auction_request_offer.id,
+			'new_messages':0,
 			'auction_url':URL('auction', args=[each_offer.auction_request.id]),
 		}
 		my_offer_summaries.append(each_offer_dict)

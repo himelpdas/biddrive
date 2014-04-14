@@ -160,10 +160,9 @@ def dealership_form():
 	response.subtitle = 'Sell your cars on our website'
 	return dict(form = form)
 	
-@auth.requires_membership('dealers')
-def dealer_portal():
+def faq():
 	return dict()
-
+	
 def user():
 	"""
 	exposes:

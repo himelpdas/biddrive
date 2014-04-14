@@ -21,6 +21,12 @@ def calcDist(lat_A, long_A, lat_B, long_B):
 
 	return distance
 	
+def quickRaise(error):
+	"""
+	for use with single line statements as '' or raise/exec will return syntax error
+	"""
+	raise Exception(error)
+	
 APP_NAME="BidDrive(Alpha)"
 EDMUNDS_KEY ="qmnpjbhe9p5g5cw3yv2vaehv"
 EDMUNDS_SECRET="zA6vs797nVgqGaSK58QJe2KW"

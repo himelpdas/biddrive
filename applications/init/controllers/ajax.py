@@ -95,7 +95,7 @@ def reviews():
 		
 def style_photos():
 	style_id = request.args[0]
-	style_photos = findPhotosByStyleID(style_id)
+	style_photos = findPhotosByStyleID(style_id) or [] #some models doesn't return an image ex. 2014 Kia cadenza.
 	photos = []
 	for each_photo_set in style_photos:
 		for each_photo in each_photo_set['photoSrcs']:
@@ -104,3 +104,24 @@ def style_photos():
 	if not photos:
 		photos.append("http://placehold.it/815x543&text=Image%20Unavailable")
 	return dict(photos=photos)
+	
+#auth requires dealer or buyer or admin
+@auth.requires(request.args(0))
+@auth.requires_login()
+def auction_request_offer_messages():
+	auction_request_offer_id = request.args[0]
+	join = db.auth_user.on(db.auction_request_offer_message.owner_id==db.auth_user.id) #for some reason [db.auth_user.on...] didn't work here. Maybe it only works for multiple joins.
+	messages = db(db.auction_request_offer_message.auction_request_offer == auction_request_offer_id).select(join=join)
+	for each_message in messages:
+		if each_message.auction_request_offer_message.owner_id == auth.user.id:
+			each_message['is_owner'] = True
+		else:
+			each_message['is_owner'] = False
+	#set defaults before form is generated, though it could probably be set even after SQLFORM creation
+	db.auction_request_offer_message.auction_request_offer.default = auction_request_offer_id
+	db.auction_request_offer_message.owner_id.default = auth.user.id
+	#form
+	message_form = SQLFORM(db.auction_request_offer_message, _class="form-horizontal")
+	if message_form.process().accepted:
+		pass
+	return dict(messages=messages, message_form=message_form)
