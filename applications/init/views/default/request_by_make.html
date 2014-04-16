@@ -133,7 +133,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading colors: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_color" class="alert alert-danger"><span id="ajax_failure_warning_color_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_color_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_color').slideDown();
+					$('#ajax_failure_warning_color').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
@@ -150,7 +155,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading stats: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_stats').slideDown();
+					$('#ajax_failure_warning_stats').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					$(this).slideDown(200); //fade back in
@@ -165,7 +175,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading reviews: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_reviews" class="alert alert-danger"><span id="ajax_failure_warning_reviews_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_reviews_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_reviews').slideDown();
+					$('#ajax_failure_warning_reviews').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					$('#loading_reviews').slideUp();
@@ -179,7 +194,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading photos: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_photos" class="alert alert-danger"><span id="ajax_failure_warning_photos_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_photos_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_photos').slideDown();
+					$('#ajax_failure_warning_photos').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					//$('#reviews_spinner').toggleClass("fa-spinner");
