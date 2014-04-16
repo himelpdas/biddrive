@@ -85,6 +85,39 @@
         </div>
     </div>
     
+		{{alert_headers = [response.flash, session.flash]}}
+		{{alert_headers=['faggot',None]}}
+		{{for each in alert_headers:}}
+			{{if each:}}
+				{{if each[:1] == "$":}} {{#if first letter dollar sign then activate success div}}
+					<div class="alert_headers alert alert-success">{{=each[1:]}} {{# "$"}}
+				{{elif each[:1] == "!":}}
+					<div class="alert_headers alert alert-warning">{{=each[1:]}} {{# "!"}}
+				{{elif each[:1] == "@":}}
+					<div class="alert_headers alert alert-danger">{{=each[1:]}} {{# "@"}}
+				{{else:}}
+					<div class="alert_headers alert alert-info" style="position:fixed;right:5%;z-index:9999;width:25%;">{{=each}} {{# "%"}}
+				{{pass}}
+				<i class="fa fa-times-circle-o pull-right"></i>
+				</div>
+			{{pass}}
+		{{pass}}
+		{{response.flash = session.flash = None}}
+		<script>
+			$('.alert_headers').css({
+				'position':'fixed',
+				'right':'10px',
+				'top': '75px',
+				'z-index':9999,
+				'width':'333px',
+			});
+			$('.alert_headers').hide();
+			$('.alert_headers').slideDown();
+			$('.alert_headers').click(function(){
+				$(this).slideUp();
+			});
+		</script>
+	
         {{include}}
 
     <!-- starts footer -->

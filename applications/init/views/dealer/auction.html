@@ -148,15 +148,15 @@
 
 			{{#=each_offer['exterior_image']}}
 			{{#=each_offer['interior_image']}}
-			{{=each_offer['front_image']}}
-			{{=each_offer['rear_image']}}
-			{{=each_offer['tire_image']}}
-			{{=each_offer['dashboard_image']}}
-			{{=each_offer['passenger_image']}}
-			{{=each_offer['trunk_image']}}
-			{{=each_offer['underhood_image']}}
-			{{=each_offer['roof_image']}}
-			{{=each_offer['other_image']}}
+			{{#=each_offer['front_image']}}
+			{{#=each_offer['rear_image']}}
+			{{#=each_offer['tire_image']}}
+			{{#=each_offer['dashboard_image']}}
+			{{#=each_offer['passenger_image']}}
+			{{#=each_offer['trunk_image']}}
+			{{#=each_offer['underhood_image']}}
+			{{#=each_offer['roof_image']}}
+			{{#=each_offer['other_image']}}
 
 		{{pass}}	
 	-->
@@ -181,48 +181,78 @@
 				  	<div class="carousel-inner">
 
 				    	<div class="item active">
-				     		<img src="{{=URL('static', 'thumbnails/%s'%each_offer['exterior_image_s'])}}" alt="{{=each_offer['exterior_image_s']}}" class="img-responsive">
+							{{exterior_image_s = each_offer['exterior_images'][0]}}
+				     		<img src="{{=URL('static', 'thumbnails/%s'%exterior_image_s)}}" alt="{{=exterior_image_s}}" class="img-responsive">
 				    	</div>
 
 						<div class="item">
-							<img src="{{=URL('static', 'thumbnails/%s'%each_offer['interior_image_s'])}}" alt="{{=each_offer['interior_image_s']}}" class="img-responsive">
+							{{interior_image_s = each_offer['interior_images'][0]}}
+							<img src="{{=URL('static', 'thumbnails/%s'%interior_image_s)}}" alt="{{=interior_image_s}}" class="img-responsive">
 						</div>
+						
+						{{if each_offer['front_images']:}} {{# from here it may be possible dealer did not submit these images}}
+							{{front_image_s=each_offer['front_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%front_image_s)}}" alt="{{=front_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
 
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['front_image']}}" class="img-responsive">
-						</div>
+						{{if each_offer['rear_images']:}}
+							{{rear_image_s=each_offer['rear_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%rear_image_s)}}" alt="{{=rear_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
 
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['rear_image']}}" class="img-responsive">
-						</div>
+						{{if each_offer['tire_images']:}}
+							{{tire_image_s = each_offer['tire_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%tire_image_s)}}" alt="{{=tire_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
 
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['tire_image']}}" class="img-responsive">
-						</div>
+						{{if each_offer['dashboard_images']:}}
+							{{dashboard_image_s = each_offer['dashboard_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%dashboard_image_s)}}" alt="{{=dashboard_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
+						
+						{{if each_offer['passenger_images']:}}
+							{{passenger_image_s = each_offer['passenger_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%passenger_image_s)}}" alt="{{=passenger_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
 
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['dashboard_image']}}" class="img-responsive">
-						</div>
+						{{if each_offer['trunk_images']:}}
+							{{trunk_image_s = each_offer['trunk_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%trunk_image_s)}}" alt="{{=trunk_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
 
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['passenger_image']}}" class="img-responsive">
-						</div>
+						{{if each_offer['underhood_images']:}}
+							{{underhood_image_s = each_offer['underhood_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%underhood_image_s)}}" alt="{{=underhood_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
 
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['trunk_image']}}" class="img-responsive">
-						</div>
+						{{if each_offer['roof_images']:}}
+							{{roof_image_s = each_offer['roof_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%roof_image_s)}}" alt="{{=roof_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
 
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['underhood_image']}}" class="img-responsive">
-						</div>
-
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['roof_image']}}" class="img-responsive">
-						</div>
-
-						<div class="item">
-							<img src="http://placehold.it/600x400" alt="{{=each_offer['other_image']}}" class="img-responsive">
-						</div>						
+						{{if each_offer['other_images']:}}
+							{{other_image_s = each_offer['other_images'][0]}}
+							<div class="item">
+								<img src="{{=URL('static', 'thumbnails/%s'%other_image_s)}}" alt="{{=other_image_s}}" class="img-responsive">
+							</div>
+						{{pass}}
+				
 				  	</div>
 
 				  	<!-- Controls -->

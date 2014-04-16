@@ -205,7 +205,7 @@ def auction_requests():
 	plural = ''
 	if not number or number > 1:
 		plural = 's'
-	response.subtitle = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
+	response.flash = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 	
@@ -343,7 +343,7 @@ def auction():
 	auction_request_id = request.args[0]
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
-		session.flash="Invalid auction ID!"
+		session.flash="!Invalid auction ID!"
 		redirect(URL('my_auctions.html'))
 	
 	trim_data = json.loads(auction_request.trim_data)
@@ -525,19 +525,26 @@ def auction():
 			'fees_options' : fees_options,
 			#'exterior_image' : each_offer.auction_request_offer.exterior_image,
 			#'interior_image' : each_offer.auction_request_offer.interior_image,
-			'exterior_image_s' : each_offer.auction_request_offer.exterior_image_compressed[0],
-			'exterior_image_l' : each_offer.auction_request_offer.exterior_image_compressed[1],
-			'interior_image_s' : each_offer.auction_request_offer.interior_image_compressed[0],
-			'interior_image_l' : each_offer.auction_request_offer.interior_image_compressed[1],
-			'front_image' : each_offer.auction_request_offer.front_image,
-			'rear_image' : each_offer.auction_request_offer.rear_image,
-			'tire_image' : each_offer.auction_request_offer.tire_image,
-			'dashboard_image' : each_offer.auction_request_offer.dashboard_image,
-			'passenger_image' : each_offer.auction_request_offer.passenger_image,
-			'trunk_image' : each_offer.auction_request_offer.trunk_image,
-			'underhood_image' : each_offer.auction_request_offer.underhood_image,
-			'roof_image' : each_offer.auction_request_offer.roof_image,
-			'other_image' : each_offer.auction_request_offer.other_image,
+			'exterior_images' : each_offer.auction_request_offer.exterior_image_compressed,
+			'interior_images' : each_offer.auction_request_offer.interior_image_compressed,
+			#'front_image' : each_offer.auction_request_offer.front_image,
+			'front_images' : each_offer.auction_request_offer.front_image_compressed,
+			#'rear_image' : each_offer.auction_request_offer.rear_image,
+			'rear_images' : each_offer.auction_request_offer.rear_image_compressed,
+			#'tire_image' : each_offer.auction_request_offer.tire_image,
+			'tire_images' : each_offer.auction_request_offer.tire_image_compressed,
+			#'dashboard_image' : each_offer.auction_request_offer.dashboard_image,
+			'dashboard_images' : each_offer.auction_request_offer.dashboard_image_compressed,
+			#'passenger_image' : each_offer.auction_request_offer.passenger_image,
+			'passenger_images' : each_offer.auction_request_offer.passenger_image_compressed,
+			#'trunk_image' : each_offer.auction_request_offer.trunk_image,
+			'trunk_images' : each_offer.auction_request_offer.trunk_image_compressed,
+			#'underhood_image' : each_offer.auction_request_offer.underhood_image,
+			'underhood_images' : each_offer.auction_request_offer.underhood_image_compressed,
+			#'roof_image' : each_offer.auction_request_offer.roof_image,
+			'roof_images' : each_offer.auction_request_offer.roof_image_compressed,
+			#'other_image' : each_offer.auction_request_offer.other_image,
+			'other_images' : each_offer.auction_request_offer.other_image_compressed,
 			'msrp': '$%s'%msrp,
 			'offer_distance_to_auction_request': '%0.2f'%this_dealer_distance,
 			'msrp_discount_percent': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
