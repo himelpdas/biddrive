@@ -215,12 +215,12 @@ db.define_table('auction_request',
 """	
 from smartthumb import * #http://goo.gl/tiSyz
 import os
-def resize_offer_image_upload(image, side=720, center=True):
+def resize_offer_image_upload(image, x=1080, y=720, center=True):
 	os_slash = '\\' if os.name == 'nt' else '/'
 	return SMARTHUMB(
 		open(request.folder + '%suploads%s%s'%(os_slash,os_slash,image), 'rb' ), #MAKE SURE BINARY MODE http://goo.gl/Z36WjY #get the file that was just uploaded# make sure test for windows as windows use / vs \
 		uuid.uuid4(),
-		(side*1.5, side), #1080,720
+		(x, y), #1080,720
 		center,
 	)
 db.define_table('auction_request_offer',
@@ -237,15 +237,15 @@ db.define_table('auction_request_offer',
 	),
 	Field('interior_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('exterior_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('mechanical_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('package_options', 'list:string',
 		#requires is_in_set like trim above
@@ -253,7 +253,7 @@ db.define_table('auction_request_offer',
 	),
 	Field('fees_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('summary', 'text',
 		requires=IS_NOT_EMPTY(),
@@ -271,7 +271,7 @@ db.define_table('auction_request_offer',
     Field('exterior_image_compressed', 'list:string', compute = 
 		#required = True, #or fails will be silent!! DEBUG IN SHELL
         lambda row: 
-            [resize_offer_image_upload(row['exterior_image']),resize_offer_image_upload(row['exterior_image'], side=1080)] #[small, big] NOTE IF ROW.FIELD DOESN'T WORK, TRY ROW.TABLE.FIELD!
+            [resize_offer_image_upload(row['exterior_image'],x=500,y=400),resize_offer_image_upload(row['exterior_image'],x=1080,y=720)] #[small, big] NOTE IF ROW.FIELD DOESN'T WORK, TRY ROW.TABLE.FIELD!
     ),
 	Field('interior_image', 'upload',
 		requires=[IS_NOT_EMPTY(), 
@@ -284,7 +284,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('interior_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row['interior_image']),resize_offer_image_upload(row['interior_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row['interior_image'],x=500,y=400),resize_offer_image_upload(row['interior_image'],x=1080,y=720)] #[small, big]
     ),
 	#ext
 	Field('front_image', 'upload',
@@ -298,7 +298,7 @@ db.define_table('auction_request_offer',
 	),
     Field('front_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['front_image']),resize_offer_image_upload(row.auction_request_offer['front_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['front_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['front_image'],x=1080,y=720)] #[small, big]
     ),
 	Field('rear_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -311,7 +311,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('rear_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['rear_image']),resize_offer_image_upload(row.auction_request_offer['rear_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['rear_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['rear_image'],x=1080,y=720)] #[small, big]
     ),
 	Field('tire_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -324,7 +324,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('tire_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['tire_image']),resize_offer_image_upload(row.auction_request_offer['tire_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['tire_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['tire_image'],x=1080,y=720)] #[small, big]
     ),
 	#int
 	Field('dashboard_image', 'upload',
@@ -338,7 +338,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('dashboard_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['dashboard_image']),resize_offer_image_upload(row.auction_request_offer['dashboard_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['dashboard_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['dashboard_image'],x=1080,y=720)] #[small, big]
     ),
 	Field('passenger_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -351,7 +351,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('passenger_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['passenger_image']),resize_offer_image_upload(row.auction_request_offer['passenger_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['passenger_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['passenger_image'],x=1080,y=720)] #[small, big]
     ),
 	Field('trunk_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -364,7 +364,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('trunk_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['trunk_image']),resize_offer_image_upload(row.auction_request_offer['trunk_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['trunk_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['trunk_image'],x=1080,y=720)] #[small, big]
     ),
 	#misc
 	Field('underhood_image', 'upload',
@@ -378,7 +378,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('underhood_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['underhood_image']),resize_offer_image_upload(row.auction_request_offer['underhood_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['underhood_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['underhood_image'],x=1080,y=720)] #[small, big]
     ),
 	Field('roof_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -391,7 +391,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('roof_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['roof_image']),resize_offer_image_upload(row.auction_request_offer['roof_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['roof_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['roof_image'],x=1080,y=720)] #[small, big]
     ),
 	Field('other_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -404,7 +404,7 @@ db.define_table('auction_request_offer',
 	),
     Field('other_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['other_image']),resize_offer_image_upload(row.auction_request_offer['other_image'], side=1080)] #[small, big]
+            [resize_offer_image_upload(row.auction_request_offer['other_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['other_image'],x=1080,y=720)] #[small, big]
     ),
 	###################IMGS#####################
 	Field.Method('latest_bid', #this offers latest bid
@@ -449,7 +449,7 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 		requires = IS_NOT_EMPTY(),
 	),
 	Field.Method('MSRP_discount',
-		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,
+		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,
 	),
 	Field('created_on', 'datetime', 
 		default=request.now,

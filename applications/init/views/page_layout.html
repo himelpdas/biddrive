@@ -11,7 +11,7 @@
 				{{elif each[:1] == "@":}}
 					<div class="alert_headers alert alert-danger">{{=each[1:]}} {{# "@"}}
 				{{else:}}
-					<div class="alert_headers alert alert-info">{{=each}} {{# "%"}}
+					<div class="alert_headers alert alert-info">{{=each}} {{# "&"}}
 				{{pass}}
 				<i class="fa fa-times-circle-o pull-right"></i>
 				</div>

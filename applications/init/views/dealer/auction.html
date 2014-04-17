@@ -1,20 +1,11 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
-<!-- clock
-<link rel="stylesheet" href="{{=URL('static','css/flipclock.css')}}"> {{#http://goo.gl/oYyk49}}
-<script src="{{=URL('static','js/flipclock.min.js')}}"></script>
 
-<div class="clock"></div>
-<script type="text/javascript">
-	var clock = $('.clock').FlipClock({{=auction_request_info['ends_in_seconds']}}, {
-		clockFace: 'DailyCounter',
-		countdown: true
-	});
-</script>
--->
+<link rel="stylesheet" href="{{=URL('static','css/flipclock.css')}}"> {{#http://goo.gl/oYyk49}}
+
 <div class="panel panel-info">
 	<div class= "panel-heading text-uppercase text-md">
-		Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
+		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
 		
 		<span class="pull-right text-xs text-light"> Auction ID: {{=auction_request_info['id']}}</span>
 	</div>
@@ -45,12 +36,12 @@
 
 					<tr>
 						<th>
-							Auction Info
+							Vehicle
 						</th>
 
 						<td>
 							<div>
-								<strong style="width: 40px; display:inline-block">Car:</strong> {{=auction_request_info['year']}} {{=auction_request_info['make'].upper()}} {{=auction_request_info['model'].upper()}}
+								<strong style="width: 40px; display:inline-block">Model:</strong> {{=auction_request_info['year']}} {{=auction_request_info['make'].upper()}} {{=auction_request_info['model'].upper()}}
 							</div>
 
 							<div>
@@ -75,7 +66,7 @@
 				<table class="table table-hover text-sm">
 					<tr>
 						<th style="border-top: none">
-							No. Dealers:
+							No. Dealers
 						</th>
 
 						<td style="border-top: none">
@@ -85,7 +76,7 @@
 
 					<tr>
 						<th>
-							No. bids:
+							No. bids
 						</th>
 
 						<td>
@@ -95,7 +86,7 @@
 
 					<tr>
 						<th>
-							Lowest bid:
+							Lowest bid
 						</th>
 
 						<td>
@@ -105,7 +96,7 @@
 
 					<tr>
 						<th>
-							Favorite price:
+							Favorite price
 						</th>
 
 						<td>
@@ -114,14 +105,60 @@
 					</tr>
 
 					<tr>
+						<th>
+							Time left
+						</th>
+
 						<td>
-							<strong style="display: block">Stock photo:</strong>
-							<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">
+							<div id="clock"></div>
+							<script src="{{=URL('static','js/jquery.countdown.js')}}"></script>
+							<script type="text/javascript">
+								$('#clock').countdown({
+									'date': new Date({{=(int(time.time()) + abs(auction_request_info['ends_in_seconds']))*1000}}), {{#add seconds remaining to epoch time, and times by thousand to get milliseconds which javascript Date object needs http://goo.gl/OGWwz}}
+									'render': function(data) {
+										var el = $(this.el);
+										el.empty() {{#empty element and reappend the data below. without empty it would duplicate itself every second}}
+										$(el).append(this.leadingZeros(data.days, 2) + " days : ");
+										$(el).append(this.leadingZeros(data.hours, 2) + " hours : ");
+										$(el).append(this.leadingZeros(data.min, 2) + " min : ");
+										$(el).append(this.leadingZeros(data.sec, 2) + " sec ");
+									},
+									'onEnd': function(){
+										location.reload(); {{#http://goo.gl/Um9jh}}
+									},
+								});
+							</script>{{#http://goo.gl/VPtnxU simplest countdown timer... check source code to understand render function}} 
 						</td>
-						<td>
-							<strong style="display: block">Favorite photo:</strong>
-							<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">						
-						</td>
+					</tr>
+
+					<tr>
+						{{if bid_form:}}
+							{{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
+							{{bid_form.element("input", _name = "bid")["_placeholder"] = "$" }}
+							{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+							{{bid_form.element("input", _type = "submit")["_value"] = "Place Bid!" }}
+							{{=bid_form.custom.begin}}
+							<th>
+								{{=bid_form.custom.widget.bid}}
+								{{if bid_form.errors['bid']:}}
+									<div class="alert alert-warning">{{=bid_form.errors['bid']}}</div>
+								{{pass}}
+							</th>
+							<td>
+								{{=bid_form.custom.submit}}
+							</td>
+							{{=bid_form.custom.end}}
+						{{pass}}
+						{{"""}}
+							<td>
+								<strong style="display: block">Stock photo:</strong>
+								<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">
+							</td>
+							<td>
+								<strong style="display: block">Favorite photo:</strong>
+								<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">						
+							</td>
+						{{"""}}
 					</tr>
 				</table>
 
@@ -164,7 +201,7 @@
 {{for counter, each_offer in enumerate(auction_request_offers_info):}}
 	<div class="panel panel-default">
 		<div class="panel-heading">
-			<span><strong>{{=each_offer['last_bid_price'] or 'Awaiting'}} bid</strong> from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>Astoria, NY</strong></span>
+			<span><strong>{{if each_offer['last_bid_price']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-dollar"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>Astoria, NY</strong></span>
 
 			<span class="pull-right">
 				<button class="btn btn-default btn-xs"><i class="fa fa-heart"></i></button>
@@ -182,12 +219,14 @@
 
 				    	<div class="item active">
 							{{exterior_image_s = each_offer['exterior_images'][0]}}
-				     		<img src="{{=URL('static', 'thumbnails/%s'%exterior_image_s)}}" alt="{{=exterior_image_s}}" class="img-responsive">
+							{{exterior_image_l = each_offer['exterior_images'][1]}}
+				     		<a href="#exterior_image_l" data-toggle="modal" data-target="#exterior_image_l"><img src="{{=URL('static', 'thumbnails/%s'%exterior_image_s)}}" alt="{{=exterior_image_s}}" class="img-responsive"></a>
 				    	</div>
 
 						<div class="item">
 							{{interior_image_s = each_offer['interior_images'][0]}}
-							<img src="{{=URL('static', 'thumbnails/%s'%interior_image_s)}}" alt="{{=interior_image_s}}" class="img-responsive">
+							{{interior_image_l = each_offer['interior_images'][1]}}
+							<a href="#interior_image_l" data-toggle="modal" data-target="#interior_image_l"><img src="{{=URL('static', 'thumbnails/%s'%interior_image_s)}}" alt="{{=interior_image_s}}" class="img-responsive"></a>
 						</div>
 						
 						{{if each_offer['front_images']:}} {{# from here it may be possible dealer did not submit these images}}
@@ -267,65 +306,73 @@
 			
 			<div class="col-xs-4">
 				<div class="row">
-					<div class="col-xs-4 text-bold">
-						MSRP:
-					</div>
-					<div class="col-xs-8">
-						{{=each_offer['msrp']}}
-					</div>	
+					<table class="table table-hover text-sm">
+						<tr>
+							<th style="border-top: none">
+								MSRP
+							</th>
 
-					<div class="col-xs-4 text-bold">
-						Savings:
-					</div>
-					<div class="col-xs-8">
-						{{=each_offer['msrp_discount_dollars']}} <span class="text-sm text-light">{{=each_offer['msrp_discount_percent']}} off</span>
-					</div>
+							<td style="border-top: none">
+								{{=each_offer['msrp']}}
+							</td>
+						</tr>
+						
+						<tr>
+							<th>
+								Savings
+							</th>
 
-					<div class="col-xs-4 text-bold">
-						Distance:
-					</div>
-					<div class="col-xs-8">
-						{{=each_offer['offer_distance_to_auction_request']}} miles away
-					</div>
+							<td>
+								{{=each_offer['msrp_discount_dollars']}} <span class="text-sm text-light">{{=each_offer['msrp_discount_percent']}} off</span>
+							</td>
+						</tr>
+						
+						<tr>
+							<th>
+								Distance
+							</th>
 
-					<div class="col-xs-4 text-bold">
-						Color:
-					</div>
+							<td>
+								{{offer_distance=each_offer['offer_distance_to_auction_request']}}{{if offer_distance == "0.00":}}In your area!{{else:}}{{=offer_distance}}miles away{{pass}}
+							</td>
+						</tr>
 
-					<div class="col-xs-8">
-						{{=each_offer['color']}}
-					</div>
-					
-					<div class="col-xs-4 text-bold">
-						Bids:
-					</div>
+						<tr>
+							<th>
+								Color
+							</th>
 
-					<div class="col-xs-8">
-						{{=each_offer['number_of_bids']}}
-					</div>
-					
-					<div class="col-xs-4 text-bold">
-						Dealer ID:
-					</div>
+							<td>
+								{{=each_offer['color']}}
+							</td>
+						</tr>
 
-					<div class="col-xs-8">
-						{{=each_offer['dealer_id']}}
-					</div>
+						<tr>
+							<th>
+								Bids
+							</th>
 
-					<div class="col-xs-4 text-bold">
-						Rating:
-					</div>
+							<td>
+								{{=each_offer['number_of_bids']}}
+							</td>
+						</tr>
+						
+						<tr>
+							<th>
+								Dealer <i class="fa fa-info-circle" rel="tooltip" title="Dealer ID: {{=each_offer['dealer_id']}} | Offer ID: {{=each_offer['id']}}"></i>
+							</th>
 
-					<div class="col-xs-8">
-						<i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i>
-					</div>
-
+							<td>
+								<i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i>
+							</td>
+						</tr>
+					</table>
 				</div>
 			</div>
 
 			<div class="col-xs-4">
 				<div class="text-bold">Description:</div>
-				<div>{{truncate=234}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></div>
+				<div>{{truncate=456}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></div>
 				<script>
 					$("#untruncate{{=counter}}").hide();
 				</script>
@@ -414,6 +461,27 @@
 	</script>
 {{pass}}
 
+{{if auction_request_offers_info:}}
+	<div id="exterior_image_l" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="exterior_image_l" aria-hidden="true">
+	  <div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-body">
+				<img src="{{=URL('static', 'thumbnails/%s'%exterior_image_l)}}" class="img-responsive">
+			</div>
+		</div>
+	  </div>
+	</div>
+
+	<div id="interior_image_l" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="interior_image_l" aria-hidden="true">
+	  <div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-body">
+				<img src="{{=URL('static', 'thumbnails/%s'%interior_image_l)}}" class="img-responsive">
+			</div>
+		</div>
+	  </div>
+	</div>
+{{pass}}
  
 <!--{{=auction_request_info['id']}}
 {{=auction_request_info['year']}}

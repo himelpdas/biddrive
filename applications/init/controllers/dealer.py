@@ -376,8 +376,11 @@ def auction():
 
 			bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
 
-		if bid_form.process(hideerror = False).accepted:
-			response.flash = 'Your new bid is %s!'%bid_form.vars.bid
+		if bid_form.process(hideerror = True).accepted:
+			response.flash = '$Your new bid is $%s!'%bid_form.vars.bid
+		elif bid_form.errors:
+			response.flash = '!Bid not submitted! Please check for mistakes in form.'
+
 
 	#auction request info
 	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
@@ -508,9 +511,12 @@ def auction():
 		this_color = color_names[each_offer.auction_request_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
 		
 		#message stuff
+		offer_id = each_offer.auction_request_offer.id
+		offer_messages = db(db.auction_request_offer_message.auction_request_offer == offer_id).select()
 		
 		each_offer_dict = {
-			'id' : each_offer.auction_request_offer.id,
+			'id' : offer_id,
+			'offer_messages' : offer_messages,
 			'dealer_first_name':each_offer.auth_user.first_name,
 			'dealer_id' : each_offer.auction_request_offer.owner_id,
 			'last_bid_price' : last_bid_price,
