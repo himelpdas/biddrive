@@ -135,17 +135,17 @@
 						{{if bid_form:}}
 							{{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
 							{{bid_form.element("input", _name = "bid")["_placeholder"] = "$" }}
-							{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+							{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-left" }}
 							{{bid_form.element("input", _type = "submit")["_value"] = "Place Bid!" }}
 							{{=bid_form.custom.begin}}
 							<th>
+								{{=bid_form.custom.submit}}
+							</th>
+							<td>
 								{{=bid_form.custom.widget.bid}}
 								{{if bid_form.errors['bid']:}}
 									<div class="alert alert-warning">{{=bid_form.errors['bid']}}</div>
 								{{pass}}
-							</th>
-							<td>
-								{{=bid_form.custom.submit}}
 							</td>
 							{{=bid_form.custom.end}}
 						{{pass}}
