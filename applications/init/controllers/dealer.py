@@ -205,7 +205,7 @@ def auction_requests():
 	plural = ''
 	if not number or number > 1:
 		plural = 's'
-	response.flash = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
+	response.message = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 	
@@ -226,11 +226,11 @@ def pre_auction():
 	if db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select(): #make sure dealer did not make an offer already... if so redirect him to auction
 		redirect(URL('auction',args=[auction_request_id]))
 	#if not request.args:  #make decorator http://bit.ly/1i2wbHz
-	#	session.flash='No request ID!'
+	#	session.message='No request ID!'
 	#	redirect(URL('my_auctions.html'))
 	auction_request_rows = db(db.auction_request.id == auction_request_id).select() #ALWAYS verify existence of vars/args in database.
 	if not auction_request_rows:
-		session.flash='Invalid request ID!'
+		session.message='@Invalid request ID!'
 		redirect(URL('my_auctions.html'))
 	
 	db.auction_request_offer.auction_request.default = auction_request_id
@@ -318,7 +318,7 @@ def pre_auction():
 	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
 	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
-		session.flash = 'success!'
+		session.message = '$Your offer was submitted! Now make a bid.'
 		redirect(
 			URL('auction.html', args=[auction_request_id])
 		)
@@ -343,7 +343,7 @@ def auction():
 	auction_request_id = request.args[0]
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
-		session.flash="!Invalid auction ID!"
+		session.message="!Invalid auction ID!"
 		redirect(URL('my_auctions.html'))
 	
 	trim_data = json.loads(auction_request.trim_data)
@@ -359,7 +359,7 @@ def auction():
 	if is_owner:
 		is_participant = True
 	if not is_participant: #somehow he never made an offer
-		session.flash="You are not a part of this auction!"
+		session.message="@You are not a part of this auction!"
 		redirect(URL('default','index.html'))
 	
 	session.last_auction_visited = auction_request_id #for instant access to last auction visited when portal button pressed
@@ -377,9 +377,9 @@ def auction():
 			bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
 
 		if bid_form.process(hideerror = True).accepted:
-			response.flash = '$Your new bid is $%s!'%bid_form.vars.bid
+			response.message = '$Your new bid is $%s!'%bid_form.vars.bid
 		elif bid_form.errors:
-			response.flash = '!Bid not submitted! Please check for mistakes in form.'
+			response.message = '!Bid not submitted! Please check for mistakes in form.'
 
 
 	#auction request info

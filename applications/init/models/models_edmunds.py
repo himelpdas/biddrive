@@ -6,15 +6,20 @@ if not db(db.auth_group.role == "dealers").select().first(): #cache!!
 if not db(db.auth_group.role == "admins").select().first(): #cache!!
 	auth.add_group('admins', 'has access to various non-public aspects of the database')
 	
+AUTH_ADMIN = False
+AUTH_DEALER = False
 if auth.user_id:
-	if auth.has_membership(user_id = auth.user_id, role = "admins"):
+	AUTH_ADMIN = auth.has_membership(user_id = auth.user_id, role = "admins")
+	if AUTH_ADMIN:
 		response.menu.append(
 			(T('Admin Portal'), False, URL('admin', 'dealership_requests.html'), [
 				(T('Dealership Requests'), False, URL('admin', 'dealership_requests.html'), []),
 				(T('User Management'), False, URL('admin', 'user_management.html'), []),
 			]),
 		)
-	if auth.has_membership(user_id = auth.user_id, role = "dealers"):
+
+	AUTH_DEALER = auth.has_membership(user_id = auth.user_id, role = "dealers")
+	if AUTH_DEALER:
 		response.menu.append(
 			(T('Dealer Portal'), False, URL('dealer', 'auction_requests') if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]), [
 				(T('Alerts'), False, URL('dealer', 'reminders'), []),

@@ -372,7 +372,7 @@
 
 			<div class="col-xs-4">
 				<div class="text-bold">Description:</div>
-				<div>{{truncate=456}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></div>
+				<div>{{truncate=345}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></div>
 				<script>
 					$("#untruncate{{=counter}}").hide();
 				</script>

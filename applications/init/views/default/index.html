@@ -1,4 +1,14 @@
 {{extend 'layout.html'}}
+
+{{#############ERROR DIVS################}}
+<div style="position:fixed; padding-left:10px; right:10px;top:75px;width:100%;min-width:120px;max-width:480px;z-index:9998;">
+	{{include 'message_divs.html'}}
+<script>
+	$('.alert_headers').fadeTo("slow", 0.75);
+</script>
+</div>
+{{#############ERROR DIVS################}}
+
     <section id="feature_slider" style="background-image: url(http://i.imgur.com/IKOzzNH.jpg); background-position: center;">
         <article class="slide active" id="showcasing" style="display: block;">
 
