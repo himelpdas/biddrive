@@ -26,7 +26,8 @@ def index():
 		year = request.args[0]
 		
 	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
-	
+
+@auth.requires(not auth.has_membership(role='dealers')) #allowing two roles in the auction page will lead to weird results
 def request_by_make():
 	if not request.args:
 		session.message='Invalid request!'
@@ -89,7 +90,7 @@ def request_by_make():
 	if form.process(onvalidation=computations, hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = ' Register or login to view it.'
 		if auth.user_id:
-			guest_msg='' #user is logged in no need for guest msg
+			guest_msg=' Dealers have been notified!' #user is logged in no need for guest msg
 		session.message = 'Auction submitted!%s' % guest_msg
 		auth.add_group('request_by_make_authorized_dealers_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
@@ -154,7 +155,7 @@ def dealership_form():
 	
 	if form.process().accepted:
 		#email alert to admin
-		response.message = 'Form accepted. Please wait a few days for our response!'
+		response.message = '$Form accepted. Please wait a few days for our response!'
 	
 	response.title = 'Become our partner!'
 	response.subtitle = 'Sell your cars on our website'
