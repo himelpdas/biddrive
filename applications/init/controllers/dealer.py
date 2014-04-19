@@ -541,6 +541,7 @@ def auction():
 
 		each_offer_dict = {
 			'id' : offer_id,
+			'is_me': each_offer.auction_request_offer.owner_id == auth.user.id,
 			'offer_messages' : offer_messages,
 			'my_message_form_dealer': my_message_form_dealer if my_auction_request_offer_id == offer_id else '', #add message form to this bid cell, only one needed hence why logic is outside this loop
 			'my_message_form_buyer': my_message_form_buyer,
