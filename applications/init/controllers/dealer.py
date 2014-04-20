@@ -1,5 +1,5 @@
 def index():
-	return dict()
+	redirect(URL('my_auctions.html'))
 
 @auth.requires_membership('dealers')
 def auction_requests():
@@ -408,7 +408,7 @@ def auction():
 	if lowest_offer_row:
 		lowest_offer = '$%s'%int(lowest_offer_row.bid)
 	
-	#auction request offers (rows)
+	#auction request offers (rows) #FIX - somehow duplicates can appear you must fix. must have to do with similar id numbers# FIXED used ordered dict for auction_request_offers_info instead of list
 	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 
 	#auction requests info
@@ -438,20 +438,20 @@ def auction():
 	sortlist = []
 	
 	#Price
-	pricechoices = ["price-up", "price-down"]; sortlist.extend(pricechoices)
+	pricechoices = ["bid_price-up", "bid_price-down"]; sortlist.extend(pricechoices)
 	if sortby in pricechoices:
 		reverse = False
-		if sortby == "price-down":
+		if sortby == "bid_price-down":
 			reverse = True
-		auction_request_offers = auction_request_offers.sort(lambda row: row.latest_bid(), reverse=reverse)
+		auction_request_offers = auction_request_offers.sort(lambda row: row.auction_request_offer.latest_bid(), reverse=reverse)
 		
 	#MSRP
-	msrpchoices = ["retail-price-up", "retail-price-down"]; sortlist.extend(msrpchoices)
+	msrpchoices = ["retail_price-up", "retail_price-down"]; sortlist.extend(msrpchoices)
 	if sortby in msrpchoices:
 		reverse = False
-		if sortby == "retail-price-down":
+		if sortby == "retail_price-down":
 			reverse = True
-		auction_request_offers = auction_request_offers.sort(lambda row: row.MSRP(), reverse=reverse)
+		auction_request_offers = auction_request_offers.sort(lambda row: row.auction_request_offer.MSRP(), reverse=reverse)
 		
 	#Discount (%off)
 	discountchoices = ["discount-up", "discount-down"]; sortlist.extend(discountchoices)
@@ -460,7 +460,7 @@ def auction():
 		if sortby == "discount-down":
 			reverse = True
 		def msrp_discount(row):
-			latest_bid = row.latest_bid()
+			latest_bid = row.auction_request_offer.latest_bid()
 			if latest_bid:
 				return latest_bid.MSRP_discount()
 			return 0
@@ -485,7 +485,7 @@ def auction():
 	return dict(auction_request_info = auction_request_info['trim_data'])
 	"""
 	
-	auction_request_offers_info = []
+	auction_request_offers_info = OD()
 	#trim_data = json.loads(auction_request_info['trim_data'])
 	for each_offer in auction_request_offers:
 		#options
@@ -584,8 +584,11 @@ def auction():
 			'msrp_discount_percent': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
 			'msrp_discount_dollars':'$%s'%(int(msrp) - int(msrp if not last_bid_price else last_bid_price),),
 		}
-		auction_request_offers_info.append(each_offer_dict)
-
+		#auction_request_offers_info.append(each_offer_dict)
+		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction
+	
+	auction_request_offers_info = auction_request_offers_info.values() #convert back to list to be compatible with current view
+		
 	#title stuff
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)

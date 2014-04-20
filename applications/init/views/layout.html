@@ -33,7 +33,7 @@
 </head>
 <body class="pull_top">
     
-    <div class="navbar navbar-inverse navbar-fixed-top {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" style="z-index:9999;">{{#z-index higher than message divs}}
+    <div class="navbar navbar-inverse navbar-fixed-top {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller =='default' and request.function=='index':}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
         <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle pull-right" data-toggle="collapse" data-target=".navbar-ex1-collapse">

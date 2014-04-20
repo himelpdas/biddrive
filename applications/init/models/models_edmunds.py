@@ -451,7 +451,7 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 		writable=False,
 	),
 	Field('bid', 'integer',
-		requires = IS_NOT_EMPTY(),
+		requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(999, 1000000)]
 	),
 	Field.Method('MSRP_discount',
 		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,

@@ -108,7 +108,7 @@
 						</th>
 
 						<td>
-							<div id="clock"></div>
+							<div id="clock" {{if auction_request_info['ends_in_seconds']<=86400/2:}}style="color:red"{{pass}}></div>
 							<script src="{{=URL('static','js/jquery.countdown.js')}}"></script>
 							<script type="text/javascript">
 								$('#clock').countdown({
@@ -128,6 +128,32 @@
 							</script>{{#http://goo.gl/VPtnxU simplest countdown timer... check source code to understand render function}} 
 						</td>
 					</tr>
+					
+					<tr>
+						<th>
+							Sort bids by
+						</th>
+						
+						<td>
+							<div class="btn-group">
+								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+									{{sortby = request.vars['sortby']}}
+									{{if sortby:}}
+										{{sort_words = sortby.split('-')}}
+										{{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
+									{{else:}}
+										Choose
+									{{pass}}<i class="fa fa-caret-down fa-fw"></i>
+								</button>
+								<ul class="dropdown-menu" role="menu">
+									{{for each in sortlist:}}
+										{{each_sort_words = each.split('-')}}
+										<li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each_sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=each_sort_words[-1]}} fa-fw"></i></a></li>
+									{{pass}}
+								</ul>
+							</div>
+						</td>
+					<tr>
 
 					<tr>
 						{{if bid_form:}}
@@ -202,7 +228,7 @@
 			<span><strong>{{if each_offer['last_bid_price']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-clock-o"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>Astoria, NY</strong></span>
 
 			<span class="pull-right">
-				<button class="btn btn-default btn-xs"><i class="fa fa-heart"></i></button>
+				<button class="btn btn-default btn-xs" rel="tooltip" title="Favorite this bid"><i class="fa fa-heart"></i></button>
 				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-plus"></i></button>
 			</span>
 

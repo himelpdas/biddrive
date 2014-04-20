@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 
 {{#############ERROR DIVS################}}
-<div style="position:fixed; padding-left:10px; right:10px;top:75px;width:100%;min-width:120px;max-width:480px;z-index:9998;">
+<div style="position:fixed; padding-left:10px; right:10px;top:75px;width:100%;min-width:120px;max-width:480px;{{if request.controller =='default' and request.function=='index':}}z-index:9998{{pass}};">{{#we only want high z-index for navbar in homepage for message divs, but not any page else because it can interfere with modals}}
 	{{include 'message_divs.html'}}
 <script>
 	$('.alert_headers').fadeTo("slow", 0.75);
@@ -137,8 +137,19 @@
                         $('.part-2-3')
                             .html('<div class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
                             .fadeIn()
-                            .load( "{{=URL('ajax','vehicle_content', args=[each_brand, year])}}")
-                        ;
+                            .load("{{=URL('ajax','vehicle_content', args=[each_brand, year])}}",
+								function( response, status, xhr ) {
+									if ( status == "error" ) {
+										var msg = "Error loading {{=each_brand.upper()}}: ";
+										$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_reviews_{{=each_brand}}" class="alert alert-danger"><span id="ajax_failure_warning_reviews_message_{{=each_brand}}"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+										$('#ajax_failure_warning_reviews_message_{{=each_brand}}').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+										$('#ajax_failure_warning_reviews_{{=each_brand}}').slideDown().fadeTo("slow", 0.75); {{# similar to request_by_make, but add =each_brand to ids so we can have multiple error divs}}
+										$('#ajax_failure_warning_reviews_{{=each_brand}}').click(function(){
+											$(this).slideUp();
+										});
+									}
+								}
+							);
                     }
                 );
             {{pass}}

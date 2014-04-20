@@ -91,7 +91,7 @@ def request_by_make():
 		guest_msg = ' Register or login to view it.'
 		if auth.user_id:
 			guest_msg=' Dealers have been notified!' #user is logged in no need for guest msg
-		session.message = 'Auction submitted!%s' % guest_msg
+		session.message = '$Auction submitted!%s' % guest_msg
 		auth.add_group('request_by_make_authorized_dealers_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
 			URL('default','pre_auction.html', args=form.vars.id) #http://goo.gl/twPSTK
