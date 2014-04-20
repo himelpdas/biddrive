@@ -27,7 +27,7 @@ def index():
 		
 	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
 
-@auth.requires(not auth.has_membership(role='dealers')) #allowing two roles in the auction page will lead to weird results
+@auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
 def request_by_make():
 	if not request.args:
 		session.message='Invalid request!'
