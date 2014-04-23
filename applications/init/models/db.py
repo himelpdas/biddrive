@@ -58,7 +58,7 @@ auth.define_tables(username=False, signature=False)
 
 ## configure email
 mail = auth.settings.mailer
-mail.settings.server = 'in-v3.mailjet.com:25' #'logging' or 'smtp.gmail.com:587'
+mail.settings.server = 'in-v3.mailjet.com:587' #'logging' or 'smtp.gmail.com:587'
 mail.settings.sender = 'noreply@biddrive.com' #'you@gmail.com' #http://goo.gl/FNosX9
 mail.settings.login = '7d01f433ff459980e1ab595decc7ba34:3fdf22c6fde649e46391c5a4e8bec77c' #'username:password'
 
