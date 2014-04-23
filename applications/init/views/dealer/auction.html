@@ -1,9 +1,9 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
 
-<div class="panel panel-info">
+<div class="panel panel-primary">
 	<div class= "panel-heading text-uppercase text-md">
-		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
+		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}} {{if False and auction_request_expired:}}<span class="text-danger">(ENDED)<span>{{pass}}</strong>
 		
 		<span class="pull-right text-xs text-light"> Auction ID: {{=auction_request_info['id']}}</span>
 	</div>
@@ -84,35 +84,42 @@
 
 					<tr>
 						<th>
-							Lowest bid
+							$ Lowest / Favorite
 						</th>
 
 						<td>
-							{{=auction_request_info['best_price']}}
+							{{=auction_request_info['lowest_price']}} / {{=auction_request_info['favorite_price']}}
 						</td>
 					</tr>
 
 					<tr>
 						<th>
-							Favorite price
+							Auction status
 						</th>
 
 						<td>
-							$ 00,000
+							{{if auction_request_info['auction_completed']:}}
+								<span class="text-danger">Ended</span>
+							{{elif auction_request_info['bidding_ended']:}}
+								<span class="text-warning">Awaiting winner</span>
+							{{else:}}
+								<span class="text-success">Active</span>
+							{{pass}}
 						</td>
 					</tr>
 
 					<tr>
 						<th>
-							Time left
+							{{if not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offer ends in{{pass}}
 						</th>
 
 						<td>
-							<div id="clock" {{if auction_request_info['ends_in_seconds']<=86400/2:}}style="color:red"{{pass}}></div>
+							{{clock = auction_request_info['ends_in_seconds'] if not auction_request_info['bidding_ended'] else auction_request_info['auction_ended_offer_expires']}}
+							<div id="clock" {{if clock<=86400/2:}}{{#style="color:red"}}class="text-danger"{{pass}}></div>
 							<script src="{{=URL('static','js/jquery.countdown.js')}}"></script>
 							<script type="text/javascript">
 								$('#clock').countdown({
-									'date': new Date({{=(int(time.time()) + abs(auction_request_info['ends_in_seconds']))*1000}}), {{#add seconds remaining to epoch time, and times by thousand to get milliseconds which javascript Date object needs http://goo.gl/OGWwz}}
+									'date': new Date({{=(int(time.time()) + abs(clock))*1000}}), {{#add seconds remaining to epoch time, and times by thousand to get milliseconds which javascript Date object needs http://goo.gl/OGWwz}}
 									'render': function(data) {
 										var el = $(this.el);
 										el.empty() {{#empty element and reappend the data below. without empty it would duplicate itself every second}}
@@ -122,7 +129,9 @@
 										$(el).append(this.leadingZeros(data.sec, 2) + " sec ");
 									},
 									'onEnd': function(){
-										location.reload(); {{#http://goo.gl/Um9jh}}
+										{{if clock:}} {{#prevent infinite loop when time left is already zero from controller}}
+											location.reload(); {{#http://goo.gl/Um9jh}}
+										{{pass}}
 									},
 								});
 							</script>{{#http://goo.gl/VPtnxU simplest countdown timer... check source code to understand render function}} 
@@ -131,7 +140,7 @@
 					
 					<tr>
 						<th>
-							Sort bids by
+							Sort offers by
 						</th>
 						
 						<td>
@@ -142,8 +151,8 @@
 										{{sort_words = sortby.split('-')}}
 										{{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
 									{{else:}}
-										Choose
-									{{pass}}<i class="fa fa-caret-down fa-fw"></i>
+										Select<i class="fa fa-caret-down fa-fw"></i>
+									{{pass}}
 								</button>
 								<ul class="dropdown-menu" role="menu">
 									{{for each in sortlist:}}
@@ -223,12 +232,18 @@
 	-->
 
 {{for counter, each_offer in enumerate(auction_request_offers_info):}}
-	<div class="panel {{if each_offer['is_me']:}}panel-warning{{else:}}panel-default{{pass}}">
-		<div class="panel-heading">
-			<span><strong>{{if each_offer['last_bid_price']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-clock-o"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>Astoria, NY</strong></span>
+	{{if not auction_request_expired:}}
+		<div class="panel {{if each_offer['is_my_offer'] and not each_offer['is_favorite']:}}panel-warning{{elif not each_offer['is_my_offer'] and each_offer['is_favorite']:}}{{if is_owner:}}panel-success{{else:}}panel-danger{{pass}}{{elif each_offer['is_my_offer'] and each_offer['is_favorite']:}}panel-success{{else:}}panel-default{{pass}}">
+	{{else:}}
+		<div class="panel {{if each_offer['is_winner']:}}panel-info{{else:}}panel-default{{pass}}">
+	{{pass}}
+		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
+			<span><strong>{{if each_offer['last_bid_price']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-clock-o"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}} {{if each_offer['is_winner']:}}<span class="text-danger">(WINNER)</span>{{pass}}</strong></span> {{if is_owner and not auction_request_info['auction_completed'] and each_offer['last_bid_price']:}}<div style="position:absolute;width:100%;"><a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}"><button class="btn btn-success btn-xs center-block"><i class="fa fa-fw fa-certificate"></i> Choose Winner</button></a></div>{{pass}}{{#http://goo.gl/eLX2w6}}{{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
 
 			<span class="pull-right">
-				<button class="btn btn-default btn-xs" rel="tooltip" title="Favorite this bid"><i class="fa fa-heart"></i></button>
+				{{is_was = 'Was' if auction_request_expired else 'Is'}}
+				{{if is_owner and not auction_request_expired:}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" rel="tooltip" title="Favorite this bid"><i class="fa fa-heart"></i></button></a>
+				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['is_favorite']:}}<i class="fa fw fa-heart" rel="tooltip" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" rel="tooltip" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
 				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-plus"></i></button>
 			</span>
 
@@ -244,13 +259,13 @@
 				    	<div class="item active">
 							{{exterior_image_s = each_offer['exterior_images'][0]}}
 							{{exterior_image_l = each_offer['exterior_images'][1]}}
-				     		<a href="#exterior_image_l" data-toggle="modal" data-target="#exterior_image_l"><img src="{{=URL('static', 'thumbnails/%s'%exterior_image_s)}}" alt="{{=exterior_image_s}}" class="img-responsive"></a>
+				     		<a href="#exterior_image_l_{{=each_offer['id']}}" data-toggle="modal" data-target="#exterior_image_l_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%exterior_image_s)}}" alt="{{=exterior_image_s}}" class="img-responsive"></a>
 				    	</div>
 
 						<div class="item">
 							{{interior_image_s = each_offer['interior_images'][0]}}
 							{{interior_image_l = each_offer['interior_images'][1]}}
-							<a href="#interior_image_l" data-toggle="modal" data-target="#interior_image_l"><img src="{{=URL('static', 'thumbnails/%s'%interior_image_s)}}" alt="{{=interior_image_s}}" class="img-responsive"></a>
+							<a href="#interior_image_l_{{=each_offer['id']}}" data-toggle="modal" data-target="#interior_image_l_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%interior_image_s)}}" alt="{{=interior_image_s}}" class="img-responsive"></a>
 						</div>
 						
 						{{if each_offer['front_images']:}} {{# from here it may be possible dealer did not submit these images}}
@@ -468,10 +483,14 @@
 								{{=each_offer['my_message_form_buyer']}}
 							</div>
 							<div class="buyer_dealer_messages {{if each_offer['my_message_form_buyer'] or each_offer['my_message_form_dealer']:}}col-xs-6{{else:}}col-xs-12{{pass}}">
-							{{for each_message in each_offer['offer_messages']:}}
-								<div>
-									<strong>{{if each_message.is_auction_requester:}}Buyer{{else:}}Dealer{{pass}} wrote:</strong> {{=each_message.message}}
-								</div>
+							{{if each_offer['offer_messages']:}}
+								{{for each_message in each_offer['offer_messages']:}}
+									<div>
+										<strong>{{if each_message.is_auction_requester:}}Buyer{{else:}}Dealer{{pass}} wrote:</strong> {{=each_message.message}}
+									</div>
+								{{pass}}
+							{{else:}}
+								<h4>No messages :(</h4>
 							{{pass}}
 							</div>
 						</div>
@@ -498,6 +517,25 @@
 			//$("#expand_offer_btn{{=counter}}
 		});
 	</script>
+	{{#####MODALS#####}}
+	<div id="exterior_image_l_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="exterior_image_l_{{=each_offer['id']}}" aria-hidden="true">
+	  <div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-body">
+				<img src="{{=URL('static', 'thumbnails/%s'%exterior_image_l)}}" class="img-responsive">
+			</div>
+		</div>
+	  </div>
+	</div>
+	<div id="interior_image_l_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="interior_image_l_{{=each_offer['id']}}" aria-hidden="true">
+	  <div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-body">
+				<img src="{{=URL('static', 'thumbnails/%s'%interior_image_l)}}" class="img-responsive">
+			</div>
+		</div>
+	  </div>
+	</div>
 {{pass}}
 
 <script>
@@ -505,7 +543,7 @@
 	$('.error').attr({'style':'color:red;'});
 </script>
 
-{{if auction_request_offers_info:}}
+{{"""}}
 	<div id="exterior_image_l" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="exterior_image_l" aria-hidden="true">
 	  <div class="modal-dialog modal-lg">
 		<div class="modal-content">
@@ -525,7 +563,7 @@
 		</div>
 	  </div>
 	</div>
-{{pass}}
+
  
 <!--{{=auction_request_info['id']}}
 {{=auction_request_info['year']}}
@@ -540,7 +578,7 @@
 {{#=auction_request_info['ends_in_seconds']}}
 {{#=auction_request_info['ends_in_human']}}
 <!--{{=auction_request_info['number_of_bids']}}
-{{=auction_request_info['best_price']}}-->
+{{=auction_request_info['lowest_price']}}-->
 
 
 <!--
@@ -567,3 +605,4 @@
 
 
 {{if bid_form:}}{{=bid_form}}{{pass}}-->
+{{"""}}
