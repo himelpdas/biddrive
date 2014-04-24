@@ -231,14 +231,17 @@
 		{{pass}}	
 	-->
 
+{{if not auction_request_offers_info:}}
+	<h3>Offers will appear here, please come back later.</h3>
+{{pass}}
 {{for counter, each_offer in enumerate(auction_request_offers_info):}}
 	{{if not auction_request_expired:}}
 		<div class="panel {{if each_offer['is_my_offer'] and not each_offer['is_favorite']:}}panel-warning{{elif not each_offer['is_my_offer'] and each_offer['is_favorite']:}}{{if is_owner:}}panel-success{{else:}}panel-danger{{pass}}{{elif each_offer['is_my_offer'] and each_offer['is_favorite']:}}panel-success{{else:}}panel-default{{pass}}">
 	{{else:}}
-		<div class="panel {{if each_offer['is_winner']:}}panel-info{{else:}}panel-default{{pass}}">
+		<div class="panel {{if each_offer['is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	{{pass}}
 		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
-			<span><strong>{{if each_offer['last_bid_price']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-clock-o"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}} {{if each_offer['is_winner']:}}<span class="text-danger">(WINNER)</span>{{pass}}</strong></span> {{if is_owner and not auction_request_info['auction_completed'] and each_offer['last_bid_price']:}}<div style="position:absolute;width:100%;"><a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}"><button class="btn btn-success btn-xs center-block"><i class="fa fa-fw fa-certificate"></i> Choose Winner</button></a></div>{{pass}}{{#http://goo.gl/eLX2w6}}{{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
+			<span><strong>{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-clock-o"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}} {{if each_offer['is_winning_offer']:}}<span class="text-danger">(WINNER)</span>{{pass}}</strong></span> {{if each_offer['show_winner_btn']:}}<div style="position:absolute;width:100%;"><a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}"><button class="btn btn-success btn-xs center-block"><i class="fa fa-fw fa-certificate"></i> Choose Winner</button></a></div>{{pass}}{{#http://goo.gl/eLX2w6}}{{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
 
 			<span class="pull-right">
 				{{is_was = 'Was' if auction_request_expired else 'Is'}}
@@ -372,7 +375,7 @@
 							</th>
 
 							<td>
-								{{offer_distance=each_offer['offer_distance_to_auction_request']}}{{if offer_distance == "0.00":}}In your area!{{else:}}{{=offer_distance}}miles away{{pass}}
+								{{offer_distance=each_offer['offer_distance_to_auction_request']}}{{if offer_distance == "0.00":}}In your area!{{else:}}{{=offer_distance}} miles away{{pass}}
 							</td>
 						</tr>
 

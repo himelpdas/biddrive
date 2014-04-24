@@ -125,21 +125,7 @@ def my_auctions(): #FIX GUEST AUCTIONS
 	
 @auth.requires_login()
 def auction(): #make sure only allow one active auction per user
-	if not request.args:  #make decorator http://bit.ly/1i2wbHz
-		session.message='No request ID!'
-		redirect(URL('my_auctions.html'))
-	
-	auction_request_id = request.args[0]
-	
-	auction_request = db(db.auction_request.id == auction_request_id).select().first()
-	if not auction_request:
-		session.message="Invalid request ID!"
-		redirect(URL('my_auctions.html'))
-	
-	response.title="Auction"
-	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	
-	return dict(auction_request=auction_request)
+	redirect(URL('dealer', args=request.args, vars=request.vars))
 
 def how_it_works():
 	return dict()

@@ -318,7 +318,7 @@ def pre_auction():
 	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
 	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
-		session.message = '$Your offer was submitted! Now make a bid.'
+		session.message = '$Your offer was submitted!'
 		redirect(
 			URL('auction.html', args=[auction_request_id])
 		)
@@ -412,7 +412,7 @@ def auction():
 				response.message = '$Your message was submitted to the buyer.'
 			elif my_message_form_dealer.errors:
 				response.message = '!Your message had errors. Please fix!'
-	else: #auction_request_expired
+	else: #auction_request_expired #MOVE THIS TO EACH_OFFER BELOW
 		#winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select() #check for winning offer
 		#make offer expires timer
 		if is_owner: #only owner can submit winner
@@ -423,6 +423,7 @@ def auction():
 			if winning_choice and not winning_offer and not auction_ended_offer_expired: #make sure winning is validated and there is no winning offer
 				winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice)#insert new winner
 				#redirect
+				#send email
 				#response.message2 = "$You have selected a winner"
 				#if winning_offer set offer expires timer
 
@@ -562,14 +563,19 @@ def auction():
 			package_options.append(__get_option_from_ID(trim_data, 'Package', each_option))
 		for each_option in each_offer.auction_request_offer.fees_options:
 			fees_options.append(__get_option_from_ID(trim_data, 'Additional Fees', each_option))
-			
+
 		#pricing stuff
 		bids = db((db.auction_request_offer_bid.owner_id == each_offer.auction_request_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
 		number_of_bids = len(bids)
 		msrp = each_offer.auction_request_offer.MSRP()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
-		last_bid_price = last_bid.bid if last_bid else None
+		last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
 		
+		#stuff to do if this offer is owned by viewing dealer
+		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
+		if is_my_offer and is_awaiting_offer:
+			response.message2 = "!Please make a bid!"
+	
 		#dealer stuff
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
 		this_dealer_distance = distance_to_auction_request(each_offer)
@@ -608,27 +614,27 @@ def auction():
 				auction_request_info['favorite_price'] = '$%s'%last_bid_price
 				
 		#winning stuff
-		is_winner = int(winning_offer.auction_request_offer if winning_offer else 0) == int(offer_id)
-		if is_winner:
+		is_winning_offer = int(winning_offer.auction_request_offer if winning_offer else 0) == int(offer_id)
+		if is_winning_offer:
 			if not last_bid_price: #see if it's an awaiting bid.
 				db(db.auction_request_winning_offer.id == winning_offer.id).delete() #it's an awaiting bid so just delete the winner. looks inefficient but it's better than querying for the favorite id's offer, why not just do it here to prevent dry.
 				if is_owner:
 					response.message3 = "!Awaiting bids cannot be chosen as a winner." #and change the message for the owner.
-				is_winner = winning_offer = False #falsify everything
+				is_winning_offer = winning_offer = False #falsify everything
 			else:
 				auction_request_info['favorite_price'] = '$%s'%last_bid_price
 
 		#response messaging stuff
-		if auction_request_info['auction_completed'] and not is_owner: #if you don't do this check, since each_offer loops for buyer as well, eventually is_winner will be true and message below will show for buyer
-			if is_winner:
+		if auction_request_info['auction_completed'] and not is_owner: #if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer
+			if is_winning_offer:
 				response.message3 = "$You are the winner! Click here be redirected to winning page."
 			elif winning_offer: #make sure that there is a winner before making the following claim
 				response.message3 = "@Buyer picked a winner, but you did not win. Sorry :-("
 
 		each_offer_dict = {
 			'id' : offer_id,
-			'is_winner' :is_winner,
-			'is_my_offer': each_offer.auction_request_offer.owner_id == auth.user.id, #i'm a dealer
+			'is_winning_offer' :is_winning_offer,
+			'is_my_offer': is_my_offer,
 			'is_favorite': is_favorite,
 			'offer_messages' : offer_messages,
 			'my_message_form_dealer': my_message_form_dealer if my_auction_request_offer_id == offer_id else '', #add message form to this bid cell, only one needed hence why logic is outside this loop
@@ -636,6 +642,8 @@ def auction():
 			'dealer_first_name':each_offer.auth_user.first_name,
 			'dealer_area':'%s, %s'%(each_offer.dealership_info.city.capitalize(), each_offer.dealership_info.state),
 			'dealer_id' : each_offer.auction_request_offer.owner_id,
+			'show_winner_btn': True if is_owner and not auction_request_info['auction_completed'] and auction_request_info['bidding_ended'] and is_not_awaiting_offer else False,
+			'is_not_awaiting_offer':is_not_awaiting_offer,
 			'last_bid_price' : last_bid_price,
 			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,
