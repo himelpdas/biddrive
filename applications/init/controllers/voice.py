@@ -1,3 +1,4 @@
+response.view="generic.json"
 def index():
 	return(
 		dict(
