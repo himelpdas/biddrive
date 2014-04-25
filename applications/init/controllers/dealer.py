@@ -320,7 +320,7 @@ def pre_auction():
 	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		session.message = '$Your offer was submitted!'
 		redirect(
-			URL('auction.html', args=[auction_request_id])
+			URL('auction', args=[auction_request_id])
 		)
 	
 	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
@@ -344,7 +344,7 @@ def auction():
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
 		session.message="!Invalid auction ID!"
-		redirect(URL('my_auctions.html'))
+		redirect(URL('my_auctions'))
 	
 	trim_data = json.loads(auction_request.trim_data)
 
@@ -365,11 +365,11 @@ def auction():
 		is_participant = True
 	if not is_participant: #somehow he never made an offer
 		session.message="@You are not a part of this auction!"
-		redirect(URL('default','index.html'))
+		redirect(URL('default','index'))
 	
 	#session.last_auction_visited = auction_request_id #for instant access to last auction visited when portal button pressed
 	#tested above if this user is worth using resources for, now do all the required queries for the logic below
-	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
+	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 	last_favorite_choice = db(db.auction_request_favorite_choice.auction_request == auction_request_id).select().last()  #no need for further testing because of previous if/else
 	winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select().last()
 	
@@ -382,10 +382,12 @@ def auction():
 				new_favorite_choice = False
 			if new_favorite_choice:
 				if last_favorite_choice and last_favorite_choice.not_until > request.now: #make sure is real favorite, make sure buyer can't constantly change favorite choice, make sure new favorite choice = old one, make sure auction hasn't expired, make sure the favorite is not an awaiting bid
-					response.message = "!Dealers not alerted! You can't change your favorite until %s."%human(last_favorite_choice.not_until - request.now, precision=2, past_tense='{}', future_tense='{}')
+					session.message = "!Dealers not alerted! You can't change your favorite until %s."%human(last_favorite_choice.not_until - request.now, precision=2, past_tense='{}', future_tense='{}')
 				else:
 					last_favorite_choice = db.auction_request_favorite_choice.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer=new_favorite_choice) #no need for further testing because of previous if/else
-					response.message = "$All dealers have been alerted about your new favorite!"
+					session.send_alert = True
+					session.message = "$All dealers will be alerted about your new favorite!"
+				redirect(URL(args=request.args)) #get rid of vars incase of refresh
 				#awating bid test below in each_offer
 		#create offer form
 		if is_authorized_dealer_with_offer:
@@ -403,7 +405,7 @@ def auction():
 			
 			#dealer bid process
 			if bid_form.process(hideerror = True).accepted:
-				response.message = '$Your new bid is $%s!'%bid_form.vars.bid
+				response.message = '$Your new bid is $%s!'%bid_form.vars.bid #redirect not needed since we're dealing with POST
 			elif bid_form.errors:
 				response.message = '!Bid not submitted! Please check for mistakes in form.'
 			
@@ -603,15 +605,28 @@ def auction():
 			else: each_message.is_auction_requester = False
 
 		#favorite stuff
-		is_favorite = int(last_favorite_choice.auction_request_offer if last_favorite_choice else 0) == int(offer_id)
+		is_favorite = int(last_favorite_choice.auction_request_offer if last_favorite_choice else 0) == int(offer_id) #see if the fave is this offer
 		if is_favorite: #set a favorite in auction_request_info
 			if not last_bid_price: #see if it's an awaiting bid.
 				db(db.auction_request_favorite_choice.id == last_favorite_choice.id).delete() #it's an awaiting bid so just delete the favorite. looks inefficient but it's better than querying for the favorite id's offer, why not just do it here to prevent dry.
 				if is_owner:
-					response.message = "!You cannot choose an awaiting bid as your favorite." #and change the message for the owner.
+					session.message = "!You cannot choose an awaiting bid as your favorite." #and change the message for the owner.
+					redirect(URL(args=request.args)) #get rid of vars
 				is_favorite = last_favorite_choice = False
 			else:
-				auction_request_info['favorite_price'] = '$%s'%last_bid_price
+				auction_request_info['favorite_price'] = '$%s'%last_bid_price #there is a favorite price so set it to the info row
+	
+		if last_favorite_choice and session.send_alert:
+			your = each_offer.auth_user
+			aid = auction_request_info['id']
+			scheduler.queue_task(
+				send_alert_task,
+				pargs=['email', your.email, EMAIL_NEW_FAVORITE_OFFER_MESSAGE%(your.first_name.capitalize(), aid, 'you' if is_favorite else 'another dealer'), EMAIL_NEW_FAVORITE_OFFER_SUBJECT%(aid, your.first_name.capitalize())],
+				#pvars={},
+				#repeats = 10, # run 10 times
+				period = 5, # run 5s after previous
+				timeout = 30, # should take less than 30 seconds
+			)
 				
 		#winning stuff
 		is_winning_offer = int(winning_offer.auction_request_offer if winning_offer else 0) == int(offer_id)
@@ -622,7 +637,7 @@ def auction():
 					response.message3 = "!Awaiting bids cannot be chosen as a winner." #and change the message for the owner.
 				is_winning_offer = winning_offer = False #falsify everything
 			else:
-				auction_request_info['favorite_price'] = '$%s'%last_bid_price
+				auction_request_info['favorite_price'] = '$%s'%last_bid_price #DRY?
 
 		#response messaging stuff
 		if auction_request_info['auction_completed'] and not is_owner: #if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer
@@ -685,7 +700,9 @@ def auction():
 		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction
 	
 	auction_request_offers_info = auction_request_offers_info.values() #convert back to list to be compatible with current view
-		
+	
+	session.send_alert = False #make sure send alert
+	
 	#title stuff
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)

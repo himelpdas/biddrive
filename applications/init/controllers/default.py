@@ -122,10 +122,6 @@ def my_auctions(): #FIX GUEST AUCTIONS
 	my_auctions = db(db.auction_request.owner_id == auth.user_id).select()
 	response.title="My auctions"
 	return dict(guest_temp_id=session.guest_temp_id, my_auctions=my_auctions)
-	
-@auth.requires_login()
-def auction(): #make sure only allow one active auction per user
-	redirect(URL('dealer', args=request.args, vars=request.vars))
 
 def how_it_works():
 	return dict()
