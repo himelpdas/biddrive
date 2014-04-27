@@ -18,10 +18,21 @@
         <div class="col-xs-7">
 
             {{ form.element("select", _name = "trim_choices")["_class"] += " form-control" }}
+			
             {{ form.element("select", _name = "FICO_credit_score")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "financing")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "funding_source")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "lease_term")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "lease_mileage")["_class"] += " form-control" }}
+            
+			{{ form.element("textarea", _name = "describe_trade_in")["_class"] += " form-control" }}
+			{{ form.element("textarea", _name = "describe_trade_in")["_placeholder"] = "Example: Red 2002 Honda Accord LX with 130k miles (mostly highway). It runs great with no mechanical or electrical problems. New tires and battery. It has a spoiler and clean tan leather interior with 6 disc CD changer. It has 5 or 6 quarter-sized dents and several visible scratches on the outside." }}
+			
             {{ form.element("select", _name = "color_preference")["_class"] += " form-control" }}
             {{ form.element("select", _name = "radius")["_class"] += " form-control" }}
             {{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
+            {{ form.element("input", _name = "expected_down_payment")["_class"] += " form-control" }}
+			{{ form.element("input", _name = "expected_down_payment")["_placeholder"] = "$" }}
             {{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
 			
 			<h5 class="text-light">Describe your request:</h5>
@@ -95,7 +106,130 @@
 						{{pass}}
                     </div>
                 </div>
-			
+				
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Funding source</label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.funding_source}}
+
+						{{if form.errors['funding_source']:}}
+							<div class="alert alert-warning">{{=form.errors['funding_source']}}</div>
+						{{pass}}
+                    </div>
+                </div>
+
+				<div id="financing" class="form-group">
+                    <label class="col-sm-3 control-label">Financing</label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.financing}}
+
+						{{if form.errors['financing']:}}
+							<div class="alert alert-warning">{{=form.errors['financing']}}</div>
+						{{pass}}
+                    </div>
+                </div>{{#TODO ADD UPDATE TO FIELDS THAT ARE DEPENDANT ON OTHER FIELDS, THEN RETURN NONE FOR INCORRECT ENTRIES}}
+				
+				<div id="expected_down_payment" class="form-group">
+                    <label class="col-sm-3 control-label">Expected down payment</label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.expected_down_payment}}
+
+						{{if form.errors['expected_down_payment']:}}
+							<div class="alert alert-warning">{{=form.errors['expected_down_payment']}}</div>
+						{{pass}}
+                    </div>
+                </div>
+				
+				<div id="lease_term" class="form-group">
+                    <label class="col-sm-3 control-label">Lease term</label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.lease_term}}
+
+						{{if form.errors['lease_term']:}}
+							<div class="alert alert-warning">{{=form.errors['lease_term']}}</div>
+						{{pass}}
+                    </div>
+                </div>
+				
+				<div id="lease_mileage" class="form-group">
+                    <label class="col-sm-3 control-label">Lease mileage</label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.lease_mileage}}
+
+						{{if form.errors['lease_mileage']:}}
+							<div class="alert alert-warning">{{=form.errors['lease_mileage']}}</div>
+						{{pass}}
+                    </div>
+                </div>				
+				
+				<div id="trading_in" class="form-group">
+                    <label class="col-sm-3 control-label">Trading in</label>
+                    <div class="col-sm-9">
+                        <div style="margin-top:6px">{{=form.custom.widget.trading_in}}</div>
+
+						{{if form.errors['trading_in']:}}
+							<div class="alert alert-warning">{{=form.errors['trading_in']}}</div>
+						{{pass}}
+                    </div>
+                </div>
+				
+				<div id="describe_trade_in" class="form-group">
+                    <label class="col-sm-3 control-label">Trading in description</label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.describe_trade_in}}
+
+						{{if form.errors['describe_trade_in']:}}
+							<div class="alert alert-warning">{{=form.errors['describe_trade_in']}}</div>
+						{{pass}}
+                    </div>
+                </div>
+				
+				<script>
+					//functions
+					function funding_souce_additional_questions(that){
+						if ($(that).val() != "Paying in full") {
+							$("#expected_down_payment").slideDown();
+						}
+						else {
+							$("#auction_request_expected_down_payment").val('');
+							$("#expected_down_payment").hide();
+						}
+						if ($(that).val() == "Taking a loan") {
+							$("#financing").slideDown();
+						}
+						else {
+							$("#financing").hide();
+						}						
+						if ($(that).val() == "Taking a lease") {
+							$("#lease_term").slideDown();
+							$("#lease_mileage").slideDown();
+						}
+						else {
+							$("#lease_term").hide();
+							$("#lease_mileage").hide();
+						}
+					}
+					function trade_in_description_box(that){
+						if ($(that).is(":checked") ) {
+							$("#describe_trade_in").slideDown();
+						}
+						else {
+							$("#auction_request_describe_trade_in").val(''); //the actual input
+							$("#describe_trade_in").hide(); //the parent div
+						}
+					}
+					//events
+					$("#auction_request_funding_source").change(function(){
+						funding_souce_additional_questions(this);
+					});
+					$("#auction_request_trading_in").change(function(){
+						trade_in_description_box(this);
+					});
+					//initialize
+					funding_souce_additional_questions("#auction_request_funding_source");
+					trade_in_description_box("#auction_request_trading_in");
+				</script>
+				
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10 ">
                         {{=form.custom.submit}}
