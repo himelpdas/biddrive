@@ -105,6 +105,33 @@ def style_photos():
 		photos.append("http://placehold.it/815x543&text=Image%20Unavailable")
 	return dict(photos=photos)
 	
+def dealer_radius_map(): #CACHE CACHE CACHE!!
+	zipcode = request.args(2)
+	radius = request.args[1]
+	make = request.args[0]
+	error_img = "http://placehold.it/600x400&text=%s"
+	urls = [error_img%"Error loading map."]
+	dealers = []
+	if not zipcode:
+		urls=[error_img%"Enter a zip code."]
+	elif int(radius) in [10, 25, 50, 85, 130, 185, 250]: #validate
+		if not IS_MATCH('^\d{5}(-\d{4})?$')(zipcode)[1]: 
+			urls=[error_img%"Wrong zip code."]
+			zip_info = db(db.zipgeo.zip_code == zipcode).select().first()
+			if zip_info:
+				urls=[]
+				dealers = db(db.dealership_info.id>0).select()
+				dealers = dealers.exclude(lambda row: int(radius) >= calcDist(zip_info.latitude, zip_info.longitude, row.latitude, row.longitude) )#remove requests not in range
+				dmap = DecoratedMap()
+				dmap.add_marker(AddressMarker(zipcode,label='0',color="green"))
+				for counter, each_dealer in enumerate(dealers):
+					dmap.add_marker(AddressMarker('%s,%s,%s,%s'%(each_dealer.address_line_1, each_dealer.city, each_dealer.state, each_dealer.zip_code),label=str(counter+1)))
+				urls.append(dmap.generate_url().replace('400x400', '600x400'))
+		else:
+			urls=[error_img%"Not a zip code."]
+
+	return dict(urls=urls, dealer_count=len(dealers))
+	
 #auth requires dealer or buyer or admin
 @auth.requires(request.args(0))
 @auth.requires_login()

@@ -161,6 +161,24 @@ db.define_table('auction_request',
 		writable =False,
 		#compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], 
 	), #FIXED WITH required=True #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS
+	Field('wish_list',
+		requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
+	),	
+	Field('FICO_credit_score',
+		requires = IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '<620', "I don't know"]), multiple=False, zero=None)
+	),
+	Field('funding_source',
+		requires = IS_IN_SET(sorted(['Taking a loan', 'Leasing', 'Paying in full']), multiple=False, zero=None)
+	),	
+	Field('financing',
+		requires = IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (your bank, credit union, etc.)']), multiple=False, zero=None)
+	),
+	Field('expected_down_payment', 'integer',
+		requires = IS_INT_IN_RANGE(0, 99999)
+	),
+	Field('lease_mileage', 
+		requires = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero=None)
+	),
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),

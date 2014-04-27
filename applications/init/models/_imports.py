@@ -32,6 +32,11 @@ APP_NAME="BidDrive(Alpha)"
 EDMUNDS_KEY ="qmnpjbhe9p5g5cw3yv2vaehv"
 EDMUNDS_SECRET="zA6vs797nVgqGaSK58QJe2KW"
 AUCTION_DAYS_EXPIRE = AUCTION_FAVS_EXPIRE = 3
+GMAPS_KEY = "AIzaSyBAnNycjSMSADu5n426xjPuT9jWWhri8xI"
 
 #regex
 REGEX_TELEPHONE = '^1?((-)\d{3}-?|\(\d{3}\))\d{3}-?\d{4}$'
+
+if request.function == "dealer_radius_map":
+	from motionless import DecoratedMap, AddressMarker #python google static maps generator
+	#gpolyencode.py included as well
