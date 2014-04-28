@@ -1,5 +1,5 @@
 def index():
-	return dict()
+	redirect(URL('my_auctions.html'))
 
 @auth.requires_membership('dealers')
 def auction_requests():
@@ -205,7 +205,7 @@ def auction_requests():
 	plural = ''
 	if not number or number > 1:
 		plural = 's'
-	response.subtitle = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
+	response.message = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 	
@@ -226,11 +226,11 @@ def pre_auction():
 	if db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select(): #make sure dealer did not make an offer already... if so redirect him to auction
 		redirect(URL('auction',args=[auction_request_id]))
 	#if not request.args:  #make decorator http://bit.ly/1i2wbHz
-	#	session.flash='No request ID!'
+	#	session.message='No request ID!'
 	#	redirect(URL('my_auctions.html'))
 	auction_request_rows = db(db.auction_request.id == auction_request_id).select() #ALWAYS verify existence of vars/args in database.
 	if not auction_request_rows:
-		session.flash='Invalid request ID!'
+		session.message='@Invalid request ID!'
 		redirect(URL('my_auctions.html'))
 	
 	db.auction_request_offer.auction_request.default = auction_request_id
@@ -318,9 +318,9 @@ def pre_auction():
 	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
 	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
-		session.flash = 'success!'
+		session.message = '$Your offer was submitted!'
 		redirect(
-			URL('auction.html', args=[auction_request_id])
+			URL('auction', args=[auction_request_id])
 		)
 	
 	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
@@ -343,41 +343,91 @@ def auction():
 	auction_request_id = request.args[0]
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
-		session.flash="Invalid request ID!"
-		redirect(URL('default','index.html'))
+		session.message="!Invalid auction ID!"
+		redirect(URL('my_auctions'))
 	
 	trim_data = json.loads(auction_request.trim_data)
-	auction_request_expired = auction_request.expires < request.now
 
-	#create offer form
+	auction_request_expired = auction_request.expires < request.now
+	auction_ended_offer_ends = auction_request.expires + datetime.timedelta(days = 1)
+	auction_ended_offer_expired = auction_ended_offer_ends < request.now
+
 	is_owner = auction_request.owner_id == auth.user.id #TODO add restriction that prevents dealers from creating an auction
-	my_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
+	is_dealer_with_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
+	is_authorized_dealer = auth.has_membership(role='request_by_make_authorized_dealers_#%s'%auction_request_id) #will need authorized dealers but may have to move redirect function that controls this
 	
 	is_participant = False
-	if my_offer:
-		is_participant = True
+	is_authorized_dealer_with_offer = False
 	if is_owner:
 		is_participant = True
+	if is_dealer_with_offer and is_authorized_dealer:
+		is_authorized_dealer_with_offer = True
+		is_participant = True
 	if not is_participant: #somehow he never made an offer
-		session.flash="You are not a part of this auction!"
-		redirect(URL('default','index.html'))
+		session.message="@You are not a part of this auction!"
+		redirect(URL('default','index'))
 	
-	session.last_auction_visited = auction_request_id #for instant access to last auction visited when portal button pressed
+	#session.last_auction_visited = auction_request_id #for instant access to last auction visited when portal button pressed
+	#tested above if this user is worth using resources for, now do all the required queries for the logic below
+	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
+	last_favorite_choice = db(db.auction_request_favorite_choice.auction_request == auction_request_id).select().last()  #no need for further testing because of previous if/else
+	winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select().last()
 	
 	#only allow form functionality to show for dealers as long as auction is active
-	bid_form = None
-	authorized_dealer = auth.has_membership(role='request_by_make_authorized_dealers_#%s'%auction_request_id)
-	if authorized_dealer and not auction_request_expired: 
-		if authorized_dealer:
-			my_auction_request_offer_id = my_offer.id
+	bid_form = my_message_form_dealer = my_auction_request_offer_id = None
+	if not auction_request_expired: #do not allow any insertions for expired or winning
+		if is_owner:
+			new_favorite_choice = int(request.vars['favorite'] or 0)
+			if not True in map(lambda each_offer: new_favorite_choice == each_offer.auction_request_offer['id'], auction_request_offers): #make sure that value in the vars is validated 
+				new_favorite_choice = False
+			if new_favorite_choice:
+				if last_favorite_choice and last_favorite_choice.not_until > request.now: #make sure is real favorite, make sure buyer can't constantly change favorite choice, make sure new favorite choice = old one, make sure auction hasn't expired, make sure the favorite is not an awaiting bid
+					session.message = "!Dealers not alerted! You can't change your favorite until %s."%human(last_favorite_choice.not_until - request.now, precision=2, past_tense='{}', future_tense='{}')
+				else:
+					last_favorite_choice = db.auction_request_favorite_choice.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer=new_favorite_choice) #no need for further testing because of previous if/else
+					session.send_alert = True
+					session.message = "$All dealers will be alerted about your new favorite!"
+				redirect(URL(args=request.args)) #get rid of vars incase of refresh
+				#awating bid test below in each_offer
+		#create offer form
+		if is_authorized_dealer_with_offer:
+			#bid form
+			my_auction_request_offer_id = is_dealer_with_offer.id
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
 			db.auction_request_offer_bid.auction_request_offer.default = my_auction_request_offer_id
 			db.auction_request_offer_bid.owner_id.default = auth.user_id
-
 			bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
 
-		if bid_form.process(hideerror = False).accepted:
-			response.flash = 'Your new bid is %s!'%bid_form.vars.bid
+			#message form
+			db.auction_request_offer_message.auction_request_offer.default = my_auction_request_offer_id #make sure the message form has the dealers offer_id for submission
+			db.auction_request_offer_message.owner_id.default = auth.user.id
+			my_message_form_dealer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
+			
+			#dealer bid process
+			if bid_form.process(hideerror = True).accepted:
+				response.message = '$Your new bid is $%s!'%bid_form.vars.bid #redirect not needed since we're dealing with POST
+			elif bid_form.errors:
+				response.message = '!Bid not submitted! Please check for mistakes in form.'
+			
+			#dealer message process
+			if my_message_form_dealer.process().accepted:
+				response.message = '$Your message was submitted to the buyer.'
+			elif my_message_form_dealer.errors:
+				response.message = '!Your message had errors. Please fix!'
+	else: #auction_request_expired #MOVE THIS TO EACH_OFFER BELOW
+		#winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select() #check for winning offer
+		#make offer expires timer
+		if is_owner: #only owner can submit winner
+			winning_choice=int(request.vars['winner'] or 0)
+			if not True in map(lambda each_offer: winning_choice == each_offer.auction_request_offer['id'], auction_request_offers):#validate winning choice, make sure it's an offer in the auction request
+				winning_choice = False
+			#make sure non-bidder cant be a winner (done in each_offer below)
+			if winning_choice and not winning_offer and not auction_ended_offer_expired: #make sure winning is validated and there is no winning offer
+				winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice)#insert new winner
+				#redirect
+				#send email
+				#response.message2 = "$You have selected a winner"
+				#if winning_offer set offer expires timer
 
 	#auction request info
 	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
@@ -390,15 +440,17 @@ def auction():
 		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
 		colors.append([each_name, color_hex])
 	
+	##################
 	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
-	lowest_offer = "No bids!"
+	lowest_price = "No bids!"
 	if lowest_offer_row:
-		lowest_offer = '$%s'%int(lowest_offer_row.bid)
-	
-	#auction request offers (rows)
-	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
+		lowest_price = '$%s'%int(lowest_offer_row.bid)
+	##auction request offers (rows) #FIX - somehow duplicates can appear you must fix. must have to do with similar id numbers# FIXED used ordered dict for auction_request_offers_info instead of list
+	##auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 
 	#auction requests info
+	auction_ended_offer_expires = (auction_ended_offer_ends-auction_request.expires).total_seconds() if not auction_ended_offer_expired and not winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
+	bidding_ended = auction_request_expired
 	auction_request_info = dict(
 		id = str(auction_request.id),
 		first_name =auction_request_user.first_name,
@@ -413,32 +465,53 @@ def auction():
 		state = auction_request_area.state_abbreviation,
 		zip_code =  auction_request_area.zip_code,
 		ends_on = str(auction_request.expires),
-		ends_in_seconds = (auction_request.expires - request.now).total_seconds(),
-		ends_in_human = human(auction_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}'),
+		ends_in_seconds = (auction_request.expires - request.now).total_seconds() if not bidding_ended else 0, #if bidding ended you'll end up with negative number will fuck up auction page
+		bidding_ended = bidding_ended,
+		auction_completed = not auction_ended_offer_expires if bidding_ended else False, #auction is finito if buyer chose a winner or offer time ran out
+		auction_ended_offer_expires = auction_ended_offer_expires,
+		#ends_in_human = human(auction_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}'),
 		number_of_bids = auction_request.number_of_bids(),
 		number_of_dealers = len(auction_request_offers),
-		best_price = lowest_offer,
+		lowest_price = lowest_price,
+		favorite_price = "No favorite!",
 	)
 
+	#AUCTION ENDING messages	
+	if auction_request_info['auction_completed']:
+		if not winning_offer:
+			no_winner_msg = "@Auction is over. %s did not pick a winner."
+			if is_owner:
+				response.message3 = no_winner_msg%'You'
+			if is_dealer_with_offer:
+				response.message3 = no_winner_msg%'Buyer'
+		else:
+			if is_owner:
+				response.message3 = "$You picked a winner! Click here be redirected to winning page"
+	elif auction_request_info['bidding_ended']:
+		if is_owner:
+			response.message3 = "Bidding has ended! Please select a winner before time runs out, or dealers may not honor %s's price guarantee!"%APP_NAME
+		if is_dealer_with_offer:
+			response.message3 = "Bidding has ended! The buyer will choose a winner within 24 hours. The winning dealer will be alerted."
+	
 	#in memory sorting	
 	sortby = request.vars['sortby']
 	sortlist = []
 	
 	#Price
-	pricechoices = ["price-up", "price-down"]; sortlist.extend(pricechoices)
+	pricechoices = ["bid_price-up", "bid_price-down"]; sortlist.extend(pricechoices)
 	if sortby in pricechoices:
 		reverse = False
-		if sortby == "price-down":
+		if sortby == "bid_price-down":
 			reverse = True
-		auction_request_offers = auction_request_offers.sort(lambda row: row.latest_bid(), reverse=reverse)
+		auction_request_offers = auction_request_offers.sort(lambda row: row.auction_request_offer.latest_bid(), reverse=reverse)
 		
 	#MSRP
-	msrpchoices = ["retail-price-up", "retail-price-down"]; sortlist.extend(msrpchoices)
+	msrpchoices = ["retail_price-up", "retail_price-down"]; sortlist.extend(msrpchoices)
 	if sortby in msrpchoices:
 		reverse = False
-		if sortby == "retail-price-down":
+		if sortby == "retail_price-down":
 			reverse = True
-		auction_request_offers = auction_request_offers.sort(lambda row: row.MSRP(), reverse=reverse)
+		auction_request_offers = auction_request_offers.sort(lambda row: row.auction_request_offer.MSRP(), reverse=reverse)
 		
 	#Discount (%off)
 	discountchoices = ["discount-up", "discount-down"]; sortlist.extend(discountchoices)
@@ -447,7 +520,7 @@ def auction():
 		if sortby == "discount-down":
 			reverse = True
 		def msrp_discount(row):
-			latest_bid = row.latest_bid()
+			latest_bid = row.auction_request_offer.latest_bid()
 			if latest_bid:
 				return latest_bid.MSRP_discount()
 			return 0
@@ -472,7 +545,7 @@ def auction():
 	return dict(auction_request_info = auction_request_info['trim_data'])
 	"""
 	
-	auction_request_offers_info = []
+	auction_request_offers_info = OD()
 	#trim_data = json.loads(auction_request_info['trim_data'])
 	for each_offer in auction_request_offers:
 		#options
@@ -492,27 +565,100 @@ def auction():
 			package_options.append(__get_option_from_ID(trim_data, 'Package', each_option))
 		for each_option in each_offer.auction_request_offer.fees_options:
 			fees_options.append(__get_option_from_ID(trim_data, 'Additional Fees', each_option))
-			
+
 		#pricing stuff
 		bids = db((db.auction_request_offer_bid.owner_id == each_offer.auction_request_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
 		number_of_bids = len(bids)
 		msrp = each_offer.auction_request_offer.MSRP()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
-		last_bid_price = last_bid.bid if last_bid else None
+		last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
 		
+		#stuff to do if this offer is owned by viewing dealer
+		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
+		if is_my_offer and is_awaiting_offer:
+			response.message2 = "!Please make a bid!"
+	
 		#dealer stuff
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
 		this_dealer_distance = distance_to_auction_request(each_offer)
 		
 		#color stuff
 		this_color = color_names[each_offer.auction_request_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
-		
-		#message stuff
-		
+			
+		offer_id = each_offer.auction_request_offer.id
+		#message stuff buyer
+		my_message_form_buyer = ''
+		if is_owner:
+			db.auction_request_offer_message.auction_request_offer.default = offer_id #my_auction_request_offer_id meant for the dealer viewing this page, offer_id means the one in this loop 
+			db.auction_request_offer_message.owner_id.default = auth.user.id
+			my_message_form_buyer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
+			if my_message_form_buyer.process(formname="buyer_message_form_%s"%offer_id).accepted: #The hidden field called "_formname" is generated by web2py as a name for the form, but the name can be overridden. This field is necessary to allow pages that contain and process multiple forms. web2py distinguishes the different submitted forms by their names. http://goo.gl/gTct7C
+				response.message = '$Your message was submitted to the dealer.'
+			elif my_message_form_buyer.errors:
+				response.message = '!Your message had errors. Please fix!'
+				
+		#message stuff dealer, keep below SQLFORM so that new messages show on submission
+		offer_messages = db(db.auction_request_offer_message.auction_request_offer == offer_id).select()
+		for each_message in offer_messages:
+			if each_message.owner_id == auction_request.owner_id:
+				each_message.is_auction_requester = True
+			else: each_message.is_auction_requester = False
+
+		#favorite stuff
+		is_favorite = int(last_favorite_choice.auction_request_offer if last_favorite_choice else 0) == int(offer_id) #see if the fave is this offer
+		if is_favorite: #set a favorite in auction_request_info
+			if not last_bid_price: #see if it's an awaiting bid.
+				db(db.auction_request_favorite_choice.id == last_favorite_choice.id).delete() #it's an awaiting bid so just delete the favorite. looks inefficient but it's better than querying for the favorite id's offer, why not just do it here to prevent dry.
+				if is_owner:
+					session.message = "!You cannot choose an awaiting bid as your favorite." #and change the message for the owner.
+					redirect(URL(args=request.args)) #get rid of vars
+				is_favorite = last_favorite_choice = False
+			else:
+				auction_request_info['favorite_price'] = '$%s'%last_bid_price #there is a favorite price so set it to the info row
+	
+		if last_favorite_choice and session.send_alert:
+			your = each_offer.auth_user
+			aid = auction_request_info['id']
+			scheduler.queue_task(
+				send_alert_task,
+				pargs=['email', your.email, EMAIL_NEW_FAVORITE_OFFER_MESSAGE%(your.first_name.capitalize(), aid, 'you' if is_favorite else 'another dealer'), EMAIL_NEW_FAVORITE_OFFER_SUBJECT%(aid, your.first_name.capitalize())],
+				#pvars={},
+				#repeats = 10, # run 10 times
+				period = 5, # run 5s after previous
+				timeout = 30, # should take less than 30 seconds
+			)
+				
+		#winning stuff
+		is_winning_offer = int(winning_offer.auction_request_offer if winning_offer else 0) == int(offer_id)
+		if is_winning_offer:
+			if not last_bid_price: #see if it's an awaiting bid.
+				db(db.auction_request_winning_offer.id == winning_offer.id).delete() #it's an awaiting bid so just delete the winner. looks inefficient but it's better than querying for the favorite id's offer, why not just do it here to prevent dry.
+				if is_owner:
+					response.message3 = "!Awaiting bids cannot be chosen as a winner." #and change the message for the owner.
+				is_winning_offer = winning_offer = False #falsify everything
+			else:
+				auction_request_info['favorite_price'] = '$%s'%last_bid_price #DRY?
+
+		#response messaging stuff
+		if auction_request_info['auction_completed'] and not is_owner: #if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer
+			if is_winning_offer:
+				response.message3 = "$You are the winner! Click here be redirected to winning page."
+			elif winning_offer: #make sure that there is a winner before making the following claim
+				response.message3 = "@Buyer picked a winner, but you did not win. Sorry :-("
+
 		each_offer_dict = {
-			'id' : each_offer.auction_request_offer.id,
+			'id' : offer_id,
+			'is_winning_offer' :is_winning_offer,
+			'is_my_offer': is_my_offer,
+			'is_favorite': is_favorite,
+			'offer_messages' : offer_messages,
+			'my_message_form_dealer': my_message_form_dealer if my_auction_request_offer_id == offer_id else '', #add message form to this bid cell, only one needed hence why logic is outside this loop
+			'my_message_form_buyer': my_message_form_buyer,
 			'dealer_first_name':each_offer.auth_user.first_name,
+			'dealer_area':'%s, %s'%(each_offer.dealership_info.city.capitalize(), each_offer.dealership_info.state),
 			'dealer_id' : each_offer.auction_request_offer.owner_id,
+			'show_winner_btn': True if is_owner and not auction_request_info['auction_completed'] and auction_request_info['bidding_ended'] and is_not_awaiting_offer else False,
+			'is_not_awaiting_offer':is_not_awaiting_offer,
 			'last_bid_price' : last_bid_price,
 			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,
@@ -523,32 +669,47 @@ def auction():
 			'mechanical_options' : mechanical_options,
 			'package_options' : package_options,
 			'fees_options' : fees_options,
-			'exterior_image' : each_offer.auction_request_offer.exterior_image,
-			'interior_image' : each_offer.auction_request_offer.interior_image,
-			'front_image' : each_offer.auction_request_offer.front_image,
-			'rear_image' : each_offer.auction_request_offer.rear_image,
-			'tire_image' : each_offer.auction_request_offer.tire_image,
-			'dashboard_image' : each_offer.auction_request_offer.dashboard_image,
-			'passenger_image' : each_offer.auction_request_offer.passenger_image,
-			'trunk_image' : each_offer.auction_request_offer.trunk_image,
-			'underhood_image' : each_offer.auction_request_offer.underhood_image,
-			'roof_image' : each_offer.auction_request_offer.roof_image,
-			'other_image' : each_offer.auction_request_offer.other_image,
+			#'exterior_image' : each_offer.auction_request_offer.exterior_image,
+			#'interior_image' : each_offer.auction_request_offer.interior_image,
+			'exterior_images' : each_offer.auction_request_offer.exterior_image_compressed,
+			'interior_images' : each_offer.auction_request_offer.interior_image_compressed,
+			#'front_image' : each_offer.auction_request_offer.front_image,
+			'front_images' : each_offer.auction_request_offer.front_image_compressed,
+			#'rear_image' : each_offer.auction_request_offer.rear_image,
+			'rear_images' : each_offer.auction_request_offer.rear_image_compressed,
+			#'tire_image' : each_offer.auction_request_offer.tire_image,
+			'tire_images' : each_offer.auction_request_offer.tire_image_compressed,
+			#'dashboard_image' : each_offer.auction_request_offer.dashboard_image,
+			'dashboard_images' : each_offer.auction_request_offer.dashboard_image_compressed,
+			#'passenger_image' : each_offer.auction_request_offer.passenger_image,
+			'passenger_images' : each_offer.auction_request_offer.passenger_image_compressed,
+			#'trunk_image' : each_offer.auction_request_offer.trunk_image,
+			'trunk_images' : each_offer.auction_request_offer.trunk_image_compressed,
+			#'underhood_image' : each_offer.auction_request_offer.underhood_image,
+			'underhood_images' : each_offer.auction_request_offer.underhood_image_compressed,
+			#'roof_image' : each_offer.auction_request_offer.roof_image,
+			'roof_images' : each_offer.auction_request_offer.roof_image_compressed,
+			#'other_image' : each_offer.auction_request_offer.other_image,
+			'other_images' : each_offer.auction_request_offer.other_image_compressed,
 			'msrp': '$%s'%msrp,
 			'offer_distance_to_auction_request': '%0.2f'%this_dealer_distance,
 			'msrp_discount_percent': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
 			'msrp_discount_dollars':'$%s'%(int(msrp) - int(msrp if not last_bid_price else last_bid_price),),
 		}
-		auction_request_offers_info.append(each_offer_dict)
-
+		#auction_request_offers_info.append(each_offer_dict)
+		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction
+	
+	auction_request_offers_info = auction_request_offers_info.values() #convert back to list to be compatible with current view
+	
+	session.send_alert = False #make sure send alert
+	
 	#title stuff
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired)
+	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_dealer = is_dealer_with_offer, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired, winning_offer=winning_offer)
 	
 @auth.requires_membership('dealers')
 def my_auctions():
-
 	def paginate(page, show): #adapted from web2py book
 		"""	{{#in view}}
 			{{for i,row in enumerate(rows):}}

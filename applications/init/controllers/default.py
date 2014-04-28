@@ -26,10 +26,11 @@ def index():
 		year = request.args[0]
 		
 	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
-	
+
+@auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
 def request_by_make():
 	if not request.args:
-		session.flash='Invalid request!'
+		session.message='Invalid request!'
 		redirect(URL('index.html'))
 		
 	year = request.args[0] 
@@ -43,7 +44,7 @@ def request_by_make():
 	model_styles = getStylesByMakeModelYear(make, model, year)
 	
 	if not model_styles:
-		session.flash='Invalid Year!'
+		session.message='Invalid Year!'
 		redirect(URL('index.html'))
 	
 	db.auction_request.temp_id.default=session.guest_temp_id=repr(uuid.uuid4()) #needed to save non logged in users form submission
@@ -64,6 +65,7 @@ def request_by_make():
 
 	db.auction_request.color_preference.requires = [IS_IN_SET(style_color_codes, multiple=True, zero=None), IS_NOT_EMPTY(error_message='pick at least one color')]
 	db.auction_request.color_preference.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	#db.auction_request.wish_list.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	form = SQLFORM(db.auction_request, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 
@@ -89,8 +91,8 @@ def request_by_make():
 	if form.process(onvalidation=computations, hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = ' Register or login to view it.'
 		if auth.user_id:
-			guest_msg='' #user is logged in no need for guest msg
-		session.flash = 'Auction submitted!%s' % guest_msg
+			guest_msg=' Dealers have been notified!' #user is logged in no need for guest msg
+		session.message = '$Auction submitted!%s' % guest_msg
 		auth.add_group('request_by_make_authorized_dealers_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
 			URL('default','pre_auction.html', args=form.vars.id) #http://goo.gl/twPSTK
@@ -121,24 +123,6 @@ def my_auctions(): #FIX GUEST AUCTIONS
 	my_auctions = db(db.auction_request.owner_id == auth.user_id).select()
 	response.title="My auctions"
 	return dict(guest_temp_id=session.guest_temp_id, my_auctions=my_auctions)
-	
-@auth.requires_login()
-def auction(): #make sure only allow one active auction per user
-	if not request.args:  #make decorator http://bit.ly/1i2wbHz
-		session.flash='No request ID!'
-		redirect(URL('my_auctions.html'))
-	
-	auction_request_id = request.args[0]
-	
-	auction_request = db(db.auction_request.id == auction_request_id).select().first()
-	if not auction_request:
-		session.flash="Invalid request ID!"
-		redirect(URL('my_auctions.html'))
-	
-	response.title="Auction"
-	response.subtitle="for %s's new %s %s %s" %  (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	
-	return dict(auction_request=auction_request)
 
 def how_it_works():
 	return dict()
@@ -154,7 +138,7 @@ def dealership_form():
 	
 	if form.process().accepted:
 		#email alert to admin
-		response.flash = 'Form accepted. Please wait a few days for our response!'
+		response.message = '$Form accepted. Please wait a few days for our response!'
 	
 	response.title = 'Become our partner!'
 	response.subtitle = 'Sell your cars on our website'
@@ -162,7 +146,16 @@ def dealership_form():
 	
 def faq():
 	return dict()
-	
+
+@auth.requires_login()
+def after_login_portal():
+	session.message = "!Successfully logged in. Welcome %s!"%auth.user.first_name.capitalize()
+	if AUTH_DEALER:
+		redirect(URL('dealer', 'auction_requests'))
+	if AUTH_ADMIN:
+		redirect(URL('admin', 'dealership_requests'))
+	redirect(URL('index'))
+
 def user():
 	"""
 	exposes:

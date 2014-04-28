@@ -142,7 +142,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
     background-color: transparent;
 }
 .navbar.navbar-homepage {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.85);
     border-bottom: 1px solid #252525;
 }
 .navbar.navbar-homepage .container {

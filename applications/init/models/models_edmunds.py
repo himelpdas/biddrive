@@ -6,22 +6,27 @@ if not db(db.auth_group.role == "dealers").select().first(): #cache!!
 if not db(db.auth_group.role == "admins").select().first(): #cache!!
 	auth.add_group('admins', 'has access to various non-public aspects of the database')
 	
+AUTH_ADMIN = False
+AUTH_DEALER = False
 if auth.user_id:
-	if auth.has_membership(user_id = auth.user_id, role = "admins"):
+	AUTH_ADMIN = auth.has_membership(user_id = auth.user_id, role = "admins")
+	if AUTH_ADMIN:
 		response.menu.append(
 			(T('Admin Portal'), False, URL('admin', 'dealership_requests.html'), [
 				(T('Dealership Requests'), False, URL('admin', 'dealership_requests.html'), []),
 				(T('User Management'), False, URL('admin', 'user_management.html'), []),
 			]),
 		)
-	if auth.has_membership(user_id = auth.user_id, role = "dealers"):
+
+	AUTH_DEALER = auth.has_membership(user_id = auth.user_id, role = "dealers")
+	if AUTH_DEALER:
 		response.menu.append(
 			(T('Dealer Portal'), False, URL('dealer', 'auction_requests') if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]), [
 				(T('Alerts'), False, URL('dealer', 'reminders'), []),
 				(T('Auction Requests'), False, URL('dealer', 'auction_requests'), []),
 				(T('Billing'), False, URL('dealer', 'billing'), []),
-				(T('Dealer Info'), False, URL('dealer', 'dealer_info'), []),
-				(T('Messages'), False, URL('dealer', 'messages'), []),
+				(T('Dealership Info'), False, URL('dealer', 'dealer_info'), []),
+				#(T('Messages'), False, URL('dealer', 'messages'), []),
 				(T('My Auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
@@ -156,6 +161,24 @@ db.define_table('auction_request',
 		writable =False,
 		#compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], 
 	), #FIXED WITH required=True #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS
+	Field('wish_list',
+		requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
+	),	
+	Field('FICO_credit_score',
+		requires = IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '<620', "I don't know"]), multiple=False, zero=None)
+	),
+	Field('funding_source',
+		requires = IS_IN_SET(sorted(['Taking a loan', 'Leasing', 'Paying in full']), multiple=False, zero=None)
+	),	
+	Field('financing',
+		requires = IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (your bank, credit union, etc.)']), multiple=False, zero=None)
+	),
+	Field('expected_down_payment', 'integer',
+		requires = IS_INT_IN_RANGE(0, 99999)
+	),
+	Field('lease_mileage', 
+		requires = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero=None)
+	),
 	Field('zip_code', 
 		requires=[
 			IS_NOT_EMPTY(),
@@ -196,6 +219,9 @@ db.define_table('auction_request',
 	Field.Method('lowest_offer', #of all the bids find the lowest
 		lambda row: db(db.auction_request_offer_bid.auction_request == row.auction_request.id).select(orderby = ~db.auction_request_offer_bid.bid).last()
 	),
+	#Field.Method('favorite_offer', #favorite offer fort this auction request
+	#	lambda row: db((db.auction_request_favorite_choice.auction_request == row.auction_request.id)&(db.auction_request_favorite_choice.auction_request_offer == db.auction_request_offer_bid.auction_request_offer)).select().last()
+	#),
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer_bid.auction_request  ==row.auction_request.id).select())
 	),
@@ -213,6 +239,16 @@ db.define_table('auction_request',
 		writable=False,
 		default = 5, #raise limit when purchase made
 """	
+from smartthumb import * #http://goo.gl/tiSyz
+import os
+def resize_offer_image_upload(image, x=1080, y=720, center=True):
+	os_slash = '\\' if os.name == 'nt' else '/'
+	return SMARTHUMB(
+		open(request.folder + '%suploads%s%s'%(os_slash,os_slash,image), 'rb' ), #MAKE SURE BINARY MODE http://goo.gl/Z36WjY #get the file that was just uploaded# make sure test for windows as windows use / vs \
+		uuid.uuid4(),
+		(x, y), #1080,720
+		center,
+	)
 db.define_table('auction_request_offer',
 	Field('auction_request', db.auction_request,
 		readable=False,
@@ -227,15 +263,15 @@ db.define_table('auction_request_offer',
 	),
 	Field('interior_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('exterior_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('mechanical_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('package_options', 'list:string',
 		#requires is_in_set like trim above
@@ -243,47 +279,160 @@ db.define_table('auction_request_offer',
 	),
 	Field('fees_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('summary', 'text',
 		requires=IS_NOT_EMPTY(),
 	),
+	###################IMGS#####################
 	Field('exterior_image', 'upload',
-		requires=[IS_NOT_EMPTY(), IS_IMAGE()] #change message
+		requires=[IS_NOT_EMPTY(), 
+			IS_IMAGE( #http://goo.gl/r3UizI
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		]
 	), 
+    Field('exterior_image_compressed', 'list:string', compute = 
+		#required = True, #or fails will be silent!! DEBUG IN SHELL
+        lambda row: 
+            [resize_offer_image_upload(row['exterior_image'],x=500,y=400),resize_offer_image_upload(row['exterior_image'],x=1080,y=720)] #[small, big] NOTE IF ROW.FIELD DOESN'T WORK, TRY ROW.TABLE.FIELD!
+    ),
 	Field('interior_image', 'upload',
-		requires=[IS_NOT_EMPTY(), IS_IMAGE()]
+		requires=[IS_NOT_EMPTY(), 
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		]
 	), 
+    Field('interior_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row['interior_image'],x=500,y=400),resize_offer_image_upload(row['interior_image'],x=1080,y=720)] #[small, big]
+    ),
 	#ext
 	Field('front_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
-	), 
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)
+	),
+    Field('front_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['front_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['front_image'],x=1080,y=720)] #[small, big]
+    ),
 	Field('rear_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)
 	), 
+    Field('rear_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['rear_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['rear_image'],x=1080,y=720)] #[small, big]
+    ),
 	Field('tire_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('tire_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['tire_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['tire_image'],x=1080,y=720)] #[small, big]
+    ),
 	#int
 	Field('dashboard_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('dashboard_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['dashboard_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['dashboard_image'],x=1080,y=720)] #[small, big]
+    ),
 	Field('passenger_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('passenger_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['passenger_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['passenger_image'],x=1080,y=720)] #[small, big]
+    ),
 	Field('trunk_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('trunk_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['trunk_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['trunk_image'],x=1080,y=720)] #[small, big]
+    ),
 	#misc
 	Field('underhood_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('underhood_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['underhood_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['underhood_image'],x=1080,y=720)] #[small, big]
+    ),
 	Field('roof_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	), 
+    Field('roof_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['roof_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['roof_image'],x=1080,y=720)] #[small, big]
+    ),
 	Field('other_image', 'upload',
-		requires=IS_EMPTY_OR(IS_IMAGE())
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(1080, 720), #min HD
+				error_message='Need an image of at least 1080x720 pixels!', 
+			)
+		)	
 	),
+    Field('other_image_compressed', 'list:string', compute = 
+        lambda row: 
+            [resize_offer_image_upload(row.auction_request_offer['other_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['other_image'],x=1080,y=720)] #[small, big]
+    ),
+	###################IMGS#####################
 	Field.Method('latest_bid', #this offers latest bid
 		lambda row: db((db.auction_request_offer_bid.auction_request == row.auction_request_offer.auction_request) & (row.auction_request_offer.id == db.auction_request_offer_bid.auction_request_offer)).select().first() #get the bid that has this auction request, and auction request offer
 	),#continue
@@ -323,10 +472,10 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 		writable=False,
 	),
 	Field('bid', 'integer',
-		requires = IS_NOT_EMPTY(),
+		requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(999, 1000000)]
 	),
 	Field.Method('MSRP_discount',
-		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,
+		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,
 	),
 	Field('created_on', 'datetime', 
 		default=request.now,
@@ -361,11 +510,78 @@ db.define_table('auction_request_offer_message',
 		readable = False,
 		writable = False,
 	),
-	Field('message',
+	Field('message', 'text',
 		required = True,
+		requires = IS_NOT_EMPTY(),
 	),
 	Field('created_on', 'datetime', 
 		default=request.now,
+		readable=False,
+		writable=False,
+	),
+	Field('changed_on', 'datetime', 
+		update=request.now,
+		readable=False,
+		writable=False,
+	),
+)
+
+db.define_table('auction_request_favorite_choice',
+	Field('auction_request_offer', 'reference auction_request_offer',
+		required = True,
+		readable = False,
+		writable = False,
+	),
+	Field('auction_request', 'reference auction_request',
+		required = True,
+		readable=False,
+		writable=False,
+	),
+	Field('owner_id', db.auth_user,
+		required = True,
+		readable = False,
+		writable = False,
+	),
+	Field('created_on', 'datetime', 
+		default=request.now,
+		readable=False,
+		writable=False,
+	),
+	Field('not_until', 'datetime', 
+		compute = lambda row: row.created_on + datetime.timedelta(hours=AUCTION_FAVS_EXPIRE),
+		readable=False,
+		writable=False,
+	),
+	Field('changed_on', 'datetime', 
+		update=request.now,
+		readable=False,
+		writable=False,
+	),
+)
+
+db.define_table('auction_request_winning_offer',
+	Field('auction_request_offer', 'reference auction_request_offer',
+		required = True,
+		readable = False,
+		writable = False,
+	),
+	Field('auction_request', 'reference auction_request',
+		required = True,
+		readable=False,
+		writable=False,
+	),
+	Field('owner_id', db.auth_user,
+		required = True,
+		readable = False,
+		writable = False,
+	),
+	Field('created_on', 'datetime', 
+		default=request.now,
+		readable=False,
+		writable=False,
+	),
+	Field('not_until', 'datetime', 
+		compute = lambda row: row.created_on + datetime.timedelta(hours=AUCTION_FAVS_EXPIRE),
 		readable=False,
 		writable=False,
 	),

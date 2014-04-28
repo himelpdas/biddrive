@@ -45,14 +45,22 @@ from gluon.tools import Auth, Crud, Service, PluginManager, prettydate
 auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
+#######CUSTOM FIELDS#######
+auth.settings.extra_fields['auth_user']= [
+  Field('address'),
+  Field('city'),
+  Field('zip'),
+  Field('phone')]
+###########################
+
 ## create all tables needed by auth if not custom tables
 auth.define_tables(username=False, signature=False)
 
 ## configure email
 mail = auth.settings.mailer
-mail.settings.server = 'logging' or 'smtp.gmail.com:587'
-mail.settings.sender = 'you@gmail.com'
-mail.settings.login = 'username:password'
+mail.settings.server = 'in-v3.mailjet.com:587' #some hosts block port 25 #'logging' or 'smtp.gmail.com:587'
+mail.settings.sender = 'noreply@biddrive.com' #'Your Name <you@gmail.com>' #http://goo.gl/FNosX9
+mail.settings.login = '7d01f433ff459980e1ab595decc7ba34:3fdf22c6fde649e46391c5a4e8bec77c' #'username:password'
 
 ## configure auth policy
 auth.settings.registration_requires_verification = False
@@ -82,4 +90,9 @@ use_janrain(auth, filename='private/janrain.key')
 #########################################################################
 
 ## after defining tables, uncomment below to enable auditing
-# auth.enable_record_versioning(db)
+
+auth.enable_record_versioning(db)
+
+#########################################################################
+## Add color changing symbol for global error message div in layout.html
+auth.messages.invalid_login = '!Invalid login'

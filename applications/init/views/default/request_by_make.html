@@ -1,36 +1,6 @@
 {{extend 'page_layout.html'}}
 {{"""}}ISSUESZAKI add a modal that asks if you are a new or returning user. for the new button redirect here {{=URL('user', args=['login'])}} and {{=URL('user', args=['register'])}} for the returning{{"""}}
 {{#=BEAUTIFY(response._vars)}}
-{{"""}}
-<!--
-
-		{{form.element('select', _name = 'trim_choices')['_class']+=' form-control'}}
-		{{form.element('select', _name = 'color_preference')['_class']+=' form-control'}}
-		{{form.element('input', _name = 'zip_code')['_class']+=' form-control'}}
-		{{form.element('select', _name = 'radius')['_class']+=' form-control'}}
-		{{form.element('input', _type = 'submit')['_class']=' btn btn-primary'}}
-		{{=form.custom.begin}}
-			Trim: <div>{{=form.custom.widget.trim_choices}}</div> {{#add your own ids and classes}}
-			{{if form.errors['trim_choices']:}}
-				<pre>{{=form.errors['trim_choices']}}</pre> {{#change to whatever element you like}}
-			{{pass}}
-			Colors: <div>{{=form.custom.widget.color_preference}}</div>
-			{{if form.errors['color_preference']:}}
-				<pre>{{=form.errors['color_preference']}}</pre>
-			{{pass}}
-			Zip Code: <div>{{=form.custom.widget.zip_code}}</div>
-			{{if form.errors['zip_code']:}}
-				<pre>{{=form.errors['zip_code']}}</pre>
-			{{pass}}
-			Radius: <div>{{=form.custom.widget.radius}}</div>
-			{{if form.errors['radius']:}}
-				<pre>{{=form.errors['radius']}}</pre>
-			{{pass}}
-			{{=form.custom.submit}}
-		{{=form.custom.end}}
-
--->
-{{"""}}
 
     <div class="row" style="background: rgba(0,0,0,.1); padding:10px; border-radius: 5px;">
         <div class="col-xs-5" id="style_photos">
@@ -44,30 +14,32 @@
         </div>
     </div>
 
-    <div class="row" style="margin-top: 50px">
+    <div class="row" style="margin-top: 25px">
         <div class="col-xs-7">
 
             {{ form.element("select", _name = "trim_choices")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "FICO_credit_score")["_class"] += " form-control" }}
             {{ form.element("select", _name = "color_preference")["_class"] += " form-control" }}
             {{ form.element("select", _name = "radius")["_class"] += " form-control" }}
             {{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
             {{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
-
+			
+			<h5 class="text-light">Describe your request:</h5>
             {{=form.custom.begin}} 
+						
                 <div class="form-group">
-                    <label for="inputEmail3" class="col-sm-3 control-label">Trim</label>
+                    <label class="col-sm-3 control-label">Trim</label>
                     <div class="col-sm-9">
-
                         {{=form.custom.widget.trim_choices}}
 
                         {{if form.errors['trim_choices']:}}
-                        	<small style="text-alert">{{=form.errors['trim_choices']}}</small>
+                        	<div class="alert alert-warning">{{=form.errors['trim_choices']}}</div>
                         {{pass}}
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin"></i> Colors</label>
+                    <label  class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin"></i> Colors</label>
                     <div class="col-sm-9">
                         {{=form.custom.widget.color_preference}}
 
@@ -75,10 +47,21 @@
 							<div class="alert alert-warning">{{=form.errors['color_preference']}}</div>
 						{{pass}}                            
                     </div>
+                </div>                
+				
+				<div class="form-group">
+                    <label  class="col-sm-3 control-label"> Wish list <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you desire in a car, so dealers can offer you the best match available."></i></label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.wish_list}}
+
+						{{if form.errors['wish_list']:}}
+							<div class="alert alert-warning">{{=form.errors['wish_list']}}</div>
+						{{pass}}                            
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-3 control-label">Zip Code</label>
+                    <label  class="col-sm-3 control-label">Zip Code</label>
                     <div class="col-sm-9">
                         <!--<input type="password" class="form-control" id="inputPassword3" placeholder="10010">-->
                         {{=form.custom.widget.zip_code}}
@@ -90,37 +73,54 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="inputEmail3" class="col-sm-3 control-label">Radius</label>
+                    <label class="col-sm-3 control-label">Radius</label>
                     <div class="col-sm-9">
                         {{=form.custom.widget.radius}}
 
 						{{if form.errors['radius']:}}
 							<div class="alert alert-warning">{{=form.errors['radius']}}</div>
 						{{pass}}
-
                     </div>
                 </div>
 
+			<h5 class="text-light">Describe yourself:</h5>
 
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">FICO credit score</label>
+                    <div class="col-sm-9">
+                        {{=form.custom.widget.FICO_credit_score}}
+
+						{{if form.errors['FICO_credit_score']:}}
+							<div class="alert alert-warning">{{=form.errors['FICO_credit_score']}}</div>
+						{{pass}}
+                    </div>
+                </div>
+			
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10 ">
                         {{=form.custom.submit}}
                     </div>
                 </div>
             {{=form.custom.end}}
-            
-
-
 
         </div>
 
         <div class="col-xs-5">
-        	<h5>Trim Specific Details <i id="stats_spinner" class="fa fa-spin"></i></h5>
-        	<div id="trim_stats"></div>
+			<div class="row-fluid">
+				<h5 class="text-light">Trim Specific Details: <i id="stats_spinner" class="fa fa-spin"></i></h5>
+				<div id="trim_stats"></div>
+			</div>
 
-        </div>
+			<div class="row-fluid">
+				<!--<div id="dealer_radius_map"><img src="http://placehold.it/500x400&text=loading map..." class="img-responsive"/></div>-->
+				<div id="dealer_radius_map">
+					<h5 class="pull-right">Input zip code and radius to reveal a map of dealers.</h5>
+				</div>
+			</div>
+
+        </div>        
+
     </div>
-
 
  <script type="text/javascript">
  	function load_color_preference(){
@@ -133,7 +133,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading colors: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_color" class="alert alert-danger"><span id="ajax_failure_warning_color_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_color_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_color').slideDown();
+					$('#ajax_failure_warning_color').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
@@ -150,7 +155,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading stats: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_stats').slideDown();
+					$('#ajax_failure_warning_stats').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					$(this).slideDown(200); //fade back in
@@ -165,7 +175,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading reviews: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_reviews" class="alert alert-danger"><span id="ajax_failure_warning_reviews_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_reviews_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_reviews').slideDown();
+					$('#ajax_failure_warning_reviews').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					$('#loading_reviews').slideUp();
@@ -179,7 +194,12 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading photos: ";
-					$( "#error" ).html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_photos" class="alert alert-danger"><span id="ajax_failure_warning_photos_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_photos_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_photos').slideDown();
+					$('#ajax_failure_warning_photos').click(function(){
+						$(this).slideUp();
+					});
 				}
 				else {
 					//$('#reviews_spinner').toggleClass("fa-spinner");
@@ -189,7 +209,50 @@
 	//close main function
 	}
  	$('#auction_request_trim_choices').change(load_color_preference); //change color preference options when you change trim dropdown
-	$("#auction_request_color_preference").multiSelect('refresh'); //initialize multiselect
 	
 	load_color_preference(); //first ajax call based on initial trim selection //remove during testing
  </script>
+
+<script>
+	$("#auction_request_color_preference").multiSelect({
+		selectableHeader: '<div style="text-align:center" class="text-light">Available colors</div>',
+		selectionHeader: '<div style="text-align:center" class="text-light">Colors I want</div>',
+	}); 
+	$("#auction_request_color_preference").multiSelect('refresh');//initialize multiselect
+</script>
+
+<script>
+	function load_radius_map(){
+		$('#dealer_radius_map').html('<img src="http://placehold.it/600x400&text=loading..." class="img-responsive"/>').load(
+			"{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + $('#auction_request_zip_code').val(), //implement fail like above
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading map: ";
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_stats').slideDown();
+					$('#ajax_failure_warning_stats').click(function(){
+						$(this).slideUp();
+					});
+				}
+				else {
+					//
+				}
+			}
+		);
+	}
+	$('#auction_request_radius').change(load_radius_map);
+	$('#auction_request_zip_code').change(load_radius_map);
+</script>
+ 
+<script>
+	function resize_bootstrap_multiselect(){
+		$('.multiselect').css({'width':$("#auction_request_wish_list").parent().width()});
+	}
+
+ 	$('#auction_request_wish_list').multiselect();
+	$(window).resize(function(){
+		resize_bootstrap_multiselect();
+	});
+	resize_bootstrap_multiselect();
+</script> {{#http://goo.gl/dh1z2}}
