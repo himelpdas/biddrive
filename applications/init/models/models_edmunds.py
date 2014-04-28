@@ -168,19 +168,19 @@ db.define_table('auction_request',
 		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '620 or less', ]), multiple=False, zero="I don't know")),
 	),
 	Field('funding_source',
-		requires = IS_IN_SET(sorted(['Taking a loan', 'Taking a lease', 'Paying in full']), multiple=False, zero=None)
+		requires = IS_IN_SET(sorted(['Taking a loan', 'Taking a lease', 'Paying in full']), multiple=False, zero=None) #TODO change to choose one
 	),	
 	Field('financing',
-		requires = IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (your bank, credit union, etc.)']), multiple=False, zero=None)
+		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (your bank, credit union, etc.)']), multiple=False, zero="Choose one")) #put in default controller
 	),
 	Field('expected_down_payment', 'integer',
 		requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 100000)) #leave here just in case even tho it's done in the controller
 	),
 	Field('lease_mileage', 
-		requires = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero=None)
+		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero="Choose one"))
 	),	
 	Field('lease_term', 
-		requires = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero=None)
+		requires = IS_EMPTY_OR(IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one"))
 	),
 	Field('trading_in', 'boolean',
 	),	

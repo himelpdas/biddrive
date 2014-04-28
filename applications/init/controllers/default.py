@@ -67,8 +67,26 @@ def request_by_make():
 	#making sure child-inputs are enforced if parent-inputs are selected
 	if request.post_vars['funding_source'] != "Paying in full":
 		db.auction_request.expected_down_payment.requires = IS_INT_IN_RANGE(0, 100000)
+	else: #is paying in full
+		request.post_vars['financing'] = None #so erase other crap
+		request.post_vars['expected_down_payment'] = None
+		request.post_vars['lease_term'] = None
+		request.post_vars['lease_mileage'] = None
+	
+	if request.post_vars['funding_source'] == "Taking a lease":
+		db.auction_request.lease_term.requires = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one") #force a choice if taking a lease
+		db.auction_request.lease_mileage.requires = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero="Choose one") #TODO MAKE LESS DRY
+		request.post_vars['financing'] = None #disable others
+		
+	if request.post_vars['funding_source'] == "Taking a loan":
+		db.auction_request.financing.requires = IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (your bank, credit union, etc.)']), multiple=False, zero="Choose one")
+		request.post_vars['lease_term'] = None
+		request.post_vars['lease_mileage'] = None
+		
 	if request.post_vars['trading_in']:
 		db.auction_request.describe_trade_in.requires = IS_NOT_EMPTY()
+	else:
+		request.post_vars['describe_trade_in'] = None 
 		
 	db.auction_request.color_preference.requires = [IS_IN_SET(style_color_codes, multiple=True, zero=None), IS_NOT_EMPTY(error_message='pick at least one color')]
 	db.auction_request.color_preference.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
@@ -110,7 +128,7 @@ def request_by_make():
 
 	return dict(model_styles=model_styles, trims=trims, form=form, year=year, make=make, model=model)
 	
-@auth.requires_login()
+@auth.requires(not auth.has_membership(role='dealers')) #make sure dealers can't get anonymous auction requests attached to their name
 @auth.requires(request.args(0))
 def pre_auction():
 	auction_id = request.args[0]
