@@ -374,7 +374,7 @@ def auction():
 	winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select().last()
 	
 	#only allow form functionality to show for dealers as long as auction is active
-	bid_form = my_message_form_dealer = my_auction_request_offer_id = None
+	bid_form = my_message_form_dealer = my_auction_request_offer_id = is_final_bid = None
 	if not auction_request_expired: #do not allow any insertions for expired or winning
 		if is_owner:
 			new_favorite_choice = int(request.vars['favorite'] or 0)
@@ -391,6 +391,10 @@ def auction():
 				#awating bid test below in each_offer
 		#create offer form
 		if is_authorized_dealer_with_offer:
+			#see if final offer
+			is_final_bid = request.vars['final_bid']
+			if is_final_bid:
+				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, 72)
 			#bid form
 			my_auction_request_offer_id = is_dealer_with_offer.id
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
@@ -706,7 +710,7 @@ def auction():
 	#title stuff
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_dealer = is_dealer_with_offer, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired, winning_offer=winning_offer)
+	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_dealer = is_dealer_with_offer, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_request_expired=auction_request_expired, winning_offer=winning_offer, is_final_bid=is_final_bid)
 	
 @auth.requires_membership('dealers')
 def my_auctions():

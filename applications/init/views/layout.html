@@ -37,6 +37,11 @@
       src="https://maps.googleapis.com/maps/api/js?key=%s&sensor=false"%GMAPS_KEY>
     </script>
 	{{"""}}
+	
+	{{if request.controller == "admin":}}{{#use default forms for now}}
+		<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script>
+		<link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}" type="text/css"/>
+	{{pass}}
 
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>

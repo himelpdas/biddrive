@@ -262,6 +262,15 @@ db.define_table('auction_request_offer',
 		writable=False,
 		required=True,
 	), 
+	Field('vin_number', #http://goo.gl/cKY06b
+		requires = IS_MATCH(
+			"^(([a-h,A-H,j-n,J-N,p-z,P-Z,0-9]{9})([a-h,A-H,j-n,J-N,p,P,r-t,R-T,v-z,V-Z,0-9])([a-h,A-H,j-n,J-N,p-z,P-Z,0-9])(\d{6}))$",
+			error_message = "Not a US VIN number!"
+		),
+	),
+	Field(
+		'remember_data_for_30_days', 'boolean', #http://goo.gl/Jx29vY
+	),
 	Field('owner_id', db.auth_user,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',)
 	),
@@ -480,6 +489,9 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 	),
 	Field('bid', 'integer',
 		requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(999, 1000000)]
+	),
+	Field('end_sooner_in_hours', 'integer',
+		#requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, 72)) #hours #handle in controller
 	),
 	Field.Method('MSRP_discount',
 		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,

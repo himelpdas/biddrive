@@ -1,7 +1,7 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
 
-<div class="panel panel-primary">
+<div id = "panel-top" class="panel panel-primary">
 	<div class= "panel-heading text-uppercase text-md">
 		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}} {{if False and auction_request_expired:}}<span class="text-danger">(ENDED)<span>{{pass}}</strong>
 		
@@ -163,36 +163,54 @@
 							</div>
 						</td>
 					<tr>
-
+				{{if bid_form:}}
+					{{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
+					{{bid_form.element("input", _name = "bid")["_placeholder"] = "$" }}
+					
+					{{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
+					{{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}
+					
+					{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-left" + (" btn-danger" if is_final_bid else "")  }}
+					{{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if is_final_bid else "Place Bid!") }}
+					{{=bid_form.custom.begin}}
 					<tr>
-						{{if bid_form:}}
-							{{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
-							{{bid_form.element("input", _name = "bid")["_placeholder"] = "$" }}
-							{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-left" }}
-							{{bid_form.element("input", _type = "submit")["_value"] = "Place Bid!" }}
-							{{=bid_form.custom.begin}}
-							<th>
+						<th>
+							<div class="btn-group">
 								{{=bid_form.custom.submit}}
-							</th>
-							<td>
-								{{=bid_form.custom.widget.bid}}
-								{{if bid_form.errors['bid']:}}
-									<div class="alert alert-warning">{{=bid_form.errors['bid']}}</div>
-								{{pass}}
-							</td>
-							{{=bid_form.custom.end}}
-						{{pass}}
-						{{"""}}
-							<td>
-								<strong style="display: block">Stock photo:</strong>
-								<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">
-							</td>
-							<td>
-								<strong style="display: block">Favorite photo:</strong>
-								<img src="http://placehold.it/400x400" class="img-responsive" style="max-width: 150px">						
-							</td>
-						{{"""}}
+								<button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+									<span class="caret"></span>
+									<span class="sr-only">Toggle Dropdown</span>
+								</button>
+								<ul class="dropdown-menu" role="menu">
+									<li><a id = "final_bid" href="{{if not is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}"><i class="fa fa-fw fa-bell"></i> {{if is_final_bid:}}Cancel{{else:}}Make a{{pass}} final offer</a></li>
+								</ul>
+							</div>
+							
+							{{if is_final_bid:}}
+								<div id="final_bid_hours_header" style="padding-top:10px;"> {{#if there is an error with the subform, don't auto hide the subform}}
+									<i class="fa fa-fw fa-bell"></i>End this offer in 
+								</div>
+							{{pass}}
+						</th>
+						<td>
+							{{=bid_form.custom.widget.bid}}
+							{{if bid_form.errors['bid']:}}
+								<div class="alert alert-warning">{{=bid_form.errors['bid']}}</div>
+							{{pass}}
+							
+							{{if is_final_bid:}}
+								<div id="final_bid_hours_form">
+									{{=bid_form.custom.widget.end_sooner_in_hours}}
+									{{if bid_form.errors['end_sooner_in_hours']:}}
+										<div class="alert alert-warning">{{=bid_form.errors['end_sooner_in_hours']}}</div>
+									{{pass}}
+								</div>
+							{{pass}}
+						</td>
+						
 					</tr>
+					{{=bid_form.custom.end}}
+				{{pass}}
 				</table>
 
 
