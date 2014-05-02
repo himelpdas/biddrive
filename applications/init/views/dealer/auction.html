@@ -20,6 +20,16 @@
 						<td style="border-top: none">
 							{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}}
 						</td>
+					</tr>					
+					
+					<tr>
+						<th>
+							Entering
+						</th>
+
+						<td>
+							4th auction
+						</td>
 					</tr>
 
 					<tr>
@@ -62,12 +72,29 @@
 			</div>
 			<div class="col-xs-6">
 				<table class="table table-hover text-sm">
+
 					<tr>
 						<th style="border-top: none">
-							No. Dealers
+							Auction status
 						</th>
 
 						<td style="border-top: none">
+							{{if auction_request_info['auction_completed']:}}
+								<span class="text-danger">Ended</span>
+							{{elif auction_request_info['bidding_ended']:}}
+								<span class="text-warning">Awaiting winner</span>
+							{{else:}}
+								<span class="text-success">Active</span>
+							{{pass}}
+						</td>
+					</tr>
+					
+					<tr>
+						<th>
+							No. Dealers
+						</th>
+
+						<td>
 							{{=auction_request_info['number_of_dealers']}}
 						</td>
 					</tr>
@@ -84,27 +111,16 @@
 
 					<tr>
 						<th>
-							$ Lowest / Favorite
+							Best prices
 						</th>
 
 						<td>
-							{{=auction_request_info['lowest_price']}} / {{=auction_request_info['favorite_price']}}
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							Auction status
-						</th>
-
-						<td>
-							{{if auction_request_info['auction_completed']:}}
-								<span class="text-danger">Ended</span>
-							{{elif auction_request_info['bidding_ended']:}}
-								<span class="text-warning">Awaiting winner</span>
-							{{else:}}
-								<span class="text-success">Active</span>
-							{{pass}}
+							<div>
+								<strong style="width: 55px; display:inline-block">Lowest:</strong> {{=auction_request_info['lowest_price']}}
+							</div>
+							<div>
+								<strong style="width: 55px; display:inline-block">Favorite:</strong> {{=auction_request_info['favorite_price']}}
+							</div>
 						</td>
 					</tr>
 
@@ -140,7 +156,7 @@
 					
 					<tr>
 						<th>
-							Sort offers by
+							<div style="margin-top:9px;">Sort offers by</div>
 						</th>
 						
 						<td>
@@ -182,13 +198,13 @@
 									<span class="sr-only">Toggle Dropdown</span>
 								</button>
 								<ul class="dropdown-menu" role="menu">
-									<li><a id = "final_bid" href="{{if not is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}"><i class="fa fa-fw fa-bell"></i> {{if is_final_bid:}}Cancel{{else:}}Make a{{pass}} final offer</a></li>
+									<li><a id = "final_bid" href="{{if not is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}">{{if is_final_bid:}}<i class="fa fa-fw fa-times-circle-o"></i> Cancel{{else:}}<i class="fa fa-fw fa-bell-o"></i> Make a{{pass}} final offer</a></li>
 								</ul>
 							</div>
 							
-							{{if is_final_bid:}}
+							{{if is_final_bid:}} {{#also check not winning and not expired etc.}}
 								<div id="final_bid_hours_header" style="padding-top:10px;"> {{#if there is an error with the subform, don't auto hide the subform}}
-									<i class="fa fa-fw fa-bell"></i>End this offer in 
+									<i class="fa fa-fw fa-bell"></i>End my offer in 
 								</div>
 							{{pass}}
 						</th>
@@ -563,67 +579,3 @@
 	$('.buyer_dealer_messages').emoticonize();
 	$('.error').attr({'style':'color:red;'});
 </script>
-
-{{"""}}
-	<div id="exterior_image_l" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="exterior_image_l" aria-hidden="true">
-	  <div class="modal-dialog modal-lg">
-		<div class="modal-content">
-			<div class="modal-body">
-				<img src="{{=URL('static', 'thumbnails/%s'%exterior_image_l)}}" class="img-responsive">
-			</div>
-		</div>
-	  </div>
-	</div>
-
-	<div id="interior_image_l" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="interior_image_l" aria-hidden="true">
-	  <div class="modal-dialog modal-lg">
-		<div class="modal-content">
-			<div class="modal-body">
-				<img src="{{=URL('static', 'thumbnails/%s'%interior_image_l)}}" class="img-responsive">
-			</div>
-		</div>
-	  </div>
-	</div>
-
- 
-<!--{{=auction_request_info['id']}}
-{{=auction_request_info['year']}}
-{{=auction_request_info['make']}}
-{{=auction_request_info['model']}}
-{{=auction_request_info['trim_name']}}
-{{#=auction_request_info['trim_data']}}
-{{=auction_request_info['colors']}}
-{{=auction_request_info['city']}}
-{{=auction_request_info['state']}}-->
-{{#=auction_request_info['ends_on']}}
-{{#=auction_request_info['ends_in_seconds']}}
-{{#=auction_request_info['ends_in_human']}}
-<!--{{=auction_request_info['number_of_bids']}}
-{{=auction_request_info['lowest_price']}}-->
-
-
-<!--
-<ul class="nav nav-list">
-  <li class="divider"></li>
-</ul>
- 
-<div class= "row-fluid">
-	<div class="span2">
-		<div class="btn-group">
-			<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-				{{sortby = request.vars['sortby']}}
-				{{=sortby.capitalize() if sortby else "Sort bids"}}
-				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu">
-				<!-- dropdown menu links 
-					{{for each in sortlist:}}<li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each.replace('-',' ').capitalize()}}</a></li>{{pass}}
-			</ul>
-		</div>
-	</div>
-</div>
- 
-
-
-{{if bid_form:}}{{=bid_form}}{{pass}}-->
-{{"""}}
