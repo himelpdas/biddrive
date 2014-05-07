@@ -28,7 +28,7 @@
 						</th>
 
 						<td>
-							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{if str(entered)[-1] == '1':}}st{{elif str(entered)[-1] == '2':}}nd{{elif str(entered)[-1] == '3':}}rd{{else:}}th{{pass}} auction
+							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{if numero == '1' and str(entered)[-2] != '11':}}st{{elif numero == '2':}}nd{{elif numero == '3':}}rd{{else:}}th{{pass}} auction
 						</td>
 					</tr>
 
