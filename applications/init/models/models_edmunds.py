@@ -217,8 +217,13 @@ db.define_table('auction_request',
 		readable=False,
 		writable=False,
 	),
-	Field('expires', 'datetime',
+	Field('auction_expires', 'datetime',
 		default = request.now + datetime.timedelta(days = AUCTION_DAYS_EXPIRE),
+		readable=False,
+		writable=False,
+	),	
+	Field('offer_expires', 'datetime',
+		compute = lambda row: row['auction_expires'] + datetime.timedelta(days = AUCTION_DAYS_OFFER_ENDS),
 		readable=False,
 		writable=False,
 	),
@@ -232,8 +237,11 @@ db.define_table('auction_request',
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer_bid.auction_request  ==row.auction_request.id).select())
 	),
-	Field.Method('expired',
-		lambda row: row.auction_request.expires < request.now
+	Field.Method('auction_expired',
+		lambda row: row.auction_request.auction_expires < request.now
+	),	
+	Field.Method('offer_expired',
+		lambda row: row.auction_request.offer_expires < request.now
 	),
 	#Field user ID
 	#Block dealers

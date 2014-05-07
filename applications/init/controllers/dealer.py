@@ -11,7 +11,7 @@ def auction_requests():
 	>>> query &= db.person.id>3
 	>>> query |= db.person.name=='John'
 	"""
-	query = (db.auction_request.id>0) & (db.auction_request.expires >= request.now) #WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
+	query = (db.auction_request.id>0) & (db.auction_request.auction_expires >= request.now) #WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
 	#####filtering#####
 	#build query and filter menu
 	#year
@@ -82,7 +82,7 @@ def auction_requests():
 	color = request.vars['color']
 	#####sorting#####
 	sortby = request.vars['sortby']
-	orderby = ~db.auction_request.expires #TEMP
+	orderby = ~db.auction_request.auction_expires #TEMP
 	if sortby == "id-up":
 		orderby = db.auction_request.id
 	if sortby == "id-down":
@@ -104,9 +104,9 @@ def auction_requests():
 	if sortby == "year-down":
 		orderby = ~db.auction_request.year
 	if sortby == "newest":
-		orderby = ~db.auction_request.expires
+		orderby = ~db.auction_request.auction_expires
 	if sortby == "oldest":
-		orderby = db.auction_request.expires #not using ID because expires can be changed by admin
+		orderby = db.auction_request.auction_expires #not using ID because expires can be changed by admin
 		
 	auction_requests = db(query).select(orderby=orderby)
 	#####in memory filterting#####
@@ -212,7 +212,7 @@ def auction_requests():
 @auth.requires(request.args(0))
 def authorize_auction_for_dealer(): #add permission and charge entry fee upon dealer agreement of terms and fees
 	auction_request_id = request.args[0]
-	if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
+	if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 		auth.add_membership('request_by_make_authorized_dealers_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
 		redirect(URL('pre_auction.html', args=[auction_request_id]))
 	raise HTTP(404 , "Invalid auction request!")
@@ -324,17 +324,7 @@ def pre_auction():
 		)
 	
 	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
-	
-	
-def __get_option_from_ID(trim_data, option_type, option_id):
-	options_data = trim_data['options']
-	options = []
-	for each_option_type in options_data:
-		if each_option_type['category'] == option_type:
-			options = each_option_type['options']
-	for each_option in options:
-		if int(each_option['id']) == int(option_id):
-			return each_option 
+
 	
 @auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
@@ -348,9 +338,9 @@ def auction():
 	
 	trim_data = json.loads(auction_request.trim_data)
 
-	auction_request_expired = auction_request.expires < request.now
-	auction_ended_offer_ends = auction_request.expires + datetime.timedelta(days = 1)
-	auction_ended_offer_expired = auction_ended_offer_ends < request.now
+	auction_request_expired = auction_request.auction_expired() #auction_request.auction_expires < request.now
+	auction_ended_offer_ends = auction_request.offer_expires #auction_request.auction_expires + datetime.timedelta(days = 1) 
+	auction_ended_offer_expired = auction_request.offer_expired() #auction_ended_offer_ends < request.now 
 
 	is_owner = auction_request.owner_id == auth.user.id #TODO add restriction that prevents dealers from creating an auction
 	is_dealer_with_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
@@ -453,10 +443,11 @@ def auction():
 	##auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 
 	#auction requests info
-	auction_ended_offer_expires = (auction_ended_offer_ends-auction_request.expires).total_seconds() if not auction_ended_offer_expired and not winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
+	auction_ended_offer_expires = (auction_ended_offer_ends-auction_request.auction_expires).total_seconds() if not auction_ended_offer_expired and not winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
 	auction_request_info = dict(
 		id = str(auction_request.id),
+		auction_requests_user_entered = len(db(db.auction_request.owner_id == auction_request_user.id).select()),
 		first_name =auction_request_user.first_name,
 		last_init =auction_request_user.last_name[:1]+'.',
 		year = auction_request.year,
@@ -468,12 +459,12 @@ def auction():
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
 		zip_code =  auction_request_area.zip_code,
-		ends_on = str(auction_request.expires),
-		ends_in_seconds = (auction_request.expires - request.now).total_seconds() if not bidding_ended else 0, #if bidding ended you'll end up with negative number will fuck up auction page
+		ends_on = str(auction_request.auction_expires),
+		ends_in_seconds = (auction_request.auction_expires - request.now).total_seconds() if not bidding_ended else 0, #if bidding ended you'll end up with negative number will fuck up auction page
 		bidding_ended = bidding_ended,
 		auction_completed = not auction_ended_offer_expires if bidding_ended else False, #auction is finito if buyer chose a winner or offer time ran out
 		auction_ended_offer_expires = auction_ended_offer_expires,
-		#ends_in_human = human(auction_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}'),
+		#ends_in_human = human(auction_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}'),
 		number_of_bids = auction_request.number_of_bids(),
 		number_of_dealers = len(auction_request_offers),
 		lowest_price = lowest_price,
@@ -560,15 +551,15 @@ def auction():
 		fees_options = []
 		
 		for each_option in each_offer.auction_request_offer.interior_options:
-			interior_options.append(__get_option_from_ID(trim_data, 'Interior', each_option))
+			interior_options.append(getOption(trim_data, 'Interior', each_option))
 		for each_option in each_offer.auction_request_offer.exterior_options:
-			exterior_options.append(__get_option_from_ID(trim_data, 'Exterior', each_option))
+			exterior_options.append(getOption(trim_data, 'Exterior', each_option))
 		for each_option in each_offer.auction_request_offer.mechanical_options:
-			mechanical_options.append(__get_option_from_ID(trim_data, 'Mechanical', each_option))
+			mechanical_options.append(getOption(trim_data, 'Mechanical', each_option))
 		for each_option in each_offer.auction_request_offer.package_options:
-			package_options.append(__get_option_from_ID(trim_data, 'Package', each_option))
+			package_options.append(getOption(trim_data, 'Package', each_option))
 		for each_option in each_offer.auction_request_offer.fees_options:
-			fees_options.append(__get_option_from_ID(trim_data, 'Additional Fees', each_option))
+			fees_options.append(getOption(trim_data, 'Additional Fees', each_option))
 
 		#pricing stuff
 		bids = db((db.auction_request_offer_bid.owner_id == each_offer.auction_request_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
@@ -579,7 +570,7 @@ def auction():
 		
 		#stuff to do if this offer is owned by viewing dealer
 		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
-		if is_my_offer and is_awaiting_offer:
+		if is_my_offer and is_awaiting_offer and not auction_request_expired:
 			response.message2 = "!Please make a bid!"
 	
 		#dealer stuff
@@ -714,7 +705,7 @@ def auction():
 	
 @auth.requires_membership('dealers')
 def my_auctions():
-	def paginate(page, show): #adapted from web2py book
+	def paginate(page, view): #adapted from web2py book
 		"""	{{#in view}}
 			{{for i,row in enumerate(rows):}}
 				{{if i==items_per_page: break}}
@@ -732,15 +723,15 @@ def my_auctions():
 		limits_list = [5,10,15,25,40,60]
 		if page: page=int(page)
 		else: page=0
-		items_per_page=limits_list[0] if not show else int(show)
+		items_per_page=limits_list[0] if not view else int(view)
 		limitby=(page*items_per_page,(page+1)*items_per_page+1)
 		return dict(page=page,items_per_page=items_per_page, limitby=limitby, limits_list=limits_list)
 	
-	paging = paginate(request.args(0),request.vars['show'])
+	paging = paginate(request.args(0),request.vars['view'])
 	
 	sortby = request.vars['sortby']
-	sorting = [["make-up", "make-down"], ["model-up", "model-down"], ["trim-up", "trim-down"], ["year-up", "year-down"], ["expiring-up", "expiring-down"]]
-	orderby = ~db.auction_request.expires
+	sorting = [["make-up", "make-down"], ["model-up", "model-down"], ["trim-up", "trim-down"], ["year-up", "year-down"], ["expiration-up", "expiration-down"]]
+	orderby = ~db.auction_request.auction_expires
 	#DB LEVEL SORTING 
 	if sortby == "make-up":
 		orderby = db.auction_request.make #this query causes referencing of two tables, so a join has occured
@@ -758,15 +749,26 @@ def my_auctions():
 		orderby = db.auction_request.year
 	if sortby == "year-down":
 		orderby = ~db.auction_request.year
-	if sortby == "expiring-up":
-		orderby = ~db.auction_request.expires
-	if sortby == "expiring-down":
-		orderby = db.auction_request.expires #not using ID because expires can be changed by admin
+	if sortby == "expiration-up":
+		orderby = ~db.auction_request.id
+	if sortby == "expiration-down":
+		orderby = db.auction_request.id #not using ID because expires can be changed by admin
 	
-	join =db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id) #[db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id)] #about joins http://goo.gl/iuQp6P #joins are much faster than sorting. Instead of two separate queries, join them and access their variables at once
+	#OLD METHOD OF JOINS A#join =db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id) #[db.auction_request.on(db.auction_request_offer.auction_request==db.auction_request.id)] #about joins http://goo.gl/iuQp6P #joins are much faster than sorting. Instead of two separate queries, join them and access their variables at once
 	#in a join if a row from tableA doesn't match with a row from tableB, the join is skipped. To force this to happen you must use a left join. (use left instead of join argument) 
+
+	show = request.vars['show']
+	show_list = sorted(['won', 'lost', 'live', 'all'])
+	query = (db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request==db.auction_request.id) #must
+	if show == "won":
+		query &= db.auction_request_winning_offer.auction_request_offer == db.auction_request_offer.id #can assume auction ended
+	elif show == "lost": #lost also means expired and not won
+		query &= (db.auction_request_winning_offer.auction_request_offer != db.auction_request_offer.id) & (db.auction_request.auction_expires < request.now) #for this to succeed a field cannot be None or incompatible with > == <
+	elif show == "live": #show is_active only
+		query &= db.auction_request.auction_expires > request.now
 	
-	my_offers = db(db.auction_request_offer.owner_id == auth.user_id).select(join=join, orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
+	#OLD METHOD OF JOINS B#my_offers = db(query).select(join=join, orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
+	my_offers = db(query).select(orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
 	my_offer_summaries = []
 	for each_offer in my_offers:
 		#auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() don't needed #make sure not abandoned or expired!
@@ -797,4 +799,4 @@ def my_auctions():
 		}
 		my_offer_summaries.append(each_offer_dict)
 	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
-	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, **paging)
+	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)

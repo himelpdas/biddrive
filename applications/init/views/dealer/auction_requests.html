@@ -44,7 +44,7 @@ Get rid of dummies and lorem ipsums
 						{{if make in brands_list:}}{{=brands_list[make]}}{{else:}}All Brands{{pass}}
 				    	<span class="caret"></span>
 				  	</button>
-					<ul class="dropdown-menu" role="menu">
+					<ul class="dropdown-menu" role="menu"    {{if len(brands_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}> {{#make sure to make it scroll if list too long http://goo.gl/nn4GJ7}}
 						<li><a id = "all_makes_filter" href="{{=URL(vars=dict(year=year ,sortby=sortby))}}">All Brands</a></li>
 						<li class="divider"></li>
 						{{for each_make in brands_list:}}
@@ -62,7 +62,7 @@ Get rid of dummies and lorem ipsums
 							{{if model in models_list:}}{{=models_list[model]}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
 							<span class="caret"></span>
 						</a>
-						<ul class="dropdown-menu">
+						<ul class="dropdown-menu" role="menu"    {{if len(models_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
 							<li><a id = "all_models_filter" href="{{=URL(vars=dict(make=make, year=year ,sortby=sortby))}}">All Models</a></li>
 							 <li class="divider"></li>
 							{{for each_model in models_list:}}
@@ -86,7 +86,7 @@ Get rid of dummies and lorem ipsums
 							{{if trim in styles_list:}}{{=styles_list[trim]}}{{else:}}All Trims{{pass}}{{#the key is the id#, the value is the name}}
 							<span class="caret"></span>
 						</a>
-						<ul class="dropdown-menu">
+						<ul class="dropdown-menu" role="menu"     {{if len(styles_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
 							<li><a id = "all_styles_filter" href="{{=URL(vars=dict(make = make, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
 							<li class="divider"></li>
 							{{for each_trim in styles_list:}}
@@ -111,7 +111,7 @@ Get rid of dummies and lorem ipsums
 							{{#the key is the id#, the value is the name}}
 							<span class="caret"></span>
 						</a>
-						<ul class="dropdown-menu">
+						<ul class="dropdown-menu" role="menu"     {{if len(colors_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
 							<li><a id = "all_colors_filter" href="{{=URL(vars=dict(make = make, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
 							 <li class="divider"></li>
 							{{for each_color in colors_list:}}
@@ -211,8 +211,8 @@ Get rid of dummies and lorem ipsums
 				</td>
 
 				<td>
-					{{=human(each_request.expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
-					{{#=each_request.expires}}
+					{{=human(each_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
+					{{#=each_request.auction_expires}}
 				</td>
 
 				<td>

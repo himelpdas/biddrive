@@ -28,7 +28,7 @@
 						</th>
 
 						<td>
-							4th auction
+							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{if str(entered)[-1] == '1':}}st{{elif str(entered)[-1] == '2':}}nd{{elif str(entered)[-1] == '3':}}rd{{else:}}th{{pass}} auction
 						</td>
 					</tr>
 
@@ -91,7 +91,7 @@
 					
 					<tr>
 						<th>
-							No. Dealers
+							Total dealers
 						</th>
 
 						<td>
@@ -101,7 +101,7 @@
 
 					<tr>
 						<th>
-							No. bids
+							Total bids
 						</th>
 
 						<td>
@@ -266,7 +266,7 @@
 	-->
 
 {{if not auction_request_offers_info:}}
-	<h3>Offers will appear here, please come back later.</h3>
+	<h3>Offers will appear here, please come back later.</h3><h4>Click <a href="{{=URL(args=request.args, vars=request.vars)}}">here</a> to refresh.</a></h4>
 {{pass}}
 {{for counter, each_offer in enumerate(auction_request_offers_info):}}
 	{{if not auction_request_expired:}}
@@ -395,11 +395,11 @@
 						
 						<tr>
 							<th>
-								Savings
+								Discount
 							</th>
 
 							<td>
-								{{=each_offer['msrp_discount_dollars']}} <span class="text-sm text-light">{{=each_offer['msrp_discount_percent']}} off</span>
+								{{=each_offer['msrp_discount_percent']}} off <span class="text-sm text-light pull-right">{{if is_owner:}}You'll{{else:}}Buyer will{{pass}} save {{=each_offer['msrp_discount_dollars']}}</span>
 							</td>
 						</tr>
 						
@@ -409,7 +409,7 @@
 							</th>
 
 							<td>
-								{{offer_distance=each_offer['offer_distance_to_auction_request']}}{{if offer_distance == "0.00":}}In your area!{{else:}}{{=offer_distance}} miles away{{pass}}
+								{{offer_distance=each_offer['offer_distance_to_auction_request']}}{{if offer_distance == "0.00":}}In {{if is_owner:}}your{{else:}}buyer's{{pass}} area!{{else:}}{{=offer_distance}} miles away{{pass}}
 							</td>
 						</tr>
 
@@ -435,11 +435,11 @@
 						
 						<tr>
 							<th>
-								Dealer <i class="fa fa-info-circle" rel="tooltip" title="Dealer ID: {{=each_offer['dealer_id']}} | Offer ID: {{=each_offer['id']}}"></i>
+								Dealer
 							</th>
 
 							<td>
-								<i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i>
+								Dealer ID: {{=each_offer['dealer_id']}} <span class="text-sm text-light pull-right">Offer ID: {{=each_offer['id']}}</span>
 							</td>
 						</tr>
 					</table>
