@@ -69,14 +69,95 @@
                 text-shadow: 1px 1px 1px #31393d;
             }
 
+            .slogan {
+                margin-top: 20px;
+                color: white;
+                font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 32px;
+                font-style: normal;
+                font-variant: normal;
+                font-weight: bold;
+                text-shadow: rgba(0, 0, 0, 0.498039)0px 2px 1px;
+                vertical-align: baseline;                
+            }
+
+            .small-slogan {
+                margin-top: 20px;
+                color: white;
+                font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 16px;
+                font-style: normal;
+                font-variant: normal;
+                font-weight: bold;
+                text-shadow: rgba(0, 0, 0, 0.498039)0px 2px 1px;
+                vertical-align: baseline;                
+            }            
+
+            .mainbox {
+                border-top-left-radius: 5px;
+                border-bottom-left-radius: 5px;
+                color: #f5f5f5;
+
+                transition-delay: 1s;
+            }
+
+            .mainbox a { 
+                color: #f5f5f5;
+                text-transform: uppercase;
+                font-size: 14px;
+            }
+
+            .sidebox {
+                
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+                color: #111;
+            }
+
+            .main-container {
+                margin-top: 100px;
+            }
+
+            .backdrop {
+                background-color: rgba(0,0,0,0.6);
+            }
 
         </style>
 
-        <div class="container" style="margin-top:100px">
+        <div class="container main-container">
+            <div class="row text-center slogan">
+                We take the hassle out of car buying.
+            </div>
+            <div class="row text-center small-slogan">
+                Choose your new car. We'll contact local dealers.
+            </div>
+            <div class="clearfix">&nbsp;</div>
 
+            <div class="row main-row">
+                <div class="col-sm-6 col-sm-offset-3 mainbox backdrop">
+                    
+                    <div class="row">
+                        {{for each_brand in brands_list:}}
+                            <div class="col-xs-4 car-make">
+                                <a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
+                            </div>
+                        {{pass}}
+                    </div>
+                </div>
+
+                <div class="col-sm-6 sidebox hidden back">
+                    asdf
+                    <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />&nbsp;
+                </div>
+
+
+            </div>
+        </div>
+
+<!--
             <div class="row part-1">
                 <div class="col-xs-6 part-1-1">
-                    <!--Year--> 
+                    <!--Year--
                     <div class= "pull-right">
                         <div class="btn-group pull-right">
                             <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
@@ -84,7 +165,7 @@
                                 <span class="caret"></span>
                             </a>
                             <ul class="dropdown-menu">
-                                <!-- dropdown menu links -->
+                                <!-- dropdown menu links --
                                     {{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
                             </ul>
                         </div>
@@ -93,11 +174,11 @@
                         <li class="divider"></li>
                     </ul>
 
-                    <!--/Year-->
+                    <!--/Year--
                 </div>
                 
                 <div class="col-xs-6 part-1-2">
-                    <!-- empty -->
+                    <!-- empty --
                     &nbsp;
 
                 </div>
@@ -120,17 +201,36 @@
 
                 <div class="col-xs-6 part-2-3" id="models">
                 <div class="absolute-center">
-                <!-- content via ajax -->
+                <!-- content via ajax --
                 </div>
                 </div>
             </div>
-
-        </div>
+        </div>-->
 
         <script>
             {{for each_brand in brands_list:}}
                 $('#{{=each_brand}}_switch').click(
                     function(evt){
+
+                        $('.mainbox').removeClass('col-sm-offset-3 backdrop');
+
+                        $('.sidebox').removeClass('hidden');
+
+                        $('.main-row').addClass('backdrop');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                         $('.part-2-2').hide();
 
@@ -170,7 +270,7 @@
                 <!-- Features Row -->
                 <div class="features_op1_row">
                     <!-- Feature -->
-                    <div class="col-sm-3 feature">
+                    <div class="col-sm-4 feature">
                         <div class="img_box">
                           <i class="fa fa-road fa-3x" style="color: black;"></i>
                         </div>
@@ -182,7 +282,7 @@
                         </div>
                     </div>
                     <!-- Feature -->
-                    <div class="col-sm-3 feature">
+                    <div class="col-sm-4 feature">
                         <div class="img_box">
                             <i class="fa fa-check-square fa-3x" style="color: red;"></i>
                         </div>
@@ -194,7 +294,7 @@
                         </div>
                     </div>
                     <!-- Feature -->
-                    <div class="col-sm-3 feature">
+                    <div class="col-sm-4 feature">
                         <div class="img_box">
                             <i class="fa fa-tags fa-3x" style="color: black;"></i>
                         </div>
@@ -205,25 +305,20 @@
                             </p>
                         </div>
                     </div>
-                    <!-- Feature -->
-                    <div class="col-sm-3 feature">
-                        <div class="img_box">
-                            <i class="fa fa-thumbs-up fa-3x" style="color: green;"></i>
-                        </div>
-                        <div class="text">
-                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center">Step 4</h3>
-                            <p style= "font-weight:bold; font-size: 15px; text-align:center">
-                                Connect to the winning dealer and buy!  
-                            </p>
-                        </div>
-                    </div>                    
+                   
                 </div>
             </div>
         </div>
     </div>
     
-    <div id="features">
+    <div id="features" style="background-color: #ccc">
         <div class="container">
+
+            <div class="row text-center" style="margin-bottom:50px">
+                <h1 style="font-size: 42px">How BidDrive Works</h1>
+            </div>
+
+
             <div class="row feature">
                 <div class="col-sm-6">
                     <img src="http://i.imgur.com/6JB4lkF.png" class="img-responsive" />
