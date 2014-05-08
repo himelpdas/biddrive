@@ -130,11 +130,22 @@
             </div>
             <div class="row text-center small-slogan">
                 Choose your new car. We'll contact local dealers.
-            </div>
+			
+				<div class="btn-group" style="display:inline-block;">
+					<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+						{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu">
+							{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
+					</ul>
+				</div>
+			</div>
+			
             <div class="clearfix">&nbsp;</div>
 
-            <div class="row main-row">
-                <div class="col-sm-6 col-sm-offset-3 mainbox backdrop">
+            <div id="mainrow" class="row" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
+                <div id="mainbox" class="col-sm-6 col-sm-offset-3 mainbox backdrop">
                     
                     <div class="row">
                         {{for each_brand in brands_list:}}
@@ -144,99 +155,38 @@
                         {{pass}}
                     </div>
                 </div>
-
-                <div class="col-sm-6 sidebox hidden back">
-                    asdf
-                    <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />&nbsp;
+				
+                <div id="sidebox" class="col-sm-6 back" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
+                    loading...
                 </div>
 
-
+				<script>
+					$("#mainrow").height($("#mainrow").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
+					$("#sidebox").height($("#mainrow").height());
+					$("#mainbox").css({
+					    '-webkit-transition': 'all 0.7s ease-out',
+						'-moz-transition': 'all 0.7s ease-out',
+						'-ms-transition': 'all 0.7s ease-out',
+						'-o-transition': 'all 0.7s ease-out',
+						'transition': 'all 0.7s ease-out',
+					}); {{#transition effect when that div moves}}
+				</script>
+				
             </div>
         </div>
-
-<!--
-            <div class="row part-1">
-                <div class="col-xs-6 part-1-1">
-                    <!--Year--
-                    <div class= "pull-right">
-                        <div class="btn-group pull-right">
-                            <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-                                {{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
-                                <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <!-- dropdown menu links --
-                                    {{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
-                            </ul>
-                        </div>
-                    </div>
-                    <ul class="nav nav-list">
-                        <li class="divider"></li>
-                    </ul>
-
-                    <!--/Year--
-                </div>
-                
-                <div class="col-xs-6 part-1-2">
-                    <!-- empty --
-                    &nbsp;
-
-                </div>
-            </div>
-
-            <div class="row part-2">
-                <div class="col-xs-6 part-2-1">
-                    <div class="row" style="margin-top: 20px;">
-                        {{for each_brand in brands_list:}}
-                            <div class="col-xs-4 car-make">
-                                <a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
-                            </div>
-                        {{pass}}
-                    </div>
-                </div>
-
-                <div class="col-xs-6 part-2-2">
-                    <h2>When dealers compete, You win.</h2>
-                </div>
-
-                <div class="col-xs-6 part-2-3" id="models">
-                <div class="absolute-center">
-                <!-- content via ajax --
-                </div>
-                </div>
-            </div>
-        </div>-->
 
         <script>
             {{for each_brand in brands_list:}}
                 $('#{{=each_brand}}_switch').click(
                     function(evt){
 
-                        $('.mainbox').removeClass('col-sm-offset-3 backdrop');
+                        $('#mainbox').removeClass('col-sm-offset-3 backdrop');
 
-                        $('.sidebox').removeClass('hidden');
+                        $('#mainrow').addClass('backdrop', 700);
 
-                        $('.main-row').addClass('backdrop');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        $('.part-2-2').hide();
-
-                        $('.part-2-3')
+                        $('#sidebox')
                             .html('<div class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
-                            .fadeIn()
+                            .show()
                             .load("{{=URL('ajax','vehicle_content', args=[each_brand, year])}}",
 								function( response, status, xhr ) {
 									if ( status == "error" ) {
