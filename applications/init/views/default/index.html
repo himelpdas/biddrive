@@ -96,10 +96,18 @@
             .mainbox {
                 border-top-left-radius: 5px;
                 border-bottom-left-radius: 5px;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
                 color: #f5f5f5;
 
-                transition-delay: 1s;
             }
+			
+			.mainrow{
+				border-top-left-radius: 5px;
+                border-bottom-left-radius: 5px;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+			}
 
             .mainbox a { 
                 color: #f5f5f5;
@@ -119,7 +127,7 @@
             }
 
             .backdrop {
-                background-color: rgba(0,0,0,0.6);
+                background-color: rgba(0,0,0,0.7);
             }
 
         </style>
@@ -144,10 +152,10 @@
 			
             <div class="clearfix">&nbsp;</div>
 
-            <div id="mainrow" class="row" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
+            <div id="mainrow" class="row mainrow" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
                 <div id="mainbox" class="col-sm-6 col-sm-offset-3 mainbox backdrop">
                     
-                    <div class="row">
+                    <div class="row" style="padding-top:5px">
                         {{for each_brand in brands_list:}}
                             <div class="col-xs-4 car-make">
                                 <a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
@@ -156,7 +164,7 @@
                     </div>
                 </div>
 				
-                <div id="sidebox" class="col-sm-6 back" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
+                <div id="sidebox" class="col-sm-6" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
                     loading...
                 </div>
 
