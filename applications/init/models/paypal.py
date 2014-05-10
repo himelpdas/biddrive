@@ -3,7 +3,7 @@ USD_PER_CREDIT = 1.0
 paypal_state =IS_IN_SET(['created', 'approved', 'failed', 'canceled', 'expired',], zero=None)
 
 
-import paypalrestsdk as Paypal
+import paypalrestsdk as Paypal #pip install paypalrestsdk
 
 Paypal.configure({
   "mode": "sandbox", # sandbox or live

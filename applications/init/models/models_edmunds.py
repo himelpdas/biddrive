@@ -254,6 +254,7 @@ db.define_table('auction_request',
 		writable=False,
 		default = 5, #raise limit when purchase made
 """	
+#pip install pillow
 from smartthumb import * #http://goo.gl/tiSyz
 import os
 def resize_offer_image_upload(image, x=1080, y=720, center=True):

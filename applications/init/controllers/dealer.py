@@ -443,7 +443,7 @@ def auction():
 	##auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 
 	#auction requests info
-	auction_ended_offer_expires = (auction_ended_offer_ends-auction_request.auction_expires).total_seconds() if not auction_ended_offer_expired and not winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
+	auction_ended_offer_expires = (auction_request.auction_expires - request.now).total_seconds() if not auction_ended_offer_expired and not winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
 	auction_request_info = dict(
 		id = str(auction_request.id),

@@ -28,7 +28,7 @@
 						</th>
 
 						<td>
-							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{if numero == '1' and str(entered)[-2] != '11':}}st{{elif numero == '2':}}nd{{elif numero == '3':}}rd{{else:}}th{{pass}} auction
+							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
 						</td>
 					</tr>
 
@@ -126,7 +126,7 @@
 
 					<tr>
 						<th>
-							{{if not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offer ends in{{pass}}
+							{{if not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offers end in{{pass}}
 						</th>
 
 						<td>
