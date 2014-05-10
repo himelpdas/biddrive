@@ -453,7 +453,6 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 -------------------------------------------------- */
 #feature_slider {
     height: 720px;
-    height: 620px;
     background: #262626;
     z-index: 1;
     margin-bottom: 0px;

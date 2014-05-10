@@ -9,7 +9,8 @@
 </div>
 {{#############ERROR DIVS################}}
 
-    <section id="feature_slider" style="background-image: url(http://i.imgur.com/IKOzzNH.jpg); background-position: center;">
+    <section id="feature_slider" style="background-image: url(http://goo.gl/GzBK3w{{#http://i.imgur.com/IKOzzNH.jpg}}); background-position: center;">
+
         <article class="slide active" id="showcasing" style="display: block;">
 
 
@@ -361,3 +362,15 @@
             
         </div>
     </div>
+	
+<script>
+	function resize_background(){
+		$("#feature_slider").css({
+			'height':$("#mainrow").offset().top + $("#mainrow").height() + 64
+		});
+	}
+	$(window).resize(function(){
+		resize_background();
+	});
+	resize_background();
+</script> {{#adjust background to encompass the mainbox}}
