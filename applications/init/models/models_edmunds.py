@@ -12,9 +12,10 @@ if auth.user_id:
 	AUTH_ADMIN = auth.has_membership(user_id = auth.user_id, role = "admins")
 	if AUTH_ADMIN:
 		response.menu.append(
-			(T('Admin Portal'), False, URL('admin', 'dealership_requests.html'), [
-				(T('Dealership Requests'), False, URL('admin', 'dealership_requests.html'), []),
-				(T('User Management'), False, URL('admin', 'user_management.html'), []),
+			(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
+				(T('Dealership Requests'), False, URL('admin', 'dealership_requests'), []),
+				(T('User Management'), False, URL('admin', 'user_management'), []),
+				(T('DB Management'), False, URL('appadmin', 'index'), []),
 			]),
 		)
 
@@ -22,12 +23,12 @@ if auth.user_id:
 	if AUTH_DEALER:
 		response.menu.append(
 			(T('Dealer Portal'), False, URL('dealer', 'auction_requests') if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]), [
-				(T('Alerts'), False, URL('dealer', 'reminders'), []),
 				(T('Auction Requests'), False, URL('dealer', 'auction_requests'), []),
 				(T('Buy Credits'), False, URL('billing', 'buy_credits'), []),
 				(T('Dealership Info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
-				(T('My Auctions'), False, URL('dealer', 'my_auctions'), []),
+				(T('Manage Alerts'), False, URL('dealer', 'reminders'), []),
+				(T('Previous Auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
 

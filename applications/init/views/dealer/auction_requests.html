@@ -138,104 +138,104 @@ Get rid of dummies and lorem ipsums
 	 </div>
 </div>
 
-
-<table class="table table-hover ">
-	<thead>
-		<tr>
-			{{for each_column in columns:}}
-				<th style="min-width: 80px">
-					{{if sortby in each_column[1]:}}
-						{{sort_pair = each_column[1][:]}}{{#create copy}}
-						{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
-						<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, make=make ) ) }}">
-							{{=each_column[0]}}
-						</a>
-					&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
-					{{else:}}
-						<a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, make=make) ) }}">
-							{{=each_column[0]}}
-						</a>
-					{{pass}}
-				</th>
-			{{pass}}
-		</tr>
-	</thead>
-
-	<tbody>
-		{{for each_request in auction_requests:}}
-			<tr class="jcorgFilterTextParent">
-				<td>
-					<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
-					<script> {{#always add id to id attr when theres more than one}}
-						$('#to-agreement-button-{{=each_request.id}}').click(
-							function(){
-								$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
-							}
-						);
-					</script>
-				</td>
-
-				<td class="jcorgFilterTextChild">
-					{{=each_request.year}}
-				</td>
-
-				<td class="jcorgFilterTextChild">
-					{{=brands_list[each_request.make]}}
-				</td>
-
-				<td class="jcorgFilterTextChild">
-					{{each_model = each_request.model}} 
-					{{if len(each_model) < 4:}}{{=each_model.upper()}}{{else:}}{{=each_model.capitalize()}}{{pass}}
-				</td>
-
-				<td class="jcorgFilterTextChild">
-					{{=each_request.trim_name}}
-				</td>
-
-				<td>
-					{{color_names=each_request.color_names}}
-					{{color_names.sort()}}
-					{{for each_name in color_names:}}
-						{{for each_color in json.loads(each_request.trim_data)['colors'][1]['options']:}}
-							{{if each_color['name'] == each_name:}}
-								{{color_hex = each_color['colorChips']['primary']['hex']}}
-							{{pass}}
+<div style="overflow-x: auto;">
+	<table class="table table-hover ">
+		<thead>
+			<tr>
+				{{for each_column in columns:}}
+					<th style="min-width: 80px">
+						{{if sortby in each_column[1]:}}
+							{{sort_pair = each_column[1][:]}}{{#create copy}}
+							{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
+							<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, make=make ) ) }}">
+								{{=each_column[0]}}
+							</a>
+						&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
+						{{else:}}
+							<a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, make=make) ) }}">
+								{{=each_column[0]}}
+							</a>
 						{{pass}}
-						<i class="fa fa-square" rel="tooltip" style="color:#{{=color_hex}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_name}}"></i>{{#add border so that whites can show}} {{#http://goo.gl/2j2bP}} {{#http://goo.gl/R9EI3h}}
-					{{pass}}
-				</td>
-
-				<td class="jcorgFilterTextChild">
-					{{area=db(db.zipgeo.zip_code == each_request.zip_code).select().first()}}
-					{{=area.city}}, {{=area.state_abbreviation}}
-				</td>
-
-				<td>
-					{{=human(each_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
-					{{#=each_request.auction_expires}}
-				</td>
-
-				<td>
-					{{=each_request.number_of_bids()}}
-				</td>
-
-				<td>
-					{{#='$' + str(int(each_request.lowest_offer().bid)) if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
-					{{lowest_offer = each_request.lowest_offer()}} {{#one db call instead of two like above}}
-					{{if lowest_offer:}}
-						{{=lowest_offer.bid}}
-					{{else:}}
-						No bids!
-					{{pass}}
-				</td>
+					</th>
+				{{pass}}
 			</tr>
-			<script>
-				$("#sifter").jcOnPageFilter({caseSensitive:false, animateHideNShow:true, hideNegatives:true, highlightColor:'lightgreen'}); {{#http://goo.gl/LYpoNj}}
-			</script>
-		{{pass}}
-	</tbody>
-</table>
+		</thead>
 
+		<tbody>
+			{{for each_request in auction_requests:}}
+				<tr class="jcorgFilterTextParent">
+					<td>
+						<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
+						<script> {{#always add id to id attr when theres more than one}}
+							$('#to-agreement-button-{{=each_request.id}}').click(
+								function(){
+									$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
+								}
+							);
+						</script>
+					</td>
+
+					<td class="jcorgFilterTextChild">
+						{{=each_request.year}}
+					</td>
+
+					<td class="jcorgFilterTextChild">
+						{{=brands_list[each_request.make]}}
+					</td>
+
+					<td class="jcorgFilterTextChild">
+						{{each_model = each_request.model}} 
+						{{if len(each_model) < 4:}}{{=each_model.upper()}}{{else:}}{{=each_model.capitalize()}}{{pass}}
+					</td>
+
+					<td class="jcorgFilterTextChild">
+						{{=each_request.trim_name}}
+					</td>
+
+					<td>
+						{{color_names=each_request.color_names}}
+						{{color_names.sort()}}
+						{{for each_name in color_names:}}
+							{{for each_color in json.loads(each_request.trim_data)['colors'][1]['options']:}}
+								{{if each_color['name'] == each_name:}}
+									{{color_hex = each_color['colorChips']['primary']['hex']}}
+								{{pass}}
+							{{pass}}
+							<i class="fa fa-square" rel="tooltip" style="color:#{{=color_hex}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_name}}"></i>{{#add border so that whites can show}} {{#http://goo.gl/2j2bP}} {{#http://goo.gl/R9EI3h}}
+						{{pass}}
+					</td>
+
+					<td class="jcorgFilterTextChild">
+						{{area=db(db.zipgeo.zip_code == each_request.zip_code).select().first()}}
+						{{=area.city}}, {{=area.state_abbreviation}}
+					</td>
+
+					<td>
+						{{=human(each_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
+						{{#=each_request.auction_expires}}
+					</td>
+
+					<td>
+						{{=each_request.number_of_bids()}}
+					</td>
+
+					<td>
+						{{#='$' + str(int(each_request.lowest_offer().bid)) if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
+						{{lowest_offer = each_request.lowest_offer()}} {{#one db call instead of two like above}}
+						{{if lowest_offer:}}
+							{{=lowest_offer.bid}}
+						{{else:}}
+							No bids!
+						{{pass}}
+					</td>
+				</tr>
+				<script>
+					$("#sifter").jcOnPageFilter({caseSensitive:false, animateHideNShow:true, hideNegatives:true, highlightColor:'lightgreen'}); {{#http://goo.gl/LYpoNj}}
+				</script>
+			{{pass}}
+		</tbody>
+	</table>
+</div>
 
 {{#MODALS}}
 <!--  {{request.function}}_alerts modal -->
