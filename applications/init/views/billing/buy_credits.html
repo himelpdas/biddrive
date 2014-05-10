@@ -1,0 +1,6 @@
+{{extend 'page_layout.html'}}
+{{for n, each_url in enumerate(sorted(buy_credits_urls)):}}
+	<a href="{{=buy_credits_urls[each_url]}}">Tier {{=n+1}}</a>
+{{pass}}
+
+<h3>Credits: {{=my_credits}}</h1>

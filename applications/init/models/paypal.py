@@ -1,24 +1,39 @@
 USD_PER_CREDIT = 1.0
 
-db.define_table("pending_transaction",
+paypal_state =IS_IN_SET(['created', 'approved', 'failed', 'canceled', 'expired',], zero=None)
+
+
+import paypalrestsdk as Paypal
+
+Paypal.configure({
+  "mode": "sandbox", # sandbox or live
+  "client_id": "EBWKjlELKMYqRNQ6sYvFo64FtaRLRR5BdHEESmha49TM",
+  "client_secret": "EO422dn3gQLgDbuwqTjzrFgFtaRLRR5BdHEESmha49TM" })
+
+db.define_table("credits",
+	Field("owner", db.auth_user),
+	Field('credits', "integer",),
+	auth.signature,
+)
+
+db.define_table("credit_orders",
 	Field("owner", db.auth_user,
 		readable = False,
 		writable = False,
 	),
-	Field('credits'),
-	Field('amount', "double",
-		compute = lambda row: USD_PER_CREDIT * row.credits
+	Field('payment_id',
+		required=True
 	),
+	Field('payer_id',
+		required=True
+	),
+	Field('credits', "integer",
+		required=True
+	),
+	Field('price', "integer",
+		required=True
+	),
+	Field('payment_created', 'datetime'),
+	Field('payment_executed', 'datetime'),
 	auth.signature,
 )
-
-db.define_table("confirmed_transaction",
-	Field("owner", db.auth_user,
-		readable = False,
-		writable = False,
-	),
-	Field('credits'),
-	Field('amount', "double",),
-	auth.signature,
-)
-

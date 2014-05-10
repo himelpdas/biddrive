@@ -24,7 +24,7 @@ if auth.user_id:
 			(T('Dealer Portal'), False, URL('dealer', 'auction_requests') if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]), [
 				(T('Alerts'), False, URL('dealer', 'reminders'), []),
 				(T('Auction Requests'), False, URL('dealer', 'auction_requests'), []),
-				(T('Billing'), False, URL('dealer', 'billing'), []),
+				(T('Buy Credits'), False, URL('billing', 'buy_credits'), []),
 				(T('Dealership Info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
 				(T('My Auctions'), False, URL('dealer', 'my_auctions'), []),
