@@ -52,6 +52,7 @@ def color_preference(): #TODO get all data from single call make/model/year
 			each_color['id'],
 			each_color['name']
 		])
+	#style_color_codes.sort(key=lambda x: x[1])
 	session.style_color_codes = style_color_codes
 	return dict(style_colors=style_colors)
 	
