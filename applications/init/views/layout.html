@@ -38,22 +38,26 @@
 		<link rel="stylesheet" type="text/css" href="{{=URL('static','css/jquery.cssemoticons.css')}}"> {{#http://goo.gl/OsAit7}}
 		<script src="{{=URL('static','js/jquery.cssemoticons.min.js')}}"  type="text/javascript"></script>
 	{{pass}}
-	
-	{{if request.function in ['index']:}}
-		<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
-		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+
 	{{pass}}
 	{{"""}}
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=%s&sensor=false"%GMAPS_KEY>
     </script>
 	{{"""}}
-	
+
+    <!-- UI -->
 	{{if request.controller == "admin":}}{{#use default forms for now}}
 		<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script>
 		<link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}" type="text/css"/>
 	{{pass}}
 
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script> {{#BS3}}
+    <script src="{{=URL('static', 'js/carbid.js')}}"></script>	
+	
+	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />{{#JQUI}}
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>{{#leave global because of better enhancements like wider tooltips}}
+	
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -212,10 +216,6 @@
 
         </div>
     </footer>
-
-    <!-- Scripts -->
-    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
-    <script src="{{=URL('static', 'js/carbid.js')}}"></script>
 
 </body>
 </html>
