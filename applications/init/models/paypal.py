@@ -1,4 +1,6 @@
 USD_PER_CREDIT = 1.0
+INTRODUCTORY_CREDITS = 1000.0
+CREDITS_PER_AUCTION = 1.0
 
 paypal_state =IS_IN_SET(['created', 'approved', 'failed', 'canceled', 'expired',], zero=None)
 

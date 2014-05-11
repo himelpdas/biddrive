@@ -165,14 +165,7 @@ Get rid of dummies and lorem ipsums
 			{{for each_request in auction_requests:}}
 				<tr class="jcorgFilterTextParent">
 					<td>
-						<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
-						<script> {{#always add id to id attr when theres more than one}}
-							$('#to-agreement-button-{{=each_request.id}}').click(
-								function(){
-									$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
-								}
-							);
-						</script>
+						<a href="{{=each_request.digitally_signed_pre_auction_url}}"><button id="to_pre_auction_button_{{=each_request.id}}" class="btn btn-default btn-action"><i class="fa fa-arrow-right"></i></button></a>
 					</td>
 
 					<td class="jcorgFilterTextChild">
@@ -276,8 +269,15 @@ Get rid of dummies and lorem ipsums
   	</div>
 </div>
 
-
-
+{{"""}}
+<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
+						<script> {{#always add id to id attr when theres more than one}}
+							$('#to-agreement-button-{{=each_request.id}}').click(
+								function(){
+									$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
+								}
+							);
+						</script>
 <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="{{=request.function}}_agreement">
 	<div class="modal-dialog">
     	<div class="modal-content">
@@ -305,3 +305,4 @@ Get rid of dummies and lorem ipsums
 		</div>
 	</div>
 </div>
+{{"""}}

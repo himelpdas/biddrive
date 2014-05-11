@@ -115,7 +115,7 @@ db.define_table('auction_request',
 		#notnull=True,
 		default=auth.user_id,
 	),
-	Field('temp_id',
+	Field('temp_id', #UUID4 used for guest users and used for digitally signed URL
 		readable=False,
 		writable=False,
 	),

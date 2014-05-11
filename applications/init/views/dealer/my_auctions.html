@@ -119,10 +119,10 @@
 {{#prev/next may or may not appear based on content}}
 {{#previous page}}
 {{if page:}}
-	<a href="{{=URL(args=[page-1])}}">previous</a>
+	<a href="{{=URL(args=[page-1])}}"><span class="glyphicon glyphicon-chevron-left"></span> Previous</a>
 {{pass}}
 
 {{#next page}}
 {{if len(my_offer_summaries)>items_per_page:}}
-	<a href="{{=URL(args=[page+1])}}" class="pull-right">next</a>
+	<a href="{{=URL(args=[page+1])}}" class="pull-right">Next <span class="glyphicon glyphicon-chevron-right"></span></a>
 {{pass}}

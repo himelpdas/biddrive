@@ -118,7 +118,7 @@ def request_by_make():
 		if auth.user_id:
 			guest_msg=' Dealers have been notified!' #user is logged in no need for guest msg
 		session.message = '$Auction submitted!%s' % guest_msg
-		auth.add_group('request_by_make_authorized_dealers_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
+		auth.add_group('dealers_authorized_for_auction_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
 			URL('default','pre_auction.html', args=form.vars.id) #http://goo.gl/twPSTK
 		)
@@ -161,9 +161,13 @@ def dealership_form():
 	
 	form = SQLFORM(db.dealership_info)
 	
-	if form.process().accepted:
-		#email alert to admin
-		response.message = '$Form accepted. Please wait a few days for our response!'
+	if not db(db.dealership_info.owner_id == auth.user_id).select():
+		if form.process().accepted:
+			#email alert to admin
+			db.credits.insert(owner=auth.user_id, credits = INTRODUCTORY_CREDITS) #create a record for this dealers credit balance
+			response.message = '$Form accepted. Please wait a few days for our response!'
+	else:
+		response.message = "!You already submitted a request! Please contact us if you've waited longer than 3 weeks."
 	
 	response.title = 'Become our partner!'
 	response.subtitle = 'Sell your cars on our website'
