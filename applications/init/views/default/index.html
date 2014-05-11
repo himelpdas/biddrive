@@ -373,13 +373,34 @@ http://goo.gl/fPkW7
     </div>
 	
 <script>
+	//define event functions
 	function resize_background(){
 		$("#feature_slider").css({
 			'height':$("#mainrow").offset().top + $("#mainrow").height() + 64
 		});
 	}
+	function x_parallax(element, rate, offset){
+		element.css({
+			"background-position":(0,-rate*($(this).scrollTop()+offset)),
+		});
+	}
+	//initialize resize
 	$(window).resize(function(){
 		resize_background();
 	});
 	resize_background();
+	//initialize x_parallax
+	$(window).scroll(function(){
+		x_parallax($("#feature_slider"), 0.25, 640);
+	});
+	x_parallax($("#feature_slider"), 0.25, 640);
 </script> {{#adjust background to encompass the mainbox}}
+
+{{"""}}
+	$("#feature_slider").css({"background-position":(0,-.25*300)})
+	$(window).scroll(function(){
+		$("#feature_slider").css({
+			"background-position":(0,-.25*($(this).scrollTop()+300)),
+		});
+	});
+{{"""}}

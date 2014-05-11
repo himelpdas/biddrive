@@ -218,7 +218,7 @@ def authorize_auction_for_dealer(): #add permission and charge entry fee upon de
 	raise HTTP(404 , "Invalid auction request!")
 
 @auth.requires_login() #make dealer only
-@auth.requires(request.args(0))
+#@auth.requires(request.args(0))
 @auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
 #@auth.requires(not db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == request.args(0))).select()) #make sure dealer did not make an offer already
 def pre_auction():
