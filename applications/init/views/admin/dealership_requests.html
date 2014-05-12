@@ -11,7 +11,7 @@
 	</div>
 <h3>-->
 
-<div style="overflow-x: scroll;">
+<div style="overflow-x: auto;">
 	<table class="table table-stripe">
 		<thead>
 			<tr>
@@ -21,7 +21,6 @@
 				<th>Phone</th>
 				<th>Owner</th>
 				<th>Address</th>
-				<th>Country</th>
 				<th>Submitted On</th>
 				<th>&nbsp;</th>
 			</tr>
@@ -32,7 +31,7 @@
 					<td>#{{=each_dealership_info.id}}</td>
 					<td>{{=each_dealership_info.verification}}</td>
 					<td>{{=each_dealership_info.dealership_name.capitalize()}}</td>
-					<td>{{=each_dealership_info.phone.replace('-',' ')}}</td>
+					<td>{{=each_dealership_info.phone}}</td>
 					<td>{{=each_dealership_info.owner_id.first_name.capitalize()}} {{=each_dealership_info.owner_id.last_name.capitalize()}} ({{=each_dealership_info.owner_id}})</td>
 					<td>
 						{{=each_dealership_info.address_line_1}} <br />
