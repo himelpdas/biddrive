@@ -1,0 +1,20 @@
+{{extend 'page_layout.html'}}
+
+<table class="table table-stripe">
+	<thead>
+		<tr>
+			<th>column 1</th>
+			<th>&nbsp;</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{for each_dealership_info in dealership_requests:}}
+			<tr>		
+				<td>value 1</td>
+				<td>
+					<button type="submit"><i class="fa fa-delete"></i></button>
+				</td>
+			</tr>
+		{{pass}}
+	</tbody>
+</table>

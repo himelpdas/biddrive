@@ -19,11 +19,7 @@
 			<th>Dealership</th>
 			<th>Phone</th>
 			<th>Owner</th>
-			<th>Address Line 1</th>
-			<th>Address Line 2</th>
-			<th>City</th>
-			<th>State</th>
-			<th>Zip Code</th>
+			<th>Address</th>
 			<th>Country</th>
 			<th>Submitted On</th>
 			<th>&nbsp;</th>
@@ -37,12 +33,11 @@
 				<td>{{=each_dealership_info.dealership_name.capitalize()}}</td>
 				<td>{{=each_dealership_info.phone.replace('-',' ')}}</td>
 				<td>{{=each_dealership_info.owner_id.first_name.capitalize()}} {{=each_dealership_info.owner_id.last_name.capitalize()}} ({{=each_dealership_info.owner_id}})</td>
-				<td>{{=each_dealership_info.address_line_1}}</td>
-				<td>{{=each_dealership_info.address_line_2 or 'None'}}</td>
-				<td>{{=each_dealership_info.city}}</td>
-				<td>{{=each_dealership_info.state}}</td>
-				<td>{{=each_dealership_info.zip_code}}</td>
-				<td>{{=each_dealership_info.country}}</td>
+				<td>
+					{{=each_dealership_info.address_line_1}} <br />
+					{{=each_dealership_info.address_line_2 or ''}}
+					{{=each_dealership_info.city}} {{=each_dealership_info.state}}, {{=each_dealership_info.zip_code}} <br />{{=each_dealership_info.country}}
+				</td>
 				<td>{{=each_dealership_info.created_on}}</td>
 				<td>
 					<a href='{{=URL("admin","dealership_form", args=[each_dealership_info.id])}}' class="btn btn-default btn-sm">

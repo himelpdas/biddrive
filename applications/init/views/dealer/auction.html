@@ -14,12 +14,64 @@
 				<table class="table table-hover text-sm">
 					<tr>
 						<th style="border-top: none">
-							Name
+							Name <a href="#info_modal" data-target="#info_modal"><i class="fa fa-info-circle"></i></a>
 						</th>
 
 						<td style="border-top: none">
 							{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}}
 						</td>
+
+						{{#info modal}}
+						<div class="modal fade" id="info_modal">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+										<h4 class="modal-title">Information about {{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}}</h4>
+									</div>
+									<div class="modal-body">
+										<table class="table table-hover table-bordered">
+											<tr>
+												<th>No. Auctions entered</th>
+												<td> 5</td>
+											</tr>
+
+											<tr>
+												<th>Wish list</th>
+												<td> 
+													<ul>
+														<li>Leather Seats</li>
+														<li>Heated Seats</li>
+													</ul>
+												</td>
+											</tr>
+
+											<tr>
+												<th>Credit Score</th>
+												<td>650 -700</td>
+											</tr>
+
+											<tr>
+												<th>Funding Source</th>
+												<td>
+													{{#funding logic will go here}}
+												</td>
+											</tr>
+
+											<tr>
+												<th>Trading In</th>
+												<td> yes </td>
+											</tr>
+										</table>
+
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+										<button type="button" class="btn btn-primary">Save changes</button>
+									</div>
+								</div>
+							</div>
+						</div> 						
 					</tr>					
 					
 					<tr>
