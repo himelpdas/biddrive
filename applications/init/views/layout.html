@@ -63,7 +63,8 @@
     <![endif]-->
 </head>
 {{if request.function == "index":}}
-	<div id = "y_parallax" style="z-index:-1000;width:100%;height:100%;position:absolute;background-image:url({{=URL('static','images/bg_2.png')}})"></div> 
+	<div id = "y_parallax" style="z-index:-1000;width:100%;height:100%;position:fixed;background-image:url({{=URL('static','images/bg_2.jpg')}})"></div> 
+	{{#"""}}
 	<script>
 		function y_parallax(element, rate, offset){
 			element.css({
@@ -73,8 +74,9 @@
 		$(window).scroll(function(){
 			y_parallax($("#y_parallax"), 0.12, 0);
 		});
-		y_parallax($("#y_parallax").css({'-webkit-transition': 'all 0.7s ease-out','-moz-transition': 'all 0.7s ease-out','-ms-transition': 'all 0.7s ease-out','-o-transition': 'all 0.7s ease-out','transition': 'all 0.7s ease-out',}), 0.25, 0);
+		y_parallax($("#y_parallax").css({'position':'absolute','-webkit-transition': 'all 0.7s ease-out','-moz-transition': 'all 0.7s ease-out','-ms-transition': 'all 0.7s ease-out','-o-transition': 'all 0.7s ease-out','transition': 'all 0.7s ease-out',}), 0.25, 0);
 	</script>
+	{{#"""}}
 {{pass}}
 <body class="pull_top">
 
