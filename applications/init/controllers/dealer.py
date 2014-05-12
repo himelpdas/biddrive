@@ -350,7 +350,8 @@ def auction():
 		redirect(URL('my_auctions'))
 	
 	trim_data = json.loads(auction_request.trim_data)
-
+	
+	auction_request_ends = auction_request.auction_expires
 	auction_request_expired = auction_request.auction_expired() #auction_request.auction_expires < request.now
 	auction_ended_offer_ends = auction_request.offer_expires #auction_request.auction_expires + datetime.timedelta(days = 1) 
 	auction_ended_offer_expired = auction_request.offer_expired() #auction_ended_offer_ends < request.now 
@@ -359,8 +360,7 @@ def auction():
 	is_dealer_with_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
 	is_authorized_dealer = auth.has_membership(role='dealers_authorized_for_auction_#%s'%auction_request_id) #will need authorized dealers but may have to move redirect function that controls this
 	
-	is_participant = False
-	is_authorized_dealer_with_offer = False
+	is_participant = is_authorized_dealer_with_offer =is_dealer_and_with_final_bid= False
 	if is_owner:
 		is_participant = True
 	if is_dealer_with_offer and is_authorized_dealer:
@@ -369,6 +369,8 @@ def auction():
 		if not db(db.credits.owner==auth.user_id).select().last() <= 0: #do not allow negative balance dealers to participate, instead make them buy more credits.
 			session.message2="@You have a negative balance! You must purchase more credits to participate in auctions."
 			redirect(URL('billing', 'buy_credits'))
+		if db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request==auction_request_id) & (db.auction_request_offer_bid.final_bid != None)).select().first():
+			is_dealer_and_with_final_bid = True
 	if not is_participant: #somehow he never made an offer
 		session.message="@You are not a part of this auction!"
 		redirect(URL('default','index'))
@@ -396,11 +398,13 @@ def auction():
 				redirect(URL(args=request.args)) #get rid of vars incase of refresh
 				#awating bid test below in each_offer
 		#create offer form
-		if is_authorized_dealer_with_offer:
+		if is_authorized_dealer_with_offer and not is_dealer_and_with_final_bid:
 			#see if final offer
+			final_message = None
 			is_final_bid = request.vars['final_bid']
 			if is_final_bid:
-				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, 72)
+				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, (auction_request_ends-request.now).total_seconds()/3600.0)
+				final_message = "@This was your final bid!"
 			#bid form
 			my_auction_request_offer_id = is_dealer_with_offer.id
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
@@ -415,7 +419,10 @@ def auction():
 			
 			#dealer bid process
 			if bid_form.process(hideerror = True).accepted:
-				response.message = '$Your new bid is $%s!'%bid_form.vars.bid #redirect not needed since we're dealing with POST
+				response.message = '$Your new bid is $%s.'%bid_form.vars.bid #redirect not needed since we're dealing with POST
+				if final_message:
+					response.message2 = final_message
+					redirect(URL(args=request.args))
 			elif bid_form.errors:
 				response.message = '!Bid not submitted! Please check for mistakes in form.'
 			
@@ -582,7 +589,12 @@ def auction():
 		number_of_bids = len(bids)
 		msrp = each_offer.auction_request_offer.MSRP()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
-		last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
+		#last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
+		last_bid_price = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = None
+		if last_bid:
+			last_bid_price = is_not_awaiting_offer = last_bid.bid 
+			bid_is_final=final_bid_ends_on = last_bid.final_bid
+		is_awaiting_offer = not is_not_awaiting_offer
 		
 		#stuff to do if this offer is owned by viewing dealer
 		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
@@ -661,6 +673,9 @@ def auction():
 			'id' : offer_id,
 			'is_winning_offer' :is_winning_offer,
 			'is_my_offer': is_my_offer,
+			'bid_is_final': bool(bid_is_final),
+			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,
+			'final_bid_ended': request.now > final_bid_ends_on if bid_is_final else False,
 			'is_favorite': is_favorite,
 			'offer_messages' : offer_messages,
 			'my_message_form_dealer': my_message_form_dealer if my_auction_request_offer_id == offer_id else '', #add message form to this bid cell, only one needed hence why logic is outside this loop
@@ -670,6 +685,7 @@ def auction():
 			'dealer_id' : each_offer.auction_request_offer.owner_id,
 			'show_winner_btn': True if is_owner and not auction_request_info['auction_completed'] and auction_request_info['bidding_ended'] and is_not_awaiting_offer else False,
 			'is_not_awaiting_offer':is_not_awaiting_offer,
+			'is_awaiting_offer': not is_not_awaiting_offer,
 			'last_bid_price' : last_bid_price,
 			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,

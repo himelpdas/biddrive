@@ -503,6 +503,9 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 	Field('end_sooner_in_hours', 'integer',
 		#requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, 72)) #hours #handle in controller
 	),
+	Field('final_bid', 'datetime',
+		compute= lambda row: request.now+datetime.timedelta(hours = row['end_sooner_in_hours']) if row['end_sooner_in_hours'] else None,
+	),
 	Field.Method('MSRP_discount',
 		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,
 	),
