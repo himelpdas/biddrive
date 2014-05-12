@@ -2,9 +2,11 @@
 	{{counter = 0}}
 	{{for each_model in make_details["models"]:}}
 		<div class="col-xs-4" style="text-align:center">
-			<a href="{{=URL('init','default','request_by_make',args=[year, request.args[0], each_model['niceName'] ] ) }}">
-				<img class="img-responsive" src="{{=make_photos[each_model['niceName']] }}">{{=each_model['name']}}
-			</a>
+			<div style="padding-top:6px;padding-bottom:7px;">
+				<a href="{{=URL('init','default','request_by_make',args=[year, request.args[0], each_model['niceName'] ] ) }}" style="color:f5f5f5;">
+					<img class="img-responsive img-thumbnail" src="{{=make_photos[each_model['niceName']] }}"><strong>{{=each_model['name']}}</strong>
+				</a>
+			</div>
 		</div>
 		
 		{{counter += 1}}

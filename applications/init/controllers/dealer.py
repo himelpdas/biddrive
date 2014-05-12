@@ -112,6 +112,9 @@ def auction_requests():
 	#####in memory filterting#####
 	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
 	auction_requests = auction_requests.exclude(lambda row: row['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.latitude, row.longitude) )#remove requests not in range
+	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
+	for each_request in auction_requests:
+		each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.id], hmac_key=each_request.temp_id, hash_vars=[each_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
 	#####in memory sorting#####
 	if sortby == "colors-most" or sortby == "colors-least":
 		reverse = False
@@ -208,19 +211,12 @@ def auction_requests():
 	response.message = "Showing %s result%s within 250 miles of %s, %s."% (number, plural, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
-	
-@auth.requires(request.args(0))
-def authorize_auction_for_dealer(): #add permission and charge entry fee upon dealer agreement of terms and fees
-	auction_request_id = request.args[0]
-	if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
-		auth.add_membership('request_by_make_authorized_dealers_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
-		redirect(URL('pre_auction.html', args=[auction_request_id]))
-	raise HTTP(404 , "Invalid auction request!")
 
-@auth.requires_login() #make dealer only
+#@auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
-@auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
+#@auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
 #@auth.requires(not db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == request.args(0))).select()) #make sure dealer did not make an offer already
+@auth.requires_membership('dealers')
 def pre_auction():
 	auction_request_id = request.args[0]
 	if db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select(): #make sure dealer did not make an offer already... if so redirect him to auction
@@ -228,17 +224,19 @@ def pre_auction():
 	#if not request.args:  #make decorator http://bit.ly/1i2wbHz
 	#	session.message='No request ID!'
 	#	redirect(URL('my_auctions.html'))
-	auction_request_rows = db(db.auction_request.id == auction_request_id).select() #ALWAYS verify existence of vars/args in database.
-	if not auction_request_rows:
+	auction_request = db(db.auction_request.id == auction_request_id).select().last() #ALWAYS verify existence of vars/args in database.
+	if not auction_request:
 		session.message='@Invalid request ID!'
-		redirect(URL('my_auctions.html'))
+		redirect(URL('my_auctions'))
+	if not URL.verify(request, hmac_key=auction_request.temp_id, hash_vars=[auction_request.id]): #verifys all args (or ones specified) in a url
+		session.message='@You are attempting to tamper with BidDrive! You have been reported.'
+		redirect(URL('my_auctions'))
 	
 	db.auction_request_offer.auction_request.default = auction_request_id
 	db.auction_request_offer.owner_id.default = auth.user_id
 	db.auction_request_offer.owner_id.readable = False
 	db.auction_request_offer.owner_id.writable = False
 	
-	auction_request = auction_request_rows.last()
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
 	#return dict(offer_form=None, options=options) #uncomment for testing
@@ -318,6 +316,10 @@ def pre_auction():
 	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
 	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
+		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
+			my_piggy = db(db.credits.owner==auth.user_id).select().last()
+			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
+			auth.add_membership('dealers_authorized_for_auction_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
 		session.message = '$Your offer was submitted!'
 		redirect(
 			URL('auction', args=[auction_request_id])
@@ -325,8 +327,19 @@ def pre_auction():
 	
 	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
 
+"""
+@auth.requires(request.args(0))
+def authorize_auction_for_dealer(): #add permission and charge entry fee upon dealer agreement of terms and fees
+	auction_request_id = request.args[0]
+	if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
+		auth.add_membership('request_by_make_authorized_dealers_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
+		redirect(URL('pre_auction.html', args=[auction_request_id]))
+	session.message='@Invalid request ID!'
+	redirect(URL('auction_requests'))
+"""
+
 	
-@auth.requires_login() #make dealer only
+#@auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
 #auth requires is admin or is part of this auction
 def auction():
@@ -337,22 +350,27 @@ def auction():
 		redirect(URL('my_auctions'))
 	
 	trim_data = json.loads(auction_request.trim_data)
-
+	
+	auction_request_ends = auction_request.auction_expires
 	auction_request_expired = auction_request.auction_expired() #auction_request.auction_expires < request.now
 	auction_ended_offer_ends = auction_request.offer_expires #auction_request.auction_expires + datetime.timedelta(days = 1) 
 	auction_ended_offer_expired = auction_request.offer_expired() #auction_ended_offer_ends < request.now 
 
 	is_owner = auction_request.owner_id == auth.user.id #TODO add restriction that prevents dealers from creating an auction
 	is_dealer_with_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
-	is_authorized_dealer = auth.has_membership(role='request_by_make_authorized_dealers_#%s'%auction_request_id) #will need authorized dealers but may have to move redirect function that controls this
+	is_authorized_dealer = auth.has_membership(role='dealers_authorized_for_auction_#%s'%auction_request_id) #will need authorized dealers but may have to move redirect function that controls this
 	
-	is_participant = False
-	is_authorized_dealer_with_offer = False
+	is_participant = is_authorized_dealer_with_offer =is_dealer_and_with_final_bid= False
 	if is_owner:
 		is_participant = True
 	if is_dealer_with_offer and is_authorized_dealer:
 		is_authorized_dealer_with_offer = True
 		is_participant = True
+		if not db(db.credits.owner==auth.user_id).select().last() <= 0: #do not allow negative balance dealers to participate, instead make them buy more credits.
+			session.message2="@You have a negative balance! You must purchase more credits to participate in auctions."
+			redirect(URL('billing', 'buy_credits'))
+		if db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request==auction_request_id) & (db.auction_request_offer_bid.final_bid != None)).select().first():
+			is_dealer_and_with_final_bid = True
 	if not is_participant: #somehow he never made an offer
 		session.message="@You are not a part of this auction!"
 		redirect(URL('default','index'))
@@ -380,11 +398,13 @@ def auction():
 				redirect(URL(args=request.args)) #get rid of vars incase of refresh
 				#awating bid test below in each_offer
 		#create offer form
-		if is_authorized_dealer_with_offer:
+		if is_authorized_dealer_with_offer and not is_dealer_and_with_final_bid:
 			#see if final offer
+			final_message = None
 			is_final_bid = request.vars['final_bid']
 			if is_final_bid:
-				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, 72)
+				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, (auction_request_ends-request.now).total_seconds()/3600.0)
+				final_message = "@This was your final bid!"
 			#bid form
 			my_auction_request_offer_id = is_dealer_with_offer.id
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
@@ -399,7 +419,10 @@ def auction():
 			
 			#dealer bid process
 			if bid_form.process(hideerror = True).accepted:
-				response.message = '$Your new bid is $%s!'%bid_form.vars.bid #redirect not needed since we're dealing with POST
+				response.message = '$Your new bid is $%s.'%bid_form.vars.bid #redirect not needed since we're dealing with POST
+				if final_message:
+					response.message2 = final_message
+					redirect(URL(args=request.args))
 			elif bid_form.errors:
 				response.message = '!Bid not submitted! Please check for mistakes in form.'
 			
@@ -443,7 +466,7 @@ def auction():
 	##auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 
 	#auction requests info
-	auction_ended_offer_expires = (auction_ended_offer_ends-auction_request.auction_expires).total_seconds() if not auction_ended_offer_expired and not winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
+	auction_ended_offer_expires = (auction_request.auction_expires - request.now).total_seconds() if not auction_ended_offer_expired and not winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
 	auction_request_info = dict(
 		id = str(auction_request.id),
@@ -566,12 +589,17 @@ def auction():
 		number_of_bids = len(bids)
 		msrp = each_offer.auction_request_offer.MSRP()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
-		last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
+		#last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
+		last_bid_price = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = None
+		if last_bid:
+			last_bid_price = is_not_awaiting_offer = last_bid.bid 
+			bid_is_final=final_bid_ends_on = last_bid.final_bid
+		is_awaiting_offer = not is_not_awaiting_offer
 		
 		#stuff to do if this offer is owned by viewing dealer
 		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
 		if is_my_offer and is_awaiting_offer and not auction_request_expired:
-			response.message2 = "!Please make a bid!"
+			response.message2 = "!Please make a bid now!"
 	
 		#dealer stuff
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
@@ -635,16 +663,19 @@ def auction():
 				auction_request_info['favorite_price'] = '$%s'%last_bid_price #DRY?
 
 		#response messaging stuff
-		if auction_request_info['auction_completed'] and not is_owner: #if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer
+		if auction_request_info['auction_completed'] and not is_owner and is_my_offer: #if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer. do same with dealer via is_my_offer
 			if is_winning_offer:
-				response.message3 = "$You are the winner! Click here be redirected to winning page."
-			elif winning_offer: #make sure that there is a winner before making the following claim
+				response.message3 = "$You are the winner! We will connect you to the buyer when the buyer contacts us."
+			elif not is_winning_offer: #make sure that there is a winner before making the following claim
 				response.message3 = "@Buyer picked a winner, but you did not win. Sorry :-("
 
 		each_offer_dict = {
 			'id' : offer_id,
 			'is_winning_offer' :is_winning_offer,
 			'is_my_offer': is_my_offer,
+			'bid_is_final': bool(bid_is_final),
+			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,
+			'final_bid_ended': request.now > final_bid_ends_on if bid_is_final else False,
 			'is_favorite': is_favorite,
 			'offer_messages' : offer_messages,
 			'my_message_form_dealer': my_message_form_dealer if my_auction_request_offer_id == offer_id else '', #add message form to this bid cell, only one needed hence why logic is outside this loop
@@ -654,6 +685,7 @@ def auction():
 			'dealer_id' : each_offer.auction_request_offer.owner_id,
 			'show_winner_btn': True if is_owner and not auction_request_info['auction_completed'] and auction_request_info['bidding_ended'] and is_not_awaiting_offer else False,
 			'is_not_awaiting_offer':is_not_awaiting_offer,
+			'is_awaiting_offer': not is_not_awaiting_offer,
 			'last_bid_price' : last_bid_price,
 			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,

@@ -62,12 +62,12 @@
                 </div>                
 				
 				<div class="form-group">
-                    <label  class="col-sm-3 control-label"> Wish list <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you desire in a car, so dealers can offer you the best match available."></i></label>
+                    <label  class="col-sm-3 control-label">Must haves <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you desire in a car, so dealers can offer you the best match they have available."></i></label>
                     <div class="col-sm-9">
-                        {{=form.custom.widget.wish_list}}
+                        {{=form.custom.widget.must_haves}}
 
-						{{if form.errors['wish_list']:}}
-							<div class="alert alert-warning">{{=form.errors['wish_list']}}</div>
+						{{if form.errors['must_haves']:}}
+							<div class="alert alert-warning">{{=form.errors['must_haves']}}</div>
 						{{pass}}                            
                     </div>
                 </div>
@@ -429,10 +429,10 @@
  
 <script>
 	function resize_bootstrap_multiselect(){
-		$('.multiselect').css({'width':$("#auction_request_wish_list").parent().width()});
+		$('.multiselect').css({'width':$("#auction_request_must_haves").parent().width()});
 	}
 
- 	$('#auction_request_wish_list').multiselect();
+ 	$('#auction_request_must_haves').multiselect();
 	$(window).resize(function(){
 		resize_bootstrap_multiselect();
 	});

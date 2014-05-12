@@ -11,40 +11,42 @@
 	</div>
 <h3>-->
 
-<table class="table table-stripe">
-	<thead>
-		<tr>
-			<th>ID</th>
-			<th>Verification</th>
-			<th>Dealership</th>
-			<th>Phone</th>
-			<th>Owner</th>
-			<th>Address</th>
-			<th>Country</th>
-			<th>Submitted On</th>
-			<th>&nbsp;</th>
-		</tr>
-	</thead>
-	<tbody>
-		{{for each_dealership_info in dealership_requests:}}
-			<tr>		
-				<td>#{{=each_dealership_info.id}}</td>
-				<td>{{=each_dealership_info.verification}}</td>
-				<td>{{=each_dealership_info.dealership_name.capitalize()}}</td>
-				<td>{{=each_dealership_info.phone.replace('-',' ')}}</td>
-				<td>{{=each_dealership_info.owner_id.first_name.capitalize()}} {{=each_dealership_info.owner_id.last_name.capitalize()}} ({{=each_dealership_info.owner_id}})</td>
-				<td>
-					{{=each_dealership_info.address_line_1}} <br />
-					{{=each_dealership_info.address_line_2 or ''}}
-					{{=each_dealership_info.city}} {{=each_dealership_info.state}}, {{=each_dealership_info.zip_code}} <br />{{=each_dealership_info.country}}
-				</td>
-				<td>{{=each_dealership_info.created_on}}</td>
-				<td>
-					<a href='{{=URL("admin","dealership_form", args=[each_dealership_info.id])}}' class="btn btn-default btn-sm">
-						<i class="fa fa-arrow-right"></i>
-					</a>
-				</td>
+<div style="overflow-x: scroll;">
+	<table class="table table-stripe">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Verification</th>
+				<th>Dealership</th>
+				<th>Phone</th>
+				<th>Owner</th>
+				<th>Address</th>
+				<th>Country</th>
+				<th>Submitted On</th>
+				<th>&nbsp;</th>
 			</tr>
-		{{pass}}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			{{for each_dealership_info in dealership_requests:}}
+				<tr>		
+					<td>#{{=each_dealership_info.id}}</td>
+					<td>{{=each_dealership_info.verification}}</td>
+					<td>{{=each_dealership_info.dealership_name.capitalize()}}</td>
+					<td>{{=each_dealership_info.phone.replace('-',' ')}}</td>
+					<td>{{=each_dealership_info.owner_id.first_name.capitalize()}} {{=each_dealership_info.owner_id.last_name.capitalize()}} ({{=each_dealership_info.owner_id}})</td>
+					<td>
+						{{=each_dealership_info.address_line_1}} <br />
+						{{=each_dealership_info.address_line_2 or ''}}
+						{{=each_dealership_info.city}} {{=each_dealership_info.state}}, {{=each_dealership_info.zip_code}} <br />{{=each_dealership_info.country}}
+					</td>
+					<td>{{=each_dealership_info.created_on}}</td>
+					<td>
+						<a href='{{=URL("admin","dealership_form", args=[each_dealership_info.id])}}' class="btn btn-default btn-sm">
+							<i class="fa fa-arrow-right"></i>
+						</a>
+					</td>
+				</tr>
+			{{pass}}
+		</tbody>
+	</table>
+</div>

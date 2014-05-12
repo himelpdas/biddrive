@@ -12,9 +12,10 @@ if auth.user_id:
 	AUTH_ADMIN = auth.has_membership(user_id = auth.user_id, role = "admins")
 	if AUTH_ADMIN:
 		response.menu.append(
-			(T('Admin Portal'), False, URL('admin', 'dealership_requests.html'), [
-				(T('Dealership Requests'), False, URL('admin', 'dealership_requests.html'), []),
-				(T('User Management'), False, URL('admin', 'user_management.html'), []),
+			(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
+				(T('Dealership Requests'), False, URL('admin', 'dealership_requests'), []),
+				(T('User Management'), False, URL('admin', 'user_management'), []),
+				(T('DB Management'), False, URL('appadmin', 'index'), []),
 			]),
 		)
 
@@ -22,12 +23,12 @@ if auth.user_id:
 	if AUTH_DEALER:
 		response.menu.append(
 			(T('Dealer Portal'), False, URL('dealer', 'auction_requests') if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]), [
-				(T('Alerts'), False, URL('dealer', 'reminders'), []),
 				(T('Auction Requests'), False, URL('dealer', 'auction_requests'), []),
-				(T('Billing'), False, URL('dealer', 'billing'), []),
+				(T('Buy Credits'), False, URL('billing', 'buy_credits'), []),
 				(T('Dealership Info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
-				(T('My Auctions'), False, URL('dealer', 'my_auctions'), []),
+				(T('Manage Alerts'), False, URL('dealer', 'reminders'), []),
+				(T('Previous Auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
 
@@ -114,7 +115,7 @@ db.define_table('auction_request',
 		#notnull=True,
 		default=auth.user_id,
 	),
-	Field('temp_id',
+	Field('temp_id', #UUID4 used for guest users and used for digitally signed URL
 		readable=False,
 		writable=False,
 	),
@@ -161,7 +162,7 @@ db.define_table('auction_request',
 		writable =False,
 		#compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], 
 	), #FIXED WITH required=True #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS
-	Field('wish_list',
+	Field('must_haves',
 		requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
 	),	
 	Field('FICO_credit_score',
@@ -254,6 +255,7 @@ db.define_table('auction_request',
 		writable=False,
 		default = 5, #raise limit when purchase made
 """	
+#pip install pillow
 from smartthumb import * #http://goo.gl/tiSyz
 import os
 def resize_offer_image_upload(image, x=1080, y=720, center=True):
@@ -500,6 +502,9 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 	),
 	Field('end_sooner_in_hours', 'integer',
 		#requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, 72)) #hours #handle in controller
+	),
+	Field('final_bid', 'datetime',
+		compute= lambda row: request.now+datetime.timedelta(hours = row['end_sooner_in_hours']) if row['end_sooner_in_hours'] else None,
 	),
 	Field.Method('MSRP_discount',
 		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,

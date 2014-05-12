@@ -9,7 +9,8 @@
 </div>
 {{#############ERROR DIVS################}}
 
-    <section id="feature_slider" style="background-image: url(http://i.imgur.com/IKOzzNH.jpg); background-position: center;">
+    <section id="feature_slider" style="background-image: url({{=URL('static','images/bg_1.jpg')}}{{#http://goo.gl/GzBK3w}}{{#http://i.imgur.com/IKOzzNH.jpg}}); background-position: center;">
+
         <article class="slide active" id="showcasing" style="display: block;">
 
 
@@ -96,10 +97,18 @@
             .mainbox {
                 border-top-left-radius: 5px;
                 border-bottom-left-radius: 5px;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
                 color: #f5f5f5;
 
-                transition-delay: 1s;
             }
+			
+			.mainrow{
+				border-top-left-radius: 5px;
+                border-bottom-left-radius: 5px;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+			}
 
             .mainbox a { 
                 color: #f5f5f5;
@@ -119,10 +128,19 @@
             }
 
             .backdrop {
-                background-color: rgba(0,0,0,0.6);
+                background-color: rgba(0,0,0,0.8);
             }
 
         </style>
+		
+{{"""}}
+http://goo.gl/fPkW7
+  -webkit-filter: blur(5px);
+  -moz-filter: blur(5px);
+  -o-filter: blur(5px);
+  -ms-filter: blur(5px);
+  filter: blur(5px);
+{{"""}}
 
         <div class="container main-container">
             <div class="row text-center slogan">
@@ -130,13 +148,24 @@
             </div>
             <div class="row text-center small-slogan">
                 Choose your new car. We'll contact local dealers.
-            </div>
+			
+				<div class="btn-group" style="display:inline-block;">
+					<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+						{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu">
+							{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
+					</ul>
+				</div>
+			</div>
+			
             <div class="clearfix">&nbsp;</div>
 
-            <div class="row main-row">
-                <div class="col-sm-6 col-sm-offset-3 mainbox backdrop">
+            <div id="mainrow" class="row mainrow" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
+                <div id="mainbox" class="col-sm-6 col-sm-offset-3 mainbox backdrop">
                     
-                    <div class="row">
+                    <div class="row" style="padding-top:5px">
                         {{for each_brand in brands_list:}}
                             <div class="col-xs-4 car-make">
                                 <a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
@@ -144,85 +173,39 @@
                         {{pass}}
                     </div>
                 </div>
-
-                <div class="col-sm-6 sidebox hidden back">
-                    asdf
-                    <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />&nbsp;
+				
+                <div id="sidebox" class="col-sm-6" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
+                    loading...
                 </div>
 
-
+				<script>
+					$("#mainrow").height($("#mainrow").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
+					$("#sidebox").height($("#mainrow").height());
+					$("#mainbox").css({
+					    '-webkit-transition': 'all 0.7s ease-out',
+						'-moz-transition': 'all 0.7s ease-out',
+						'-ms-transition': 'all 0.7s ease-out',
+						'-o-transition': 'all 0.7s ease-out',
+						'transition': 'all 0.7s ease-out',
+					}); {{#transition effect when that div moves}}
+				</script>
+				
             </div>
         </div>
-
-<!--
-            <div class="row part-1">
-                <div class="col-xs-6 part-1-1">
-                    <!--Year--
-                    <div class= "pull-right">
-                        <div class="btn-group pull-right">
-                            <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-                                {{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
-                                <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <!-- dropdown menu links --
-                                    {{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
-                            </ul>
-                        </div>
-                    </div>
-                    <ul class="nav nav-list">
-                        <li class="divider"></li>
-                    </ul>
-
-                    <!--/Year--
-                </div>
-                
-                <div class="col-xs-6 part-1-2">
-                    <!-- empty --
-                    &nbsp;
-
-                </div>
-            </div>
-
-            <div class="row part-2">
-                <div class="col-xs-6 part-2-1">
-                    <div class="row" style="margin-top: 20px;">
-                        {{for each_brand in brands_list:}}
-                            <div class="col-xs-4 car-make">
-                                <a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
-                            </div>
-                        {{pass}}
-                    </div>
-                </div>
-
-                <div class="col-xs-6 part-2-2">
-                    <h2>When dealers compete, You win.</h2>
-                </div>
-
-                <div class="col-xs-6 part-2-3" id="models">
-                <div class="absolute-center">
-                <!-- content via ajax --
-                </div>
-                </div>
-            </div>
-        </div>-->
 
         <script>
             {{for each_brand in brands_list:}}
                 $('#{{=each_brand}}_switch').click(
                     function(evt){
 
-                        $('.mainbox').removeClass('col-sm-offset-3 backdrop');
+                        $('#mainbox').removeClass('col-sm-offset-3 backdrop');
 
-                        $('.sidebox').removeClass('hidden');
+                        $('#mainrow').addClass('backdrop', 700); {{#jquery UI transistion}}
 
-                        $('.main-row').addClass('backdrop');
-
-                        $('.part-2-2').hide();
-
-                        $('.part-2-3')
+                        $('#sidebox')
+						
                             .html('<div class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
-                            .fadeIn()
+                            .show()
                             .load("{{=URL('ajax','vehicle_content', args=[each_brand, year])}}",
 								function( response, status, xhr ) {
 									if ( status == "error" ) {
@@ -258,36 +241,36 @@
                     <!-- Feature -->
                     <div class="col-sm-4 feature">
                         <div class="img_box">
-                          <i class="fa fa-road fa-3x" style="color: black;"></i>
+                          <i class="fa fa-check-square fa-3x" style="color: red;"></i>
                         </div>
                         <div class="text">
-                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center;">Step 1</h3>
-                            <p style= "font-weight:bold; font-size: 15px; text-align:center">
-                                Select your desired car by Make or Type. 
+                            <h3 style="text-transform:uppercase; color:white; letter-spacing: 4px; text-align:center;">Step 1</h3>
+                            <p style= "font-weight:bold; font-size: 16px; color:white; text-align:center">
+                                Select your desired vehicle by year, make, model, trim, color, features, as well as dealer radius. 
                             </p>
                         </div>
                     </div>
                     <!-- Feature -->
                     <div class="col-sm-4 feature">
                         <div class="img_box">
-                            <i class="fa fa-check-square fa-3x" style="color: red;"></i>
+                            <i class="fa fa-users fa-3x" style="color: yellow;"></i>
                         </div>
                         <div class="text">
-                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center">Step 2</h3>
-                            <p style= "font-weight:bold; font-size: 15px; text-align:center">
-                                Choose your car features, and dealer radius.  We will send your request to local dealerships. You will stay anonymous!
+                            <h3 style="text-transform:uppercase; color:white; letter-spacing: 4px; text-align:center">Step 2</h3>
+                            <p style= "font-weight:bold; font-size: 16px; color:white; text-align:center">
+                                We will send your request to local dealerships via reverse auction. You will stay anonymous!
                             </p>
                         </div>
                     </div>
                     <!-- Feature -->
                     <div class="col-sm-4 feature">
                         <div class="img_box">
-                            <i class="fa fa-tags fa-3x" style="color: black;"></i>
+                            <i class="fa fa-gavel fa-3x" style="color: lightgreen;"></i>
                         </div>
                         <div class="text">
-                            <h3 style="text-transform:uppercase; letter-spacing: 4px; text-align:center">Step 3</h3>
-                            <p style= "font-weight:bold; font-size: 15px; text-align:center">
-                                Watch as dealers compete for your business--no emails or negotiating face to face with dealers.
+                            <h3 style="text-transform:uppercase; color:white; letter-spacing: 4px; text-align:center">Step 3</h3>
+                            <p style= "font-weight:bold; font-size: 16px; color:white; text-align:center">
+                                Watch as dealers compete for your business--no emails or haggling face to face with dealers.
                             </p>
                         </div>
                     </div>
@@ -297,7 +280,7 @@
         </div>
     </div>
     
-    <div id="features" style="background-color: #ccc">
+    <div id="features" style="background-color: rgba(204,204,204, 1)">
         <div class="container">
 
             <div class="row text-center" style="margin-bottom:50px">
@@ -389,3 +372,36 @@
             
         </div>
     </div>
+	
+<script>
+	//define event functions
+	function resize_background(){
+		$("#feature_slider").css({
+			'height':$("#mainrow").offset().top + $("#mainrow").height() + 64
+		});
+	}
+	function x_parallax(element, rate, offset){
+		element.css({
+			"background-position":(0,-rate*($(this).scrollTop()+offset)),
+		});
+	}
+	//initialize resize
+	$(window).resize(function(){
+		resize_background();
+	});
+	resize_background();
+	//initialize x_parallax
+	$(window).scroll(function(){
+		x_parallax($("#feature_slider"), 0.10, 640);
+	});
+	x_parallax($("#feature_slider").css({'-webkit-transition': 'all 0.7s ease-out','-moz-transition': 'all 0.7s ease-out','-ms-transition': 'all 0.7s ease-out','-o-transition': 'all 0.7s ease-out','transition': 'all 0.7s ease-out',}), 0.25, 640);
+</script> {{#adjust background to encompass the mainbox}}
+
+{{"""}}
+	$("#feature_slider").css({"background-position":(0,-.25*300)})
+	$(window).scroll(function(){
+		$("#feature_slider").css({
+			"background-position":(0,-.25*($(this).scrollTop()+300)),
+		});
+	});
+{{"""}}
