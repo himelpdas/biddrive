@@ -86,8 +86,17 @@
                 background-color: rgba(0,0,0,0.8);
             }
 			
-			.text{
+			.index_text{
 				text-shadow: black 0.1em 0.1em 0.2em;
+			}
+			a:visited, a:link, a:active{
+				color:#f5f5f5;
+			}
+			a:hover {
+				text-decoration:underline;
+			}
+			.dropdown-toggle:hover{
+				color:gray;
 			}
         </style>
 		
@@ -109,7 +118,7 @@ http://goo.gl/fPkW7
 			
 				<div class="btn-group" style="display:inline-block;">
 					<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-						{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}
+						<strong>{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}</strong>
 						<span class="caret"></span>
 					</a>
 					<ul class="dropdown-menu">
@@ -201,7 +210,7 @@ http://goo.gl/fPkW7
                         <div class="img_box">
                           <i class="fa fa-check-square fa-3x" style="color: red;"></i>
                         </div>
-                        <div class="text">
+                        <div class="index_text">
                             <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center;">Step 1</h3>
                             <p style= "font-weight:bold; font-size: 17px; color:#f5f5f5; text-align:center">
                                 Select your desired vehicle by year, make, model, trim, color, features, and the distance you're willing to go. 
@@ -213,7 +222,7 @@ http://goo.gl/fPkW7
                         <div class="img_box">
                             <i class="fa fa-users fa-3x" style="color: yellow;"></i>
                         </div>
-                        <div class="text">
+                        <div class="index_text">
                             <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Step 2</h3>
                             <p style= "font-weight:bold; font-size: 17px; color:#f5f5f5; text-align:center">
                                 We will send your request to local dealerships via reverse auction. You will remain anonymous. Guaranteed!
@@ -225,10 +234,10 @@ http://goo.gl/fPkW7
                         <div class="img_box">
                             <i class="fa fa-gavel fa-3x" style="color: lightgreen;"></i>
                         </div>
-                        <div class="text">
+                        <div class="index_text">
                             <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Step 3</h3>
                             <p style= "font-weight:bold; font-size: 17px; color:#f5f5f5; text-align:center">
-                                Watch as dealers compete for your business — no emails, phone calls, or negotiating face-to-face with dealers.
+                                Watch as dealers compete for your business — no emails, calls, or haggling face-to-face with dealers.
                             </p>
                         </div>
                     </div>
