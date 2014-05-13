@@ -242,7 +242,7 @@
 								});
 							</script>
 						{{"""}}
-						{{if not auth.is_logged_in:}}
+						{{if not auth.is_logged_in():}}
 							<button id="fake_submit" type="button" class="btn btn-default pull-right">Submit</button>
 						{{else:}}
 							{{=form.custom.submit}}
