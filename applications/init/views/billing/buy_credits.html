@@ -1,6 +1,81 @@
 {{extend 'page_layout.html'}}
-{{for n, each_url in enumerate(sorted(buy_credits_urls)):}}
-	<a href="{{=buy_credits_urls[each_url]}}">Tier {{=n+1}}</a>
-{{pass}}
 
-<h3>Credits: {{=my_credits}}</h1>
+<h3>Credits remaining: <span class="{{if my_credits < 10:}}text-danger{{elif my_credits < 100:}}text-warning{{else:}}text-success{{pass}}">{{=my_credits}}</span></h1>
+<h2></h2>
+
+<a href="{{=buy_credits_urls['tier_1']}}">
+	<div class=" col-md-3 col-sm-6">
+		<div class="buy_buttons panel panel-default text-center">
+			<div class="panel-body">
+				Purchase
+				<h3 style="font-size: 36px">200</h3>
+				Credits	for $200
+			</div>
+			<div class="panel-footer">
+				$1 / credit. Great to try!
+			</div>
+		</div>
+	</div>
+</a>
+
+<a href="{{=buy_credits_urls['tier_2']}}">
+	<div class=" col-md-3 col-sm-6">
+		<div class="buy_buttons panel panel-default text-center">
+			<div class="panel-body">
+				Purchase
+				<h3 style="font-size: 36px">400</h3>
+				Credits	for $300
+			</div>
+			<div class="panel-footer">
+				$0.75 / credit. Great deal.
+			</div>
+		</div>
+	</div>
+</a>
+
+<a href="{{=buy_credits_urls['tier_3']}}">
+	<div class=" col-md-3 col-sm-6">
+		<div class="buy_buttons panel panel-default text-center">
+			<div class="panel-body">
+				Purchase
+				<h3 style="font-size: 36px">1200</h3>
+				Credits	for $600
+			</div>
+			<div class="panel-footer">
+				$0.50 / credit. Even better.
+			</div>		
+		</div>
+</div>
+</a>
+
+<a href="{{=buy_credits_urls['tier_4']}}">
+	<div class=" col-md-3 col-sm-6">
+		<div class="buy_buttons panel panel-default text-center">
+			<div class="panel-body">
+				Purchase
+				<h3 style="font-size: 36px">4800</h3>
+				Credits	for $1200
+			</div>
+			<div class="panel-footer">
+				$0.25 / credit. Best Value!
+			</div>		
+		</div>
+	</div>
+</a>
+
+<div class="row"><div class="col-xs-4 col-xs-offset-4"><img class="img-responsive" src="{{=URL('static', 'images/paypal-secure-payments.png')}}"/></div></div>
+
+<script>
+	$( ".buy_buttons" ).hover(
+		function() {
+			$(this).removeClass('panel-default', 100);
+			$(this).addClass('panel-primary', 150);				
+		}, function() {
+			$(this).removeClass('panel-primary', 100);
+			$(this).addClass('panel-default', 150);
+		}
+	).click(function(){
+		$(this).removeClass('buy_buttons', 100);
+		$(this).addClass('panel-danger', 150);
+	});
+</script>
