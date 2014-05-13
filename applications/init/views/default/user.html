@@ -33,7 +33,9 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 		{{el["_class"] += " form-control" }}
 	{{pass}}
 	{{form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
-
+	
+	{{after_login_string = request.vars['_next'] or ''}}
+	
 	{{#login reset_password profile}}
 	<div class="row" style="margin-top: 50px">
 		<div class="col-xs-7">
@@ -84,6 +86,9 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 					{{=form.custom.submit}}
 
 				{{elif request.args(0) == "login":}}
+					{{if 'force_register' in after_login_string:}}
+						{{redirect(URL(request.controller, request.function, args='register', vars=dict(_next=after_login_string)))}}
+					{{pass}}
 					<div class="form-group">
 						<label class="col-sm-3 control-label">Email</label>
 						<div class="col-sm-9">

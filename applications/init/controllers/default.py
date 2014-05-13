@@ -114,13 +114,21 @@ def request_by_make():
 		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in form.vars.color_preference ]
 	
 	if form.process(onvalidation=computations, hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
-		guest_msg = ' Register or login to view it.'
+		guest_msg = '! Register or login to view it.'
+		msg_color = '$'
+		pre_auction_id = [form.vars.id]
+		if request.post_vars['password'] or request.post_vars['email']: #can't use form.vars for some reason, probably because process removed non SQLFORM vars like email and password
+			if not auth.login_bare(request.post_vars['email'],request.post_vars['password']): #will login automatically if true
+				guest_msg = ', but your email or password was incorrect. Try again!' 
+				msg_color = "!"
+		else: #user didn't login so force registration, use "force_register" arg in URL redirect to modify default behaviour in user.html
+			pre_auction_id.append('force_register')
 		if auth.user_id:
-			guest_msg=' Dealers have been notified!' #user is logged in no need for guest msg
-		session.message = '$Auction submitted!%s' % guest_msg
+			guest_msg='! Dealers have been notified.' #user is logged in no need for guest msg
+		session.message = msg_color + 'Auction submitted%s' % guest_msg
 		auth.add_group('dealers_authorized_for_auction_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
 		redirect(
-			URL('default','pre_auction.html', args=form.vars.id) #http://goo.gl/twPSTK
+			URL('default','pre_auction', args=pre_auction_id) #http://goo.gl/twPSTK
 		)
 		
 	response.title="Request an auction"
