@@ -96,7 +96,8 @@
 				text-decoration:underline;
 			}
 			.dropdown-toggle:hover{
-				color:gray;
+				color:#f5f5f5;
+				text-decoration:underline;
 			}
         </style>
 		
@@ -118,7 +119,7 @@ http://goo.gl/fPkW7
 			
 				<div class="btn-group" style="display:inline-block;">
 					<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-						<strong>{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}</strong>
+						<strong style="color:#f5f5f5">{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}</strong>
 						<span class="caret"></span>
 					</a>
 					<ul class="dropdown-menu">
