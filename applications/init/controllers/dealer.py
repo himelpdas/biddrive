@@ -422,7 +422,7 @@ def auction():
 			if bid_form.process(hideerror = True).accepted:
 				response.message = '$Your new bid is $%s.'%bid_form.vars.bid #redirect not needed since we're dealing with POST
 				if final_message:
-					response.message2 = final_message
+					session.message2 = final_message
 					redirect(URL(args=request.args))
 			elif bid_form.errors:
 				response.message = '!Bid not submitted! Please check for mistakes in form.'
@@ -591,10 +591,12 @@ def auction():
 		msrp = each_offer.auction_request_offer.MSRP()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
 		#last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
-		last_bid_price = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = None
+		last_bid_price = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = final_bid_ended = None
 		if last_bid:
-			last_bid_price = is_not_awaiting_offer = last_bid.bid 
+			last_bid_price = is_not_awaiting_offer = last_bid.bid  #last bid means latest
+			#final bid
 			bid_is_final=final_bid_ends_on = last_bid.final_bid
+			final_bid_ended = (request.now > final_bid_ends_on) if bid_is_final else None #DO NOT USE ALONE
 		is_awaiting_offer = not is_not_awaiting_offer
 		
 		#stuff to do if this offer is owned by viewing dealer
@@ -676,7 +678,8 @@ def auction():
 			'is_my_offer': is_my_offer,
 			'bid_is_final': bool(bid_is_final),
 			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,
-			'final_bid_ended': request.now > final_bid_ends_on if bid_is_final else False,
+			'final_bid_ended': final_bid_ended,
+			'show_buy_now_btn': True if is_owner and not auction_request_info['auction_completed'] and is_not_awaiting_offer and bid_is_final and not final_bid_ended else False,
 			'is_favorite': is_favorite,
 			'offer_messages' : offer_messages,
 			'my_message_form_dealer': my_message_form_dealer if my_auction_request_offer_id == offer_id else '', #add message form to this bid cell, only one needed hence why logic is outside this loop
