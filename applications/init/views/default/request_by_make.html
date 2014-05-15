@@ -2,7 +2,7 @@
 {{"""}}ISSUESZAKI add a modal that asks if you are a new or returning user. for the new button redirect here {{=URL('user', args=['login'])}} and {{=URL('user', args=['register'])}} for the returning{{"""}}
 {{#=BEAUTIFY(response._vars)}}
 
-    <div class="row" style="background: rgba(0,0,0,.1); padding:10px; border-radius: 5px;">
+    <div id="photos_and_reviews" class="row" style="background: rgba(0,0,0,.1); padding:10px; border-radius: 5px;">
         <div class="col-xs-5" id="style_photos">
 			...
         </div>
@@ -13,9 +13,23 @@
 			...
         </div>
     </div>
-
-    <div class="row" style="margin-top: 25px">
-        <div class="col-xs-7">
+	<script>
+		function resize_reviews(){
+			$(".review_and_rating").each(function(i){
+				$(this).height($("#photos_carousel").height()); {{#dont use image as height can go to zero on carousel slide, use carousel itself instead}}
+			}) 
+		}
+		$(function(){
+			$(window).resize(function(){
+				resize_reviews();
+			});
+			$(document).ajaxComplete(function(){
+				resize_reviews();
+			});
+		});
+	</script>
+    <div class="row-fluid" style="margin-top: 25px">
+        <div id="mainform" class="col-xs-8">
 
             {{ form.element("select", _name = "trim_choices")["_class"] += " form-control" }}
 			
@@ -29,6 +43,7 @@
 			{{ form.element("textarea", _name = "describe_trade_in")["_placeholder"] = "Example: Red 2002 Honda Accord LX with 130k miles (mostly highway). It runs great with no mechanical or electrical problems. New tires and battery. It has a spoiler and clean tan leather interior with 6 disc CD changer. It has 5 or 6 quarter-sized dents and several visible scratches on the outside." }}
 			
             {{ form.element("select", _name = "color_preference")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "must_haves")["_class"] += " form-control" }}
             {{ form.element("select", _name = "radius")["_class"] += " form-control" }}
             {{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
             {{ form.element("input", _name = "expected_down_payment")["_class"] += " form-control" }}
@@ -62,7 +77,7 @@
                 </div>                
 				
 				<div class="form-group">
-                    <label  class="col-sm-3 control-label">Must haves <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Make sure you pick a trim that has those features available!"></i></label>
+                    <label  class="col-sm-3 control-label"><i id="must_haves_spinner" class="fa fa-spin"></i> Must haves <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
                     <div class="col-sm-9">
                         {{=form.custom.widget.must_haves}}
 
@@ -300,17 +315,15 @@
 
         </div>
 
-        <div class="col-xs-5">
-			<div class="row-fluid">
+        <div class="col-xs-4">
+			<div class="row">
 				<h5 class="text-light">Trim Specific Details: <i id="stats_spinner" class="fa fa-spin"></i></h5>
 				<div id="trim_stats"></div>
 			</div>
 
-			<div class="row-fluid">
-				<!--<div id="dealer_radius_map"><img src="http://placehold.it/500x400&text=loading map..." class="img-responsive"/></div>-->
-				<div id="dealer_radius_map">
-					<h5 class="pull-right">Input zip code and radius to reveal a map of dealers.</h5>
-				</div>
+			<!--<div id="dealer_radius_map"><img src="http://placehold.it/500x400&text=loading map..." class="img-responsive"/></div>-->
+			<div id="dealer_radius_map">
+				<h5 class="pull-right">Input zip code and radius to reveal a map of dealers.</h5>
 			</div>
 
         </div>        
@@ -340,6 +353,30 @@
 				else {
 					$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
 					$('#colors_spinner').toggleClass("fa-spinner");
+					$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
+				}
+			}
+		//close load call
+		);
+		$('#ms-auction_request_must_haves').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
+		$('#must_haves_spinner').toggleClass("fa-spinner");
+		$('#auction_request_must_haves').load(
+			//url
+			"{{=URL('ajax','must_haves', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):
+			//callback
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading must-haves: ";
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_must_haves" class="alert alert-danger"><span id="ajax_failure_warning_must_haves_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_must_haves_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_must_haves').slideDown();
+					$('#ajax_failure_warning_must_haves').click(function(){
+						$(this).slideUp();
+					});
+				}
+				else {
+					$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //fade back in
+					$('#must_haves_spinner').toggleClass("fa-spinner");
 					$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
 				}
 			}
@@ -416,6 +453,12 @@
 		selectionHeader: '<div style="text-align:center" class="text-light">Colors I want</div>',
 	}); 
 	$("#auction_request_color_preference").multiSelect('refresh');//initialize multiselect
+
+	$("#auction_request_must_haves").multiSelect({
+		selectableHeader: '<div style="text-align:center" class="text-light">Available options</div>',
+		selectionHeader: '<div style="text-align:center" class="text-light">Options I must have</div>',
+	}); 
+	$("#auction_request_must_haves").multiSelect('refresh');//initialize multiselect
 </script>
 
 <script>
@@ -441,7 +484,7 @@
 	$('#auction_request_radius').change(load_radius_map);
 	$('#auction_request_zip_code').change(load_radius_map);
 </script>
- 
+{{"""}}
 <script>
 	function resize_bootstrap_multiselect(){
 		$('.multiselect').css({'width':$("#auction_request_must_haves").parent().width()});
@@ -453,3 +496,4 @@
 	});
 	resize_bootstrap_multiselect();
 </script> {{#http://goo.gl/dh1z2}}
+{{"""}}

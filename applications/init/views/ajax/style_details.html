@@ -16,8 +16,48 @@
 			{{pass}}
 		</strong>
 	</div>
+	<div class="col-xs-12">&nbsp;</div>
 {{pass}}
-<div class="col-xs-12">&nbsp;</div>
+
+{{if options_descriptions:}}
+	<div class="col-xs-6">
+		<strong>Options info</strong>
+	</div>
+	<div class="col-xs-6">
+		<span id="toggle_options_descriptions_items">
+			<strong id = "toggle_options_descriptions_items_click"><a href="javascript:void(0);">Show</a></strong>
+			<strong id = "toggle_options_descriptions_items_clicked"><a href="javascript:void(0);" >Hide</a></strong>
+		</span>
+	</div>
+	<div class= "row-fluid">
+		<div id="options_descriptions_items" class="col-xs-12">
+			<div class="col-xs-12">&nbsp;</div>
+		{{for each_option in options_descriptions:}}
+			<div class="col-xs-12">
+				<span rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="{{=each_option[1]}}"><i class="fa fa-info fa-fw"></i>{{=each_option[0]}}</span>
+			</div>
+		{{pass}}
+		</div>
+	</div>
+	<script>
+		$("#options_descriptions_items").hide();
+		$("#toggle_options_descriptions_items_clicked").hide();
+		$("#toggle_options_descriptions_items_click").click(function(){
+			$("#toggle_options_descriptions_items_click").hide();
+			$("#toggle_options_descriptions_items_clicked").show();
+			$("#options_descriptions_items").slideDown();
+		});
+		$("#toggle_options_descriptions_items_clicked").click(function(){
+			$("#toggle_options_descriptions_items_clicked").hide();
+			$("#toggle_options_descriptions_items_click").show();
+			$("#options_descriptions_items").slideUp(1000);
+		});	
+	</script>
+{{pass}}
+</div>
+<div class="row-fluid">&nbsp;</div>
+
+
 <script>
 	$("[data-toggle=tooltip]").tooltip({container: 'body'});
 </script>{{#http://goo.gl/mcwC7O http://goo.gl/2TRR1R}}

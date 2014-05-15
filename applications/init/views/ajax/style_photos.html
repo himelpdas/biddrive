@@ -3,7 +3,7 @@
 	<div class="carousel-inner">
 	{{active=False}}
 	{{for each_photo in photos:}}
-		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><img src="{{=each_photo}}"/></div>
+		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><img class="vehicle_image" src="{{=each_photo}}"/></div>
 	{{pass}}
 	</div>
   <!-- Carousel nav -->

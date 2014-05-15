@@ -1,3 +1,6 @@
 #ms-auction_request_color_preference { 
 	width:100%; {{#align the multi-select jquery with the bootrap form}}
 }
+#ms-auction_request_must_haves { 
+	width:100%; {{#align the multi-select jquery with the bootrap form}}
+}

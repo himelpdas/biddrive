@@ -279,7 +279,8 @@ def pre_auction():
 	for each_option in exterior_options: #FIXED front and rear splash guard 2014 buick enclave has no msrp and causes page to fail. so if price doesn't exist don't add it
 		if 'price' in each_option and 'baseMSRP' in each_option['price']:
 			exterior_options_names.append([each_option['id'],each_option['name']])
-			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']
+		#TODO CHANGE TO $0 here N/A via ajax in view
 	exterior_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.exterior_options.requires = IS_IN_SET(exterior_options_names, multiple=True)
 	db.auction_request_offer.exterior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators

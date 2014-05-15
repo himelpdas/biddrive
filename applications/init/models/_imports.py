@@ -35,6 +35,9 @@ AUCTION_DAYS_EXPIRE = AUCTION_FAVS_EXPIRE = 3
 AUCTION_DAYS_OFFER_ENDS = 1
 GMAPS_KEY = "AIzaSyBAnNycjSMSADu5n426xjPuT9jWWhri8xI"
 
+if not session.salt:
+	session.salt = uuid.uuid4()
+
 #regex
 REGEX_TELEPHONE = '^1?((-)\d{3}-?|\(\d{3}\))\d{3}-?\d{4}$'
 
