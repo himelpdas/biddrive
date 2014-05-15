@@ -13,6 +13,7 @@ from gluon.admin import *
 from gluon.fileutils import abspath, read_file, write_file
 from gluon.utils import web2py_uuid
 from gluon.tools import Config
+from gluon.compileapp import find_exposed_functions
 from glob import glob
 import shutil
 import platform
@@ -752,7 +753,7 @@ def edit():
 
     if len(request.args) > 2 and request.args[1] == 'controllers':
         controller = (request.args[2])[:-3]
-        functions = regex_expose.findall(data)
+        functions = find_exposed_functions(data)
     else:
         (controller, functions) = (None, None)
 
@@ -1065,7 +1066,7 @@ def design():
     functions = {}
     for c in controllers:
         data = safe_read(apath('%s/controllers/%s' % (app, c), r=request))
-        items = regex_expose.findall(data)
+        items = find_exposed_functions(data)
         functions[c] = items
 
     # Get all views
@@ -1203,7 +1204,7 @@ def plugin():
     functions = {}
     for c in controllers:
         data = safe_read(apath('%s/controllers/%s' % (app, c), r=request))
-        items = regex_expose.findall(data)
+        items = find_exposed_functions(data)
         functions[c] = items
 
     # Get all views
@@ -1906,10 +1907,14 @@ def plugins():
     app = request.args(0)
     from serializers import loads_json
     if not session.plugins:
-        rawlist = urllib.urlopen("http://www.web2pyslices.com/" +
-            "public/api.json/action/list/content/Package?package" +
-            "_type=plugin&search_index=false").read()
-        session.plugins = loads_json(rawlist)
+        try:
+            rawlist = urllib.urlopen("http://www.web2pyslices.com/" +
+                                     "public/api.json/action/list/content/Package?package" +
+                                     "_type=plugin&search_index=false").read()
+            session.plugins = loads_json(rawlist)
+        except:
+            response.flash = T('Unable to download the list of plugins')
+            session.plugins = []
     return dict(plugins=session.plugins["results"], app=request.args(0))
 
 def install_plugin():
@@ -1932,7 +1937,7 @@ def install_plugin():
             session.flash = T('New plugin installed: %s', filename)
         else:
             session.flash = \
-                T('unable to create application "%s"', filename)
+                T('unable to install plugin "%s"', filename)
         redirect(URL(f="plugins", args=[app,]))
     return dict(form=form, app=app, plugin=plugin, source=source)
 

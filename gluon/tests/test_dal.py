@@ -43,12 +43,12 @@ def fix_sys_path():
 
 fix_sys_path()
 
-from dal import DAL, Field, Table, SQLALL
-
 #for travis-ci
 DEFAULT_URI = os.environ.get('DB', 'sqlite:memory')
+
 print 'Testing against %s engine (%s)' % (DEFAULT_URI.partition(':')[0], DEFAULT_URI)
 
+from dal import DAL, Field, Table, SQLALL
 
 ALLOWED_DATATYPES = [
     'string',
@@ -79,9 +79,6 @@ def tearDownModule():
 class TestFields(unittest.TestCase):
 
     def testFieldName(self):
-        return
-
-        # Any table name is supported as long as underlying db does. The following code is ignored.
 
         # Check that Fields cannot start with underscores
         self.assertRaises(SyntaxError, Field, '_abc', 'string')
@@ -199,6 +196,25 @@ class TestFields(unittest.TestCase):
         self.assertEqual(db.tt.insert(aa=t0), 1)
         self.assertEqual(db().select(db.tt.aa)[0].aa, t0)
         db.tt.drop()
+
+
+class TestTables(unittest.TestCase):
+
+    def testTableNames(self):
+
+        # Check that Tables cannot start with underscores
+        self.assertRaises(SyntaxError, Table, None, '_abc')
+
+        # Check that Tables cannot contain punctuation other than underscores
+        self.assertRaises(SyntaxError, Table, None, 'a.bc')
+
+        # Check that Tables cannot be a name of a method or property of DAL
+        for x in ['define_table', 'tables', 'as_dict']:
+            self.assertRaises(SyntaxError, Table, None, x)
+
+        # Check that Table allows underscores in the body of a field name.
+        self.assert_(Table(None, 'a_bc'),
+            "Table isn't allowing underscores in tablename.  It should.")
 
 
 class TestAll(unittest.TestCase):
@@ -866,7 +882,7 @@ class TestRNameTable(unittest.TestCase):
 
     def testSelect(self):
         db = DAL(DEFAULT_URI, check_reserved=['all'])
-        rname = db._adapter.QUOTE_TEMPLATE % 'a very complicated tablename'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'a very complicated tablename'
         db.define_table(
             'easy_name',
             Field('a_field'),
@@ -895,14 +911,14 @@ class TestRNameTable(unittest.TestCase):
         avg = db.easy_name.id.avg()
         rtn = db(db.easy_name.id > 0).select(avg)
         self.assertEqual(rtn[0][avg], 3)
-        rname = db._adapter.QUOTE_TEMPLATE % 'this is the person table'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'this is the person table'
         db.define_table(
             'person',
             Field('name', default="Michael"),
             Field('uuid'),
             rname=rname
             )
-        rname = db._adapter.QUOTE_TEMPLATE % 'this is the pet table'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'this is the pet table'
         db.define_table(
             'pet',
             Field('friend','reference person'),
@@ -975,7 +991,7 @@ class TestRNameTable(unittest.TestCase):
             for key in ['reference','reference FK']:
                 db._adapter.types[key]=db._adapter.types[key].replace(
                 '%(on_delete_action)s','NO ACTION')
-        rname = db._adapter.QUOTE_TEMPLATE % 'the cubs'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'the cubs'
         db.define_table('pet_farm',
             Field('name'),
             Field('father','reference pet_farm'),
@@ -1018,8 +1034,8 @@ class TestRNameTable(unittest.TestCase):
 
     def testJoin(self):
         db = DAL(DEFAULT_URI, check_reserved=['all'])
-        rname = db._adapter.QUOTE_TEMPLATE % 'this is table t1'
-        rname2 = db._adapter.QUOTE_TEMPLATE % 'this is table t2'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'this is table t1'
+        rname2 = db._adapter.__class__.QUOTE_TEMPLATE % 'this is table t2'
         db.define_table('t1', Field('aa'), rname=rname)
         db.define_table('t2', Field('aa'), Field('b', db.t1), rname=rname2)
         i1 = db.t1.insert(aa='1')
@@ -1089,8 +1105,8 @@ class TestRNameFields(unittest.TestCase):
     # tests for highly experimental rname attribute
     def testSelect(self):
         db = DAL(DEFAULT_URI, check_reserved=['all'])
-        rname = db._adapter.QUOTE_TEMPLATE % 'a very complicated fieldname'
-        rname2 = db._adapter.QUOTE_TEMPLATE % 'rrating from 1 to 10'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'a very complicated fieldname'
+        rname2 = db._adapter.__class__.QUOTE_TEMPLATE % 'rrating from 1 to 10'
         db.define_table(
             'easy_name',
             Field('a_field', rname=rname),
@@ -1124,13 +1140,13 @@ class TestRNameFields(unittest.TestCase):
         rtn = db(db.easy_name.id > 0).select(avg)
         self.assertEqual(rtn[0][avg], 2)
 
-        rname = db._adapter.QUOTE_TEMPLATE % 'this is the person name'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'this is the person name'
         db.define_table(
             'person',
             Field('name', default="Michael", rname=rname),
             Field('uuid')
             )
-        rname = db._adapter.QUOTE_TEMPLATE % 'this is the pet name'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'this is the pet name'
         db.define_table(
             'pet',
             Field('friend','reference person'),
@@ -1197,7 +1213,7 @@ class TestRNameFields(unittest.TestCase):
         self.assertEqual(rtn[2].pet.name, 'Gertie')
 
         #aliases
-        rname = db._adapter.QUOTE_TEMPLATE % 'the cub name'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'the cub name'
         if DEFAULT_URI.startswith('mssql'):
             #multiple cascade gotcha
             for key in ['reference','reference FK']:
@@ -1244,7 +1260,7 @@ class TestRNameFields(unittest.TestCase):
 
     def testRun(self):
         db = DAL(DEFAULT_URI, check_reserved=['all'])
-        rname = db._adapter.QUOTE_TEMPLATE % 'a very complicated fieldname'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'a very complicated fieldname'
         for ft in ['string', 'text', 'password', 'upload', 'blob']:
             db.define_table('tt', Field('aa', ft, default='', rname=rname))
             self.assertEqual(db.tt.insert(aa='x'), 1)
@@ -1314,7 +1330,7 @@ class TestRNameFields(unittest.TestCase):
 
     def testInsert(self):
         db = DAL(DEFAULT_URI, check_reserved=['all'])
-        rname = db._adapter.QUOTE_TEMPLATE % 'a very complicated fieldname'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'a very complicated fieldname'
         db.define_table('tt', Field('aa', rname=rname))
         self.assertEqual(db.tt.insert(aa='1'), 1)
         self.assertEqual(db.tt.insert(aa='1'), 2)
@@ -1330,8 +1346,8 @@ class TestRNameFields(unittest.TestCase):
 
     def testJoin(self):
         db = DAL(DEFAULT_URI, check_reserved=['all'])
-        rname = db._adapter.QUOTE_TEMPLATE % 'this is field aa'
-        rname2 = db._adapter.QUOTE_TEMPLATE % 'this is field b'
+        rname = db._adapter.__class__.QUOTE_TEMPLATE % 'this is field aa'
+        rname2 = db._adapter.__class__.QUOTE_TEMPLATE % 'this is field b'
         db.define_table('t1', Field('aa', rname=rname))
         db.define_table('t2', Field('aa', rname=rname), Field('b', db.t1, rname=rname2))
         i1 = db.t1.insert(aa='1')
@@ -1396,77 +1412,30 @@ class TestRNameFields(unittest.TestCase):
         self.assertEqual(len(db.person._referenced_by),0)
         db.person.drop()
 
-
 class TestQuoting(unittest.TestCase):
-    # tests for complex table names
-    def testRun(self):
-        return
-        db = DAL(DEFAULT_URI, check_reserved=['all'])
-
-        t0 = db.define_table('A.table.with.dots and spaces',
-                        Field('f', 'string'))
-        t1 = db.define_table('A.table',
-                        Field('f_other', t0),
-                             Field('words', 'text'))
-
-        blather = 'blah blah and so'
-        t0[0] = {'f': 'content'}
-        t1[0] = {'f_other': int(t0[1]['id']),
-                 'words': blather}
-
-
-        r = db(t1['f_other']==t0.id).select()
-        self.assertEqual(r[0][db['A.table']].words, blather)
-
-        db.define_table('t0', Field('f0'))
-        db.define_table('t1', Field('f1'), Field('t0', db['t0']))
-        db.t0[0]=dict(f0=3)
-        db.t1[0]=dict(f1=3, t0=1)
-
-        rows=db(db.t0.id==db.t1.t0).select()
-        self.assertEqual(rows[0].t1.t0, rows[0].t0.id)
-        if DEFAULT_URI.startswith('mssql'):
-            #there's no drop cascade in mssql
-            t1.drop()
-            t0.drop()
-        else:
-            t0.drop('cascade')
-            t1.drop()
-
-        db.t1.drop()
-        db.t0.drop()
 
     # tests for case sensitivity
     def testCase(self):
-        return
-        db = DAL(DEFAULT_URI, check_reserved=['all'], ignore_field_case=False)
+        db = DAL(DEFAULT_URI, check_reserved=['all'], ignore_field_case=False, entity_quoting=True)
         if DEFAULT_URI.startswith('mssql'):
             #multiple cascade gotcha
             for key in ['reference','reference FK']:
                 db._adapter.types[key]=db._adapter.types[key].replace(
-                '%(on_delete_action)s','NO ACTION') 
-        
-        # test table case
-        t0 = db.define_table('B',
+                '%(on_delete_action)s','NO ACTION')
+
+                
+        t0 = db.define_table('t0',
                         Field('f', 'string'))
-        try:
-            t1 = db.define_table('b',
-                                 Field('B', t0),
-                                 Field('words', 'text'))
-        except Exception, e:
-            # An error is expected when database does not support case
-            # sensitive entity names.
-            if DEFAULT_URI.startswith('sqlite:'):
-                self.assertTrue(isinstance(e, db._adapter.driver.OperationalError))
-                return
-            raise e
+        t1 = db.define_table('b',
+                             Field('B', t0),
+                             Field('words', 'text'))
 
         blather = 'blah blah and so'
         t0[0] = {'f': 'content'}
         t1[0] = {'B': int(t0[1]['id']),
                  'words': blather}
 
-        r = db(db.B.id==db.b.B).select()
+        r = db(db.t0.id==db.b.B).select()
 
         self.assertEqual(r[0].b.words, blather)
 
@@ -1475,12 +1444,12 @@ class TestQuoting(unittest.TestCase):
 
         # test field case
         try:
-            t0 = db.define_table('table is a test',
+            t0 = db.define_table('table_is_a_test',
                                  Field('a_a'),
                                  Field('a_A'))
         except Exception, e:
             # some db does not support case sensitive field names mysql is one of them.
-            if DEFAULT_URI.startswith('mysql:'):
+            if DEFAULT_URI.startswith('mysql:') or DEFAULT_URI.startswith('sqlite:'):
                 db.rollback()
                 return
             raise e
@@ -1493,7 +1462,7 @@ class TestQuoting(unittest.TestCase):
         t0.drop()
 
     def testPKFK(self):
-        
+
         # test primary keys
 
         db = DAL(DEFAULT_URI, check_reserved=['all'], ignore_field_case=False)
@@ -1527,6 +1496,24 @@ class TestQuoting(unittest.TestCase):
             t2.drop()
             t3.drop()
             t4.drop()
+
+
+class TestTableAndFieldCase(unittest.TestCase):
+    """
+    at the Python level we should not allow db.C and db.c because of .table conflicts on windows 
+    but it should be possible to map two different names into distinct tables "c" and "C" at the Python level
+    By default Python models names should be mapped into lower case table names and assume case insensitivity.
+    """
+    def testme(self):
+        return
+
+
+class TestQuotesByDefault(unittest.TestCase):
+    """
+    all default tables names should be quoted unless an explicit mapping has been given for a table.
+    """
+    def testme(self):
+        return
 
 if __name__ == '__main__':
     unittest.main()

@@ -11,7 +11,7 @@ def auction_requests():
 	>>> query &= db.person.id>3
 	>>> query |= db.person.name=='John'
 	"""
-	query = (db.auction_request.id) & (db.auction_request.auction_expires >= request.now) #NON-COMPLETE AUCTIONS WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
+	query = (db.auction_request.id > 0) & (db.auction_request.auction_expires >= request.now) #NON-COMPLETE AUCTIONS WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
 	#query = (db.auction_request.id != db.auction_request_winning_offer.auction_request) & (db.auction_request.auction_expires >= request.now) #This doesn't work for some fucking reason, so filter in memory instead
 	#####filtering#####
 	#build query and filter menu
@@ -111,8 +111,11 @@ def auction_requests():
 		
 	auction_requests = db(query & (db.auction_request.owner_id==db.auth_user.id)).select(orderby=orderby)
 	#####in memory filterting#####
+	#location
 	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
 	auction_requests = auction_requests.exclude(lambda row: row.auction_request['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.auction_request.latitude, row.auction_request.longitude) )#remove requests not in range
+	#winning
+	auction_requests =auction_requests.exclude(lambda row: not db(db.auction_request_winning_offer.auction_request == row.auction_request['id']).select().first())
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	for each_request in auction_requests:
 		each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.auction_request.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
