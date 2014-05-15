@@ -165,26 +165,26 @@ Get rid of dummies and lorem ipsums
 			{{for each_request in auction_requests:}}
 				<tr class="jcorgFilterTextParent">
 					<td>
-						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.id}}" class="btn btn-default btn-sm btn-action"><i class="fa fa-arrow-right"></i></a>
+						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"><i class="fa fa-arrow-right"></i></a>
 
-						<a class="btn btn-default btn-sm btn-action"  data-toggle="modal" data-target="#modal_{{=each_request.id}}"><i class="fa fa-plus"></i></a>
+						<a class="btn btn-default btn-sm btn-action"  data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}"><i class="fa fa-user"></i></a>
 
-						<div class="modal fade" id="modal_{{=each_request.id}}">
+						<div class="modal fade" id="modal_{{=each_request.auction_request.id}}">
 							<div class="modal-dialog">
 								<div class="modal-content">
 									<div class="modal-header">
 										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-										<h4 class="modal-title">Auction Details for "{{=each_request.year}} {{=brands_list[each_request.make]}} {{=each_request.model}} "</h4>
+										<h4 class="modal-title">Auction Details for "{{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make]}} {{=each_request.auction_request.model}} "</h4>
 									</div>
 									<div class="modal-body">
 										<table class="table">
 											<tr>
-												<th>
+												<th style="border-top: none">
 													Name:
 												</th>
 
-												<td>
-													$first_name $last_name
+												<td style="border-top: none">
+													{{=each_request.auth_user.first_name[:1]}}. {{=each_request.auth_user.last_name}}
 												</td>
 											</tr>
 
@@ -194,20 +194,38 @@ Get rid of dummies and lorem ipsums
 												</th>
 
 												<td>
-													$number
+													{{entered=len(db(db.auction_request.owner_id == each_request.auth_user.id).select())}}
+													{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
 												</td>
 											</tr>
 
 											<tr>
 												<th>
-													Wish list 
+													Must haves 
 												</th>
 
 												<td>
 													<ul>
-														<li>item 1</li>
-														<li>item 2</li>
-														<li>item 3</li>
+														{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
+														{{each_request_trim_data = json.loads(each_request.auction_request.trim_data)}}
+														{{must_haves = each_request.auction_request.must_haves}}
+														{{if must_haves:}}
+															{{for each_option in must_haves:}}
+																{{has_option_data = False}}
+																{{for each_option_type in option_names:}}
+																	{{if not has_option_data:}}
+																		{{has_option_data = getOption(each_request_trim_data, each_option_type, each_option)}}
+																		{{if has_option_data:}}
+																			<li>{{=has_option_data['name']}}</li>
+																		{{pass}}
+																	{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
+																{{pass}}
+																{{if not has_option_data:}}
+																	</li>{{=each_option}}</li> {{#then just show the id number}}
+																{{pass}}
+															{{pass}}
+														{{else:}}</li>No preference</li>
+														{{pass}}
 													</ul>
 												</td>
 											</tr>
@@ -218,7 +236,8 @@ Get rid of dummies and lorem ipsums
 												</th>
 
 												<td>
-													$credit_score
+													{{credit_score=each_request.auction_request.FICO_credit_score}}
+													{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}
 												</td>
 											</tr>
 
@@ -228,7 +247,7 @@ Get rid of dummies and lorem ipsums
 												</th>
 
 												<td>
-													$funding logic
+													{{=each_request.auction_request.funding_source}}
 												</td>
 											</tr>
 
@@ -238,25 +257,26 @@ Get rid of dummies and lorem ipsums
 												</th>
 
 												<td>
-													$boolean
+													{{trading=each_request.auction_request.trading_in}}
+													{{if trading:}}Yes{{else:}}No{{pass}}
 												</td>
 											</tr>
-
+										{{if trading:}}
 											<tr>
 												<th>
 													Trading in Description
 												</th>
 
 												<td>
-													$trading_desc
+													{{=each_request.auction_request.describe_trade_in}}
 												</td>
 											</tr>
+										{{pass}}
 										</table>
 
 									</div>
 									<div class="modal-footer">
 										<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-										<button type="button" class="btn btn-primary">Save changes</button>
 									</div>
 								</div>
 							</div>
@@ -264,27 +284,27 @@ Get rid of dummies and lorem ipsums
 					</td>
 
 					<td class="jcorgFilterTextChild">
-						{{=each_request.year}}
+						{{=each_request.auction_request.year}}
 					</td>
 
 					<td class="jcorgFilterTextChild">
-						{{=brands_list[each_request.make]}}
+						{{=brands_list[each_request.auction_request.make]}}
 					</td>
 
 					<td class="jcorgFilterTextChild">
-						{{each_model = each_request.model}} 
+						{{each_model = each_request.auction_request.model}} 
 						{{if len(each_model) < 4:}}{{=each_model.upper()}}{{else:}}{{=each_model.capitalize()}}{{pass}}
 					</td>
 
 					<td class="jcorgFilterTextChild">
-						{{=each_request.trim_name}}
+						{{=each_request.auction_request.trim_name}}
 					</td>
 
 					<td>
-						{{color_names=each_request.color_names}}
+						{{color_names=each_request.auction_request.color_names}}
 						{{color_names.sort()}}
 						{{for each_name in color_names:}}
-							{{for each_color in json.loads(each_request.trim_data)['colors'][1]['options']:}}
+							{{for each_color in json.loads(each_request.auction_request.trim_data)['colors'][1]['options']:}}
 								{{if each_color['name'] == each_name:}}
 									{{color_hex = each_color['colorChips']['primary']['hex']}}
 								{{pass}}
@@ -294,22 +314,22 @@ Get rid of dummies and lorem ipsums
 					</td>
 
 					<td class="jcorgFilterTextChild">
-						{{area=db(db.zipgeo.zip_code == each_request.zip_code).select().first()}}
+						{{area=db(db.zipgeo.zip_code == each_request.auction_request.zip_code).select().first()}}
 						{{=area.city}}, {{=area.state_abbreviation}}
 					</td>
 
 					<td>
-						{{=human(each_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
-						{{#=each_request.auction_expires}}
+						{{=human(each_request.auction_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
+						{{#=each_request.auction_request.auction_expires}}
 					</td>
 
 					<td>
-						{{=each_request.number_of_bids()}}
+						{{=each_request.auction_request.number_of_bids()}}
 					</td>
 
 					<td>
-						{{#='$' + str(int(each_request.lowest_offer().bid)) if each_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
-						{{lowest_offer = each_request.lowest_offer()}} {{#one db call instead of two like above}}
+						{{#='$' + str(int(each_request.auction_request.lowest_offer().bid)) if each_request.auction_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
+						{{lowest_offer = each_request.auction_request.lowest_offer()}} {{#one db call instead of two like above}}
 						{{if lowest_offer:}}
 							{{=lowest_offer.bid}}
 						{{else:}}
@@ -365,11 +385,11 @@ Get rid of dummies and lorem ipsums
 </div>
 
 {{"""}}
-<button id="to-agreement-button-{{=each_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
+<button id="to-agreement-button-{{=each_request.auction_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
 						<script> {{#always add id to id attr when theres more than one}}
-							$('#to-agreement-button-{{=each_request.id}}').click(
+							$('#to-agreement-button-{{=each_request.auction_request.id}}').click(
 								function(){
-									$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.id])}}");
+									$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.auction_request.id])}}");
 								}
 							);
 						</script>

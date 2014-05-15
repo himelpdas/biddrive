@@ -13,25 +13,32 @@ if auth.user_id:
 	if AUTH_ADMIN:
 		response.menu.append(
 			(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
-				(T('Dealership Requests'), False, URL('admin', 'dealership_requests'), []),
-				(T('User Management'), False, URL('admin', 'user_management'), []),
-				(T('DB Management'), False, URL('appadmin', 'index'), []),
+				(T('Dealership requests'), False, URL('admin', 'dealership_requests'), []),
+				(T('User management'), False, URL('admin', 'user_management'), []),
+				(T('DB management'), False, URL('appadmin', 'index'), []),
 			]),
 		)
-
+# if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]
 	AUTH_DEALER = auth.has_membership(user_id = auth.user_id, role = "dealers")
 	if AUTH_DEALER:
 		response.menu.append(
-			(T('Dealer Portal'), False, URL('dealer', 'auction_requests') if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]), [
-				(T('Auction Requests'), False, URL('dealer', 'auction_requests'), []),
-				(T('Buy Credits'), False, URL('billing', 'buy_credits'), []),
-				(T('Dealership Info'), False, URL('dealer', 'dealer_info'), []),
+			(T('Dealer portal'), False, URL('dealer', 'auction_requests'), [
+				(T('Auction requests'), False, URL('dealer', 'auction_requests'), []),
+				(T('Buy credits'), False, URL('billing', 'buy_credits'), []),
+				(T('Dealership info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
-				(T('Manage Alerts'), False, URL('dealer', 'reminders'), []),
-				(T('Previous Auctions'), False, URL('dealer', 'my_auctions'), []),
+				(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
+				(T('Previous auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
-
+	AUTH_BUYER = not auth.has_membership(user_id = auth.user_id, role = "dealers")
+	if AUTH_BUYER:
+		response.menu.append(
+			(T('Buyer portal'), False, URL('default', 'auction_history'), [
+				(T('Auction history'), False, URL('dealer', 'auction_history'), []),
+			]),
+		)
+		
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
 db.define_table('dealership_info',
@@ -162,7 +169,7 @@ db.define_table('auction_request',
 		writable =False,
 		#compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['color_preference'] ], 
 	), #FIXED WITH required=True #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS
-	Field('must_haves',
+	Field('must_haves', 'list:string',
 		requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
 	),	
 	Field('FICO_credit_score',
