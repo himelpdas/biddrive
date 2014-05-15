@@ -1,1 +1,42 @@
 <!-- winning certificate -->
+<div class="row">
+    <div class="col-xs-6 col-sm-3">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{=$hash}}" alt="Winning QR Code" class="img-responsive pull-left">
+    </div>
+
+    <div class="col-xs-6 col-sm-9" style="background-image: url(http://maps.googleapis.com/maps/api/staticmap?center=-15.800513,-47.91378&zoom=12&size=705x300&sensor=false)">
+
+        <div style="background-color: rgba(255,255,255,.7); padding: 10px; margin: 15px 0">
+
+        <h1>Congratulations</h1>
+        <h4>Call this number to get connected with the dealer: (888) 123 - 4567</h4>
+
+        <table class="table">
+            <tr>
+                <th>hash:</th>
+                <td>$hash</td>
+            </tr>
+
+            <tr>
+                <th>Auction ID:</th>
+                <td>$auction_id</td>
+            </tr>
+
+            <tr>
+                <th>Car Details:</th>
+                <td>
+                    <ul>
+                        <li>$spec_1</li>
+                        <li>$spec_2</li>
+                        <li>$spec_3</li>
+                    </ul>
+                </td>
+            </tr>
+
+        </table>
+
+        </div>
+
+
+    </div>           
+</div>
