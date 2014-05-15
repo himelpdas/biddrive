@@ -818,3 +818,6 @@ def my_auctions():
 		my_offer_summaries.append(each_offer_dict)
 	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
+	
+def winner():
+	return dict()
