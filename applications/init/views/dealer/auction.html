@@ -2,9 +2,17 @@
 {{#=BEAUTIFY(response._vars)}}
 
 <div id = "panel-top" class="panel panel-primary">
-	<div class= "panel-heading text-uppercase text-md">
-		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}} {{if False and auction_request_expired:}}<span class="text-danger">(ENDED)<span>{{pass}}</strong>
-		
+	<div class= "panel-heading text-uppercase text-md" style="position:relative;">
+		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}} {{if a_winning_offer or auction_ended_offer_expired:}}<span class="text-danger">(ENDED)<span>{{pass}}</strong>
+		{{if a_winning_offer and (is_owner):}}
+			<div style="position:absolute;width:100%;">
+				<a href="{{=URL('dealer','winner',args=request.args)}}">
+					<button class="btn btn-success btn-xs center-block">
+						<i class="fa fa-fw fa-certificate"></i> View Certificate
+					</button>
+				</a>
+			</div>
+		{{pass}}
 		<span class="pull-right text-xs text-light"> Auction ID: {{=auction_request_info['id']}}</span>
 	</div>
 
@@ -126,11 +134,15 @@
 
 					<tr>
 						<th>
-							{{if not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offers end in{{pass}}
+							{{if a_winning_offer:}}Ended{{elif not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offers end in{{pass}}
 						</th>
 
 						<td>
-							{{clock = auction_request_info['ends_in_seconds'] if not auction_request_info['bidding_ended'] else auction_request_info['auction_ended_offer_expires']}}
+							{{if not a_winning_offer:}}
+								{{clock = auction_request_info['ends_in_seconds'] if not auction_request_info['bidding_ended'] else auction_request_info['auction_ended_offer_expires']}}
+							{{else:}}
+								{{clock=0}}
+							{{pass}}
 							<div id="clock" {{if clock<=86400/2:}}{{#style="color:red"}}class="text-danger"{{pass}}></div>
 							<script src="{{=URL('static','js/jquery.countdown.js')}}"></script>
 							<script type="text/javascript">
@@ -301,8 +313,8 @@
 				{{if each_offer['show_winner_btn']:}}
 					<div style="position:absolute;width:100%;">
 						<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-							<button class="btn btn-success btn-xs center-block">
-								<i class="fa fa-fw fa-certificate"></i> Choose Winner
+							<button class="btn btn-warning btn-xs center-block">
+								<i class="fa fa-fw fa-trophy"></i> Choose Winner
 							</button>
 						</a>
 					</div>
@@ -319,7 +331,7 @@
 			<span class="pull-right">
 				{{is_was = 'Was' if auction_request_expired else 'Is'}}
 				{{if is_owner and not auction_request_expired:}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" rel="tooltip" title="Favorite this bid"><i class="fa fa-heart"></i></button></a>
-				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['is_favorite'] and not :}}<i class="fa fw fa-heart" rel="tooltip" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" rel="tooltip" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
+				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['is_favorite']:}}<i class="fa fw fa-heart" rel="tooltip" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" rel="tooltip" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
 				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-plus"></i></button>
 			</span>
 
