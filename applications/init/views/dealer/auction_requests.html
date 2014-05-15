@@ -143,7 +143,7 @@ Get rid of dummies and lorem ipsums
 		<thead>
 			<tr>
 				{{for each_column in columns:}}
-					<th style="min-width: 80px">
+					<th style="min-width: 90px">
 						{{if sortby in each_column[1]:}}
 							{{sort_pair = each_column[1][:]}}{{#create copy}}
 							{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
@@ -165,7 +165,102 @@ Get rid of dummies and lorem ipsums
 			{{for each_request in auction_requests:}}
 				<tr class="jcorgFilterTextParent">
 					<td>
-						<a href="{{=each_request.digitally_signed_pre_auction_url}}"><button id="to_pre_auction_button_{{=each_request.id}}" class="btn btn-default btn-action"><i class="fa fa-arrow-right"></i></button></a>
+						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.id}}" class="btn btn-default btn-sm btn-action"><i class="fa fa-arrow-right"></i></a>
+
+						<a class="btn btn-default btn-sm btn-action"  data-toggle="modal" data-target="#modal_{{=each_request.id}}"><i class="fa fa-plus"></i></a>
+
+						<div class="modal fade" id="modal_{{=each_request.id}}">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+										<h4 class="modal-title">Auction Details for "{{=each_request.year}} {{=brands_list[each_request.make]}} {{=each_request.model}} "</h4>
+									</div>
+									<div class="modal-body">
+										<table class="table">
+											<tr>
+												<th>
+													Name:
+												</th>
+
+												<td>
+													$first_name $last_name
+												</td>
+											</tr>
+
+											<tr>
+												<th>
+													No. of auctions entered
+												</th>
+
+												<td>
+													$number
+												</td>
+											</tr>
+
+											<tr>
+												<th>
+													Wish list 
+												</th>
+
+												<td>
+													<ul>
+														<li>item 1</li>
+														<li>item 2</li>
+														<li>item 3</li>
+													</ul>
+												</td>
+											</tr>
+
+											<tr>
+												<th>
+													Credit Score
+												</th>
+
+												<td>
+													$credit_score
+												</td>
+											</tr>
+
+											<tr>
+												<th>
+													Funding:
+												</th>
+
+												<td>
+													$funding logic
+												</td>
+											</tr>
+
+											<tr>
+												<th>
+													Trading In:
+												</th>
+
+												<td>
+													$boolean
+												</td>
+											</tr>
+
+											<tr>
+												<th>
+													Trading in Description
+												</th>
+
+												<td>
+													$trading_desc
+												</td>
+											</tr>
+										</table>
+
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+										<button type="button" class="btn btn-primary">Save changes</button>
+									</div>
+								</div>
+							</div>
+						</div>
 					</td>
 
 					<td class="jcorgFilterTextChild">
