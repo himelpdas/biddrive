@@ -9,69 +9,17 @@
 	</div>
 
 	<div class="panel-body">
-		<div class="row-fluid">
+		<div class="row">
 			<div class="col-xs-6">
 				<table class="table table-hover text-sm">
 					<tr>
 						<th style="border-top: none">
-							Name <a href="#info_modal" data-target="#info_modal"><i class="fa fa-info-circle"></i></a>
+							Name
 						</th>
 
 						<td style="border-top: none">
 							{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}}
 						</td>
-
-						{{#info modal}}
-						<div class="modal fade" id="info_modal">
-							<div class="modal-dialog">
-								<div class="modal-content">
-									<div class="modal-header">
-										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-										<h4 class="modal-title">Information about {{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}}</h4>
-									</div>
-									<div class="modal-body">
-										<table class="table table-hover table-bordered">
-											<tr>
-												<th>No. Auctions entered</th>
-												<td> 5</td>
-											</tr>
-
-											<tr>
-												<th>Wish list</th>
-												<td> 
-													<ul>
-														<li>Leather Seats</li>
-														<li>Heated Seats</li>
-													</ul>
-												</td>
-											</tr>
-
-											<tr>
-												<th>Credit Score</th>
-												<td>650 -700</td>
-											</tr>
-
-											<tr>
-												<th>Funding Source</th>
-												<td>
-													{{#funding logic will go here}}
-												</td>
-											</tr>
-
-											<tr>
-												<th>Trading In</th>
-												<td> yes </td>
-											</tr>
-										</table>
-
-									</div>
-									<div class="modal-footer">
-										<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-										<button type="button" class="btn btn-primary">Save changes</button>
-									</div>
-								</div>
-							</div>
-						</div> 						
 					</tr>					
 					
 					<tr>
@@ -327,12 +275,29 @@
 		<div class="panel {{if each_offer['is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	{{pass}}
 		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
-			<span><strong>{{if each_offer['is_not_awaiting_offer'] and not each_offer['bid_is_final']:}}<i class="fa fa-dollar"></i> <u>{{=each_offer['last_bid_price']}}</u>{{elif each_offer['is_awaiting_offer']:}}<i class="fa fa-question"></i> Awaiting{{elif each_offer['bid_is_final']:}}<i class="fa fa-clock-o"></i> <span class="text-danger">{{=int(each_offer['final_bid_ends_in_hours'])}} hours left for a <u>${{=each_offer['last_bid_price']}}</u></span>{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}} {{if each_offer['is_winning_offer']:}}<span class="text-danger">(WINNER)</span>{{pass}}</strong></span> {{if each_offer['show_winner_btn']:}}<div style="position:absolute;width:100%;"><a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}"><button class="btn btn-success btn-xs center-block"><i class="fa fa-fw fa-certificate"></i> Choose Winner</button></a></div>{{elif each_offer['final_bid_ends_in_hours']:}}{{pass}}{{#http://goo.gl/eLX2w6}}{{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
+			<span><strong>{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-question"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}} {{if each_offer['is_winning_offer']:}}<span class="text-danger">(WINNER)</span>{{elif each_offer['final_bid_ended']:}}<span class="text-warning">(EXPIRED)</span>{{elif each_offer['bid_is_final']:}}<span class="text-danger">(FINAL)</span>{{pass}}</strong></span>
+				{{if each_offer['show_winner_btn']:}}
+					<div style="position:absolute;width:100%;">
+						<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
+							<button class="btn btn-success btn-xs center-block">
+								<i class="fa fa-fw fa-certificate"></i> Choose Winner
+							</button>
+						</a>
+					</div>
+				{{elif each_offer['show_buy_now_btn']:}}
+					<div style="position:absolute;width:100%;">
+						<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
+							<button class="btn btn-danger btn-xs center-block">
+								<i class="fa fa-fw fa-clock-o"></i> Buy it now! ({{=int(each_offer['final_bid_ends_in_hours'])}} hours left)
+							</button>
+						</a>
+					</div>
+				{{pass}}{{#http://goo.gl/eLX2w6}}{{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
 
 			<span class="pull-right">
 				{{is_was = 'Was' if auction_request_expired else 'Is'}}
 				{{if is_owner and not auction_request_expired:}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" rel="tooltip" title="Favorite this bid"><i class="fa fa-heart"></i></button></a>
-				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['is_favorite']:}}<i class="fa fw fa-heart" rel="tooltip" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" rel="tooltip" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
+				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['is_favorite'] and not :}}<i class="fa fw fa-heart" rel="tooltip" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" rel="tooltip" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
 				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-plus"></i></button>
 			</span>
 
