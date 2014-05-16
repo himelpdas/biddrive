@@ -1,20 +1,22 @@
 <!-- winning certificate -->
 {{extend 'page_layout.html'}}
 <div class="row">
-    <div class="col-xs-6 col-sm-3">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{='test_hash'}}" alt="Winning QR Code" class="img-responsive pull-left">
+    <div class="col-xs-6">
+        <h1>Congratulations</h1>
     </div>
 
-    <div class="col-xs-6 col-sm-9" style="background-image: url(http://maps.googleapis.com/maps/api/staticmap?center=-15.800513,-47.91378&zoom=12&size=705x300&sensor=false)">
+    <div class="col-xs-6">
+    	<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{='test_hash'}}" alt="Winning QR Code" class="img-responsive pull-right">
+    </div>
 
-        <div style="background-color: rgba(255,255,255,.7); padding: 10px; margin: 15px 0">
+    <div class="col-xs-6">
+    	<img src="http://maps.googleapis.com/maps/api/staticmap?center=-15.800513,-47.91378&zoom=12&size=600x450&sensor=false" alt="Dealer Map" class="img-responsive">
+    </div>
 
-        <h1>Congratulations</h1>
-        <h4>Call this number to get connected with the dealer: (888) 123 - 4567</h4>
-
-        <table class="table">
+    <div class="col-xs-6">
+        <table class="table table-hover">
             <tr>
-                <th>hash:</th>
+                <th>Hash:</th>
                 <td>$hash</td>
             </tr>
 
@@ -34,10 +36,20 @@
                 </td>
             </tr>
 
+            <tr>
+                <th>Address:</th>
+                <td>
+                	<div>$addr_1</div>
+                	<div>$addr_2</div>
+                	<div>$city, $state, $zip</div>
+                </td>
+            </tr>            
+
         </table>
-
-        </div>
-
-
     </div>
+
+    <div class="col-xs-12" style="margin-top: 20px">
+    	<strong>You must bring</strong> the confirmation page and the following document(s) with you at all steps during the application process
+    </div>
+
 </div>
