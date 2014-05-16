@@ -374,7 +374,7 @@ def auction():
 	if is_dealer_with_offer and is_authorized_dealer:
 		is_authorized_dealer_with_offer = True
 		is_participant = True
-		if not db(db.credits.owner==auth.user_id).select().last() <= 0: #do not allow negative balance dealers to participate, instead make them buy more credits.
+		if not db(db.credits.owner==auth.user_id).select().last() >= 0: #do not allow negative balance dealers to participate, instead make them buy more credits.
 			session.message2="@You have a negative balance! You must purchase more credits to participate in auctions."
 			redirect(URL('billing', 'buy_credits'))
 		if db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request==auction_request_id) & (db.auction_request_offer_bid.final_bid != None)).select().first():
