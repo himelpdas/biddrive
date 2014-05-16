@@ -108,10 +108,10 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 -------------------------------------------------- */
 .navbar { padding: 10px 0px 10px 0px }
 .navbar.navbar-inverse {
-    background: #252528;
+    background: #333333;
     border-bottom: 1px solid #585858;
 }
-.navbar.navbar-inverse.navbar-static-top { background-color: #252528 }
+.navbar.navbar-inverse.navbar-static-top { background-color: #333333 }
 .navbar.navbar-inverse.navbar-static-top .container {
     margin-top: 0;
     margin-bottom: 0;
@@ -143,7 +143,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 }
 .navbar.navbar-homepage {
     background: rgba(0, 0, 0, 0.85);
-    border-bottom: 1px solid #252525;
+    border-bottom: 1px solid #333333;
 }
 .navbar.navbar-homepage .container {
     margin-top: 0px !important;
@@ -165,7 +165,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 }
 .navbar .container .collapse .nav .dropdown .caret { margin-bottom: 4px }
 .navbar .container .collapse .nav .dropdown .dropdown-menu {
-    background: #252528;
+    background: #333333;
     -webkit-border-radius: 6px;
     -moz-border-radius: 6px;
     border-radius: 6px;
@@ -192,7 +192,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 #footer {
     min-height: 260px;
     margin-top: 140px;
-    background-color: #252528;
+    background-color: #333333;
     color: #fff;
     padding-top: 35px;
     /* testimonials */
@@ -401,7 +401,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 -------------------------------------------------- */
 @media (max-width: 991px) { 
     body { padding-top: 0 !important }
-    .navbar.navbar-inverse { background: #252528 }
+    .navbar.navbar-inverse { background: #333333 }
 }
 @media (min-width: 768px) and (max-width: 991px) { 
     .navbar { margin-bottom: 0 }
