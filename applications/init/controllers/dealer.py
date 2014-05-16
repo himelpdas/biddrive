@@ -461,6 +461,7 @@ def auction():
 		model = auction_request.model,
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
+		auction_request=auction_request,
 		colors = colors,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
