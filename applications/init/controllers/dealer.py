@@ -821,3 +821,18 @@ def my_auctions():
 	
 def winner():
 	return dict()
+	
+@auth.requires_membership('dealers')
+def dealer_info():
+	response.view = 'default/dealership_form.html'
+	response.title=heading="Edit dealership info"
+	my_info =db(db.dealership_info.id == auth.user_id).select().last()
+
+	city_field = request.post_vars['city']
+	if city_field:
+		request.post_vars['city'] = " ".join(map(lambda word: word.capitalize(), city_field.split(' ')))
+	form=SQLFORM(db.dealership_info,my_info,_class="form-horizontal", hideerror=True)
+
+	if form.process().accepted:
+		response.message="$Changes were saved!"
+	return dict(heading=heading,form=form)

@@ -124,7 +124,7 @@
                 </div>
 				
                 <div class="form-group">
-                    <label class="col-sm-3 control-label">Funding source</label>
+                    <label class="col-sm-3 control-label">How will you pay?</label>
                     <div class="col-sm-9">
                         {{=form.custom.widget.funding_source}}
 
@@ -199,24 +199,23 @@
 						{{pass}}
                     </div>
                 </div>
-				
 				<script>
 					//functions
 					function funding_souce_additional_questions(that){
-						if ($(that).val() != "Paying in full") {
+						if ($(that).val() != "cash") { //cash
 							$("#expected_down_payment").slideDown();
 						}
 						else {
 							$("#auction_request_expected_down_payment").val('');
 							$("#expected_down_payment").hide();
 						}
-						if ($(that).val() == "Taking a loan") {
+						if ($(that).val() == "loan") { //loan
 							$("#financing").slideDown();
 						}
 						else {
 							$("#financing").hide();
 						}						
-						if ($(that).val() == "Taking a lease") {
+						if ($(that).val() == "lease") { //lease
 							$("#lease_term").slideDown();
 							$("#lease_mileage").slideDown();
 						}

@@ -1,6 +1,149 @@
  {{extend 'page_layout.html'}}
  {{#BEAUTIFY(response._vars)}}
- {{=form}}
+ <h3>{{=heading}}</h3>
+ <h4>&nbsp;</h4>
+ <div class="row-fluid">
+	<div class="col-xs-7">
+		{{=form.custom.begin}}
+				{{ form.element("input", _name = "dealership_name")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "specialty")["_class"] += " form-control" }}
+				{{ form.element("textarea", _name = "mission_statement")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "phone")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "address_line_1")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "address_line_2")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "city")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "state")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "country")["_class"] += " form-control" }}
+				{{ form.element("input", _type = "submit")["_id"] = "submit" }}
+				{{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+				
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Dealership name</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.dealership_name}}
+
+						{{if form.errors['dealership_name']:}}
+							<div class="alert alert-warning">{{=form.errors['trim_choices']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Specialty</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.specialty}}
+
+						{{if form.errors['specialty']:}}
+							<div class="alert alert-warning">{{=form.errors['specialty']}}</div>
+						{{pass}}
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Mission statement</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.mission_statement}}
+
+						{{if form.errors['mission_statement']:}}
+							<div class="alert alert-warning">{{=form.errors['mission_statement']}}</div>
+						{{pass}}
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Phone</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.phone}}
+
+						{{if form.errors['phone']:}}
+							<div class="alert alert-warning">{{=form.errors['phone']}}</div>
+						{{pass}}
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Address line 1</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.address_line_1}}
+
+						{{if form.errors['address_line_1']:}}
+							<div class="alert alert-warning">{{=form.errors['address_line_1']}}</div>
+						{{pass}}
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Address line 2</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.address_line_2}}
+
+						{{if form.errors['address_line_2']:}}
+							<div class="alert alert-warning">{{=form.errors['address_line_2']}}</div>
+						{{pass}}
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-3 control-label">City</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.city}}
+
+						{{if form.errors['city']:}}
+							<div class="alert alert-warning">{{=form.errors['city']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-sm-3 control-label">State</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.state}}
+
+						{{if form.errors['state']:}}
+							<div class="alert alert-warning">{{=form.errors['state']}}</div>
+						{{pass}}
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Zip code</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.zip_code}}
+
+						{{if form.errors['zip_code']:}}
+							<div class="alert alert-warning">{{=form.errors['zip_code']}}</div>
+						{{pass}}
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Country</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.country}}
+
+						{{if form.errors['country']:}}
+							<div class="alert alert-warning">{{=form.errors['country']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				{{=form.custom.submit}}
+		{{=form.custom.end}}
+	</div>
+</div>
  <script>
 	$("#dealership_info_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
  </script>
+ <script>
+	function resize_bootstrap_multiselect(){
+		$('.multiselect').css({
+			'width':$("#dealership_info_specialty").parent().width()
+		});
+	}
+
+ 	$('#dealership_info_specialty').multiselect({'maxHeight':240});
+	$(window).resize(function(){
+		resize_bootstrap_multiselect();
+	});
+	resize_bootstrap_multiselect();
+</script> {{#http://goo.gl/dh1z2}}

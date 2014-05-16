@@ -20,13 +20,14 @@
 
     <script src="http://code.jquery.com/jquery-latest.js"></script>
 	
-	{{if request.function in ['dealership_form']:}}
+	{{if request.function in ['dealership_form', 'dealer_info']:}}
 		<script src="{{=URL('static','js/jquery.maskedinput.min.js')}}"  type="text/javascript"></script>{{#http://bit.ly/1ck85cy}}
 	{{pass}}
 	{{if request.function in ['request_by_make', 'pre_auction']:}}
 		<link rel="stylesheet" type="text/css" href="{{=URL('static','css/multi-select.css')}}"> {{#http://bit.ly/OOENrP}}
 		<script src="{{=URL('static','js/jquery.multi-select.js')}}"  type="text/javascript"></script>
-		
+	{{pass}}
+	{{if request.function in ['dealership_form', 'dealer_info']:}}
 		<script type="text/javascript" src="{{=URL('static','js/bootstrap-multiselect.js')}}"></script> {{#http://goo.gl/dh1z2}}
 		<link rel="stylesheet" href="{{=URL('static','css/bootstrap-multiselect.css')}}" type="text/css"/>
 	{{pass}}
@@ -62,7 +63,7 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 </head>
-{{if request.function == "index":}}
+{{if request.function == "index" and request.controller=="default":}}
 	<div id = "y_parallax" style="z-index:-1000;width:100%;height:100%;position:fixed;background-image:url({{=URL('static','images/bg_2.jpg')}})"></div> 
 	{{#"""}}
 	<script>
