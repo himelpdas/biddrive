@@ -246,7 +246,7 @@ def pre_auction():
 	
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
-	#return dict(offer_form=None, options=options) #uncomment for testing
+	#return dict(form=None, options=options) #uncomment for testing
 	interior_options = []
 	exterior_options = []
 	mechanical_options = []
@@ -263,7 +263,7 @@ def pre_auction():
 			package_options = each_option_type['options']
 		if each_option_type['category'] == 'Additional Fees':
 			fees_options = each_option_type['options']
-	#return dict(offer_form=None, options=options, interior_options=interior_options, mechanical_options=mechanical_options) #uncomment for testing
+	#return dict(form=None, options=options, interior_options=interior_options, mechanical_options=mechanical_options) #uncomment for testing
 	#USEFUL #interior_options = options.get('interior') or [] #returns None, but get blank [] instead
 	interior_options_names = []
 	exterior_options_names = []
@@ -321,9 +321,9 @@ def pre_auction():
 	
 	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
 	
-	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
+	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 	
-	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
+	if form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 			my_piggy = db(db.credits.owner==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
@@ -333,7 +333,7 @@ def pre_auction():
 			URL('auction', args=[auction_request_id])
 		)
 	
-	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
+	return dict(form = form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
 
 """
 @auth.requires(request.args(0))
