@@ -27,18 +27,19 @@ if auth.user_id:
 				(T('Buy credits'), False, URL('billing', 'buy_credits'), []),
 				(T('Dealership info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
-				(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
+				#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
 				(T('Previous auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
+	"""
 	AUTH_BUYER = not auth.has_membership(user_id = auth.user_id, role = "dealers")
 	if AUTH_BUYER:
 		response.menu.append(
 			(T('Buyer portal'), False, URL('default', 'auction_history'), [
-				(T('Auction history'), False, URL('dealer', 'auction_history'), []),
+				(T('Auction history'), False, URL('default', 'auction_history'), []),
 			]),
 		)
-		
+	"""
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
 all_brands_list = OD() #TEMP

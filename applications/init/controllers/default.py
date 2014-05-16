@@ -200,6 +200,33 @@ def after_login_portal():
 	if AUTH_ADMIN:
 		redirect(URL('admin', 'dealership_requests'))
 	redirect(URL('index'))
+	
+@auth.requires(not auth.has_membership(role='dealers'))
+def auction_history():
+	my_auctions = db(db.auction_request.owner_id == auth.user_id).select(orderby=~db.auction_request.id)
+	response.title = heading = "Auction history for %s" % auth.user.first_name.capitalize()
+	for each_request in my_auctions:
+		#ended logic
+		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_request.id).select().last()
+		auction_is_completed = (a_winning_offer or each_request.offer_expired())
+		ends_in_human=False
+		if not auction_is_completed:
+			ends_in_human = human(each_request.offer_expires - request.now, precision=2, past_tense='{}', future_tense='{}')
+		ends_in_human = ends_in_human if ends_in_human else "Ended"
+		each_request['ends_in_human'] = ends_in_human
+		each_request['auction_url']=URL('dealer','auction', args=[each_request.id])
+		#colors logic
+		trim_data= json.loads(each_request['trim_data'])
+		each_request['color_names_and_codes'] = []
+		#last bid logic
+		last_bid = db(db.auction_request_offer_bid.auction_request == each_request.id).select().last()
+		last_bid_price = '$%s'%last_bid.bid if last_bid else "No Bids!"
+		each_request['last_bid_price'] = last_bid_price
+		last_bid_time = human(request.now-last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if last_bid else None
+		each_request['last_bid_time'] = last_bid_time
+		for each_color in each_request['color_names']:
+			each_request['color_names_and_codes'].append([each_color, getColorHexByNameOrID(each_color, trim_data)])
+	return dict(my_auctions=my_auctions,heading =heading)
 
 def user():
 	"""

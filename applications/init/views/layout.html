@@ -81,7 +81,7 @@
 {{pass}}
 <body class="pull_top">
 
-    <div class="navbar navbar-inverse navbar-fixed-top {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller =='default' and request.function=='index':}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
+    <div class="navbar navbar-inverse navbar-fixed-top {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller in ['default','dealer'] and request.function in ['index', 'winner']:}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
         <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle pull-right" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -122,7 +122,11 @@
                         <ul class="dropdown-menu">
 							{{#auth_next = '/%s/%s/%s/'%(request.application, request.controller, request.function)}} {{#make sure user redirected to proper pages after auth form submissions}}
 							{{#auth_next_portal = '/%s/%s/%s'%(request.application, 'default', 'after_login_portal')}}
-                            <li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>
+							{{if auth.is_logged_in() and not auth.has_membership(user_id = auth.user_id, role = "dealers"):}}
+								<li><a href="{{=URL('default', 'auction_history',)}}"><i class="fa fa-gavel fa-fw"></i>Auction history</a></li>
+								<li class="divider"></li>
+							{{pass}}
+							<li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>
                             <li><a href="{{=URL('default', 'user', args=['change_password' if auth.is_logged_in() else 'request_reset_password'])}}"><i class="fa fa-lock fa-fw"></i>{{if auth.is_logged_in():}}Password{{else:}}Lost password?{{pass}}</a></li>
 							<li class="divider"></li>
 							{{if auth.is_logged_in():}}

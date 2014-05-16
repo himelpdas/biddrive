@@ -795,15 +795,24 @@ def my_auctions():
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
 		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
-		my_last_bid_time = my_last_bid.created_on if my_last_bid else "N/A"
+		my_last_bid_time = human(request.now-my_last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if my_last_bid else None
 		#get the best price for this auction
 		auction_best_bid = each_offer.auction_request.lowest_offer()
 		auction_best_price = '$%s'%auction_best_bid.bid if auction_best_bid else "No Bids!"
+		
+		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_offer.auction_request.id).select().last()
+		auction_is_completed = (a_winning_offer or each_offer.auction_request.offer_expired())
+		ends_in_human=False
+		if not auction_is_completed:
+			ends_in_human = human(each_offer.auction_request.offer_expires - request.now, precision=2, past_tense='{}', future_tense='{}')
+		
 		each_offer_dict = {
+			'ends_in_human': ends_in_human if ends_in_human else "Ended",
 			'year':each_offer.auction_request.year,
 			'make':each_offer.auction_request.make,
 			'model':each_offer.auction_request.model,
 			'trim':each_offer.auction_request.trim_name,
+			'vin':each_offer.auction_request_offer.vin_number,
 			'color': color_names[each_offer.auction_request_offer.color],
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -819,8 +828,11 @@ def my_auctions():
 	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
 	
+@auth.requires(request.args(0))
 def winner():
-	return dict()
+	auction_id = request.args[0]
+	hashed_id = lookup_hash.hashlittle(auction_id)
+	return dict(auction_id = auction_id, hashed_id=hashed_id)
 	
 @auth.requires_membership('dealers')
 def dealer_info():
