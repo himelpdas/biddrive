@@ -17,6 +17,9 @@
 		function resize_reviews(){
 			$(".review_and_rating").each(function(i){
 				$(this).height($("#photos_carousel").height()); {{#dont use image as height can go to zero on carousel slide, use carousel itself instead}}
+				if ($("#photos_carousel").height() == 0){
+					resize_reviews(); {{#recursive to make sure it is done}}
+				}
 			}) 
 		}
 		$(function(){
