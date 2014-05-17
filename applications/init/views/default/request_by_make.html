@@ -23,7 +23,7 @@
 			$(window).resize(function(){
 				resize_reviews();
 			});
-			$("#style_photos").ajaxComplete(function(){
+			$(document).ajaxComplete(function(){ {{#ajax complete only works on document}}
 				resize_reviews();
 			});
 		});

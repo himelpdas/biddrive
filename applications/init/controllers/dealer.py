@@ -541,7 +541,7 @@ def auction():
 		is_favorite = None		
 		if last_favorite_choice:
 			is_favorite = last_favorite_choice.auction_request_offer == offer_id #see if the fave is this offer
-
+	
 		
 		#options
 		interior_options = []
