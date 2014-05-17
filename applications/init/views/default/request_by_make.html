@@ -14,21 +14,23 @@
         </div>
     </div>
 	<script>
-		function resize_reviews(){
-			$(".review_and_rating").each(function(i){
-				$(this).height($("#photos_carousel").height()); {{#dont use image as height can go to zero on carousel slide, use carousel itself instead}}
-				if ($("#photos_carousel").height() == 0){
-					resize_reviews(); {{#recursive to make sure it is done}}
-				}
-			}) 
-		}
-		$(function(){
-			$(window).resize(function(){
+ 		function resize_reviews(){
+ 			$(".review_and_rating").each(function(i){
+ 				$(this).css(
+					{
+						'height':$("#photos_carousel").height(),
+						'overflow-y':'auto'
+					}
+				); {{#dont use image as height can go to zero on carousel slide, use carousel itself instead}}
+ 			}) 
+ 		}
+		$(window).resize(function(){
+			resize_reviews();
+		});
+		$(document).ajaxComplete(function(){ {{#ajax complete only works on document}}
+			$(window).load(function(){ {{#make sure all images are loaded before resizing reviews or Else it could be zero http://goo.gl/WSuKPP}}
 				resize_reviews();
-			});
-			$(document).ajaxComplete(function(){ {{#ajax complete only works on document}}
-				resize_reviews();
-			});
+			})
 		});
 	</script>
     <div class="row-fluid" style="margin-top: 25px">
@@ -337,75 +339,81 @@
 
 
  <script type="text/javascript">
+	var firstload = true; {{#Need a way to preserve values on form error on first load. Checks to see If select values exist from previous form submission.}}
  	function load_color_preference(){
-		$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
-		$('#colors_spinner').toggleClass("fa-spinner");
-		$('#auction_request_color_preference').load(
-			//url
-			"{{=URL('ajax','color_preference', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):
-			//callback
-			function( response, status, xhr ) {
-				if ( status == "error" ) {
-					var msg = "Error loading colors: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_color" class="alert alert-danger"><span id="ajax_failure_warning_color_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_color_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-					$('#ajax_failure_warning_color').slideDown();
-					$('#ajax_failure_warning_color').click(function(){
-						$(this).slideUp();
-					});
+		if ($(".ms-elem-selectable").length == false || firstload==false){ {{#http://goo.gl/aZeO3n}} {{#if multiselect options is black or page already loaded}}
+			$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
+			$('#colors_spinner').toggleClass("fa-spinner");
+			$('#auction_request_color_preference').load(
+				//url
+				"{{=URL('ajax','color_preference', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):
+				//callback
+				function( response, status, xhr ) {
+					if ( status == "error" ) {
+						var msg = "Error loading colors: ";
+						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_color" class="alert alert-danger"><span id="ajax_failure_warning_color_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+						$('#ajax_failure_warning_color_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+						$('#ajax_failure_warning_color').slideDown();
+						$('#ajax_failure_warning_color').click(function(){
+							$(this).slideUp();
+						});
+					}
+					else {
+						$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
+						$('#colors_spinner').toggleClass("fa-spinner");
+						$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
+					}
 				}
-				else {
-					$('#ms-auction_request_color_preference').fadeTo(250, 1.0); //fade back in
-					$('#colors_spinner').toggleClass("fa-spinner");
-					$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
+			//close load call
+			);
+			$('#ms-auction_request_must_haves').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
+			$('#must_haves_spinner').toggleClass("fa-spinner");
+			$('#auction_request_must_haves').load(
+				//url
+				"{{=URL('ajax','must_haves', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):
+				//callback
+				function( response, status, xhr ) {
+					if ( status == "error" ) {
+						var msg = "Error loading must-haves: ";
+						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_must_haves" class="alert alert-danger"><span id="ajax_failure_warning_must_haves_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+						$('#ajax_failure_warning_must_haves_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+						$('#ajax_failure_warning_must_haves').slideDown();
+						$('#ajax_failure_warning_must_haves').click(function(){
+							$(this).slideUp();
+						});
+					}
+					else {
+						$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //fade back in
+						$('#must_haves_spinner').toggleClass("fa-spinner");
+						$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
+					}
 				}
-			}
-		//close load call
-		);
-		$('#ms-auction_request_must_haves').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
-		$('#must_haves_spinner').toggleClass("fa-spinner");
-		$('#auction_request_must_haves').load(
-			//url
-			"{{=URL('ajax','must_haves', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):
-			//callback
-			function( response, status, xhr ) {
-				if ( status == "error" ) {
-					var msg = "Error loading must-haves: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_must_haves" class="alert alert-danger"><span id="ajax_failure_warning_must_haves_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_must_haves_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-					$('#ajax_failure_warning_must_haves').slideDown();
-					$('#ajax_failure_warning_must_haves').click(function(){
-						$(this).slideUp();
-					});
+			//close load call
+			);
+			//display trim stats
+			$('#stats_spinner').toggleClass("fa-spinner");
+			$('#trim_stats').slideUp(400).load(
+				"{{=URL('ajax','style_details', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
+				function( response, status, xhr ) {
+					if ( status == "error" ) {
+						var msg = "Error loading stats: ";
+						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+						$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+						$('#ajax_failure_warning_stats').slideDown();
+						$('#ajax_failure_warning_stats').click(function(){
+							$(this).slideUp();
+						});
+					}
+					else {
+						$(this).slideDown(200); //fade back in
+						$('#stats_spinner').toggleClass("fa-spinner");
+					}
 				}
-				else {
-					$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //fade back in
-					$('#must_haves_spinner').toggleClass("fa-spinner");
-					$(this).multiSelect('refresh'); //refresh the multiselect widget because new options were loaded via ajax after the trim was changed
-				}
-			}
-		//close load call
-		);
-		//display trim stats
-		$('#stats_spinner').toggleClass("fa-spinner");
-		$('#trim_stats').slideUp(400).load(
-			"{{=URL('ajax','style_details', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //implement fail like above
-			function( response, status, xhr ) {
-				if ( status == "error" ) {
-					var msg = "Error loading stats: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-					$('#ajax_failure_warning_stats').slideDown();
-					$('#ajax_failure_warning_stats').click(function(){
-						$(this).slideUp();
-					});
-				}
-				else {
-					$(this).slideDown(200); //fade back in
-					$('#stats_spinner').toggleClass("fa-spinner");
-				}
-			}
-		);
+			);
+		}
+		else{
+			firstload=false;
+		};
 		//display reviews
 		$('#loading_reviews').slideDown();
 		$('#reviews').slideUp(600).load(
@@ -448,7 +456,9 @@
 	}
  	$('#auction_request_trim_choices').change(load_color_preference); //change color preference options when you change trim dropdown
 	
-	load_color_preference(); //first ajax call based on initial trim selection //remove during testing
+	$(document).ready(function(){
+		load_color_preference(); //first ajax call based on initial trim selection //remove during testing
+	});{{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or Else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
  </script>
 
 <script>

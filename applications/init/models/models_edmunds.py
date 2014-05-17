@@ -194,7 +194,7 @@ db.define_table('auction_request',
 		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '620 or less', ]), multiple=False, zero="I don't know")),
 	),
 	Field('funding_source',
-		requires = IS_IN_SET([['cash',"I'm buying it (cash)"],['loan',"I'll Take a loan"], ['lease','I want to lease']], multiple=False, zero=None) #TODO change to choose one
+		requires = IS_IN_SET([['cash',"I'm buying it (cash)"],['loan',"I'll take a loan"], ['lease','I want to lease']], multiple=False, zero=None) #TODO change to choose one
 	),	
 	Field('financing',
 		requires = IS_EMPTY_OR(financing_requires) #put in default controller but leave here for admin purposes
