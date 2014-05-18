@@ -1,4 +1,12 @@
 {{#limit = 10}} {{# ZAKI change this value to the limit number of reviews you want}}
+{{#clean reviews}}
+{{dirty_reviews = reviews}}
+{{reviews=[]}}
+{{for each_review in dirty_reviews:}}
+	{{if float(each_review['averageRating']) > 3.0:}}
+		{{reviews.append(each_review)}}
+	{{pass}}
+{{pass}}
 <div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
 	<!-- Indicators -->
 	<ol class="carousel-indicators" style="position:absolute;top:0px;">
