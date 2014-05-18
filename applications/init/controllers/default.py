@@ -25,6 +25,8 @@ def index():
 	if request.args(0):
 		year = request.args[0]
 		
+	response.message="!%s is currently under development"%APP_NAME
+		
 	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
 
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results

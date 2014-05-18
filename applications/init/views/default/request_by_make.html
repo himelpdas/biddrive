@@ -27,7 +27,7 @@
 		$(window).resize(function(){
 			resize_reviews();
 		});
-		$(document).ajaxComplete(function(){ {{#ajax complete only works on document}}
+		$(document).ajaxComplete(function(){ {{#resize reviews after ajax calls. ajax complete only works on document}}
 			$(this).imagesLoaded(function(){ {{#make sure all images are loaded before resizing reviews or Else it could be zero http://goo.gl/WSuKPP}}
 				resize_reviews();
 			})
