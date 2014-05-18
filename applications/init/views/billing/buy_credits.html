@@ -1,7 +1,7 @@
 {{extend 'page_layout.html'}}
 
 <h3>Credits remaining: <span class="{{if my_credits < 10:}}text-danger{{elif my_credits < 100:}}text-warning{{else:}}text-success{{pass}}">{{=my_credits}}</span></h1>
-<h2></h2>
+<hr></hr>
 
 <a href="{{=buy_credits_urls['tier_1']}}">
 	<div class=" col-md-3 col-sm-6">

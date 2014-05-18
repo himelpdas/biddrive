@@ -130,7 +130,7 @@ db.define_table('dealership_info',
 )
 
 expected_down_payment_requires = IS_INT_IN_RANGE(0, 100000)
-financing_requires = IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (bank, credit union, etc.)']), multiple=False, zero="Choose one") #put in default controller
+financing_requires = IS_IN_SET(sorted(['Through the dealership or manufacturer', 'Self-finance (bank, credit union, etc.)']), multiple=False, zero="Choose one") #put in default controller
 lease_mileage_requires = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero="Choose one")
 lease_term_requires = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one")
 db.define_table('auction_request',

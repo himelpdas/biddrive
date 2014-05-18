@@ -174,7 +174,7 @@ Get rid of dummies and lorem ipsums
 								<div class="modal-content">
 									<div class="modal-header">
 										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-										<h4 class="modal-title">Auction Details for "{{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make]}} {{=each_request.auction_request.model}} "</h4>
+										<h4 class="modal-title">Request details for a {{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make].capitalize()}} {{=each_request.auction_request.model.capitalize()}}</h4>
 									</div>
 									<div class="modal-body" style="max-height:480px;overflow-y:auto;">
 										<table class="table">

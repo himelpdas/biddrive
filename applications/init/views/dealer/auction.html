@@ -29,16 +29,6 @@
 							{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}} <a href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-info-circle"></i></a>
 						</td>
 					</tr>					
-					
-					<tr>
-						<th>
-							Entering
-						</th>
-
-						<td>
-							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
-						</td>
-					</tr>
 
 					<tr>
 						<th>
@@ -76,6 +66,34 @@
 							{{pass}}
 						</td>
 					</tr>
+					<tr>
+						<th>
+							Must haves 
+						</th>
+
+						<td>
+							{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
+							{{each_request_trim_data = json.loads(auction_request_info['auction_request']['trim_data'])}}
+							{{must_haves = auction_request_info['auction_request']['must_haves']}}
+							{{if must_haves:}}
+								{{for each_option in must_haves:}}
+									{{has_option_data = False}}
+									{{for each_option_type in option_names:}}
+										{{if not has_option_data:}}
+											{{has_option_data = getOption(each_request_trim_data, each_option_type, each_option)}}
+											{{if has_option_data:}}
+												<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;{{=has_option_data['name']}}</div>
+											{{pass}}
+										{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
+									{{pass}}
+									{{if not has_option_data:}}
+										</div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;{{=each_option}}</div> {{#then just show the id number}}
+									{{pass}}
+								{{pass}}
+							{{else:}}<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;No preference</div>
+							{{pass}}
+						</td>
+					</tr>
 				</table>
 			</div>
 			<div class="col-xs-6">
@@ -99,7 +117,7 @@
 					
 					<tr>
 						<th>
-							Total dealers
+							Dealers bidding
 						</th>
 
 						<td>
@@ -259,32 +277,11 @@
 					<table class="table">
 						<tr>
 							<th style="border-top:none;">
-								Must haves 
+								Entering
 							</th>
 
 							<td style="border-top:none;">
-								<ul>
-									{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
-									{{each_request_trim_data = json.loads(auction_request_info['auction_request']['trim_data'])}}
-									{{must_haves = auction_request_info['auction_request']['must_haves']}}
-									{{if must_haves:}}
-										{{for each_option in must_haves:}}
-											{{has_option_data = False}}
-											{{for each_option_type in option_names:}}
-												{{if not has_option_data:}}
-													{{has_option_data = getOption(each_request_trim_data, each_option_type, each_option)}}
-													{{if has_option_data:}}
-														<li>{{=has_option_data['name']}}</li>
-													{{pass}}
-												{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
-											{{pass}}
-											{{if not has_option_data:}}
-												</li>{{=each_option}}</li> {{#then just show the id number}}
-											{{pass}}
-										{{pass}}
-									{{else:}}<li>No preference</li>
-									{{pass}}
-								</ul>
+								{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
 							</td>
 						</tr>
 
@@ -327,7 +324,7 @@
 							</th>
 
 							<td>
-								${{=auction_request_info['auction_request']['financing']}}
+								{{=auction_request_info['auction_request']['financing']}}
 							</td>
 						</tr>
 					{{pass}}										

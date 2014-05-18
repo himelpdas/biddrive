@@ -2,14 +2,27 @@
 	<!-- Carousel items -->
 	<div class="carousel-inner">
 	{{active=False}}
-	{{for each_photo in photos:}}
-		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><img class="vehicle_image" src="{{=each_photo}}"/></div>
+	{{for numb, each_photo in enumerate(photos):}}
+		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><a data-toggle="modal" data-target="#vehicle_image_{{=numb}}" href="javascript:void(0);"><img class="vehicle_image" src="{{=each_photo}}"/></a></div>
 	{{pass}}
 	</div>
   <!-- Carousel nav -->
   <a class="carousel-control left" href="#photos_carousel" data-slide="prev">&lsaquo;</a>
   <a class="carousel-control right" href="#photos_carousel" data-slide="next">&rsaquo;</a>
 </div>
+
+{{for numb, each_photo in enumerate(photos):}}
+	<div id="vehicle_image_{{=numb}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="vehicle_image_{{=numb}}" aria-hidden="true">
+	  <div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-body">
+				<img src="{{=each_photo}}" class="img-responsive">
+			</div>
+		</div>
+	  </div>
+	</div>
+{{pass}}
+
 <script>
 	$('#photos_carousel').hide().fadeIn(1000).carousel();
 </script>
