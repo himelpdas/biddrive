@@ -28,7 +28,7 @@
 			resize_reviews();
 		});
 		$(document).ajaxComplete(function(){ {{#ajax complete only works on document}}
-			$(window).load(function(){ {{#make sure all images are loaded before resizing reviews or Else it could be zero http://goo.gl/WSuKPP}}
+			$(this).imagesLoaded(function(){ {{#make sure all images are loaded before resizing reviews or Else it could be zero http://goo.gl/WSuKPP}}
 				resize_reviews();
 			})
 		});
