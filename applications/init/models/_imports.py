@@ -8,6 +8,7 @@ import time
 from ago import human
 import simplecolor
 from collections import OrderedDict as OD #http://bit.ly/OhPhQr
+import lookup_hash
 
 from math import *
 

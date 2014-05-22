@@ -20,13 +20,17 @@
 
     <script src="http://code.jquery.com/jquery-latest.js"></script>
 	
-	{{if request.function in ['dealership_form']:}}
+	{{if request.function in ['dealership_form', 'dealer_info']:}}
 		<script src="{{=URL('static','js/jquery.maskedinput.min.js')}}"  type="text/javascript"></script>{{#http://bit.ly/1ck85cy}}
+	{{pass}}
+	{{if request.function in ['request_by_make']:}}
+		<script src="{{=URL('static','js/imagesloaded.pkgd.min.js')}}"  type="text/javascript"></script> {{#http://goo.gl/edQvam}}
 	{{pass}}
 	{{if request.function in ['request_by_make', 'pre_auction']:}}
 		<link rel="stylesheet" type="text/css" href="{{=URL('static','css/multi-select.css')}}"> {{#http://bit.ly/OOENrP}}
 		<script src="{{=URL('static','js/jquery.multi-select.js')}}"  type="text/javascript"></script>
-		
+	{{pass}}
+	{{if request.function in ['dealership_form', 'dealer_info']:}}
 		<script type="text/javascript" src="{{=URL('static','js/bootstrap-multiselect.js')}}"></script> {{#http://goo.gl/dh1z2}}
 		<link rel="stylesheet" href="{{=URL('static','css/bootstrap-multiselect.css')}}" type="text/css"/>
 	{{pass}}
@@ -62,7 +66,7 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 </head>
-{{if request.function == "index":}}
+{{if request.function == "index" and request.controller=="default":}}
 	<div id = "y_parallax" style="z-index:-1000;width:100%;height:100%;position:fixed;background-image:url({{=URL('static','images/bg_2.jpg')}})"></div> 
 	{{#"""}}
 	<script>
@@ -80,7 +84,7 @@
 {{pass}}
 <body class="pull_top">
 
-    <div class="navbar navbar-inverse navbar-fixed-top {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller =='default' and request.function=='index':}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
+    <div class="navbar navbar-inverse navbar-fixed-top {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller in ['default','dealer'] and request.function in ['index', 'winner']:}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
         <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle pull-right" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -121,7 +125,11 @@
                         <ul class="dropdown-menu">
 							{{#auth_next = '/%s/%s/%s/'%(request.application, request.controller, request.function)}} {{#make sure user redirected to proper pages after auth form submissions}}
 							{{#auth_next_portal = '/%s/%s/%s'%(request.application, 'default', 'after_login_portal')}}
-                            <li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>
+							{{if auth.is_logged_in() and not auth.has_membership(user_id = auth.user_id, role = "dealers"):}}
+								<li><a href="{{=URL('default', 'auction_history',)}}"><i class="fa fa-gavel fa-fw"></i>Auction history</a></li>
+								<li class="divider"></li>
+							{{pass}}
+							<li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>
                             <li><a href="{{=URL('default', 'user', args=['change_password' if auth.is_logged_in() else 'request_reset_password'])}}"><i class="fa fa-lock fa-fw"></i>{{if auth.is_logged_in():}}Password{{else:}}Lost password?{{pass}}</a></li>
 							<li class="divider"></li>
 							{{if auth.is_logged_in():}}
@@ -229,7 +237,7 @@
                     </div>
 
                     <div style="margin-top:75px">
-                        <img src="http://haggledaddy.com/assets/img/edmunds.png" alt="Powered by Edmunds" class="pull-right">
+                        <img src="{{=URL('static','images/edmunds.png')}}" alt="Powered by Edmunds" class="pull-right">
                     </div>
                 </div>
             </div>

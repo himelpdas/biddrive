@@ -4,3 +4,19 @@
 #ms-auction_request_must_haves { 
 	width:100%; {{#align the multi-select jquery with the bootrap form}}
 }
+
+#ms-auction_request_offer_interior_options { 
+	width:100%; {{#align the multi-select jquery with the bootrap form}}
+}
+#ms-auction_request_offer_exterior_options { 
+	width:100%; {{#align the multi-select jquery with the bootrap form}}
+}
+#ms-auction_request_offer_mechanical_options { 
+	width:100%; {{#align the multi-select jquery with the bootrap form}}
+}
+#ms-auction_request_offer_package_options { 
+	width:100%; {{#align the multi-select jquery with the bootrap form}}
+}
+#ms-auction_request_offer_fees_options { 
+	width:100%; {{#align the multi-select jquery with the bootrap form}}
+}

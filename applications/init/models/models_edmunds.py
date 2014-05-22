@@ -27,20 +27,26 @@ if auth.user_id:
 				(T('Buy credits'), False, URL('billing', 'buy_credits'), []),
 				(T('Dealership info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
-				(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
+				#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
 				(T('Previous auctions'), False, URL('dealer', 'my_auctions'), []),
 			]),
 		)
+	"""
 	AUTH_BUYER = not auth.has_membership(user_id = auth.user_id, role = "dealers")
 	if AUTH_BUYER:
 		response.menu.append(
 			(T('Buyer portal'), False, URL('default', 'auction_history'), [
-				(T('Auction history'), False, URL('dealer', 'auction_history'), []),
+				(T('Auction history'), False, URL('default', 'auction_history'), []),
 			]),
 		)
-		
+	"""
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
+all_brands_list = OD() #TEMP
+for each_year in YEAR_RANGE:
+	all_brands_list.update(getBrandsList(each_year)) #doesn't matter if each_year is int or str because getBrandsList uses string formatting
+
+all_brands_list_sorted = sorted(all_brands_list.items(), key=lambda x: x[1]) #niceName, name
 db.define_table('dealership_info',
 	Field('owner_id', db.auth_user,
 		readable=False,
@@ -58,6 +64,13 @@ db.define_table('dealership_info',
 	),
 	Field('dealership_name',
 		requires=IS_NOT_EMPTY(),
+	),	
+	Field('specialty', 'list:string',
+		requires=[IS_IN_SET(all_brands_list_sorted, zero=None, multiple=True),IS_NOT_EMPTY(error_message="You must pick at least one brand"),],
+		widget =SQLFORM.widgets.multiple.widget
+	),	
+	Field('mission_statement', 'text',
+		requires = IS_NOT_EMPTY(),
 	),
 	Field('phone',
 		requires = IS_MATCH(
@@ -70,7 +83,8 @@ db.define_table('dealership_info',
 	),
 	Field('address_line_2'),	
 	Field('city',
-		requires=IS_NOT_EMPTY(),
+		requires=[IS_NOT_EMPTY(),IS_IN_DB(db,'zipgeo.city')],
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('state',
 		requires=IS_IN_SET([
@@ -115,6 +129,10 @@ db.define_table('dealership_info',
 	),
 )
 
+expected_down_payment_requires = IS_INT_IN_RANGE(0, 100000)
+financing_requires = IS_IN_SET(sorted(['Through the dealership or manufacturer', 'Self-finance (bank, credit union, etc.)']), multiple=False, zero="Choose one") #put in default controller
+lease_mileage_requires = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero="Choose one")
+lease_term_requires = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one")
 db.define_table('auction_request',
 	Field('owner_id', db.auth_user,
 		readable=False,
@@ -176,19 +194,19 @@ db.define_table('auction_request',
 		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '620 or less', ]), multiple=False, zero="I don't know")),
 	),
 	Field('funding_source',
-		requires = IS_IN_SET(sorted(['Taking a loan', 'Taking a lease', 'Paying in full']), multiple=False, zero=None) #TODO change to choose one
+		requires = IS_IN_SET([['cash',"I'm buying it (cash)"],['loan',"I'll take a loan"], ['lease','I want to lease']], multiple=False, zero=None) #TODO change to choose one
 	),	
 	Field('financing',
-		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (your bank, credit union, etc.)']), multiple=False, zero="Choose one")) #put in default controller
+		requires = IS_EMPTY_OR(financing_requires) #put in default controller but leave here for admin purposes
 	),
 	Field('expected_down_payment', 'integer',
-		requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 100000)) #leave here just in case even tho it's done in the controller
+		requires = IS_EMPTY_OR(expected_down_payment_requires) #leave here just in case even tho it's done in the controller
 	),
 	Field('lease_mileage', 
-		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero="Choose one"))
+		requires = IS_EMPTY_OR(lease_mileage_requires)
 	),	
 	Field('lease_term', 
-		requires = IS_EMPTY_OR(IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one"))
+		requires = IS_EMPTY_OR(lease_term_requires)
 	),
 	Field('trading_in', 'boolean',
 	),	

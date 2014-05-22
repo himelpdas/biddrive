@@ -246,7 +246,7 @@ def pre_auction():
 	
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
-	#return dict(offer_form=None, options=options) #uncomment for testing
+	#return dict(form=None, options=options) #uncomment for testing
 	interior_options = []
 	exterior_options = []
 	mechanical_options = []
@@ -263,7 +263,7 @@ def pre_auction():
 			package_options = each_option_type['options']
 		if each_option_type['category'] == 'Additional Fees':
 			fees_options = each_option_type['options']
-	#return dict(offer_form=None, options=options, interior_options=interior_options, mechanical_options=mechanical_options) #uncomment for testing
+	#return dict(form=None, options=options, interior_options=interior_options, mechanical_options=mechanical_options) #uncomment for testing
 	#USEFUL #interior_options = options.get('interior') or [] #returns None, but get blank [] instead
 	interior_options_names = []
 	exterior_options_names = []
@@ -321,9 +321,9 @@ def pre_auction():
 	
 	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
 	
-	offer_form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
+	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 	
-	if offer_form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
+	if form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 			my_piggy = db(db.credits.owner==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
@@ -333,7 +333,7 @@ def pre_auction():
 			URL('auction', args=[auction_request_id])
 		)
 	
-	return dict(offer_form = offer_form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
+	return dict(form = form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
 
 """
 @auth.requires(request.args(0))
@@ -374,7 +374,7 @@ def auction():
 	if is_dealer_with_offer and is_authorized_dealer:
 		is_authorized_dealer_with_offer = True
 		is_participant = True
-		if not db(db.credits.owner==auth.user_id).select().last() <= 0: #do not allow negative balance dealers to participate, instead make them buy more credits.
+		if 0 >= db(db.credits.owner==auth.user_id).select().last().credits: #do not allow negative balance dealers to participate, instead make them buy more credits.
 			session.message2="@You have a negative balance! You must purchase more credits to participate in auctions."
 			redirect(URL('billing', 'buy_credits'))
 		if db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request==auction_request_id) & (db.auction_request_offer_bid.final_bid != None)).select().first():
@@ -461,6 +461,7 @@ def auction():
 		model = auction_request.model,
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
+		auction_request=auction_request,
 		colors = colors,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
@@ -540,7 +541,7 @@ def auction():
 		is_favorite = None		
 		if last_favorite_choice:
 			is_favorite = last_favorite_choice.auction_request_offer == offer_id #see if the fave is this offer
-
+	
 		
 		#options
 		interior_options = []
@@ -795,15 +796,24 @@ def my_auctions():
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
 		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
-		my_last_bid_time = my_last_bid.created_on if my_last_bid else "N/A"
+		my_last_bid_time = human(request.now-my_last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if my_last_bid else None
 		#get the best price for this auction
 		auction_best_bid = each_offer.auction_request.lowest_offer()
 		auction_best_price = '$%s'%auction_best_bid.bid if auction_best_bid else "No Bids!"
+		
+		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_offer.auction_request.id).select().last()
+		auction_is_completed = (a_winning_offer or each_offer.auction_request.offer_expired())
+		ends_in_human=False
+		if not auction_is_completed:
+			ends_in_human = human(each_offer.auction_request.offer_expires - request.now, precision=2, past_tense='{}', future_tense='{}')
+		
 		each_offer_dict = {
+			'ends_in_human': ends_in_human if ends_in_human else "Ended",
 			'year':each_offer.auction_request.year,
 			'make':each_offer.auction_request.make,
 			'model':each_offer.auction_request.model,
 			'trim':each_offer.auction_request.trim_name,
+			'vin':each_offer.auction_request_offer.vin_number,
 			'color': color_names[each_offer.auction_request_offer.color],
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -819,5 +829,23 @@ def my_auctions():
 	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
 	
+@auth.requires(request.args(0))
 def winner():
-	return dict()
+	auction_id = request.args[0]
+	hashed_id = lookup_hash.hashlittle(auction_id)
+	return dict(auction_id = auction_id, hashed_id=hashed_id)
+	
+@auth.requires_membership('dealers')
+def dealer_info():
+	response.view = 'default/dealership_form.html'
+	response.title=heading="Edit dealership info"
+	my_info =db(db.dealership_info.id == auth.user_id).select().last()
+
+	city_field = request.post_vars['city']
+	if city_field:
+		request.post_vars['city'] = " ".join(map(lambda word: word.capitalize(), city_field.split(' ')))
+	form=SQLFORM(db.dealership_info,my_info,_class="form-horizontal", hideerror=True)
+
+	if form.process().accepted:
+		response.message="$Changes were saved!"
+	return dict(heading=heading,form=form)

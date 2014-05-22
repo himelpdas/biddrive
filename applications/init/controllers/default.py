@@ -25,6 +25,8 @@ def index():
 	if request.args(0):
 		year = request.args[0]
 		
+	response.message="!%s is currently under development"%APP_NAME
+		
 	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
 
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
@@ -66,21 +68,21 @@ def request_by_make():
 		option_codes = session.option_codes
 	
 	#making sure child-inputs are enforced if parent-inputs are selected
-	if request.post_vars['funding_source'] != "Paying in full":
-		db.auction_request.expected_down_payment.requires = IS_INT_IN_RANGE(0, 100000)
+	if request.post_vars['funding_source'] != 'cash':  #cash 
+		db.auction_request.expected_down_payment.requires = expected_down_payment_requires
 	else: #is paying in full
 		request.post_vars['financing'] = None #so erase other crap
 		request.post_vars['expected_down_payment'] = None
 		request.post_vars['lease_term'] = None
 		request.post_vars['lease_mileage'] = None
 	
-	if request.post_vars['funding_source'] == "Taking a lease":
-		db.auction_request.lease_term.requires = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one") #force a choice if taking a lease
-		db.auction_request.lease_mileage.requires = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero="Choose one") #TODO MAKE LESS DRY
+	if request.post_vars['funding_source'] == 'lease': #lease
+		db.auction_request.lease_term.requires = lease_term_requires #force a choice if taking a lease
+		db.auction_request.lease_mileage.requires = lease_mileage_requires #TODO MAKE LESS DRY
 		request.post_vars['financing'] = None #disable others
 		
-	if request.post_vars['funding_source'] == "Taking a loan":
-		db.auction_request.financing.requires = IS_IN_SET(sorted(['Through the manufacturer', 'Self-finance (your bank, credit union, etc.)']), multiple=False, zero="Choose one")
+	if request.post_vars['funding_source'] == 'loan': #loan
+		db.auction_request.financing.requires = financing_requires
 		request.post_vars['lease_term'] = None
 		request.post_vars['lease_mileage'] = None
 		
@@ -171,7 +173,11 @@ def hello_dealers():
 def dealership_form():
 	#db.dealership_info.created_on.default=request.now #moved to model thanks to update argument
 	
-	form = SQLFORM(db.dealership_info)
+	city_field = request.post_vars['city']
+	if city_field:
+		request.post_vars['city'] = " ".join(map(lambda word: word.capitalize(), city_field.split(' ')))
+	
+	form = SQLFORM(db.dealership_info, _class="form-horizontal", hideerror=True)
 	
 	if not db(db.dealership_info.owner_id == auth.user_id).select():
 		if form.process().accepted:
@@ -183,7 +189,7 @@ def dealership_form():
 	
 	response.title = 'Become our partner!'
 	response.subtitle = 'Sell your cars on our website'
-	return dict(form = form)
+	return dict(form = form, heading="Become a %s partnering dealer"%APP_NAME)
 	
 def faq():
 	return dict()
@@ -196,6 +202,33 @@ def after_login_portal():
 	if AUTH_ADMIN:
 		redirect(URL('admin', 'dealership_requests'))
 	redirect(URL('index'))
+	
+@auth.requires(not auth.has_membership(role='dealers'))
+def auction_history():
+	my_auctions = db(db.auction_request.owner_id == auth.user_id).select(orderby=~db.auction_request.id)
+	response.title = heading = "Auction history for %s" % auth.user.first_name.capitalize()
+	for each_request in my_auctions:
+		#ended logic
+		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_request.id).select().last()
+		auction_is_completed = (a_winning_offer or each_request.offer_expired())
+		ends_in_human=False
+		if not auction_is_completed:
+			ends_in_human = human(each_request.offer_expires - request.now, precision=2, past_tense='{}', future_tense='{}')
+		ends_in_human = ends_in_human if ends_in_human else "Ended"
+		each_request['ends_in_human'] = ends_in_human
+		each_request['auction_url']=URL('dealer','auction', args=[each_request.id])
+		#colors logic
+		trim_data= json.loads(each_request['trim_data'])
+		each_request['color_names_and_codes'] = []
+		#last bid logic
+		last_bid = db(db.auction_request_offer_bid.auction_request == each_request.id).select().last()
+		last_bid_price = '$%s'%last_bid.bid if last_bid else "No Bids!"
+		each_request['last_bid_price'] = last_bid_price
+		last_bid_time = human(request.now-last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if last_bid else None
+		each_request['last_bid_time'] = last_bid_time
+		for each_color in each_request['color_names']:
+			each_request['color_names_and_codes'].append([each_color, getColorHexByNameOrID(each_color, trim_data)])
+	return dict(my_auctions=my_auctions,heading =heading)
 
 def user():
 	"""

@@ -126,14 +126,14 @@ Get rid of dummies and lorem ipsums
 					{{pass}}
 				</div>
 	 		</div>
-
+		{{"""}}
 	 		<!-- modal summon button -->
 			<div  class="pull-right" style="margin-left:15px; margin-right:15px; display:inline-block">
 				<a class="btn btn-info" href="#{{=request.function}}_alerts" data-toggle="modal" data-target="#{{=request.function}}_alerts">
 					<i class="fa fa-exclamation-circle"></i>
 				</a>
 			</div>	 		 		
-
+		{{"""}}
 	 	</div>
 	 </div>
 </div>
@@ -174,9 +174,9 @@ Get rid of dummies and lorem ipsums
 								<div class="modal-content">
 									<div class="modal-header">
 										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-										<h4 class="modal-title">Auction Details for "{{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make]}} {{=each_request.auction_request.model}} "</h4>
+										<h4 class="modal-title">Request details for a {{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make].capitalize()}} {{=each_request.auction_request.model.capitalize()}}</h4>
 									</div>
-									<div class="modal-body">
+									<div class="modal-body" style="max-height:480px;overflow-y:auto;">
 										<table class="table">
 											<tr>
 												<th style="border-top: none">
@@ -232,7 +232,7 @@ Get rid of dummies and lorem ipsums
 
 											<tr>
 												<th>
-													Credit Score
+													Credit score
 												</th>
 
 												<td>
@@ -247,13 +247,55 @@ Get rid of dummies and lorem ipsums
 												</th>
 
 												<td>
-													{{=each_request.auction_request.funding_source}}
+													{{funding=each_request.auction_request.funding_source}}
+													{{=funding.capitalize()}}
 												</td>
 											</tr>
-
+										{{if funding in ['lease', 'loan']:}}
 											<tr>
 												<th>
-													Trading In:
+													Expected down payment:
+												</th>
+
+												<td>
+													${{=each_request.auction_request.expected_down_payment}}
+												</td>
+											</tr>
+										{{pass}}
+										{{if funding == 'loan':}}
+											<tr>
+												<th>
+													Financing:
+												</th>
+
+												<td>
+													${{=each_request.auction_request.financing}}
+												</td>
+											</tr>
+										{{pass}}										
+										{{if funding == 'lease':}}
+											<tr>
+												<th>
+													Lease mileage:
+												</th>
+
+												<td>
+													{{=each_request.auction_request.lease_mileage}} miles
+												</td>
+											</tr>
+											<tr>
+												<th>
+													Lease term:
+												</th>
+
+												<td>
+													{{=each_request.auction_request.lease_term}}
+												</td>
+											</tr>
+										{{pass}}
+											<tr>
+												<th>
+													Trading in:
 												</th>
 
 												<td>
@@ -264,7 +306,7 @@ Get rid of dummies and lorem ipsums
 										{{if trading:}}
 											<tr>
 												<th>
-													Trading in Description
+													Trade in description
 												</th>
 
 												<td>
@@ -346,6 +388,7 @@ Get rid of dummies and lorem ipsums
 </div>
 
 {{#MODALS}}
+{{"""}}
 <!--  {{request.function}}_alerts modal -->
 <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="{{=request.function}}_alerts">
 	<div class="modal-dialog">
@@ -384,7 +427,6 @@ Get rid of dummies and lorem ipsums
   	</div>
 </div>
 
-{{"""}}
 <button id="to-agreement-button-{{=each_request.auction_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
 						<script> {{#always add id to id attr when theres more than one}}
 							$('#to-agreement-button-{{=each_request.auction_request.id}}').click(

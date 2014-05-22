@@ -1,17 +1,246 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
 {{#"""}}
+
 <div class="row-fluid">
-	<div class = "span6">
-		{{=offer_form}}
+	<div class = "col-xs-7">
+	
+		{{=form.custom.begin}}
+				{{ form.element("input", _name = "vin_number")["_class"] += " form-control" }}
+				{{# form.element("input", _name = "remember_data_for_30_days")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "color")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "interior_options")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "exterior_options")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "mechanical_options")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "package_options")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "fees_options")["_class"] += " form-control" }}
+				{{ form.element("textarea", _name = "summary")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "exterior_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "interior_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "front_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "rear_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "tire_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "dashboard_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "passenger_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "trunk_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "underhood_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "roof_image")["_class"] += " form-control" }}
+				{{ form.element(_type="file", _name = "other_image")["_class"] += " form-control" }}
+				{{ form.element("input", _type = "submit")["_id"] = "submit" }}
+				{{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+				
+				<div class="form-group">
+					<label class="col-sm-3 control-label">VIN number</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.vin_number}}
+
+						{{if form.errors['vin_number']:}}
+							<div class="alert alert-warning">{{=form.errors['vin_number']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Remember for 45 days</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.remember_data_for_30_days}}
+
+						{{if form.errors['remember_data_for_30_days']:}}
+							<div class="alert alert-warning">{{=form.errors['remember_data_for_30_days']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Color</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.color}}
+
+						{{if form.errors['color']:}}
+							<div class="alert alert-warning">{{=form.errors['color']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Interior options</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.interior_options}}
+
+						{{if form.errors['interior_options']:}}
+							<div class="alert alert-warning">{{=form.errors['interior_options']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Exterior options</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.exterior_options}}
+
+						{{if form.errors['exterior_options']:}}
+							<div class="alert alert-warning">{{=form.errors['exterior_options']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Mechanical options</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.mechanical_options}}
+
+						{{if form.errors['mechanical_options']:}}
+							<div class="alert alert-warning">{{=form.errors['mechanical_options']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Package options</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.package_options}}
+
+						{{if form.errors['package_options']:}}
+							<div class="alert alert-warning">{{=form.errors['package_options']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Fees</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.fees_options}}
+
+						{{if form.errors['fees_options']:}}
+							<div class="alert alert-warning">{{=form.errors['fees_options']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Summary</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.summary}}
+
+						{{if form.errors['summary']:}}
+							<div class="alert alert-warning">{{=form.errors['summary']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Exterior image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.exterior_image}}
+
+						{{if form.errors['exterior_image']:}}
+							<div class="alert alert-warning">{{=form.errors['exterior_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Interior image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.interior_image}}
+
+						{{if form.errors['interior_image']:}}
+							<div class="alert alert-warning">{{=form.errors['interior_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Front image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.front_image}}
+
+						{{if form.errors['front_image']:}}
+							<div class="alert alert-warning">{{=form.errors['front_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Rear image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.rear_image}}
+
+						{{if form.errors['rear_image']:}}
+							<div class="alert alert-warning">{{=form.errors['rear_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Tire image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.tire_image}}
+
+						{{if form.errors['tire_image']:}}
+							<div class="alert alert-warning">{{=form.errors['tire_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Dashboard image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.dashboard_image}}
+
+						{{if form.errors['dashboard_image']:}}
+							<div class="alert alert-warning">{{=form.errors['dashboard_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Passenger image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.passenger_image}}
+
+						{{if form.errors['passenger_image']:}}
+							<div class="alert alert-warning">{{=form.errors['passenger_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Trunk image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.trunk_image}}
+
+						{{if form.errors['trunk_image']:}}
+							<div class="alert alert-warning">{{=form.errors['trunk_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Underhood image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.underhood_image}}
+
+						{{if form.errors['underhood_image']:}}
+							<div class="alert alert-warning">{{=form.errors['underhood_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Roof image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.roof_image}}
+
+						{{if form.errors['roof_image']:}}
+							<div class="alert alert-warning">{{=form.errors['roof_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Other image</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.other_image}}
+
+						{{if form.errors['other_image']:}}
+							<div class="alert alert-warning">{{=form.errors['other_image']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				{{=form.custom.submit}}
+		{{=form.custom.end}}
 	</div>
-	<div class= "span6">
-		<h4>
-			Calculated MSRP
-		</h4>
-		<h3>
-			$<span id='msrp'>{{=int(msrp_by_id['base'])}}</span>
-		</h3>
+	<div class= "col-xs-5">
+		<div  style="position:fixed;">
+			<h4>
+				Calculated MSRP
+			</h4>
+			<h3>
+				$<span id='msrp'>{{=int(msrp_by_id['base'])}}</span>
+			</h3>
+		</div>
 	</div>
 </div>
 {{#=BEAUTIFY(options)}}
