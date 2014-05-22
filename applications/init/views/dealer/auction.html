@@ -1,6 +1,37 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
 
+
+<div class="row text-center" style="margin-bottom:20px">
+	<div class="col-xs-2 col-xs-offset-1 text-muted text-center">
+		<div class="" style="border-radius: 50%; border: 1px solid #ccc; padding: 10px; width: 100px; height: 100px">
+			<i class="fa fa-tags fa-4x"></i>
+			<div>Step one</div>
+		</div>
+	</div>
+	<div class="col-xs-2 text-muted">
+		<hr style="margin-top: 40px; border-color: #ccc">
+	</div>
+
+
+	<div class="col-xs-2 text-center text-muted">
+		<div class="" style="border-radius: 50%; border: 1px solid #ccc; padding: 10px; width: 100px; height: 100px">
+			<i class="fa fa-clock-o fa-4x"></i>
+			<div>Step two</div>
+		</div>
+	</div>
+	<div class="col-xs-2">
+		<hr style="margin-top: 40px; border-color: #ccc">
+	</div>
+
+	<div class="col-xs-2 text-center">
+		<div class="" style="border-radius: 50%; border: 1px solid #333; padding: 10px; width: 100px; height: 100px">
+			<i class="fa fa-check fa-4x"></i>
+			<div>Step three</div>
+		</div>
+	</div>
+</div>
+
 <div id = "panel-top" class="panel panel-primary">
 	<div class= "panel-heading text-uppercase text-md" style="position:relative;">
 		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}} {{if a_winning_offer or auction_ended_offer_expired:}}<span class="text-danger">(ENDED)<span>{{pass}}</strong>
