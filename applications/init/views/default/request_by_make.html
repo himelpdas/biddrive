@@ -375,7 +375,7 @@
 	var firstload = true; {{#Need a way to preserve values on form error on first load. Checks to see If select values exist from previous form submission.}}
  	function load_color_preference(){
 		if ($(".ms-elem-selectable").length == false || firstload==false){ {{#http://goo.gl/aZeO3n}} {{#if multiselect options is black or page already loaded}}
-			firstload=false;
+			firstload=false; //
 			$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //the new multiselect element that the multiselect plugin creates after initialization //fade out while loading ajax
 			$('#colors_spinner').toggleClass("fa-spinner");
 			$('#auction_request_color_preference').load(
