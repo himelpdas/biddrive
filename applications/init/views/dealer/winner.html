@@ -79,8 +79,18 @@
         <h4 class="modal-title"><i class="fa fa-certificate fa-fw text-warning"></i> Confirmation</h4>
       </div>
       <div class="modal-body">
-        <div style="text-align:center;"><h3>Call us at <span class="text-info">1-800-BIDDRIVE</span> to reveal your {{=APP_NAME}} certificate of guarantee.</h3></div>
-      </div>
+        <div style="text-align:center;">
+			<h3>Call us at <span class="text-info">1-800-BIDDRIVE</span> to reveal your {{=APP_NAME}} certificate of guarantee.</h3>
+			<button id="refresh_certificate" type="button" class="btn btn-default btn-lg">
+				<span class="glyphicon glyphicon-refresh"></span> Refresh
+			</button>
+			<script type="text/javascript">
+				$('#refresh_certificate').click(function() {
+					location.reload();
+				});
+			</script>
+		</div>
+	  </div>
       <div class="modal-footer">
         <div class="text-danger">Winner code: <strong>{{=hashed_id}}</strong> (write it down)</div>
       </div>

@@ -213,9 +213,11 @@ def auction_requests():
 	state = area.state_abbreviation
 	number = len(auction_requests)
 	plural = ''
+	verb = 'is'
 	if not number or number > 1:
 		plural = 's'
-	response.message = 'Showing %s buyer%s who are willing to come to "%s" in %s, %s.'% (number, plural, name, city, state)
+		verb = 'are'
+	response.message = 'Showing %s buyer%s who %s willing to come to "%s" in %s, %s.'% (number, plural, verb, name, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 
