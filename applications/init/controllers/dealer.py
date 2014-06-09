@@ -634,8 +634,10 @@ def auction():
 			if auction_request_info['auction_completed']: 
 				if is_winning_offer:
 					response.message3 = "$You are the winner! We will connect you to the buyer when the buyer contacts us."
-				elif not is_winning_offer: #make sure that there is a winner before making the following claim
+				elif not is_winning_offer and a_winning_offer: #make sure that there is a winner before making the following claim
 					response.message3 = "@Buyer picked a winner, but you did not win. Sorry :-("
+				elif not is_winning_offer and not a_winning_offer:
+					response.message3 = "@Buyer did not pick a winner."
 				
 		#message stuff dealer, keep below SQLFORM so that new messages show on submission
 		offer_messages = db(db.auction_request_offer_message.auction_request_offer == offer_id).select()
