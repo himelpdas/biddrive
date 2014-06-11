@@ -58,9 +58,9 @@
 			</td>
 		</tr>
 		<tr>
+			<th>Vehicle</th>
+			<th>Details</th>
 			<th>Your offer</th>
-			<th>VIN number</th>
-			<th>Your latest bid</th>
 			<th>Ends in</th>
 			<th>&nbsp;</th>
 		</tr>
@@ -69,18 +69,22 @@
 		{{for each_offer in my_offer_summaries:}}
 			<tr>
 				<td>
-					<div>{{=each_offer['year'].upper()}} {{=each_offer['make'].upper()}} {{=each_offer['model'].upper()}} <small class="text-light">{{=each_offer['color']}}</small></div>
-					<div><small>{{=each_offer['trim']}}</small></div>
+					<div>{{=each_offer['year'].upper()}} {{=each_offer['make'].upper()}} {{=each_offer['model'].upper()}}</div>
+					<div><small class="text-light">{{=each_offer['trim']}}</small></div>
 				</td>
 				<td>
 					<div>{{=each_offer['vin']}}</div>
+					<div><small class="text-light">{{=each_offer['color']}}</small></div>
 				</td>
 				<td>
 					<div>
-						{{=each_offer['my_last_bid_price']}} {{if each_offer['my_last_bid_time']:}}<div><small class="text-light">{{=each_offer['my_last_bid_time']}} ago</small></div>{{pass}}
+						{{=each_offer['my_last_bid_price']}}{{if each_offer['has_unread_messages']:}} <i class="fa fa-fw fa-envelope" rel="tooltip" data-toggle="tooltip" data-placement="top" title="You have unread messages."></i>{{pass}}<div><small class="text-light">{{if each_offer['my_last_bid_time']:}}{{=each_offer['my_last_bid_time']}} ago{{else:}}Awaiting{{pass}}</small></div>
 					</div>
 				</td>
-				<td>{{=each_offer['ends_in_human']}}</td>
+				<td>
+					<div>{{=each_offer['ends_in_human']}}</div>
+					<div class="text-sm text-light">{{=each_offer['offer_expires']}}</div>
+				</td>
 				<td> 
 					<a class="btn btn-default" href="{{=each_offer['auction_url']}}"><i class="fa fa-arrow-right"></i></a> 
 					{{#=each_offer['my_offer_id']}}
