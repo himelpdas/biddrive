@@ -27,7 +27,7 @@
 					</div>
 				</td>
 				<td>
-					{{=each_request['last_bid_price']}}
+					{{=each_request['last_bid_price']}}{{if each_request['has_unread_messages']:}} <i class="fa fa-fw fa-envelope" rel="tooltip" data-toggle="tooltip" data-placement="top" title="You have unread messages."></i>{{pass}}
 					<div  class="text-sm text-light">
 						{{if each_request['last_bid_time']:}}{{=each_request['last_bid_time']}} ago{{pass}}
 					</div>

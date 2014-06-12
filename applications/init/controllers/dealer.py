@@ -414,6 +414,7 @@ def auction():
 
 			#message form
 			db.auction_request_offer_message.auction_request_offer.default = my_auction_request_offer_id #make sure the message form has the dealers offer_id for submission
+			db.auction_request_offer_message.auction_request.default = auction_request_id
 			db.auction_request_offer_message.owner_id.default = auth.user.id
 			my_message_form_dealer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
 			
@@ -458,6 +459,11 @@ def auction():
 		if last_favorite_choice_bid: #it guaranteed exists, but do if then in case anyway
 			favorite_price='$%s'%last_favorite_choice_bid.bid
 	##################
+	#unread message stuff
+	if is_owner:
+		highest_message_in_this_auction = db(db.auction_request_offer_message.auction_request == auction_request_id).select().last()
+		if highest_message_in_this_auction:
+			marked_as_read = db.unread_auction_messages.insert(highest_id = highest_message_in_this_auction.id, auction_request = auction_request_id)
 	#auction requests info
 	auction_ended_offer_expires = (auction_request.auction_expires - request.now).total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
@@ -593,9 +599,9 @@ def auction():
 		
 		#mark all messages as read
 		if is_my_offer:
-			highest_message_in_this_auction = db(db.auction_request_offer_message.auction_request == auction_request_id).select().last()
-			if highest_message_in_this_auction:
-				all_messages_read = db.unread_auction_messages.insert(highest_id = highest_message_in_this_auction.id, auction_request = auction_request_id, auction_request_offer = each_offer.auction_request_offer.id)
+			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
+			if highest_message_in_this_offer:
+				all_messages_read = db.unread_auction_messages.insert(highest_id = highest_message_in_this_offer.id, auction_request = auction_request_id, auction_request_offer = each_offer.auction_request_offer.id)
 	
 		#dealer stuff
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
@@ -626,7 +632,7 @@ def auction():
 					session.SEND_WINNER_ALERT = True
 					session.message = "$All dealers will be alerted about your new favorite!"
 				else:
-					session.message = "!Awaiting or ended bids cannot be chosen as a winner."
+					session.message = "!Awaiting or expired bids cannot be chosen as a winner."
 			if a_winning_offer:
 				response.message = "$You picked a winner! Click the green button below to be redirected to the winning page" #keep as response.message so it always shows
 			#favorite stuff
@@ -637,7 +643,7 @@ def auction():
 				elif is_awaiting_offer:
 					session.message = "!You cannot choose an awaiting bid as your favorite." #and change the message for the owner.
 				elif final_bid_ended:
-					session.message = "!You cannot choose an ended bid as your favorite." #and change the message for the owner.
+					session.message = "!You cannot choose an expired bid as your favorite." #and change the message for the owner.
 				elif is_not_awaiting_offer and not final_bid_ended:
 					last_favorite_choice = db.auction_request_favorite_choice.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer=new_favorite_choice) #no need for further testing because of previous if/else
 					#send message
@@ -828,7 +834,7 @@ def my_auctions():
 		
 		has_unread_messages = False
 		highest_message_for_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
-		my_highest_message_for_this_offer = db(db.unread_auction_messages.auction_request_offer == each_offer.auction_request_offer.id).select().last()
+		my_highest_message_for_this_offer = db((db.unread_auction_messages.auction_request_offer == each_offer.auction_request_offer.id)&(db.unread_auction_messages.owner_id == auth.user_id)).select().last()
 		if my_highest_message_for_this_offer and highest_message_for_this_offer: #maybe no messages
 			if my_highest_message_for_this_offer.highest_id < highest_message_for_this_offer.id:
 				has_unread_messages = True

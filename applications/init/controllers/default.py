@@ -208,7 +208,15 @@ def auction_history():
 	my_auctions = db(db.auction_request.owner_id == auth.user_id).select(orderby=~db.auction_request.id)
 	response.title = heading = "Auction history for %s" % auth.user.first_name.capitalize()
 	for each_request in my_auctions:
-		#ended logic
+		#####unread message logic#####
+		has_unread_messages = False #buyer is interested in all messages from all dealers, rather than in dealers case where he is interested in only his own offer's messages. that's why this scans through auction_requests
+		highest_message_for_this_auction = db(db.auction_request_offer_message.auction_request == each_request.id).select().last()
+		my_highest_message_for_this_auction = db((db.unread_auction_messages.auction_request == each_request.id)&(db.unread_auction_messages.owner_id == auth.user_id)).select().last()
+		if my_highest_message_for_this_auction and highest_message_for_this_auction: #maybe no messages
+			if my_highest_message_for_this_auction.highest_id < highest_message_for_this_auction.id:
+				has_unread_messages = True
+		each_request['has_unread_messages'] = has_unread_messages
+		#####ended logic#####
 		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_request.id).select().last()
 		auction_is_completed = (a_winning_offer or each_request.offer_expired())
 		ends_in_human=False

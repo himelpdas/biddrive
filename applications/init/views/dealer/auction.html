@@ -183,7 +183,7 @@
 
 					<tr>
 						<th>
-							{{if a_winning_offer:}}Ended{{elif not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offers end in{{pass}}
+							{{if a_winning_offer:}}Ending{{elif not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offers end in{{pass}}
 						</th>
 
 						<td>
@@ -420,7 +420,9 @@
 		<div class="panel {{if each_offer['is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	{{pass}}
 		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
-			<span><strong>{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-question"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}} {{if each_offer['is_winning_offer']:}}<span class="text-danger">(WINNER)</span>{{elif each_offer['final_bid_ended']:}}<span class="text-warning">(EXPIRED)</span>{{elif each_offer['bid_is_final']:}}<span class="text-danger">(FINAL)</span>{{pass}}</strong></span>
+			<strong>{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> {{=each_offer['last_bid_price']}}{{else:}}<i class="fa fa-question"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong>
+				{{final_bid_hours_left=(int(each_offer['final_bid_ends_in_hours'])+1) if each_offer['final_bid_ends_in_hours'] else 'N/A'}}
+				{{final_bid_hours_left='%s hour%s'%(final_bid_hours_left, '' if final_bid_hours_left==1 else 's')}}
 				{{if each_offer['show_winner_btn']:}}
 					<div style="position:absolute;width:100%;">
 						<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
@@ -429,13 +431,31 @@
 							</button>
 						</a>
 					</div>
-				{{elif each_offer['show_buy_now_btn']:}}
+				{{elif each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
 					<div style="position:absolute;width:100%;">
 						<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-							<button class="btn btn-danger btn-xs center-block">
-								<i class="fa fa-fw fa-clock-o"></i> Buy it now! ({{=int(each_offer['final_bid_ends_in_hours'])}} hours left)
+							<button class="btn btn-warning btn-xs center-block">
+								<i class="fa fa-fw fa-bell-o"></i> Buy it now! (Less than {{=final_bid_hours_left}} left)
 							</button>
 						</a>
+					</div>
+				{{elif each_offer['is_winning_offer']:}}
+					<div style="position:absolute;width:100%;">
+						<button class="btn btn-success btn-xs center-block disabled">
+							<i class="fa fa-fw fa-trophy"></i> Winner!
+						</button>
+					</div>
+				{{elif each_offer['final_bid_ended']:}}
+					<div style="position:absolute;width:100%;">
+						<button class="btn btn-danger btn-xs center-block disabled">
+							<i class="fa fa-fw fa-bell"></i> Expired!
+						</button>
+					</div>
+				{{elif each_offer['bid_is_final'] and is_dealer:}}
+					<div style="position:absolute;width:100%;">
+						<button class="btn btn-warning btn-xs center-block disabled">
+							<i class="fa fa-fw fa-bell"></i> Expires in less than {{=final_bid_hours_left}}!
+						</button>
 					</div>
 				{{pass}}{{#http://goo.gl/eLX2w6}} {{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
 
