@@ -404,7 +404,7 @@ def auction():
 			is_final_bid = request.vars['final_bid']
 			if is_final_bid:
 				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, (auction_request_ends-request.now).total_seconds()/3600.0)
-				final_message = "@This was your final bid!"
+				final_message = "@This was your final bid! The buyer has been notified."
 			#bid form
 			my_auction_request_offer_id = is_dealer_with_offer.id
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
@@ -459,11 +459,6 @@ def auction():
 		if last_favorite_choice_bid: #it guaranteed exists, but do if then in case anyway
 			favorite_price='$%s'%last_favorite_choice_bid.bid
 	##################
-	#unread message stuff
-	if is_owner:
-		highest_message_in_this_auction = db(db.auction_request_offer_message.auction_request == auction_request_id).select().last()
-		if highest_message_in_this_auction:
-			marked_as_read = db.unread_auction_messages.insert(highest_id = highest_message_in_this_auction.id, auction_request = auction_request_id)
 	#auction requests info
 	auction_ended_offer_expires = (auction_request.auction_expires - request.now).total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
@@ -661,7 +656,7 @@ def auction():
 					response.message3 = "@Buyer did not pick a winner."
 				
 		#message stuff dealer, keep below SQLFORM so that new messages show on submission
-		offer_messages = db(db.auction_request_offer_message.auction_request_offer == offer_id).select()
+		offer_messages = db(db.auction_request_offer_message.auction_request_offer == offer_id).select(orderby=~db.auction_request_offer_message.id)
 		for each_message in offer_messages:
 			if each_message.owner_id == auction_request.owner_id:
 				each_message.is_auction_requester = True
@@ -737,6 +732,12 @@ def auction():
 		}
 		#auction_request_offers_info.append(each_offer_dict)
 		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction
+	
+	#unread message stuff# keep below each offer to prevent new message icon from showing to owner when owner submits a message
+	if is_owner:
+		highest_message_in_this_auction = db(db.auction_request_offer_message.auction_request == auction_request_id).select().last()
+		if highest_message_in_this_auction:
+			marked_as_read = db.unread_auction_messages.insert(highest_id = highest_message_in_this_auction.id, auction_request = auction_request_id)
 	
 	auction_request_offers_info = auction_request_offers_info.values() #convert back to list to be compatible with current view
 	
