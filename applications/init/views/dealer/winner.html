@@ -70,23 +70,24 @@
   <br>
   <br>
   <br>
-  <br>
-  <br>
   <div class="modal-dialog">
     <div class="modal-content" style="background-color:rgba(246,246,246,0.8);">
       <div class="modal-header">
         {{#<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>}}
-        <h4 class="modal-title"><i class="fa fa-certificate fa-fw text-warning"></i> Confirmation</h4>
+        <h4 class="modal-title"><i class="fa fa-certificate fa-fw text-warning"></i> Instructions</h4>
       </div>
       <div class="modal-body">
         <div style="text-align:center;">
-			<h3>Call us at <span class="text-info">1-800-BIDDRIVE</span> to reveal your {{=APP_NAME}} certificate of guarantee.</h3>
-			<button id="refresh_certificate" type="button" class="btn btn-default btn-lg">
-				<span class="glyphicon glyphicon-refresh"></span> Refresh
+			{{"""}}<h3>Call us at <span class="text-info">1-800-BIDDRIVE</span> to reveal your {{=APP_NAME}} certificate of guarantee.</h3>{{"""}}
+			<h3>The winning dealer will call you soon. Once you accept the call, come back to this page to reveal your <span class="text-info">{{=APP_NAME}} Certificate of Guarantee</span>, which you will show at dealership. If you don't receive a call within 24 hours, please contact customer service with your winner code. This offer expires 48 hours after the auction ended.</h3>
+			<br>
+			<button id="back_to_auction" type="button" class="btn btn-default btn-lg">
+				<span class="glyphicon glyphicon-arrow-left"></span> Back to auction
 			</button>
 			<script type="text/javascript">
-				$('#refresh_certificate').click(function() {
-					location.reload();
+				$('#back_to_auction').click(function() {
+					//location.reload();
+					history.back();
 				});
 			</script>
 		</div>

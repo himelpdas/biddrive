@@ -143,7 +143,7 @@ Get rid of dummies and lorem ipsums
 		<thead>
 			<tr>
 				{{for each_column in columns:}}
-					<th style="min-width: 90px">
+					<th style="min-width: 100px">
 						{{if sortby in each_column[1]:}}
 							{{sort_pair = each_column[1][:]}}{{#create copy}}
 							{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
@@ -368,7 +368,7 @@ Get rid of dummies and lorem ipsums
 					<td>
 						{{=each_request.auction_request.number_of_bids()}}
 					</td>
-
+{{"""}}
 					<td>
 						{{#='$' + str(int(each_request.auction_request.lowest_offer().bid)) if each_request.auction_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
 						{{lowest_offer = each_request.auction_request.lowest_offer()}} {{#one db call instead of two like above}}
@@ -378,6 +378,7 @@ Get rid of dummies and lorem ipsums
 							No bids!
 						{{pass}}
 					</td>
+{{"""}}
 				</tr>
 				<script>
 					$("#sifter").jcOnPageFilter({caseSensitive:false, animateHideNShow:true, hideNegatives:true, highlightColor:'lightgreen'}); {{#http://goo.gl/LYpoNj}}

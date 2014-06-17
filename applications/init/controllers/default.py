@@ -221,8 +221,8 @@ def auction_history():
 		auction_is_completed = (a_winning_offer or each_request.offer_expired())
 		ends_in_human=False
 		if not auction_is_completed:
-			ends_in_human = human(each_request.offer_expires - request.now, precision=2, past_tense='{}', future_tense='{}')
-		ends_in_human = ends_in_human if ends_in_human else "Ended"
+			ends_in_human = human(each_request.offer_expires - request.now, precision=3, past_tense='{}', future_tense='{}')
+		#ends_in_human = ends_in_human if ends_in_human else "Auction ended" #COMMENT OUT IF HANDLED IN VIEW
 		each_request['ends_in_human'] = ends_in_human
 		each_request['auction_url']=URL('dealer','auction', args=[each_request.id])
 		#colors logic
@@ -234,6 +234,14 @@ def auction_history():
 		each_request['last_bid_price'] = last_bid_price
 		last_bid_time = human(request.now-last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if last_bid else None
 		each_request['last_bid_time'] = last_bid_time
+		#how auction ended
+		how_auction_ended = False
+		if db(db.auction_request_winning_offer.auction_request == each_request['id']).select().last():
+			how_auction_ended = 'You picked a winner!' 
+		elif not ends_in_human: #that means time ran out so auction ended but no winner chosen
+			how_auction_ended = "No winner was chosen"
+		each_request['how_auction_ended'] = how_auction_ended
+		#color stuff
 		for each_color in each_request['color_names']:
 			each_request['color_names_and_codes'].append([each_color, getColorHexByNameOrID(each_color, trim_data)])
 	return dict(my_auctions=my_auctions,heading =heading)

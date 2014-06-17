@@ -8,7 +8,7 @@
 			<th>Your request</th>
 			<th>Colors</th>
 			<th>Latest bid</th>
-			<th>Ends in</th>
+			<th>Ends in <i class="fa fa-fw fa-info-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Includes 24 hour winner selection period."></i></th>
 			<th>&nbsp;</th>
 		</tr>
 	</thead>
@@ -17,10 +17,10 @@
 			<tr>
 				<td>
 					<div>{{=each_request['year'].upper()}} {{=each_request['make'].upper()}} {{=each_request['model'].upper()}}</div>
-					<div><small>{{=each_request['trim_name']}}</small></div>
+					<div class="text-sm text-light">{{=each_request['trim_name']}}</div>
 				</td>
 				<td>
-					<div>
+					<div style="width:75px;">
 						{{for each_pair in each_request['color_names_and_codes']:}}
 							<i class="fa fa-square" rel="tooltip" style="color:#{{=each_pair[1]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_pair[0]}}"></i>{{#add border so that whites can show}} {{#http://goo.gl/2j2bP}} {{#http://goo.gl/R9EI3h}}
 						{{pass}}
@@ -29,10 +29,18 @@
 				<td>
 					{{=each_request['last_bid_price']}}{{if each_request['has_unread_messages']:}} <i class="fa fa-fw fa-envelope" rel="tooltip" data-toggle="tooltip" data-placement="top" title="You have unread messages."></i>{{pass}}
 					<div  class="text-sm text-light">
-						{{if each_request['last_bid_time']:}}{{=each_request['last_bid_time']}} ago{{pass}}
+						{{if each_request['last_bid_time']:}}
+							{{=each_request['last_bid_time']}} ago
+						{{else:}}
+							Awaiting
+						{{pass}}
 					</div>
 				</td>
-				<td>{{=each_request['ends_in_human']}}<div class="text-sm text-light">created on: {{=each_request['created_on']}}</div></td>
+				<td>
+					<div style="width:125px;">{{if each_request['ends_in_human']:}}{{=each_request['ends_in_human']}}{{else:}}Auction ended{{pass}}</div>
+					{{if each_request['how_auction_ended']:}}<div class="text-sm text-light">{{=each_request['how_auction_ended']}}</div>{{pass}}
+					{{"""}}<div class="text-sm text-light">{{=each_request['offer_expires']}}</div>{{"""}}
+				</td>
 				<td> 
 					<a class="btn btn-default" href="{{=each_request['auction_url']}}"><i class="fa fa-arrow-right"></i></a> 
 				</td>

@@ -61,7 +61,7 @@
 			<th>Vehicle</th>
 			<th>Details</th>
 			<th>Your offer</th>
-			<th>Ends in</th>
+			<th>Ends in <i class="fa fa-fw fa-info-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Includes 24 hour winner selection period."></i></th>
 			<th>&nbsp;</th>
 		</tr>
 	</thead>
@@ -82,8 +82,8 @@
 					</div>
 				</td>
 				<td>
-					<div>{{=each_offer['ends_in_human']}}</div>
-					<div class="text-sm text-light">{{=each_offer['offer_expires']}}</div>
+					<div style="width:125px;">{{if each_offer['ends_in_human']:}}{{=each_offer['ends_in_human']}}{{else:}}Auction ended{{pass}}</div>
+					{{if each_offer['how_auction_ended']:}}<div class="text-sm text-light">{{=each_offer['how_auction_ended']}}</div>{{pass}}
 				</td>
 				<td> 
 					<a class="btn btn-default" href="{{=each_offer['auction_url']}}"><i class="fa fa-arrow-right"></i></a> 
