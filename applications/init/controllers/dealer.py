@@ -677,7 +677,16 @@ def auction():
 			aid = auction_request_info['id']
 			scheduler.queue_task(
 				send_alert_task,
-				pargs=['email', your.email, EMAIL_NEW_FAVORITE_OFFER_MESSAGE%(your.first_name.capitalize(), aid, 'you' if is_favorite else 'another dealer'), EMAIL_NEW_FAVORITE_OFFER_SUBJECT%(aid, your.first_name.capitalize())],
+				pargs=['email', your.email, HTML_EMAIL_TEMPLATE.format(
+					APPNAME=APP_NAME,
+					NAME = your.first_name.capitalize(), 
+					MESSAGE =  "The buyer for auction ID: %s picked %s as the favorite! Check your auctions page"%(aid, 'you' if is_favorite else 'another dealer'),
+					MESSAGE_TITLE = "New favorite!",
+					WHAT_NOW = "Act fast!" if is_favorite else 'Keep it up!',
+					INSTRUCTIONS = "Make a better offer to convince the buyer that your offer is the best deal!" if is_favorite else 'But stay alert for competing offers that may convince the buyer to change his/her mind!',
+					CLICK_HERE = "Click here to view the auction",
+					CLICK_HERE_URL = URL(args=request.args),
+				), "New favorite was chosen for %s auction #%s"%(APP_NAME,aid)],
 				#pvars={},
 				#repeats = 10, # run 10 times
 				period = 5, # run 5s after previous
