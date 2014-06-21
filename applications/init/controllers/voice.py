@@ -17,7 +17,7 @@ def result():
 def index():
 	resp = twiml.Response()
 	resp.say("Hello! Welcome to bid drive dot com.")
-	with resp.gather(numDigits=10, action="init/voice/handle_key.xml", method="POST") as g:
+	with resp.gather(numDigits=10, action="handle_key.xml", method="POST") as g:
 		g.say("Please dial your 10 digit winner code now.")
 	return(
 		dict(
