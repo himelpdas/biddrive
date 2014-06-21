@@ -31,7 +31,7 @@ def handle_key():
 	
 	# Get the digit pressed by the user
 	digit_pressed = request.post_vars['Digits']
-	if len(digit_pressed) = 10:
+	if len(digit_pressed) == 10:
 		resp = twiml.Response()
 		# Dial (310) 555-1212 - connect that number to the incoming caller.
 		#resp.dial("+13105551212")
