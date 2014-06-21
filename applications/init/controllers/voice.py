@@ -17,7 +17,7 @@ def result():
 def index():
 	resp = twiml.Response()
 	if not request.vars['force_gather']:
-		resp.say("Hello! Welcome to the bid drive dot com auction verification automated hot line.")
+		resp.say("Hello! Welcome to the bid drive dot com automated auction verification hot line.")
 	with resp.gather(numDigits=10, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
 		g.say("Please dial your 10 digit winner code now.")
 	return(
@@ -48,7 +48,7 @@ def handle_key():
 def handle_key_check():
 	digit_pressed = request.post_vars['Digits']
 	winner_code = request.args(0)
-	if digit_pressed and len(digit_pressed) == 1 and digit_pressed == 1 and winner_code:
+	if digit_pressed and len(digit_pressed) == 1 and digit_pressed == '1' and winner_code:
 		resp = twiml.Response()
 		resp.say("Thank you. We will now connect you to your winning dealer. Please hold.")
 		return dict(resp = str(resp))
