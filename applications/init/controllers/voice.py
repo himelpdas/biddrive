@@ -24,10 +24,10 @@ def index():
 			resp=str(resp) #XML() MOVED TO VIEW #By default web2py escapes string characters passed to view, use XML function to preserve escapable characters (ex < > & etc.)
 		)
 	)
-
+	
 def handle_key():
 	"""Handle key press from a user."""
- 
+	
 	# Get the digit pressed by the user
 	digit_pressed = request.post_vars['Digits']
 	if digit_pressed:
