@@ -47,7 +47,7 @@ def handle_key():
 		
 def handle_key_check():
 	digit_pressed = request.post_vars['Digits']
-	winner_code = request.vars(0)
+	winner_code = request.args(0)
 	if len(digit_pressed) == 1 and winner_code:
 		resp = twiml.Response()
 		resp.say("Thank you. We will now connect you to your winning dealer. Please hold.")
