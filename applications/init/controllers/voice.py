@@ -35,7 +35,7 @@ def handle_key():
 		# Dial (310) 555-1212 - connect that number to the incoming caller.
 		#resp.dial("+13105551212")
 		# If the dial fails:
-		resp.say("You dialed %s. Goodbye."%digit_pressed)
+		resp.say("You dialed %s. Is this correct?"%digit_pressed)
 
 		return dict(resp = str(resp))
  
