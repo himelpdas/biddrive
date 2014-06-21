@@ -16,7 +16,7 @@ def result():
 """
 def index():
 	resp = twiml.Response()
-	if not request.vars['force_gather']:
+	if not response['force_gather']:
 		resp.say("Hello! Welcome to the bid drive dot com auction verification automated hot line.")
 	with resp.gather(numDigits=10, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
 		g.say("Please dial your 10 digit winner code now.")
@@ -43,15 +43,17 @@ def handle_key():
  
 	# If the caller pressed anything but 1, redirect them to the homepage.
 	else:
-		redirect(URL('init', 'voice', 'index.xml', vars=dict(force_gather=True)))
+		response['force_gather'] = True
+		return index()
 		
 def handle_key_check():
 	digit_pressed = request.post_vars['Digits']
 	winner_code = request.args(0)
-	if digit_pressed and len(digit_pressed) == 1 and winner_code:
+	if digit_pressed and len(digit_pressed) == "1" and winner_code:
 		resp = twiml.Response()
 		resp.say("Thank you. We will now connect you to your winning dealer. Please hold.")
 		return dict(resp = str(resp))
 	# If the caller pressed 2 or some other key
 	else:
-		redirect(URL('init', 'voice', 'index.xml', vars=dict(force_gather=True)))
+		response['force_gather'] = True
+		return index()
