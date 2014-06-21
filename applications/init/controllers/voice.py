@@ -16,7 +16,7 @@ def result():
 """
 def index():
 	resp = twiml.Response()
-	resp.say("Hello! Welcome to bid drive dot com.")
+	resp.say("Hello! Welcome to the bid drive dot com auction verification automated hot line.")
 	with resp.gather(numDigits=10, action="handle_key.xml", method="POST") as g:
 		g.say("Please dial your 10 digit winner code now.")
 	return(
