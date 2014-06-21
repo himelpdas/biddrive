@@ -3,7 +3,7 @@
 {{#"""}}
 
 <div class="row-fluid">
-	<div class = "col-xs-7">
+	<div class = "col-xs-8">
 	
 		{{=form.custom.begin}}
 				{{ form.element("input", _name = "vin_number")["_class"] += " form-control" }}
@@ -13,8 +13,10 @@
 				{{ form.element("select", _name = "exterior_options")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "mechanical_options")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "package_options")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "safety_options")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "fees_options")["_class"] += " form-control" }}
 				{{ form.element("textarea", _name = "summary")["_class"] += " form-control" }}
+				{{ form.element("textarea", _name = "fineprint")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "exterior_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "interior_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "front_image")["_class"] += " form-control" }}
@@ -39,6 +41,7 @@
 						{{pass}}
 					</div>
 				</div>
+				{{"""}}
 				<div class="form-group">
 					<label class="col-sm-3 control-label">Remember for 45 days</label>
 					<div class="col-sm-9">
@@ -49,6 +52,7 @@
 						{{pass}}
 					</div>
 				</div>
+				{{"""}}
 				<div class="form-group">
 					<label class="col-sm-3 control-label">Color</label>
 					<div class="col-sm-9">
@@ -100,6 +104,16 @@
 					</div>
 				</div>
 				<div class="form-group">
+					<label class="col-sm-3 control-label">Safety</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.safety_options}}
+
+						{{if form.errors['safety_options']:}}
+							<div class="alert alert-warning">{{=form.errors['safety_options']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
 					<label class="col-sm-3 control-label">Fees</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.fees_options}}
@@ -110,12 +124,22 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label">Summary</label>
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Only put info about this vehicle! Ex. Condition, miles, defects, additional features, etc."></i> Summary</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.summary}}
 
 						{{if form.errors['summary']:}}
 							<div class="alert alert-warning">{{=form.errors['summary']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="This is a good place to put information about additional fees, available upgrades and services, etc."></i> Additional info</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.fineprint}}
+
+						{{if form.errors['fineprint']:}}
+							<div class="alert alert-warning">{{=form.errors['fineprint']}}</div>
 						{{pass}}
 					</div>
 				</div>
@@ -232,10 +256,10 @@
 				{{=form.custom.submit}}
 		{{=form.custom.end}}
 	</div>
-	<div class= "col-xs-5">
+	<div class= "col-xs-4">
 		<div  style="position:fixed;">
 			<h4>
-				Calculated MSRP
+				Estimated MSRP
 			</h4>
 			<h3>
 				$<span id='msrp'>{{=int(msrp_by_id['base'])}}</span>
@@ -246,7 +270,7 @@
 {{#=BEAUTIFY(options)}}
 {{#'''}}
 <script>
-	{{offer_types = ['interior','exterior','mechanical','package','fees',]}}
+	{{offer_types = ['interior','exterior','mechanical','package','fees','safety']}}
 	{{for each_offer_type in offer_types:}}
 		$("#auction_request_offer_{{=each_offer_type}}_options").multiSelect('refresh'); //initialize multiselect
 	{{pass}}

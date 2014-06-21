@@ -652,7 +652,7 @@
 				<!-- Nav tabs -->
 				<ul class="nav nav-tabs nav-justified ">
 					<li class="active"><a href="#dd_{{=each_offer['id']}}" data-toggle="tab">Options included</a></li>
-					<li><a href="#ques_{{=each_offer['id']}}" data-toggle="tab">Question</a></li>
+					<li><a href="#ques_{{=each_offer['id']}}" data-toggle="tab">Other details</a></li>
 				</ul>
 
 				<!-- Tab panes -->
@@ -732,10 +732,10 @@
 								</div>
 								<div class="col-xs-10">
 									<ul>
-									{{for each_option in each_offer['package_options']:}}
+									{{for each_option in each_offer['safety_options']:}}
 										<li>{{=each_option['name']}}
 									{{pass}}
-									{{if not each_offer['package_options']:}}
+									{{if not each_offer['safety_options']:}}
 										<li><i>Not specified</i>
 									{{pass}}
 									</ul>
@@ -747,10 +747,10 @@
 								</div>
 								<div class="col-xs-10">
 									<ul>
-									{{for each_option in each_offer['package_options']:}}
+									{{for each_option in each_offer['fees_options']:}}
 										<li>{{=each_option['name']}}
 									{{pass}}
-									{{if not each_offer['package_options']:}}
+									{{if not each_offer['fees_options']:}}
 										<li><i>Not specified</i>
 									{{pass}}
 									</ul>
@@ -760,7 +760,38 @@
 					</div>
 					
 					<div class="tab-pane" id="ques_{{=each_offer['id']}}">
-						coming soon
+						<div class="row-fluid margin-top-10">
+							<div class="col-xs-6">
+								<div class="col-xs-3 text-bold">
+									Additional info:
+								</div>
+								<div class="col-xs-9">
+									<ul>
+										<li>
+											{{if not each_offer['additional_info']:}}
+												<i>Not specified</i>
+											{{else:}}
+												{{=each_offer['additional_info']}}
+											{{pass}}
+									</ul>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="col-xs-3 text-bold">
+									About us:
+								</div>
+								<div class="col-xs-9">
+									<ul>
+										<li>
+											{{if not each_offer['about_us']:}}
+												<i>Not specified</i>
+											{{else:}}
+												{{=each_offer['about_us']}}
+											{{pass}}
+									</ul>
+								</div>
+							</div>
+						</div>
 					</div>
 					
 				</div>
@@ -796,6 +827,7 @@
 	</div>
 	{{######MESSAGE######}}
 	{{message_form = each_offer['my_message_form_dealer'] or each_offer['my_message_form_buyer']}}
+	{{if (is_owner or each_offer['is_my_offer']):}} 
 		<div id="message_form_{{=each_offer['id']}}" class="modal fade message_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
@@ -819,7 +851,7 @@
 							{{pass}}
 						</div>
 					</div>
-				{{if message_form and (is_owner or each_offer['is_my_offer']):}} {{#if it's a dealer only print his form, if it's a buyer print all forms (invoke via id for owner class for dealer)}}
+				{{if message_form and not each_offer['final_bid_ended']:}}{{#if it's a dealer only print his form (if its not final), if it's a buyer print all forms (invoke via id for owner class for dealer)}}
 					<hr>
 					{{message_form.element("textarea", _name = "message")["_class"] += " form-control" }}
 					{{message_form.element("textarea", _name = "message")["_style"] = " height:125px;" }}

@@ -20,3 +20,6 @@
 #ms-auction_request_offer_fees_options { 
 	width:100%; {{#align the multi-select jquery with the bootrap form}}
 }
+#ms-auction_request_offer_safety_options { 
+	width:100%; {{#align the multi-select jquery with the bootrap form}}
+}

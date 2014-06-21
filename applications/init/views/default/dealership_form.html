@@ -2,135 +2,317 @@
  {{#BEAUTIFY(response._vars)}}
  <h3>{{=heading}}</h3>
  <hr>
- <div class="row-fluid">
-	<div class="col-xs-7">
-		{{=form.custom.begin}}
-				{{ form.element("input", _name = "dealership_name")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "specialty")["_class"] += " form-control" }}
-				{{ form.element("textarea", _name = "mission_statement")["_class"] += " form-control" }}
-				{{ form.element("input", _name = "phone")["_class"] += " form-control" }}
-				{{ form.element("input", _name = "address_line_1")["_class"] += " form-control" }}
-				{{ form.element("input", _name = "address_line_2")["_class"] += " form-control" }}
-				{{ form.element("input", _name = "city")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "state")["_class"] += " form-control" }}
-				{{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "country")["_class"] += " form-control" }}
-				{{ form.element("input", _type = "submit")["_id"] = "submit" }}
-				{{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
-				
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Dealership name</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.dealership_name}}
+{{=form.custom.begin}}
+{{ form.element("input", _name = "dealership_name")["_class"] += " form-control" }}
+{{ form.element("select", _name = "specialty")["_class"] += " form-control" }}
+{{ form.element("textarea", _name = "mission_statement")["_class"] += " form-control" }}
+{{ form.element("input", _name = "phone")["_class"] += " form-control" }}
+{{ form.element("input", _name = "address_line_1")["_class"] += " form-control" }}
+{{ form.element("input", _name = "address_line_2")["_class"] += " form-control" }}
+{{ form.element("input", _name = "city")["_class"] += " form-control" }}
+{{ form.element("select", _name = "state")["_class"] += " form-control" }}
+{{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
+{{ form.element("select", _name = "country")["_class"] += " form-control" }}
+{{ form.element("select", _name = "time_zone")["_class"] += " form-control" }}
+{{ form.element("select", _name = "monday_opening_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "monday_closing_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "tuesday_opening_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "tuesday_closing_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "wednesday_opening_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "wednesday_closing_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "thursday_opening_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "thursday_closing_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "friday_opening_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "friday_closing_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "saturday_opening_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "saturday_closing_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "sunday_opening_time")["_class"] += " form-control" }}
+{{ form.element("select", _name = "sunday_closing_time")["_class"] += " form-control" }}
+{{ form.element("input", _type = "submit")["_id"] = "submit" }}
+{{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+{{#FURTHER CSS IN static/css/_custom.css}}
+ <div class="row">
+	<div class="col-xs-7">				
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Dealership name</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.dealership_name}}
 
-						{{if form.errors['dealership_name']:}}
-							<div class="alert alert-warning">{{=form.errors['trim_choices']}}</div>
-						{{pass}}
-					</div>
+				{{if form.errors['dealership_name']:}}
+					<div class="alert alert-warning">{{=form.errors['trim_choices']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Specialty</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.specialty}}
+
+				{{if form.errors['specialty']:}}
+					<div class="alert alert-warning">{{=form.errors['specialty']}}</div>
+				{{pass}}
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Mission statement</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.mission_statement}}
+
+				{{if form.errors['mission_statement']:}}
+					<div class="alert alert-warning">{{=form.errors['mission_statement']}}</div>
+				{{pass}}
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Phone</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.phone}}
+
+				{{if form.errors['phone']:}}
+					<div class="alert alert-warning">{{=form.errors['phone']}}</div>
+				{{pass}}
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Address line 1</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.address_line_1}}
+
+				{{if form.errors['address_line_1']:}}
+					<div class="alert alert-warning">{{=form.errors['address_line_1']}}</div>
+				{{pass}}
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Address line 2</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.address_line_2}}
+
+				{{if form.errors['address_line_2']:}}
+					<div class="alert alert-warning">{{=form.errors['address_line_2']}}</div>
+				{{pass}}
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label">City</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.city}}
+
+				{{if form.errors['city']:}}
+					<div class="alert alert-warning">{{=form.errors['city']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		
+		<div class="form-group">
+			<label class="col-sm-3 control-label">State</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.state}}
+
+				{{if form.errors['state']:}}
+					<div class="alert alert-warning">{{=form.errors['state']}}</div>
+				{{pass}}
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Zip code</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.zip_code}}
+
+				{{if form.errors['zip_code']:}}
+					<div class="alert alert-warning">{{=form.errors['zip_code']}}</div>
+				{{pass}}
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Country</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.country}}
+
+				{{if form.errors['country']:}}
+					<div class="alert alert-warning">{{=form.errors['country']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Time zone</label>
+			<div class="col-sm-9">
+				{{=form.custom.widget.time_zone}}
+
+				{{if form.errors['time_zone']:}}
+					<div class="alert alert-warning">{{=form.errors['time_zone']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		{{=form.custom.submit}}
+	</div>
+	<div class="col-xs-5">
+		<div class="row">
+			<div class="col-xs-2">
+				<h4 class="text-light">&nbsp;</h4>
+			</div>
+			<div class="col-xs-5">
+				<h4 class="text-light">Opening hour</h4>
+			</div>
+			<div class="col-xs-5">
+				<h4 class="text-light">Closing hour</h4>
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-2">
+				<strong>M.</strong>
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.monday_opening_time}}
+
+				{{if form.errors['monday_opening_time']:}}
+					<div class="alert alert-warning">{{=form.errors['monday_opening_time']}}</div>
+				{{pass}}
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.monday_closing_time}}
+
+				{{if form.errors['monday_closing_time']:}}
+					<div class="alert alert-warning">{{=form.errors['monday_closing_time']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-2">
+				<strong>T.</strong>
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.tuesday_opening_time}}
+
+				{{if form.errors['tuesday_opening_time']:}}
+					<div class="alert alert-warning">{{=form.errors['tuesday_opening_time']}}</div>
+				{{pass}}
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.tuesday_closing_time}}
+
+				{{if form.errors['tuesday_closing_time']:}}
+					<div class="alert alert-warning">{{=form.errors['tuesday_closing_time']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-2">
+				<strong>W.</strong>
+			</div>
+			<div class="col-xs-5">
+				<div>
+					{{=form.custom.widget.wednesday_opening_time}}
+
+					{{if form.errors['wednesday_opening_time']:}}
+						<div class="alert alert-warning">{{=form.errors['wednesday_opening_time']}}</div>
+					{{pass}}
 				</div>
-				
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Specialty</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.specialty}}
+			</div>
+			<div class="col-xs-5">
+				<div>
+					{{=form.custom.widget.wednesday_closing_time}}
 
-						{{if form.errors['specialty']:}}
-							<div class="alert alert-warning">{{=form.errors['specialty']}}</div>
-						{{pass}}
-					</div>
+					{{if form.errors['wednesday_closing_time']:}}
+						<div class="alert alert-warning">{{=form.errors['wednesday_closing_time']}}</div>
+					{{pass}}
 				</div>
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-2">
+				<strong>Th.</strong>
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.thursday_opening_time}}
 
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Mission statement</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.mission_statement}}
+				{{if form.errors['thursday_opening_time']:}}
+					<div class="alert alert-warning">{{=form.errors['thursday_opening_time']}}</div>
+				{{pass}}
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.thursday_closing_time}}
 
-						{{if form.errors['mission_statement']:}}
-							<div class="alert alert-warning">{{=form.errors['mission_statement']}}</div>
-						{{pass}}
-					</div>
-				</div>
+				{{if form.errors['thursday_closing_time']:}}
+					<div class="alert alert-warning">{{=form.errors['thursday_closing_time']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-2">
+				<strong>F.</strong>
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.friday_opening_time}}
 
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Phone</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.phone}}
+				{{if form.errors['friday_opening_time']:}}
+					<div class="alert alert-warning">{{=form.errors['friday_opening_time']}}</div>
+				{{pass}}
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.friday_closing_time}}
 
-						{{if form.errors['phone']:}}
-							<div class="alert alert-warning">{{=form.errors['phone']}}</div>
-						{{pass}}
-					</div>
-				</div>
+				{{if form.errors['friday_closing_time']:}}
+					<div class="alert alert-warning">{{=form.errors['friday_closing_time']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-2">
+				<strong>S.</strong>
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.saturday_opening_time}}
 
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Address line 1</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.address_line_1}}
+				{{if form.errors['saturday_opening_time']:}}
+					<div class="alert alert-warning">{{=form.errors['saturday_opening_time']}}</div>
+				{{pass}}
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.saturday_closing_time}}
 
-						{{if form.errors['address_line_1']:}}
-							<div class="alert alert-warning">{{=form.errors['address_line_1']}}</div>
-						{{pass}}
-					</div>
-				</div>
+				{{if form.errors['saturday_closing_time']:}}
+					<div class="alert alert-warning">{{=form.errors['saturday_closing_time']}}</div>
+				{{pass}}
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-2">
+				<strong>Su.</strong>
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.sunday_opening_time}}
 
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Address line 2</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.address_line_2}}
+				{{if form.errors['sunday_opening_time']:}}
+					<div class="alert alert-warning">{{=form.errors['sunday_opening_time']}}</div>
+				{{pass}}
+			</div>
+			<div class="col-xs-5">
+				{{=form.custom.widget.sunday_closing_time}}
 
-						{{if form.errors['address_line_2']:}}
-							<div class="alert alert-warning">{{=form.errors['address_line_2']}}</div>
-						{{pass}}
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label class="col-sm-3 control-label">City</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.city}}
-
-						{{if form.errors['city']:}}
-							<div class="alert alert-warning">{{=form.errors['city']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				
-				<div class="form-group">
-					<label class="col-sm-3 control-label">State</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.state}}
-
-						{{if form.errors['state']:}}
-							<div class="alert alert-warning">{{=form.errors['state']}}</div>
-						{{pass}}
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Zip code</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.zip_code}}
-
-						{{if form.errors['zip_code']:}}
-							<div class="alert alert-warning">{{=form.errors['zip_code']}}</div>
-						{{pass}}
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Country</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.country}}
-
-						{{if form.errors['country']:}}
-							<div class="alert alert-warning">{{=form.errors['country']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				{{=form.custom.submit}}
-		{{=form.custom.end}}
+				{{if form.errors['sunday_closing_time']:}}
+					<div class="alert alert-warning">{{=form.errors['sunday_closing_time']}}</div>
+				{{pass}}
+			</div>
+		</div>
 	</div>
 </div>
+{{=form.custom.end}}
  <script>
 	$("#dealership_info_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
  </script>

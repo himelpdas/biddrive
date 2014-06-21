@@ -254,6 +254,7 @@ def pre_auction():
 	mechanical_options = []
 	package_options = []
 	fees_options = []
+	safety_options = []
 	for each_option_type in options:
 		if each_option_type['category'] == 'Interior':
 			interior_options = each_option_type['options']
@@ -264,7 +265,9 @@ def pre_auction():
 		if each_option_type['category'] == 'Package':
 			package_options = each_option_type['options']
 		if each_option_type['category'] == 'Additional Fees':
-			fees_options = each_option_type['options']
+			fees_options = each_option_type['options']		
+		if each_option_type['category'] == 'Safety':
+			safety_options = each_option_type['options']
 	#return dict(form=None, options=options, interior_options=interior_options, mechanical_options=mechanical_options) #uncomment for testing
 	#USEFUL #interior_options = options.get('interior') or [] #returns None, but get blank [] instead
 	interior_options_names = []
@@ -272,6 +275,7 @@ def pre_auction():
 	mechanical_options_names = []
 	package_options_names = []
 	fees_options_names = []
+	safety_options_names = []
 	
 	msrp_by_id = {'base':trim_data['price']['baseMSRP']}
 
@@ -285,10 +289,11 @@ def pre_auction():
 	db.auction_request_offer.interior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	#now make a price dict for calculation
-	for each_option in exterior_options: #FIXED front and rear splash guard 2014 buick enclave has no msrp and causes page to fail. so if price doesn't exist don't add it
-		if 'price' in each_option and 'baseMSRP' in each_option['price']:
-			exterior_options_names.append([each_option['id'],each_option['name']])
-			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']
+	for each_option in exterior_options: #FIXED front and rear splash guard 2014 buick enclave has no msrp and causes page to fail. so if price doesn't exist don't add it#NVM JUST MAKE IT $0 LIKE HAGGLEDADDY
+		#if 'price' in each_option and 'baseMSRP' in each_option['price']:
+		exterior_options_names.append([each_option['id'],each_option['name']])
+		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP'] if 'price' in each_option and 'baseMSRP' in each_option['price'] else 0
+
 		#TODO CHANGE TO $0 here N/A via ajax in view
 	exterior_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.exterior_options.requires = IS_IN_SET(exterior_options_names, multiple=True)
@@ -317,6 +322,14 @@ def pre_auction():
 	fees_options_names.sort(key=lambda each:each[1])
 	db.auction_request_offer.fees_options.requires = IS_IN_SET(fees_options_names, multiple=True)
 	db.auction_request_offer.fees_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	
+	for each_option in safety_options:
+		if 'price' in each_option and 'baseMSRP' in each_option['price']: 
+			safety_options_names.append([each_option['id'],each_option['name']])
+			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
+	safety_options_names.sort(key=lambda each:each[1])
+	db.auction_request_offer.safety_options.requires = IS_IN_SET(safety_options_names, multiple=True)
+	db.auction_request_offer.safety_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	colors = zip(auction_request.color_preference, auction_request.color_names) #color_preference means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
@@ -556,6 +569,7 @@ def auction():
 		mechanical_options = []
 		package_options = []
 		fees_options = []
+		safety_options =[]
 		
 		for each_option in each_offer.auction_request_offer.interior_options:
 			interior_options.append(getOption(trim_data, 'Interior', each_option))
@@ -565,6 +579,8 @@ def auction():
 			mechanical_options.append(getOption(trim_data, 'Mechanical', each_option))
 		for each_option in each_offer.auction_request_offer.package_options:
 			package_options.append(getOption(trim_data, 'Package', each_option))
+		for each_option in each_offer.auction_request_offer.package_options:
+			safety_options.append(getOption(trim_data, 'Safety', each_option))
 		for each_option in each_offer.auction_request_offer.fees_options:
 			fees_options.append(getOption(trim_data, 'Additional Fees', each_option))
 
@@ -674,19 +690,19 @@ def auction():
 		#MESSAGE QUEUES
 		if last_favorite_choice and session.SEND_FAVORITE_ALERT:
 			your = each_offer.auth_user
-			aid = auction_request_info['id']
+			car = '%s %s %s (ID:%s)' % (auction_request_info['year'], auction_request_info['make'].upper(), auction_request_info['model'].upper(), auction_request_info['id'])
 			scheduler.queue_task(
 				send_alert_task,
-				pargs=['email', your.email, HTML_EMAIL_TEMPLATE.format(
+				pargs=['email', your.email, response.render('email_alert_template.html', dict(
 					APPNAME=APP_NAME,
 					NAME = your.first_name.capitalize(), 
-					MESSAGE =  "The buyer for auction ID: %s picked %s as the favorite! Check your auctions page"%(aid, 'you' if is_favorite else 'another dealer'),
-					MESSAGE_TITLE = "New favorite!",
-					WHAT_NOW = "Act fast!" if is_favorite else 'Keep it up!',
-					INSTRUCTIONS = "Make a better offer to convince the buyer that your offer is the best deal!" if is_favorite else 'But stay alert for competing offers that may convince the buyer to change his/her mind!',
-					CLICK_HERE = "Click here to view the auction",
+					MESSAGE =  XML("The buyer for a <i>%s</i> picked <b>%s</b> as the favorite! So what now?"%(car, 'you' if is_favorite else 'another dealer')),
+					MESSAGE_TITLE = "Buyer picked a new favorite!",
+					WHAT_NOW = "Act fast!" if not is_favorite else 'Keep it up!',
+					INSTRUCTIONS = "Make a better offer to convince the buyer that your offer is the best deal!" if not is_favorite else 'But stay alert for competing offers that may convince the buyer to have a change of mind!',
+					CLICK_HERE = "Go to auction",
 					CLICK_HERE_URL = URL(args=request.args),
-				), "New favorite was chosen for %s auction #%s"%(APP_NAME,aid)],
+				)), "New favorite was chosen for %s auction for a %s"%(APP_NAME,car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
 				period = 5, # run 5s after previous
@@ -697,6 +713,8 @@ def auction():
 			'id' : offer_id,
 			'is_winning_offer' :is_winning_offer,
 			'is_my_offer': is_my_offer,
+			'additional_info':each_offer.auction_request_offer['fineprint'],
+			'about_us':each_offer.dealership_info['mission_statement'],
 			'bid_is_final': bool(bid_is_final),
 			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,
 			'final_bid_ended': final_bid_ended,
@@ -721,6 +739,7 @@ def auction():
 			'mechanical_options' : mechanical_options,
 			'package_options' : package_options,
 			'fees_options' : fees_options,
+			'safety_options':safety_options,
 			#'exterior_image' : each_offer.auction_request_offer.exterior_image,
 			#'interior_image' : each_offer.auction_request_offer.interior_image,
 			'exterior_images' : each_offer.auction_request_offer.exterior_image_compressed,

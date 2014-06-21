@@ -100,7 +100,7 @@ def getMsrp(trim_data, option_ids={}):
 		for each_choice in option_ids[each_option_key]:
 			for each_option in options:
 				if int(each_option['id']) == int(each_choice):
-					price+=int(each_option['price']['baseMSRP'])
+					price+=int(each_option['price']['baseMSRP'] if 'price' in each_option else 0)
 	return price
 	
 def colorChipsErrorFix(style_colors): #experimental
