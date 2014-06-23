@@ -646,7 +646,8 @@ def auction():
 			winning_choice=int(request.vars['winner'] or 0)
 			if each_offer.auction_request_offer['id'] == winning_choice and not a_winning_offer and not auction_ended_offer_expired:
 				if is_not_awaiting_offer and not final_bid_ended:
-					a_winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice)#insert new winner
+					winner_code = str(random.randint(0,999999999999 + 1)).zfill(10) #http://goo.gl/2IkFe #ONE IN TRILLION CHANCE FOR CONFLICT BUT TEST ANYWAY, UNIQUE=TRUE WILL CAUSE INTERNAL ERROR
+					a_winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice, winner_code=winner_code)#insert new winner
 					is_winning_offer=True #now make it true
 					redirect(URL(args=request.args)) #get rid of vars
 					#session.SEND_WINNER_ALERT = True
