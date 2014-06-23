@@ -19,7 +19,7 @@ def index():
 	skip_message = request.vars['skip_message']
 	message = request.vars['message']
 	intro =  "Hello! Welcome to the bid drive dot com automated auction verification service."
-	gather = "Please %sdial your 10 digit winner code now."% 're' if bool(message or skip_message) else ''
+	gather = "Please %sdial your 10 digit winner code now."% ('re' if bool(message or skip_message) else '',)
 	if not skip_message:
 		resp.say(message or intro)
 	with resp.gather(numDigits=12, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
