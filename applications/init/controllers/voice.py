@@ -18,7 +18,7 @@ def index():
 	resp = twiml.Response()
 	skip_message = request.vars['skip_message']
 	message = request.vars['message']
-	intro =  "Hello! Welcome to the bid drive dot com automated auction verification service."
+	intro =  "Hello! Welcome to the bid drive dot com automated auction validation system."
 	gather = "Please %sdial your 12 digit winner code now."% ('re' if bool(message or skip_message) else '',)
 	if not skip_message:
 		resp.say(message or intro)
@@ -41,7 +41,7 @@ def handle_key():
 		#resp.dial("+13105551212")
 		# If the dial fails:
 		with resp.gather(numDigits=1, action="handle_key_check.xml/%s"%digit_pressed, method="POST") as g: #change to csv so operator can say each number separate
-			g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 to redial your winner code."%(str(list(digit_pressed)).strip('[').strip(']'),))
+			g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 to try again."%(str(list(digit_pressed)).strip('[').strip(']'),))
 		
 		return dict(resp = str(resp))
  
@@ -53,7 +53,7 @@ def handle_key_check():
 	winner_code = request.args(0)
 	if digit_pressed == '1':
 		resp = twiml.Response()
-		winner_code_exists = db(db.auction_request_winning_offer.winner_code.contains(digit_pressed)).select() #http://goo.gl/GwI1xN
+		winner_code_exists = db(db.auction_request_winning_offer.winner_code==digit_pressed).select() #http://goo.gl/GwI1xN
 		if winner_code_exists:
 			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 			return dict(resp = str(resp))
