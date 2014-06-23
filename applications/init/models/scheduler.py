@@ -8,7 +8,9 @@ from twilio import twiml
 
 TWILIO_SID = "AC2cec9db22d55360d41944cd2b953804a"
 TWILIO_KEY = "34add1bda0569d8c32fa37e2b9a7200b" 
-twilio_clinet = TwilioRestClient(TWILIO_SID, TWILIO_KEY)
+TWILIO_NUMBER = "(857) 453-8317"
+twilio_client = TwilioRestClient(TWILIO_SID, TWILIO_KEY)
+
 
 #http://goo.gl/L05FHS
 #http://goo.gl/An6V4P

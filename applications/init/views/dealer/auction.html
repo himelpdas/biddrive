@@ -35,9 +35,9 @@
 <div id = "panel-top" class="panel panel-primary">
 	<div class= "panel-heading text-uppercase text-md" style="position:relative;">
 		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}} {{if a_winning_offer or auction_ended_offer_expired:}}<span class="text-danger">(ENDED)<span>{{pass}}</strong>
-		{{if a_winning_offer and (is_owner):}}
+		{{if a_winning_offer and (is_owner):}}{{#TODO change so dealer can see too}}
 			<div style="position:absolute;width:100%;">
-				<a href="{{=URL('dealer','winner',args=request.args)}}">
+				<a href="{{=auction_request_info['view_certificate_url']}}">
 					<button class="btn btn-success btn-xs center-block">
 						<i class="fa fa-fw fa-certificate"></i> View Certificate
 					</button>

@@ -27,7 +27,7 @@ response.menu = [
     #(T('Used cars'), False, URL('default', 'index'), []),
     (T('How %s works' % APP_NAME), False, URL('default', 'how_it_works'), []),
 	(T('Hello dealers!'), False, URL('default', 'hello_dealers' ), []),
-] if not auth.user_id else []
+] if not auth.has_membership(user_id = auth.user_id, role = "dealers") else []
 
 DEVELOPMENT_MENU = False
 

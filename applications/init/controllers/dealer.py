@@ -365,7 +365,7 @@ def authorize_auction_for_dealer(): #add permission and charge entry fee upon de
 #@auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
 #auth requires is admin or is part of this auction
-def auction():
+def __auction_validator__():
 	auction_request_id = request.args[0]
 	auction_request = db(db.auction_request.id == auction_request_id).select().first()
 	if not auction_request:
@@ -398,7 +398,7 @@ def auction():
 	if not is_participant: #somehow he never made an offer
 		session.message="@You are not a part of this auction!"
 		redirect(URL('default','index'))
-	
+		
 	#session.last_auction_visited = auction_request_id #for instant access to last auction visited when portal button pressed
 	#tested above if this user is worth using resources for, now do all the required queries for the logic below
 	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
@@ -406,6 +406,44 @@ def auction():
 	a_winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select().last()
 	
 	auction_is_completed = (a_winning_offer or auction_ended_offer_expired)
+
+	return dict(auction_request_id=auction_request_id, 
+		auction_request=auction_request, 
+		trim_data=trim_data,
+		auction_request_ends=auction_request_ends,
+		auction_request_expired=auction_request_expired,
+		auction_ended_offer_ends=auction_ended_offer_ends,
+		auction_ended_offer_expired=auction_ended_offer_expired,
+		is_owner=is_owner,
+		is_dealer_with_offer=is_dealer_with_offer,
+		is_authorized_dealer=is_authorized_dealer,
+		is_participant=is_participant,
+		is_authorized_dealer_with_offer=is_authorized_dealer_with_offer,
+		is_dealer_and_with_final_bid=is_dealer_and_with_final_bid,
+		auction_request_offers = auction_request_offers,
+		last_favorite_choice = last_favorite_choice,
+		a_winning_offer = a_winning_offer,
+		auction_is_completed = auction_is_completed,)
+
+def auction():
+	auction_validator = __auction_validator__()
+	auction_request_id=auction_validator['auction_request_id']
+	auction_request=auction_validator['auction_request']
+	trim_data=auction_validator['trim_data']
+	auction_request_ends=auction_validator['auction_request_ends']
+	auction_request_expired=auction_validator['auction_request_expired']
+	auction_ended_offer_ends=auction_validator['auction_ended_offer_ends']
+	auction_ended_offer_expired=auction_validator['auction_ended_offer_expired']
+	is_owner=auction_validator['is_owner']
+	is_dealer_with_offer=auction_validator['is_dealer_with_offer']
+	is_authorized_dealer=auction_validator['is_authorized_dealer']
+	is_participant=auction_validator['is_participant']
+	is_authorized_dealer_with_offer=auction_validator['is_authorized_dealer_with_offer']
+	is_dealer_and_with_final_bid=auction_validator['is_dealer_and_with_final_bid']
+	auction_request_offers=auction_validator['auction_request_offers']
+	last_favorite_choice=auction_validator['last_favorite_choice']
+	a_winning_offer=auction_validator['a_winning_offer']
+	auction_is_completed=auction_validator['auction_is_completed']
 	
 	#only allow form functionality to show for dealers as long as auction is active
 	bid_form = my_message_form_dealer = my_auction_request_offer_id = is_final_bid = None
@@ -504,6 +542,7 @@ def auction():
 		number_of_dealers = len(auction_request_offers),
 		lowest_price = lowest_price,
 		favorite_price = favorite_price,
+		view_certificate_url = URL('dealer','winner', args=[auction_request_id], hmac_key=str(auth.user_id), hash_vars=[auction_request_id], salt=str(session.salt)) #hash_vars is like message in hmac function #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
 	)
 
 	#in memory sorting	
@@ -913,11 +952,13 @@ def my_auctions():
 	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
 	
-@auth.requires(request.args(0))
+@auth.requires(URL.verify(request, hmac_key=str(auth.user_id), salt = str(session.salt), hash_vars=[request.args(0)])) #guarantees that user clicked from auction page if this passes
 def winner():
-	auction_id = request.args[0]
-	hashed_id = lookup_hash.hashlittle(auction_id)
-	return dict(auction_id = auction_id, hashed_id=hashed_id)
+	auction_validator = __auction_validator__()
+	winning_offer = auction_validator['a_winning_offer'] #must be True because this link would be active if there is a winner
+	winner_code=winning_offer.winner_code
+	hashed_id = ' '.join([winner_code[i:i+3] for i in range(0,len(winner_code),3)]) #http://goo.gl/0ra6oM
+	return dict(auction_id = auction_validator['auction_request_id'], hashed_id=hashed_id)
 	
 @auth.requires_membership('dealers')
 def dealer_info():
