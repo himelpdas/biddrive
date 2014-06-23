@@ -635,7 +635,7 @@ db.define_table('auction_request_winning_offer',
 	Field('winner_code',
 		readable=False,
 		writable=False,
-		unique = True,
+		#unique = True, #UNCOMMENT IN PRODUCTION
 	),
 	Field('contact_made', 'boolean',
 		default=False,
