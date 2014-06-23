@@ -56,6 +56,10 @@ def handle_key_check():
 		winner_code_exists = db(db.auction_request_winning_offer.winner_code.contains(winner_code)).select() #http://goo.gl/GwI1xN
 		if winner_code_exists:
 			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
+			winning_offer = db(db.auction_request_offer.id == winner_code.auction_request_offer).select().last()
+			winning_dealer = db(db.auction_request.dealership_info.owner_id == winning_offer.owner_id).select().last()
+			winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
+			resp.dial(winning_dealer_phone_number)
 			return dict(resp = str(resp))
 		else:
 			redirect(URL('init', 'voice', 'index.xml', vars=dict(message="I'm sorry. That code doesn't exist in our database.")))
