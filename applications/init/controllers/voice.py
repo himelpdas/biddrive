@@ -57,7 +57,7 @@ def handle_key_check():
 		if winner_code_exists:
 			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 			winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
-			winning_dealer = db(db.auction_request.dealership_info.owner_id == winning_offer.owner_id).select().last()
+			winning_dealer = db(db.dealership_info.owner_id == winning_offer.owner_id).select().last()
 			winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
 			resp.dial(winning_dealer_phone_number)
 			return dict(resp = str(resp))
