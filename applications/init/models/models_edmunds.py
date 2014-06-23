@@ -632,14 +632,14 @@ db.define_table('auction_request_winning_offer',
 		readable = False,
 		writable = False,
 	),
-	Field('winner_code',
-		readable=False,
-		writable=False,
-		#unique = True, #UNCOMMENT IN PRODUCTION
-	),
-	Field('contact_made', 'boolean',
-		default=False,
-	),
+#	Field('winner_code',
+#		readable=False,
+#		writable=False,
+#		unique = True, #UNCOMMENT IN PRODUCTION
+#	),
+#	Field('contact_made', 'boolean',
+#		default=False,
+#	),
 	auth.signature,
 )
 
