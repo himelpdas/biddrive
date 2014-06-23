@@ -53,7 +53,7 @@ def handle_key_check():
 	winner_code = request.args(0)
 	if digit_pressed == '1':
 		resp = twiml.Response()
-		winner_code_exists = db.auction_request_winning_offer.winner_code.contains(digit_pressed) #http://goo.gl/GwI1xN
+		winner_code_exists = db(db.auction_request_winning_offer.winner_code.contains(digit_pressed)).select() #http://goo.gl/GwI1xN
 		if winner_code_exists:
 			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 			return dict(resp = str(resp))

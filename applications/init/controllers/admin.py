@@ -27,9 +27,9 @@ def dealership_form():
 	#expose fields for admin. Do this before sql form is created.
 	db.dealership_info.verification.readable = True
 	db.dealership_info.verification.writable = True
-	db.dealership_info.created_on.readable = True
-	db.dealership_info.changed_on.readable = True
-	db.dealership_info.changed_by.readable = True
+	#db.dealership_info.created_on.readable = True #done automatically via auth.signature
+	#db.dealership_info.changed_on.readable = True
+	#db.dealership_info.changed_by.readable = True
 	db.dealership_info.owner_id.readable = True
 	db.dealership_info.owner_id.writable = True
 		
