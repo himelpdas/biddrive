@@ -65,8 +65,8 @@ def handle_key_check():
 			winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
 			screen_for_machine_url = URL("screen_for_machine.xml", vars = auction_request_vehicle, scheme=True, host=True)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
 			dialer = resp.dial() #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
-			dialer.append(twiml.Enqueue(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
 			dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST"))
+			dialer.append(twiml.Conference(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
 			resp.say("The call failed, or the remote party hung up. Goodbye.")
 			return dict(resp = str(resp))
 		else:
