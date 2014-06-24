@@ -90,7 +90,7 @@ def handle_key_check():
 					opening_time = winning_dealer['%s_opening_time'%each_day]
 					closing_time = winning_dealer['%s_closing_time'%each_day]
 					if opening_time and closing_time:
-						schedule+=" %s, %s to %s."%(each_day, opening_time, closing_time)
+						schedule+=" %s, %s through %s."%(each_day, opening_time, closing_time)
 				for each in range(3):
 					resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day. "%(tz_country, tz_zone, schedule) )
 					resp.pause(length=3)
