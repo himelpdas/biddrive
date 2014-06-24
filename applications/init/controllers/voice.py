@@ -24,8 +24,8 @@ def index():
 		resp.say(message or intro)
 	with resp.gather(numDigits=12, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
 		for each in range(3):
-			g.say(gather)
-			resp.pause(length=3)
+			g.say(gather) #g is gather obj
+			g.pause(length=3)
 	return(
 		dict(
 			resp=str(resp) #XML() MOVED TO VIEW #By default web2py escapes string characters passed to view, use XML function to preserve escapable characters (ex < > & etc.)
@@ -45,7 +45,7 @@ def handle_key():
 		with resp.gather(numDigits=1, action="handle_key_check.xml/%s"%digit_pressed, method="POST") as g: #change to csv so operator can say each number separate
 			for each in range(3):
 				g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 and try again."%(str(list(digit_pressed)).strip('[').strip(']'),))
-				resp.pause(length=3)
+				g.pause(length=3)
 		return dict(resp = str(resp))
  
 	# If the caller pressed anything but 1, redirect them to the homepage.
@@ -118,7 +118,7 @@ def screen_for_machine():
 	with resp.gather(numDigits=1, action="screen_complete.xml", method="POST") as g: #if he pressed something go to a new function.
 		for each in range(3):
 			g.say(message)
-			resp.pause(length=3)
+			g.pause(length=3)
 	resp.hangup() #hang up if no gather
 	return dict(resp=str(resp))
 	
