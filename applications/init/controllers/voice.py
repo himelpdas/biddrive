@@ -115,11 +115,12 @@ def handle_key_check():
 def screen_for_machine():
 	resp = twiml.Response()
 	winning_offer_id = request.args(0)
-	message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {id}, for a {color} {year} {make} {model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
-	with resp.gather(numDigits=1, action="screen_complete.xml/%s"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function.
-		for each in range(3):
-			g.say(message)
-			g.pause(length=3)
+	if request.vars:
+		message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {id}, for a {color} {year} {make} {model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
+		with resp.gather(numDigits=1, action="screen_complete.xml/%s"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function.
+			for each in range(3):
+				g.say(message)
+				g.pause(length=3)
 	resp.hangup() #hang up if no gather
 	return dict(resp=str(resp))
 	
