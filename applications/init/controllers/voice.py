@@ -57,6 +57,7 @@ def handle_key_check():
 		if winner_code_exists:
 			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 			winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
+			contact_made = winning_offer.update_record(contact_made=True)
 			winning_dealer = db(db.dealership_info.owner_id == winning_offer.owner_id).select().last()
 			auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
 			auction_request_vehicle = dict(color = winning_offer.color, year = auction_request.year, make = auction_request.make, model = auction_request.model, trim = auction_request.trim_name)

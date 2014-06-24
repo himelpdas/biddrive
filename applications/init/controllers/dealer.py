@@ -957,8 +957,9 @@ def winner():
 	auction_validator = __auction_validator__()
 	winning_offer = auction_validator['a_winning_offer'] #must be True because this link would be active if there is a winner
 	winner_code=winning_offer.winner_code
+	contact_made=winning_offer.contact_made
 	hashed_id = ' '.join([winner_code[i:i+3] for i in range(0,len(winner_code),3)]) #http://goo.gl/0ra6oM
-	return dict(auction_id = auction_validator['auction_request_id'], hashed_id=hashed_id)
+	return dict(auction_id = auction_validator['auction_request_id'], hashed_id=hashed_id, contact_made=contact_made)
 	
 @auth.requires_membership('dealers')
 def dealer_info():
