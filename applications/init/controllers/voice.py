@@ -19,7 +19,7 @@ def index():
 	skip_message = request.vars['skip_message']
 	message = request.vars['message']
 	intro =  "Hello! Welcome to the bid drive dot com automated auction validation system."
-	gather = "Please %sdial your 12 digit winner code now. . . . "*3% ('re' if bool(message or skip_message) else '',)
+	gather = ("Please %sdial your 12 digit winner code now. . . . "% ('re' if bool(message or skip_message) else '',))*3
 	if not skip_message:
 		resp.say(message or intro)
 	with resp.gather(numDigits=12, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
@@ -41,7 +41,7 @@ def handle_key():
 		#resp.dial("+13105551212")
 		# If the dial fails:
 		with resp.gather(numDigits=1, action="handle_key_check.xml/%s"%digit_pressed, method="POST") as g: #change to csv so operator can say each number separate
-			g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 and try again. . . . "*3%(str(list(digit_pressed)).strip('[').strip(']'),))
+			g.say(("You dialed %s. If this is correct, press 1. Otherwise, press 2 and try again. . . . "%(str(list(digit_pressed)).strip('[').strip(']'),))*3)
 		
 		return dict(resp = str(resp))
  
