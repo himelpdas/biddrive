@@ -77,9 +77,10 @@ def handle_key_check():
 
 def screen_for_machine():
 	resp = twiml.Response()
-	message = "Hello. This is the bid drive dot com automatic validation service. You are the winning bidder for a {color} {year} {make} {model} {trim}. The buyer initiated this call and is on waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
+	message = "Hello. This is the bid drive dot com automatic validation service. You are the winning bidder for a {color} {year} {make} {model} {trim}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
 	with resp.gather(numDigits=1, action="screen_complete.xml", method="POST") as g:
 		g.say(message*3)
+	resp.hangup()
 	return dict(resp=str(resp))
 	
 def screen_complete():
