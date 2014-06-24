@@ -68,7 +68,6 @@ def handle_key_check():
 			return dict(resp = str(resp))
 		else:
 			redirect(URL('init', 'voice', 'index.xml', vars=dict(message="I'm sorry. That code doesn't exist in our database.")))
-	elif 
 	# If the caller pressed 2 or some other key
 	redirect(URL('init', 'voice', 'index.xml', vars=dict(skip_message=True)))
 
