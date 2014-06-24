@@ -59,7 +59,7 @@ def handle_key_check():
 			winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
 			winning_dealer = db(db.dealership_info.owner_id == winning_offer.owner_id).select().last()
 			#time stuff# see if dealer is open now at his location's time. if not open, say schedule
-			today_datetime_for_dealer = datetime.now(timezone(winning_dealer.time_zone))
+			today_datetime_for_dealer = datetime.datetime.now(timezone(winning_dealer.time_zone))
 			weekday_for_dealer = today_datetime_for_dealer.strftime("%A").lower() #extract day of the week #http://goo.gl/dopxlP
 			def twelve_to_24hr(time, am_pm):
 				hour, minute = map(lambda t: int(t),time.split(':'))
