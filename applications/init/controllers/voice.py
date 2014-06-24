@@ -57,18 +57,19 @@ def handle_key_check():
 		if winner_code_exists:
 			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 			winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
-			contact_made = winning_offer.update_record(contact_made=True)
 			winning_dealer = db(db.dealership_info.owner_id == winning_offer.owner_id).select().last()
+			#contact_made = winning_offer.update_record(contact_made=True)
 			auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
 			auction_request_vehicle = dict(color = winning_offer.color, year = auction_request.year, make = auction_request.make, model = auction_request.model, trim = auction_request.trim_name)
 			winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
 			screen_for_machine_url = URL("screen_for_machine.xml", vars = auction_request_vehicle).split('/')[-1]
-			dialer = resp.dial(winning_dealer_phone_number, action = screen_for_machine_url, method="POST") #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
-			#dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST"))
+			dialer = resp.dial() #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
+			dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST"))
 			resp.say("The call failed, or the remote party hung up. Goodbye.")
 			return dict(resp = str(resp))
 		else:
 			redirect(URL('init', 'voice', 'index.xml', vars=dict(message="I'm sorry. That code doesn't exist in our database.")))
+	
 	# If the caller pressed 2 or some other key
 	redirect(URL('init', 'voice', 'index.xml', vars=dict(skip_message=True)))
 
