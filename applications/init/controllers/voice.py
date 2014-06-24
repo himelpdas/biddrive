@@ -100,7 +100,7 @@ def handle_key_check():
 				color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.simple_color_names))
 				auction_request_vehicle = dict(color = color_names[winning_offer.color], year = auction_request.year, make = auction_request.make, model = auction_request.model, id=auction_request.id) #trim = auction_request.trim_name)
 				winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
-				screen_for_machine_url = URL("screen_for_machine.xml", vars = auction_request_vehicle, scheme=True, host=True)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
+				screen_for_machine_url = URL("screen_for_machine.xml", args=[winning_offer.id] vars = auction_request_vehicle, scheme=True, host=True)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
 				dialer = resp.dial(callerId = TWILIO_NUMBER_CALLER_ID) #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
 				dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST")) #allows for interaction (ie. gather) with dealer before he enters the call.. must hang up explicitly if unresponsive or call will connect
 				#TODO figure out a way to play music while ringing #dialer.append(twiml.Conference(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
@@ -114,8 +114,9 @@ def handle_key_check():
 
 def screen_for_machine():
 	resp = twiml.Response()
+	winning_offer_id = request.args(0)
 	message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Hello. You are the winning bidder of auction I D number {id}, for a {color} {year} {make} {model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
-	with resp.gather(numDigits=1, action="screen_complete.xml", method="POST") as g: #if he pressed something go to a new function.
+	with resp.gather(numDigits=1, action="screen_complete.xml/%s"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function.
 		for each in range(3):
 			g.say(message)
 			g.pause(length=3)
@@ -124,6 +125,8 @@ def screen_for_machine():
 	
 def screen_complete():
 	#no need to test gather as any key is good
+	winning_offer_id = request.args(0)
+	winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
 	contact_made = winning_offer.update_record(contact_made=True)
 	resp = twiml.Response()
 	resp.say("Connecting.")
