@@ -58,16 +58,44 @@ def handle_key_check():
 			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 			winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
 			winning_dealer = db(db.dealership_info.owner_id == winning_offer.owner_id).select().last()
-			#contact_made = winning_offer.update_record(contact_made=True)
-			auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
-			color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.simple_color_names))
-			auction_request_vehicle = dict(color = color_names[winning_offer.color], year = auction_request.year, make = auction_request.make, model = auction_request.model, id=auction_request.id) #trim = auction_request.trim_name)
-			winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
-			screen_for_machine_url = URL("screen_for_machine.xml", vars = auction_request_vehicle, scheme=True, host=True)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
-			dialer = resp.dial(callerId = TWILIO_NUMBER_CALLER_ID) #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
-			dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST")) #allows for interaction (ie. gather) with dealer before he enters the call.. must hang up explicitly if unresponsive or call will connect
-			#TODO figure out a way to play music while ringing #dialer.append(twiml.Conference(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
-			resp.say("The call failed, or the remote party hung up. Goodbye.")
+			#time stuff# see if dealer is open now at his location's time. if not open, say schedule
+			today_datetime_for_dealer = datetime.now(timezone(winning_dealer.time_zone))
+			weekday_for_dealer = today_datetime_for_dealer.strftime("%A").lower() #extract day of the week #http://goo.gl/dopxlP
+			def twelve_to_24hr(time, am_pm):
+				hour, minute = map(lambda t: int(t),time.split(':'))
+				if am_pm == "AM" and hour == 12: #convert from 12hr to 24hr time. Here 12AM should be 0hr, every other AM is fine
+					hour = 0
+				elif am_pm == "PM" and hour != 12: #leave 12PM alone, as it is also 12 in 24hr time. Every other PM add 12 to it. Ex. 1PM = 13hr
+					hour+=12
+				return hour, minute
+			opening_time=winning_dealer['%s_opening_time'%weekday_for_dealer]
+			closing_time=winning_dealer['%s_closing_time'%weekday_for_dealer]
+			is_business_day = closing_time and opening_time #means it has, is, or was open this day
+			if is_business_day: #if one if false it's closed
+				opening_hour, opening_minute = twelve_to_24hr(*opening_time.split(' ')) #Get schedule for the day of the week at dealer's location. Returns something like ['12:30', 'AM'] for Monday or whatever day it is for dealer... note it could be Tuesday on server's time, but still Monday on dealer's time
+				closing_hour, closing_minute = twelve_to_24hr(*closing_time.split(' ')) #Get schedule for the day of the week at dealer's location. Returns something like ['12:30', 'AM'] for Monday or whatever day it is for dealer... note it could be Tuesday on server's time, but still Monday on dealer's time
+				opening_datetime_for_dealer = today_datetime_for_dealer.replace(hour=opening_hour, minute=opening_minute)
+				closing_datetime_for_dealer = today_datetime_for_dealer.replace(hour=closing_hour, minute=closing_minute)
+			if is_business_day and today_datetime_for_dealer < opening_datetime_for_dealer and closing_datetime_for_dealer < today_datetime_for_dealer: #means they're closed
+				tz_country, tz_zone = winning_dealer.time_zone.split('/') 
+				days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+				schedule = ''
+				for each_day in days:
+					opening_time = winning_dealer['%s_opening_time'%each_day]
+					closing_time = winning_dealer['%s_closing_time'%each_day]
+					if opening_time and closing_time:
+						schedule+=" %s, %s to %s."%(day, opening_time, closing_time)
+				resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s"%(tz_country, tz_zone, schedule))
+			else: #make vehicle details to pass to dealer	and CALL the dealer
+				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
+				color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.simple_color_names))
+				auction_request_vehicle = dict(color = color_names[winning_offer.color], year = auction_request.year, make = auction_request.make, model = auction_request.model, id=auction_request.id) #trim = auction_request.trim_name)
+				winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
+				screen_for_machine_url = URL("screen_for_machine.xml", vars = auction_request_vehicle, scheme=True, host=True)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
+				dialer = resp.dial(callerId = TWILIO_NUMBER_CALLER_ID) #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
+				dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST")) #allows for interaction (ie. gather) with dealer before he enters the call.. must hang up explicitly if unresponsive or call will connect
+				#TODO figure out a way to play music while ringing #dialer.append(twiml.Conference(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
+				resp.say("The call failed, or the remote party hung up. Goodbye.")
 			return dict(resp = str(resp))
 		else:
 			redirect(URL('init', 'voice', 'index.xml', vars=dict(message="I'm sorry. That code doesn't exist in our database.")))
@@ -85,7 +113,7 @@ def screen_for_machine():
 	
 def screen_complete():
 	#no need to test gather as any key is good
-	#mark as #contact_made = winning_offer.update_record(contact_made=True)
+	contact_made = winning_offer.update_record(contact_made=True)
 	resp = twiml.Response()
 	resp.say("Connecting.")
 	return dict(resp=str(resp))
