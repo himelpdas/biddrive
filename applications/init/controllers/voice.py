@@ -55,7 +55,6 @@ def handle_key_check():
 		resp = twiml.Response()
 		winner_code_exists = db(db.auction_request_winning_offer.winner_code.contains(winner_code)).select().last() #http://goo.gl/GwI1xN
 		if winner_code_exists:
-			resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 			winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
 			winning_dealer = db(db.dealership_info.owner_id == winning_offer.owner_id).select().last()
 			#time stuff# see if dealer is open now at his location's time. if not open, say schedule
@@ -92,6 +91,7 @@ def handle_key_check():
 						schedule+=" %s, %s to %s."%(each_day, opening_time, closing_time)
 				resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s"%(tz_country, tz_zone, schedule))
 			else: #make vehicle details to pass to dealer	and CALL the dealer
+				resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
 				color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.simple_color_names))
 				auction_request_vehicle = dict(color = color_names[winning_offer.color], year = auction_request.year, make = auction_request.make, model = auction_request.model, id=auction_request.id) #trim = auction_request.trim_name)
