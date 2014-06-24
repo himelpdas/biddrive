@@ -126,7 +126,7 @@ def screen_for_machine():
 def screen_complete():
 	#no need to test gather as any key is good
 	winning_offer_id = request.args(0)
-	winning_offer = db(db.auction_request_offer.id == winner_code_exists.auction_request_offer).select().last()
+	winning_offer = db(db.auction_request_offer.id == winning_offer_id).select().last()
 	contact_made = winning_offer.update_record(contact_made=True)
 	resp = twiml.Response()
 	resp.say("Connecting.")
