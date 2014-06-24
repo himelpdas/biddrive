@@ -89,7 +89,7 @@ def handle_key_check():
 					opening_time = winning_dealer['%s_opening_time'%each_day]
 					closing_time = winning_dealer['%s_closing_time'%each_day]
 					if opening_time and closing_time:
-						schedule+=" %s, %s to %s."%(day, opening_time, closing_time)
+						schedule+=" %s, %s to %s."%(each_day, opening_time, closing_time)
 				resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s"%(tz_country, tz_zone, schedule))
 			else: #make vehicle details to pass to dealer	and CALL the dealer
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
