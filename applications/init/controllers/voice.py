@@ -77,7 +77,7 @@ def handle_key_check():
 
 def screen_for_machine():
 	resp = twiml.Response()
-	message = "This is the bid drive dot com automatic validation system. Press any key to skip this message. Hello. You are the winning bidder of auction ID {id}, for a {color} {year} {make} {model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
+	message = "This is the bid drive dot com automatic validation system. Press any key to skip this message. Hello. You are the winning bidder of auction I D {id}, for a {color} {year} {make} {model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
 	with resp.gather(numDigits=1, action="screen_complete.xml", method="POST") as g: #if he pressed something go to a new function.
 		g.say(message*3)
 	resp.hangup() #hang up if no gather
@@ -85,6 +85,7 @@ def screen_for_machine():
 	
 def screen_complete():
 	#no need to test gather as any key is good
+	#mark as #contact_made = winning_offer.update_record(contact_made=True)
 	resp = twiml.Response()
 	resp.say("Connecting.")
 	return dict(resp=str(resp))
