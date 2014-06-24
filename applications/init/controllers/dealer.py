@@ -968,9 +968,10 @@ def dealer_info():
 	response.title=heading="Edit dealership info"
 	my_info =db(db.dealership_info.id == auth.user_id).select().last()
 
-	city_field = request.post_vars['city']
+	city_field = request.post_vars['city'] #make it look nice for auction page
 	if city_field:
 		request.post_vars['city'] = " ".join(map(lambda word: word.capitalize(), city_field.split(' ')))
+		
 	form=SQLFORM(db.dealership_info,my_info,_class="form-horizontal", hideerror=True)
 	#4 ways to further validate: check post_vars (bad as nothing has been validated), on_validate and form.vars, custom validators, compute fields with required == True (will cause internal error instead)
 	def make_sure_opening_and_closing_times_make_sense(form):
