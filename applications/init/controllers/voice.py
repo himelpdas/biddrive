@@ -14,7 +14,7 @@ def result():
 			)
 	)
 """
-long_pause =" , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , "
+long_pause =" . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
 def index():
 	resp = twiml.Response()
 	skip_message = request.vars['skip_message']
