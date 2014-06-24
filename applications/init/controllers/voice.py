@@ -23,7 +23,7 @@ def index():
 	if not skip_message:
 		resp.say(message or intro)
 	with resp.gather(numDigits=12, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
-		for each in range(3)
+		for each in range(3):
 			g.say(gather)
 			resp.pause(3)
 	return(
