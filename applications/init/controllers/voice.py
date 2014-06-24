@@ -76,7 +76,7 @@ def handle_key_check():
 				closing_hour, closing_minute = twelve_to_24hr(*closing_time.split(' ')) #Get schedule for the day of the week at dealer's location. Returns something like ['12:30', 'AM'] for Monday or whatever day it is for dealer... note it could be Tuesday on server's time, but still Monday on dealer's time
 				opening_datetime_for_dealer = today_datetime_for_dealer.replace(hour=opening_hour, minute=opening_minute)
 				closing_datetime_for_dealer = today_datetime_for_dealer.replace(hour=closing_hour, minute=closing_minute)
-				if today_datetime_for_dealer < opening_datetime_for_dealer and closing_datetime_for_dealer < today_datetime_for_dealer:
+				if today_datetime_for_dealer < opening_datetime_for_dealer or closing_datetime_for_dealer < today_datetime_for_dealer:
 					is_open_now = False
 			else:
 				is_open_now = False
@@ -89,7 +89,7 @@ def handle_key_check():
 					closing_time = winning_dealer['%s_closing_time'%each_day]
 					if opening_time and closing_time:
 						schedule+=" %s, %s to %s."%(each_day, opening_time, closing_time)
-				resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day."%(tz_country, tz_zone, schedule))
+				resp.say(("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day. "%(tz_country, tz_zone, schedule) )*3 )
 			else: #make vehicle details to pass to dealer	and CALL the dealer
 				resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
