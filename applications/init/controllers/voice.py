@@ -25,7 +25,7 @@ def index():
 	with resp.gather(numDigits=12, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
 		for each in range(3):
 			g.say(gather)
-			resp.pause(3)
+			resp.pause(length=3)
 	return(
 		dict(
 			resp=str(resp) #XML() MOVED TO VIEW #By default web2py escapes string characters passed to view, use XML function to preserve escapable characters (ex < > & etc.)
@@ -45,7 +45,7 @@ def handle_key():
 		with resp.gather(numDigits=1, action="handle_key_check.xml/%s"%digit_pressed, method="POST") as g: #change to csv so operator can say each number separate
 			for each in range(3):
 				g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 and try again."%(str(list(digit_pressed)).strip('[').strip(']'),))
-				resp.pause(3)
+				resp.pause(length=3)
 		return dict(resp = str(resp))
  
 	# If the caller pressed anything but 1, redirect them to the homepage.
@@ -93,7 +93,7 @@ def handle_key_check():
 						schedule+=" %s, %s to %s."%(each_day, opening_time, closing_time)
 				for each in range(3):
 					resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day. "%(tz_country, tz_zone, schedule) )
-					resp.pause(3)
+					resp.pause(length=3)
 			else: #make vehicle details to pass to dealer	and CALL the dealer
 				resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
@@ -118,7 +118,7 @@ def screen_for_machine():
 	with resp.gather(numDigits=1, action="screen_complete.xml", method="POST") as g: #if he pressed something go to a new function.
 		for each in range(3):
 			g.say(message)
-			resp.pause(3)
+			resp.pause(length=3)
 	resp.hangup() #hang up if no gather
 	return dict(resp=str(resp))
 	
