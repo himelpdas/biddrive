@@ -89,7 +89,7 @@ def handle_key_check():
 					closing_time = winning_dealer['%s_closing_time'%each_day]
 					if opening_time and closing_time:
 						schedule+=" %s, %s to %s."%(each_day, opening_time, closing_time)
-				resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s"%(tz_country, tz_zone, schedule))
+				resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day."%(tz_country, tz_zone, schedule))
 			else: #make vehicle details to pass to dealer	and CALL the dealer
 				resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
@@ -100,7 +100,7 @@ def handle_key_check():
 				dialer = resp.dial(callerId = TWILIO_NUMBER_CALLER_ID) #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
 				dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST")) #allows for interaction (ie. gather) with dealer before he enters the call.. must hang up explicitly if unresponsive or call will connect
 				#TODO figure out a way to play music while ringing #dialer.append(twiml.Conference(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
-				resp.say("The call failed, or the remote party hung up. Goodbye.")
+				resp.say("The call failed, or the remote party hung up. Thank you and have a great day.")
 			return dict(resp = str(resp))
 		else:
 			redirect(URL('init', 'voice', 'index.xml', vars=dict(message="I'm sorry. That code doesn't exist in our database.")))
