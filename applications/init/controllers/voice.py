@@ -71,12 +71,17 @@ def handle_key_check():
 			opening_time=winning_dealer['%s_opening_time'%weekday_for_dealer]
 			closing_time=winning_dealer['%s_closing_time'%weekday_for_dealer]
 			is_business_day = closing_time and opening_time #means it has, is, or was open this day
+			is_open_now = True
 			if is_business_day: #if one if false it's closed
 				opening_hour, opening_minute = twelve_to_24hr(*opening_time.split(' ')) #Get schedule for the day of the week at dealer's location. Returns something like ['12:30', 'AM'] for Monday or whatever day it is for dealer... note it could be Tuesday on server's time, but still Monday on dealer's time
 				closing_hour, closing_minute = twelve_to_24hr(*closing_time.split(' ')) #Get schedule for the day of the week at dealer's location. Returns something like ['12:30', 'AM'] for Monday or whatever day it is for dealer... note it could be Tuesday on server's time, but still Monday on dealer's time
 				opening_datetime_for_dealer = today_datetime_for_dealer.replace(hour=opening_hour, minute=opening_minute)
 				closing_datetime_for_dealer = today_datetime_for_dealer.replace(hour=closing_hour, minute=closing_minute)
-			if is_business_day and today_datetime_for_dealer < opening_datetime_for_dealer and closing_datetime_for_dealer < today_datetime_for_dealer: #means they're closed
+				if today_datetime_for_dealer < opening_datetime_for_dealer and closing_datetime_for_dealer < today_datetime_for_dealer:
+					is_open_now = False
+			else:
+				is_open_now = False
+			if not is_open_now: #means they're closed
 				tz_country, tz_zone = winning_dealer.time_zone.split('/') 
 				days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 				schedule = ''
