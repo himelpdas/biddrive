@@ -1002,6 +1002,9 @@ def winner():
 		for each_option in options[each_option_type]:
 			option_names.append(getOption(trim_data, each_option_type, each_option)['name'])
 			
+	#prices stuff
+	last_bid = auction_request_offer.latest_bid().bid
+	
 	#dealership info stuff
 	dealer = db(db.auth_user.id == auction_request_offer.owner_id).select().last()
 	dealership = db(db.dealership_info.id == auction_request_offer.owner_id).select().last()
@@ -1034,6 +1037,7 @@ def winner():
 		dealer=dealer,
 		dealership = dealership,
 		map_url=map_url,
+		last_bid=last_bid,
 		interior_image_url=interior_image_url,
 		exterior_image_url=exterior_image_url,
 	)
