@@ -125,7 +125,6 @@ def screen_for_machine():
 		resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
 		resp.hangup() #hang up if no gather
 	else:
-		winning_offer_id = request.args(0)
 		winning_offer = db(db.auction_request_offer.id == winning_offer_id).select().last()
 		contact_made = winning_offer.update_record(contact_made=True)
 		resp.say("Connecting. ")
