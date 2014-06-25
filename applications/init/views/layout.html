@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>{{=APP_NAME}} {{=request.function.replace('_',' ').capitalize()}}</title>
+    <title>{{=APP_NAME}} {{if response.title:}}{{=response.title}}{{else:}}{{=request.function.replace('_',' ').capitalize()}}{{pass}}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	
@@ -84,7 +84,7 @@
 {{pass}}
 <body class="pull_top">
 
-    <div class="navbar navbar-inverse navbar-fixed-top {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller in ['default','dealer'] and request.function in ['index', 'winner']:}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
+    <div class="navbar navbar-inverse navbar-fixed-top hidden-print {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller in ['default','dealer'] and request.function in ['index', 'winner']:}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
         <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle pull-right" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -147,7 +147,7 @@
         {{include}}
 
     <!-- starts footer -->
-    <footer id="footer"> {{#ISSUESZAKI the footer needs a powered by edmunds logo in the footer. Check 5874 and below of default branch to find it.}}
+    <footer id="footer" class="hidden-print"> {{#ISSUESZAKI the footer needs a powered by edmunds logo in the footer. Check 5874 and below of default branch to find it.}}
         <div class="container">
             <div class="row sections">
                 <div class="col-sm-4 recent_posts">

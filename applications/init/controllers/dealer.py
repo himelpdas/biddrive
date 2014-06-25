@@ -407,6 +407,17 @@ def __auction_validator__():
 	
 	auction_is_completed = (a_winning_offer or auction_ended_offer_expired)
 
+	#auction request info
+	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
+	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
+	
+	colors=[]
+	color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+	color_names = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
+	for id, each_name in color_names.items(): #just get names here for auction_request_info
+		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
+		colors.append([each_name, color_hex])
+	
 	return dict(auction_request_id=auction_request_id, 
 		auction_request=auction_request, 
 		trim_data=trim_data,
@@ -423,7 +434,11 @@ def __auction_validator__():
 		auction_request_offers = auction_request_offers,
 		last_favorite_choice = last_favorite_choice,
 		a_winning_offer = a_winning_offer,
-		auction_is_completed = auction_is_completed,)
+		auction_is_completed = auction_is_completed,
+		auction_request_area=auction_request_area,
+		auction_request_user=auction_request_user,
+		colors=colors,
+		color_names=color_names,)
 
 def auction():
 	auction_validator = __auction_validator__()
@@ -444,6 +459,11 @@ def auction():
 	last_favorite_choice=auction_validator['last_favorite_choice']
 	a_winning_offer=auction_validator['a_winning_offer']
 	auction_is_completed=auction_validator['auction_is_completed']
+	auction_is_completed = auction_validator['auction_is_completed']
+	auction_request_area=auction_validator['auction_request_area']
+	auction_request_user=auction_validator['auction_request_user']
+	colors=auction_validator['colors']
+	color_names=auction_validator['color_names']
 	
 	#only allow form functionality to show for dealers as long as auction is active
 	bid_form = my_message_form_dealer = my_auction_request_offer_id = is_final_bid = None
@@ -487,17 +507,6 @@ def auction():
 				response.message = '$Your message was submitted to the buyer.'
 			elif my_message_form_dealer.errors:
 				response.message = '!Your message had errors. Please fix!'
-
-	#auction request info
-	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
-	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
-	
-	colors=[]
-	color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
-	color_names = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
-	for id, each_name in color_names.items(): #just get names here for auction_request_info
-		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
-		colors.append([each_name, color_hex])
 	
 	##################
 	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
@@ -955,12 +964,79 @@ def my_auctions():
 	
 @auth.requires(URL.verify(request, hmac_key=str(auth.user_id), salt = str(session.salt), hash_vars=[request.args(0)])) #guarantees that user clicked from auction page if this passes
 def winner():
+	response.title="Certificate"
+	#get valuable data and validate this page
 	auction_validator = __auction_validator__()
-	winning_offer = auction_validator['a_winning_offer'] #must be True because this link would be active if there is a winner
-	winner_code=winning_offer.winner_code
-	contact_made=winning_offer.contact_made
-	hashed_id = ' '.join([winner_code[i:i+3] for i in range(0,len(winner_code),3)]) #http://goo.gl/0ra6oM
-	return dict(auction_id = auction_validator['auction_request_id'], hashed_id=hashed_id, contact_made=contact_made)
+
+	#get the color chart
+	colors=auction_validator['color_names']
+	
+	#get the auction request
+	auction_request=auction_validator['auction_request']
+	
+	#get the winner
+	winner = auction_validator['a_winning_offer'] #must be True because this link would be active if there is a winner
+	
+	#details about trim
+	trim_data=auction_validator['trim_data']
+	#details about offer
+	auction_request_offer = db(db.auction_request_offer.id == winner.auction_request_offer).select().last()
+	#get the image urls
+	interior_image_s = auction_request_offer.interior_image_compressed[0]
+	exterior_image_s = auction_request_offer.exterior_image_compressed[0]
+	interior_image_url = URL('static', 'thumbnails/%s'%interior_image_s)
+	exterior_image_url = URL('static', 'thumbnails/%s'%exterior_image_s)
+	#color stuff
+	color = colors[auction_request_offer.color]
+	#options stuff
+	options =  {
+		'Interior':auction_request_offer.interior_options,
+		'Exterior':auction_request_offer.exterior_options,
+		'Mechanical':auction_request_offer.mechanical_options,
+		'Package':auction_request_offer.package_options,
+		'Additional Fees':auction_request_offer.fees_options,
+		'Safety':auction_request_offer.safety_options,
+	}
+	option_names = []
+	for each_option_type in options:
+		for each_option in options[each_option_type]:
+			option_names.append(getOption(trim_data, each_option_type, each_option)['name'])
+			
+	#dealership info stuff
+	dealer = db(db.auth_user.id == auction_request_offer.owner_id).select().last()
+	dealership = db(db.dealership_info.id == auction_request_offer.owner_id).select().last()
+	
+	#winner code for call verification and certificate
+	winner_code=winner.winner_code
+	#make the winner code look nice
+	winner_code_spaced = ' '.join([winner_code[i:i+3] for i in range(0,len(winner_code),3)]) #http://goo.gl/0ra6oM
+	
+	#map stuff
+	dmap = DecoratedMap()
+	dmap.add_marker(AddressMarker('%s,%s,%s,%s'%(dealership.address_line_1, dealership.city, dealership.state, dealership.zip_code),label='D'))
+	map_url = dmap.generate_url().replace('400x400', '600x400')
+	
+	#was call verification complete and buyer/dealer talked?
+	contact_made=winner.contact_made
+	
+	return dict(
+		auction_id = auction_validator['auction_request_id'], 
+		winner_code_spaced=winner_code_spaced, 
+		contact_made=contact_made, 
+		auction_request_id = auction_request.id,
+		trade_in = auction_request.trading_in,
+		year=auction_request.year, 
+		trim = auction_request.trim_name,
+		make = auction_request.make, 
+		model = auction_request.model, 
+		color = color,
+		option_names= option_names,
+		dealer=dealer,
+		dealership = dealership,
+		map_url=map_url,
+		interior_image_url=interior_image_url,
+		exterior_image_url=exterior_image_url,
+	)
 	
 @auth.requires_membership('dealers')
 def dealer_info():

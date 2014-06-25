@@ -43,6 +43,6 @@ if not session.salt:
 #regex
 REGEX_TELEPHONE = '^1?((-)\d{3}-?|\(\d{3}\))\d{3}-?\d{4}$'
 
-if request.function == "dealer_radius_map":
+if request.function in ["dealer_radius_map", "winner"]:
 	from motionless import DecoratedMap, AddressMarker #python google static maps generator
 	#gpolyencode.py included as well

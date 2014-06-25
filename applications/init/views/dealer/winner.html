@@ -1,70 +1,109 @@
 <!-- winning certificate -->
 {{extend 'page_layout.html'}}
 
-<div id="certificate" class="row">
-    <div class="col-xs-6">
-        <h1><i class="fa fa-certificate fa-fw text-warning"></i> Congratulations</h1>
-    </div>
+<div id="certificate">
+	<div class="row">
+		<div class="col-xs-1">
+			<a href="#" onClick="window.print()">
+				<h1 class="hidden-print"><i class="fa fa-print fa-fw text-success"></i></h1>
+				<h1 class="visible-print"><i class="fa fa-car fa-fw"></i></h1>
+			</a>
+		</div>
 
-    <div class="col-xs-6">
-    	<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{=hashed_id}}" alt="Winning QR Code" class="img-responsive pull-right">
-    </div>
+		<div class="col-xs-3">
+			<h3>BidDrive.com</h3>
+		</div>
 
-    <div class="col-xs-6">
-    	<img src="http://maps.googleapis.com/maps/api/staticmap?center=-15.800513,-47.91378&zoom=12&size=600x450&sensor=false" alt="Dealer Map" class="img-responsive">
-    </div>
+		<div class="col-xs-4" style="text-align:center;">
+			<h4><u>{{=year}} {{=make.upper()}} {{=model.upper()}}</u></h4>
+			<h5 class="text-light"><u>{{=trim}}</u></h5>
+		</div>
 
-    <div class="col-xs-6">
-        <table class="table table-hover">
-            <tr>
-                <th style="border-top: none">Hash:</th>
-                <td>{{=hashed_id}}</td>
-            </tr>
+		<div class="col-xs-4">
+			<img src="https://api.qrserver.com/v1/create-qr-code/?size=75x75&data={{=winner_code_spaced}}" alt="Winning QR Code" class="fa-rotate-90 img-responsive pull-right">
+		</div>
+	</div>
+	<hr>
+	<div class="row">
 
-            <tr>
-                <th>Auction ID:</th>
-                <td>$auction_id</td>
-            </tr>
+		<div class="col-xs-5">
+			<div class = "row">
+				<img src="{{=map_url}}" alt="Dealer Map" class="img-responsive">
+			</div>
+			<hr>
+			<div class="row">
+				<div class="col-xs-6">
+					<img src="{{=exterior_image_url}}" alt="Exterior image" class="img-responsive">
+				</div>
+				<div class="col-xs-6">
+					<img src="{{=interior_image_url}}" alt="Interior image" class="img-responsive">
+				</div>
+			</div>
+		</div>
 
-            <tr>
-                <th>Car Details:</th>
-                <td>
-                    <ul>
-                        <li>$spec_1</li>
-                        <li>$spec_2</li>
-                        <li>$spec_3</li>
-                        <li>$spec_4</li>
-                    </ul>
-                </td>
-            </tr>
+		<div class="col-xs-7">
+			<table class="table table-hover">
+				<tr>
+					<th  style="border-top: none">Winner Code:</th>
+					<td  style="border-top: none">{{=winner_code_spaced}}</td>
+				</tr>
 
-            <tr>
-                <th>Address:</th>
-                <td>
-                	<div>$name</div>
-                	<div>$addr_1</div>
-                	<div>$addr_2</div>
-                	<div>$city, $state, $zip</div>
-                	<div>$country</div>
-                </td>
-            </tr>            
+				<tr>
+					<th>Auction ID:</th>
+					<td>{{=auction_request_id}}</td>
+				</tr>
+				
+				<tr>
+					<th>Color:</th>
+					<td>{{=color}}</td>
+				</tr>
 
-        </table>
-    </div>
+				<tr>
+					<th>Options:</th>
+					<td>
+						{{for each_option in option_names:}}
+							<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;{{=each_option}}</div>
+						{{pass}}
+					</td>
+				</tr>            
+				
+				<tr>
+					<th>Dealer:</th>
+					<td>
+						<div><strong>{{='%s %s' % (dealer.first_name, dealer.last_name)}}</strong></div>
+						<div>{{=dealer.email}}</div>
+					</td>
+				</tr>
 
-    <div class="col-xs-12" style="margin-top: 20px">
-    	<strong>You must bring</strong> the confirmation page and the following document(s) with you at all steps during the application process
-    	<ul>
-			<li>Drivers license</li>
-			<li>Vehicle title</li>
-			<li>Insurance</li>
-			<li>Credit card bill or bank statement</li>
-			<li>Lease papers (if any)</li>
-		</ul>
-    </div>
+				<tr>
+					<th>Dealership:</th>
+					<td>
+						<div><strong>{{=dealership.dealership_name}}</strong></div>
+						<div>{{=dealership.address_line_1}}</div>
+						<div>{{=dealership.address_line_2}}</div>
+						<div>{{=dealership.city}}, {{=dealership.state}}, {{=dealership.zip_code}}</div>
+						<div>{{=dealership.country}}</div>
+						<div>{{=dealership.phone}}</div>
+					</td>
+				</tr>
 
+				<tr>
+					<th>Please bring your:</th>
+					<td>
+						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;<a href="#" onClick="window.print()">Certificate</a></div>
+						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Drivers license</div>
+						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Registration and insurance</div>
+						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Credit card bill or bank statement</div>
+						{{if trade_in:}}<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Current vehicle and title</div>{{pass}}
+					</td>
+				</tr>            
+
+			</table>
+		</div>
+	</div>
 </div>
-{{if not contact_made:}}
+
+{{if contact_made:}}
 <div id="myModal" class="modal fade">
   <br>
   <br>
@@ -90,7 +129,7 @@
 		</div>
 	  </div>
       <div class="modal-footer">
-        <div class="text-danger">Winner code: <strong>{{=hashed_id}}</strong> (write it down)</div>
+        <div class="text-danger">Winner code: <strong>{{=winner_code_spaced}}</strong> (write it down)</div>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

@@ -18,7 +18,7 @@ def index():
 	resp = twiml.Response()
 	skip_message = request.vars['skip_message']
 	message = request.vars['message']
-	intro =  "Hello! Welcome to the bid drive dot com automated auction validation system."
+	intro =  "Hello! Welcome to the bid drive dot com automatic auction validation system."
 	gather = "Please %sdial your 12 digit winner code now."% ('re' if bool(message or skip_message) else '',)
 	if not skip_message:
 		resp.say(message or intro)
@@ -115,7 +115,7 @@ def handle_key_check():
 def screen_for_machine():
 	resp = twiml.Response()
 	winning_offer_id = request.args(0)
-	if set(['_color', '_year', '_make', '_model', '_id']).issubset(request.vars): #test is list values in list w/o strf #http://goo.gl/mxqfX1
+	if set(['_color', '_year', '_make', '_model', '_id']).issubset(request.vars): #test is list values in list w/o comprehensions #http://goo.gl/mxqfX1
 		message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
 		with resp.gather(numDigits=1, action="%s/screen_complete"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function. #action would be screen_for_machine.xml/screen_complete
 			for each in range(3):
