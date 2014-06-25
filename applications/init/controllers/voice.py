@@ -121,7 +121,7 @@ def screen_for_machine():
 			for each in range(3):
 				g.say(message)
 				g.pause(length=3)
-	if not request.args(1) == "screen_complete":
+	if not "screen_complete" in request.args:
 		resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
 		resp.hangup() #hang up if no gather
 	else:
