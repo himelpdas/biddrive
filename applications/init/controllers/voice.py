@@ -117,7 +117,7 @@ def screen_for_machine():
 	winning_offer_id = request.args(0)
 	if set(['_color', '_year', '_make', '_model', '_id']).issubset(request.vars): #test is list values in list w/o strf #http://goo.gl/mxqfX1
 		message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
-		with resp.gather(numDigits=1, action="screen_completes.xml/%s"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function.
+		with resp.gather(numDigits=1, action=URL("screen_for_machine.xml", args=[winning_offer_id], scheme=True, host=True), method="POST") as g: #if he pressed something go to a new function.
 			for each in range(3):
 				g.say(message)
 				g.pause(length=3)
