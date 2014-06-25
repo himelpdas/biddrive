@@ -22,7 +22,7 @@ def index():
 	gather = "Please %sdial your 12 digit winner code now."% ('re' if bool(message or skip_message) else '',)
 	if not skip_message:
 		resp.say(message or intro)
-	with resp.gather(numDigits=12, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
+	with resp.gather(numDigits=12, timeout=300, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
 		for each in range(3):
 			g.say(gather) #g is gather obj
 			g.pause(length=3)
@@ -42,7 +42,7 @@ def handle_key():
 		# Dial (310) 555-1212 - connect that number to the incoming caller.
 		#resp.dial("+13105551212")
 		# If the dial fails:
-		with resp.gather(numDigits=1, action="handle_key_check.xml/%s"%digit_pressed, method="POST") as g: #change to csv so operator can say each number separate
+		with resp.gather(numDigits=1, timeout=300, action="handle_key_check.xml/%s"%digit_pressed, method="POST") as g: #change to csv so operator can say each number separate
 			for each in range(3):
 				g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 and try again."%(str(list(digit_pressed)).strip('[').strip(']'),))
 				g.pause(length=3)
@@ -117,7 +117,7 @@ def screen_for_machine():
 	winning_offer_id = request.args(0)
 	if set(['_color', '_year', '_make', '_model', '_id']).issubset(request.vars): #test is list values in list w/o strf #http://goo.gl/mxqfX1
 		message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
-		with resp.gather(numDigits=1, action="screen_complete.xml/%s"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function.
+		with resp.gather(numDigits=1, timeout=300, action="screen_complete.xml/%s"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function.
 			for each in range(3):
 				g.say(message)
 				g.pause(length=3)
