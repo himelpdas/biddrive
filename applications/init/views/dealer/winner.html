@@ -17,7 +17,7 @@
     <div class="col-xs-6">
         <table class="table table-hover">
             <tr>
-                <th>Hash:</th>
+                <th style="border-top: none">Hash:</th>
                 <td>{{=hashed_id}}</td>
             </tr>
 
@@ -64,7 +64,7 @@
     </div>
 
 </div>
-{{if contact_made:}}
+{{if not contact_made:}}
 <div id="myModal" class="modal fade">
   <br>
   <br>
