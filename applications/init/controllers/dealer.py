@@ -627,7 +627,7 @@ def auction():
 			mechanical_options.append(getOption(trim_data, 'Mechanical', each_option))
 		for each_option in each_offer.auction_request_offer.package_options:
 			package_options.append(getOption(trim_data, 'Package', each_option))
-		for each_option in each_offer.auction_request_offer.package_options:
+		for each_option in each_offer.auction_request_offer.safety_options:
 			safety_options.append(getOption(trim_data, 'Safety', each_option))
 		for each_option in each_offer.auction_request_offer.fees_options:
 			fees_options.append(getOption(trim_data, 'Additional Fees', each_option))

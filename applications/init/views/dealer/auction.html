@@ -666,7 +666,7 @@
 								<div class="col-xs-10">
 									<ul>
 									{{for each_option in each_offer['exterior_options']:}}
-										<li>{{=each_option['name'] if each_option else 'N/A'}}					
+										<li>{{=each_option['name']}}
 									{{pass}}
 									{{if not each_offer['exterior_options']:}}
 										<li><i>Not specified</i>
@@ -681,7 +681,7 @@
 								<div class="col-xs-10">
 									<ul>
 									{{for each_option in each_offer['interior_options']:}}
-										<li>{{=each_option['name'] if each_option else 'N/A'}}				
+										<li>{{=each_option['name']}}
 									{{pass}}
 									{{if not each_offer['interior_options']:}}
 										<li><i>Not specified</i>
@@ -696,10 +696,9 @@
 								<div class="col-xs-10">
 									<ul>
 									{{for each_option in each_offer['mechanical_options']:}}
-										<li>{{=each_option['name'] if each_option else 'N/A'}}			
+										<li>{{=each_option['name']}}
 									{{pass}}
 									{{if not each_offer['mechanical_options']:}}
-
 										<li><i>Not specified</i>
 									{{pass}}
 									</ul>
@@ -719,7 +718,7 @@
 								<div class="col-xs-10">
 									<ul>
 									{{for each_option in each_offer['package_options']:}}
-										<li>{{=each_option['name'] if each_option else 'N/A'}}		
+										<li>{{=each_option['name']}}
 									{{pass}}
 									{{if not each_offer['package_options']:}}
 										<li><i>Not specified</i>
@@ -734,7 +733,7 @@
 								<div class="col-xs-10">
 									<ul>
 									{{for each_option in each_offer['safety_options']:}}
-										<li>{{=each_option['name'] if each_option else 'N/A'}}		
+										<li>{{=each_option['name']}}
 									{{pass}}
 									{{if not each_offer['safety_options']:}}
 										<li><i>Not specified</i>
@@ -749,7 +748,7 @@
 								<div class="col-xs-10">
 									<ul>
 									{{for each_option in each_offer['fees_options']:}}
-										<li>{{=each_option['name'] if each_option else 'N/A'}}
+										<li>{{=each_option['name']}}
 									{{pass}}
 									{{if not each_offer['fees_options']:}}
 										<li><i>Not specified</i>
