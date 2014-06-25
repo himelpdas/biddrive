@@ -100,7 +100,7 @@ def handle_key_check():
 				color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.simple_color_names))
 				auction_request_vehicle = dict(_color = color_names[winning_offer.color], _year = auction_request.year, _make = auction_request.make, _model = auction_request.model, _id=auction_request.id) #trim = auction_request.trim_name)
 				winning_dealer_phone_number = "+"+''.join(winning_dealer.phone.split("-"))#http://goo.gl/JhE2V
-				screen_for_machine_url = URL("screen_for_machine.xml", args=[winning_offer.id], vars = auction_request_vehicle)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
+				screen_for_machine_url = URL("screen_for_machine.xml", args=[winning_offer.id], vars = auction_request_vehicle, scheme=True, host=True)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
 				dialer = resp.dial(callerId = TWILIO_NUMBER_CALLER_ID) #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
 				dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST")) #allows for interaction (ie. gather) with dealer before he enters the call.. must hang up explicitly if unresponsive or call will connect
 				#TODO figure out a way to play music while ringing #dialer.append(twiml.Conference(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
@@ -117,12 +117,15 @@ def screen_for_machine():
 	winning_offer_id = request.args(0)
 	if set(['_color', '_year', '_make', '_model', '_id']).issubset(request.vars): #test is list values in list w/o strf #http://goo.gl/mxqfX1
 		message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
-		with resp.gather(numDigits=1, action="screen_complete.xml/%s"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function.
+		with resp.gather(numDigits=1, action="screen_complete", method="POST") as g: #if he pressed something go to a new function.
 			for each in range(3):
 				g.say(message)
 				g.pause(length=3)
-	resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
-	resp.hangup() #hang up if no gather
+	if not request.args(1) == "screen_complete":
+		resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
+		resp.hangup() #hang up if no gather
+	else:
+		screen_complete()
 	return dict(resp=str(resp))
 	
 def screen_complete(): #IF POOR VOIP PHONE IS BEING CALLED, THE KEY PRESS WILL NOT BE REGISTERED AND THIS ACTION WILL NOT BE CALLED!!! TWILIO PROBABLY REGISTERS IT AS A # PRESS!!!
