@@ -121,7 +121,7 @@ def screen_for_machine():
 			for each in range(3):
 				g.say(message)
 				g.pause(length=3)
-	resp.hangup() #hang up if no gather
+		resp.hangup() #hang up if no gather
 	return dict(resp=str(resp))
 	
 def screen_complete():
