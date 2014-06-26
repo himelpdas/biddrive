@@ -149,7 +149,7 @@
 
 <script>{{#polling to see whether connection was made #http://goo.gl/17YuW}}
 (function poll(){
-	$.ajax({ url: "{{=URL('init', 'ajax', 'contact_made', args=[winner_code]}}{{#TODO hmac enforce}}", success: function(data){
+	$.ajax({ url: "{{=URL('init', 'ajax', 'contact_made', args=[winner_code])}}{{#TODO hmac enforce}}", success: function(data){
         //Update your dashboard gauge
         if (data.value=="success"){
 			$('#refresh_certificate').click(function() {
