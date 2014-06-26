@@ -180,3 +180,11 @@ def auction_request_offer_messages():
 	if message_form.process().accepted:
 		pass
 	return dict(messages=messages, message_form=message_form)
+	
+def contact_made():
+	winner_code = request.args(0)
+	winning_choice = db(db.auction_request_winning_offer.winner_code == winner_code).select().last()
+	status = 'pending'
+	if winning_choice and winning_choice.contact_made:
+		status = 'success'
+	return dict(status=status)
