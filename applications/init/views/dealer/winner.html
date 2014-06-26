@@ -151,7 +151,7 @@
 (function poll(){
 	$.ajax({ url: "{{=URL('init', 'ajax', 'contact_made.json', args=[winner_code])}}{{#TODO hmac enforce}}", success: function(data){
         //Update your dashboard gauge
-        if (data.value=="success"){
+        if (data.status=="success"){
 			$('#refresh_certificate').click(function() {
 				location.reload();
 			});
