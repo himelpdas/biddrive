@@ -1026,6 +1026,7 @@ def winner():
 		auction_id = auction_validator['auction_request_id'], 
 		winner_code_spaced=winner_code_spaced, 
 		contact_made=contact_made, 
+		winner_code=winner_code,
 		auction_request_id = auction_request.id,
 		trade_in = auction_request.trading_in,
 		year=auction_request.year, 
