@@ -1,4 +1,91 @@
 {{extend 'layout.html'}}
+{{#TODO- MOVE TO LAYOUT.HTML HEAD TAG WITH IF TEST}}
+<style type="text/css">
+
+	.absolute-center {
+		margin: auto;
+		position: absolute;
+		top: 0; left: 0; bottom: 0; right: 0;
+		height:80px; width:80px;
+		color: #fff;
+		text-shadow: 1px 1px 1px #31393d;
+	}
+
+	.slogan {
+		margin-top: 20px;
+		color: white;
+		font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+		font-size: 32px;
+		font-style: normal;
+		font-variant: normal;
+		font-weight: bold;
+		text-shadow: rgba(0, 0, 0, 0.498039)0px 2px 1px;
+		vertical-align: baseline;                
+	}
+
+	.small-slogan {
+		margin-top: 20px;
+		color: white;
+		font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+		font-size: 16px;
+		font-style: normal;
+		font-variant: normal;
+		font-weight: bold;
+		text-shadow: rgba(0, 0, 0, 0.498039)0px 2px 1px;
+		vertical-align: baseline;                
+	}            
+
+	.mainbox {
+		border-top-left-radius: 5px;
+		border-bottom-left-radius: 5px;
+		border-top-right-radius: 5px;
+		border-bottom-right-radius: 5px;
+		color: #f5f5f5;
+
+	}
+	
+	.mainrow{
+		border-top-left-radius: 5px;
+		border-bottom-left-radius: 5px;
+		border-top-right-radius: 5px;
+		border-bottom-right-radius: 5px;
+	}
+
+	.mainbox a { 
+		color: #f5f5f5;
+		text-transform: uppercase;
+		font-size: 14px;
+	}
+
+	.sidebox {
+		
+		border-top-right-radius: 5px;
+		border-bottom-right-radius: 5px;
+		color: #111;
+	}
+
+	.main-container {
+		margin-top: 100px;
+	}
+
+	.backdrop {
+		background-color: rgba(0,0,0,0.8);
+	}
+	
+	.index_text{
+		text-shadow: black 0.1em 0.1em 0.2em;
+	}
+	a:visited, a:link, a:active{
+		color:#f5f5f5;
+	}
+	a:hover {
+		text-decoration:underline;
+	}
+	.dropdown-toggle:hover{
+		color:#f5f5f5;
+		text-decoration:underline;
+	}
+</style>
 
 {{#############ERROR DIVS################}}
 <div style="position:fixed; padding-left:10px; right:10px;top:75px;width:100%;min-width:120px;max-width:480px;{{if request.controller =='default' and request.function=='index':}}z-index:9998{{pass}};">{{#we only want high z-index for navbar in homepage for message divs, but not any page else because it can interfere with modals}}
@@ -10,96 +97,8 @@
 {{#############ERROR DIVS################}}
 
     <section id="feature_slider" style="background-image: url({{=URL('static','images/bg_1.jpg')}}{{#http://goo.gl/GzBK3w}}{{#http://i.imgur.com/IKOzzNH.jpg}}); background-position: center;">
-
+	{{#Feature slider default max-width makes this disappear in xs, reducing it shows it again}}
         <article class="slide active" id="showcasing" style="display: block;">
-
-
-        <style type="text/css">
-
-            .absolute-center {
-                margin: auto;
-                position: absolute;
-                top: 0; left: 0; bottom: 0; right: 0;
-                height:80px; width:80px;
-                color: #fff;
-                text-shadow: 1px 1px 1px #31393d;
-            }
-
-            .slogan {
-                margin-top: 20px;
-                color: white;
-                font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                font-size: 32px;
-                font-style: normal;
-                font-variant: normal;
-                font-weight: bold;
-                text-shadow: rgba(0, 0, 0, 0.498039)0px 2px 1px;
-                vertical-align: baseline;                
-            }
-
-            .small-slogan {
-                margin-top: 20px;
-                color: white;
-                font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                font-size: 16px;
-                font-style: normal;
-                font-variant: normal;
-                font-weight: bold;
-                text-shadow: rgba(0, 0, 0, 0.498039)0px 2px 1px;
-                vertical-align: baseline;                
-            }            
-
-            .mainbox {
-                border-top-left-radius: 5px;
-                border-bottom-left-radius: 5px;
-                border-top-right-radius: 5px;
-                border-bottom-right-radius: 5px;
-                color: #f5f5f5;
-
-            }
-			
-			.mainrow{
-				border-top-left-radius: 5px;
-                border-bottom-left-radius: 5px;
-                border-top-right-radius: 5px;
-                border-bottom-right-radius: 5px;
-			}
-
-            .mainbox a { 
-                color: #f5f5f5;
-                text-transform: uppercase;
-                font-size: 14px;
-            }
-
-            .sidebox {
-                
-                border-top-right-radius: 5px;
-                border-bottom-right-radius: 5px;
-                color: #111;
-            }
-
-            .main-container {
-                margin-top: 100px;
-            }
-
-            .backdrop {
-                background-color: rgba(0,0,0,0.8);
-            }
-			
-			.index_text{
-				text-shadow: black 0.1em 0.1em 0.2em;
-			}
-			a:visited, a:link, a:active{
-				color:#f5f5f5;
-			}
-			a:hover {
-				text-decoration:underline;
-			}
-			.dropdown-toggle:hover{
-				color:#f5f5f5;
-				text-decoration:underline;
-			}
-        </style>
 		
 {{"""}}
 http://goo.gl/fPkW7
@@ -123,15 +122,19 @@ http://goo.gl/fPkW7
 						<span class="caret"></span>
 					</a>
 					<ul class="dropdown-menu">
-							{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
+						{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
 					</ul>
 				</div>
+			</div>
+			
+			<div id="small_screen_only_back_to_makes" class="row text-center small-slogan visible-xs">
+				<button class="btn btn-info" href="#" onclick="reset_mainbox()">Reset</button>
 			</div>
 			
             <div class="clearfix">&nbsp;</div>
 
             <div id="mainrow" class="row mainrow" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
-                <div id="mainbox" class="col-sm-6 col-sm-offset-3 mainbox backdrop">
+                <div id="mainbox" class="col-xs-12 col-sm-6 col-sm-offset-3 mainbox backdrop"> {{# @480px or so it'll fill all 12 columns, but higher will fill 6}}
                     
                     <div class="row" style="padding-top:5px">
                         {{for each_brand in brands_list:}}
@@ -142,7 +145,7 @@ http://goo.gl/fPkW7
                     </div>
                 </div>
 				
-                <div id="sidebox" class="col-sm-6" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
+                <div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
                     loading...
                 </div>
 
@@ -161,18 +164,40 @@ http://goo.gl/fPkW7
             </div>
         </div>
 
-        <script>
-            {{for each_brand in brands_list:}}
-                $('#{{=each_brand}}_switch').click(
-                    function(evt){
+        <script> {{#hides mainbox on smaller devices}}
 
-                        $('#mainbox').removeClass('col-sm-offset-3 backdrop');
+			function hide_mainbox_for_small_screens(){
+				if ($(window).width() < 768) { 
+					if ($('#sidebox').is(':visible')){ {{#when sidebox is not there, leave mainbox alone #http://goo.gl/xdHbtj}}
+						$('#mainbox').hide();
+					}
+				} else {
+					$('#mainbox').show();
+				}
+			}			
+			
+			function reset_mainbox(){
+				$("#sidebox").hide();
+				$("#mainbox").show();
+			}
+						
+			$(window).resize(function(){ 
+				hide_mainbox_for_small_screens();
+			});
+
+            {{for each_brand in brands_list:}}
+
+                $('#{{=each_brand}}_switch').click(
+				
+                    function(evt){
+						
+						$('#mainbox').removeClass('col-sm-offset-3 backdrop');
 
                         $('#mainrow').addClass('backdrop', 700); {{#jquery UI transistion}}
 
                         $('#sidebox')
 						
-                            .html('<div class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
+                            .html('<div id="loading_spinner" class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
                             .show()
                             .load("{{=URL('ajax','vehicle_content', args=[each_brand, year])}}",
 								function( response, status, xhr ) {
@@ -187,6 +212,8 @@ http://goo.gl/fPkW7
 									}
 								}
 							);
+						
+						hide_mainbox_for_small_screens(); {{#click was made force hide mainbox}}
                     }
                 );
             {{pass}}
@@ -195,8 +222,6 @@ http://goo.gl/fPkW7
                 $('.browse').toggle();
             });                                                
         </script>
-
-
 
         </article>       
     </section>

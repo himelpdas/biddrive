@@ -767,7 +767,11 @@ a.navbar-brand { text-shadow: 1px 1px 1px #000 }
     #features .feature .pic-right { float: right }
     #features .feature .info-left { float: left }
 }
-@media (max-width: 767px) { 
+/* @media (max-width: 767px) { 
+CUSTOM-Feature slider, which holds the mainbox wouldn't show on a width less than 768px due to #feature_slider { display: none } below
+Was changed to 140px to be visible in smallest devices possible
+*/ 
+@media (max-width: 140px) {
     #partner-slider,
     #feature_slider { display: none }
     #features .section_header { text-align: center }
