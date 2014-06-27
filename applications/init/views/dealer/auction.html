@@ -480,7 +480,7 @@
 			{{"""}}<span class="text-center text-sm text-light text-uppercase margin-right-10"> Bid ID: {{=each_offer['id']}} | Dealer ID: 00</span>{{"""}}
 		</div>
 		<div class="panel-body">
-			<div class="col-xs-4">
+			<div class="col-sm-4 hidden-xs">
 				<div id="images_{{=each_offer['id']}}" class="carousel slide" data-ride="carousel">
 
 				  	<!-- IMAGE SLIDER -->
@@ -573,7 +573,7 @@
 				</div>			
 			</div>
 			
-			<div class="col-xs-4">
+			<div class="col-xs-6 col-sm-4">
 				<div class="row">
 					<table class="table table-hover text-sm">
 						<tr>
@@ -639,7 +639,7 @@
 				</div>
 			</div>
 
-			<div class="col-xs-4">
+			<div class="col-xs-6 col-sm-4">
 				<div class="text-bold">Description:</div>
 				<div>{{truncate=345}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></div>
 				<script>
