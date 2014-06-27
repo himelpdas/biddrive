@@ -265,6 +265,34 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 					
 					{{form.element("input", _type = "submit")["_value"] = "Join Us!" }}
 					{{=form.custom.submit}}
+				{{elif request.args(0) == "reset_password":}}
+					<div class="form-group">
+						<label class="col-sm-3 control-label">New Password</label>
+						<div class="col-sm-9">
+							<div class="input-group margin-bottom-sm">
+								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+								{{=form.custom.widget.new_password}}
+							</div>
+							{{#=form.errors.keys()}}
+							{{if form.errors['new_password']:}}
+								<div class="alert alert-warning">{{=form.errors['new_password']}}</div>
+							{{pass}}
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Retype Password</label>
+						<div class="col-sm-9">
+							<div class="input-group margin-bottom-sm">
+								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+								{{=form.custom.widget.new_password2}}
+							</div>
+							{{if form.errors['new_password2']:}}
+								<div class="alert alert-warning">{{=form.errors['new_password2']}}</div>
+							{{pass}}
+						</div>
+					</div>
+					{{form.element("input", _type = "submit")["_value"] = "Set new password!" }}
+					{{=form.custom.submit}}
 				{{pass}}
 			{{=form.custom.end}}
 		</div>

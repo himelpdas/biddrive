@@ -261,20 +261,25 @@ def user():
 		@auth.requires_permission('read','table name',record_id)
 	to decorate functions that need access control
 	"""
-
-	if request.args:
-		if request.args[0] == "register":
-			response.title = "Join us"
-		if request.args[0] == "login":
-			response.title = "Welcome back"
-		if request.args[0] == "request_reset_password":
-			response.title = "Forgot something?"
+	form = auth()
+	user_arg = request.args(0)
+	if user_arg == "register":
+		response.title = "Join us"
+	if user_arg == "login":
+		response.title = "Welcome back"
+	if user_arg == "request_reset_password":
+		response.title = "Forgot something?"
+	if user_arg == "reset_password":
+		response.title = "Create a new password"
+		#form = auth.reset_password()
+		#response.view = 'generic.html'
+	
 	if auth.is_logged_in():
 		response.title='Hey, %s!' % auth.user.first_name
 
 
 
-	return dict(form=auth())
+	return dict(form=form)
 
 @cache.action()
 def download():

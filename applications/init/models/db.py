@@ -55,7 +55,7 @@ auth.settings.extra_fields['auth_user']= [
 
 ## create all tables needed by auth if not custom tables
 auth.define_tables(username=False, signature=False)
-
+auth.messages.email_sent = '$Email sent'
 ## configure email
 mail = auth.settings.mailer
 mail.settings.server = 'in-v3.mailjet.com:587' #some hosts block port 25 #'logging' or 'smtp.gmail.com:587'
