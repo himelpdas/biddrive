@@ -39,7 +39,7 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 	
 	{{#login reset_password profile}}
 	<div class="row-fluid" style="margin-top: 50px">
-		<div class="col-md-7 col-sm-9 col-xs-11"> {{#if width greater than 480px (col-xs) then 12 columns will fill this, row. if >480px only 7 will show}}
+		<div class="col-md-8 col-sm-9 col-xs-11"> {{#if width greater than 480px (col-xs) then 12 columns will fill this, row. if >480px only 7 will show}}
 			{{=form.custom.begin}}
 				{{if request.args(0)=='profile':}}
 					{{form.element("input", _type = "submit")["_value"] = "Save Changes" }}
