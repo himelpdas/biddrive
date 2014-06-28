@@ -128,7 +128,7 @@ http://goo.gl/fPkW7
 			</div>
 			
 			<div id="small_screen_only_back_to_makes" class="row text-center small-slogan visible-xs">
-				<button class="btn btn-info" href="#" onclick="reset_mainbox()">Reset</button>
+				<button id="reset_mainbox"  class="btn btn-info" href="#" onclick="reset_mainbox()">Reset</button>
 			</div>
 			
             <div class="clearfix">&nbsp;</div>
@@ -167,7 +167,7 @@ http://goo.gl/fPkW7
         <script> {{#hides mainbox on smaller devices}}
 
 			function hide_mainbox_for_small_screens(){
-				if ($(window).width() < 768) { 
+				if ($('#reset_mainbox').is(':visible')) { {{# better than (window).width() < 768 #http://goo.gl/pxeXf3}}
 					if ($('#sidebox').is(':visible')){ {{#when sidebox is not there, leave mainbox alone #http://goo.gl/xdHbtj}}
 						$('#mainbox').hide();
 					}
