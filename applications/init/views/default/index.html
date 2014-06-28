@@ -150,8 +150,11 @@ http://goo.gl/fPkW7
                 </div>
 
 				<script>
-					$("#mainrow").height($("#mainrow").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
-					$("#sidebox").height($("#mainrow").height());
+					function setBoxesHeight(){
+						$("#mainrow").height($("#mainbox").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
+						$("#sidebox").height($("#mainrow").height());
+					}
+					setBoxesHeight();
 					$("#mainbox").css({
 					    '-webkit-transition': 'all 0.7s ease-out',
 						'-moz-transition': 'all 0.7s ease-out',
@@ -177,11 +180,13 @@ http://goo.gl/fPkW7
 			}			
 			
 			function reset_mainbox(){
+				setBoxesHeight();
 				$("#sidebox").hide();
 				$("#mainbox").show();
 			}
 						
 			$(window).resize(function(){ 
+				setBoxesHeight();
 				hide_mainbox_for_small_screens();
 			});
 
