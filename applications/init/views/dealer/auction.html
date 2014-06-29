@@ -473,7 +473,7 @@
 				{{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
 				{{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" rel="tooltip" title="Favorite this bid"><i class="fa fa-heart"></i></button></a>
 				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['is_favorite']:}}<i class="fa fw fa-heart" rel="tooltip" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" rel="tooltip" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
-				{{if is_owner:}}<button class="btn btn-default btn-xs" rel="tooltip" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-envelope"></i></button>{{pass}}
+				{{if is_owner:}}<button class="btn btn-default btn-xs" rel="tooltip" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-envelope {{if each_offer['has_message_from_buyer']:}}blink{{pass}}"></i></button>{{pass}}
 				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" rel="tooltip" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-plus"></i></button>
 			</span>
 
@@ -877,4 +877,8 @@
 <script>
 	$('.buyer_dealer_messages').emoticonize();
 	$('.error').attr({'style':'color:red;'});
+	$(document).ready(function(){
+		$('.blink').blink(); // default is 500ms blink interval.
+		//$('.blink').blink({delay:100}); // causes a 100ms blink interval.
+	});
 </script>

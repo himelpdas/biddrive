@@ -700,6 +700,7 @@ def auction():
 			
 		#message stuff buyer
 		my_message_form_buyer = ''
+		has_message_from_buyer = None
 		if is_owner:
 			#message stuff
 			if not a_winning_offer and not auction_request_expired: #do not allow any insertions for expired or winning
@@ -739,14 +740,18 @@ def auction():
 					a_winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice, winner_code=winner_code)#insert new winner
 					is_winning_offer=True #now make it true
 					session.BROADCAST_WINNER_ALERT=True
-					redirect(URL(args=request.args)) #get rid of vars
 					#session.BROADCAST_WINNER_ALERT = True
 					#session.message = "$All dealers will be alerted about your new favorite!"
 				else:
 					session.message = "!Awaiting or expired bids cannot be chosen as a winner."
+				redirect(URL(args=request.args)) #get rid of vars
 			if a_winning_offer:
 				response.message = "$You picked a winner! Click the green button below to be redirected to the winning page" #keep as response.message so it always shows
-
+			#blinking new message stuff
+			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == offer_id).select().last()
+			highest_message_id_that_owner_read = db(db.unread_auction_messages.auction_request == auction_request_id).select().last()
+			if highest_message_id_that_owner_read.highest_id <= highest_message_in_this_offer.id and highest_message_in_this_offer.owner_id!=auth.user_id :
+				has_message_from_buyer =True
 			
 			#favorite insert stuff
 			new_favorite_choice = int(request.vars['favorite'] or 0)
@@ -823,6 +828,7 @@ def auction():
 
 		each_offer_dict = {
 			'id' : offer_id,
+			'has_message_from_buyer' : has_message_from_buyer,
 			'is_winning_offer' :is_winning_offer,
 			'is_my_offer': is_my_offer,
 			'additional_info':each_offer.auction_request_offer['fineprint'],
@@ -882,7 +888,7 @@ def auction():
 		#auction_request_offers_info.append(each_offer_dict)
 		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction
 	
-	#unread message stuff# keep below each offer to prevent new message icon from showing to owner when owner submits a message
+	#MARK ALL MESSAGES AS READ FOR USER. unread message stuff# keep below each offer to prevent new message icon from showing to owner when owner submits a message
 	if is_owner:
 		highest_message_in_this_auction = db(db.auction_request_offer_message.auction_request == auction_request_id).select().last()
 		if highest_message_in_this_auction:

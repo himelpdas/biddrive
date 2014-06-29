@@ -373,31 +373,30 @@ http://goo.gl/fPkW7
 	
 <script>
 	//define event functions
-	function resize_background(){
+	function resize_background(){  {{#adjust background to encompass the mainbox}}
 		$("#feature_slider").css({
 			'height':$("#mainrow").offset().top + $("#mainrow").height() + 64
 		});
 	}
+	//initialize resize
+	$(window).resize(function(){
+		resize_background();
+	});
+	resize_background();
+</script>
+{{###SCRIPT GRAVE###}}
 {{"""}}
 	function x_parallax(element, rate, offset){
 		element.css({
 			"background-position":(0,-rate*($(this).scrollTop()+offset)),
 		});
 	}
-{{"""}}
-	//initialize resize
-	$(window).resize(function(){
-		resize_background();
-	});
-	resize_background();
-{{"""}}
 	//initialize x_parallax
 	$(window).scroll(function(){
 		x_parallax($("#feature_slider"), 0.10, 640);
 	});
 	x_parallax($("#feature_slider").css({'-webkit-transition': 'all 0.7s ease-out','-moz-transition': 'all 0.7s ease-out','-ms-transition': 'all 0.7s ease-out','-o-transition': 'all 0.7s ease-out','transition': 'all 0.7s ease-out',}), 0.25, 640);
 {{"""}}
-</script> {{#adjust background to encompass the mainbox}}
 {{"""}}
 	$("#feature_slider").css({"background-position":(0,-.25*300)})
 	$(window).scroll(function(){
