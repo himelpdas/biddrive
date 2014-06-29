@@ -1125,7 +1125,7 @@ def winner():
 def dealer_info():
 	response.view = 'default/dealership_form.html'
 	response.title=heading="Edit dealership info"
-	my_info =db(db.dealership_info.id == auth.user_id).select().last()
+	my_info =db(db.dealership_info.owner_id == auth.user_id).select().last()
 
 	city_field = request.post_vars['city'] #make it look nice for auction page
 	if city_field:
