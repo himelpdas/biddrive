@@ -1083,7 +1083,7 @@ def winner():
 	
 	#dealership info stuff
 	dealer = db(db.auth_user.id == auction_request_offer.owner_id).select().last()
-	dealership = db(db.dealership_info.id == auction_request_offer.owner_id).select().last()
+	dealership = db(db.dealership_info.owner_id == auction_request_offer.owner_id).select().last()
 	
 	#winner code for call verification and certificate
 	winner_code=winner.winner_code
