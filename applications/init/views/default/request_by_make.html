@@ -6,30 +6,30 @@
 	<!-- progress -->
 	<div class="row text-center" style="margin-bottom:20px">
 		<div class="col-xs-2 col-xs-offset-1 text-muted text-center">
-			<div class="" style="border-radius: 50%; border: 1px solid #ccc; padding: 10px; width: 100px; height: 100px">
+			<div class="" style="border-radius: 50%; border: 1px solid #ccc; padding: 10px; width: 120px; height: 120px">
 				<i class="fa fa-tags fa-4x"></i>
-				<div>Step one</div>
+				<small style="text-transform: uppercase; display:block; margin-top: 10px">Choose car</small>
 			</div>
 		</div>
 		<div class="col-xs-2 text-muted">
-			<hr style="margin-top: 40px; border-color: #ccc">
+			<hr style="margin-top: 60px; border-color: #ccc">
 		</div>
 
 
 		<div class="col-xs-2 text-center">
-			<div class="" style="border-radius: 50%; border: 1px solid #333; padding: 10px; width: 100px; height: 100px">
+			<div class="" style="border-radius: 50%; border: 1px solid #333; padding: 10px; width: 120px; height: 120px">
 				<i class="fa fa-clock-o fa-4x"></i>
-				<div>Step two</div>
+				<small style="text-transform: uppercase; display:block; margin-top: 10px">Get offers</small>
 			</div>
 		</div>
-		<div class="col-xs-2 text-muted">
-			<hr style="margin-top: 40px; border-color: #ccc">
+		<div class="col-xs-2">
+			<hr style="margin-top: 60px; border-color: #ccc">
 		</div>
 
-		<div class="col-xs-2 text-muted text-center">
-			<div class="" style="border-radius: 50%; border: 1px solid #ccc; padding: 10px; width: 100px; height: 100px">
+		<div class="col-xs-2 text-center text-muted">
+			<div class="" style="border-radius: 50%; border: 1px solid #ccc; padding: 10px; width: 120px; height: 120px">
 				<i class="fa fa-check fa-4x"></i>
-				<div>Step three</div>
+				<small style="text-transform: uppercase; display:block">Connect with Dealer</small>
 			</div>
 		</div>
 	</div>
@@ -338,7 +338,7 @@
 									<hr />
 
 									<div class="row">
-										<div class="col-xs-8">
+										<div class="col-xs-8" style="border-right: 1px solid #eee">
 											<div class="form-group">
 												<label for="inputEmail3" class="col-sm-2 control-label">Email</label>
 												<div class="input-group col-sm-10" style="padding-right:15px">
@@ -357,11 +357,11 @@
 												<div class="col-sm-offset-2 col-sm-10">
 													<button id="submit_with_login" type="submit" class="btn btn-default pull-right">Login</button>
 												</div>
-											</div>										
+											</div>
 										</div>
 
-										<div class="col-xs-4" style="display:table-cell; vertical-align: middle;">
-											Or <a href="init/default/user/register" class="btn btn-default">Register</a>
+										<div class="col-xs-4 pull-right" style="margin-top: 50px">
+											<small>- OR -</small> <a href="init/default/user/register" class="btn btn-default">Register</a>
 										</div>
 
 									</div>									
@@ -372,12 +372,7 @@
 								<div class="modal-footer">
 									Don't have an account?
 									<button id ="submit_with_register" type="submit" class="btn btn-primary"> <i class="fa fa-user"></i> Register</button>
-									<script>
-										$("#submit_with_register").click(function(){
-											$("#inputEmail3").val('');
-											$("#inputPassword3").val('');
-										})
-									</script>
+	
 								</div>
 								-->
 							</div>
@@ -385,6 +380,12 @@
 					</div>
 
                 </div>
+				<script>
+					$("#submit_with_register").click(function(){
+						$("#inputEmail3").val('');
+						$("#inputPassword3").val('');
+					})
+				</script>                
             {{=form.custom.end}}
 
         </div>
