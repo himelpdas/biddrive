@@ -128,7 +128,7 @@ http://goo.gl/fPkW7
 			</div>
 			
 			<div id="small_screen_only_back_to_makes" class="row text-center small-slogan visible-xs">
-				<button id="reset_mainbox"  class="btn btn-info" href="#" onclick="reset_mainbox()">Reset</button>
+				<button id="reset_mainbox"  class="btn btn-info" href="javascript:void(0);" onclick="reset_mainbox()">Reset</button>
 			</div>
 			
             <div class="clearfix">&nbsp;</div>
@@ -139,7 +139,7 @@ http://goo.gl/fPkW7
                     <div class="row" style="padding-top:5px">
                         {{for each_brand in brands_list:}}
                             <div class="col-xs-4 car-make">
-                                <a id="{{=each_brand}}_switch" href="#">{{=each_brand}}</a>
+                                <a id="{{=each_brand}}_switch" href="javascript:void(0);">{{=each_brand}}</a>
                             </div>
                         {{pass}}
                     </div>
