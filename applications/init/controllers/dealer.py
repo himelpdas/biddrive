@@ -417,6 +417,8 @@ def __auction_validator__():
 	for id, each_name in color_names.items(): #just get names here for auction_request_info
 		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
 		colors.append([each_name, color_hex])
+		
+	is_lease = auction_request.funding_source == 'lease'
 	
 	return dict(auction_request_id=auction_request_id, 
 		auction_request=auction_request, 
@@ -438,6 +440,7 @@ def __auction_validator__():
 		auction_request_area=auction_request_area,
 		auction_request_user=auction_request_user,
 		colors=colors,
+		is_lease=is_lease,
 		color_names=color_names,)
 
 def auction():
@@ -464,6 +467,7 @@ def auction():
 	auction_request_user=auction_validator['auction_request_user']
 	colors=auction_validator['colors']
 	color_names=auction_validator['color_names']
+	is_lease=auction_validator['is_lease']
 	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make'].upper(), auction_request['model'].upper(), auction_request['id'])
 	
 	#only allow form functionality to show for dealers as long as auction is active
@@ -479,8 +483,8 @@ def auction():
 				final_message = "@This was your final bid! The buyer has been notified."
 			#make sure new bid can't be higher than previous
 			my_previous_bid = db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select().last()
-			if my_previous_bid:
-				db.auction_request_offer_bid.bid.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(999, my_previous_bid.bid)]
+			highest_bid_allowed = my_previous_bid.bid if my_previous_bid else (5000 if is_lease else 1000000)
+			db.auction_request_offer_bid.bid.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(49 if is_lease else 999, highest_bid_allowed)]
 			#bid form
 			my_auction_request_offer_id = is_dealer_with_offer.id
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
@@ -555,6 +559,7 @@ def auction():
 		year = auction_request.year,
 		make = auction_request.make,
 		model = auction_request.model,
+		is_lease = is_lease,
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
 		auction_request=auction_request,
@@ -596,17 +601,18 @@ def auction():
 		auction_request_offers = auction_request_offers.sort(lambda row: row.auction_request_offer.MSRP(), reverse=reverse)
 		
 	#Discount (%off)
-	discountchoices = ["discount-up", "discount-down"]; sortlist.extend(discountchoices)
-	if sortby in discountchoices:
-		reverse = False
-		if sortby == "discount-down":
-			reverse = True
-		def msrp_discount(row):
-			latest_bid = row.auction_request_offer.latest_bid()
-			if latest_bid:
-				return latest_bid.MSRP_discount()
-			return 0
-		auction_request_offers = auction_request_offers.sort(msrp_discount, reverse=reverse)
+	if not is_lease:
+		discountchoices = ["discount-up", "discount-down"]; sortlist.extend(discountchoices)
+		if sortby in discountchoices:
+			reverse = False
+			if sortby == "discount-down":
+				reverse = True
+			def msrp_discount(row):
+				latest_bid = row.auction_request_offer.latest_bid()
+				if latest_bid:
+					return latest_bid.MSRP_discount()
+				return 0
+			auction_request_offers = auction_request_offers.sort(msrp_discount, reverse=reverse)
 	
 	#Distance
 	distancechoices = ["distance-up", "distance-down"]; sortlist.extend(distancechoices)
@@ -750,8 +756,9 @@ def auction():
 			#blinking new message stuff
 			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == offer_id).select().last()
 			highest_message_id_that_owner_read = db(db.unread_auction_messages.auction_request == auction_request_id).select().last()
-			if highest_message_id_that_owner_read.highest_id <= highest_message_in_this_offer.id and highest_message_in_this_offer.owner_id!=auth.user_id :
-				has_message_from_buyer =True
+			if highest_message_id_that_owner_read and highest_message_in_this_offer:
+				if highest_message_id_that_owner_read.highest_id <= highest_message_in_this_offer.id and highest_message_in_this_offer.owner_id!=auth.user_id :
+					has_message_from_buyer =True
 			
 			#favorite insert stuff
 			new_favorite_choice = int(request.vars['favorite'] or 0)
@@ -1071,7 +1078,8 @@ def winner():
 			option_names.append(getOption(trim_data, each_option_type, each_option)['name'])
 			
 	#prices stuff
-	last_bid = auction_request_offer.latest_bid().bid
+	last_bid = auction_request_offer.latest_bid()
+	last_bid_price = ('$%s'%last_bid.bid) if not auction_validator['is_lease'] else ('$%s per month'%last_bid.bid)
 	
 	#dealership info stuff
 	dealer = db(db.auth_user.id == auction_request_offer.owner_id).select().last()
@@ -1096,6 +1104,7 @@ def winner():
 		contact_made=contact_made, 
 		winner_code=winner_code,
 		auction_request_id = auction_request.id,
+		auction_request = auction_request,
 		trade_in = auction_request.trading_in,
 		year=auction_request.year, 
 		trim = auction_request.trim_name,
@@ -1105,8 +1114,9 @@ def winner():
 		option_names= option_names,
 		dealer=dealer,
 		dealership = dealership,
+		is_lease = auction_validator['is_lease'],
 		map_url=map_url,
-		last_bid=last_bid,
+		last_bid_price=last_bid_price,
 		interior_image_url=interior_image_url,
 		exterior_image_url=exterior_image_url,
 	)

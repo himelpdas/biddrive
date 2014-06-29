@@ -50,9 +50,14 @@
 
 				<tr>
 					<th>Price lock:</th>
-					<td>${{=last_bid}}</td>
+					<td>{{=last_bid_price}}</td>
 				</tr>
-				
+			{{if is_lease:}}
+				<tr>
+					<th>Lease term:</th>
+					<td>{{=auction_request.lease_term}} or {{auction_request.lease_mileage}}</td>
+				</tr>
+			{{pass}}
 				<tr>
 					<th>Color:</th>
 					<td>{{=color}}</td>
@@ -94,7 +99,7 @@
 						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Drivers license</div>
 						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Registration and insurance</div>
 						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Credit card bill or bank statement</div>
-						{{if trade_in:}}<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Current vehicle and title</div>{{pass}}
+						{{if trade_in:}}<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Current trade-in vehicle and title</div>{{pass}}
 					</td>
 				</tr>            
 
