@@ -88,6 +88,7 @@
 			{{ form.element("input", _name = "expected_down_payment")["_placeholder"] = "$" }}
             {{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
             {{ form.element("input", _type = "submit")["_id"] = "submit" }}
+            {{ form.element("input", _type = "submit")["_value"] = "Go to auction" }}
 			
 			<h5 class="text-light">Describe your request:</h5>
             {{=form.custom.begin}} 
@@ -294,11 +295,7 @@
 								});
 							</script>
 						{{"""}}
-						{{if not auth.is_logged_in():}}
-							<button id="fake_submit" type="button" class="btn btn-default pull-right">Submit</button>
-						{{else:}}
-							{{=form.custom.submit}}
-						{{pass}}
+						<button id="fake_submit" type="button" class="btn btn-default pull-right">Submit</button>
                     </div>
 
                     <script type="text/javascript">
@@ -318,37 +315,39 @@
 
 									<div class="row">
 										<div class="col-xs-12">
-											<ul class="fa-ul">
+											<ul class="fa-ul" style="font-size: 24px">
 												<li>
 													<i class="fa-li fa fa-tags"></i>
-													After you register, dealers will begin sending bids to your auction page,
+													After you register or login, dealers will begin making offers to your auction page.
 												</li>
+												<li>&nbsp;</li>
 												<li>
 													<i class="fa-li fa fa-clock-o"></i>
 													Dealers have 72 hours to submit bids. Feel free to communicate with the dealers.
 												</li>
+												<li>&nbsp;</li>
 												<li>
 													<i class="fa-li fa fa-car"></i>
-													When the auction ends, select yours favorite offer and we'll connect you with that dealer.
+													When the auction ends, select your best offer and we'll connect you with that dealer.
 												</li>
 											</ul>
 										</div>
 									</div>
 									
 									<hr />
-
+								{{if not auth.is_logged_in():}}
 									<div class="row">
 										<div class="col-xs-8" style="border-right: 1px solid #eee">
 											<div class="form-group">
-												<label for="inputEmail3" class="col-sm-2 control-label">Email</label>
-												<div class="input-group col-sm-10" style="padding-right:15px">
+												{{"""}}<label for="inputEmail3" class="col-sm-2 control-label">Email</label>{{"""}}
+												<div class="input-group col-sm-12" style="padding-right:15px">
 													<span class="input-group-addon"><i class="fa fa-envelope fa-fw"></i></span>
 													<input name="email" type="email" class="form-control" id="inputEmail3" placeholder="Email">
 												</div>
 											</div>
 											<div class="form-group">
-												<label for="inputPassword3" class="col-sm-2 control-label">Password</label>
-												<div class="input-group col-sm-10" style="padding-right:15px">
+												{{"""}}<label for="inputPassword3" class="col-sm-2 control-label">Password</label>{{"""}}
+												<div class="input-group col-sm-12" style="padding-right:15px">
 													<span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
 													<input name="password" type="password" class="form-control" id="inputPassword3" placeholder="Password">
 												</div>
@@ -361,11 +360,17 @@
 										</div>
 
 										<div class="col-xs-4 pull-right" style="margin-top: 50px">
-											<small>- OR -</small> <a href="{{=URL('default', 'user', args=['register'])}}" class="btn btn-default">Register</a>
+											<small style="padding-right:12px;">- OR -</small><button id ="submit_with_register" type="submit" class="btn btn-primary"> <i class="fa fa-user"></i> Register</button>
 										</div>
 
 									</div>									
-
+								{{else:}}
+									<div class="row">
+										<div style="padding-right:12px;">
+											{{=form.custom.submit}}
+										</div>
+									</div>
+								{{pass}}
 								</div>
 
 								<!--
