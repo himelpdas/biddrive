@@ -34,7 +34,7 @@
 @media (min-width: 992px) { 
     .navbar .collapse { display: block !important }
 }
-/* ****BID DRIVE, CAUSES MENU TO AUTOHIDE! COMMENT OUT!! **** 
+/************ BAD DESIGN! For small devices it leads to sub-menu automatically disappearing on click!
 @media (max-width: 991px) { 
     .navbar .navbar-header { float: none }
     .navbar .navbar-toggle { display: block }
@@ -62,7 +62,7 @@
         background: none;
     }
 }
-*/
+*********/
 /*******************************************************************************************************************/
 /*******************************************************************************************************************/
 html { margin: 0 }
