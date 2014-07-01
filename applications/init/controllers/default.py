@@ -30,11 +30,8 @@ def index():
 	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
 
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
+@auth.requires(URL.verify(request, hmac_key = str(session.salt), hash_vars=[request.args(0),request.args(1),request.args(2)]),  requires_login=False)
 def request_by_make():
-	if not request.args:
-		session.message='Invalid request!'
-		redirect(URL('index.html'))
-		
 	year = request.args[0] 
 	make = request.args[1] #VALIDATE
 	model = request.args[2]
@@ -119,7 +116,7 @@ def request_by_make():
 		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in form.vars.color_preference ] #make a list of color names based on ids in color_preference field
 		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in form.vars.color_preference ]
 	
-	if form.process(onvalidation=computations, hideerror=True).accepted: #hideerror = True to hide default error elements #change error message via form.custom
+	if form.process(onvalidation=computations, hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = '! Register or login to view it.'
 		msg_color = '$'
 		pre_auction_id = [form.vars.id]

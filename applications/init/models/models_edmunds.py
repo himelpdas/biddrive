@@ -373,8 +373,8 @@ db.define_table('auction_request_offer',
 		requires=[IS_NOT_EMPTY(), 
 			IS_IMAGE( #http://goo.gl/r3UizI
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		]
 	), 
@@ -387,8 +387,8 @@ db.define_table('auction_request_offer',
 		requires=[IS_NOT_EMPTY(), 
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		]
 	), 
@@ -401,8 +401,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)
 	),
@@ -414,8 +414,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)
 	), 
@@ -427,8 +427,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)	
 	), 
@@ -441,8 +441,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)	
 	), 
@@ -454,8 +454,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)	
 	), 
@@ -467,8 +467,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)	
 	), 
@@ -481,8 +481,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)	
 	), 
@@ -494,8 +494,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)	
 	), 
@@ -507,8 +507,8 @@ db.define_table('auction_request_offer',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
-				minsize=(1080, 720), #min HD
-				error_message='Need an image of at least 1080x720 pixels!', 
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
 			)
 		)	
 	),
