@@ -76,7 +76,7 @@
 					<th>Dealer:</th>
 					<td>
 						<div><strong>{{='%s %s' % (dealer.first_name, dealer.last_name)}}</strong></div>
-						<div class="hidden-print"><a href="mailto:{{=dealer.email}}?subject=Regarding {{=APP_NAME}} auction {{=str(auction_request_id).zfill(3)}} ({{=year}} {{=make.upper()}} {{=model.upper()}})&body=Hello {{=dealer.first_name.capitalize()}}! You are the winner for my request (ID {{=str(auction_request_id).zfill(3)}}) for a {{=year}} {{=make.upper()}} {{=model.upper()}}. Please call me as soon as possible back at [MY NUMBER]. -{{=auth.user.first_name.capitalize()}}">{{=dealer.email}}</a></div> {{#since only requester can view its safe to use auth.user}}
+						<div class="hidden-print"><a href="mailto:{{=dealer.email}}?subject=Regarding {{=APP_NAME}} auction {{=str(auction_request_id).zfill(3)}} ({{=year}} {{=make.upper()}} {{=model.upper()}})&body=Hello {{=dealer.first_name.capitalize()}}! You are the winner of my request (ID {{=str(auction_request_id).zfill(3)}}) for a {{=year}} {{=make.upper()}} {{=model.upper()}}. Please reply as soon as possible! -{{=auth.user.first_name.capitalize()}}">{{=dealer.email}}</a></div> {{#since only requester can view its safe to use auth.user}}
 						<div class="visible-print">{{=dealer.email}}</div>
 					</td>
 				</tr>
