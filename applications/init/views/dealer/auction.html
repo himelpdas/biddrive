@@ -447,7 +447,7 @@
 				{{elif each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
 					<div style="position:absolute;width:100%;">
 						<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-							<button class="btn btn-warning btn-xs center-block">
+							<button class="btn btn-danger btn-xs center-block">
 								<i class="fa fa-fw fa-bell-o"></i> Buy it now! (Less than {{=final_bid_hours_left}} left)
 							</button>
 						</a>
@@ -466,7 +466,7 @@
 					</div>
 				{{elif each_offer['bid_is_final'] and is_dealer:}}
 					<div style="position:absolute;width:100%;">
-						<button class="btn btn-warning btn-xs center-block disabled">
+						<button class="btn btn-danger btn-xs center-block disabled">
 							<i class="fa fa-fw fa-bell"></i> Expires in less than {{=final_bid_hours_left}}!
 						</button>
 					</div>

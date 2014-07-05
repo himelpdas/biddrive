@@ -967,15 +967,18 @@ def my_auctions():
 	show = request.vars['show']
 	show_list = sorted(['won', 'lost', 'live', 'all'])
 	query = (db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request==db.auction_request.id) #must
+	left=None
 	if show == "won":
 		query &= db.auction_request_winning_offer.auction_request_offer == db.auction_request_offer.id #can assume auction ended
 	elif show == "lost": #lost also means expired and not won
-		query &= (db.auction_request_winning_offer.auction_request_offer != db.auction_request_offer.id) & (db.auction_request.offer_expires < request.now) #for this to succeed a field cannot be None or incompatible with > == < #QUERY DOENS'T WORK WINNING OFFERS STILL SHOW
+		#query &= (db.auction_request_winning_offer.auction_request_offer != db.auction_request_offer.id) & (db.auction_request.offer_expires < request.now) #THIS WON'T WORK BECAUSE != WILL NOT CAUSE A JOIN, THEREFORE IT IS IGNORED AND BOTH WIN AND LOSE AUCTIONS WILL SHOW
+		query &= (db.auction_request_winning_offer.auction_request_offer == None) & (db.auction_request.offer_expires < request.now) #for this to succeed a field cannot be None or incompatible with > == < #QUERY DOENS'T WORK WINNING OFFERS STILL SHOW
+		left = db.auction_request_winning_offer.on(db.auction_request_offer.id == db.auction_request_winning_offer.auction_request_offer) #left join forces auction_request_winning_offer to be joined to query even though not all auction_request_offers have a corresponding auction_request_winning_offer, therefore it will be None instead and can be queried. # IF you intend to select on persons (whether they have things or not) and their things (if they have any), then you need to perform a LEFT OUTER JOIN. # 
 	elif show == "live": #show is_active only
 		query &= db.auction_request.auction_expires > request.now
 	
 	#OLD METHOD OF JOINS B#my_offers = db(query).select(join=join, orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
-	my_offers = db(query).select(orderby=orderby,limitby=paging['limitby']) #do a select where, join, and orderby all at once.
+	my_offers = db(query).select(orderby=orderby,limitby=paging['limitby'], left=left) #do a select where, join, and orderby all at once.
 	my_offer_summaries = []
 	for each_offer in my_offers:
 		#auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() don't needed #make sure not abandoned or expired!

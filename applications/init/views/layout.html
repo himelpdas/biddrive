@@ -68,7 +68,7 @@
     <![endif]-->
 	
 	<style type="text/css">
-		{{if request.function in ['index']:}}
+		{{if request.controller in ['default'] and request.function in ['index']:}}
 
 			.absolute-center {
 				margin: auto;
