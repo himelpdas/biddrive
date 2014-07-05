@@ -25,8 +25,9 @@ response.google_analytics_id = None
 
 response.menu = [
     #(T('Used cars'), False, URL('default', 'index'), []),
-	(T('Become a dealer!'), False, URL('default', "dealership_form", args=["force_register"] ), []),
-] if not auth.has_membership(user_id = auth.user_id, role = "dealers") else []
+	(T('Become a dealer'), False, URL('default', "dealership_form", args=["force_register"] ), []),
+	(T('Register'), False, URL('default', "user", args=["register"] ), []),
+] if not auth.user_id else [] #if not auth.has_membership(user_id = auth.user_id, role = "dealers") else []
 
 DEVELOPMENT_MENU = False
 

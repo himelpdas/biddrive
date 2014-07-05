@@ -122,7 +122,7 @@
 						{{pass}}
 					{{pass}}
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i> {{if auth.is_logged_in():}}Hello, {{=auth.user.first_name.capitalize()}}!{{else:}}Sign in{{pass}} <b class="caret"></b></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i> {{if auth.is_logged_in():}}Hello, {{=auth.user.first_name.capitalize()}}!{{else:}}Account{{pass}} <b class="caret"></b></a>
                         <ul class="dropdown-menu">
 							{{#auth_next = '/%s/%s/%s/'%(request.application, request.controller, request.function)}} {{#make sure user redirected to proper pages after auth form submissions}}
 							{{#auth_next_portal = '/%s/%s/%s'%(request.application, 'default', 'after_login_portal')}}
@@ -130,7 +130,8 @@
 								<li><a href="{{=URL('default', 'auction_history',)}}"><i class="fa fa-gavel fa-fw"></i>Auction history</a></li>
 								<li class="divider"></li>
 							{{pass}}
-							<li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>
+							{{"""}}<li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>{{"""}}
+							<li><a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user fa-fw"></i>Profile</a></li>
                             <li><a href="{{=URL('default', 'user', args=['change_password' if auth.is_logged_in() else 'request_reset_password'])}}"><i class="fa fa-lock fa-fw"></i>{{if auth.is_logged_in():}}Password{{else:}}Lost password?{{pass}}</a></li>
 							<li class="divider"></li>
 							{{if auth.is_logged_in():}}
