@@ -1127,7 +1127,7 @@ def winner():
 @auth.requires_membership('dealers')
 def dealer_info():
 	response.view = 'default/dealership_form.html'
-	response.title=heading="Edit dealership info"
+	response.title=heading="Edit dealer's info"
 	my_info =db(db.dealership_info.owner_id == auth.user_id).select().last()
 
 	city_field = request.post_vars['city'] #make it look nice for auction page

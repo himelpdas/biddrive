@@ -76,7 +76,8 @@
 					<th>Dealer:</th>
 					<td>
 						<div><strong>{{='%s %s' % (dealer.first_name, dealer.last_name)}}</strong></div>
-						<div><a href="mailto:{{=dealer.email}}">{{=dealer.email}}</a></div>
+						<div class="hidden-print"><a href="mailto:{{=dealer.email}}?subject=Regarding {{=APP_NAME}}} auction {{=str(auction_request_id).zfill(3)}} ({{=year}} {{=make.upper()}} {{=model.upper()}})&body=Hello {{=dealer.first_name}}! You are the winner for my request (ID {{=str(auction_request_id).zfill(3)}}) for a {{=year}} {{=make.upper()}} {{=model.upper()}}. Please call me as soon as possible back at [MY NUMBER].">{{=dealer.email}}</a></div>
+						<div class="visible-print">{{=dealer.email}}</div>
 					</td>
 				</tr>
 
@@ -96,7 +97,7 @@
 					<th>Please bring your:</th>
 					<td>
 						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;<a href="#" onClick="window.print()">Certificate</a></div>
-						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Drivers license</div>
+						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Driver's license</div>
 						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Registration and insurance</div>
 						<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Credit card bill or bank statement</div>
 						{{if trade_in:}}<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;Current trade-in vehicle and title</div>{{pass}}
@@ -134,7 +135,7 @@
 		</div>
 	  </div>
       <div class="modal-footer">
-        <div class="text-danger">Winner code: <strong>{{=winner_code_spaced}}</strong> (write it down)</div>
+        <div class="text-danger" style="font-size: 24px">Winner code: <strong>{{=winner_code_spaced}}</strong> (write it down)</div>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

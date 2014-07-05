@@ -15,6 +15,12 @@ add progress bar to dealer portion
 alert dealer through call and text when he is accepted to biddrive.
 allow messaging DURING final offer
 add pages to auction_request
+make auction page more responsive
+remove 2 picture restriction on pre_auction
+remove group permission for auction its not necessary
+scramble text in cert before validation
+change voice to british guy
+cache auction requests
 
 *Optional
 add twilio verification in page 2
