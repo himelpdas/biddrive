@@ -47,16 +47,16 @@
 					<th  style="border-top: none">Auction ID:</th>
 					<td  style="border-top: none">{{=str(auction_request_id).zfill(3)}}</td>
 				</tr>
-
-				<tr>
-					<th>Price lock:</th>
-					<td>{{=last_bid_price}}</td>
-				</tr>			
 				
 				<tr>
 					<th>VIN #:</th>
 					<td>{{=vin}}</td>
 				</tr>
+
+				<tr>
+					<th>Price lock:</th>
+					<td>{{=last_bid_price}}</td>
+				</tr>			
 				
 			{{if is_lease:}}
 				<tr>
