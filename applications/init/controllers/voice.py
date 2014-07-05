@@ -21,10 +21,10 @@ def index():
 	intro =  "Hello! Welcome to the bid drive dot com automatic auction validation system."
 	gather = "Please %sdial your 12 digit winner code now."% ('re' if bool(message or skip_message) else '',)
 	if not skip_message:
-		resp.say(message or intro, language="en-gb")
+		resp.say(message or intro)
 	with resp.gather(numDigits=12, action="handle_key.xml", method="POST") as g: #with is like try finally that automatically closes the file via calling __exit__()
 		for each in range(3):
-			g.say(gather, language="en-gb") #g is gather obj
+			g.say(gather) #g is gather obj
 			g.pause(length=3)
 	return(
 		dict(
@@ -44,7 +44,7 @@ def handle_key():
 		# If the dial fails:
 		with resp.gather(numDigits=1, action="handle_key_check.xml/%s"%digit_pressed, method="POST") as g: #change to csv so operator can say each number separate
 			for each in range(3):
-				g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 and try again."%(str(list(digit_pressed)).strip('[').strip(']'),), language="en-gb")
+				g.say("You dialed %s. If this is correct, press 1. Otherwise, press 2 and try again."%(str(list(digit_pressed)).strip('[').strip(']'),))
 				g.pause(length=3)
 		return dict(resp = str(resp))
  
@@ -92,10 +92,10 @@ def handle_key_check():
 					if opening_time and closing_time:
 						schedule+=" %s, %s through %s."%(each_day, opening_time, closing_time)
 				for each in range(3):
-					resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day. "%(tz_country, tz_zone, schedule), language="en-gb" )
+					resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day. "%(tz_country, tz_zone, schedule) )
 					resp.pause(length=3)
 			else: #make vehicle details to pass to dealer	and CALL the dealer
-				resp.say("Thank you. I will now connect you to your winning dealer. Please hold.", language="en-gb")
+				resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
 				color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.simple_color_names))
 				auction_request_vehicle = dict(_color = color_names[winning_offer.color], _year = auction_request.year, _make = auction_request.make, _model = auction_request.model, _id=auction_request.id) #trim = auction_request.trim_name)
@@ -104,7 +104,7 @@ def handle_key_check():
 				dialer = resp.dial(callerId = TWILIO_NUMBER_CALLER_ID) #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...
 				dialer.append(twiml.Number(winning_dealer_phone_number, url = screen_for_machine_url, method="POST")) #allows for interaction (ie. gather) with dealer before he enters the call.. must hang up explicitly if unresponsive or call will connect
 				#TODO figure out a way to play music while ringing #dialer.append(twiml.Conference(winner_code, waitUrl=URL('static','audio/on_hold_music.mp3', scheme=True, host=True) ) ) #room name is first argument
-				resp.say("The call failed, or the remote party hung up. Goodbye.", language="en-gb")
+				resp.say("The call failed, or the remote party hung up. Goodbye.")
 			return dict(resp = str(resp))
 		else:
 			redirect(URL('init', 'voice', 'index.xml', vars=dict(message="I'm sorry. That code doesn't exist in our database.")))
@@ -119,15 +119,15 @@ def screen_for_machine():
 		message = "This is the bid drive dot com automatic validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
 		with resp.gather(numDigits=1, action="%s/screen_complete"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function. #action would be screen_for_machine.xml/screen_complete
 			for each in range(3):
-				g.say(message, language="en-gb")
+				g.say(message)
 				g.pause(length=3)
 	if not "screen_complete" in request.args:
-		resp.say("Goodbye. ", language="en-gb") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
+		resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
 		resp.hangup() #hang up if no gather
 	else: #HMAC PROTECT HERE!!
 		winning_offer = db(db.auction_request_winning_offer.auction_request_offer == winning_offer_id).select().last()
 		contact_made = winning_offer.update_record(contact_made=True)
-		resp.say("Connecting. ", language="en-gb")
+		resp.say("Connecting. ")
 	return dict(resp=str(resp))
 
 """
