@@ -1084,6 +1084,9 @@ def winner():
 	last_bid = auction_request_offer.latest_bid()
 	last_bid_price = ('$%s'%last_bid.bid) if not auction_validator['is_lease'] else ('$%s per month'%last_bid.bid)
 	
+	#vin number
+	vin = auction_request_offer.vin_number
+	
 	#dealership info stuff
 	dealer = db(db.auth_user.id == auction_request_offer.owner_id).select().last()
 	dealership = db(db.dealership_info.owner_id == auction_request_offer.owner_id).select().last()
@@ -1119,6 +1122,7 @@ def winner():
 		dealership = dealership,
 		is_lease = auction_validator['is_lease'],
 		map_url=map_url,
+		vin=vin,
 		last_bid_price=last_bid_price,
 		interior_image_url=interior_image_url,
 		exterior_image_url=exterior_image_url,

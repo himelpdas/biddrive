@@ -51,13 +51,20 @@
 				<tr>
 					<th>Price lock:</th>
 					<td>{{=last_bid_price}}</td>
+				</tr>			
+				
+				<tr>
+					<th>VIN #:</th>
+					<td>{{=vin}}</td>
 				</tr>
+				
 			{{if is_lease:}}
 				<tr>
 					<th>Lease term:</th>
 					<td>{{=auction_request.lease_term}} or {{auction_request.lease_mileage}}</td>
 				</tr>
 			{{pass}}
+			
 				<tr>
 					<th>Color:</th>
 					<td>{{=color}}</td>
