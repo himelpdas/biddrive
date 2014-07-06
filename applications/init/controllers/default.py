@@ -113,8 +113,8 @@ def request_by_make():
 		colorChipsErrorFix(trim_data['colors']) #make sure all db entries are safe. protect trim_data from this error
 		db.auction_request.trim_data.default = json.dumps(trim_data)
 		db.auction_request.trim_name.default = trim_data['name'] 
-		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in form.vars.color_preference ] #make a list of color names based on ids in color_preference field
-		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in form.vars.color_preference ]
+		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.color_preference ] #make a list of color names based on ids in color_preference field
+		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.color_preference ]
 	
 	if form.process(onvalidation=computations, hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = '! Register or login to view it.'

@@ -121,7 +121,8 @@ def getColorHexByNameOrID(identifier, trim_data):
 		try: trim_data.keys()
 		except: raise Exception("Trim_data variable corrupt!")
 	color_hex=None
-	for each_color in trim_data['colors'][1]['options']:
+	#for each_color in trim_data['colors'][1]['options']: #check instead to find exterior's index, since lambo doesn't have interior color, and therefore exterior is index 0, not 1... thus causing error
+	for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options']:
 		if each_color[name_or_id] == identifier:
 			color_hex = each_color['colorChips']['primary']['hex']
 			break

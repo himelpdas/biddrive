@@ -346,7 +346,8 @@ Get rid of dummies and lorem ipsums
 						{{color_names=each_request.auction_request.color_names}}
 						{{color_names.sort()}}
 						{{for each_name in color_names:}}
-							{{for each_color in json.loads(each_request.auction_request.trim_data)['colors'][1]['options']:}}
+							{{trim_data=json.loads(each_request.auction_request.trim_data)}}
+							{{for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options']:}}
 								{{if each_color['name'] == each_name:}}
 									{{color_hex = each_color['colorChips']['primary']['hex']}}
 								{{pass}}

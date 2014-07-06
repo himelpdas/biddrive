@@ -45,7 +45,7 @@ def color_preference(): #TODO get all data from single call make/model/year
 				counter+=1
 	"""
 	colorChipsErrorFix(style_colors)
-	style_colors = style['colors'][1]['options']
+	style_colors = style['colors'] [[each['category']=='Exterior' for each in style['colors']].index(True)] ['options']
 	style_color_codes = []
 	for each_color in style_colors:
 		style_color_codes.append([
