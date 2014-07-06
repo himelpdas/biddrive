@@ -246,6 +246,11 @@ def pre_auction():
 	db.auction_request_offer.owner_id.readable = False
 	db.auction_request_offer.owner_id.writable = False
 	
+	car=dict(year=auction_request.year,
+	make=auction_request.make,
+	model=auction_request.model,
+	trim=auction_request.trim_name)
+	
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
 	#return dict(form=None, options=options) #uncomment for testing
@@ -348,7 +353,7 @@ def pre_auction():
 			URL('auction', args=[auction_request_id])
 		)
 	
-	return dict(form = form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id)
+	return dict(form = form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id, **car)
 
 """
 @auth.requires(request.args(0))

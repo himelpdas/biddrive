@@ -1,6 +1,11 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
 {{#"""}}
+<hr>
+<h3>Submit your offer</h3>
+<h4 class="text-light">{{="%s %s %s"%tuple(map(lambda each: each.upper(), [year, make, model]))}}</h4>
+<span class="text-light text-md pull-right">{{=trim}}</span>
+<hr>
 
 <div class="row-fluid">
 	<div class = "col-xs-8">

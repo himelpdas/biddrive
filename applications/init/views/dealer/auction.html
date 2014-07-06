@@ -1,40 +1,6 @@
 {{extend 'page_layout.html'}}
 {{#=BEAUTIFY(response._vars)}}
 
-{{if is_owner:}}
-<!-- progress -->
-	<div class="row text-center" style="margin-top:-18px;">
-		<div class="col-xs-2 col-xs-offset-1 text-center  text-muted">
-			<div class="center-block" style="border-radius: 50%; border: 4px solid #ccc; padding: 10px; width: 60px; height: 60px">
-				<i class="fa fa-car fa-2x" style="color:#32bec0"></i>
-				<small style="text-transform: uppercase; display:block; margin-top: 15px; margin-left:0px;"><font size="1em">Select</font></small>
-			</div> 
-		</div>
-		<div class="col-xs-2  text-muted">
-			<i class="fa fa-long-arrow-right fa-3x" style="margin-top: 17px; border-color: #ccc;"></i>
-		</div>
-
-		<div class="col-xs-2 text-center">
-			<div class="center-block" style="border-radius: 50%; border: 4px solid #000; padding: 12px; width: 60px; height: 60px">
-				<i class="fa fa-legal fa-2x" style="color:#32bec0"></i>
-				<small style="text-transform: uppercase; display:block; margin-top: 15px; margin-left:-6px;"><font size="1em">Auction</font></small>
-			</div>
-		</div>
-		<div class="col-xs-2 ">
-			<i class="fa fa-long-arrow-right fa-3x" style="margin-top: 17px; border-color: #ccc;"></i>
-		</div>
-
-		<div class="col-xs-2 text-center text-muted">
-			<div class="center-block" style="border-radius: 50%; border: 4px solid #ccc; padding: 13px; width: 60px; height: 60px" align="center">
-				<i class="fa fa-phone fa-2x" style="color:#32bec0"></i>
-				<small style="text-transform: uppercase; display:block; margin-top: 15px; margin-left:-9px;"><font size="1em">Connect</font></small>
-			</div>
-		</div>
-	</div>
-	<div class="hidden-xs" style="padding-bottom:18px;">&nbsp;</div>
-<!-- / -->
-{{pass}}
-
 <div id = "panel-top" class="panel panel-primary">
 	<div class= "panel-heading text-uppercase text-md" style="position:relative;">
 		<i class="fa fa-legal"></i> Auction for <strong>{{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}} {{if a_winning_offer or auction_ended_offer_expired:}}<span class="text-danger">(ENDED)<span>{{pass}}</strong>

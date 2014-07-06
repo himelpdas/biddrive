@@ -11,13 +11,11 @@ create an admin interface that allows safe addition and deletion of rows from im
 add unsubscribe features to certain types of emails to profile
 add more tooltips to everything
 fix progress bar to allow more than one word
-add progress bar to dealer portion
 alert dealer through call and text when he is accepted to biddrive.
 allow messaging DURING final offer
 add pagination to auction_request
 make auction page more responsive
 remove 2 picture restriction on pre_auction
-remove group permission for auction its not necessary
 scramble text in cert before validation
 cache auction requests
 include colors in msrp
@@ -31,3 +29,4 @@ calculate msrp in page 2
 fix filter in my_auctions and auction_history where "lost" filter shows won auctions too
 change voice to british guy
 fix failure in lambo
+add progress bar to dealer portion
