@@ -292,7 +292,53 @@
 							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
 						</td>
 					</tr>
+					
+					<tr>
+						<th>
+							Color choices:
+						</th>
+						<td>
+							<ul>
+								{{for each_color_name in auction_request_info['auction_request'].color_names:}}
+									<li>
+										{{=each_color_name}}
+									</li>
+								{{pass}}
+							</ul>
+						</td>
+					</tr>
+					
+					<tr>
+						<th>
+							Must haves 
+						</th>
 
+						<td>
+							<ul>
+								{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
+								{{request_trim_data = json.loads(auction_request_info['auction_request'].trim_data)}}
+								{{must_haves = auction_request_info['auction_request'].must_haves}}
+								{{if must_haves:}}
+									{{for each_option in must_haves:}}
+										{{has_option_data = False}}
+										{{for each_option_type in option_names:}}
+											{{if not has_option_data:}}
+												{{has_option_data = getOption(request_trim_data, each_option_type, each_option)}}
+												{{if has_option_data:}}
+													<li>{{=has_option_data['name']}}</li>
+												{{pass}}
+											{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
+										{{pass}}
+										{{if not has_option_data:}}
+											</li>{{=each_option}}</li> {{#then just show the id number}}
+										{{pass}}
+									{{pass}}
+								{{else:}}<li>No preference</li>
+								{{pass}}
+							</ul>
+						</td>
+					</tr>
+					
 					<tr>
 						<th>
 							Credit score
