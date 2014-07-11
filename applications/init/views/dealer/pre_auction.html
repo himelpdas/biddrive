@@ -8,7 +8,7 @@
 <hr>
 
 <div class="row-fluid">
-	<div class = "col-xs-8">
+	<div class = "col-sm-8 col-xs-12">
 	
 		{{=form.custom.begin}}
 				{{ form.element("input", _name = "vin_number")["_class"] += " form-control" }}
@@ -261,14 +261,127 @@
 				{{=form.custom.submit}}
 		{{=form.custom.end}}
 	</div>
-	<div class= "col-xs-4">
-		<div  style="position:fixed;">
+	<div class= "col-sm-4 hidden-xs">
+		<div style="position:fixed;">
+			<button class="btn btn-info" href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-fw fa-user"></i>View buyer info</button>
+			<br><br>
 			<h4>
-				Estimated MSRP
+				Estimated MSRP:
 			</h4>
 			<h3>
-				$<span id='msrp'>{{=int(msrp_by_id['base'])}}</span>
+				<span class="text-success">$</span><span class="pull-right" id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span>{{#http://goo.gl/aOI4}}
 			</h3>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="info_modal">
+	<div class="modal-dialog">
+		<div class="modal-content" style="background-color:rgba(246,246,246,0.9);">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">Information about {{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}}</h4>
+			</div>
+			<div class="modal-body" style="max-height:480px;overflow-y:auto;">
+				<table class="table">
+					<tr>
+						<th style="border-top:none;">
+							Entering
+						</th>
+
+						<td style="border-top:none;">
+							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							Credit score
+						</th>
+
+						<td>
+							{{credit_score=auction_request_info['auction_request']['FICO_credit_score']}}
+							{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}
+						</td>
+					</tr>
+
+					<tr>
+						<th>
+							Funding:
+						</th>
+
+						<td>
+							{{funding=auction_request_info['auction_request']['funding_source']}}
+							{{=funding.capitalize()}}
+						</td>
+					</tr>
+				{{if funding in ['lease', 'loan']:}}
+					<tr>
+						<th>
+							Expected down payment:
+						</th>
+
+						<td>
+							${{=auction_request_info['auction_request']['expected_down_payment']}}
+						</td>
+					</tr>
+				{{pass}}
+				{{if funding == 'loan':}}
+					<tr>
+						<th>
+							Financing:
+						</th>
+
+						<td>
+							{{=auction_request_info['auction_request']['financing']}}
+						</td>
+					</tr>
+				{{pass}}										
+				{{if funding == 'lease':}}
+					<tr>
+						<th>
+							Lease mileage:
+						</th>
+
+						<td>
+							{{=auction_request_info['auction_request']['lease_mileage']}} miles
+						</td>
+					</tr>
+					<tr>
+						<th>
+							Lease term:
+						</th>
+
+						<td>
+							{{=auction_request_info['auction_request']['lease_term']}}
+						</td>
+					</tr>
+				{{pass}}
+					<tr>
+						<th>
+							Trading in:
+						</th>
+
+						<td>
+							{{trading=auction_request_info['auction_request']['trading_in']}}
+							{{if trading:}}Yes{{else:}}No{{pass}}
+						</td>
+					</tr>
+				{{if trading:}}
+					<tr>
+						<th>
+							Trade in description
+						</th>
+
+						<td>
+							{{=auction_request_info['auction_request']['describe_trade_in']}}
+						</td>
+					</tr>
+				{{pass}}
+				</table>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
 		</div>
 	</div>
 </div>

@@ -380,8 +380,7 @@
 						</tr>
 					{{pass}}
 					</table>
-
-									</div>
+				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 				</div>
@@ -399,7 +398,7 @@
 		<div class="panel {{if each_offer['is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	{{pass}}
 		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
-			<strong>{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> <u>{{=each_offer['last_bid_price']}}</u>{{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-question"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong>
+			<strong>{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-question"></i> Awaiting{{pass}}</strong> bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong>{{#http://goo.gl/aOI4}}
 				{{final_bid_hours_left=(int(each_offer['final_bid_ends_in_hours'])+1) if each_offer['final_bid_ends_in_hours'] else 'N/A'}}
 				{{final_bid_hours_left='%s hour%s'%(final_bid_hours_left, '' if final_bid_hours_left==1 else 's')}}
 				{{if each_offer['show_winner_btn']:}}

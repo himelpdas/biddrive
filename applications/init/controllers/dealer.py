@@ -352,8 +352,29 @@ def pre_auction():
 		redirect(
 			URL('auction', args=[auction_request_id])
 		)
+
+	#auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
+	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
+
+	auction_request_info = dict(
+		id = str(auction_request.id),
+		auction_requests_user_entered = len(db(db.auction_request.owner_id == auction_request_user.id).select()),
+		first_name =auction_request_user.first_name,
+		last_init =auction_request_user.last_name[:1]+'.',
+		year = auction_request.year,
+		make = auction_request.make,
+		model = auction_request.model,
+		is_lease = auction_request.funding_source == 'lease',
+		trim_name = auction_request.trim_name,
+		trim_data = trim_data,
+		auction_request=auction_request,
+		colors = colors,
+		#city = auction_request_area.city,
+		#state = auction_request_area.state_abbreviation,
+		#zip_code =  auction_request_area.zip_code,
+	)
 	
-	return dict(form = form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id, **car)
+	return dict(form = form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
 
 """
 @auth.requires(request.args(0))
