@@ -526,7 +526,7 @@ def auction():
 			
 			#dealer bid process
 			if bid_form.process(hideerror = True).accepted:
-				response.message = '$Your new bid is $%s.'%bid_form.vars.bid #redirect not needed since we're dealing with POST
+				response.message = '$Your new bid is $%s.'%"{:,}".format(bid_form.vars.bid) #redirect not needed since we're dealing with POST
 				if final_message:
 					session.message2 = final_message
 					redirect(URL(args=request.args))
