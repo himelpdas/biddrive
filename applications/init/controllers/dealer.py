@@ -348,7 +348,7 @@ def pre_auction():
 			my_piggy = db(db.credits.owner==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
 			auth.add_membership('dealers_authorized_for_auction_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
-		session.message = '$Your offer was submitted!'
+		session.message = '$Your vehicle was submitted!'
 		redirect(
 			URL('auction', args=[auction_request_id])
 		)
@@ -830,7 +830,7 @@ def auction():
 					MESSAGE =  XML("The buyer for a <i>%s</i> picked <b>%s</b> as the favorite! So what now?"%(car, 'you' if is_favorite else 'another dealer')),
 					MESSAGE_TITLE = "%s picked a new favorite!"%_buyer.first_name.capitalize(),
 					WHAT_NOW = "Act fast!" if not is_favorite else 'Keep it up!',
-					INSTRUCTIONS = "Make a better offer to convince the buyer that your offer is the best deal!" if not is_favorite else 'But stay alert for competing offers that may convince the buyer to have a change of mind!',
+					INSTRUCTIONS = "Make a better offer to convince the buyer that your vehicle is the best deal!" if not is_favorite else 'But stay alert for competing offers that may convince the buyer to have a change of mind!',
 					CLICK_HERE = "Go to auction",
 					CLICK_HERE_URL = URL(args=request.args),
 				)), "New favorite was chosen for %s auction for a %s"%(APP_NAME,car)],
