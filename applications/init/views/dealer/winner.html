@@ -31,14 +31,21 @@
 				<img src="{{=map_url}}" alt="Dealer Map" class="img-responsive">
 			</div>
 			<hr>
-			<div class="row">
-				<div class="col-xs-6">
-					<img src="{{=exterior_image_url}}" alt="Exterior image" class="img-responsive">
-				</div>
-				<div class="col-xs-6">
-					<img src="{{=interior_image_url}}" alt="Interior image" class="img-responsive">
-				</div>
-			</div>
+			{{for i, each_image_url in enumerate(image_urls):}}
+				{{new_row=False if (i%2) else True}}
+				{{if new_row:}}
+					<div class="row">
+				{{pass}}
+						<div class="col-xs-6" style="padding-bottom:18px;">
+							<img src="{{=image_urls[each_image_url]}}" alt="{{=each_image_url}}" class="img-responsive">
+						</div>
+				{{if not new_row:}}
+					</div>
+				{{pass}}
+			{{pass}}
+				{{if len(image_urls)%2:}} {{#make sure div closes if there are an odd number of images}}
+					</{{="div"}}>
+				{{pass}}
 		</div>
 
 		<div class="col-xs-7">

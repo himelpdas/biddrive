@@ -1086,10 +1086,14 @@ def winner():
 	#details about offer
 	auction_request_offer = db(db.auction_request_offer.id == winner.auction_request_offer).select().last()
 	#get the image urls
-	interior_image_s = auction_request_offer.interior_image_compressed[0]
-	exterior_image_s = auction_request_offer.exterior_image_compressed[0]
-	interior_image_url = URL('static', 'thumbnails/%s'%interior_image_s)
-	exterior_image_url = URL('static', 'thumbnails/%s'%exterior_image_s)
+	list_of_image_types = ['exterior', 'interior', 'front', 'rear', 'tire', 'dashboard', 'passenger', 'trunk', 'underhood', 'roof', 'other']
+	image_urls = {}
+	for each_image_type in list_of_image_types:
+		image_filename_pair = auction_request_offer['%s_image_compressed'%each_image_type]
+		image_s = image_filename_pair[0] if image_filename_pair else None
+		image_urls.update({
+			'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s) if image_s else "http://placehold.it/500x400&text=%s"% each_image_type.capitalize()
+		})
 	#color stuff
 	color = colors[auction_request_offer.color]
 	#options stuff
@@ -1150,8 +1154,8 @@ def winner():
 		map_url=map_url,
 		vin=vin,
 		last_bid_price=last_bid_price,
-		interior_image_url=interior_image_url,
-		exterior_image_url=exterior_image_url,
+		list_of_image_types=list_of_image_types,
+		image_urls=image_urls,
 	)
 	
 @auth.requires_membership('dealers')
