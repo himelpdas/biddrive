@@ -369,32 +369,41 @@ db.define_table('auction_request_offer',
 	),	
 	#about us
 	###################IMGS#####################
+#	Field('exterior_image', 'upload',
+#		requires=[IS_NOT_EMPTY(), 
+#			IS_IMAGE( #http://goo.gl/r3UizI
+#				maxsize=(10000, 10000),
+#				minsize=(800,600), #min HD
+#				error_message='Need an image of at least 800x600 pixels!', 
+#			)
+#		]
+#	),
 	Field('exterior_image', 'upload',
-		requires=[IS_NOT_EMPTY(), 
-			IS_IMAGE( #http://goo.gl/r3UizI
-				maxsize=(10000, 10000),
-				minsize=(800,600), #min HD
-				error_message='Need an image of at least 800x600 pixels!', 
-			)
-		]
-	), 
-    Field('exterior_image_compressed', 'list:string', compute = 
-		#required = True, #or fails will be silent!! DEBUG IN SHELL
-        lambda row: 
-            [resize_offer_image_upload(row['exterior_image'],x=500,y=400),resize_offer_image_upload(row['exterior_image'],x=1080,y=720)] #[small, big] NOTE IF ROW.FIELD DOESN'T WORK, TRY ROW.TABLE.FIELD!
-    ),
-	Field('interior_image', 'upload',
-		requires=[IS_NOT_EMPTY(), 
+		requires=IS_EMPTY_OR(
 			IS_IMAGE(
 				maxsize=(10000, 10000),
 				minsize=(800,600), #min HD
 				error_message='Need an image of at least 800x600 pixels!', 
 			)
-		]
+		)
+	),	
+    Field('exterior_image_compressed', 'list:string', compute = 
+		#required = True, #or fails will be silent!! DEBUG IN SHELL
+        lambda row: 
+            [resize_offer_image_upload(row['exterior_image'],x=500,y=400),resize_offer_image_upload(row['exterior_image'],x=800,y=600)] if row['exterior_image'] else [] #[small, big] NOTE IF ROW.FIELD DOESN'T WORK, TRY ROW.TABLE.FIELD!
+    ),
+	Field('interior_image', 'upload',
+		requires=IS_EMPTY_OR(
+			IS_IMAGE(
+				maxsize=(10000, 10000),
+				minsize=(800,600), #min HD
+				error_message='Need an image of at least 800x600 pixels!', 
+			)
+		)
 	), 
     Field('interior_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row['interior_image'],x=500,y=400),resize_offer_image_upload(row['interior_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['interior_image'],x=500,y=400),resize_offer_image_upload(row['interior_image'],x=800,y=600)] if row['interior_image'] else []  #[small, big]
     ),
 	#ext
 	Field('front_image', 'upload',
@@ -408,7 +417,7 @@ db.define_table('auction_request_offer',
 	),
     Field('front_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['front_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['front_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['front_image'],x=500,y=400),resize_offer_image_upload(row['front_image'],x=800,y=600)] if row['front_image'] else [] #[small, big]
     ),
 	Field('rear_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -421,7 +430,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('rear_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['rear_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['rear_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['rear_image'],x=500,y=400),resize_offer_image_upload(row['rear_image'],x=800,y=600)] if row['rear_image'] else [] #[small, big]
     ),
 	Field('tire_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -434,7 +443,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('tire_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['tire_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['tire_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['tire_image'],x=500,y=400),resize_offer_image_upload(row['tire_image'],x=800,y=600)] if row['tire_image'] else [] #[small, big]
     ),
 	#int
 	Field('dashboard_image', 'upload',
@@ -448,7 +457,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('dashboard_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['dashboard_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['dashboard_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['dashboard_image'],x=500,y=400),resize_offer_image_upload(row['dashboard_image'],x=800,y=600)] if row['dashboard_image'] else [] #[small, big]
     ),
 	Field('passenger_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -461,7 +470,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('passenger_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['passenger_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['passenger_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['passenger_image'],x=500,y=400),resize_offer_image_upload(row['passenger_image'],x=800,y=600)] if row['passenger_image'] else [] #[small, big]
     ),
 	Field('trunk_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -474,7 +483,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('trunk_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['trunk_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['trunk_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['trunk_image'],x=500,y=400),resize_offer_image_upload(row['trunk_image'],x=800,y=600)] if row['trunk_image'] else [] #[small, big]
     ),
 	#misc
 	Field('underhood_image', 'upload',
@@ -488,7 +497,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('underhood_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['underhood_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['underhood_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['underhood_image'],x=500,y=400),resize_offer_image_upload(row['underhood_image'],x=800,y=600)] if row['underhood_image'] else [] #[small, big]
     ),
 	Field('roof_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -501,7 +510,7 @@ db.define_table('auction_request_offer',
 	), 
     Field('roof_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['roof_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['roof_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['roof_image'],x=500,y=400),resize_offer_image_upload(row['roof_image'],x=800,y=600)] if row[''] else [] #[small, big]
     ),
 	Field('other_image', 'upload',
 		requires=IS_EMPTY_OR(
@@ -514,7 +523,7 @@ db.define_table('auction_request_offer',
 	),
     Field('other_image_compressed', 'list:string', compute = 
         lambda row: 
-            [resize_offer_image_upload(row.auction_request_offer['other_image'],x=500,y=400),resize_offer_image_upload(row.auction_request_offer['other_image'],x=1080,y=720)] #[small, big]
+            [resize_offer_image_upload(row['other_image'],x=500,y=400),resize_offer_image_upload(row['other_image'],x=800,y=600)] if row[''] else [] #[small, big]
     ),
 	###################IMGS#####################
 	Field.Method('latest_bid', #this offers latest bid

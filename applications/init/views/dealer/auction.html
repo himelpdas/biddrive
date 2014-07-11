@@ -454,91 +454,34 @@
 
 				  	<!-- IMAGE SLIDER -->
 				  	<div class="carousel-inner">
-
-				    	<div class="item active">
-							{{exterior_image_s = each_offer['exterior_images'][0]}}
-							{{exterior_image_l = each_offer['exterior_images'][1]}}
-				     		<a href="#exterior_image_l_{{=each_offer['id']}}" data-toggle="modal" data-target="#exterior_image_l_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%exterior_image_s)}}" alt="{{=exterior_image_s}}" class="img-responsive"></a>
-				    	</div>
-
-						<div class="item">
-							{{interior_image_s = each_offer['interior_images'][0]}}
-							{{interior_image_l = each_offer['interior_images'][1]}}
-							<a href="#interior_image_l_{{=each_offer['id']}}" data-toggle="modal" data-target="#interior_image_l_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%interior_image_s)}}" alt="{{=interior_image_s}}" class="img-responsive"></a>
-						</div>
-						
-						{{if each_offer['front_images']:}} {{# from here it may be possible dealer did not submit these images}}
-							{{front_image_s=each_offer['front_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%front_image_s)}}" alt="{{=front_image_s}}" class="img-responsive">
-							</div>
+						{{list_of_image_types = ['exterior', 'interior', 'front', 'rear', 'tire', 'dashboard', 'passenger', 'trunk', 'underhood', 'roof', 'other']}}
+						{{has_images = had_active =False}}
+				    	{{for n, each_image_type in enumerate(list_of_image_types):}}
+							{{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
+							{{if small_and_large_file_names:}} {{#did dealer submit images?}}
+								<div class="item {{if not had_active:}}active{{pass}}"> {{#need one active label or image won't show!}}
+									{{had_active=True}}
+									{{#image_s = each_offer['exterior_images'][0]}}
+									{{image_s = small_and_large_file_names[0]}}
+									{{image_l = small_and_large_file_names[1]}}
+									{{has_images=True}}
+									<a href="#{{=each_image_type}}_{{=each_offer['id']}}" data-toggle="modal" data-target="#{{=each_image_type}}_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
+								</div>							
+							{{pass}}
 						{{pass}}
-
-						{{if each_offer['rear_images']:}}
-							{{rear_image_s=each_offer['rear_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%rear_image_s)}}" alt="{{=rear_image_s}}" class="img-responsive">
-							</div>
+						{{if not has_images:}}
+							<div class="item active"><img src="http://placehold.it/500x400&text=No image available"></div>
 						{{pass}}
-
-						{{if each_offer['tire_images']:}}
-							{{tire_image_s = each_offer['tire_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%tire_image_s)}}" alt="{{=tire_image_s}}" class="img-responsive">
-							</div>
-						{{pass}}
-
-						{{if each_offer['dashboard_images']:}}
-							{{dashboard_image_s = each_offer['dashboard_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%dashboard_image_s)}}" alt="{{=dashboard_image_s}}" class="img-responsive">
-							</div>
-						{{pass}}
-						
-						{{if each_offer['passenger_images']:}}
-							{{passenger_image_s = each_offer['passenger_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%passenger_image_s)}}" alt="{{=passenger_image_s}}" class="img-responsive">
-							</div>
-						{{pass}}
-
-						{{if each_offer['trunk_images']:}}
-							{{trunk_image_s = each_offer['trunk_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%trunk_image_s)}}" alt="{{=trunk_image_s}}" class="img-responsive">
-							</div>
-						{{pass}}
-
-						{{if each_offer['underhood_images']:}}
-							{{underhood_image_s = each_offer['underhood_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%underhood_image_s)}}" alt="{{=underhood_image_s}}" class="img-responsive">
-							</div>
-						{{pass}}
-
-						{{if each_offer['roof_images']:}}
-							{{roof_image_s = each_offer['roof_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%roof_image_s)}}" alt="{{=roof_image_s}}" class="img-responsive">
-							</div>
-						{{pass}}
-
-						{{if each_offer['other_images']:}}
-							{{other_image_s = each_offer['other_images'][0]}}
-							<div class="item">
-								<img src="{{=URL('static', 'thumbnails/%s'%other_image_s)}}" alt="{{=other_image_s}}" class="img-responsive">
-							</div>
-						{{pass}}
-				
 				  	</div>
-
-				  	<!-- Controls -->
-				  	<a class="left carousel-control" href="#images_{{=each_offer['id']}}" data-slide="prev">
-				    	<span class="glyphicon glyphicon-chevron-left"></span>
-				  	</a>
-				  	<a class="right carousel-control" href="#images_{{=each_offer['id']}}" data-slide="next">
-				    	<span class="glyphicon glyphicon-chevron-right"></span>
-					</a>
+					{{if has_images:}}
+						<!-- Controls -->
+						<a class="left carousel-control" href="#images_{{=each_offer['id']}}" data-slide="prev">
+							<span class="glyphicon glyphicon-chevron-left"></span>
+						</a>
+						<a class="right carousel-control" href="#images_{{=each_offer['id']}}" data-slide="next">
+							<span class="glyphicon glyphicon-chevron-right"></span>
+						</a>
+					{{pass}}
 				</div>			
 			</div>
 			
@@ -776,24 +719,24 @@
 		});
 	</script>
 	{{#####MODALS#####}}
-	<div id="exterior_image_l_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="exterior_image_l_{{=each_offer['id']}}" aria-hidden="true">
-	  <div class="modal-dialog modal-lg">
-		<div class="modal-content">
-			<div class="modal-body">
-				<img src="{{=URL('static', 'thumbnails/%s'%exterior_image_l)}}" class="img-responsive">
-			</div>
-		</div>
-	  </div>
-	</div>
-	<div id="interior_image_l_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="interior_image_l_{{=each_offer['id']}}" aria-hidden="true">
-	  <div class="modal-dialog modal-lg">
-		<div class="modal-content">
-			<div class="modal-body">
-				<img src="{{=URL('static', 'thumbnails/%s'%interior_image_l)}}" class="img-responsive">
-			</div>
-		</div>
-	  </div>
-	</div>
+	{{if has_images:}} {{#cpu saver, since for loop can do the same}}
+		{{for each_image_type in list_of_image_types:}}
+			{{#image_s = each_offer['exterior_images'][0]}}
+			{{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
+			{{if small_and_large_file_names:}} {{#did dealer submit images?}}
+				{{image_l = small_and_large_file_names[1]}}
+				<div id="{{=each_image_type}}_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_type}}_image_l_{{=each_offer['id']}}" aria-hidden="true">
+				  <div class="modal-dialog modal-md">
+					<div class="modal-content">
+						<div class="modal-body">
+							<img src="{{=URL('static', 'thumbnails/%s'%image_l)}}" class="img-responsive">
+						</div>
+					</div>
+				  </div>
+				</div>
+			{{pass}}
+		{{pass}}
+	{{pass}}
 	{{######MESSAGE######}}
 	{{message_form = each_offer['my_message_form_dealer'] or each_offer['my_message_form_buyer']}}
 	{{if (is_owner or each_offer['is_my_offer']):}} 
