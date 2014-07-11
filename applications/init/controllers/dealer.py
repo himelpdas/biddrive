@@ -1091,9 +1091,10 @@ def winner():
 	for each_image_type in list_of_image_types:
 		image_filename_pair = auction_request_offer['%s_image_compressed'%each_image_type]
 		image_s = image_filename_pair[0] if image_filename_pair else None
-		image_urls.update({
-			'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s) if image_s else "http://placehold.it/500x400&text=%s"% each_image_type.capitalize()
-		})
+		if image_s:
+			image_urls.update({
+				'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s)
+			})
 	#color stuff
 	color = colors[auction_request_offer.color]
 	#options stuff

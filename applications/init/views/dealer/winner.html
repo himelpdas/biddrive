@@ -46,6 +46,13 @@
 				{{if len(image_urls)%2:}} {{#make sure div closes if there are an odd number of images}}
 					</{{="div"}}>
 				{{pass}}
+				{{if not len(image_urls):}} {{#if there are no images show generic image}}
+					<div class="row">
+						<div class="col-xs-6">
+							<img src="http://placehold.it/500x400&text=No image" class="img-responsive">
+						</div>
+					</div>
+				{{pass}}
 		</div>
 
 		<div class="col-xs-7">
@@ -123,7 +130,7 @@
 	</div>
 </div>
 
-{{if not contact_made:}}
+{{if False and not contact_made:}}
 <div id="myModal" class="modal fade">
   <br>
   <br>
