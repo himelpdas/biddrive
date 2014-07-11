@@ -15,7 +15,6 @@ alert dealer through call and text when he is accepted to biddrive.
 allow messaging DURING final offer
 add pagination to auction_request
 make auction page more responsive
-remove 2 picture restriction on pre_auction
 scramble text in cert before validation
 cache auction requests
 include colors in msrp
@@ -30,3 +29,5 @@ fix filter in my_auctions and auction_history where "lost" filter shows won auct
 change voice to british guy
 fix failure in lambo
 add progress bar to dealer portion
+add user info to pre_auction
+remove 2 picture restriction on pre_auction

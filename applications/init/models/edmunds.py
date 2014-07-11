@@ -127,5 +127,6 @@ def getColorHexByNameOrID(identifier, trim_data):
 			color_hex = each_color['colorChips']['primary']['hex']
 			break
 	if not color_hex:
-		raise Exception("Couldn't find color hex by name or ID!")
+		#raise Exception("Couldn't find color hex by name or ID!")
+		color_hex="#000"
 	return color_hex
