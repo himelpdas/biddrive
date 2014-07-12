@@ -1,5 +1,6 @@
 {{extend 'page_layout.html'}}
-<!--<h3>
+{{"""}}
+<h3>
 	<div class="row-fluid"  style="text-align:center;">
 		{{for each_verification in ['approved', 'rejected', 'awaiting']: }}
 			{{if not each_verification == verification:}}
@@ -9,11 +10,32 @@
 			{{pass}}
 		{{pass}}
 	</div>
-<h3>-->
+<h3>
+{{"""}}
 
 <div style="overflow-x: auto;">
 	<table class="table table-stripe">
 		<thead>
+			<tr>
+				<td colspan="7">
+					<div class="pull-right">
+						{{#items per page}}
+						<div class="btn-group">
+							<button type="button" class="btn btn-default btn-sm dropdown-toggle text-sm" data-toggle="dropdown">
+								Showing {{=verification}} dealer requests<i class="fa fa-fw fa-caret-down"></i></span>
+							</button>
+							<ul class="dropdown-menu" role="menu">
+								{{for each_verification in ['approved', 'rejected', 'awaiting']: }}
+									{{#_vars = dict(view=each_limit, sortby=request.vars['sortby'], show=request.vars['show'])}}
+									{{if not each_verification == verification:}}
+										<li><a href="{{=URL(args=[each_verification])}}">Show only {{=each_verification}} dealer requests</a></li>
+									{{pass}}
+								{{pass}}
+							</ul>
+						</div>
+					</div>
+				</td>
+			</tr>
 			<tr>
 				<th>ID</th>
 				<th>Verification</th>
@@ -41,7 +63,7 @@
 					<td>{{=each_dealership_info.created_on}}</td>
 					<td>
 						<a href='{{=URL("admin","dealership_form", args=[each_dealership_info.id])}}' class="btn btn-default btn-sm">
-							<i class="fa fa-arrow-right"></i>
+							<i class="fa fa-arrow-right" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Edit this dealer's request"></i>
 						</a>
 					</td>
 				</tr>
