@@ -31,6 +31,7 @@ fix failure in lambo
 add progress bar to dealer portion
 add user info to pre_auction
 remove 2 picture restriction on pre_auction
+show all user info in right side of pre_auction page similar to auction_requests
 
 *Ongoing
 Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of simple_color_names with color_pref in auction request, but this is unlikely.
