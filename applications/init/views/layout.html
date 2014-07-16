@@ -52,13 +52,24 @@
 	{{"""}}
 
     <!-- UI -->
+    <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script> {{#BS3}}
+    {{"""}}<script type="text/javascript" src="{{=URL('static', 'js/carbid.js')}}"></script>{{"""}} {{#useless nanoscroller stuff}}
+	
 	{{if request.controller in ["admin", "appadmin"]:}}{{#use default forms for now}}
-		<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script>
+		<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script> {{#http://goo.gl/cPFP9a}}
+		<script type="text/javascript" src="{{=URL('static','js/web2py.js')}}"></script>
 		<link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}" type="text/css"/>
+		{{"""}}<link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap3.css')}}" type="text/css"/>{{"""}}{{#messes up navbar}}
+		<style type="text/css">
+			.web2py_counter {color:red;} {{#make error message red}}
+		</style>
+		{{#hidden class in bootstrap.min.css has !important declaration which prevents changes to those classes via jquery or css overrides! This causes some problems with the admin page, especially in sqlform.grid}}
+		<script type="text/javascript"> 
+			$(document).ready(function(){
+				$(".w2p_query_row").removeClass("hidden");
+			});
+		</script>
 	{{pass}}
-
-    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script> {{#BS3}}
-    <script src="{{=URL('static', 'js/carbid.js')}}"></script>	
 	
 	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />{{#JQUI}}
 	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>{{#leave global because of better enhancements like wider tooltips}}

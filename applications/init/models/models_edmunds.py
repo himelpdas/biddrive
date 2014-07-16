@@ -14,7 +14,7 @@ if auth.user_id:
 		response.menu.append(
 			(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
 				(T('Dealership requests'), False, URL('admin', 'dealership_requests'), []),
-				#(T('User management'), False, URL('admin', 'user_management'), []),
+				(T('Manage users'), False, URL('admin', 'list_users'), []),
 				(T('DB management'), False, URL('appadmin', 'index'), []),
 			]),
 		)

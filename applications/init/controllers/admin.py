@@ -47,3 +47,40 @@ def dealership_form():
 	response.title = 'Admin interface'
 	response.subtitle = 'to modify dealership request #%s'%request.args[0]
 	return dict(form = form)
+	
+@auth.requires_membership("admins") # uncomment to enable security 
+def list_users(): #http://goo.gl/PDylze
+    btn = lambda row: A("Edit", _href=URL('admin', 'manage_user', args=row.auth_user.id))
+    btn2 = lambda row: A("Edit", _href=URL('admin', 'manage_membership', args=row.auth_user.id))
+    db.auth_user.edit_user = Field.Virtual(btn)
+    db.auth_user.edit_membership = Field.Virtual(btn2)
+    rows = db(db.auth_user).select()
+    headers = ["ID", "Name", "Last Name", "Email", "User", "Membership"]
+    fields = ['id', 'first_name', 'last_name', "email", "edit_user", "edit_membership"]
+    table = TABLE(THEAD(TR(*[B(header) for header in headers])),
+                  TBODY(*[TR(*[TD(row[field]) for field in fields]) \
+                        for row in rows]))
+    table["_class"] = "table table-striped table-bordered table-condensed"
+    return dict(table=table)
+	
+@auth.requires_membership("admins") # uncomment to enable security 
+def manage_user():
+    user_id = request.args(0) or redirect(URL('admin','list_users'))
+    form = SQLFORM(db.auth_user, user_id).process()
+    return dict(form=form)
+	
+@auth.requires_membership("admins") # uncomment to enable security 
+def manage_membership():
+    user_id = request.args(0) or redirect(URL('admin','list_users'))
+    db.auth_membership.user_id.default = int(user_id)
+    db.auth_membership.user_id.writable = False
+    form = SQLFORM.grid(db.auth_membership.user_id == user_id,
+                       args=[user_id],
+                       searchable=True,
+					   editable=False,
+                       deletable=True,
+                       details=True,
+                       selectable=False,
+                       csv=True,
+                       user_signature=False)  # change to True in production
+    return dict(form=form)

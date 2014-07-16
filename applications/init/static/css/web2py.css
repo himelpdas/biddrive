@@ -33,7 +33,7 @@ audio {width:200px}
 [type="text"], [type="password"], select {
   margin-right: 5px; width: 300px;
 }
-.hidden {display:none;visibility:visible}
+.hidden {display:none;visibility:visible} /*WARNING bootstrap3.css overrides this causing problems in sqlform.grid*/
 .right {float:right; text-align:right}
 .left {float:left; text-align:left}
 .center {width:100%; text-align:center; vertical-align:middle}
