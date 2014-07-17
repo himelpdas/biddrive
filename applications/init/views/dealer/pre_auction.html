@@ -262,8 +262,9 @@
 		{{=form.custom.end}}
 	</div>
 	<div class= "col-md-5 col-sm-4 hidden-xs" style="position:relative;">
-		<div id="user_info" style="position:fixed;">
+		<div id="user_info" style="position:fixed; border: #ccc solid; border-radius:8px; height:240px;overflow-y:scroll;">
 			{{#<button class="btn btn-info" href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-fw fa-user"></i>View buyer info</button>}}
+				<pre>Details of {{=auction_request_info['first_name']}} {{=auction_request_info['last_init']}} from {{=auction_request_info['city']}}, {{=auction_request_info['state']}}, {{=auction_request_info['zip_code']}}</pre>
 				<table class="table">
 					<tr>
 						<th style="border-top:none;">
@@ -407,20 +408,22 @@
 				{{pass}}
 				</table>
 			<h4>
-				Estimated MSRP: <span class="pull-right" id='msrp'>${{="{:,}".format(int(msrp_by_id['base']))}}</span>{{#http://goo.gl/aOI4}}
+				<span class="text-light">Estimated MSRP — $&nbsp;</span><span class="{{#pull-right}}" id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span>{{#http://goo.gl/aOI4}}
 			</h4>
 		</div>
 	</div>
 </div>
 <script>
-$(window).scroll(function(){
-	if ($("#user_info").offset().top + $("#user_info").height() > ($("#pre_auction_form").offset().top + $("#pre_auction_form").height())) {
-		$("#user_info").fadeOut(100);
-	} else {
-		$("#user_info").fadeIn(100);
-	}
+$(document).ready(function(){
+	$(window).scroll(function(){
+		if ($("#user_info").offset().top + $("#user_info").height() > ($("#footer").offset().top) ) {
+			$("#user_info").fadeOut(100);
+		} else {
+			$("#user_info").fadeIn(100);
+		}
+	});
 });
-</script>
+</script>{{#important to put in document ready because an element may not be yet defined in the DOM so an error will occur when trying to access that element}}
 {{"""}}
 <div class="modal fade" id="info_modal">
 	<div class="modal-dialog">
