@@ -101,9 +101,12 @@ def manage_users():
 	
 def manage_dealers():	
 	form = SQLFORM.grid(db.auth_user.id==db.dealership_info.owner_id, links = [
-		dict(header='Auctions',body=lambda row: A('Show all%s'% (' auctions' if 'auth_user' in request.args else ''),_href=URL('admin','manage_auctions', vars=dict(user_type='dealer'), args=[row.id if "auth_user" in request.args else row.auth_user.id] ) ) ), 
-		dict(header='Memberships',body=lambda row: A('Show all%s'% (' memberships' if 'auth_user' in request.args else ''),_href=URL('admin','manage_memberships', vars=dict(user_type='dealer'), args=[row.id if "auth_user" in request.args else row.auth_user.id] ) ) ), 
-	],  user_signature=False)
+		dict(header='Auctions',body=lambda row: A('Show all%s'% (' auctions' if 'auth_user' in request.args else ''),_href=URL('admin','manage_auctions', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
+		dict(header='Memberships',body=lambda row: A('Show all%s'% (' memberships' if 'auth_user' in request.args else ''),_href=URL('admin','manage_memberships', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
+		dict(header='Dealership info',body=lambda row: A('Show %s'% (' dealership info' if 'auth_user' in request.args else ''),_href=URL('admin','manage_dealership_info', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
+	], 
+	fields=map(lambda each_field_string: db.auth_user[each_field_string], db.auth_user.fields()), #fields method returns strings of field names of a table #http://goo.gl/L9nONC
+	user_signature=False)
 	return dict(form=form)
 	
 def manage_auctions():

@@ -15,6 +15,7 @@ allow messaging DURING final offer
 add pagination to auction_request
 make auction page more responsive
 scramble text in cert before validation
+show only kia dealers in page 2 if car is kia
 cache auction requests
 include colors in msrp
 

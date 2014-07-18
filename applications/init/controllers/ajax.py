@@ -148,7 +148,7 @@ def dealer_radius_map(): #CACHE CACHE CACHE!!
 			zip_info = db(db.zipgeo.zip_code == zipcode).select().first()
 			if zip_info:
 				urls=[]
-				dealers = db(db.dealership_info.id>0).select()
+				dealers = db(db.dealership_info.specialty.contains(make)).select()
 				dealers = dealers.exclude(lambda row: int(radius) >= calcDist(zip_info.latitude, zip_info.longitude, row.latitude, row.longitude) )#remove requests not in range
 				dmap = DecoratedMap()
 				dmap.add_marker(AddressMarker(zipcode,label='0',color="green"))
@@ -158,7 +158,7 @@ def dealer_radius_map(): #CACHE CACHE CACHE!!
 		else:
 			urls=[error_img%"Not a zip code."]
 
-	return dict(urls=urls, dealer_count=len(dealers))
+	return dict(urls=urls, make=make, dealer_count=len(dealers))
 	
 #auth requires dealer or buyer or admin
 @auth.requires(request.args(0))

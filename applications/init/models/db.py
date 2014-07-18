@@ -46,11 +46,11 @@ auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
 #######CUSTOM FIELDS#######
-auth.settings.extra_fields['auth_user']= [
-  Field('address'),
-  Field('city'),
-  Field('zip'),
-  Field('phone')]
+#auth.settings.extra_fields['auth_user']= [
+#  Field('address'),
+#  Field('city'),
+#  Field('zip'),
+#  Field('phone')]
 ###########################
 
 ## create all tables needed by auth if not custom tables
