@@ -347,7 +347,7 @@ def pre_auction():
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 			my_piggy = db(db.credits.owner==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
-			auth.add_membership('dealers_authorized_for_auction_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
+			auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
 		session.message = '$Your vehicle was submitted!'
 		redirect(
 			URL('auction', args=[auction_request_id])
@@ -408,10 +408,11 @@ def __auction_validator__():
 
 	is_owner = auction_request.owner_id == auth.user.id #TODO add restriction that prevents dealers from creating an auction
 	is_dealer_with_offer = db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select().first() #where dealer owns this bid of this auction_request
-	is_authorized_dealer = auth.has_membership(role='dealers_authorized_for_auction_#%s'%auction_request_id) #will need authorized dealers but may have to move redirect function that controls this
+	is_authorized_dealer = auth.has_membership(role='dealers_in_auction_%s'%auction_request_id) #will need authorized dealers but may have to move redirect function that controls this
+	is_authorized_buyer = auth.has_membership(role='owner_of_auction_%s'%auction_request_id) #can remove at admin
 	
 	is_participant = is_authorized_dealer_with_offer =is_dealer_and_with_final_bid= False
-	if is_owner:
+	if is_owner and is_authorized_buyer:
 		is_participant = True
 	if is_dealer_with_offer and is_authorized_dealer:
 		is_authorized_dealer_with_offer = True

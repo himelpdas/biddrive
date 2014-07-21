@@ -75,28 +75,39 @@ def manage_user():
 	
 @auth.requires_membership("admins") # uncomment to enable security 
 def manage_memberships():
-	user_id = request.args(0) or redirect(URL('admin','list_users'))
+	user_id = request.args(0) #or redirect(URL('admin','list_users'))
 	db.auth_membership.user_id.default = int(user_id)
 	db.auth_membership.user_id.writable = False
-	form = SQLFORM.grid(db.auth_membership.user_id == user_id,
-					   args=[user_id],
-					   searchable=True,
-					   editable=False,
-					   deletable=True,
-					   details=True,
-					   #left=db.auth_membership.on(db.auth_user.id==db.auth_membership.user_id), ##technically a left join, left joins preserve all the rows on the left table, even if right table doesn't #http://goo.gl/TSc6L
-					   selectable=False,
-					   csv=True,
-					   create=False,
-					   user_signature=False)  # change to True in production
+	form = SQLFORM.grid(db.auth_membership.user_id == user_id, 
+						buttons_placement = 'left', links_placement = 'left', 
+						args=[user_id],
+						searchable=True,
+						editable=False,
+						deletable=True,
+						details=True,
+						#left=db.auth_membership.on(db.auth_user.id==db.auth_membership.user_id), ##technically a left join, left joins preserve all the rows on the left table, even if right table doesn't #http://goo.gl/TSc6L
+						selectable=False,
+						csv=True,
+						create=False,
+						user_signature=False)  # change to True in production
 	return dict(form=form)
 	
+db.auth_user.registration_key.readable = True
+db.auth_user.registration_key.writable = True
+db.auth_user.registration_key.requires = IS_EMPTY_OR(IS_IN_SET(['blocked', 'pending'], zero="allowed")) #this is a hack! remove this if email registration is enabled!
+
+	
 @auth.requires_membership("admins") # uncomment to enable security 
-def manage_users():
-	form = SQLFORM.grid(db.auth_user, links = [
+def manage_buyers():
+	#form = SQLFORM.grid(db.auth_user, links = [
+	form = SQLFORM.grid( ((db.auth_user.id > 0) & (db.dealership_info.id == None) ), links = [
 		dict(header='Auctions',body=lambda row: A('Show all',_href=URL('admin','manage_auctions', vars=dict(user_type='buyer'), args=[row.id] ) ) ), 
-		dict(header='Memberships',body=lambda row: A('Show all',_href=URL('admin','manage_memberships', vars=dict(user_type='buyer'), args=[row.id] ) ) ), 
-	],  user_signature=False)
+		dict(header='Memberships',body=lambda row: A('Show all',_href=URL('admin','manage_memberships', vars=dict(user_type='buyer'), args=[row.id] ) ) ), #args=[row.auth_user.id] #by forcing the fields argument to show only auth_user, the join is essentially gone and row.auth_user.id is unnecessary 
+	],  
+	buttons_placement = 'left', links_placement = 'left', 
+	left=db.dealership_info.on(db.auth_user.id == db.dealership_info.owner_id), #technically a left join, left joins preserve all the rows on the left table, even if right table doesn't #http://goo.gl/TSc6L
+	fields = map(lambda each_field_string: db.auth_user[each_field_string], db.auth_user.fields()), #show only auth_user fields
+	user_signature=False)
 	return dict(form=form)
 	
 def manage_dealers():	
@@ -105,8 +116,13 @@ def manage_dealers():
 		dict(header='Memberships',body=lambda row: A('Show all%s'% (' memberships' if 'auth_user' in request.args else ''),_href=URL('admin','manage_memberships', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
 		dict(header='Dealership info',body=lambda row: A('Show %s'% (' dealership info' if 'auth_user' in request.args else ''),_href=URL('admin','manage_dealership_info', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
 	], 
-	fields=map(lambda each_field_string: db.auth_user[each_field_string], db.auth_user.fields()), #fields method returns strings of field names of a table #http://goo.gl/L9nONC
+	fields=map(lambda each_field_string: db.auth_user[each_field_string], db.auth_user.fields()), #fields method returns list of strings of field names of a table #http://goo.gl/L9nONC
+	buttons_placement = 'left', links_placement = 'left', 
 	user_signature=False)
+	return dict(form=form)
+	
+def manage_dealership_info():
+	form = SQLFORM.grid(db.dealership_info.id==request.args(0), buttons_placement = 'left', links_placement = 'left', user_signature=False)
 	return dict(form=form)
 	
 def manage_auctions():
@@ -122,11 +138,13 @@ def manage_auctions():
 	db.auction_request.color_names.readable = True
 	db.auction_request.year.readable = True
 	if for_user_type == 'buyer':
-		form = SQLFORM.grid(db.auction_request.owner_id == user_id, args=[user_id], create=False,user_signature=False)
+		form = SQLFORM.grid(db.auction_request.owner_id == user_id, args=[user_id], create=False, buttons_placement = 'left', links_placement = 'left', user_signature=False)
 	elif for_user_type == 'dealer':
-		form = SQLFORM.grid(((db.auction_request.id == db.auction_request_offer.auction_request)&(db.auction_request_offer.owner_id==user_id)), args=[user_id], create=False,user_signature=False)
+		form = SQLFORM.grid(((db.auction_request.id == db.auction_request_offer.auction_request)&(db.auction_request_offer.owner_id==user_id)), args=[user_id], create=False, buttons_placement = 'left', links_placement = 'left',
+		fields=map(lambda each_field_string: db.auction_request[each_field_string], db.auction_request.fields()), #fields method returns list of strings of field names of a table #http://goo.gl/L9nONC
+		user_signature=False)
 	else:
 		db.auction_request.owner_id.readable = True
-		form = SQLFORM.grid(db.auction_request, create=False,user_signature=False)
+		form = SQLFORM.grid(db.auction_request, create=False, buttons_placement = 'left', links_placement = 'left', user_signature=False)
 	return dict(form=form)
 	

@@ -15,7 +15,6 @@ allow messaging DURING final offer
 add pagination to auction_request
 make auction page more responsive
 scramble text in cert before validation
-show only kia dealers in page 2 if car is kia
 cache auction requests
 include colors in msrp
 
@@ -32,6 +31,7 @@ add progress bar to dealer portion
 add user info to pre_auction
 remove 2 picture restriction on pre_auction
 show all user info in right side of pre_auction page similar to auction_requests
+show only kia dealers in page 2 if car is kia
 
 *Not needed
 add balance history to dealer buy credits page (let paypal handle that)

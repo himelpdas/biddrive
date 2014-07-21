@@ -129,7 +129,8 @@ def request_by_make():
 		if auth.user_id:
 			guest_msg='! Dealers have been notified.' #user is logged in no need for guest msg
 		session.message = msg_color + 'Auction submitted%s' % guest_msg
-		auth.add_group('dealers_authorized_for_auction_#%s'%form.vars.id, 'The group of dealers that entered a particular request_by_make auction by agreeing to its terms and charges.')
+		auth.add_group('dealers_in_auction_%s'%form.vars.id, 'The group of dealers that entered a particular auction by agreeing to its terms and charges.')
+		auth.add_group('owner_of_auction_%s'%form.vars.id, 'The owner of a particular auction who made the initial request.')
 		redirect(
 			URL('default','pre_auction', args=pre_auction_id) #http://goo.gl/twPSTK
 		)
@@ -140,12 +141,13 @@ def request_by_make():
 	return dict(model_styles=model_styles, trims=trims, form=form, year=year, make=make, model=model)
 	
 @auth.requires(not auth.has_membership(role='dealers')) #make sure dealers can't get anonymous auction requests attached to their name
-@auth.requires(request.args(0))
+@auth.requires(request.args(0)) #login true
 def pre_auction():
 	auction_id = request.args[0]
 	guest_auction_requests = db((db.auction_request.owner_id == None) & (db.auction_request.temp_id == session.guest_temp_id)).select() #guest temp id is unique for each auction request, so it's safe to query up with this value... but make sure it's empty so that update doesn't keep running on this function
 	for each_guest_auction_request in guest_auction_requests:
 		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id
+	auth.add_membership('owner_of_auction_%s'%auction_request_id, auth.user_id)
 	redirect(
 		URL('dealer','auction.html', args=auction_id) #http://goo.gl/twPSTK
 	)
