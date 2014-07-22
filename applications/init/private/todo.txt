@@ -4,7 +4,6 @@ hmac verify twilio
 hmac verify all ajax in page 2
 increase lat long precision in dealership form with google geocoding
 add auction sniping in dealer auction page
-alert dealer of certain specialty and radius when theres a new auction request
 change all instances of color_preference (to colors), trim_choices (to trim), auction_request_winning_offer (to ..._choice), and unread_auction_messages (to auction_request_unread_message)
 add unsubscribe features to certain types of emails to profile
 add more tooltips to everything
@@ -34,6 +33,7 @@ remove 2 picture restriction on pre_auction
 show all user info in right side of pre_auction page similar to auction_requests
 show only kia dealers in page 2 if car is kia
 create an admin interface that allows safe addition and deletion of rows from important tables
+alert dealer of certain specialty and radius when theres a new auction request
 
 *Not needed
 add balance history to dealer buy credits page (let paypal handle that)
@@ -42,3 +42,4 @@ add balance history to dealer buy credits page (let paypal handle that)
 Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of simple_color_names with color_pref in auction request, but this is unlikely.
 
 nohup python  web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8889
+killall python

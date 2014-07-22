@@ -145,6 +145,34 @@ def pre_auction():
 	for each_guest_auction_request in guest_auction_requests:
 		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id
 	auth.add_membership('owner_of_auction_%s'%auction_request_id, auth.user_id)
+	####alert dealers nearby####
+	auction_request = db((db.auction_request.id == auction_request_id)&(db.auth_user.id == db.auction_request.owner_id)#join auth_user
+		&(db.auth_user.id == auth.user_id) #temp id should have been attached to a real auth_user by now
+	).select().last()
+	all_specialty_dealerships = db((db.dealership_info.verification == "approved")&(db.dealership_info.specialty.contains(auction_request.auction_request.make))&(db.auth_user.id == db.dealership_info.owner_id)).select()
+	#remove dealerships not in range
+	all_specialty_dealerships_in_range_of_auction_request = all_specialty_dealerships.exclude(lambda row: auction_request.auction_request['radius'] >= calcDist(row.dealership_info.latitude, row.dealership_info.longitude, auction_request.auction_request.latitude, auction_request.auction_request.longitude) )
+	for each_dealership in all_specialty_dealerships_in_range_of_auction_request:
+		scheduler.queue_task(
+			send_alert_task,
+			pargs=['email', each_dealership.auth_user.email, response.render('email_alert_template.html', 
+				dict(
+					APPNAME=APP_NAME,
+					NAME = each_dealership.auth_user.first_name.capitalize(), 
+					MESSAGE =  XML("There is a new request for a <i>%s <b>%s</b> %s</i> near your area."%(auction_request.auction_request.year, auction_request.auction_request.make.capitalize(), auction_request.auction_request.model.capitalize() ) ),
+					MESSAGE_TITLE = "%s wants a new %s!"%("%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize()), auction_request.auction_request.make.capitalize()),
+					WHAT_NOW = "Hurry! Other dealers have been alerted as well.",
+					INSTRUCTIONS = "Submit your %s vehicle now to grab the buyer's attention first!"%auction_request.auction_request.make.capitalize(),
+					CLICK_HERE = "View auction requests",
+					CLICK_HERE_URL = URL('dealer', 'auction_requests'),
+				)
+			), 
+				"%s request for a new %s %s %s (near your area)."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make.capitalize(), auction_request.auction_request.model.capitalize()),
+			],
+			period = 3, # run 5s after previous
+			timeout = 30, # should take less than 30 seconds
+		)
+	########
 	redirect(
 		URL('dealer','auction.html', args=auction_request_id) #http://goo.gl/twPSTK
 	)

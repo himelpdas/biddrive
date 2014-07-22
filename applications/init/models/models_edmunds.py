@@ -15,9 +15,9 @@ if auth.user_id:
 			(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
 				(T('DB management'), False, URL('appadmin', 'index'), []),
 				(T('Dealership requests'), False, URL('admin', 'dealership_requests'), []),
+				(T('Manage auctions'), False, URL('admin', 'manage_auctions'), []),
 				(T('Manage buyers'), False, URL('admin', 'manage_buyers'), []),
 				(T('Manage dealers'), False, URL('admin', 'manage_dealers'), []),
-				(T('Manage auctions'), False, URL('admin', 'manage_auctions'), []),
 			]),
 		)
 # if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]

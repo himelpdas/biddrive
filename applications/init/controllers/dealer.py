@@ -123,7 +123,7 @@ def auction_requests():
 	#####in memory filterting#####
 	#location
 	auction_requests = auction_requests.exclude(lambda row: row.auction_request['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.auction_request.latitude, row.auction_request.longitude) )#remove requests not in range
-	#winning #CPU INTENSIVE, did via DAL select instead
+	#winning #CPU INTENSIVE, did via DAL select with left outer join above instead
 	#auction_requests =auction_requests.exclude(lambda row: not db(db.auction_request_winning_offer.auction_request == row.auction_request['id']).select().first())
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	for each_request in auction_requests:
@@ -577,7 +577,7 @@ def auction():
 					)), "You have a new message about the %s at %s"%(car,APP_NAME)],
 					#pvars={},
 					#repeats = 10, # run 10 times
-					period = 5, # run 5s after previous
+					period = 3, # run 5s after previous
 					timeout = 30, # should take less than 30 seconds
 				)
 				
@@ -783,7 +783,7 @@ def auction():
 						)), "You have a new message about the %s at %s"%(car,APP_NAME)],
 						#pvars={},
 						#repeats = 10, # run 10 times
-						period = 5, # run 5s after previous
+						period = 3, # run 5s after previous
 						timeout = 30, # should take less than 30 seconds
 					)
 				elif my_message_form_buyer.errors:
@@ -861,7 +861,7 @@ def auction():
 				)), "New favorite was chosen for %s auction for a %s"%(APP_NAME,car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
-				period = 5, # run 5s after previous
+				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
 		if session.BROADCAST_WINNER_ALERT: 
@@ -880,7 +880,7 @@ def auction():
 				)), "A winner was chosen for %s auction for a %s"%(APP_NAME,car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
-				period = 5, # run 5s after previous
+				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
 
