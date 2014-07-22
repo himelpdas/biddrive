@@ -56,7 +56,8 @@ u'Porsche'), (u'ram', u'Ram'), (u'rolls-royce', u'Rolls-Royce'), (u'scion', u'Sc
 
 def getBrandsList(year):
 	brands_list = OD()
-	map(lambda model: brands_list.update({model['niceName']:model['name']}),ed_call(MAKES_URI%year)['makes']) #FIXED#TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
+	makes_this_year = ed_call(MAKES_URI%year)
+	map(lambda model: brands_list.update({model['niceName']:model['name']}),makes_this_year['makes'] if makes_this_year else {}) #fixed Nonetype has no attribute __getitem__ #FIXED#TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
 	return brands_list
 	
 def findPhotosByStyleID(style_id):

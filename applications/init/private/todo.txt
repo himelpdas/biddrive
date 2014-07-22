@@ -17,6 +17,7 @@ scramble text in cert before validation
 cache auction requests
 include colors in msrp
 emails
+please make a bid now after buy it now pressed
 
 *Optional
 add twilio verification in page 2
@@ -39,3 +40,5 @@ add balance history to dealer buy credits page (let paypal handle that)
 
 *Ongoing
 Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of simple_color_names with color_pref in auction request, but this is unlikely.
+
+nohup python  web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8889
