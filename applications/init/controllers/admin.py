@@ -246,7 +246,7 @@ def manage_orders():
 	user_id = request.args[0]
 	query = db.credit_orders.owner == user_id
 	links=[
-		dict(header='Refund',body=lambda row: A('Issue%s'% (' refund' if 'credit_orders' in request.args else ''),_href=URL('admin','issue_refund', args=[row.id] ), _onclick="return confirm('Are you sure?')" ) ) #http://goo.gl/h6vOEE
+		dict(header='Refund',body=lambda row: A('Issue%s'% (' refund' if 'credit_orders' in request.args else ''),_href=URL('admin','issue_refund', args=[row.id] ), _onclick="return confirm('Are you sure you want to issue a refund?')" ) ) #http://goo.gl/h6vOEE
 	]
 	form =  SQLFORM.grid(query, args=[user_id],
 		buttons_placement = 'left', links=links, links_placement = 'left', 
