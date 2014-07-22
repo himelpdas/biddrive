@@ -342,8 +342,22 @@ def pre_auction():
 	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
 	
 	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
-	
-	if form.process(hideerror = False).accepted: #hideerror = True to hide default error elements #change error message via form.custom
+				
+	def computations(form):
+		codes_to_names = dict(interior_options_names+
+			exterior_options_names+
+			mechanical_options_names+
+			package_options_names+
+			fees_options_names+
+			safety_options_names
+		)
+		codes_to_colors = dict(colors)
+		options_prefixes = ['interior', 'exterior', 'mechanical', 'package', 'fees', 'safety']
+		for each_prefix in options_prefixes:
+			db.auction_request_offer['%s_options_names'%each_prefix].default = [ codes_to_names[each_option_code] for each_option_code in form.vars["%s_options"%each_prefix] ]
+		db.auction_request_offer.color_name.default = codes_to_colors[form.vars["color"]]
+
+	if form.process(onvalidation=computations, hideerror = False, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 			my_piggy = db(db.credits.owner==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
@@ -779,7 +793,7 @@ def auction():
 					session.message = "!Awaiting or expired bids cannot be chosen as a winner."
 				redirect(URL(args=request.args)) #get rid of vars
 			if a_winning_offer:
-				response.message = "$You picked a winner! Click the green button below to be redirected to the winning page" #keep as response.message so it always shows
+				response.message = "$You picked a winner! Click the green button below to view your certificate!" #keep as response.message so it always shows
 			#blinking new message stuff
 			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == offer_id).select().last()
 			highest_message_id_that_owner_read = db(db.unread_auction_messages.auction_request == auction_request_id).select().last()
@@ -792,8 +806,8 @@ def auction():
 			if each_offer.auction_request_offer['id'] == new_favorite_choice and not a_winning_offer and not auction_ended_offer_expired:
 				if last_favorite_choice and last_favorite_choice.not_until > request.now: #make sure is real favorite, make sure buyer can't constantly change favorite choice, make sure new favorite choice = old one, make sure auction hasn't expired, make sure the favorite is not an awaiting bid
 					session.message = "!Dealers not alerted! You can't change your favorite until %s."%human(last_favorite_choice.not_until - request.now, precision=2, past_tense='{}', future_tense='{}')
-				elif is_awaiting_offer:
-					session.message = "!You cannot choose an awaiting bid as your favorite." #and change the message for the owner.
+				elif is_awaiting_offer or bid_is_final:
+					session.message = "!You cannot choose an this bid as your favorite." #and change the message for the owner.
 				elif final_bid_ended:
 					session.message = "!You cannot choose an expired bid as your favorite." #and change the message for the owner.
 				elif is_not_awaiting_offer and not final_bid_ended:

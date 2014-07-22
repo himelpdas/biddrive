@@ -18,16 +18,13 @@ def index():
 	return auth.wiki()
 	"""
 
-	bg_images = db(db.index_bg_image.id > 0).select()
-	hero_images = db(db.index_hero_image.id > 0).select()
-	
 	year = datetime.date.today().year
 	if request.args(0):
 		year = request.args[0]
 		
 	response.message="!%s is currently under development"%APP_NAME
 		
-	return dict(brands_list=getBrandsList(year), bg_images=bg_images, hero_images=hero_images)
+	return dict(brands_list=getBrandsList(year))
 
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
 @auth.requires(URL.verify(request, hmac_key = str(session.salt), hash_vars=[request.args(0),request.args(1),request.args(2)]),  requires_login=False)
@@ -143,13 +140,13 @@ def request_by_make():
 @auth.requires(not auth.has_membership(role='dealers')) #make sure dealers can't get anonymous auction requests attached to their name
 @auth.requires(request.args(0)) #login true
 def pre_auction():
-	auction_id = request.args[0]
+	auction_request_id = request.args[0]
 	guest_auction_requests = db((db.auction_request.owner_id == None) & (db.auction_request.temp_id == session.guest_temp_id)).select() #guest temp id is unique for each auction request, so it's safe to query up with this value... but make sure it's empty so that update doesn't keep running on this function
 	for each_guest_auction_request in guest_auction_requests:
 		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id
 	auth.add_membership('owner_of_auction_%s'%auction_request_id, auth.user_id)
 	redirect(
-		URL('dealer','auction.html', args=auction_id) #http://goo.gl/twPSTK
+		URL('dealer','auction.html', args=auction_request_id) #http://goo.gl/twPSTK
 	)
 	
 @auth.requires_login()

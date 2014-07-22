@@ -13,11 +13,11 @@ if auth.user_id:
 	if AUTH_ADMIN:
 		response.menu.append(
 			(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
-				(T('Dealership requests'), False, URL('admin', 'dealership_requests'), []),
 				(T('Manage buyers'), False, URL('admin', 'manage_buyers'), []),
 				(T('Manage dealers'), False, URL('admin', 'manage_dealers'), []),
 				(T('Manage auctions'), False, URL('admin', 'manage_auctions'), []),
 				(T('DB management'), False, URL('appadmin', 'index'), []),
+				(T('Dealership requests'), False, URL('admin', 'dealership_requests'), []),
 			]),
 		)
 # if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]
@@ -338,32 +338,59 @@ db.define_table('auction_request_offer',
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',)
 	),
 	Field('color',
-		requires=IS_NOT_EMPTY(),
+		requires=IS_NOT_EMPTY(), required=True
+	),	
+	Field('color_name', 
+		readable=False, writable=False, required=True
 	),
 	Field('interior_options', 'list:string',
+		#requires is_in_set like trim above
+		#requires=IS_NOT_EMPTY(),
+	),
+	Field('interior_options_names', 'list:string', readable=False, writable=False, #MUST PUT READABLE = WRITABLE = FALSE, BECAUSE CUSTOM FORM WITHOUT THESE FIELDS WILL SUMBIT NONE REGARDLESS OF DEFAULTS DEFINED HERE OR IN CONTROLLER
 		#requires is_in_set like trim above
 		#requires=IS_NOT_EMPTY(),
 	),
 	Field('exterior_options', 'list:string',
 		#requires is_in_set like trim above
 		#requires=IS_NOT_EMPTY(),
+	),	
+	Field('exterior_options_names', 'list:string', readable=False, writable=False,
+		#requires is_in_set like trim above
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('mechanical_options', 'list:string',
+		#requires is_in_set like trim above
+		#requires=IS_NOT_EMPTY(),
+	),	
+	Field('mechanical_options_names', 'list:string', readable=False, writable=False,
 		#requires is_in_set like trim above
 		#requires=IS_NOT_EMPTY(),
 	),
 	Field('package_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
+	),	
+	Field('package_options_names', 'list:string', readable=False, writable=False,
+		#requires is_in_set like trim above
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('safety_options', 'list:string',
 		#requires is_in_set like trim above
-		requires=IS_NOT_EMPTY(),
+		#requires=IS_NOT_EMPTY(),
+	),	
+	Field('safety_options_names', 'list:string', readable=False, writable=False,
+		#requires is_in_set like trim above
+		#requires=IS_NOT_EMPTY(),
 	),
 	Field('fees_options', 'list:string',
 		#requires is_in_set like trim above
 		#requires=IS_NOT_EMPTY(),
 	),
+	Field('fees_options_names', 'list:string', readable=False, writable=False,
+		#requires is_in_set like trim above
+		#requires=IS_NOT_EMPTY(),
+	),	
 	Field('summary', 'text',
 		requires=IS_NOT_EMPTY(),
 	),	

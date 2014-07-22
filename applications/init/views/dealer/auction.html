@@ -8,7 +8,7 @@
 			<div style="position:absolute;width:100%;">
 				<a href="{{=auction_request_info['view_certificate_url']}}">
 					<button class="btn btn-success btn-xs center-block">
-						<i class="fa fa-fw fa-certificate"></i> View Certificate
+						<i class="blink fa fa-fw fa-print"></i> View Your Certificate!
 					</button>
 				</a>
 			</div>
@@ -419,7 +419,7 @@
 					</div>
 				{{elif each_offer['is_winning_offer']:}}
 					<div style="position:absolute;width:100%;">
-						<button class="btn btn-success btn-xs center-block disabled">
+						<button class="btn btn-danger btn-xs center-block disabled">
 							<i class="fa fa-fw fa-trophy"></i> Winner!
 						</button>
 					</div>

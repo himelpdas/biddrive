@@ -56,8 +56,9 @@
     {{"""}}<script type="text/javascript" src="{{=URL('static', 'js/carbid.js')}}"></script>{{"""}} {{#useless nanoscroller stuff}}
 	
 	{{if request.controller in ["admin", "appadmin"]:}}{{#use default forms for now}}
+		{{include "web2py_ajax.html"}}
 		<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script> {{#http://goo.gl/cPFP9a}}
-		<script type="text/javascript" src="{{=URL('static','js/web2py.js')}}"></script>
+		{{"""}}<script type="text/javascript" src="{{=URL('static','js/web2py.js')}}"></script>{{"""}}{{#not needed it web2py_ajax}}
 		<link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}" type="text/css"/>
 		{{"""}}<link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap3.css')}}" type="text/css"/>{{"""}}{{#messes up navbar}}
 		<style type="text/css">
