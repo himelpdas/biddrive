@@ -12,7 +12,8 @@ def auction_requests():
 	>>> query |= db.person.name=='John'
 	"""
 	query = (db.auction_request.id > 0) & (db.auction_request.auction_expires >= request.now) #NON-COMPLETE AUCTIONS WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
-	#query = (db.auction_request.id != db.auction_request_winning_offer.auction_request) & (db.auction_request.auction_expires >= request.now) #This doesn't work for some fucking reason, so filter in memory instead
+	#query = (db.auction_request.id != db.auction_request_winning_offer.auction_request) & (db.auction_request.auction_expires >= request.now) #This doesn't work for some fucking reason, so filter in memory instead #NVM HANDLED IN SELECT BELOW VIA LEFT JOIN #THE REASON IT DOESN'T WORK IS BECAUSE == and != creates non-left join
+	#	#what happens above is db finds anywhere winning_offer.auction_request does not match auction_request.id and joins them, since there are many winning_offers already, you can expect many joins, therefore many rows 
 	#####filtering#####
 	#build query and filter menu
 	#year
@@ -114,12 +115,16 @@ def auction_requests():
 	if sortby == "oldest":
 		orderby = db.auction_request.auction_expires #not using ID because expires can be changed by admin
 		
-	auction_requests = db(query & (db.auction_request.owner_id==db.auth_user.id)).select(orderby=orderby)
+	auction_requests = db(query & (db.auction_request.owner_id==db.auth_user.id)
+		& (db.auction_request_winning_offer.id == None)
+	).select(orderby=orderby, 
+		left=db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request ==  db.auction_request.id)
+	)
 	#####in memory filterting#####
 	#location
 	auction_requests = auction_requests.exclude(lambda row: row.auction_request['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.auction_request.latitude, row.auction_request.longitude) )#remove requests not in range
-	#winning
-	auction_requests =auction_requests.exclude(lambda row: not db(db.auction_request_winning_offer.auction_request == row.auction_request['id']).select().first())
+	#winning #CPU INTENSIVE, did via DAL select instead
+	#auction_requests =auction_requests.exclude(lambda row: not db(db.auction_request_winning_offer.auction_request == row.auction_request['id']).select().first())
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	for each_request in auction_requests:
 		each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.auction_request.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
@@ -869,7 +874,7 @@ def auction():
 					MESSAGE =  XML("The buyer for a <i>%s</i> picked <b>%s</b> as the winner! So what now?"%(car, 'you' if is_winning_offer else 'another dealer')),
 					MESSAGE_TITLE = "%s picked a winner!"%_buyer.first_name.capitalize(),
 					WHAT_NOW = "Try again! You'll have better luck next time." if not is_winning_offer else "Wait for the buyer's call!",
-					INSTRUCTIONS = "Tip: Look out for new buyer requests and bid quickly! Having attention of the buyer early on goes a long way." if not is_winning_offer else "The buyer will call you soon via our automatic validation system within your business hours!",
+					INSTRUCTIONS = "Tip: Look out for new buyer requests and bid quickly! Having the early attention of a buyer goes a long way." if not is_winning_offer else "The buyer will call you soon via our automatic validation system within your business hours!",
 					CLICK_HERE = "Go to auction",
 					CLICK_HERE_URL = URL(args=request.args),
 				)), "A winner was chosen for %s auction for a %s"%(APP_NAME,car)],
