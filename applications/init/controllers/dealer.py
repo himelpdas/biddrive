@@ -840,7 +840,7 @@ def auction():
 
 		#MESSAGE QUEUES #GOTTA DO IT LIKE THIS BECAUSE LET'S SAY OFFER[7] IS WINNER, ONLY OFFERS > 7 WILL GET ALERTED, SO IT'S NECESSARY TO RELOAD THE PAGE (STORING A COMMAND TO SEND ALERTS IN SESSION) SO THAT OFFERS > 0 WILL BE ALERTED.
 		your = each_offer.auth_user
-		if last_favorite_choice and session.BROADCAST_FAVORITE_ALERT:
+		if session.BROADCAST_FAVORITE_ALERT:
 			_buyer = auction_request_user
 			scheduler.queue_task(
 				send_alert_task,
@@ -859,7 +859,7 @@ def auction():
 				period = 5, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
-		if a_winning_offer and session.BROADCAST_WINNER_ALERT: 
+		if session.BROADCAST_WINNER_ALERT: 
 			_buyer = auction_request_user
 			scheduler.queue_task(
 				send_alert_task,
