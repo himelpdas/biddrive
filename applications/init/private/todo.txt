@@ -16,6 +16,7 @@ make auction page more responsive
 scramble text in cert before validation
 cache auction requests
 include colors in msrp
+emails
 
 *Optional
 add twilio verification in page 2

@@ -16,6 +16,9 @@ def auction_requests():
 	#####filtering#####
 	#build query and filter menu
 	#year
+	
+	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
+	
 	year = request.vars['year']
 	year_range_string = map(lambda each_year: str(each_year),YEAR_RANGE) #vars come back as strings, so make YEAR_RANGE strings for easy comparison
 	if not year in year_range_string: #get all years and makes if year not specified
@@ -27,6 +30,8 @@ def auction_requests():
 	else:
 		brands_list = getBrandsList(year)
 		year_list = [year]
+	#dealer_specialty = my_info.specialty
+	#brands_list = dict([[each_niceName , brands_list[each_niceName]] for each_niceName in dealer_specialty]) #niceName, name #HACK - limit the brandslist to only whats in the dealer's speciality
 	brands_list = OD(sorted(brands_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
 		
 	make = request.vars['make']
@@ -112,7 +117,6 @@ def auction_requests():
 	auction_requests = db(query & (db.auction_request.owner_id==db.auth_user.id)).select(orderby=orderby)
 	#####in memory filterting#####
 	#location
-	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
 	auction_requests = auction_requests.exclude(lambda row: row.auction_request['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.auction_request.latitude, row.auction_request.longitude) )#remove requests not in range
 	#winning
 	auction_requests =auction_requests.exclude(lambda row: not db(db.auction_request_winning_offer.auction_request == row.auction_request['id']).select().first())
@@ -217,7 +221,8 @@ def auction_requests():
 	if not number or number > 1:
 		plural = 's'
 		verb = 'are'
-	response.message = 'Showing %s buyer%s who %s willing to come to "%s" in %s, %s.'% (number, plural, verb, name, city, state)
+		car = brands_list[make] if make else 'car'
+	response.message = 'Showing %s %s buyer%s who %s near "%s" in %s, %s.'% (number, car ,plural, verb, name, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
 
