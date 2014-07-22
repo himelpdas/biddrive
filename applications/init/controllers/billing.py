@@ -26,7 +26,8 @@ def paypal_return():
 
 		# PayerID is required to approve the payment.
 		if payment.execute({"payer_id": request.vars['PayerID'] }):  # return True or False
-			db.credit_orders.insert(owner = auth.user_id,payment_executed = request.now, payer_id = request.vars['PayerID'], **session.purchase)
+			sale_id = payment['transactions'][0]['related_resources'][0]['sale']['id']
+			db.credit_orders.insert(owner = auth.user_id,payment_executed = request.now, payer_id = request.vars['PayerID'], sale_id = sale_id, **session.purchase)
 			my_credits = db(db.credits.owner == auth.user_id).select().first()
 			if not my_credits: #credits row for dealer doesn't exist for some reason
 				db.credits.insert(owner=auth.user_id, credits = session.purchase['credits'])

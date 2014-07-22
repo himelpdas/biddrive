@@ -25,6 +25,9 @@ db.define_table("credit_orders",
 	),
 	Field('payment_id',
 		required=True
+	),	
+	Field('sale_id',
+		required=True
 	),
 	Field('payer_id',
 		required=True
@@ -34,6 +37,9 @@ db.define_table("credit_orders",
 	),
 	Field('price', "integer",
 		required=True
+	),	
+	Field('refunded', "boolean",
+		default=False
 	),
 	Field('payment_created', 'datetime'),
 	Field('payment_executed', 'datetime'),

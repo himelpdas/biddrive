@@ -74,7 +74,7 @@ def manage_user():
 	form = SQLFORM(db.auth_user, user_id).process()
 	return dict(form=form)
 """
-	
+
 if not request.function in ['dealership_requests', 'dealership_form']:
 	response.view = 'admin/manage_generic.html'
 	
@@ -116,6 +116,7 @@ def manage_buyers():
 	user_signature=False)
 	return dict(form=form)
 	
+@auth.requires_membership("admins") # uncomment to enable security 
 def manage_dealers():	
 	form = SQLFORM.grid(db.auth_user.id==db.dealership_info.owner_id, links = [
 		dict(header='Auctions',body=lambda row: A('Show all%s'% (' auctions' if 'auth_user' in request.args else ''),_href=URL('admin','manage_auctions', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
@@ -130,12 +131,14 @@ def manage_dealers():
 	user_signature=False)
 	return dict(form=form)
 	
+@auth.requires_membership("admins") # uncomment to enable security 
 @auth.requires(request.args(0))
 def manage_dealership_info():
 	user_id =request.args[0]
 	form = SQLFORM.grid(db.dealership_info.owner_id==user_id, buttons_placement = 'left', links_placement = 'left', create=False, user_signature=False)
 	return dict(form=form)
-	
+
+@auth.requires_membership("admins") # uncomment to enable security 	
 def manage_auctions():
 	for_user_type = request.vars['user_type']
 	identifier = request.args(0)
@@ -171,7 +174,8 @@ def manage_auctions():
 		form = SQLFORM.grid(query, create=False, buttons_placement = 'left', links=links, links_placement = 'left', 
 		user_signature=False)
 	return dict(form=form)
-	
+
+@auth.requires_membership("admins") # uncomment to enable security 	
 @auth.requires(request.args(0))
 def manage_winning_offer():
 	#db.auction_request_winning_offer.auction_request.readable=True
@@ -191,6 +195,7 @@ def manage_winning_offer():
 	)
 	return dict(form=form)
 	
+@auth.requires_membership("admins") # uncomment to enable security 
 def manage_offers():
 	auction_id = request.args(0)
 	query = db.auction_request_offer
@@ -219,12 +224,13 @@ def manage_offers():
 	)
 	return dict(form=form)
 	
+@auth.requires_membership("admins") # uncomment to enable security 
 @auth.requires(request.args(0))
 def manage_credits():
 	user_id = request.args[0]
 	query = db.credits.owner == user_id
 	links=[]
-	form =  SQLFORM.grid(query,
+	form =  SQLFORM.grid(query,  args=[user_id],
 		buttons_placement = 'left', links=links, links_placement = 'left', 
 		editable=True,
 		searchable=False,
@@ -234,12 +240,15 @@ def manage_credits():
 	)
 	return dict(form=form)
 	
+@auth.requires_membership("admins") # uncomment to enable security 
 @auth.requires(request.args(0))
 def manage_orders():
 	user_id = request.args[0]
 	query = db.credit_orders.owner == user_id
-	links=[]
-	form =  SQLFORM.grid(query,
+	links=[
+		dict(header='Refund',body=lambda row: A('Issue%s'% (' refund' if 'credit_orders' in request.args else ''),_href=URL('admin','issue_refund', args=[row.id] ), _onclick="return confirm('Are you sure?')" ) ) #http://goo.gl/h6vOEE
+	]
+	form =  SQLFORM.grid(query, args=[user_id],
 		buttons_placement = 'left', links=links, links_placement = 'left', 
 		editable=False,
 		create=False,
@@ -247,3 +256,34 @@ def manage_orders():
 		user_signature=False
 	)
 	return dict(form=form)
+	
+#from paypalrestsdk import Sale, Payment
+@auth.requires_membership("admins") # uncomment to enable security 
+#@auth.requires_membership("accountants") # uncomment to enable security 
+@auth.requires(request.args(0))
+def issue_refund(): #how to refund via sale id http://goo.gl/zVzjE7 #where the sale id is http://goo.gl/QwJjfe
+	order_id = request.args[0]
+	order = db(db.credit_orders.id == order_id).select().last()
+	sale = Paypal.Sale.find(order.sale_id)
+
+	# Make Refund API call
+	# Set amount only if the refund is partial
+	refund = sale.refund({
+	  "amount": {
+		"total" : str(order.price), #"total": "0.01",
+		"currency": "USD" } 
+	})
+
+	# Check refund status
+	if refund.success():
+		#print("Refund[%s] Success"%(refund.id))
+		my_credits = db(db.credits.owner == order.owner).select().first()
+		order.update_record(refunded=True)
+		my_credits.update_record(credits = int(my_credits.credits) - int(order.credits) )
+		session.message2 = "$Payment %s successfully refunded!" % order.payment_id
+	else:
+		#print("Unable to Refund")
+		#print(refund.error)
+		session.message2 = "@%s: %s!" % (refund.error['name'],refund.error['message'])
+		session.message = "!Sorry, payment %s could not be refunded!" % order.payment_id
+	redirect(URL('admin','manage_orders', args=[order.owner]))
