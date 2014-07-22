@@ -1,10 +1,12 @@
+"""
 @auth.requires_membership('admins')
 def index():
 	response.title="Admin portal"
 	return dict()
-
+"""
 response.title=None
-	
+
+
 @auth.requires_membership('admins')
 def dealership_requests():
 	if not request.args:
@@ -92,7 +94,7 @@ def manage_memberships():
 						#left=db.auth_membership.on(db.auth_user.id==db.auth_membership.user_id), ##technically a left join, left joins preserve all the rows on the left table, even if right table doesn't #http://goo.gl/TSc6L
 						selectable=False,
 						csv=True,
-						create=False,
+						#create=False,
 						user_signature=False)  # change to True in production
 	return dict(form=form)
 	
@@ -118,17 +120,20 @@ def manage_dealers():
 	form = SQLFORM.grid(db.auth_user.id==db.dealership_info.owner_id, links = [
 		dict(header='Auctions',body=lambda row: A('Show all%s'% (' auctions' if 'auth_user' in request.args else ''),_href=URL('admin','manage_auctions', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
 		dict(header='Memberships',body=lambda row: A('Show all%s'% (' memberships' if 'auth_user' in request.args else ''),_href=URL('admin','manage_memberships', args=[row.id] ) ) ), 
+		dict(header='Credits',body=lambda row: A('Show%s'% (' credits' if 'auth_user' in request.args else ''),_href=URL('admin','manage_credits', args=[row.id] ) ) ), 
+		dict(header='Orders',body=lambda row: A('Show all%s'% (' orders' if 'auth_user' in request.args else ''),_href=URL('admin','manage_orders', args=[row.id] ) ) ), 
 		dict(header='Dealership info',body=lambda row: A('Show %s'% (' dealership info' if 'auth_user' in request.args else ''),_href=URL('admin','manage_dealership_info', args=[row.id] ) ) ), 
 	], 
 	fields=map(lambda each_field_string: db.auth_user[each_field_string], db.auth_user.fields()), #fields method returns list of strings of field names of a table #http://goo.gl/L9nONC
 	buttons_placement = 'left', links_placement = 'left', 
+	create=False,
 	user_signature=False)
 	return dict(form=form)
 	
 @auth.requires(request.args(0))
 def manage_dealership_info():
-	dealership_info_id =request.args[0]
-	form = SQLFORM.grid(db.dealership_info.id==dealership_info_id, buttons_placement = 'left', links_placement = 'left', user_signature=False)
+	user_id =request.args[0]
+	form = SQLFORM.grid(db.dealership_info.owner_id==user_id, buttons_placement = 'left', links_placement = 'left', create=False, user_signature=False)
 	return dict(form=form)
 	
 def manage_auctions():
@@ -163,7 +168,8 @@ def manage_auctions():
 		if auction_id:
 			query = db.auction_request.id == auction_id
 		db.auction_request.owner_id.readable = True
-		form = SQLFORM.grid(query, create=False, buttons_placement = 'left', links=links, links_placement = 'left', user_signature=False)
+		form = SQLFORM.grid(query, create=False, buttons_placement = 'left', links=links, links_placement = 'left', 
+		user_signature=False)
 	return dict(form=form)
 	
 @auth.requires(request.args(0))
@@ -208,6 +214,36 @@ def manage_offers():
 		query = db.auction_request_offer.auction_request == auction_id
 	form =  SQLFORM.grid(query,
 		buttons_placement = 'left', links=links, links_placement = 'left', 
+		create=False,
+		user_signature=False
+	)
+	return dict(form=form)
+	
+@auth.requires(request.args(0))
+def manage_credits():
+	user_id = request.args[0]
+	query = db.credits.owner == user_id
+	links=[]
+	form =  SQLFORM.grid(query,
+		buttons_placement = 'left', links=links, links_placement = 'left', 
+		editable=True,
+		searchable=False,
+		create=False,
+		deletable=False,
+		user_signature=False
+	)
+	return dict(form=form)
+	
+@auth.requires(request.args(0))
+def manage_orders():
+	user_id = request.args[0]
+	query = db.credit_orders.owner == user_id
+	links=[]
+	form =  SQLFORM.grid(query,
+		buttons_placement = 'left', links=links, links_placement = 'left', 
+		editable=False,
+		create=False,
+		deletable=False,
 		user_signature=False
 	)
 	return dict(form=form)
