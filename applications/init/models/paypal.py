@@ -43,5 +43,6 @@ db.define_table("credit_orders",
 	),
 	Field('payment_created', 'datetime'),
 	Field('payment_executed', 'datetime'),
+	Field('payment_refunded', 'datetime', default=None),
 	auth.signature,
 )

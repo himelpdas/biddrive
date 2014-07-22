@@ -279,7 +279,7 @@ def issue_refund(): #how to refund via sale id http://goo.gl/zVzjE7 #where the s
 		#print("Refund[%s] Success"%(refund.id))
 		my_credits = db(db.credits.owner == order.owner).select().first()
 		order.update_record(refunded=True)
-		my_credits.update_record(credits = int(my_credits.credits) - int(order.credits) )
+		my_credits.update_record(credits = int(my_credits.credits) - int(order.credits), payment_refunded=request.now)
 		session.message2 = "$Payment %s successfully refunded!" % order.payment_id
 	else:
 		#print("Unable to Refund")
