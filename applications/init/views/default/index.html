@@ -53,7 +53,7 @@ http://goo.gl/fPkW7
                     <div class="row" style="padding-top:5px">
                         {{for each_brand in brands_list:}}
                             <div class="col-xs-4 car-make">
-                                <a id="{{=each_brand}}_switch" href="javascript:void(0);">{{=each_brand}}</a>
+                                <a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a> {{#prevent linebreak on overflow http://goo.gl/tCoek4}}
                             </div>
                         {{pass}}
                     </div>
@@ -110,6 +110,8 @@ http://goo.gl/fPkW7
 				
                     function(evt){
 						
+						$("#switch_selected_icon").remove(); $(this).prepend('<i id="switch_selected_icon" class="fa fa-fw fa-arrow-right"></i>'); //remove and add icon
+
 						$('#mainbox').removeClass('col-sm-offset-3 backdrop');
 
                         $('#mainrow').addClass('backdrop', 700); {{#jquery UI transistion}}

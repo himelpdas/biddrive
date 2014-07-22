@@ -5,7 +5,7 @@ hmac verify all ajax in page 2
 increase lat long precision in dealership form with google geocoding
 add auction sniping in dealer auction page
 alert dealer of certain specialty and radius when theres a new auction request
-change all instances of color_preference (to color), trim_choices (to trim), auction_request_winning_offer (to ..._choice), and unread_auction_messages (to auction_request_unread_message)
+change all instances of color_preference (to colors), trim_choices (to trim), auction_request_winning_offer (to ..._choice), and unread_auction_messages (to auction_request_unread_message)
 add unsubscribe features to certain types of emails to profile
 add more tooltips to everything
 fix progress bar to allow more than one word
