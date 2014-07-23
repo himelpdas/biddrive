@@ -257,9 +257,9 @@ def pre_auction():
 	db.auction_request_offer.owner_id.writable = False
 	
 	car=dict(year=auction_request.year,
-	make=auction_request.make,
-	model=auction_request.model,
-	trim=auction_request.trim_name)
+	make_name=auction_request.make_name,
+	model_name=auction_request.model_name,
+	trim_name=auction_request.trim_name)
 	
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
@@ -386,8 +386,8 @@ def pre_auction():
 		first_name =auction_request_user.first_name,
 		last_init =auction_request_user.last_name.capitalize()[:1]+'.',
 		year = auction_request.year,
-		make = auction_request.make,
-		model = auction_request.model,
+		make = auction_request.make_name,
+		model = auction_request.model_name,
 		is_lease = auction_request.funding_source == 'lease',
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
@@ -519,7 +519,7 @@ def auction():
 	colors=auction_validator['colors']
 	color_names=auction_validator['color_names']
 	is_lease=auction_validator['is_lease']
-	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make'].upper(), auction_request['model'].upper(), auction_request['id'])
+	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 	
 	#only allow form functionality to show for dealers as long as auction is active
 	bid_form = my_message_form_dealer = my_auction_request_offer_id = is_final_bid = None
@@ -608,8 +608,8 @@ def auction():
 		first_name =auction_request_user.first_name,
 		last_init =auction_request_user.last_name[:1]+'.',
 		year = auction_request.year,
-		make = auction_request.make,
-		model = auction_request.model,
+		make = auction_request.make_name,
+		model = auction_request.model_name,
 		is_lease = is_lease,
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
@@ -1071,8 +1071,8 @@ def my_auctions():
 			'has_unread_messages':has_unread_messages,
 			'ends_in_human': ends_in_human if ends_in_human else "Auction ended",
 			'year':each_offer.auction_request.year,
-			'make':each_offer.auction_request.make,
-			'model':each_offer.auction_request.model,
+			'make':each_offer.auction_request.make_name,
+			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
 			'color': color_names[each_offer.auction_request_offer.color],

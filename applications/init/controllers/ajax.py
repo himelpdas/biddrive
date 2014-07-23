@@ -158,7 +158,7 @@ def dealer_radius_map(): #CACHE CACHE CACHE!!
 		else:
 			urls=[error_img%"Not a zip code."]
 
-	return dict(urls=urls, make=make, dealer_count=len(dealers))
+	return dict(urls=urls, make_name=all_brands_list[make], dealer_count=len(dealers))
 	
 #auth requires dealer or buyer or admin
 @auth.requires(request.args(0))

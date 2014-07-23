@@ -30,7 +30,7 @@ def index():
 @auth.requires(URL.verify(request, hmac_key = str(session.salt), hash_vars=[request.args(0),request.args(1),request.args(2)]),  requires_login=False)
 def request_by_make():
 	year = request.args[0] 
-	make = request.args[1] #VALIDATE
+	make = request.args[1] #VALIDATE #done via digitally signed url
 	model = request.args[2]
 	db.auction_request.year.default=year
 	db.auction_request.make.default=make
@@ -105,14 +105,18 @@ def request_by_make():
 		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.color_preference ]
 	"""
 	
-	def computations(form):
+	#make model names
+	db.auction_request.make_name.default = make_name = model_styles[0]['make']['name']
+	db.auction_request.model_name.default = model_name = model_styles[0]['model']['name']
+	#
+	def computations(form): #these defaults need form vars, so must do it in onvalidation
 		trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim_choices)
 		colorChipsErrorFix(trim_data['colors']) #make sure all db entries are safe. protect trim_data from this error
 		db.auction_request.trim_data.default = json.dumps(trim_data)
 		db.auction_request.trim_name.default = trim_data['name'] 
 		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.color_preference ] #make a list of color names based on ids in color_preference field
 		db.auction_request.simple_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.color_preference ]
-	
+		
 	if form.process(onvalidation=computations, hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		guest_msg = '! Register or login to view it.'
 		msg_color = '$'
@@ -133,9 +137,9 @@ def request_by_make():
 		)
 		
 	response.title="Request an auction"
-	response.subtitle="for a %s %s %s."%(year, make, model)
+	response.subtitle="for a %s %s %s."%(year, make_name, model_name)
 
-	return dict(model_styles=model_styles, trims=trims, form=form, year=year, make=make, model=model)
+	return dict(model_styles=model_styles, trims=trims, form=form, year=year, make=make, model=model, make_name=make_name, model_name=model_name)
 	
 @auth.requires(not auth.has_membership(role='dealers')) #make sure dealers can't get anonymous auction requests attached to their name
 @auth.requires(request.args(0)) #login true
@@ -159,15 +163,15 @@ def pre_auction():
 				dict(
 					APPNAME=APP_NAME,
 					NAME = each_dealership.auth_user.first_name.capitalize(), 
-					MESSAGE =  XML("There is a new request for a <i>%s <b>%s</b> %s</i> near your area."%(auction_request.auction_request.year, auction_request.auction_request.make.capitalize(), auction_request.auction_request.model.capitalize() ) ),
-					MESSAGE_TITLE = "%s wants a new %s!"%("%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize()), auction_request.auction_request.make.capitalize()),
+					MESSAGE =  XML("There is a new request for a <i>%s <b>%s</b> %s</i> near your area."%(auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name ) ),
+					MESSAGE_TITLE = "%s wants a new %s!"%("%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize()), auction_request.auction_request.make_name),
 					WHAT_NOW = "Hurry! Other dealers have been alerted as well.",
-					INSTRUCTIONS = "Submit your %s vehicle now to grab the buyer's attention first!"%auction_request.auction_request.make.capitalize(),
+					INSTRUCTIONS = "Submit your %s vehicle now to grab the buyer's attention first!"%auction_request.auction_request.make_name,
 					CLICK_HERE = "View auction requests",
 					CLICK_HERE_URL = URL('dealer', 'auction_requests'),
 				)
 			), 
-				"%s request for a new %s %s %s (near your area)."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make.capitalize(), auction_request.auction_request.model.capitalize()),
+				"New %s request for a %s %s %s (near your area)."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name),
 			],
 			period = 3, # run 5s after previous
 			timeout = 30, # should take less than 30 seconds

@@ -330,12 +330,12 @@ Get rid of dummies and lorem ipsums
 					</td>
 
 					<td class="jcorgFilterTextChild">
-						{{=brands_list[each_request.auction_request.make]}}
+						{{=brands_list[each_request.auction_request.make_name]}}
 					</td>
 
 					<td class="jcorgFilterTextChild">
-						{{each_model = each_request.auction_request.model}} 
-						{{if len(each_model) < 4:}}{{=each_model.upper()}}{{else:}}{{=each_model.capitalize()}}{{pass}}
+						{{each_model = each_request.auction_request.model_name}} 
+						{{if len(each_model) < 4:}}{{=each_model}}{{else:}}{{=each_model}}{{pass}}
 					</td>
 
 					<td class="jcorgFilterTextChild">

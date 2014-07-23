@@ -16,7 +16,7 @@
 		{{for each_request in my_auctions:}}
 			<tr>
 				<td>
-					<div>{{=each_request['year'].upper()}} {{=each_request['make'].upper()}} {{=each_request['model'].upper()}}</div>
+					<div>{{=each_request['year']}} {{=each_request['make_name']}} {{=each_request['model_name']}}</div>
 					<div class="text-sm text-light">{{=each_request['trim_name']}}</div>
 				</td>
 				<td>
