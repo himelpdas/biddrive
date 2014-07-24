@@ -33,8 +33,8 @@
 				{{ form.element(_type="file", _name = "underhood_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "roof_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "other_image")["_class"] += " form-control" }}
-				{{ form.element("input", _type = "submit")["_id"] = "submit" }}
-				{{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+				{{# form.element("input", _type = "submit")["_id"] = "submit" }}
+				{{# form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
 				
 				<div class="form-group">
 					<label class="col-sm-3 control-label">VIN number</label>
@@ -258,7 +258,18 @@
 						{{pass}}
 					</div>
 				</div>
-				{{=form.custom.submit}}
+				{{#=form.custom.submit}}
+				<button id="fake_submit" type="button" class="btn btn-default pull-right">Submit</button>
+				<script>
+					$("#fake_submit").click(function(){
+						var message = "{{='You will now be charged a fee of %s credits to enter this auction. If you are the winner of this auction and the buyer attempts to call you, we will charge you %s credits. Good luck!'%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS)}}"
+						bootbox.confirm(message, function(agreed){
+							if (agreed){
+								$("form#pre_auction_form").trigger('submit'); //{{#needs id needs form befoe it to work}}
+							}
+						})
+					});
+				</script>
 		{{=form.custom.end}}
 	</div>
 	<div class= "col-md-5 col-sm-4 hidden-xs" style="position:relative;">

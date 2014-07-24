@@ -53,6 +53,7 @@
 
     <!-- UI -->
     <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script> {{#BS3}}
+	<script src="{{=URL('static','js/bootbox.min.js')}}"  type="text/javascript"></script>
     {{"""}}<script type="text/javascript" src="{{=URL('static', 'js/carbid.js')}}"></script>{{"""}} {{#useless nanoscroller stuff}}
 	
 	{{if request.controller in ["admin", "appadmin", "billing"]:}}{{#use default forms for now}}

@@ -351,7 +351,7 @@ def pre_auction():
 	
 	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
 	
-	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
+	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", _id="pre_auction_form", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 				
 	def computations(form):
 		codes_to_names = dict(interior_options_names+
