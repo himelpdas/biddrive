@@ -116,7 +116,7 @@ def screen_for_machine():
 	resp = twiml.Response()
 	winning_offer_id = request.args(0)
 	if set(['_color', '_year', '_make', '_model', '_id']).issubset(request.vars): #test is list values in list w/o comprehensions #http://goo.gl/mxqfX1
-		message = "This is the bid drive dot com automatic auction validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction I D number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
+		message = "This is the bid drive dot com automatic auction validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
 		with resp.gather(numDigits=1, action="%s/screen_complete"%winning_offer_id, method="POST") as g: #if he pressed something go to a new function. #action would be screen_for_machine.xml/screen_complete
 			for each in range(3):
 				g.say(message)
@@ -129,7 +129,7 @@ def screen_for_machine():
 		contact_made = winning_offer.update_record(contact_made=True)
 		#collect money
 		winners_piggy = db(db.credits.owner==winning_offer.owner_id).select().last()
-		winners_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_SUCCESS) #remove one credit
+		winners_piggy.update_record( credits = winners_piggy.credits - CREDITS_PER_SUCCESS) #remove one credit
 		db.credits_history.insert(change= -CREDITS_PER_SUCCESS, owner_id=winning_offer.owner_id, reason="Success fee")
 		resp.say("Connecting. ")
 	return dict(resp=str(resp))
