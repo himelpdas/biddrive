@@ -35,7 +35,7 @@ def dealership_form():
 	#db.dealership_info.changed_on.readable = True
 	#db.dealership_info.changed_by.readable = True
 	db.dealership_info.owner_id.readable = True
-	db.dealership_info.owner_id.writable = True
+	#db.dealership_info.owner_id.writable = True
 		
 	form = SQLFORM(db.dealership_info, record)
 	
@@ -118,6 +118,7 @@ def manage_buyers():
 	
 @auth.requires_membership("admins") # uncomment to enable security 
 def manage_dealers():	
+	db.dealership_info.verification.readable = True
 	form = SQLFORM.grid(db.auth_user.id==db.dealership_info.owner_id, links = [
 		dict(header='Auctions',body=lambda row: A('Show all%s'% (' auctions' if 'auth_user' in request.args else ''),_href=URL('admin','manage_auctions', vars=dict(user_type='dealer'), args=[row.id] ) ) ), 
 		dict(header='Memberships',body=lambda row: A('Show all%s'% (' memberships' if 'auth_user' in request.args else ''),_href=URL('admin','manage_memberships', args=[row.id] ) ) ), 

@@ -84,6 +84,33 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 							{{pass}}
 						</div>
 					</div>
+					
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Email me when</label>
+						<div class="col-sm-9">
+							<div class="input-group margin-bottom-sm">
+								{{=form.custom.widget.alerts}}
+							</div>
+
+							{{if form.errors['alerts']:}}
+								<div class="alert alert-warning">{{=form.errors['alerts']}}</div>
+							{{pass}}
+						</div>
+					</div>
+				 <script>
+					function resize_bootstrap_multiselect(){
+						$('.multiselect').css({
+							'width':$("#auth_user_email").parent().width()
+						});
+					}
+					$(document).ready(function(){ //{{#use document ready because some elements might not be ready and getting things like width from them may be wrong}}
+						$('#auth_user_alerts').multiselect({'maxHeight':240, 'numberDisplayed':1});
+						$(window).resize(function(){
+							resize_bootstrap_multiselect();
+						});
+						resize_bootstrap_multiselect(); //{{#http://goo.gl/dh1z2}}
+					});
+				</script>
 					{{=form.custom.submit}}
 
 				{{elif request.args(0) == "login":}}

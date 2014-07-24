@@ -22,7 +22,7 @@ def index():
 	if request.args(0):
 		year = request.args[0]
 		
-	response.message="!%s is currently under development"%APP_NAME
+	response.message2="!%s is currently under development"%APP_NAME
 		
 	return dict(brands_list=getBrandsList(year))
 
@@ -231,7 +231,7 @@ def dealership_form():
 		if form.process().accepted:
 			#email alert to admin
 			db.credits.insert(owner=auth.user_id, credits = INTRODUCTORY_CREDITS) #create a record for this dealers credit balance
-			db.credits_history.insert(change= INTRODUCTORY_CREDITS, owner_id=auth.user_id, reason="Welcome!")
+			db.credits_history.insert(change= INTRODUCTORY_CREDITS, owner_id=auth.user_id, reason="Welcome :)")
 			response.message = '$Form accepted. Please wait a few days for our response!'
 	else:
 		response.message = "!You already submitted a request! Please contact us if you've waited longer than 3 weeks."
@@ -322,11 +322,9 @@ def user():
 		response.title = "Create a new password"
 		#form = auth.reset_password()
 		#response.view = 'generic.html'
-	
-	if auth.is_logged_in():
+	if user_arg=="profile":
 		response.title='Hey, %s!' % auth.user.first_name
-
-
+		
 
 	return dict(form=form)
 

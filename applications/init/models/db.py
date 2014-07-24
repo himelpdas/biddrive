@@ -46,6 +46,22 @@ auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
 #######CUSTOM FIELDS#######
+auth_user_alerts_requires_list = [
+	["new_request", "a buyer wants a compatible car near my area (dealers only)"],
+	["new_offer", "a dealer submits a new vehicle to an auction",],
+	["new_bid", "a dealer makes changes to a bid",], #also for final bid
+	["new_message", "I get a new message in an auction"],
+	["new_favorite", "a new favorite is chosen in an auction"],
+	["new_winner", "a new winner is chosen in an auction"],
+]
+auth_user_alerts_readable_writable = True if 'profile' in request.args else False
+auth.settings.extra_fields['auth_user']= [
+	Field('alerts', "list:string", #WHENEVER you use IS_IN_SET use list:integer!!
+		requires=IS_IN_SET(auth_user_alerts_requires_list, zero=None, multiple=True),
+		default=map(lambda each: each[0], auth_user_alerts_requires_list), #check off all by default ["new_request", new_offer, ...]
+		readable=auth_user_alerts_readable_writable, writable=auth_user_alerts_readable_writable, #IN CUSTOM FORMS, IF FIELD IS MISSING, THEN IT'LL DEFAULT TO NONE INSTEAD, NOT DEFAULT ABOVE!!
+	),
+]
 #auth.settings.extra_fields['auth_user']= [
 #  Field('address'),
 #  Field('city'),

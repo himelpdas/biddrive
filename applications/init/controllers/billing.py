@@ -21,6 +21,7 @@ def buy_credits():
 		details=False,
 		searchable=False,
 		csv=False,
+		orderby=~db.credits_history.id,
 		user_signature=False
 	)
 	
