@@ -150,7 +150,7 @@ def pre_auction():
 		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id
 	auth.add_membership('owner_of_auction_%s'%auction_request_id, auth.user_id)
 	####alert dealers nearby####
-	auction_request = db((db.auction_request.id == auction_request_id)&(db.auth_user.id == db.auction_request.owner_id)#join auth_user
+	auction_request = db((db.auction_request.id == auction_request_id)&(db.auth_user.id == db.auction_request.owner_id)#join auth_user, make sure he owns this auction
 		&(db.auth_user.id == auth.user_id) #temp id should have been attached to a real auth_user by now
 	).select().last()
 	all_specialty_dealerships = db((db.dealership_info.verification == "approved")&(db.dealership_info.specialty.contains(auction_request.auction_request.make))&(db.auth_user.id == db.dealership_info.owner_id)).select()
@@ -168,7 +168,7 @@ def pre_auction():
 					WHAT_NOW = "Hurry! Other dealers have been alerted as well.",
 					INSTRUCTIONS = "Submit your %s vehicle now to grab the buyer's attention first!"%auction_request.auction_request.make_name,
 					CLICK_HERE = "View auction requests",
-					CLICK_HERE_URL = URL('dealer', 'auction_requests'),
+					CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
 				)
 			), 
 				"New %s request for a %s %s %s (near your area)."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name),
@@ -177,6 +177,26 @@ def pre_auction():
 			timeout = 30, # should take less than 30 seconds
 		)
 	########
+	#send email to owner reminding him he created an auction
+	scheduler.queue_task(
+		send_alert_task,
+		pargs=['email', auth.user.email, response.render('email_alert_template.html', 
+			dict(
+				APPNAME=APP_NAME,
+				NAME = auth.user.first_name.capitalize(), 
+				MESSAGE_TITLE =  XML("You requested a <i>{year} <b>{make}</b> {model}</i>.".format(year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name ) ),
+				MESSAGE = "Within a {mile} mile radius of {zip}.".format(mile = auction_request.auction_request.radius, zip=auction_request.auction_request.zip_code),
+				WHAT_NOW = "Stay tuned for offers!",
+				INSTRUCTIONS = "Dealers near you have been alerted about your request",
+				CLICK_HERE = "Go to auction!",
+				CLICK_HERE_URL = URL('default', 'auction', args=[auction_request_id], host=True, scheme=True),
+			)
+		), 
+			"You requested a {year} {make} {model} at {app}!".format(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name),
+		],
+		period = 3, # run 5s after previous
+		timeout = 30, # should take less than 30 seconds
+	)
 	redirect(
 		URL('dealer','auction.html', args=auction_request_id) #http://goo.gl/twPSTK
 	)

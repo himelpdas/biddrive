@@ -573,7 +573,7 @@ def auction():
 						WHAT_NOW = "%s said:"%your.first_name.capitalize(),
 						INSTRUCTIONS = my_message_form_dealer.vars.message,
 						CLICK_HERE = "Go to auction",
-						CLICK_HERE_URL = URL(args=request.args),
+						CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 					)), "You have a new message about the %s at %s"%(car,APP_NAME)],
 					#pvars={},
 					#repeats = 10, # run 10 times
@@ -779,7 +779,7 @@ def auction():
 							WHAT_NOW = "%s said:"%your.first_name.capitalize(),
 							INSTRUCTIONS = my_message_form_buyer.vars.message,
 							CLICK_HERE = "Go to auction",
-							CLICK_HERE_URL = URL(args=request.args),
+							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 						)), "You have a new message about the %s at %s"%(car,APP_NAME)],
 						#pvars={},
 						#repeats = 10, # run 10 times
@@ -857,7 +857,7 @@ def auction():
 					WHAT_NOW = "Act fast!" if not is_favorite else 'Keep it up!',
 					INSTRUCTIONS = "Make a better offer to convince the buyer that your vehicle is the best deal!" if not is_favorite else 'But stay alert for competing offers that may convince the buyer to have a change of mind!',
 					CLICK_HERE = "Go to auction",
-					CLICK_HERE_URL = URL(args=request.args),
+					CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 				)), "New favorite was chosen for %s auction for a %s"%(APP_NAME,car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
@@ -876,7 +876,7 @@ def auction():
 					WHAT_NOW = "Try again! You'll have better luck next time." if not is_winning_offer else "Wait for the buyer's call!",
 					INSTRUCTIONS = "Tip: Look out for new buyer requests and bid quickly! Having the early attention of a buyer goes a long way." if not is_winning_offer else "The buyer will call you soon via our automatic validation system within your business hours!",
 					CLICK_HERE = "Go to auction",
-					CLICK_HERE_URL = URL(args=request.args),
+					CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 				)), "A winner was chosen for %s auction for a %s"%(APP_NAME,car)],
 				#pvars={},
 				#repeats = 10, # run 10 times

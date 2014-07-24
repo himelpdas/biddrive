@@ -25,12 +25,12 @@ if auth.user_id:
 	if AUTH_DEALER:
 		response.menu.append(
 			(T('Dealer portal'), False, URL('dealer', 'auction_requests'), [
-				(T('Buyer requests'), False, URL('dealer', 'auction_requests'), []),
-				(T('Dealership info'), False, URL('dealer', 'dealer_info'), []),
+				(XML('<i class="fa fa-fw fa-tags"></i> Buyer requests'), False, URL('dealer', 'auction_requests'), []),
+				(XML('<i class="fa fa-fw fa-info-circle"></i> Dealership info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
 				#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
-				(T('Entered auctions'), False, URL('dealer', 'my_auctions'), []),
-				(T('Purchase credits'), False, URL('billing', 'buy_credits'), []),
+				(XML('<i class="fa fa-fw fa-gavel"></i> Entered auctions'), False, URL('dealer', 'my_auctions'), []),
+				(XML('<i class="fa fa-fw fa-btc"></i> Purchase credits'), False, URL('billing', 'buy_credits'), []),
 			]),
 		)
 	"""
