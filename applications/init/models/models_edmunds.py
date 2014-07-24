@@ -334,10 +334,11 @@ db.define_table('auction_request_offer',
 		required=True,
 	), 
 	Field('vin_number', #http://goo.gl/cKY06b
-		requires = IS_MATCH(
-			"^(([a-h,A-H,j-n,J-N,p-z,P-Z,0-9]{9})([a-h,A-H,j-n,J-N,p,P,r-t,R-T,v-z,V-Z,0-9])([a-h,A-H,j-n,J-N,p-z,P-Z,0-9])(\d{6}))$",
-			error_message = "Not a US VIN number!"
-		),
+		#requires = IS_MATCH(
+		#	"^(([a-h,A-H,j-n,J-N,p-z,P-Z,0-9]{9})([a-h,A-H,j-n,J-N,p,P,r-t,R-T,v-z,V-Z,0-9])([a-h,A-H,j-n,J-N,p-z,P-Z,0-9])(\d{6}))$",
+		#	error_message = "Not a US VIN number!"
+		#),
+		requires=IS_NOT_EMPTY(), required=True
 	),
 	#Field(
 	#	'remember_data_for_30_days', 'boolean', #http://goo.gl/Jx29vY
