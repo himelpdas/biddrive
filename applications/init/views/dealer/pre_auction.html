@@ -262,7 +262,7 @@
 				<button id="fake_submit" type="button" class="btn btn-default pull-right">Submit</button>
 				<script>
 					$("#fake_submit").click(function(){
-						var message = "{{='You will now be charged a fee of %s credits to enter this auction. If you are the winner of this auction and the buyer attempts to call you, we will charge you %s credits. Good luck!'%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS)}}"
+						var message = "{{='You will now be charged %s credits (auction fee) to enter this auction. If you win this auction and the buyer initiates contact with you, you will be charged %s credits (success fee). Good luck!'%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS)}}"
 						bootbox.confirm(message, function(agreed){
 							if (agreed){
 								$("form#pre_auction_form").trigger('submit'); //{{#needs id needs form befoe it to work}}
