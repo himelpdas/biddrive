@@ -366,8 +366,6 @@
 
     </div>
 
-
-
  <script type="text/javascript">
 	var firstload = true; {{#Need a way to preserve values on form error on first load. Checks to see If select values exist from previous form submission.}}
  	function load_color_preference(){
@@ -422,31 +420,31 @@
 				}
 			//close load call
 			);
-			//display trim stats
-			$('#stats_spinner').toggleClass("fa-spinner");
-			$('#trim_stats').slideUp(400).load(
-				"{{=URL('ajax','style_details', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //{{#implement fail like above}}
-				function( response, status, xhr ) {
-					if ( status == "error" ) {
-						var msg = "Error loading stats: ";
-						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-						$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-						$('#ajax_failure_warning_stats').slideDown();
-						$('#ajax_failure_warning_stats').click(function(){
-							$(this).slideUp();
-						});
-					}
-					else {
-						$(this).slideDown(200); //{{#fade back in}}
-						$('#stats_spinner').toggleClass("fa-spinner");
-					}
-				}
-			);
 		}
 		else{
 			firstload=false;
 		};
 		//{{#display reviews}}
+		//display trim stats
+		$('#stats_spinner').toggleClass("fa-spinner");
+		$('#trim_stats').slideUp(400).load(
+			"{{=URL('ajax','style_details', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim_choices').val() , //{{#implement fail like above}}
+			function( response, status, xhr ) {
+				if ( status == "error" ) {
+					var msg = "Error loading stats: ";
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
+					$('#ajax_failure_warning_stats').slideDown();
+					$('#ajax_failure_warning_stats').click(function(){
+						$(this).slideUp();
+					});
+				}
+				else {
+					$(this).slideDown(200); //{{#fade back in}}
+					$('#stats_spinner').toggleClass("fa-spinner");
+				}
+			}
+		);
 		$('#loading_reviews').slideDown();
 		$('#reviews').slideUp(600).load(
 			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim_choices').val() , //{{#implement fail like above}}
@@ -532,6 +530,11 @@
 	}
 	$('#auction_request_radius').change(load_radius_map);
 	$('#auction_request_zip_code').change(load_radius_map);
+	$(document).ready(function(){
+		if ($('#auction_request_zip_code').val().length==5){ //{{#if length is of zipcode}}
+			load_radius_map();
+		}
+	});
 </script>
 {{"""}}
 <script>
