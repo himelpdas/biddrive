@@ -223,10 +223,10 @@ def auction_requests():
 	number = len(auction_requests)
 	plural = ''
 	verb = 'is'
+	car = brands_list[make] if make else 'car'
 	if not number or number > 1:
 		plural = 's'
 		verb = 'are'
-		car = brands_list[make] if make else 'car'
 	response.message = 'Showing %s %s buyer%s who %s near "%s" in %s, %s.'% (number, car ,plural, verb, name, city, state)
 	#
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
