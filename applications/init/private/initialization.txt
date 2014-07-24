@@ -25,7 +25,9 @@ python web2py.py -a password -i 127.0.0.1 -p 8888
 nohup python web2py.py -K init -X -a password -i 127.0.0.1 -p 8889
 #to start shell with models
 python web2py -S init -M
-
+#when having cache problems (look for words like "shelve" in traceback) with cache start shell
+>>>cache.ram.clear()
+>>>cache.disk.clear()
 --------
 ####test commits/push here####
 
