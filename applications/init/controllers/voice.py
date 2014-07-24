@@ -127,6 +127,10 @@ def screen_for_machine():
 	else: #HMAC PROTECT HERE!!
 		winning_offer = db(db.auction_request_winning_offer.auction_request_offer == winning_offer_id).select().last()
 		contact_made = winning_offer.update_record(contact_made=True)
+		#collect money
+		winners_piggy = db(db.credits.owner==winning_offer.owner_id).select().last()
+		winners_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_SUCCESS) #remove one credit
+		db.credits_history.insert(change= -CREDITS_PER_SUCCESS, owner_id=winning_offer.owner_id, reason="Success fee")
 		resp.say("Connecting. ")
 	return dict(resp=str(resp))
 

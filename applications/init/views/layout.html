@@ -55,7 +55,7 @@
     <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script> {{#BS3}}
     {{"""}}<script type="text/javascript" src="{{=URL('static', 'js/carbid.js')}}"></script>{{"""}} {{#useless nanoscroller stuff}}
 	
-	{{if request.controller in ["admin", "appadmin"]:}}{{#use default forms for now}}
+	{{if request.controller in ["admin", "appadmin", "billing"]:}}{{#use default forms for now}}
 		{{include "web2py_ajax.html"}}
 		<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script> {{#http://goo.gl/cPFP9a}}
 		{{"""}}<script type="text/javascript" src="{{=URL('static','js/web2py.js')}}"></script>{{"""}}{{#not needed it web2py_ajax}}

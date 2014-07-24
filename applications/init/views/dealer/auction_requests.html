@@ -165,7 +165,7 @@ Get rid of dummies and lorem ipsums
 			{{for each_request in auction_requests:}}
 				<tr class="jcorgFilterTextParent">
 					<td>
-						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action" rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right"></i></a>
+						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action" rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a>
 
 						<a class="btn btn-default btn-sm btn-action" style="margin-top:3px"  data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" rel="tooltip" data-placement="bottom" title="{{=each_request.auth_user.first_name[:1]}}. {{=each_request.auth_user.last_name}}">Info<i class="fa fa-fw fa-user"></i></a>
 

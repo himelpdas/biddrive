@@ -25,7 +25,7 @@ if auth.user_id:
 	if AUTH_DEALER:
 		response.menu.append(
 			(T('Dealer portal'), False, URL('dealer', 'auction_requests'), [
-				(XML('<i class="fa fa-fw fa-tags"></i> Buyer requests'), False, URL('dealer', 'auction_requests'), []),
+				(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, URL('dealer', 'auction_requests'), []),
 				(XML('<i class="fa fa-fw fa-info-circle"></i> Dealership info'), False, URL('dealer', 'dealer_info'), []),
 				#(T('Messages'), False, URL('dealer', 'messages'), []),
 				#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),

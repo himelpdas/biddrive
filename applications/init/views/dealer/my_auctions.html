@@ -1,10 +1,8 @@
 {{extend 'page_layout.html'}}
-
 {{#=BEAUTIFY(my_offers)}}
 
-
 {{show=request.vars['show']}}
-<h3>{{if show == 'won':}}Auctions you won{{elif show == 'lost':}}Auctions you didn't win{{elif show == "live":}}Live auctions you're in{{else:}}All auctions you entered{{pass}}.</h3>
+<h3><i class="fa fa-fw fa-info-circle"></i> {{if show == 'won':}}Auctions you won{{elif show == 'lost':}}Auctions you didn't win{{elif show == "live":}}Live auctions you're in{{else:}}All auctions you entered{{pass}}</h3>
 <hr>
 
 <table class="table table-striped">

@@ -8,7 +8,23 @@ def buy_credits():
 	)
 	my_credits_row = db(db.credits.owner == auth.user_id).select().first()
 	my_credits = my_credits_row['credits'] if my_credits_row else 0
-	return dict(buy_credits_urls=buy_credits_urls, my_credits=my_credits)
+	#history
+	#db.credits_history.id.readable=False #need ID in case of questioning by user
+	db.credits_history.owner_id.readable=False
+	db.credits_history.modified_on.readable=True
+	db.credits_history.modified_by.readable=True #use signature, because admin can add remove credits too 
+	my_credits_history_grid = SQLFORM.grid( ((db.credits_history.owner_id == auth.user_id)&(db.credits_history.id>0)),
+		buttons_placement = 'left', links=[], links_placement = 'left', 
+		editable=False,
+		create=False,
+		deletable=False,
+		details=False,
+		searchable=False,
+		csv=False,
+		user_signature=False
+	)
+	
+	return dict(buy_credits_urls=buy_credits_urls, my_credits=my_credits,my_credits_history_grid=my_credits_history_grid)
 
 #visit https://github.com/paypal/rest-api-sdk-python/tree/master/samples
 
@@ -33,8 +49,9 @@ def paypal_return():
 				db.credits.insert(owner=auth.user_id, credits = session.purchase['credits'])
 			else:
 				my_credits.update_record(credits = my_credits['credits'] + session.purchase['credits'])
+				db.credits_history.insert(change=session.purchase['credits'], owner_id=auth.user_id, reason="Purchase")
 			session.purchase = None #successful payment so remove purchase session
-			session.message2 = "$Payment[%s] made successfully"%(payment.id)
+			session.message2 = "$Payment [%s] made successfully"%(payment.id)
 		else:
 			session.message2 = "!%s: %s"%(payment.error['name'], payment.error['details'])
 	redirect(URL('billing','buy_credits'))

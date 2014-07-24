@@ -232,12 +232,21 @@ def manage_credits():
 	user_id = request.args[0]
 	query = db.credits.owner == user_id
 	links=[]
+	def onvalidation(form): #this will document changes made by an admin to the dealers credits history 
+		credits_now = db(query).select().last()
+		credits_new = form.vars.credits
+		change = credits_new - credits_now.credits
+		reason = form.vars.latest_reason or "Administrative"
+		db.credits_history.insert(reason=reason, change=change, owner_id=user_id)
+		#form.errors= True  #this prevents the submission from completing
+
 	form =  SQLFORM.grid(query,  args=[user_id],
 		buttons_placement = 'left', links=links, links_placement = 'left', 
 		editable=True,
 		searchable=False,
 		create=False,
 		deletable=False,
+		onvalidation=onvalidation,
 		user_signature=False
 	)
 	return dict(form=form)
@@ -282,6 +291,7 @@ def issue_refund(): #how to refund via sale id http://goo.gl/zVzjE7 #where the s
 		my_credits = db(db.credits.owner == order.owner).select().first()
 		order.update_record(refunded=True, payment_refunded=request.now)
 		my_credits.update_record(credits = int(my_credits.credits) - int(order.credits))
+		db.credits_history.insert(change= -int(order.credits), owner_id=auth.user_id, reason="Refund")
 		session.message2 = "$Payment %s successfully refunded!" % order.payment_id
 	else:
 		#print("Unable to Refund")

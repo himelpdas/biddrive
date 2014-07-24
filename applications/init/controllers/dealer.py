@@ -371,6 +371,7 @@ def pre_auction():
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 			my_piggy = db(db.credits.owner==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
+			db.credits_history.insert(change= -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
 			auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
 		session.message = '$Your vehicle was submitted!'
 		redirect(
@@ -442,7 +443,7 @@ def __auction_validator__():
 		is_authorized_dealer_with_offer = True
 		is_participant = True
 		if 0 >= db(db.credits.owner==auth.user_id).select().last().credits: #do not allow negative balance dealers to participate, instead make them buy more credits.
-			session.message2="@You have a negative balance! You must purchase more credits to participate in auctions."
+			session.message2="@You have a zero or negative balance! You must purchase more credits to participate in auctions."
 			redirect(URL('billing', 'buy_credits'))
 		if db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request==auction_request_id) & (db.auction_request_offer_bid.final_bid != None)).select().first():
 			is_dealer_and_with_final_bid = True
