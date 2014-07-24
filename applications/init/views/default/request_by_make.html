@@ -371,9 +371,9 @@
  <script type="text/javascript">
 	var firstload = true; {{#Need a way to preserve values on form error on first load. Checks to see If select values exist from previous form submission.}}
  	function load_color_preference(){
+		$("#fake_submit").addClass("disabled", 250);//{{#ajax active, disable submit button}}
 		if ($(".ms-elem-selectable").length == false || firstload==false){ {{#http://goo.gl/aZeO3n}} {{#if multiselect options is black or page already loaded}}
 			firstload=false; //
-			$("#fake_submit").addClass("disabled", 250);//{{#disable submit button}}
 			$('#ms-auction_request_color_preference').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
 			$('#colors_spinner').toggleClass("fa-spinner");
 			$('#auction_request_color_preference').load(
@@ -491,7 +491,7 @@
 	$(document).ready(function(){
 		load_color_preference(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
 	})
-	.ajaxComplete(function(){
+	.ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
 		$("#fake_submit").removeClass("disabled", 250);
 	});
 	</script>
@@ -517,10 +517,10 @@
 			function( response, status, xhr ) {
 				if ( status == "error" ) {
 					var msg = "Error loading map: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-					$('#ajax_failure_warning_stats').slideDown();
-					$('#ajax_failure_warning_stats').click(function(){
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_radius" class="alert alert-danger"><span id="ajax_failure_warning_radius_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_radius_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+					$('#ajax_failure_warning_radius').slideDown();
+					$('#ajax_failure_warning_radius').click(function(){
 						$(this).slideUp();
 					});
 				}
