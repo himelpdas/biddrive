@@ -29,7 +29,7 @@ def vehicle_content():
 
 	return dict(make_details=make_details, make_photos=make_photos, year=year)
 	
-def color_preference(): #TODO get all data from single call make/model/year
+def exterior_colors(): #TODO get all data from single call make/model/year
 	if not request.args:
 		return dict() #maybe 404
 	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
@@ -81,7 +81,7 @@ def style_details(): #OLD#getting details by style id rather than parsing throug
 	year = request.args[2] 
 	style_id = request.args[3]
 	style = getStyleByMakeModelYearStyleID(make, model, year, style_id)
-	style_colors = color_preference()
+	style_colors = exterior_colors()
 	colors=[]
 	for each_color in style_colors['style_colors']:
 		colors.append([each_color['name'], each_color['colorChips']['primary']['hex']])

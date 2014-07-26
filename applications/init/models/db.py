@@ -12,7 +12,7 @@
 if not request.env.web2py_runtime_gae:
     ## if NOT running on Google App Engine use SQLite or other DB
 
-    db = DAL('sqlite://storage14.sqlite',pool_size=1, adapter_args=dict(foreign_keys=False),) #check_reserved=['all']) #http://bit.ly/1fkDk3w
+    db = DAL('sqlite://storage15.sqlite',pool_size=1, adapter_args=dict(foreign_keys=False),) #check_reserved=['all']) #http://bit.ly/1fkDk3w
 else:
     ## connect to Google BigTable (optional 'google:datastore://namespace')
     db = DAL('google:datastore')
@@ -47,14 +47,14 @@ crud, service, plugins = Crud(db), Service(), PluginManager()
 
 #######CUSTOM FIELDS#######
 auth_user_alerts_requires_list = [
-	["new_request", "a buyer wants a compatible car near my area (dealers only)"],
-	["new_offer", "a dealer submits a new vehicle to an auction",],
-	["new_bid", "a dealer makes changes to a bid",], #also for final bid
-	["new_message", "I get a new message in an auction"],
-	["new_favorite", "a new favorite is chosen in an auction"],
-	["new_winner", "a new winner is chosen in an auction"],
+	["new_request", "a new vehicle request"],
+	["new_offer", "a new vehicle offer",],
+	["new_bid", "changes to an offer's price",], #also for final bid
+	["new_message", "a new message about an offer"],
+	["new_favorite", "choice of a new favorite offer"],
+	["new_winner", "choice of a winning offer"],
 ]
-auth_user_alerts_readable_writable = True if 'profile' in request.args else False
+auth_user_alerts_readable_writable = True if 'profile' in request.args else False #modify only when user is in profile, otherwise force default
 auth.settings.extra_fields['auth_user']= [
 	Field('alerts', "list:string", #WHENEVER you use IS_IN_SET use list:integer!!
 		requires=IS_IN_SET(auth_user_alerts_requires_list, zero=None, multiple=True),

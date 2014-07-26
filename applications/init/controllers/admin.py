@@ -144,11 +144,11 @@ def manage_auctions():
 	for_user_type = request.vars['user_type']
 	identifier = request.args(0)
 	db.auction_request.must_haves.writable = False
-	db.auction_request.color_preference.writable = False
-	db.auction_request.trim_choices.writable = False	
+	db.auction_request.exterior_colors.writable = False
+	db.auction_request.trim.writable = False	
 	db.auction_request.must_haves.readable = False
-	db.auction_request.color_preference.readable = False
-	db.auction_request.trim_choices.readable = False
+	db.auction_request.exterior_colors.readable = False
+	db.auction_request.trim.readable = False
 	db.auction_request.trim_name.readable = True
 	db.auction_request.color_names.readable = True
 	db.auction_request.year.readable = True

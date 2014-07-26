@@ -66,7 +66,7 @@ def auction_requests():
 	trim = str(request.vars['trim'])
 	colors_list = {}
 	if trim in styles_list:
-		query &= db.auction_request.trim_choices==trim
+		query &= db.auction_request.trim==trim
 		for each_style in model_styles:
 			if trim == str(each_style['id']):
 				safe_style_colors = each_style['colors']
@@ -79,7 +79,7 @@ def auction_requests():
 	#
 	color = str(request.vars['color'])
 	if color in colors_list:
-		query &= db.auction_request.color_preference.contains(color)
+		query &= db.auction_request.exterior_colors.contains(color)
 	else:
 		color = None
 	#
@@ -133,7 +133,7 @@ def auction_requests():
 		reverse = False
 		if sortby == "colors-least":
 			reverse = True
-		auction_requests = auction_requests.sort(lambda row: len(row.auction_request.color_preference), reverse=reverse)#the sort function takes a rows object and applies a function with each row as the argument. Then it compares the returned numerical value of each row and sorts it 
+		auction_requests = auction_requests.sort(lambda row: len(row.auction_request.exterior_colors), reverse=reverse)#the sort function takes a rows object and applies a function with each row as the argument. Then it compares the returned numerical value of each row and sorts it 
 	
 	if sortby == 'closest' or sortby == 'farthest':
 		reverse = False
@@ -261,6 +261,9 @@ def pre_auction():
 	model_name=auction_request.model_name,
 	trim_name=auction_request.trim_name)
 	
+	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
+	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
+	
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
 	#return dict(form=None, options=options) #uncomment for testing
@@ -346,7 +349,7 @@ def pre_auction():
 	db.auction_request_offer.safety_options.requires = IS_IN_SET(safety_options_names, multiple=True)
 	db.auction_request_offer.safety_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
-	colors = zip(auction_request.color_preference, auction_request.color_names) #color_preference means color_ids please do sitewide replace
+	colors = zip(auction_request.exterior_colors, auction_request.color_names) #exterior_colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
 	
 	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
@@ -373,13 +376,55 @@ def pre_auction():
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
 			db.credits_history.insert(change= -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
 			auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
+			#####send a messages to all involved in this auction#####
+			auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
+			car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
+			#send to dealers
+			me = auth.user #i'm the guy submitting this offer
+			for each_offer in auction_request_offers:
+				send_to = each_offer.auth_user
+				this_dealer_initials='%s %s'%(send_to.first_name.capitalize(), send_to.last_name.capitalize()[:1]+'.')
+				is_my_offer = me.id == send_to.id #since I'm the one submitting and it's my offer
+				if "new_offer" in send_to.alerts:
+					scheduler.queue_task(
+						send_alert_task,
+						pargs=['email', send_to.email, response.render('email_alert_template.html', dict(
+							APPNAME=APP_NAME,
+							NAME = send_to.first_name.capitalize(), 
+							MESSAGE = "%s joined auction %s just moments ago! So what now?"%("You" if is_my_offer else this_dealer_initials, auction_request['id']) ,
+							MESSAGE_TITLE = XML("%s submitted <b>%s</b> <i>%s</i>!"%("You" if is_my_offer else "A new dealer", "your" if is_my_offer else "a", car) ) ,
+							WHAT_NOW = "Compare offers from other dealers and start making bids!" if is_my_offer else "Keep an eye out for this dealer's bids!",
+							INSTRUCTIONS = "Hint: You can message the buyer at any time during the auction." if is_my_offer else "Don't worry, we will alert you when offer prices change.",
+							CLICK_HERE = "Go to auction",
+							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+						)), "%s: A new dealer submitted a %s!"%(APP_NAME, car)],
+						retry_failed = 5,
+						period = 3, # run 5s after previous
+						timeout = 30, # should take less than 30 seconds
+					)
+			my_initials='%s %s'%(me.first_name.capitalize(), me.last_name.capitalize()[:1]+'.')
+			if "new_offer" in auction_request_user.alerts:
+				scheduler.queue_task(
+					send_alert_task,
+					pargs=['email', auction_request_user.email, response.render('email_alert_template.html', dict(
+						APPNAME=APP_NAME,
+						NAME = auction_request_user.first_name.capitalize(), 
+						MESSAGE = XML("%s joined your auction just moments ago! So what now?"%(my_initials,) ),
+						MESSAGE_TITLE = "A dealer submitted a %s!"%(car, ),
+						WHAT_NOW = "Say hello!",
+						INSTRUCTIONS = "You can message this or any dealer at any time during the duration of this auction.",
+						CLICK_HERE = "Go to auction",
+						CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+					)), "%s: A new dealer submitted a %s!"%(APP_NAME, car)],
+					retry_failed = 5,
+					period = 3, # run 5s after previous
+					timeout = 30, # should take less than 30 seconds
+				)
+			##########
 		session.message = '$Your vehicle was submitted!'
 		redirect(
 			URL('auction', args=[auction_request_id])
 		)
-
-	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
-	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
 
 	auction_request_info = dict(
 		id = str(auction_request.id),
@@ -464,7 +509,7 @@ def __auction_validator__():
 	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
 	
 	colors=[]
-	color_names = dict(map(lambda id,name: [id,name], auction_request.color_preference, auction_request.color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+	color_names = dict(map(lambda id,name: [id,name], auction_request.exterior_colors, auction_request.color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 	color_names = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
 	for id, each_name in color_names.items(): #just get names here for auction_request_info
 		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
@@ -552,7 +597,29 @@ def auction():
 			
 			#dealer bid process
 			if bid_form.process(hideerror = True).accepted:
-				response.message = '$Your new bid is $%s.'%"{:,}".format(bid_form.vars.bid) #redirect not needed since we're dealing with POST
+				form_bid_price = "{:,}".format(bid_form.vars.bid)
+				response.message = '$Your new bid is $%s.'%form_bid_price #redirect not needed since we're dealing with POST
+				#alert buyer about lower bid from this dealer
+				if "new_bid" in auction_request_user.alerts:
+					bidding_dealer_name='%s %s'%(auth.user.first_name.capitalize(), auth.user.last_name.capitalize()[:1]+'.')
+					scheduler.queue_task(
+						send_alert_task,
+						pargs=['email', auction_request_user.email, response.render('email_alert_template.html', dict(
+							APPNAME=APP_NAME,
+							NAME = auction_request_user.first_name.capitalize(), 
+							MESSAGE =  XML("%s lowered his price to %s. So what now?"%(bidding_dealer_name, form_bid_price,) ),
+							MESSAGE_TITLE = XML("A dealer lowered his price for the <i>%s</i>!"%car),
+							WHAT_NOW = "This was the dealer's final bid!" if is_final_bid else "Let other dealers know if you like it!",
+							INSTRUCTIONS = 'You can buy this car now! Just press the "buy it now" button for this offer in the auction page.' if is_final_bid else "If you like this bid, go to the auction page and choose this price as your favorite. You can also message other dealers to bargain for better prices.",
+							CLICK_HERE = "Go to auction",
+							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+						)), "%s: %s %s his %s price to $%s%s!"%(APP_NAME,  bidding_dealer_name,  'finalized' if is_final_bid else 'lowered',  car,  form_bid_price,  '/month' if is_lease else '')],
+						retry_failed = 5,
+						period = 3, # run 5s after previous
+						timeout = 30, # should take less than 30 seconds
+					)
+				#broadcast to dealers
+				session.BROADCAST_BID_ALERT=True
 				if final_message:
 					session.message2 = final_message
 					redirect(URL(args=request.args))
@@ -560,28 +627,29 @@ def auction():
 				response.message = '!Bid not submitted! Please check for mistakes in form.'
 			
 			#dealer message process
-			if my_message_form_dealer.process().accepted:
+			if my_message_form_dealer.process().accepted: #EMAILALERT
 				response.message = '$Your message was submitted to the buyer.'
 				your = auth.user
-				_buyer = auction_request_user
-				scheduler.queue_task(
-					send_alert_task,
-					pargs=['email', _buyer.email, response.render('email_alert_template.html', dict(
-						APPNAME=APP_NAME,
-						NAME = _buyer.first_name.capitalize(), 
-						MESSAGE =  XML("A dealer for a <i>%s</i> sent <b>%s</b> a message."%(car, 'you')),
-						MESSAGE_TITLE = "You have a new message!",
-						WHAT_NOW = "%s said:"%your.first_name.capitalize(),
-						INSTRUCTIONS = my_message_form_dealer.vars.message,
-						CLICK_HERE = "Go to auction",
-						CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-					)), "You have a new message about the %s at %s"%(car,APP_NAME)],
-					#pvars={},
-					#repeats = 10, # run 10 times
-					period = 3, # run 5s after previous
-					timeout = 30, # should take less than 30 seconds
-				)
-				
+				send_to = auction_request_user
+				if "new_message" in send_to.alerts: #it's being sent to buyer, so test for buyers alert settings
+					scheduler.queue_task(
+						send_alert_task,
+						pargs=['email', send_to.email, response.render('email_alert_template.html', dict(
+							APPNAME=APP_NAME,
+							NAME = send_to.first_name.capitalize(), 
+							MESSAGE =  XML("A dealer for a <i>%s</i> sent <b>%s</b> a message."%(car, 'you')),
+							MESSAGE_TITLE = "You have a new message!",
+							WHAT_NOW = "%s said:"%your.first_name.capitalize(),
+							INSTRUCTIONS = my_message_form_dealer.vars.message,
+							CLICK_HERE = "Go to auction",
+							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+						)), "%s: You have a new message about the %s!"%(APP_NAME, car)],
+						#pvars={},
+						#repeats = 10, # run 10 times
+						retry_failed = 5,
+						period = 3, # run 5s after previous
+						timeout = 30, # should take less than 30 seconds
+					)
 			elif my_message_form_dealer.errors:
 				response.message = '!Your message had errors. Please fix!'
 	
@@ -770,23 +838,25 @@ def auction():
 					response.message = '$Your message was submitted to the dealer.'
 					your = auth.user
 					_dealer = each_offer.auth_user
-					scheduler.queue_task(
-						send_alert_task,
-						pargs=['email', _dealer.email, response.render('email_alert_template.html', dict(
-							APPNAME=APP_NAME,
-							NAME = _dealer.first_name.capitalize(), 
-							MESSAGE =  XML("The buyer for a <i>%s</i> sent <b>%s</b> a message."%(car, 'you')),
-							MESSAGE_TITLE = "You have a new message!",
-							WHAT_NOW = "%s said:"%your.first_name.capitalize(),
-							INSTRUCTIONS = my_message_form_buyer.vars.message,
-							CLICK_HERE = "Go to auction",
-							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-						)), "You have a new message about the %s at %s"%(car,APP_NAME)],
-						#pvars={},
-						#repeats = 10, # run 10 times
-						period = 3, # run 5s after previous
-						timeout = 30, # should take less than 30 seconds
-					)
+					if "new_message" in _dealer.alerts: #it's being sent to buyer, so test for buyers alert settings
+						scheduler.queue_task(
+							send_alert_task,
+							pargs=['email', _dealer.email, response.render('email_alert_template.html', dict(
+								APPNAME=APP_NAME,
+								NAME = _dealer.first_name.capitalize(), 
+								MESSAGE =  XML("The buyer for a <i>%s</i> sent <b>%s</b> a message."%(car, 'you')),
+								MESSAGE_TITLE = "You have a new message!",
+								WHAT_NOW = "%s said:"%your.first_name.capitalize(),
+								INSTRUCTIONS = my_message_form_buyer.vars.message,
+								CLICK_HERE = "Go to auction",
+								CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+							)), "%s: You have a new message about the %s!"%(APP_NAME, car)],
+							#pvars={},
+							#repeats = 10, # run 10 times
+							retry_failed = 5,
+							period = 3, # run 5s after previous
+							timeout = 30, # should take less than 30 seconds
+						)
 				elif my_message_form_buyer.errors:
 					response.message = '!Your message had errors. Please fix!'
 			#winner insert stuff
@@ -798,6 +868,26 @@ def auction():
 					a_winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice, winner_code=winner_code)#insert new winner
 					is_winning_offer=True #now make it true
 					session.BROADCAST_WINNER_ALERT=True
+					send_to = auction_request_user
+					if "new_winner" in auction_request_user.alerts:
+						scheduler.queue_task(
+							send_alert_task,
+							pargs=['email', send_to.email, response.render('email_alert_template.html', dict(
+								APPNAME=APP_NAME,
+								NAME = auction_request_user.first_name.capitalize(), 
+								MESSAGE_TITLE = "You picked a winner!",
+								MESSAGE =  XML("You picked a %s as your winning vehicle! So what now?"%car),
+								WHAT_NOW = "Connect with the dealer to get your certificate.",
+								INSTRUCTIONS = "Click the button below and follow the instructions on the auction page.",
+								CLICK_HERE = "Go to auction",
+								CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+							)), "%s: A winner was chosen for for a %s!"%(APP_NAME,car)],
+							#pvars={},
+							#repeats = 10, # run 10 times
+							retry_failed = 5,
+							period = 3, # run 5s after previous
+							timeout = 30, # should take less than 30 seconds
+						)
 					#session.BROADCAST_WINNER_ALERT = True
 					#session.message = "$All dealers will be alerted about your new favorite!"
 				else:
@@ -826,6 +916,24 @@ def auction():
 					#send message
 					session.BROADCAST_FAVORITE_ALERT = True
 					session.message = "$All dealers will be alerted about your new favorite!"
+					if "new_favorite" in your.alerts:
+						_buyer = auction_request_user
+						scheduler.queue_task(
+							send_alert_task,
+							pargs=['email', _buyer.email, response.render('email_alert_template.html', dict(
+								APPNAME=APP_NAME,
+								NAME = _buyer.first_name.capitalize(), 
+								MESSAGE =  XML("Dealers in your auction were alerted about your favorite <i>%s</i> offer. So what now?"%car),
+								MESSAGE_TITLE = "You picked a new favorite!",
+								WHAT_NOW = "Keep an eye out for lower bids.",
+								INSTRUCTIONS = 'Now that dealers know which offer you like the most, they may lower their prices!',
+								CLICK_HERE = "Go to auction",
+								CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+							)), "%s: New favorite was chosen for a %s!"%(APP_NAME,car)],
+							retry_failed = 5,
+							period = 3, # run 5s after previous
+							timeout = 30, # should take less than 30 seconds
+						)
 				redirect(URL(args=request.args)) #get rid of vars
 		#response messaging stuff
 		if not is_owner and is_my_offer:#if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer. do same with dealer via is_my_offer
@@ -845,46 +953,64 @@ def auction():
 			else: each_message.is_auction_requester = False
 
 		#MESSAGE QUEUES #GOTTA DO IT LIKE THIS BECAUSE LET'S SAY OFFER[7] IS WINNER, ONLY OFFERS > 7 WILL GET ALERTED, SO IT'S NECESSARY TO RELOAD THE PAGE (STORING A COMMAND TO SEND ALERTS IN SESSION) SO THAT OFFERS > 0 WILL BE ALERTED.
-		your = each_offer.auth_user
-		if session.BROADCAST_FAVORITE_ALERT:
-			_buyer = auction_request_user
+		send_to = each_offer.auth_user #each offer in this auction will get an email if conditions are met
+		this_dealer_name='%s %s'%(send_to.first_name.capitalize(), send_to.last_name.capitalize()[:1]+'.')
+		_buyer = auction_request_user
+		if session.BROADCAST_FAVORITE_ALERT	and "new_favorite" in send_to.alerts:
 			scheduler.queue_task(
 				send_alert_task,
-				pargs=['email', your.email, response.render('email_alert_template.html', dict(
+				pargs=['email', send_to.email, response.render('email_alert_template.html', dict(
 					APPNAME=APP_NAME,
-					NAME = your.first_name.capitalize(), 
-					MESSAGE =  XML("The buyer for a <i>%s</i> picked <b>%s</b> as the favorite! So what now?"%(car, 'you' if is_favorite else 'another dealer')),
+					NAME = send_to.first_name.capitalize(), 
+					MESSAGE =  XML("The buyer for a <i>%s</i> picked <b>%s</b> as the favorite! So what now?"%(car, 'you' if is_favorite else 'dealer %s'%this_dealer_name)),
 					MESSAGE_TITLE = "%s picked a new favorite!"%_buyer.first_name.capitalize(),
 					WHAT_NOW = "Act fast!" if not is_favorite else 'Keep it up!',
 					INSTRUCTIONS = "Make a better offer to convince the buyer that your vehicle is the best deal!" if not is_favorite else 'But stay alert for competing offers that may convince the buyer to have a change of mind!',
 					CLICK_HERE = "Go to auction",
 					CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-				)), "New favorite was chosen for %s auction for a %s"%(APP_NAME,car)],
+				)), "%s: New favorite was chosen for a %s!"%(APP_NAME,car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
+				retry_failed = 5,
 				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
-		if session.BROADCAST_WINNER_ALERT: 
-			_buyer = auction_request_user
+		if session.BROADCAST_WINNER_ALERT and "new_winner" in send_to.alerts:
 			scheduler.queue_task(
 				send_alert_task,
-				pargs=['email', your.email, response.render('email_alert_template.html', dict(
+				pargs=['email', send_to.email, response.render('email_alert_template.html', dict(
 					APPNAME=APP_NAME,
-					NAME = your.first_name.capitalize(), 
-					MESSAGE =  XML("The buyer for a <i>%s</i> picked <b>%s</b> as the winner! So what now?"%(car, 'you' if is_winning_offer else 'another dealer')),
+					NAME = send_to.first_name.capitalize(), 
+					MESSAGE =  XML("The buyer for a <i>%s</i> picked <b>%s</b> as the winner! So what now?"%(car, 'you' if is_winning_offer else 'dealer %s'%this_dealer_name)),
 					MESSAGE_TITLE = "%s picked a winner!"%_buyer.first_name.capitalize(),
 					WHAT_NOW = "Try again! You'll have better luck next time." if not is_winning_offer else "Wait for the buyer's call!",
 					INSTRUCTIONS = "Tip: Look out for new buyer requests and bid quickly! Having the early attention of a buyer goes a long way." if not is_winning_offer else "The buyer will call you soon via our automatic validation system within your business hours!",
 					CLICK_HERE = "Go to auction",
 					CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-				)), "A winner was chosen for %s auction for a %s"%(APP_NAME,car)],
+				)), "%s: A winner was chosen for a %s!"%(APP_NAME, car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
+				retry_failed = 5,
 				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
-
+			if session.BROADCAST_BID_ALERT and "new_bid" in send_to.alerts and send_to.id != auth.user.id: #no need to alert myself I made a new bid, so send_to.id != auth.user.id
+				scheduler.queue_task(
+					send_alert_task,
+					pargs=['email', send_to.email, response.render('email_alert_template.html', dict(
+						APPNAME=APP_NAME,
+						NAME = _buyer.first_name.capitalize(), 
+						MESSAGE =  XML("%s lowered his price to %s. So what now?"%(this_dealer_name, form_bid_price,) ),
+						MESSAGE_TITLE = "A dealer lowered his price for the <i>%s</i>!"%car,
+						WHAT_NOW = "Let other dealers know if you like it!",
+						INSTRUCTIONS = "If you like this bid, go to the auction page and choose this price as your favorite. You can also message other dealers to request a better price.",
+						CLICK_HERE = "Go to auction",
+						CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
+					)), "%s: %s lowered his %s's price to %s!"%(APP_NAME, this_dealer_name, car, form_bid_price)],
+					retry_failed = 5,
+					period = 3, # run 5s after previous
+					timeout = 30, # should take less than 30 seconds
+				)
 		each_offer_dict = {
 			'id' : offer_id,
 			'has_message_from_buyer' : has_message_from_buyer,
@@ -955,7 +1081,7 @@ def auction():
 	
 	auction_request_offers_info = auction_request_offers_info.values() #convert back to list to be compatible with current view
 	
-	session.BROADCAST_FAVORITE_ALERT = session.BROADCAST_WINNER_ALERT = False #make sure send alert
+	session.BROADCAST_FAVORITE_ALERT = session.BROADCAST_BID_ALERT = session.BROADCAST_WINNER_ALERT = False #make sure send alert
 	
 	#title stuff
 	response.title="Auction"
@@ -1035,7 +1161,7 @@ def my_auctions():
 	for each_offer in my_offers:
 		#auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() don't needed #make sure not abandoned or expired!
 		#auction_request.expired()
-		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.color_preference, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.exterior_colors, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
 		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
