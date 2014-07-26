@@ -4,7 +4,6 @@ hmac verify twilio
 hmac verify all ajax in page 2
 increase lat long precision in dealership form with google geocoding
 add auction sniping in dealer auction page
-add unsubscribe features to certain types of emails to profile
 add more tooltips to everything
 fix progress bar to allow more than one word
 alert dealer through call and text when he is accepted to biddrive.
@@ -24,6 +23,7 @@ fix filter in my_auctions and auction_history where "lost" filter shows won auct
 change voice to british guy
 fix failure in lambo
 emails
+add unsubscribe features to certain types of emails to profile
 please make a bid now after buy it now pressed for awaiting offers
 change all instances of color_preference (to colors), trim_choices (to trim), auction_request_winning_offer (to ..._choice), and unread_auction_messages (to auction_request_unread_message)
 add progress bar to dealer portion

@@ -607,13 +607,13 @@ def auction():
 						pargs=['email', auction_request_user.email, response.render('email_alert_template.html', dict(
 							APPNAME=APP_NAME,
 							NAME = auction_request_user.first_name.capitalize(), 
-							MESSAGE =  XML("%s lowered his price to %s. So what now?"%(bidding_dealer_name, form_bid_price,) ),
-							MESSAGE_TITLE = XML("A dealer lowered his price for the <i>%s</i>!"%car),
+							MESSAGE =  XML("%s lowered the price to $%s. So what now?"%(bidding_dealer_name, form_bid_price,) ),
+							MESSAGE_TITLE = XML("A dealer lowered the price for the <i>%s</i>!"%car),
 							WHAT_NOW = "This was the dealer's final bid!" if is_final_bid else "Let other dealers know if you like it!",
 							INSTRUCTIONS = 'You can buy this car now! Just press the "buy it now" button for this offer in the auction page.' if is_final_bid else "If you like this bid, go to the auction page and choose this price as your favorite. You can also message other dealers to bargain for better prices.",
 							CLICK_HERE = "Go to auction",
 							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-						)), "%s: %s %s his %s price to $%s%s!"%(APP_NAME,  bidding_dealer_name,  'finalized' if is_final_bid else 'lowered',  car,  form_bid_price,  '/month' if is_lease else '')],
+						)), "%s: %s %s the %s price to $%s%s!"%(APP_NAME,  bidding_dealer_name,  'finalized' if is_final_bid else 'lowered',  car,  form_bid_price,  '/month' if is_lease else '')],
 						retry_failed = 5,
 						period = 3, # run 5s after previous
 						timeout = 30, # should take less than 30 seconds
@@ -1000,13 +1000,13 @@ def auction():
 					pargs=['email', send_to.email, response.render('email_alert_template.html', dict(
 						APPNAME=APP_NAME,
 						NAME = _buyer.first_name.capitalize(), 
-						MESSAGE =  XML("%s lowered his price to %s. So what now?"%(this_dealer_name, form_bid_price,) ),
-						MESSAGE_TITLE = "A dealer lowered his price for the <i>%s</i>!"%car,
+						MESSAGE =  XML("%s lowered the price to $%s. So what now?"%(this_dealer_name, form_bid_price,) ),
+						MESSAGE_TITLE = "A dealer lowered the price for the <i>%s</i>!"%car,
 						WHAT_NOW = "Let other dealers know if you like it!",
 						INSTRUCTIONS = "If you like this bid, go to the auction page and choose this price as your favorite. You can also message other dealers to request a better price.",
 						CLICK_HERE = "Go to auction",
 						CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-					)), "%s: %s lowered his %s's price to %s!"%(APP_NAME, this_dealer_name, car, form_bid_price)],
+					)), "%s: %s lowered the %s's price to $%s!"%(APP_NAME, this_dealer_name, car, form_bid_price)],
 					retry_failed = 5,
 					period = 3, # run 5s after previous
 					timeout = 30, # should take less than 30 seconds
