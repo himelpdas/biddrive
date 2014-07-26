@@ -24,6 +24,7 @@ def dealership_form():
 		session.flash = "No form ID provided!"
 		redirect(URL('admin', 'index.html'))
 	record = db(db.dealership_info.id == request.args[0]).select().first()
+	record_owner = db(db.auth_user.id == record.owner_id).select().last()
 	if not record:
 		session.flash = "Invalid form ID!"
 		redirect(URL('admin', 'index.html'))
@@ -43,6 +44,23 @@ def dealership_form():
 		membership = dict(user_id = form.vars.owner_id, role = "dealers") #user_id = form.vars.owner_id will not work unless writable set to True.
 		if form.vars.verification == "approved":
 			auth.add_membership(**membership) #unpack keyword args
+			#alert new dealer
+			scheduler.queue_task(
+				send_alert_task,
+				pargs=['email', record_owner.email, response.render('email_alert_template.html', dict(
+					APPNAME=APP_NAME,
+					NAME = record_owner.first_name.capitalize(), 
+					MESSAGE_TITLE = "Congratulations! You are now an approved dealer!",
+					MESSAGE =  "Your request to join the %s dealer network was approved! So what now?"%APP_NAME,
+					WHAT_NOW = "Click the button below to look for potential buyers.",
+					INSTRUCTIONS = "We'll also alert you when we see new %s requests near your area."%' '.join(record.specialty),
+					CLICK_HERE = "See buyer requests!",
+					CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
+				)), "%s: You have been approved!"&APP_NAME],
+				retry_failed = 5,
+				period = 3, # run 5s after previous
+				timeout = 30, # should take less than 30 seconds
+			)
 		else:
 			auth.del_membership(**membership)
 		#alert user
