@@ -44,15 +44,39 @@ if auth.user_id:
 	"""
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
+#####GENERATE BRANDSLIST#####
 all_brands_list = OD() #TEMP
 for each_year in YEAR_RANGE:
 	all_brands_list.update(getBrandsList(each_year)) #doesn't matter if each_year is int or str because getBrandsList uses string formatting
-
 #useful data structure
 all_brands_list_sorted = sorted(all_brands_list.items(), key=lambda x: x[1]) #niceName, name
 times_of_the_day = ['12:00 AM', '12:15 AM', '12:30 AM', '12:45 AM', '1:00 AM', '1:15 AM', '1:30 AM', '1:45 AM', '2:00 AM', '2:15 AM', '2:30 AM', '2:45 AM', '3:00 AM', '3:15 AM', '3:30 AM', '3:45 AM', '4:00 AM', '4:15 AM', '4:30 AM', '4:45 AM', '5:00 AM', '5:15 AM', '5:30 AM', '5:45 AM', '6:00 AM', '6:15 AM', '6:30 AM', '6:45 AM', '7:00 AM', '7:15 AM', '7:30 AM', '7:45 AM', '8:00 AM', '8:15 AM', '8:30 AM', '8:45 AM', '9:00 AM', '9:15 AM', '9:30 AM', '9:45 AM', '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM', '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM', '6:00 PM', '6:15 PM', '6:30 PM', '6:45 PM', '7:00 PM', '7:15 PM', '7:30 PM', '7:45 PM', '8:00 PM', '8:15 PM', '8:30 PM', '8:45 PM', '9:00 PM', '9:15 PM', '9:30 PM', '9:45 PM', '10:00 PM', '10:15 PM', '10:30 PM', '10:45 PM', '11:00 PM', '11:15 PM', '11:30 PM', '11:45 PM']
 days_of_the_week = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+##########
+#####GET ACCURATE COORDINATES COMPUTE FUNCTIONS#####
+#geocoding allows one to turn an addy into coords
+def get_coordinates_data(row):
+	us = geocoders.GeocoderDotUS() #https://code.google.com/p/geopy/wiki/GettingStarted
+	location = us.geocode("{str1} {str2} {city} {state} {zip_code}".format(str1 = row['address_line_1'], str2 = row['address_line_2'] or '', city = row['city'], state = row['state'], zip_code = row['zip_code']))
+	place, coords = location
+	return coords
 
+def get_most_accurate_longitude_from_address(row):
+	coords = get_coordinates_data(row)
+	if coords: # (lat, lon)
+		return coords[1]
+	else: #fallback to zip code accuracy if geocoding fails
+		return db(db.zipgeo.zip_code == row['zip_code']).select().first()["longitude"]
+
+def get_most_accurate_latitude_from_address(row):
+	coords = get_coordinates_data(row)
+	if coords: # (lat, lon)
+		return coords[0]
+	else: #fallback to zip code accuracy if geocoding fails
+		return db(db.zipgeo.zip_code == row['zip_code']).select().first()["latitude"]
+##########
+
+#####DEFINE TABLES#####
 db.define_table('dealership_info',
 	Field('owner_id', db.auth_user,
 		readable=False,
@@ -149,10 +173,12 @@ db.define_table('dealership_info',
 		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
 	),
 	Field('longitude', 'double',
-		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().longitude,
+		required=True,
+		compute=get_most_accurate_longitude_from_address,
 	),
 	Field('latitude', 'double',
-		compute=lambda row: db(db.zipgeo.zip_code == row['zip_code']).select().first().latitude,
+		required=True, #make sure its guaranteed because it can mess things up later if geocoding fails
+		compute=get_most_accurate_latitude_from_address,
 	),
 	Field('country',
 		requires=IS_IN_SET([

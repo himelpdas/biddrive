@@ -5,7 +5,11 @@ pillow
 requests
 twilio
 paypalrestsdk
-
+geopy
+motionless and gployencode (modules)
+smartthumb (custom module)
+edmunds (module)
+simplecolor (custom module)
 --------
 ####setting up site####
 

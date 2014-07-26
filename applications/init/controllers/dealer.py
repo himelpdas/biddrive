@@ -114,7 +114,7 @@ def auction_requests():
 		orderby = ~db.auction_request.auction_expires
 	if sortby == "oldest":
 		orderby = db.auction_request.auction_expires #not using ID because expires can be changed by admin
-		
+	#####DB FILTERING#####
 	def db_filtering(query): #filters out requests that are won or abandoned
 		auction_requests = db(query & (db.auction_request.owner_id==db.auth_user.id) #exclude the abandoned auction requests (owner_id = None, due to when un-logged in users make a request)
 			& (db.auction_request_winning_offer.id == None)
@@ -1287,14 +1287,18 @@ def winner():
 	winner_code=winner.winner_code
 	#make the winner code look nice
 	winner_code_spaced = ' '.join([winner_code[i:i+3] for i in range(0,len(winner_code),3)]) #http://goo.gl/0ra6oM
+		
+	#was call verification complete and buyer/dealer talked?
+	contact_made=winner.contact_made
 	
 	#map stuff
 	dmap = DecoratedMap()
-	dmap.add_marker(AddressMarker('%s,%s,%s,%s'%(dealership.address_line_1, dealership.city, dealership.state, dealership.zip_code),label='D'))
+	if contact_made:
+		marker_string = '%s,%s,%s,%s'%(dealership.address_line_1, dealership.city, dealership.state, dealership.zip_code) #use address market as lat lon isn't perfectly precise, may lead buyer to miss his destination
+	else:
+		marker_string = "%s"%dealership.zip_code #just show zip code if contact wasn't made because someone can check the source code to find the e address on the map url
+	dmap.add_marker(AddressMarker(marker_string, label='D'))
 	map_url = dmap.generate_url().replace('400x400', '600x400')
-	
-	#was call verification complete and buyer/dealer talked?
-	contact_made=winner.contact_made
 	
 	return dict(
 		auction_id = auction_validator['auction_request_id'], 

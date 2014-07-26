@@ -9,20 +9,7 @@ import time
 from ago import human
 import simplecolor
 from collections import OrderedDict as OD #http://bit.ly/OhPhQr
-import lookup_hash
-
-from math import *
-
-def calcDist(lat_A, long_A, lat_B, long_B):
-	distance = (sin(radians(lat_A)) *
-		sin(radians(lat_B)) +
-		cos(radians(lat_A)) *
-		cos(radians(lat_B)) *
-		cos(radians(long_A - long_B)))
-
-	distance = (degrees(acos(distance))) * 69.09
-
-	return distance
+#import lookup_hash
 	
 def quickRaise(error):
 	"""
@@ -44,5 +31,27 @@ if not session.salt:
 REGEX_TELEPHONE = '^1?((-)\d{3}-?|\(\d{3}\))\d{3}-?\d{4}$'
 
 if request.function in ["dealer_radius_map", "winner"]:
-	from motionless import DecoratedMap, AddressMarker #python google static maps generator
-	#gpolyencode.py included as well
+	from motionless import DecoratedMap, AddressMarker, LatLonMarker #python google static maps generator
+	#import gpolyencode #gpolyencode.py included as well
+	
+if request.function in ["dealership_form", "dealer_info", "pre_auction", "auction", "auction_requests", "dealer_radius_map"]: #spans default, appadmin, admin, dealer controllers #needed to convert dealership addy to proper lat long
+	from geopy import geocoders #https://code.google.com/p/geopy/wiki/GettingStarted
+	from geopy import distance, point
+	def calcDist (lat_A, long_A, lat_B, long_B):
+		return float(distance.distance(point.Point(lat_A, long_A), point.Point(lat_B, long_B)).miles)
+	
+"""
+from math import *
+
+def calcDist(lat_A, long_A, lat_B, long_B): #DEPRECATED USE GEOPY NOW!
+	distance = (sin(radians(lat_A)) *
+		sin(radians(lat_B)) +
+		cos(radians(lat_A)) *
+		cos(radians(lat_B)) *
+		cos(radians(long_A - long_B)))
+
+	distance = (degrees(acos(distance))) * 69.09
+
+	return distance
+"""
+	
