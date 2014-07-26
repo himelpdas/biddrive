@@ -397,7 +397,7 @@ def pre_auction():
 							INSTRUCTIONS = "Hint: You can message the buyer at any time during the auction." if is_my_offer else "Don't worry, we will alert you when offer prices change.",
 							CLICK_HERE = "Go to auction",
 							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-						)), "%s: A new dealer submitted a %s!"%(APP_NAME, car)],
+						)), "%s: %s submitted a %s!"%(APP_NAME, "You" if is_my_offer else "A new dealer", car)],
 						retry_failed = 5,
 						period = 3, # run 5s after previous
 						timeout = 30, # should take less than 30 seconds
