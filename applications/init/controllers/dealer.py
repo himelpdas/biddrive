@@ -11,7 +11,7 @@ def auction_requests():
 	>>> query &= db.person.id>3
 	>>> query |= db.person.name=='John'
 	"""
-	query = (db.auction_request.id > 0) & (db.auction_request.auction_expires >= request.now) #NON-COMPLETE AUCTIONS WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
+	query = all_query = (db.auction_request.id > 0) & (db.auction_request.auction_expires >= request.now) #NON-COMPLETE AUCTIONS WITHIN TIME AND RADIUS ONLY. RADIUS IN FILTERING BELOW
 	#query = (db.auction_request.id != db.auction_request_winning_offer.auction_request) & (db.auction_request.auction_expires >= request.now) #This doesn't work for some fucking reason, so filter in memory instead #NVM HANDLED IN SELECT BELOW VIA LEFT JOIN #THE REASON IT DOESN'T WORK IS BECAUSE == and != creates non-left join
 	#	#what happens above is db finds anywhere winning_offer.auction_request does not match auction_request.id and joins them, since there are many winning_offers already, you can expect many joins, therefore many rows 
 	#####filtering#####
@@ -115,16 +115,25 @@ def auction_requests():
 	if sortby == "oldest":
 		orderby = db.auction_request.auction_expires #not using ID because expires can be changed by admin
 		
-	auction_requests = db(query & (db.auction_request.owner_id==db.auth_user.id)
-		& (db.auction_request_winning_offer.id == None)
-	).select(orderby=orderby, 
-		left=db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request ==  db.auction_request.id)
-	)
+	def db_filtering(query): #filters out requests that are won or abandoned
+		auction_requests = db(query & (db.auction_request.owner_id==db.auth_user.id) #exclude the abandoned auction requests (owner_id = None, due to when un-logged in users make a request)
+			& (db.auction_request_winning_offer.id == None)
+		).select(orderby=orderby, 
+			left=db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request ==  db.auction_request.id)
+		)
+		return auction_requests
+	auction_requests = db_filtering(query)
 	#####in memory filterting#####
 	#location
 	auction_requests = auction_requests.exclude(lambda row: row.auction_request['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.auction_request.latitude, row.auction_request.longitude) )#remove requests not in range
 	#winning #CPU INTENSIVE, did via DAL select with left outer join above instead
 	#auction_requests =auction_requests.exclude(lambda row: not db(db.auction_request_winning_offer.auction_request == row.auction_request['id']).select().first())
+	###blank message###
+	is_blank = not bool(auction_requests)
+	blank_after_filter_message=None
+	if is_blank:
+		total_requests = len(db_filtering(all_query))
+		blank_after_filter_message = XML('<div class="text-light"><h4>There are %s requests on %s, but none are within your parameters.</h4><h5>Please try again later.</h5></div>'%(total_requests, APP_NAME) if is_blank else '')
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	for each_request in auction_requests:
 		each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.auction_request.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
@@ -229,7 +238,7 @@ def auction_requests():
 		verb = 'are'
 	response.message = 'Showing %s %s buyer%s who %s near "%s" in %s, %s.'% (number, car ,plural, verb, name, city, state)
 	#
-	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list)
+	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list, blank_after_filter_message=blank_after_filter_message)
 
 #@auth.requires_login() #make dealer only
 @auth.requires(request.args(0))

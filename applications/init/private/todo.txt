@@ -12,7 +12,6 @@ make auction page more responsive
 scramble text in cert before validation
 cache auction requests
 include colors in msrp
-a stats messege in blank auction requests
 
 *Optional
 add twilio verification in page 2
@@ -35,6 +34,7 @@ show only kia dealers in page 2 if car is kia
 create an admin interface that allows safe addition and deletion of rows from important tables
 alert dealer of certain specialty and radius when theres a new auction request
 allow messaging DURING final offer
+a stats messege in blank auction requests
 
 *Not needed
 add balance history to dealer buy credits page (let paypal handle that)
