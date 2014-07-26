@@ -808,7 +808,7 @@ def auction():
 		
 		#stuff to do if this offer is owned by viewing dealer
 		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
-		if is_my_offer and is_awaiting_offer and not auction_request_expired:
+		if is_my_offer and is_awaiting_offer and not auction_is_completed: #auction_request_expired: #FIXED: please make a bid now after buy it now pressed
 			response.message2 = "!Please make a bid now!"
 		
 		#mark all messages as read
