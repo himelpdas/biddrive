@@ -571,7 +571,7 @@ def auction():
 	bid_form = my_message_form_dealer = my_auction_request_offer_id = is_final_bid = None
 	if not a_winning_offer and not auction_request_expired: #do not allow any insertions for expired or winning
 		#create offer form
-		if is_authorized_dealer_with_offer and not is_dealer_and_with_final_bid:
+		if is_authorized_dealer_with_offer:# and not is_dealer_and_with_final_bid:
 			#see if final offer
 			final_message = None
 			is_final_bid = request.vars['final_bid']
