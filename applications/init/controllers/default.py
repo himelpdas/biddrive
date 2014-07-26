@@ -166,7 +166,7 @@ def pre_auction():
 						NAME = each_dealership.auth_user.first_name.capitalize(), 
 						MESSAGE =  XML("There is a new request for a <i>%s <b>%s</b> %s</i> near your area."%(auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name ) ),
 						MESSAGE_TITLE = "%s wants a new %s!"%("%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize()), auction_request.auction_request.make_name),
-						WHAT_NOW = "Hurry! Other dealers have been alerted as well.",
+						WHAT_NOW = "Hurry! Other nearby dealers %s have been alerted as well."%auction_request.auction_request.make_name,
 						INSTRUCTIONS = "Submit your %s vehicle now to grab the buyer's attention first!"%auction_request.auction_request.make_name,
 						CLICK_HERE = "View auction requests",
 						CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
