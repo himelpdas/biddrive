@@ -398,7 +398,7 @@ def pre_auction():
 							CLICK_HERE = "Go to auction",
 							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 						)), "%s: %s submitted a %s!"%(APP_NAME, "You" if is_my_offer else "A new dealer", car)],
-						retry_failed = 5,
+						retry_failed = 10,
 						period = 3, # run 5s after previous
 						timeout = 30, # should take less than 30 seconds
 					)
@@ -416,7 +416,7 @@ def pre_auction():
 						CLICK_HERE = "Go to auction",
 						CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 					)), "%s: A new dealer submitted a %s!"%(APP_NAME, car)],
-					retry_failed = 5,
+					retry_failed = 10,
 					period = 3, # run 5s after previous
 					timeout = 30, # should take less than 30 seconds
 				)
@@ -614,7 +614,7 @@ def auction():
 							CLICK_HERE = "Go to auction",
 							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 						)), "%s: %s %s the %s price to $%s%s!"%(APP_NAME,  bidding_dealer_name,  'finalized' if is_final_bid else 'lowered',  car,  form_bid_price,  '/month' if is_lease else '')],
-						retry_failed = 5,
+						retry_failed = 10,
 						period = 3, # run 5s after previous
 						timeout = 30, # should take less than 30 seconds
 					)
@@ -646,7 +646,7 @@ def auction():
 						)), "%s: You have a new message about the %s!"%(APP_NAME, car)],
 						#pvars={},
 						#repeats = 10, # run 10 times
-						retry_failed = 5,
+						retry_failed = 10,
 						period = 3, # run 5s after previous
 						timeout = 30, # should take less than 30 seconds
 					)
@@ -853,7 +853,7 @@ def auction():
 							)), "%s: You have a new message about the %s!"%(APP_NAME, car)],
 							#pvars={},
 							#repeats = 10, # run 10 times
-							retry_failed = 5,
+							retry_failed = 10,
 							period = 3, # run 5s after previous
 							timeout = 30, # should take less than 30 seconds
 						)
@@ -884,7 +884,7 @@ def auction():
 							)), "%s: A winner was chosen for for a %s!"%(APP_NAME,car)],
 							#pvars={},
 							#repeats = 10, # run 10 times
-							retry_failed = 5,
+							retry_failed = 10,
 							period = 3, # run 5s after previous
 							timeout = 30, # should take less than 30 seconds
 						)
@@ -930,7 +930,7 @@ def auction():
 								CLICK_HERE = "Go to auction",
 								CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 							)), "%s: New favorite was chosen for a %s!"%(APP_NAME,car)],
-							retry_failed = 5,
+							retry_failed = 10,
 							period = 3, # run 5s after previous
 							timeout = 30, # should take less than 30 seconds
 						)
@@ -971,7 +971,7 @@ def auction():
 				)), "%s: New favorite was chosen for a %s!"%(APP_NAME,car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
-				retry_failed = 5,
+				retry_failed = 10,
 				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
@@ -990,7 +990,7 @@ def auction():
 				)), "%s: A winner was chosen for a %s!"%(APP_NAME, car)],
 				#pvars={},
 				#repeats = 10, # run 10 times
-				retry_failed = 5,
+				retry_failed = 10,
 				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
@@ -1007,7 +1007,7 @@ def auction():
 						CLICK_HERE = "Go to auction",
 						CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
 					)), "%s: %s lowered the %s's price to $%s!"%(APP_NAME, this_dealer_name, car, form_bid_price)],
-					retry_failed = 5,
+					retry_failed = 10,
 					period = 3, # run 5s after previous
 					timeout = 30, # should take less than 30 seconds
 				)

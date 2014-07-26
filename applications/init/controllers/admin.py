@@ -57,7 +57,7 @@ def dealership_form():
 					CLICK_HERE = "See buyer requests!",
 					CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
 				)), "%s: You have been approved!"&APP_NAME],
-				retry_failed = 5,
+				retry_failed = 10,
 				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)

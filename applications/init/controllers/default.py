@@ -172,8 +172,9 @@ def pre_auction():
 						CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
 					)
 				), 
-					"New %s request for a %s %s %s (near your area)."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name),
+					"%s: New request for a %s %s %s near your area."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name),
 				],
+				retry_failed = 10,
 				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
 			)
@@ -194,8 +195,9 @@ def pre_auction():
 					CLICK_HERE_URL = URL('default', 'auction', args=[auction_request_id], host=True, scheme=True),
 				)
 			), 
-				"You requested a {year} {make} {model} at {app}!".format(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name),
+				"{app}: You requested a {year} {make} {model} near you!".format(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name),
 			],
+			retry_failed = 10,
 			period = 3, # run 5s after previous
 			timeout = 30, # should take less than 30 seconds
 		)
