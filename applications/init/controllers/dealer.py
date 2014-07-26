@@ -1300,6 +1300,12 @@ def winner():
 	dmap.add_marker(AddressMarker(marker_string, label='D'))
 	map_url = dmap.generate_url().replace('400x400', '600x400')
 	
+	#string scramble stuff
+	def text_scrambler(text):
+		if not contact_made:
+			text = str(uuid.uuid4().get_hex().upper()[:len(text)]) #http://goo.gl/GAfp26 #randomize a string, this function matches the length of the initial string
+		return text
+
 	return dict(
 		auction_id = auction_validator['auction_request_id'], 
 		winner_code_spaced=winner_code_spaced, 
@@ -1319,6 +1325,7 @@ def winner():
 		is_lease = auction_validator['is_lease'],
 		map_url=map_url,
 		vin=vin,
+		text_scrambler=text_scrambler,
 		last_bid_price=last_bid_price,
 		list_of_image_types=list_of_image_types,
 		image_urls=image_urls,

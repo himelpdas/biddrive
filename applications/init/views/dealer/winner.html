@@ -15,8 +15,8 @@
 		</div>
 
 		<div class="col-xs-4" style="text-align:center;">
-			<h4><u>{{=year}} {{=make_name}}{{#=make.upper()}} {{=model_name}}{{#=model.upper()}}</u></h4>
-			<h5 class="text-light"><u>{{=trim}}</u></h5>
+			<h4><u>{{=text_scrambler(year)}} {{=text_scrambler(make_name)}}{{#=make.upper()}} {{=text_scrambler(model_name)}}{{#=model.upper()}}</u></h4>
+			<h5 class="text-light"><u>{{=text_scrambler(trim)}}</u></h5>
 		</div>
 
 		<div class="col-xs-4">
@@ -59,36 +59,36 @@
 			<table class="table table-hover">
 				<tr>
 					<th  style="border-top: none">Auction ID:</th>
-					<td  style="border-top: none">{{=str(auction_request_id).zfill(3)}}</td>
+					<td  style="border-top: none">{{=text_scrambler(str(auction_request_id).zfill(3))}}</td>
 				</tr>
 				
 				<tr>
 					<th>VIN #:</th>
-					<td>{{=vin}}</td>
+					<td>{{=text_scrambler(vin)}}</td>
 				</tr>
 
 				<tr>
 					<th>Price lock:</th>
-					<td>{{=last_bid_price}}</td>
+					<td>{{=text_scrambler(last_bid_price)}}</td>
 				</tr>			
 				
 			{{if is_lease:}}
 				<tr>
 					<th>Lease term:</th>
-					<td>{{=auction_request.lease_term}} or {{auction_request.lease_mileage}}</td>
+					<td>{{=text_scrambler(auction_request.lease_term)}} or {{text_scrambler(auction_request.lease_mileage)}}</td>
 				</tr>
 			{{pass}}
 			
 				<tr>
 					<th>Color:</th>
-					<td>{{=color}}</td>
+					<td>{{=text_scrambler(color)}}</td>
 				</tr>
 
 				<tr>
 					<th>Options:</th>
 					<td>
 						{{for each_option in option_names:}}
-							<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;{{=each_option}}</div>
+							<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;{{=text_scrambler(each_option)}}</div>
 						{{pass}}
 					</td>
 				</tr>            
@@ -96,21 +96,21 @@
 				<tr>
 					<th>Dealer:</th>
 					<td>
-						<div><strong>{{='%s %s' % (dealer.first_name, dealer.last_name)}}</strong></div>
-						<div class="hidden-print"><a href="mailto:{{=dealer.email}}?subject=Regarding {{=APP_NAME}} auction {{=str(auction_request_id).zfill(3)}} ({{=year}} {{=make_name}} {{=model_name}})&body=Hello {{=dealer.first_name.capitalize()}}! You are the winner of my request (ID {{=str(auction_request_id).zfill(3)}}) for a {{=year}} {{=make_name}} {{=model_name}}. Please reply as soon as possible! -{{=auth.user.first_name.capitalize()}}">{{=dealer.email}}</a></div> {{#since only requester can view its safe to use auth.user}}
-						<div class="visible-print">{{=dealer.email}}</div>
+						<div><strong>{{=text_scrambler('%s %s' % (dealer.first_name, dealer.last_name))}}</strong></div>
+						<div class="hidden-print"><a href="mailto:{{=text_scrambler(dealer.email)}}?subject=Regarding {{=text_scrambler(APP_NAME)}} auction {{=text_scrambler(str(auction_request_id).zfill(3))}} ({{=text_scrambler(year)}} {{=text_scrambler(make_name)}} {{=text_scrambler(model_name)}})&body=Hello {{=text_scrambler(dealer.first_name.capitalize())}}! You are the winner of my request (ID {{=text_scrambler(str(auction_request_id).zfill(3))}}) for a {{=text_scrambler(year)}} {{=text_scrambler(make_name)}} {{=text_scrambler(model_name)}}. Please reply as soon as possible! -{{=text_scrambler(auth.user.first_name.capitalize())}}">{{=text_scrambler(dealer.email)}}</a></div> {{#since only requester can view its safe to use auth.user}}
+						<div class="visible-print">{{=text_scrambler(dealer.email)}}</div>
 					</td>
 				</tr>
 
 				<tr>
 					<th>Dealership:</th>
 					<td>
-						<div><strong>{{=dealership.dealership_name}}</strong></div>
-						<div>{{=dealership.address_line_1}}</div>
-						<div>{{=dealership.address_line_2}}</div>
-						<div>{{=dealership.city}}, {{=dealership.state}}, {{=dealership.zip_code}}</div>
-						<div>{{=dealership.country}}</div>
-						<div>{{=dealership.phone}}</div>
+						<div><strong>{{=text_scrambler(dealership.dealership_name)}}</strong></div>
+						<div>{{=text_scrambler(dealership.address_line_1)}}</div>
+						<div>{{=text_scrambler(dealership.address_line_2)}}</div>
+						<div>{{=text_scrambler(dealership.city)}}, {{=text_scrambler(dealership.state)}}, {{=text_scrambler(dealership.zip_code)}}</div>
+						<div>{{=text_scrambler(dealership.country)}}</div>
+						<div>{{=text_scrambler(dealership.phone)}}</div>
 					</td>
 				</tr>
 
