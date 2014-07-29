@@ -322,7 +322,9 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 					{{=form.custom.submit}}
 				{{pass}}
 			{{=form.custom.end}}
-			<a href="{{if 'dealer_registration' in after_login_string:}}{{=URL('default', 'dealership_form')}}{{else:}}{{=URL('default', 'user', args=['login'], vars=dict(_next=after_login_string))}}{{pass}}"><button class="btn btn-default pull-right" style="margin-right:5px">Already have an account?</button></a>
+			{{if "dealer_registration" in after_login_string:}}
+				<a href="{{=URL('default', 'dealership_form')}}"><button class="btn btn-default pull-right" style="margin-right:5px">Already have an account?</button></a>
+			{{pass}}
 		</div>
 	</div>
 	{{#auth() has poor parent customization compared to SQLFORM}}
