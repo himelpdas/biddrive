@@ -95,7 +95,7 @@ def handle_key_check():
 					resp.say("I'm sorry. Your winning dealer is not accepting calls at this time. Please call back at the following days, %s %s time.%s Thank you and have a great day. "%(tz_country, tz_zone, schedule) )
 					resp.pause(length=3)
 			else: #make vehicle details to pass to dealer	and CALL the dealer
-				resp.say("Thank you. I will now connect you to your winning dealer. Please hold.")
+				resp.say("Thank you. I will now connect you to your winning dealer. Please hold for up to 5 minutes.")
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
 				color_names = dict(map(lambda id,name: [id,name], auction_request.exterior_colors, auction_request.simple_exterior_color_names))
 				auction_request_vehicle = dict(_color = color_names[winning_offer.color], _year = auction_request.year, _make = auction_request.make, _model = auction_request.model, _id=auction_request.id) #trim = auction_request.trim_name)
