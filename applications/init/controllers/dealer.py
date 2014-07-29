@@ -567,7 +567,6 @@ def auction():
 	auction_request_offers=auction_validator['auction_request_offers']
 	last_favorite_choice=auction_validator['last_favorite_choice']
 	a_winning_offer=auction_validator['a_winning_offer']
-	auction_is_completed=auction_validator['auction_is_completed']
 	auction_is_completed = auction_validator['auction_is_completed']
 	auction_request_area=auction_validator['auction_request_area']
 	auction_request_user=auction_validator['auction_request_user']
@@ -678,7 +677,10 @@ def auction():
 			favorite_price='$%s'%last_favorite_choice_bid.bid
 	##################
 	#auction requests info
-	auction_ended_offer_expires = (auction_request.offer_expires - request.now).total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
+	auction_ended_offer_expires_datetime = auction_request.offer_expires - request.now
+	auction_ended_offer_expires = auction_ended_offer_expires_datetime.total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
+	if auction_ended_offer_expires:
+		response.message3 = "!Bidding has ended. Now %s can choose a winner within %s."%("the buyer" if not is_owner else "you", human(auction_ended_offer_expires_datetime, precision=2, past_tense='{}', future_tense='{}') )
 	bidding_ended = auction_request_expired
 	auction_request_info = dict(
 		id = str(auction_request.id),
@@ -817,7 +819,7 @@ def auction():
 		
 		#stuff to do if this offer is owned by viewing dealer
 		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
-		if is_my_offer and is_awaiting_offer and not auction_is_completed: #auction_request_expired: #FIXED: please make a bid now after buy it now pressed
+		if is_my_offer and is_awaiting_offer and not (auction_is_completed or bidding_ended): #auction_request_expired: #FIXED: please make a bid now after buy it now pressed
 			response.message2 = "!Please make a bid now!"
 		
 		#mark all messages as read
