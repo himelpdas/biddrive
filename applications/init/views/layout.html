@@ -259,7 +259,7 @@
                     </li>
 					{{if not auth.user:}}
 						<li class="navbar-btn">
-							<button onClick="location.href='{{=URL('default', 'user', args=['register'] )}}'" class="btn btn-info btn-xs"><i class="fa fa-fw fa-thumbs-up"></i> Register</button> {{#have to use href because "a" tag will mess up button styling #http://bit.ly/1tkUb0l}}
+							<button onClick="location.href='{{=URL('default', 'user', args=['register'] )}}'" class="btn btn-primary btn-xs"><i class="fa fa-fw fa-thumbs-up"></i> Register</button> {{#have to use href because "a" tag will mess up button styling #http://bit.ly/1tkUb0l}}
 						</li>
 					{{pass}}
                 </ul>

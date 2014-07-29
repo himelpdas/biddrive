@@ -115,7 +115,7 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 
 				{{elif request.args(0) == "login":}}
 					{{if 'force_register' in after_login_string:}}
-						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_message="Join our dealership network" if "dealership_form" in after_login_string else "", _next=after_login_string)))}} {{#cannot use custom_message var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
+						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_message="Join our dealership network" if "dealer_registration" in after_login_string else "", _next=after_login_string)))}} {{#cannot use custom_message var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
 					{{pass}}
 					<div class="form-group">
 						<label class="col-sm-3 control-label">Email</label>
@@ -289,8 +289,8 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 							{{pass}}
 						</div>
 					</div>
-					
 					{{form.element("input", _type = "submit")["_value"] = "Join Us!" }}
+					{{form.element("input", _type = "submit")["_class"] += " btn-primary" }}
 					{{=form.custom.submit}}
 				{{elif request.args(0) == "reset_password":}}
 					<div class="form-group">
@@ -322,6 +322,9 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 					{{=form.custom.submit}}
 				{{pass}}
 			{{=form.custom.end}}
+			{{if "dealer_registration" in after_login_string:}}
+				<a href="{{=URL('default', 'dealership_form')}}"><button class="btn btn-default pull-right" style="margin-right:5px">Already have an account?</button></a>
+			{{pass}}
 		</div>
 	</div>
 	{{#auth() has poor parent customization compared to SQLFORM}}
