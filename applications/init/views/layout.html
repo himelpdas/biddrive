@@ -246,7 +246,7 @@
 								<li class="divider"></li>
 							{{pass}}
 							{{"""}}<li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>{{"""}}
-							<li><a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-cog fa-fw"></i>Profile</a></li>
+							<li><a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-gears fa-fw"></i>Profile</a></li>
                             <li><a href="{{=URL('default', 'user', args=['change_password' if auth.is_logged_in() else 'request_reset_password'])}}"><i class="fa fa-lock fa-fw"></i>{{if auth.is_logged_in():}}Password{{else:}}Lost password?{{pass}}</a></li>
 							<li class="divider"></li>
 							{{if auth.is_logged_in():}}

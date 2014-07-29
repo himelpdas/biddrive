@@ -10,6 +10,16 @@ from ago import human
 import simplecolor
 from collections import OrderedDict as OD #http://bit.ly/OhPhQr
 #import lookup_hash
+
+####SET ZERO IN PRODUCTION####
+if 0:
+	import logging
+	logger = logging.getLogger("web2py.app.biddrive")
+	#handler = logging.StreamHandler() #by default logs go to stdout or stderr, you can set it to file via FileH
+	#print logger.findCaller()
+	logger.setLevel(logging.DEBUG)
+######## http://goo.gl/BAU6cF
+
 	
 def quickRaise(error):
 	"""

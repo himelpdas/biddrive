@@ -132,7 +132,9 @@ def auction_requests():
 	is_blank = not bool(auction_requests)
 	blank_after_filter_message=None
 	if is_blank:
-		total_requests = len(db_filtering(all_query))
+		all_results = db_filtering(all_query)
+		total_requests = len(all_results)
+		#logger.debug(all_results[0].auction_request.id)
 		blank_after_filter_message = XML('<div class="text-light"><h4>There are %s requests on %s, but none are within your parameters.</h4><h5>Please try again later.</h5></div>'%(total_requests, APP_NAME) if is_blank else '')
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	for each_request in auction_requests:
