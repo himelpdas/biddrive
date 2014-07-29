@@ -10,6 +10,10 @@ motionless and gployencode (modules)
 smartthumb (custom module)
 edmunds (module)
 simplecolor (custom module)
+
+note pythonanywhere has most modules built in, but since this is technically a shared host you can't use pip to install to root python installation
+therefore python anywhere allows installation in a local directory pip install --user
+sometimes a local pip installation might not manifest immediatley, therefore you should restart the server, if that doesn't work see if running the local web2py.py webserver does the trick.
 --------
 ####setting up site####
 

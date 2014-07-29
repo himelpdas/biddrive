@@ -1,6 +1,6 @@
 {{extend 'page_layout.html'}}
 
-<h3><i class="fa fa-user"></i> {{=T( request.args(0).replace('_',' ').capitalize() )}}</h3>
+<h3><i class="fa fa-user"></i> {{=request.vars.custom_message or T( request.args(0).replace('_',' ').capitalize() )}}</h3>
 <hr>
 {{"""}}<!--
 <div id="web2py_user_form">
@@ -115,7 +115,7 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 
 				{{elif request.args(0) == "login":}}
 					{{if 'force_register' in after_login_string:}}
-						{{redirect(URL(request.controller, request.function, args='register', vars=dict(_next=after_login_string)))}}
+						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_message="Join our dealership network" if "dealership_form" in after_login_string else "", _next=after_login_string)))}} {{#cannot use custom_message var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
 					{{pass}}
 					<div class="form-group">
 						<label class="col-sm-3 control-label">Email</label>

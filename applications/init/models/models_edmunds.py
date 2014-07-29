@@ -1,47 +1,5 @@
 #do caching and db stuff here!
 
-if not db(db.auth_group.role == "dealers").select().first(): #cache!!
-	auth.add_group('dealers', 'only accounts that submitted an admin-verified dealership application may join this group.')
-
-if not db(db.auth_group.role == "admins").select().first(): #cache!!
-	auth.add_group('admins', 'has access to various non-public aspects of the database')
-	
-AUTH_ADMIN = False
-AUTH_DEALER = False
-if auth.user_id:
-	AUTH_ADMIN = auth.has_membership(user_id = auth.user_id, role = "admins")
-	if AUTH_ADMIN:
-		response.menu.append(
-			(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
-				(T('DB management'), False, URL('appadmin', 'index'), []),
-				(T('Dealership requests'), False, URL('admin', 'dealership_requests'), []),
-				(T('Manage auctions'), False, URL('admin', 'manage_auctions'), []),
-				(T('Manage buyers'), False, URL('admin', 'manage_buyers'), []),
-				(T('Manage dealers'), False, URL('admin', 'manage_dealers'), []),
-			]),
-		)
-# if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]
-	AUTH_DEALER = auth.has_membership(user_id = auth.user_id, role = "dealers")
-	if AUTH_DEALER:
-		response.menu.append(
-			(T('Dealer portal'), False, URL('dealer', 'auction_requests'), [
-				(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, URL('dealer', 'auction_requests'), []),
-				(XML('<i class="fa fa-fw fa-info-circle"></i> Dealership info'), False, URL('dealer', 'dealer_info'), []),
-				#(T('Messages'), False, URL('dealer', 'messages'), []),
-				#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
-				(XML('<i class="fa fa-fw fa-gavel"></i> Entered auctions'), False, URL('dealer', 'my_auctions'), []),
-				(XML('<i class="fa fa-fw fa-btc"></i> Purchase credits'), False, URL('billing', 'buy_credits'), []),
-			]),
-		)
-	"""
-	AUTH_BUYER = not auth.has_membership(user_id = auth.user_id, role = "dealers")
-	if AUTH_BUYER:
-		response.menu.append(
-			(T('Buyer portal'), False, URL('default', 'auction_history'), [
-				(T('Auction history'), False, URL('default', 'auction_history'), []),
-			]),
-		)
-	"""
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
 
 #####GENERATE BRANDSLIST#####
@@ -131,46 +89,46 @@ db.define_table('dealership_info',
 		requires=IS_IN_SET(['US/Alaska', 'US/Arizona', 'US/Central', 'US/Eastern', 'US/Hawaii', 'US/Mountain', 'US/Pacific'], zero=None),
 	),
 	Field('monday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),	
 	Field('monday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),
 	Field('tuesday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),	
 	Field('tuesday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),
 	Field('wednesday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),	
 	Field('wednesday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),
 	Field('thursday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),	
 	Field('thursday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),
 	Field('friday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),	
 	Field('friday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),
 	Field('saturday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),	
 	Field('saturday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),
 	Field('sunday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),	
 	Field('sunday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Closed")),
+		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
 	),
 	Field('longitude', 'double',
 		required=True,

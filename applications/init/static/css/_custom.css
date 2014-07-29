@@ -23,3 +23,21 @@
 #ms-auction_request_offer_safety_options { 
 	width:100%; {{#align the multi-select jquery with the bootrap form}}
 }
+/*{{#verticle divider bs3 http://goo.gl/JHPAAw }}*/
+.navbar .divider-vertical {
+height: 40px;
+margin: 0 9px;
+border-right: 1px solid #ffffff;
+border-left: 1px solid #f2f2f2;
+}
+
+.navbar-inverse .divider-vertical {
+border-right-color: #222222;
+border-left-color: #111111;
+}
+
+@media (max-width: 767px) {
+.navbar-collapse .nav > .divider-vertical {
+    display: none;
+  }
+}

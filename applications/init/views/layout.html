@@ -236,8 +236,9 @@
 							<li><a href="{{=each_item[2]}}">{{=each_item[0]}}</a></li>
 						{{pass}}
 					{{pass}}
+					<li class="divider-vertical"></li>
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i> {{if auth.is_logged_in():}}Hello, {{=auth.user.first_name.capitalize()}}!{{else:}}Account{{pass}} <b class="caret"></b></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {{if auth.is_logged_in():}}Hello, {{=auth.user.first_name.capitalize()}}!{{else:}}Account{{pass}} <b class="caret"></b></a>
                         <ul class="dropdown-menu">
 							{{#auth_next = '/%s/%s/%s/'%(request.application, request.controller, request.function)}} {{#make sure user redirected to proper pages after auth form submissions}}
 							{{#auth_next_portal = '/%s/%s/%s'%(request.application, 'default', 'after_login_portal')}}
@@ -246,16 +247,21 @@
 								<li class="divider"></li>
 							{{pass}}
 							{{"""}}<li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>{{"""}}
-							<li><a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user fa-fw"></i>Profile</a></li>
+							<li><a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-cog fa-fw"></i>Profile</a></li>
                             <li><a href="{{=URL('default', 'user', args=['change_password' if auth.is_logged_in() else 'request_reset_password'])}}"><i class="fa fa-lock fa-fw"></i>{{if auth.is_logged_in():}}Password{{else:}}Lost password?{{pass}}</a></li>
 							<li class="divider"></li>
 							{{if auth.is_logged_in():}}
 								<li><a href="{{=URL('default', 'user', args=['logout'])}}"><i class="fa fa-power-off fa-fw"></i>Log out</a></li>
 							{{else:}}
-								<li><a href="{{=URL('default', 'user', args=['login'])}}"><i class="fa fa-key fa-fw"></i>Log in</a></li> {{#login/register should be taken to portal}}
+								<li><a href="{{=URL('default', 'user', args=['login'])}}"><i class="fa fa-sign-in fa-fw"></i>Log in</a></li> {{#login/register should be taken to portal}}
 							{{pass}}
                         </ul>
                     </li>
+					{{if not auth.user:}}
+						<li class="navbar-btn">
+							<button onClick="location.href='{{=URL('default', 'user', args=['register'] )}}'" class="btn btn-info btn-xs"><i class="fa fa-fw fa-thumbs-up"></i> Register</button> {{#have to use href because "a" tag will mess up button styling #http://bit.ly/1tkUb0l}}
+						</li>
+					{{pass}}
                 </ul>
             </div>
         </div>
