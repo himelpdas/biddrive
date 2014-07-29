@@ -678,7 +678,7 @@ def auction():
 			favorite_price='$%s'%last_favorite_choice_bid.bid
 	##################
 	#auction requests info
-	auction_ended_offer_expires = (auction_request.auction_expires - request.now).total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
+	auction_ended_offer_expires = (auction_request.offer_expires - request.now).total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
 	auction_request_info = dict(
 		id = str(auction_request.id),
