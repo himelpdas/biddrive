@@ -131,7 +131,7 @@ def screen_for_machine():
 		winners_piggy.update_record( credits = winners_piggy.credits - CREDITS_PER_SUCCESS) #remove one credit
 		db.credits_history.insert(change= -CREDITS_PER_SUCCESS, owner_id=winning_offer.owner_id, reason="Success fee", modified_by=winning_offer.owner_id)
 		resp.say("Connecting. ")
-	else "screen_complete" in request.args or not URL.verify(request, hmac_key=winning_offer_id, salt = winner_code):
+	else:
 		resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
 		resp.hangup() #hang up if no gather
 	return dict(resp=str(resp))
