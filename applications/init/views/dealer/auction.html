@@ -211,7 +211,7 @@
 					<tr>
 				{{if bid_form:}}
 					{{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
-					{{bid_form.element("input", _name = "bid")["_placeholder"] = "$" if not auction_request_info['is_lease'] else "$ (per month)" }}
+					{{bid_form.element("input", _name = "bid")["_placeholder"] = "$$$" if not auction_request_info['is_lease'] else "$ (per month)" }}
 					
 					{{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
 					{{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}

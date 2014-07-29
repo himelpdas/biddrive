@@ -163,14 +163,15 @@
 </div><!-- /.modal -->
 
 <script type="text/javascript">
-	$('#myModal').modal({backdrop:'static',keyboard:false, show:true}); {{#http://goo.gl/HAohdA}}
+	$('#myModal').modal({backdrop:'static',keyboard:false, show:true}); //{{#http://goo.gl/HAohdA}}
 	$('#certificate').css({
 		'-webkit-filter': 'blur(5px)',
 		'-moz-filter': 'blur(5px)',
 		'-o-filter': 'blur(5px)',
 		'-ms-filter': 'blur(5px)',
-		'filter': 'blur(5px)',
-	});
+		'filter:progid':'DXImageTransform.Microsoft.Blur(PixelRadius="5")',
+		'filter': 'url({{=URL("static", "images/cross_browser_blur.svg")}}#blur)',
+	}); //{{#http://goo.gl/EMJBKz IE10 and FF23 does not support yet so use this #http://goo.gl/yhclo}}
     $('.modal').modal('show');
 </script>
 {{"""}}
