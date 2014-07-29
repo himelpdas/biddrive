@@ -118,7 +118,7 @@ def screen_for_machine():
 	winner_code = request.args(1)
 	if set(['_color', '_year', '_make', '_model', '_id']).issubset(request.vars): #test is list values in list w/o comprehensions #http://goo.gl/mxqfX1 #this will NOT run on self redirect because vehicle vars will not be in url, thus it can proceed to db insertion
 		message = "This is the bid drive dot com automatic auction validation system. Press any key to skip the following message. Congratulations! You are the winning bidder of auction number {_id}, for a {_color} {_year} {_make} {_model}. The buyer initiated this call and is waiting on the line. Please press any key to connect to the buyer now. ".format(**request.vars)
-		hmac_hash = URL(hmac_key=str(winning_offer_id), salt = str(winner_code) ).split("_signature=")[-1] #need some kinda random number to ensure winner_code is safe... since there is no session to store a uuid, the winner_code is random and private enough
+		hmac_hash = URL('dealer', 'screen_for_machine', hmac_key=str(winning_offer_id), salt = str(winner_code) ).split("_signature=")[-1] #need some kinda random number to ensure winner_code is safe... since there is no session to store a uuid, the winner_code is random and private enough
 		with resp.gather(numDigits=1, action="%s/%s/screen_complete?_signature=%s"%(winning_offer_id, winner_code, hmac_hash), method="POST") as g: #if he pressed something go to a new function. #action would be screen_for_machine.xml/screen_complete
 			for each in range(3):
 				g.say(message)

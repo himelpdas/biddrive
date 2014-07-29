@@ -170,7 +170,7 @@
 		'-o-filter': 'blur(5px)',
 		'-ms-filter': 'blur(5px)',
 		'filter:progid':'DXImageTransform.Microsoft.Blur(PixelRadius="5")',
-		'filter': 'url({{=URL("static", "images/cross_browser_blur.svg")}}#blur)',
+		'filter': 'url({{=URL("static", "images/cross_browser_blur.svg")}}#blur)', //{{#CHANGE stdDeviation="5" in svg!}}
 	}); //{{#http://goo.gl/EMJBKz IE10 and FF23 does not support yet so use this #http://goo.gl/yhclo}}
     $('.modal').modal('show');
 </script>
@@ -178,7 +178,6 @@
 <script>{{#polling to see whether connection was made #http://goo.gl/17YuW}}
 (function poll(){
 	$.ajax({ url: "{{=URL('init', 'ajax', 'contact_made.json', args=[winner_code])}}{{#TODO hmac enforce}}", success: function(data){
-        //Update your dashboard gauge
         if (data.status=="success"){
 			$('#refresh_certificate').click(function() {
 				location.reload();
