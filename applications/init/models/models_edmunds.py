@@ -217,7 +217,7 @@ db.define_table('auction_request',
 		#compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['exterior_colors'] ], 
 	), #FIXED WITH required=True #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS
 	Field('must_haves', 'list:string',
-		requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
+		#requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
 	),	
 	Field('FICO_credit_score',
 		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '620 or less', ]), multiple=False, zero="I don't know")),
@@ -387,7 +387,10 @@ db.define_table('auction_request_offer',
 	Field('summary', 'text',
 		requires=IS_NOT_EMPTY(),
 	),	
-	Field('fineprint', 'text',
+	Field('dealership_fees', 'integer',
+		requires=IS_EMPTY_OR(IS_INT_IN_RANGE(0,20000)),
+	),
+	Field('dealership_fees_details', 'text',
 	),	
 	#about us
 	###################IMGS#####################
@@ -551,7 +554,7 @@ db.define_table('auction_request_offer',
 	Field.Method('latest_bid', #this offers latest bid
 		lambda row: db((db.auction_request_offer_bid.auction_request == row.auction_request_offer.auction_request) & (row.auction_request_offer.id == db.auction_request_offer_bid.auction_request_offer)).select().first() #get the bid that has this auction request, and auction request offer
 	),#continue
-	Field.Method('MSRP',
+	Field.Method('estimation',
 		lambda row, auction_request=None: getMsrp(
 			auction_request or db(db.auction_request.id == row.auction_request_offer.auction_request).select().first().trim_data,
 			{
@@ -562,7 +565,7 @@ db.define_table('auction_request_offer',
 				'Additional Fees':row.auction_request_offer.fees_options,
 				'Safety':row.auction_request_offer.safety_options,
 			}
-		)
+		) + row.auction_request_offer.dealership_fees
 	),
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer_bid.auction_request_offer == row.auction_request_offer.id).select())
@@ -597,8 +600,8 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 	Field('final_bid', 'datetime',
 		compute= lambda row: request.now+datetime.timedelta(hours = row['end_sooner_in_hours']) if row['end_sooner_in_hours'] else None,
 	),
-	Field.Method('MSRP_discount',
-		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.MSRP() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().MSRP())*100,
+	Field.Method('estimation_discount',
+		lambda row, offer=None: 100-(row.auction_request_offer_bid.bid)/float(offer.auction_request_offer.estimation() if offer else db(db.auction_request_offer.id == row.auction_request_offer_bid.auction_request_offer).select().last().estimation())*100,
 	),
 	auth.signature,
 )

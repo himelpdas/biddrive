@@ -21,7 +21,9 @@
 				{{ form.element("select", _name = "safety_options")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "fees_options")["_class"] += " form-control" }}
 				{{ form.element("textarea", _name = "summary")["_class"] += " form-control" }}
-				{{ form.element("textarea", _name = "fineprint")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "dealership_fees")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "dealership_fees")["_placeholder"] = "$$$" }}
+				{{ form.element("textarea", _name = "dealership_fees_details")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "exterior_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "interior_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "front_image")["_class"] += " form-control" }}
@@ -109,7 +111,7 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label">Safety</label>
+					<label class="col-sm-3 control-label">Safety options</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.safety_options}}
 
@@ -119,7 +121,7 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label">Fees</label>
+					<label class="col-sm-3 control-label">Regulatory fees</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.fees_options}}
 
@@ -129,22 +131,32 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Only put info about this vehicle! Ex. Condition, miles, defects, additional features, etc."></i> Summary</label>
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="The total dollar value of ALL fees from your dealership regarding this vehicle."></i> Dealership fees cost</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.dealership_fees}}
+
+						{{if form.errors['dealership_fees']:}}
+							<div class="alert alert-warning">{{=form.errors['dealership_fees']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Describe ALL additional fees from your dealership regarding this vehicle."></i> Dealership fees description</label>
+					<div class="col-sm-9">
+						{{=form.custom.widget.dealership_fees_details}}
+
+						{{if form.errors['dealership_fees_details']:}}
+							<div class="alert alert-warning">{{=form.errors['dealership_fees_details']}}</div>
+						{{pass}}
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Only put info about this vehicle! Ex. Condition, miles, defects, additional features, etc."></i> Vehicle summary</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.summary}}
 
 						{{if form.errors['summary']:}}
 							<div class="alert alert-warning">{{=form.errors['summary']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="This is a good place to put information about additional fees, available upgrades and services, etc."></i> Additional info</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.fineprint}}
-
-						{{if form.errors['fineprint']:}}
-							<div class="alert alert-warning">{{=form.errors['fineprint']}}</div>
 						{{pass}}
 					</div>
 				</div>
@@ -313,6 +325,7 @@
 								{{request_trim_data = json.loads(auction_request_info['auction_request'].trim_data)}}
 								{{must_haves = auction_request_info['auction_request'].must_haves}}
 								{{if must_haves:}}
+								{{#"""}}
 									{{for each_option in must_haves:}}
 										{{has_option_data = False}}
 										{{for each_option_type in option_names:}}
@@ -327,6 +340,7 @@
 											</li>{{=each_option}}</li> {{#then just show the id number}}
 										{{pass}}
 									{{pass}}
+								{{#"""}}
 								{{else:}}<li>No preference</li>
 								{{pass}}
 							</ul>
@@ -419,7 +433,7 @@
 				{{pass}}
 				</table>
 			<h4>
-				<span class="text-light">Estimated MSRP — $&nbsp;</span><span class="{{#pull-right}}" id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span>{{#http://goo.gl/aOI4}}
+				<span class="text-light">&nbsp;&nbsp;Estimation — </span><span class="{{#pull-right}}" id='msrp'>${{="{:,}".format(int(msrp_by_id['base']))}}</span>{{#http://goo.gl/aOI4}}
 			</h4>
 		</div>
 	</div>
@@ -599,17 +613,20 @@ $(document).ready(function(){
 <script>
 	{{offer_types = ['interior','exterior','mechanical','package','fees','safety']}}
 	{{for each_offer_type in offer_types:}}
-		$("#auction_request_offer_{{=each_offer_type}}_options").multiSelect('refresh'); //initialize multiselect
+		$("#auction_request_offer_{{=each_offer_type}}_options").multiSelect('refresh'); //{{#initialize multiselect}}
 	{{pass}}
 
 	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; {{#ok to use name instead of id because there is no character limitations like at get url}}
-	$('.ms-container').click(function(){
+	function update_estimation(){
 		var msrp = msrp_by_id['base'];
 		var list = $(".ms-selected").map(function(){return $(this).children().text();}).get(); {{#map runs a function on each element}}
 		list.map( function(item) {
-			msrp = msrp + msrp_by_id[item];
+			msrp = msrp + msrp_by_id[item]
 		});
+		msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_dealership_fees").val() || 0)) || 0); //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
 		$('#msrp').html(msrp);
-	});
+	}
+	$("#auction_request_offer_dealership_fees").change(update_estimation);
+	$('.ms-container').click(update_estimation);
 </script>{{#http://goo.gl/IpBLpn http://goo.gl/cB089T http://goo.gl/IpBLpn http://goo.gl/WvuDbj http://goo.gl/HwI81Q}}
 {{#"""}}

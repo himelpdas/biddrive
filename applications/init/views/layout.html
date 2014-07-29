@@ -20,7 +20,7 @@
 
     <script src="http://code.jquery.com/jquery-latest.js"></script>
 	
-	{{if request.function in ['dealership_form', 'dealer_info']:}}
+	{{if request.function in ['dealership_form', 'dealer_info', 'pre_auction']:}}
 		<script src="{{=URL('static','js/jquery.maskedinput.min.js')}}"  type="text/javascript"></script>{{#http://bit.ly/1ck85cy}}
 	{{pass}}
 	{{if request.function in ['request_by_make']:}}
@@ -44,7 +44,6 @@
 		<script src="{{=URL('static','js/jquery-blink.js')}}"  type="text/javascript"></script>
 	{{pass}}
 
-	{{pass}}
 	{{"""}}
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=%s&sensor=false"%GMAPS_KEY>

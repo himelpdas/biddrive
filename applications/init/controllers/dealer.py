@@ -727,7 +727,7 @@ def auction():
 		reverse = False
 		if sortby == "retail_price-down":
 			reverse = True
-		auction_request_offers = auction_request_offers.sort(lambda row: row.auction_request_offer.MSRP(), reverse=reverse)
+		auction_request_offers = auction_request_offers.sort(lambda row: row.auction_request_offer.estimation(), reverse=reverse)
 		
 	#Discount (%off)
 	if not is_lease:
@@ -739,7 +739,7 @@ def auction():
 			def msrp_discount(row):
 				latest_bid = row.auction_request_offer.latest_bid()
 				if latest_bid:
-					return latest_bid.MSRP_discount()
+					return latest_bid.estimation_discount()
 				return 0
 			auction_request_offers = auction_request_offers.sort(msrp_discount, reverse=reverse)
 	
@@ -791,7 +791,7 @@ def auction():
 		#pricing stuff
 		bids = db((db.auction_request_offer_bid.owner_id == each_offer.auction_request_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
 		number_of_bids = len(bids)
-		msrp = each_offer.auction_request_offer.MSRP()
+		msrp = each_offer.auction_request_offer.estimation()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
 		#last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
 		last_bid_price = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = final_bid_ended = None
@@ -1025,7 +1025,7 @@ def auction():
 			'has_message_from_buyer' : has_message_from_buyer,
 			'is_winning_offer' :is_winning_offer,
 			'is_my_offer': is_my_offer,
-			'additional_info':each_offer.auction_request_offer['fineprint'],
+			'additional_info':each_offer.auction_request_offer['dealership_fees_details'],
 			'about_us':each_offer.dealership_info['mission_statement'],
 			'bid_is_final': bool(bid_is_final),
 			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,
@@ -1074,10 +1074,10 @@ def auction():
 			'roof_images' : each_offer.auction_request_offer.roof_image_compressed,
 			#'other_image' : each_offer.auction_request_offer.other_image,
 			'other_images' : each_offer.auction_request_offer.other_image_compressed,
-			'msrp': '$%s'%msrp,
+			'estimation': '$%s'%msrp,
 			'offer_distance_to_auction_request': '%0.2f'%this_dealer_distance,
-			'msrp_discount_percent': '%0.2f%%'% (last_bid.MSRP_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
-			'msrp_discount_dollars':'$%s'%(int(msrp) - int(msrp if not last_bid_price else last_bid_price),),
+			'estimation_discount_percent': '%0.2f%%'% (last_bid.estimation_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
+			'estimation_discount_dollars':'$%s'%(int(msrp) - int(msrp if not last_bid_price else last_bid_price),),
 		}
 		#auction_request_offers_info.append(each_offer_dict)
 		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction

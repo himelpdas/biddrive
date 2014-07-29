@@ -26,7 +26,7 @@
 						</th>
 
 						<td style="border-top: none">
-							{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}} <a href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-info-circle"></i></a>
+							<a href="#info_modal" data-target="#info_modal" data-toggle="modal">{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}} <i class="fa fa-info-circle"></i></a>
 						</td>
 					</tr>					
 
@@ -489,11 +489,11 @@
 					<table class="table table-hover text-sm">
 						<tr>
 							<th style="border-top: none">
-								MSRP
+								Retails for
 							</th>
 
 							<td style="border-top: none">
-								{{=each_offer['msrp']}}
+								{{=each_offer['estimation']}}
 							</td>
 						</tr>
 					{{if not auction_request_info['is_lease']:}}
@@ -503,7 +503,7 @@
 							</th>
 
 							<td>
-								{{=each_offer['msrp_discount_percent']}} off <span class="text-sm text-light pull-right">{{if is_owner:}}You'll{{else:}}Buyer will{{pass}} save {{=each_offer['msrp_discount_dollars']}}</span>
+								{{=each_offer['estimation_discount_percent']}} off <span class="text-sm text-light pull-right">{{if is_owner:}}You'll{{else:}}Buyer will{{pass}} save {{=each_offer['estimation_discount_dollars']}}</span>
 							</td>
 						</tr>
 					{{pass}}
@@ -562,8 +562,8 @@
 				<hr>
 				<!-- Nav tabs -->
 				<ul class="nav nav-tabs nav-justified ">
-					<li class="active"><a href="#dd_{{=each_offer['id']}}" data-toggle="tab">Options included</a></li>
-					<li><a href="#ques_{{=each_offer['id']}}" data-toggle="tab">Other details</a></li>
+					<li class="active"><a href="#dd_{{=each_offer['id']}}" data-toggle="tab">Vehicle details</a></li>
+					<li><a href="#ques_{{=each_offer['id']}}" data-toggle="tab">Dealer details</a></li>
 				</ul>
 
 				<!-- Tab panes -->
@@ -572,7 +572,7 @@
 						<div class="row-fluid margin-top-10">
 							<div class="col-xs-4">
 								<div class="col-xs-2 text-bold">
-									Exterior:
+									Exterior options:
 								</div>
 								<div class="col-xs-10">
 									<ul>
@@ -587,7 +587,7 @@
 							</div>
 							<div class="col-xs-4">
 								<div class="col-xs-2 text-bold">
-									Interior:
+									Interior options:
 								</div>
 								<div class="col-xs-10">
 									<ul>
@@ -602,7 +602,7 @@
 							</div>
 							<div class="col-xs-4">
 								<div class="col-xs-2 text-bold">
-									Mechanical:
+									Mechanical options:
 								</div>
 								<div class="col-xs-10">
 									<ul>
@@ -624,7 +624,7 @@
 						<div class="row-fluid margin-top-10">
 							<div class="col-xs-4">
 								<div class="col-xs-2 text-bold">
-									Package:
+									Packages:
 								</div>
 								<div class="col-xs-10">
 									<ul>
@@ -639,7 +639,7 @@
 							</div>							
 							<div class="col-xs-4">
 								<div class="col-xs-2 text-bold">
-									Safety:
+									Safety options:
 								</div>
 								<div class="col-xs-10">
 									<ul>
@@ -654,7 +654,7 @@
 							</div>
 							<div class="col-xs-4">
 								<div class="col-xs-2 text-bold">
-									Fees:
+									Regulatory fees:
 								</div>
 								<div class="col-xs-10">
 									<ul>
@@ -674,32 +674,26 @@
 						<div class="row-fluid margin-top-10">
 							<div class="col-xs-6">
 								<div class="col-xs-3 text-bold">
-									Additional info:
+									Dealership fees:
 								</div>
 								<div class="col-xs-9">
-									<ul>
-										<li>
-											{{if not each_offer['additional_info']:}}
-												<i>Not specified</i>
-											{{else:}}
-												{{=each_offer['additional_info']}}
-											{{pass}}
-									</ul>
+									{{if not each_offer['additional_info']:}}
+										<i>Not specified</i>
+									{{else:}}
+										{{=each_offer['additional_info']}}
+									{{pass}}
 								</div>
 							</div>
 							<div class="col-xs-6">
 								<div class="col-xs-3 text-bold">
-									About us:
+									About dealer:
 								</div>
 								<div class="col-xs-9">
-									<ul>
-										<li>
-											{{if not each_offer['about_us']:}}
-												<i>Not specified</i>
-											{{else:}}
-												{{=each_offer['about_us']}}
-											{{pass}}
-									</ul>
+									{{if not each_offer['about_us']:}}
+										<i>Not specified</i>
+									{{else:}}
+										{{=each_offer['about_us']}}
+									{{pass}}
 								</div>
 							</div>
 						</div>
