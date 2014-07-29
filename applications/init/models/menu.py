@@ -37,11 +37,11 @@ AUTH_DEALER = auth.has_membership(user_id = auth.user_id, role = "dealers")
 if AUTH_ADMIN:
 	response.menu.append(
 		(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
-			(T('DB management'), False, URL('appadmin', 'index'), []),
-			(T('Dealership requests'), False, URL('admin', 'dealership_requests'), []),
-			(T('Manage auctions'), False, URL('admin', 'manage_auctions'), []),
-			(T('Manage buyers'), False, URL('admin', 'manage_buyers'), []),
-			(T('Manage dealers'), False, URL('admin', 'manage_dealers'), []),
+			(XML('<i class="fa fa-fw fa-caret-right"></i> DB management'), False, URL('appadmin', 'index'), []),
+			(XML('<i class="fa fa-fw fa-caret-right"></i> Dealership requests'), False, URL('admin', 'dealership_requests'), []),
+			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage auctions'), False, URL('admin', 'manage_auctions'), []),
+			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage buyers'), False, URL('admin', 'manage_buyers'), []),
+			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage dealers'), False, URL('admin', 'manage_dealers'), []),
 		]),
 	)
 # if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]
@@ -53,7 +53,7 @@ dealer_portal_menu_list=[
 		(XML('<i class="fa fa-fw fa-gavel"></i> Entered auctions'), False, URL('dealer', 'my_auctions'), []),
 		(XML('<i class="fa fa-fw fa-btc"></i> Purchase credits'), False, URL('billing', 'buy_credits'), []),
 	] if AUTH_DEALER else [
-		(XML('<i class="fa fa-fw fa-caret-right"></i> Dealer login'), False, URL('default', 'user', args=["login"], vars=dict(custom_message="Dealer login")), []),
+		(XML('<i class="fa fa-fw fa-caret-right"></i> Dealer login'), False, URL('default', 'user', args=["login"], vars=dict(custom_title="Dealer login")), []),
 		(XML('<i class="fa fa-fw fa-caret-right"></i> Join us!'), False, URL('default', "dealership_form", args=["force_register", "dealer_registration"]), []),
 	]
 

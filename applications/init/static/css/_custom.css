@@ -41,3 +41,10 @@ border-left-color: #111111;
     display: none;
   }
 }
+/*{{#Bootstrap XL button http://goo.gl/Pzi08w}}*/
+.btn-xl {
+	padding: 15px 22px;
+	font-size: 24px;
+	line-height: 1.33;
+	border-radius: 6px
+}
