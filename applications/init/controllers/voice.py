@@ -137,6 +137,7 @@ def screen_for_machine():
 		db.credits_history.insert(change= -CREDITS_PER_SUCCESS, owner_id=winning_offer.owner_id, reason="Success fee", modified_by=winning_offer.owner_id)
 		resp.say("Connecting. ")
 	else:
+		quickRaise("HMAC failed")
 		resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
 		resp.hangup() #hang up if no gather
 	return dict(resp=str(resp))
