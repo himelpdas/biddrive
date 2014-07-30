@@ -412,7 +412,7 @@
 				{{elif each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
 					<div style="position:absolute;width:100%;">
 						<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-							<button class="btn btn-danger btn-xs center-block">
+							<button class="btn btn-danger btn-xs center-block" onClick="return confirm('Are you sure you want to buy this now?')">
 								<i class="fa fa-fw fa-bell-o"></i> Buy it now! (Less than {{=final_bid_hours_left}} left)
 							</button>
 						</a>
