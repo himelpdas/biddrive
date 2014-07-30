@@ -1,3 +1,5 @@
+import hmac
+
 def vehicle_content():
 	if not request.args:
 		return dict() #maybe 404
@@ -29,92 +31,98 @@ def vehicle_content():
 
 	return dict(make_details=make_details, make_photos=make_photos, year=year)
 	
-def exterior_colors(): #TODO get all data from single call make/model/year
-	if not request.args:
-		return dict() #maybe 404
+def options_content(): #TODO get all data from single call make/model/year
+	server_side_digest = hmac.new(str(hash(session.salt)), '%s%s%s%s'%(request.args[0], request.args[1], request.args[2], request.args[3])).hexdigest() #http://goo.gl/BtlcAZ #Make, Model, Year, StyleID, 4 = SESSION_ID #hmac.new("Secret Passphrase", Message);
+	client_side_digest = request.args[-1]
+	logger.debug("sEC:%s"%server_side_digest); logger.debug("cEC:%s"%client_side_digest)
+	if not server_side_digest == client_side_digest:
+		raise HTTP(404)
 	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
-	style_colors=style['colors']#[1]['options']
-	#make sure color data is safe for the multiselect form submission in request_by_make
-	"""
-	for each_color in style_colors:#replacced with colorChipsErrorFix()
-		if each_color['category'] == 'Exterior':
-			counter=0#USE ENUMERATE
-			for each_option in each_color['options']:
-				if not 'colorChips' in each_option:
-					del each_color['options'][counter]
-				counter+=1
-	"""
-	colorChipsErrorFix(style_colors)
-	style_colors = style['colors'] [[each['category']=='Exterior' for each in style['colors']].index(True)] ['options']
-	style_color_codes = []
-	for each_color in style_colors:
-		style_color_codes.append([
-			each_color['id'],
-			each_color['name']
-		])
-	#style_color_codes.sort(key=lambda x: x[1])
-	session.style_color_codes = style_color_codes
-	return dict(style_colors=style_colors)
-	
-def must_haves():
-	#each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.id], hmac_key=each_request.temp_id, hash_vars=[each_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
-	#arg 0,1,2,3 is year make model and style id, make hmac key style id, even though it doesn't matter what is used as style id, as long as they're hashed together. salt is a hidden random string defined in _imports.py
-	#if not URL.verify(request, hmac_key=request.args[3], salt = session.salt, hash_vars=[request.args[0], request.args[1], request.args[2]): #verifys all args (or ones specified) in a url
-	#	return dict()
-	trim_data = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
-	options = trim_data['options']
-	
-	option_codes = []
-
-	for each_option_type in options:
-		if each_option_type['category'] in ['Interior','Exterior','Mechanical','Package', 'Safety']:
-			for each_option in each_option_type['options']:
-				option_codes.append([each_option['id'], each_option['name'], each_option['description'] if 'description' in each_option else None])
-	
-	session.option_codes = map(lambda each_option: [each_option[0],  each_option[1]], option_codes) #requires in default function needs id, names
-	
-	return dict(option_codes = option_codes)
-	
-def style_details(): #OLD#getting details by style id rather than parsing through make/model/year makes it harder for hackers to fake get values# FIXED WITH DIGITALLY SIGNED URLS
-	make = request.args[0]
-	model = request.args[1]
-	year = request.args[2] 
-	style_id = request.args[3]
-	style = getStyleByMakeModelYearStyleID(make, model, year, style_id)
-	style_colors = exterior_colors()
-	colors=[]
-	for each_color in style_colors['style_colors']:
-		colors.append([each_color['name'], each_color['colorChips']['primary']['hex']])
-	
-	options_descriptions = []
-	for each_option in must_haves()['option_codes']:
-		if each_option[2] and each_option[2] != each_option[1]:
-			options_descriptions.append([each_option[1],each_option[2]]) #append name and description
+	(make, model, year, style_id) = (request.args[0], request.args[1], request.args[2],  request.args[3])
+	def __exterior_colors__():
+		style_colors=style['colors']#[1]['options']
+		#make sure color data is safe for the multiselect form submission in request_by_make
+		"""
+		for each_color in style_colors:#replacced with colorChipsErrorFix()
+			if each_color['category'] == 'Exterior':
+				counter=0#USE ENUMERATE
+				for each_option in each_color['options']:
+					if not 'colorChips' in each_option:
+						del each_color['options'][counter]
+					counter+=1
+		"""
+		colorChipsErrorFix(style_colors)
+		style_colors = style['colors'] [[each['category']=='Exterior' for each in style['colors']].index(True)] ['options']
+		style_color_codes = []
+		for each_color in style_colors:
+			style_color_codes.append([
+				each_color['id'],
+				each_color['name']
+			])
+		#style_color_codes.sort(key=lambda x: x[1])
+		session.style_color_codes = style_color_codes
+		return dict(style_colors=style_colors)
 		
-	stats = dict(
-		mpg_city = ['MPG city, hwy' , '%s, %s'%(style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A', style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A')],
-		#mpg_city = ['MPG city' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
-		#mpg_hwy = ['MPG highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
-		#fuel_type = ['Fuel type' , style['engine']['fuelType'].capitalize()],
-		hp = ['Motor' , '%s, V%s, %s hp'%(style['engine']['type'].capitalize(), style['engine']['cylinder'] , style['engine']['horsepower'] if 'engine' in style and 'horsepower' in style['engine'] else 'N/A')],
-		#torque = ['Engine torque' , style['engine']['torque'] if 'engine' in style and 'torque' in style['engine'] else 'N/A'],
-		#v =  ['Cylinders' , style['engine']['cylinder']],
-		drive = ['Driven wheels' , style['drivenWheels'].capitalize()],
-		body = ['Body type' , '%s door %s'%(style['numOfDoors'],style['submodel']['body'])],
-		trans = ['Transmission' ,'%s speed %s'%(str(style['transmission']['numberOfSpeeds']).capitalize(), style['transmission']['transmissionType'].lower().replace('_', ' '))],
-		#trans = ['Transmission type' , style['transmission']['transmissionType'].capitalize().replace('_', ' ')],
-		#speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
-		base_msrp = ['Base MSRP', '$%0.0f'%style['price']['baseMSRP']],
-		estimate = ['%s estimate'%APP_NAME.replace('(Alpha)', ''), '$%0.0f'%(int(style['price']['baseMSRP'])-random.randrange(3000,6000),)],
-		colors=['Color options', colors],
-		#manufacturer_code = ['Code', style['manufacturerCode'] if 'manufacturerCode' in style else 'N/A'],
-		#fuel = ['Fuel type', style['engine']['type'].capitalize()],
-		#doors = ['Doors' , style['numOfDoors']],
+	def __must_haves__():
+		#each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.id], hmac_key=each_request.temp_id, hash_vars=[each_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
+		#arg 0,1,2,3 is year make model and style id, make hmac key style id, even though it doesn't matter what is used as style id, as long as they're hashed together. salt is a hidden random string defined in _imports.py
+		#if not URL.verify(request, hmac_key=request.args[3], salt = session.salt, hash_vars=[request.args[0], request.args[1], request.args[2]): #verifys all args (or ones specified) in a url
+		#	return dict()
+		trim_data = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
+		options = trim_data['options']
+		
+		option_codes = []
+
+		for each_option_type in options:
+			if each_option_type['category'] in ['Interior','Exterior','Mechanical','Package', 'Safety']:
+				for each_option in each_option_type['options']:
+					option_codes.append([each_option['id'], each_option['name'], each_option['description'] if 'description' in each_option else None])
+		
+		session.option_codes = map(lambda each_option: [each_option[0],  each_option[1]], option_codes) #requires in default function needs id, names
+		
+		return dict(option_codes = option_codes)
+		
+	def __style_details__(): #OLD#getting details by style id rather than parsing through make/model/year makes it harder for hackers to fake get values# FIXED WITH DIGITALLY SIGNED URLS
+		#NO NEED TO HMAC VERIFY IT IS DONE IN EXTERIOR_COLORS AND MUST_HAVES, ONLY DO IN CLIENT VIEW #DRY?
+		style_colors = __exterior_colors__()
+		colors=[]
+		for each_color in style_colors['style_colors']:
+			colors.append([each_color['name'], each_color['colorChips']['primary']['hex']])
+		
+		options_descriptions = []
+		for each_option in __must_haves__()['option_codes']:
+			if each_option[2] and each_option[2] != each_option[1]:
+				options_descriptions.append([each_option[1],each_option[2]]) #append name and description
+			
+		stats = dict(
+			mpg_city = ['MPG city, hwy' , '%s, %s'%(style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A', style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A')],
+			#mpg_city = ['MPG city' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
+			#mpg_hwy = ['MPG highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
+			#fuel_type = ['Fuel type' , style['engine']['fuelType'].capitalize()],
+			hp = ['Motor' , '%s, V%s, %s hp'%(style['engine']['type'].capitalize(), style['engine']['cylinder'] , style['engine']['horsepower'] if 'engine' in style and 'horsepower' in style['engine'] else 'N/A')],
+			#torque = ['Engine torque' , style['engine']['torque'] if 'engine' in style and 'torque' in style['engine'] else 'N/A'],
+			#v =  ['Cylinders' , style['engine']['cylinder']],
+			drive = ['Driven wheels' , style['drivenWheels'].capitalize()],
+			body = ['Body type' , '%s door %s'%(style['numOfDoors'],style['submodel']['body'])],
+			trans = ['Transmission' ,'%s speed %s'%(str(style['transmission']['numberOfSpeeds']).capitalize(), style['transmission']['transmissionType'].lower().replace('_', ' '))],
+			#trans = ['Transmission type' , style['transmission']['transmissionType'].capitalize().replace('_', ' ')],
+			#speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
+			base_msrp = ['Base MSRP', '$%0.0f'%style['price']['baseMSRP']],
+			estimate = ['%s estimate'%APP_NAME.replace('(Alpha)', ''), '$%0.0f'%(int(style['price']['baseMSRP'])-random.randrange(3000,6000),)],
+			colors=['Color options', colors],
+			#manufacturer_code = ['Code', style['manufacturerCode'] if 'manufacturerCode' in style else 'N/A'],
+			#fuel = ['Fuel type', style['engine']['type'].capitalize()],
+			#doors = ['Doors' , style['numOfDoors']],
+		)
+		stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
+		return dict(stats = stats, options_descriptions=options_descriptions, make = make, model = model, year = year, style_id = style_id)
+	
+	return dict(
+		style_colors=__exterior_colors__()['style_colors'], option_codes = __must_haves__()['option_codes'], style_details_html_string=XML(response.render('ajax/style_details.html', __style_details__() ) ),
 	)
-	stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
-	return dict(stats = stats, options_descriptions=options_descriptions, make = make, model = model, year = year, style_id = style_id)
 
 def reviews():
+	#leave as is, no need to protect because no vals go into db
 	reviews = ed_call(REVIEWS_URI%request.args[0])
 	if reviews and 'reviews' in reviews:
 		return dict(reviews = reviews['reviews'])
@@ -122,6 +130,7 @@ def reviews():
 		return dict(reviews = {})
 		
 def style_photos():
+	#leave as is, no need to protect because no vals go into db
 	style_id = request.args[0]
 	style_photos = findPhotosByStyleID(style_id) or [] #some models doesn't return an image ex. 2014 Kia cadenza.
 	photos = []
@@ -134,6 +143,7 @@ def style_photos():
 	return dict(photos=photos)
 	
 def dealer_radius_map(): #CACHE CACHE CACHE!!
+	#leave as is, no need to protect because no vals go into db
 	zipcode = request.args(2)
 	radius = request.args[1]
 	make = request.args[0]

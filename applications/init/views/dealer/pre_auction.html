@@ -285,7 +285,7 @@
 		{{=form.custom.end}}
 	</div>
 	<div class= "col-md-5 col-sm-4 hidden-xs" style="position:relative;">
-		<div id="user_info" style="position:fixed; border: #ccc solid; border-radius:8px; height:240px;overflow-y:scroll;">
+		<div id="user_info" style="position:fixed; border: #ccc solid; border-radius:8px; height:270px;overflow-y:scroll;">
 			{{#<button class="btn btn-info" href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-fw fa-user"></i>View buyer info</button>}}
 				<pre>Details of {{=auction_request_info['first_name']}} {{=auction_request_info['last_init']}} from {{=auction_request_info['city']}}, {{=auction_request_info['state']}}, {{=auction_request_info['zip_code']}}</pre>
 				<table class="table">
@@ -305,7 +305,7 @@
 						</th>
 						<td>
 							<ul>
-								{{for each_color_name in auction_request_info['auction_request'].color_names:}}
+								{{for each_color_name in auction_request_info['auction_request'].exterior_color_names:}}
 									<li>
 										{{=each_color_name}}
 									</li>
@@ -432,8 +432,9 @@
 					</tr>
 				{{pass}}
 				</table>
+			<hr>
 			<h4>
-				<span class="text-light">&nbsp;&nbsp;Estimation — </span>$<span class="{{#pull-right}}" id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span>{{#http://goo.gl/aOI4}}
+				<span class="text-light">&nbsp;&nbsp;Your vehicle's estimation — </span><h3>&nbsp;&nbsp;$<span id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span></h3>{{#http://goo.gl/aOI4}}
 			</h4>
 		</div>
 	</div>
@@ -475,7 +476,7 @@ $(document).ready(function(){
 						</th>
 						<td>
 							<ul>
-								{{for each_color_name in auction_request_info['auction_request'].color_names:}}
+								{{for each_color_name in auction_request_info['auction_request'].exterior_color_names:}}
 									<li>
 										{{=each_color_name}}
 									</li>
@@ -616,17 +617,20 @@ $(document).ready(function(){
 		$("#auction_request_offer_{{=each_offer_type}}_options").multiSelect('refresh'); //{{#initialize multiselect}}
 	{{pass}}
 
-	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; {{#ok to use name instead of id because there is no character limitations like at get url}}
+	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; //{{#ok to use name instead of id because there is no character limitations like at get url}}
 	function update_estimation(){
 		var msrp = msrp_by_id['base'];
-		var list = $(".ms-selected").map(function(){return $(this).children().text();}).get(); {{#map runs a function on each element}}
+		var msrp = msrp + msrp_by_id[$("#auction_request_offer_color").val()]; //{{#note val returns ids not names}}
+		var list = $(".ms-selected").map(function(){return $(this).children().text();}).get(); //{{#map runs a function on each element}}
 		list.map( function(item) {
 			msrp = msrp + msrp_by_id[item]
 		});
 		msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_dealership_fees").val() || 0)) || 0); //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
 		$('#msrp').html(msrp);
 	}
+	$("#auction_request_offer_color").change(update_estimation);
 	$("#auction_request_offer_dealership_fees").change(update_estimation);
+	$('.ms-container').click(update_estimation);
 	$('.ms-container').click(update_estimation);
 </script>{{#http://goo.gl/IpBLpn http://goo.gl/cB089T http://goo.gl/IpBLpn http://goo.gl/WvuDbj http://goo.gl/HwI81Q}}
 {{#"""}}

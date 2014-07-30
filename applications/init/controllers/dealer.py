@@ -307,7 +307,9 @@ def pre_auction():
 	safety_options_names = []
 	
 	msrp_by_id = {'base':trim_data['price']['baseMSRP']}
-
+	logger.debug(auction_request.exterior_color_prices)
+	msrp_by_id.update(dict(zip(auction_request.exterior_colors,auction_request.exterior_color_prices) ) )
+	
 	for each_option in interior_options:
 		if 'price' in each_option and 'baseMSRP' in each_option['price']:
 			interior_options_names.append([each_option['id'],each_option['name']]) ##never safe to use names in forms stick to standard ids
@@ -360,7 +362,7 @@ def pre_auction():
 	db.auction_request_offer.safety_options.requires = IS_IN_SET(safety_options_names, multiple=True)
 	db.auction_request_offer.safety_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
-	colors = zip(auction_request.exterior_colors, auction_request.color_names) #exterior_colors means color_ids please do sitewide replace
+	colors = zip(auction_request.exterior_colors, auction_request.exterior_color_names) #exterior_colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
 	
 	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
@@ -376,8 +378,7 @@ def pre_auction():
 			safety_options_names
 		)
 		codes_to_colors = dict(colors)
-		options_prefixes = ['interior', 'exterior', 'mechanical', 'package', 'fees', 'safety']
-		for each_prefix in options_prefixes:
+		for each_prefix in OPTIONS_PREFIXES:
 			db.auction_request_offer['%s_options_names'%each_prefix].default = [ codes_to_names[each_option_code] for each_option_code in form.vars["%s_options"%each_prefix] ]
 		db.auction_request_offer.color_name.default = codes_to_colors[form.vars["color"]]
 
@@ -520,9 +521,9 @@ def __auction_validator__():
 	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
 	
 	colors=[]
-	color_names = dict(map(lambda id,name: [id,name], auction_request.exterior_colors, auction_request.color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
-	color_names = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
-	for id, each_name in color_names.items(): #just get names here for auction_request_info
+	exterior_color_names = dict(map(lambda id,name: [id,name], auction_request.exterior_colors, auction_request.exterior_color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+	exterior_color_names = OD(sorted(exterior_color_names.items(), key=lambda x: x[1])) #exterior_color_names.sort()
+	for id, each_name in exterior_color_names.items(): #just get names here for auction_request_info
 		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
 		colors.append([each_name, color_hex])
 		
@@ -549,7 +550,7 @@ def __auction_validator__():
 		auction_request_user=auction_request_user,
 		colors=colors,
 		is_lease=is_lease,
-		color_names=color_names,)
+		exterior_color_names=exterior_color_names,)
 
 def auction():
 	auction_validator = __auction_validator__()
@@ -573,7 +574,7 @@ def auction():
 	auction_request_area=auction_validator['auction_request_area']
 	auction_request_user=auction_validator['auction_request_user']
 	colors=auction_validator['colors']
-	color_names=auction_validator['color_names']
+	exterior_color_names=auction_validator['exterior_color_names']
 	is_lease=auction_validator['is_lease']
 	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 	
@@ -835,7 +836,7 @@ def auction():
 		this_dealer_distance = distance_to_auction_request(each_offer)
 		
 		#color stuff
-		this_color = color_names[each_offer.auction_request_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
+		this_color = exterior_color_names[each_offer.auction_request_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
 			
 		#message stuff buyer
 		my_message_form_buyer = ''
@@ -1174,7 +1175,7 @@ def my_auctions():
 	for each_offer in my_offers:
 		#auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() don't needed #make sure not abandoned or expired!
 		#auction_request.expired()
-		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.exterior_colors, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+		exterior_color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.exterior_colors, each_offer.auction_request.exterior_color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
 		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
@@ -1215,7 +1216,7 @@ def my_auctions():
 			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
-			'color': color_names[each_offer.auction_request_offer.color],
+			'color': exterior_color_names[each_offer.auction_request_offer.color],
 			'offer_expires':each_offer.auction_request.offer_expires,
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -1238,7 +1239,7 @@ def winner():
 	auction_validator = __auction_validator__()
 
 	#get the color chart
-	colors=auction_validator['color_names']
+	colors=auction_validator['exterior_color_names']
 	
 	#get the auction request
 	auction_request=auction_validator['auction_request']

@@ -56,7 +56,7 @@ def dealership_form():
 					INSTRUCTIONS = "We'll also alert you when we see new %s requests near your area."%' '.join(record.specialty),
 					CLICK_HERE = "See buyer requests!",
 					CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
-				)), "%s: You have been approved!"&APP_NAME],
+				)), "%s: You have been approved!"%APP_NAME],
 				retry_failed = 10,
 				period = 3, # run 5s after previous
 				timeout = 30, # should take less than 30 seconds
@@ -168,7 +168,7 @@ def manage_auctions():
 	db.auction_request.exterior_colors.readable = False
 	db.auction_request.trim.readable = False
 	db.auction_request.trim_name.readable = True
-	db.auction_request.color_names.readable = True
+	db.auction_request.exterior_color_names.readable = True
 	db.auction_request.year.readable = True
 	db.auction_request.make_name.readable = True
 	db.auction_request.model_name.readable = True

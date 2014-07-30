@@ -342,9 +342,9 @@ Get rid of dummies and lorem ipsums
 					</td>
 
 					<td>
-						{{color_names=each_request.auction_request.color_names}}
-						{{color_names.sort()}}
-						{{for each_name in color_names:}}
+						{{exterior_color_names=each_request.auction_request.exterior_color_names}}
+						{{exterior_color_names.sort()}}
+						{{for each_name in exterior_color_names:}}
 							{{trim_data=json.loads(each_request.auction_request.trim_data)}}
 							{{for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options']:}}
 								{{if each_color['name'] == each_name:}}

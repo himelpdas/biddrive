@@ -12,7 +12,7 @@ from collections import OrderedDict as OD #http://bit.ly/OhPhQr
 #import lookup_hash
 
 ####SET ZERO IN PRODUCTION####
-if 0:
+if 1:
 	import logging
 	logger = logging.getLogger("web2py.app.biddrive")
 	#handler = logging.StreamHandler() #by default logs go to stdout or stderr, you can set it to file via FileH

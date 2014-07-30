@@ -110,11 +110,32 @@ def request_by_make():
 	db.auction_request.model_name.default = model_name = model_styles[0]['model']['name']
 	#
 	def computations(form): #these defaults need form vars, so must do it in onvalidation
+		#initialize
 		trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim)
 		colorChipsErrorFix(trim_data['colors']) #make sure all db entries are safe. protect trim_data from this error
+		#trim stuff
 		db.auction_request.trim_data.default = json.dumps(trim_data)
-		db.auction_request.trim_name.default = trim_data['name'] 
-		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.exterior_colors ] #make a list of color names based on ids in exterior_colors field
+		db.auction_request.trim_name.default = trim_data['name']
+		db.auction_request.trim_price.default = trim_data['price']['baseMSRP']
+		#get options id:name and id:price
+		option_ids_to_names = {} 
+		option_ids_to_prices = {} 
+		for each_option_type in trim_data['options']:
+			for each_option in each_option_type['options']:
+				#logger.debug(each_option)
+				option_ids_to_names.update({str(each_option['id']):each_option['name']})
+				option_ids_to_prices.update( { str(each_option['id']) : ( each_option['price']['baseMSRP'] if ('price' in each_option and 'baseMSRP' in each_option['price']) else 0 ) } )
+		#put them in db
+		option_names_list = []
+		option_prices_list = []
+		for each_id in form.vars['must_haves']: #THIS ALSO VALIDATES THAT THESE VALUES ARE WITHIN THIS TRIM, AND NOT FAKE IDS, ALSO SOLVES THE PROBLEM WHERE COLORS OAD BEFORE MUST HAVES WHEN DIFFERENT TRIM IS SELECTED, AND SUBMIT IS PRESSED.
+			option_names_list.append(option_ids_to_names[str(each_id)])
+			option_prices_list.append(option_ids_to_prices[str(each_id)])
+		db.auction_request.must_have_names.default = option_names_list
+		db.auction_request.must_have_prices.default = option_prices_list
+		#colors
+		db.auction_request.exterior_color_names.default = [ each_color['name'] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.exterior_colors ] #make a list of color names based on ids in exterior_colors field
+		db.auction_request.exterior_color_prices.default = [ (int(float(each_color['price']['baseMSRP'])) if ('price' in each_color and 'baseMSRP' in each_color['price']) else 0 ) for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.exterior_colors ] #make a list of color names based on ids in exterior_colors field
 		db.auction_request.simple_exterior_color_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.exterior_colors ]
 		
 	if form.process(onvalidation=computations, hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
@@ -282,7 +303,7 @@ def auction_history():
 		each_request['auction_url']=URL('dealer','auction', args=[each_request.id])
 		#colors logic
 		trim_data= json.loads(each_request['trim_data'])
-		each_request['color_names_and_codes'] = []
+		each_request['exterior_color_names_and_codes'] = []
 		#last bid logic
 		last_bid = db(db.auction_request_offer_bid.auction_request == each_request.id).select().last()
 		last_bid_price = '$%s'%last_bid.bid if last_bid else "No Bids!"
@@ -297,8 +318,8 @@ def auction_history():
 			how_auction_ended = "No winner was chosen"
 		each_request['how_auction_ended'] = how_auction_ended
 		#color stuff
-		for each_color in each_request['color_names']:
-			each_request['color_names_and_codes'].append([each_color, getColorHexByNameOrID(each_color, trim_data)])
+		for each_color in each_request['exterior_color_names']:
+			each_request['exterior_color_names_and_codes'].append([each_color, getColorHexByNameOrID(each_color, trim_data)])
 	return dict(my_auctions=my_auctions,heading =heading)
 
 def user():

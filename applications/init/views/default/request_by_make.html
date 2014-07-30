@@ -70,7 +70,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label  class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin"></i> Colors</label>
+                    <label  class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors</label>
                     <div class="col-sm-9">
                         {{=form.custom.widget.exterior_colors}}
 
@@ -81,7 +81,7 @@
                 </div>                
 				
 				<div class="form-group">
-                    <label  class="col-sm-3 control-label"><i id="must_haves_spinner" class="fa fa-spin"></i> Must haves <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
+                    <label  class="col-sm-3 control-label"><i id="must_haves_spinner" class="fa fa-spin options_spinner"></i> Must haves <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
                     <div class="col-sm-9">
                         {{=form.custom.widget.must_haves}}
 
@@ -354,7 +354,7 @@
 
         <div class="col-xs-4 hidden-xs">
 			<div class="row">
-				<h5 class="text-light">Trim Specific Details: <i id="stats_spinner" class="fa fa-spin"></i></h5>
+				<h5 class="text-light">Trim Specific Details: <i id="stats_spinner " class="fa fa-spin options_spinner"></i></h5>
 				<div id="trim_stats"></div>
 			</div>
 
@@ -366,85 +366,70 @@
 
     </div>
 
+<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-md5.js"></script> {{#quick configure-less function}}{{#https://code.google.com/p/crypto-js/}}
+
+<script>
+//{{#client side hmac verification}}
+var glob_message_string = "{{=make}}"+"{{=model}}"+"{{=year}}";
+var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT IN ITS ORIGINAL FORM #HASH IS WEAK (64-bit) BUT DOES ITS JOB}}
+</script>
+	
  <script type="text/javascript">
 	var firstload = true; {{#Need a way to preserve values on form error on first load. Checks to see If select values exist from previous form submission.}}
  	function load_exterior_colors(){
+		//{{#hmac}}
+		var loc_token =$('#auction_request_trim').val();
+		var loc_hash = CryptoJS.HmacMD5(glob_message_string+loc_token, glob_session_key ); //{{#CryptoJS.HmacMD5("Message", "Secret Passphrase");}}
+		//
 		$("#fake_submit").addClass("disabled", 250);//{{#ajax active, disable submit button}}
+		//{{#no need to reload if multiselect has values. this is due to erroneous forms, which pre-fill the multi-selects after submission}}
 		if ($(".ms-elem-selectable").length == false || firstload==false){ {{#http://goo.gl/aZeO3n}} {{#if multiselect options is black or page already loaded}}
-			firstload=false; //
+			//{{#force false}}
+			firstload=false;
+			//{{#shoe spinner before ajax}}
+			$('.options_spinner').addClass("fa-spinner");
+			//{{#exterior_colors}}
 			$('#ms-auction_request_exterior_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
-			$('#colors_spinner').toggleClass("fa-spinner");
-			$('#auction_request_exterior_colors').load(
-				//url
-				"{{=URL('ajax','exterior_colors', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim').val() , //{{#and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):}}
-				//callback
-				function( response, status, xhr ) {
+			//{{#must_haves}}
+			$('#ms-auction_request_must_haves').fadeTo(500, 0.2);
+			////{{#ajax}}
+			$('#trim_stats').slideUp(400)
+			$.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
+				.done(function( data ) {
+					//{{#exterior_colors}}
+					$.each( data.style_colors, function( i, item ) { //{{#similar to python enumerate}}
+						$("#auction_request_exterior_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
+					});
+					$("#auction_request_exterior_colors").multiSelect('refresh');
+					$('#ms-auction_request_exterior_colors').fadeTo(250, 1.0); //{{#fade back in}}
+					//{{#must_haves}}
+					$.each( data.option_codes, function( i, item ) { //{{#similar to python enumerate}}
+						$("#auction_request_must_haves").append("<option value='"+ item[0] + "'>" + item[1] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
+					});
+					$("#auction_request_must_haves").multiSelect('refresh');
+					$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //{{#fade back in}}
+					//{{#trim stats}}
+					$('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
+				})
+				.fail(function( xhr, status, error ) {
 					if ( status == "error" ) {
-						var msg = "Error loading colors: ";
-						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_color" class="alert alert-danger"><span id="ajax_failure_warning_color_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-						$('#ajax_failure_warning_color_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-						$('#ajax_failure_warning_color').slideDown();
-						$('#ajax_failure_warning_color').click(function(){
+						var msg = "Error loading options: ";
+						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_options" class="alert alert-danger"><span id="ajax_failure_warning_options_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+						$('#ajax_failure_warning_options_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
+						$('#ajax_failure_warning_options').slideDown();
+						$('#ajax_failure_warning_options').click(function(){
 							$(this).slideUp();
 						});
 					}
-					else {
-						$('#ms-auction_request_exterior_colors').fadeTo(250, 1.0); //{{#fade back in}}
-						$('#colors_spinner').toggleClass("fa-spinner");
-						$(this).multiSelect('refresh'); //{{#refresh the multiselect widget because new options were loaded via ajax after the trim was changed}}
-					}
-				}
-			//{{#close load call}}
-			);
-			$('#ms-auction_request_must_haves').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
-			$('#must_haves_spinner').toggleClass("fa-spinner");
-			$('#auction_request_must_haves').load(
-				//url
-				"{{=URL('ajax','must_haves', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim').val() , //{{#and the style id needed by getStylesByMakeModelYear(make, model, year, style_id):}}
-				//callback
-				function( response, status, xhr ) {
-					if ( status == "error" ) {
-						var msg = "Error loading must-haves: ";
-						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_must_haves" class="alert alert-danger"><span id="ajax_failure_warning_must_haves_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-						$('#ajax_failure_warning_must_haves_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-						$('#ajax_failure_warning_must_haves').slideDown();
-						$('#ajax_failure_warning_must_haves').click(function(){
-							$(this).slideUp();
-						});
-					}
-					else {
-						$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //fade back in
-						$('#must_haves_spinner').toggleClass("fa-spinner");
-						$(this).multiSelect('refresh'); //{{#refresh the multiselect widget because new options were loaded via ajax after the trim was changed}}
-					}
-				}
-			//close load call
-			);
+				})
+				.always(function(){
+					//{{#always hide spinner when done}}
+					$('.options_spinner').removeClass("fa-spinner");
+				});
 		}
 		else{
 			firstload=false;
 		};
-		//{{#display reviews}}
-		//display trim stats
-		$('#stats_spinner').toggleClass("fa-spinner");
-		$('#trim_stats').slideUp(400).load(
-			"{{=URL('ajax','style_details', args=[make, model, year])}}{{='/'}}"+$('#auction_request_trim').val() , //{{#implement fail like above}}
-			function( response, status, xhr ) {
-				if ( status == "error" ) {
-					var msg = "Error loading stats: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_stats" class="alert alert-danger"><span id="ajax_failure_warning_stats_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_stats_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-					$('#ajax_failure_warning_stats').slideDown();
-					$('#ajax_failure_warning_stats').click(function(){
-						$(this).slideUp();
-					});
-				}
-				else {
-					$(this).slideDown(200); //{{#fade back in}}
-					$('#stats_spinner').toggleClass("fa-spinner");
-				}
-			}
-		);
 		$('#loading_reviews').slideDown();
 		$('#reviews').slideUp(600).load(
 			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim').val() , //{{#implement fail like above}}

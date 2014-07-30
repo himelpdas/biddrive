@@ -1,15 +1,13 @@
 *Todo
 dont allow more than one auction request at a time
-hmac verify twilio
-hmac verify all ajax in page 2
-add auction sniping in dealer auction page
 add more tooltips to everything
 fix progress bar to allow more than one word
-alert dealer through call and text when he is accepted to biddrive.
 add pagination to auction_request
 make auction page more responsive
 cache auction requests
-include colors in msrp
+add interior colors (big job)
+show grid fields in reverse
+
 
 *Optional
 add twilio verification in page 2
@@ -17,6 +15,9 @@ add text message alerts
 calculate msrp in page 2
 
 *Complete
+hmac verify twilio
+include colors in msrp
+hmac verify all ajax in page 2
 fix filter in my_auctions and auction_history where "lost" filter shows won auctions too
 change voice to british guy
 scramble text in cert before validation
@@ -38,6 +39,8 @@ a stats messege in blank auction requests
 
 *Not needed
 add balance history to dealer buy credits page (let paypal handle that)
+add auction sniping in dealer auction page
+alert dealer through call and text when he is accepted to biddrive.
 
 *Ongoing
 Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of simple_color_names with color_pref in auction request, but this is unlikely.

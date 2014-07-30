@@ -196,19 +196,29 @@ db.define_table('auction_request',
 	),#move compute to controller to prevent updating of error json returned by edmunds
 	Field('trim_name',
 		required=True,
-		readable=False,
+		readable=True,
 		writable=False,
 		#compute = lambda row: json.loads(row['trim_data'])['name'], 
+	),
+	Field('trim_price', 'integer',
+		required=True,
+		readable=True,
+		writable=False,
 	),
 	Field('exterior_colors', 'list:string', #otherwise queries will return string not list!
 		requires=IS_NOT_EMPTY(), #IS_IN_SET in default controller completely overrides this, but leave here for admin
 		#widget = SQLFORM.widgets.checkboxes.widget,
 	),	
-	Field('color_names', 'list:string',
+	Field('exterior_color_names', 'list:string',
 		required=True, #tells the DAL that no insert should be allowed on this table if a value for this field is not explicitly specified.
 		readable=False,
 		writable=False,
 		#compute = lambda row: [ each_color['name'] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['exterior_colors'] ], #make a list of color names based on ids in exterior_colors field
+	),
+	Field('exterior_color_prices', 'list:integer',
+		required=True, #tells the DAL that no insert should be allowed on this table if a value for this field is not explicitly specified.
+		readable=True,
+		writable=False,
 	),
 	Field('simple_exterior_color_names','list:string',
 		required=True,
@@ -219,6 +229,12 @@ db.define_table('auction_request',
 	Field('must_haves', 'list:string',
 		#requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
 	),	
+	Field('must_have_names', 'list:string',
+		writable =False,
+	),	
+	Field('must_have_prices', 'list:integer',
+		writable =False,
+	),
 	Field('FICO_credit_score',
 		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '620 or less', ]), multiple=False, zero="I don't know")),
 	),
@@ -311,6 +327,9 @@ def resize_offer_image_upload(image, x=1080, y=720, center=True):
 		(x, y), #1080,720
 		center,
 	)
+	
+OPTIONS_PREFIXES = ['interior', 'exterior', 'mechanical', 'package', 'fees', 'safety']
+	
 db.define_table('auction_request_offer',
 	Field('auction_request', db.auction_request,
 		readable=False,
