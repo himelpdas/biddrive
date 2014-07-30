@@ -62,7 +62,7 @@
 						</th>
 						<td>
 							{{for each_color in auction_request_info['colors']:}}
-								<div><i class="fa fa-square" style="color:#{{=each_color[1]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" title="{{=each_color[0]}}"></i> {{=each_color[0]}}</div>
+								{{=COLOR_SWATCH(each_color[1],each_color[0])}}
 							{{pass}}
 						</td>
 					</tr>

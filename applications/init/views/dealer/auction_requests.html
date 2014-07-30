@@ -113,12 +113,11 @@ Get rid of dummies and lorem ipsums
 	 		</div>
 
 	 		<!-- Colors dropdown -->
-			{{color_swatch = lambda hex: XML('<i class="fa fa-square fa-fw" rel="tooltip" style="color:#%s; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;"></i>'%hex)}}
 	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
 				<div class="btn-group">
 					{{if trim:}}
 						<a id="color_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
-							{{if color in colors_list:}}{{=color_swatch(colors_list[color][1])}}{{=colors_list[color][0]}}{{else:}}All Colors{{pass}}
+							{{if color in colors_list:}}{{=COLOR_SWATCH(colors_list[color][1])}}{{=colors_list[color][0]}}{{else:}}All Colors{{pass}}
 							{{#the key is the id#, the value is the name}}
 							<span class="caret"></span>
 						</a>
@@ -126,7 +125,7 @@ Get rid of dummies and lorem ipsums
 							<li><a id = "all_colors_filter" href="{{=URL(vars=dict(multiple=multiple_string, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
 							 <li class="divider"></li>
 							{{for each_color in colors_list:}}
-								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=color_swatch(colors_list[each_color][1])}}{{#Todo-move to glob}} {{=colors_list[each_color][0]}}</a></li>
+								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=COLOR_SWATCH(colors_list[each_color][1])}}{{#Todo-move to glob}} {{=colors_list[each_color][0]}}</a></li>
 							{{pass}}
 						</ul>
 					{{else:}}
@@ -362,7 +361,7 @@ Get rid of dummies and lorem ipsums
 									{{color_hex = each_color['colorChips']['primary']['hex']}}
 								{{pass}}
 							{{pass}}
-							<i class="fa fa-square" rel="tooltip" style="color:#{{=color_hex}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_name}}"></i>{{#add border so that whites can show}} {{#http://goo.gl/2j2bP}} {{#http://goo.gl/R9EI3h}}
+							{{=COLOR_SWATCH(color_hex,each_name)}}
 						{{pass}}
 					</td>
 
