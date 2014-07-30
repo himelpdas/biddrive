@@ -6,7 +6,7 @@ def buy_credits():
 		tier_3 = URL('billing','paypal', args=['3']),
 		tier_4 = URL('billing','paypal', args=['4']),
 	)
-	my_credits_row = db(db.credits.owner == auth.user_id).select().first()
+	my_credits_row = db(db.credits.owner_id == auth.user_id).select().first()
 	my_credits = my_credits_row['credits'] if my_credits_row else 0
 	#history
 	#db.credits_history.id.readable=False #need ID in case of questioning by user
@@ -45,7 +45,7 @@ def paypal_return():
 		if payment.execute({"payer_id": request.vars['PayerID'] }):  # return True or False
 			sale_id = payment['transactions'][0]['related_resources'][0]['sale']['id']
 			db.credit_orders.insert(owner = auth.user_id,payment_executed = request.now, payer_id = request.vars['PayerID'], sale_id = sale_id, **session.purchase)
-			my_credits = db(db.credits.owner == auth.user_id).select().first()
+			my_credits = db(db.credits.owner_id == auth.user_id).select().first()
 			if not my_credits: #credits row for dealer doesn't exist for some reason
 				db.credits.insert(owner=auth.user_id, credits = session.purchase['credits'])
 			else:

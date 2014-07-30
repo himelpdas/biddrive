@@ -13,14 +13,14 @@ Paypal.configure({
   "client_secret": "EO422dn3gQLgDbuwqTjzrFgFtaRLRR5BdHEESmha49TM" })
 
 db.define_table("credits",
-	Field("owner", db.auth_user,),
+	Field("owner_id", db.auth_user,),
 	Field('credits', "integer",),
 	Field("latest_reason",), #default="Administrative"),#will not work onvalidation because default is done on insertion
 	auth.signature,
 )
 
 db.define_table("credit_orders",
-	Field("owner", db.auth_user,
+	Field("owner_id", db.auth_user,
 		readable = False,
 		writable = False,
 	),

@@ -369,7 +369,7 @@ def pre_auction():
 	colors = zip(auction_request.exterior_colors, auction_request.exterior_color_names) #exterior_colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
 	
-	db.auction_request_offer.color.requires = IS_IN_SET(colors, zero=None)
+	db.auction_request_offer.exterior_color.requires = IS_IN_SET(colors, zero=None)
 	
 	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", _id="pre_auction_form", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 				
@@ -384,11 +384,11 @@ def pre_auction():
 		codes_to_colors = dict(colors)
 		for each_prefix in OPTIONS_PREFIXES:
 			db.auction_request_offer['%s_options_names'%each_prefix].default = [ codes_to_names[each_option_code] for each_option_code in form.vars["%s_options"%each_prefix] ]
-		db.auction_request_offer.color_name.default = codes_to_colors[form.vars["color"]]
+		db.auction_request_offer.exterior_color_name.default = codes_to_colors[form.vars["exterior_color"]]
 
 	if form.process(onvalidation=computations, hideerror = False, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
-			my_piggy = db(db.credits.owner==auth.user_id).select().last()
+			my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
 			db.credits_history.insert(change= -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
 			auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
@@ -503,7 +503,7 @@ def __auction_validator__():
 	if is_dealer_with_offer and is_authorized_dealer:
 		is_authorized_dealer_with_offer = True
 		is_participant = True
-		if 0 >= db(db.credits.owner==auth.user_id).select().last().credits: #do not allow negative balance dealers to participate, instead make them buy more credits.
+		if 0 >= db(db.credits.owner_id==auth.user_id).select().last().credits: #do not allow negative balance dealers to participate, instead make them buy more credits.
 			session.message2="@You have a zero or negative balance! You must purchase more credits to participate in auctions."
 			redirect(URL('billing', 'buy_credits'))
 		if db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request==auction_request_id) & (db.auction_request_offer_bid.final_bid != None)).select().first():
@@ -840,7 +840,7 @@ def auction():
 		this_dealer_distance = distance_to_auction_request(each_offer)
 		
 		#color stuff
-		this_color = exterior_color_names[each_offer.auction_request_offer.color]#since the pictures will have colors, no need to add a color square, so just map id to name
+		this_color = exterior_color_names[each_offer.auction_request_offer.exterior_color]#since the pictures will have colors, no need to add a color square, so just map id to name
 			
 		#message stuff buyer
 		my_message_form_buyer = ''
@@ -1053,7 +1053,7 @@ def auction():
 			'last_bid_price' : last_bid_price,
 			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,
-			'color' : this_color,
+			'exterior_color' : this_color,
 			'summary' : each_offer.auction_request_offer.summary,
 			'interior_options' : interior_options,
 			'exterior_options' : exterior_options,
@@ -1220,7 +1220,7 @@ def my_auctions():
 			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
-			'color': exterior_color_names[each_offer.auction_request_offer.color],
+			'color': exterior_color_names[each_offer.auction_request_offer.exterior_color],
 			'offer_expires':each_offer.auction_request.offer_expires,
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -1266,7 +1266,7 @@ def winner():
 				'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s)
 			})
 	#color stuff
-	color = colors[auction_request_offer.color]
+	color = colors[auction_request_offer.exterior_color]
 	#options stuff
 	options =  {
 		'Interior':auction_request_offer.interior_options,

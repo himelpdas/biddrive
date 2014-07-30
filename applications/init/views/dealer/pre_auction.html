@@ -13,7 +13,7 @@
 		{{=form.custom.begin}}
 				{{ form.element("input", _name = "vin_number")["_class"] += " form-control" }}
 				{{# form.element("input", _name = "remember_data_for_30_days")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "color")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "exterior_color")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "interior_options")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "exterior_options")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "mechanical_options")["_class"] += " form-control" }}
@@ -63,10 +63,10 @@
 				<div class="form-group">
 					<label class="col-sm-3 control-label">Color</label>
 					<div class="col-sm-9">
-						{{=form.custom.widget.color}}
+						{{=form.custom.widget.exterior_color}}
 
-						{{if form.errors['color']:}}
-							<div class="alert alert-warning">{{=form.errors['color']}}</div>
+						{{if form.errors['exterior_color']:}}
+							<div class="alert alert-warning">{{=form.errors['exterior_color']}}</div>
 						{{pass}}
 					</div>
 				</div>
@@ -285,8 +285,13 @@
 		{{=form.custom.end}}
 	</div>
 	<div class= "col-md-5 col-sm-4 hidden-xs" style="position:relative;">
-		<div id="user_info" style="position:fixed; border: #ccc solid; border-radius:8px; height:270px;overflow-y:scroll;">
-			{{#<button class="btn btn-info" href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-fw fa-user"></i>View buyer info</button>}}
+		<div id="follow_me" style="position:fixed;">
+			<h4>
+				<span class="text-light">Retail estimate — </span class="pull-right"><span>$<span id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span></span>{{#http://goo.gl/aOI4}}
+			</h4>
+			<hr>
+			<div id="user_info_box" style="border: #ccc solid; border-radius:8px; height:240px;overflow-y:scroll;">
+				<!--{{#<button class="btn btn-info" href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-fw fa-user"></i>View buyer info</button>}}-->
 				<pre>Details of {{=auction_request_info['first_name']}} {{=auction_request_info['last_init']}} from {{=auction_request_info['city']}}, {{=auction_request_info['state']}}, {{=auction_request_info['zip_code']}}</pre>
 				<table class="table">
 					<tr>
@@ -432,20 +437,17 @@
 					</tr>
 				{{pass}}
 				</table>
-			<hr>
-			<h4>
-				<span class="text-light">&nbsp;&nbsp;Your vehicle's estimation — </span><h3>&nbsp;&nbsp;$<span id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span></h3>{{#http://goo.gl/aOI4}}
-			</h4>
+			</div>
 		</div>
 	</div>
 </div>
 <script>
 $(document).ready(function(){
 	$(window).scroll(function(){
-		if ($("#user_info").offset().top + $("#user_info").height() > ($("#footer").offset().top) ) {
-			$("#user_info").fadeOut(100);
+		if ($("#follow_me").offset().top + $("#follow_me").height() > ($("#footer").offset().top) ) {
+			$("#follow_me").fadeOut(100);
 		} else {
-			$("#user_info").fadeIn(100);
+			$("#follow_me").fadeIn(100);
 		}
 	});
 });
@@ -620,7 +622,7 @@ $(document).ready(function(){
 	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; //{{#ok to use name instead of id because there is no character limitations like at get url}}
 	function update_estimation(){
 		var msrp = msrp_by_id['base'];
-		var msrp = msrp + msrp_by_id[$("#auction_request_offer_color").val()]; //{{#note val returns ids not names}}
+		var msrp = msrp + msrp_by_id[$("#auction_request_offer_exterior_color").val()]; //{{#note val returns ids not names}}
 		var list = $(".ms-selected").map(function(){return $(this).children().text();}).get(); //{{#map runs a function on each element}}
 		list.map( function(item) {
 			msrp = msrp + msrp_by_id[item]
@@ -628,7 +630,7 @@ $(document).ready(function(){
 		msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_dealership_fees").val() || 0)) || 0); //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
 		$('#msrp').html(msrp);
 	}
-	$("#auction_request_offer_color").change(update_estimation);
+	$("#auction_request_offer_exterior_color").change(update_estimation);
 	$("#auction_request_offer_dealership_fees").change(update_estimation);
 	$('.ms-container').click(update_estimation);
 	$('.ms-container').click(update_estimation);

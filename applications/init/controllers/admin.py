@@ -113,7 +113,8 @@ def manage_memberships():
 						selectable=False,
 						csv=True,
 						#create=False,
-						user_signature=False)  # change to True in production
+						user_signature=False,
+						orderby=~db.auth_membership.id)  # change to True in production
 	return dict(form=form)
 	
 db.auth_user.registration_key.readable = True
@@ -131,7 +132,8 @@ def manage_buyers():
 	buttons_placement = 'left', links_placement = 'left', 
 	left=db.dealership_info.on(db.auth_user.id == db.dealership_info.owner_id), #technically a left join, left joins preserve all the rows on the left table, even if right table doesn't #http://goo.gl/TSc6L
 	fields = map(lambda each_field_string: db.auth_user[each_field_string], db.auth_user.fields()), #show only auth_user fields
-	user_signature=False)
+	user_signature=False, 
+	orderby=~db.auth_user.id)
 	return dict(form=form)
 	
 @auth.requires_membership("admins") # uncomment to enable security 
@@ -147,14 +149,16 @@ def manage_dealers():
 	fields=map(lambda each_field_string: db.auth_user[each_field_string], db.auth_user.fields()), #fields method returns list of strings of field names of a table #http://goo.gl/L9nONC
 	buttons_placement = 'left', links_placement = 'left', 
 	create=False,
-	user_signature=False)
+	user_signature=False,
+	orderby=~db.auth_user.id)
 	return dict(form=form)
 	
 @auth.requires_membership("admins") # uncomment to enable security 
 @auth.requires(request.args(0))
 def manage_dealership_info():
 	user_id =request.args[0]
-	form = SQLFORM.grid(db.dealership_info.owner_id==user_id, buttons_placement = 'left', links_placement = 'left', create=False, user_signature=False)
+	form = SQLFORM.grid(db.dealership_info.owner_id==user_id, buttons_placement = 'left', links_placement = 'left', create=False, user_signature=False,
+	orderby=~db.dealership_info.id)
 	return dict(form=form)
 
 @auth.requires_membership("admins") # uncomment to enable security 	
@@ -193,7 +197,8 @@ def manage_auctions():
 			query = db.auction_request.id == auction_id
 		db.auction_request.owner_id.readable = True
 		form = SQLFORM.grid(query, create=False, buttons_placement = 'left', links=links, links_placement = 'left', 
-		user_signature=False)
+		user_signature=False,
+		orderby=~db.auction_request.id)
 	return dict(form=form)
 
 @auth.requires_membership("admins") # uncomment to enable security 	
@@ -212,7 +217,8 @@ def manage_winning_offer():
 		searchable=False,
 		editable=True,
 		create=False,
-		user_signature=False
+		user_signature=False,
+		orderby=~db.auction_request_winning_offer.id
 	)
 	return dict(form=form)
 	
@@ -231,17 +237,18 @@ def manage_offers():
 		db.auction_request_offer['%s_options_names'%each_prefix].writable = False #even though it's handled in models_edmunds do it again anyway
 		db.auction_request_offer['%s_options'%each_prefix].readable = False
 		db.auction_request_offer['%s_options'%each_prefix].writable = False
-	db.auction_request_offer.color.readable = False
-	db.auction_request_offer.color.writable = False
-	db.auction_request_offer.color_name.readable = True
-	db.auction_request_offer.color_name.writable = False
+	db.auction_request_offer.exterior_color.readable = False
+	db.auction_request_offer.exterior_color.writable = False
+	db.auction_request_offer.exterior_color_name.readable = True
+	db.auction_request_offer.exterior_color_name.writable = False
 
 	if auction_id:
 		query = db.auction_request_offer.auction_request == auction_id
 	form =  SQLFORM.grid(query,
 		buttons_placement = 'left', links=links, links_placement = 'left', 
 		create=False,
-		user_signature=False
+		user_signature=False,
+		orderby=~db.auction_request_offer.id
 	)
 	return dict(form=form)
 	
@@ -249,7 +256,7 @@ def manage_offers():
 @auth.requires(request.args(0))
 def manage_credits():
 	user_id = request.args[0]
-	query = db.credits.owner == user_id
+	query = db.credits.owner_id == user_id
 	links=[]
 	def onvalidation(form): #this will document changes made by an admin to the dealers credits history 
 		credits_now = db(query).select().last()
@@ -266,7 +273,8 @@ def manage_credits():
 		create=False,
 		deletable=False,
 		onvalidation=onvalidation,
-		user_signature=False
+		user_signature=False,
+		orderby=~db.credits.id
 	)
 	return dict(form=form)
 	
@@ -274,7 +282,7 @@ def manage_credits():
 @auth.requires(request.args(0))
 def manage_orders():
 	user_id = request.args[0]
-	query = db.credit_orders.owner == user_id
+	query = db.credit_orders.owner_id == user_id
 	links=[
 		dict(header='Refund',body=lambda row: A('Issue%s'% (' refund' if 'credit_orders' in request.args else ''),_href=URL('admin','issue_refund', args=[row.id] ), _onclick="return confirm('Are you sure you want to issue a refund?')" ) ) #http://goo.gl/h6vOEE
 	]
@@ -283,7 +291,8 @@ def manage_orders():
 		editable=False,
 		create=False,
 		deletable=False,
-		user_signature=False
+		user_signature=False,
+		orderby=~db.credit_orders.id
 	)
 	return dict(form=form)
 	
@@ -307,7 +316,7 @@ def issue_refund(): #how to refund via sale id http://goo.gl/zVzjE7 #where the s
 	# Check refund status
 	if refund.success():
 		#print("Refund[%s] Success"%(refund.id))
-		my_credits = db(db.credits.owner == order.owner).select().first()
+		my_credits = db(db.credits.owner_id == order.owner_id).select().first()
 		order.update_record(refunded=True, payment_refunded=request.now)
 		my_credits.update_record(credits = int(my_credits.credits) - int(order.credits))
 		db.credits_history.insert(change= -int(order.credits), owner_id=auth.user_id, reason="Refund")
@@ -317,4 +326,4 @@ def issue_refund(): #how to refund via sale id http://goo.gl/zVzjE7 #where the s
 		#print(refund.error)
 		session.message2 = "@%s: %s!" % (refund.error['name'],refund.error['message'])
 		session.message = "!Sorry, payment %s could not be refunded!" % order.payment_id
-	redirect(URL('admin','manage_orders', args=[order.owner]))
+	redirect(URL('admin','manage_orders', args=[order.owner_id]))

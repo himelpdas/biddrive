@@ -46,7 +46,9 @@ if AUTH_ADMIN:
 	)
 # if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]
 dealer_portal_menu_list=[
-		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, URL('dealer', 'auction_requests'), []),
+		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, URL('dealer', 'auction_requests',
+			vars=dict(year=request.now.year, sortby="newest", multiple = '|'.join(db(db.dealership_info.owner_id == auth.user.id).select().last().specialty) ),
+		), []),
 		(XML('<i class="fa fa-fw fa-info-circle"></i> Dealership info'), False, URL('dealer', 'dealer_info'), []),
 		#(T('Messages'), False, URL('dealer', 'messages'), []),
 		#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
@@ -54,7 +56,7 @@ dealer_portal_menu_list=[
 		(XML('<i class="fa fa-fw fa-btc"></i> Purchase credits'), False, URL('billing', 'buy_credits'), []),
 	] if AUTH_DEALER else [
 		(XML('<i class="fa fa-fw fa-caret-right"></i> Dealer login'), False, URL('default', 'user', args=["login"], vars=dict(custom_title="Dealer login")), []),
-		(XML('<i class="fa fa-fw fa-caret-right"></i> Join our network!'), False, URL('default', "dealership_form", args=["force_register", "dealer_registration"]), []),
+		(XML('<i class="fa fa-fw fa-caret-right"></i> Join our network!'), False, URL('default', "dealership_form", args=["force_register", "dealer_registration"],	), []),
 	]
 
 if (not auth.user) or (AUTH_DEALER or AUTH_ADMIN): #non-buyers and visitors only

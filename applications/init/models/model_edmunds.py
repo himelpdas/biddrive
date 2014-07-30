@@ -349,10 +349,10 @@ db.define_table('auction_request_offer',
 	Field('owner_id', db.auth_user,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',)
 	),
-	Field('color',
+	Field('exterior_color',
 		requires=IS_NOT_EMPTY(), required=True
 	),	
-	Field('color_name', 
+	Field('exterior_color_name', 
 		readable=False, writable=False, required=True
 	),
 	Field('interior_options', 'list:string',

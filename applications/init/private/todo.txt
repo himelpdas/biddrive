@@ -6,7 +6,7 @@ add pagination to auction_request
 make auction page more responsive
 cache auction requests
 add interior colors (big job)
-show grid fields in reverse
+add are you sure modals to favorite and winner
 
 
 *Optional
@@ -15,6 +15,7 @@ add text message alerts
 calculate msrp in page 2
 
 *Complete
+show grid fields in reverse
 multiple brand filtering in auction requests 
 hmac verify twilio
 include colors in msrp
