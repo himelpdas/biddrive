@@ -54,7 +54,7 @@ dealer_portal_menu_list=[
 		(XML('<i class="fa fa-fw fa-btc"></i> Purchase credits'), False, URL('billing', 'buy_credits'), []),
 	] if AUTH_DEALER else [
 		(XML('<i class="fa fa-fw fa-caret-right"></i> Dealer login'), False, URL('default', 'user', args=["login"], vars=dict(custom_title="Dealer login")), []),
-		(XML('<i class="fa fa-fw fa-caret-right"></i> Join us!'), False, URL('default', "dealership_form", args=["force_register", "dealer_registration"]), []),
+		(XML('<i class="fa fa-fw fa-caret-right"></i> Join our network!'), False, URL('default', "dealership_form", args=["force_register", "dealer_registration"]), []),
 	]
 
 if (not auth.user) or (AUTH_DEALER or AUTH_ADMIN): #non-buyers and visitors only
