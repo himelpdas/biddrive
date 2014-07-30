@@ -22,7 +22,7 @@ Get rid of dummies and lorem ipsums
 	 		<!-- year dropdown -->
 	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
 				<div class="btn-group">
-				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" id="make_dropdown">
+				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown">
 						{{all_years = "%s - %s"%(years_list[0],years_list[-1])}}
 						{{if year in years_list:}}{{=year}} models{{else:}}{{=all_years}}{{pass}}
 				    	<span class="caret"></span>
@@ -40,15 +40,24 @@ Get rid of dummies and lorem ipsums
 	 		<!-- Brands dropdown -->
 	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
 				<div class="btn-group">
-				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" id="make_dropdown">
-						{{if make in brands_list:}}{{=brands_list[make]}}{{else:}}All Brands{{pass}}
+				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown">
+						{{if len(multiple) > 1:}}Brands ({{=len(multiple)}} selected){{elif len(multiple) == 1:}}{{=brands_list[multiple[0]]}}{{else:}}All Brands{{pass}}
 				    	<span class="caret"></span>
 				  	</button>
 					<ul class="dropdown-menu" role="menu"    {{if len(brands_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}> {{#make sure to make it scroll if list too long http://goo.gl/nn4GJ7}}
 						<li><a id = "all_makes_filter" href="{{=URL(vars=dict(year=year ,sortby=sortby))}}">All Brands</a></li>
 						<li class="divider"></li>
 						{{for each_make in brands_list:}}
-							<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(make=each_make, year=year ,sortby=sortby))}}">{{=brands_list[each_make]}}</a></li>
+							{{new_multiple=multiple[:]}}
+							{{if each_make in new_multiple:}}
+								{{check_box=XML('<i class="fa fa-fw fa-check-square-o"></i>')}}
+								{{new_multiple.remove(each_make)}} {{#uncheck box}} 
+							{{else:}}
+								{{check_box=XML('<i class="fa fa-fw fa-square-o"></i>')}}
+								{{new_multiple += [each_make]}} {{#check box}}
+							{{pass}}
+							{{new_multiple_string = '|'.join(new_multiple)}}
+							<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(multiple=new_multiple_string, year=year ,sortby=sortby))}}">{{=check_box}} {{=brands_list[each_make]}}</a></li>
 						{{pass}}
 					</ul>
 				</div>
@@ -57,16 +66,17 @@ Get rid of dummies and lorem ipsums
 	 		<!-- Models dropdown -->
 	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
 				<div class="btn-group">
-					{{if make:}}
+					{{if multiple:}}
+						{{model_brand_name=lambda model_nice_name:" (%s)"%brands_list[models_list[ model_nice_name ][1]] if len(multiple)>1 else ''}}
 						<a id="model_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#">
-							{{if model in models_list:}}{{=models_list[model]}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
+							{{if model in models_list:}}{{=models_list[model][0]}}{{=model_brand_name(model)}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
 							<span class="caret"></span>
 						</a>
 						<ul class="dropdown-menu" role="menu"    {{if len(models_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
-							<li><a id = "all_models_filter" href="{{=URL(vars=dict(make=make, year=year ,sortby=sortby))}}">All Models</a></li>
+							<li><a id = "all_models_filter" href="{{=URL(vars=dict(multiple=multiple_string, year=year ,sortby=sortby))}}">All Models</a></li>
 							 <li class="divider"></li>
 							{{for each_model in models_list:}}
-								<li><a id = "{{=each_model}}_model__filter" href="{{=URL(vars=dict(model=each_model, make=make, year=year ,sortby=sortby))}}">{{=models_list[each_model]}}</a></li>
+								<li><a id = "{{=each_model}}_model_filter" href="{{=URL(vars=dict(model=each_model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=models_list[each_model][0]}}{{=model_brand_name(each_model)}}</a></li>
 							{{pass}}
 						</ul>
 					{{else:}}
@@ -87,10 +97,10 @@ Get rid of dummies and lorem ipsums
 							<span class="caret"></span>
 						</a>
 						<ul class="dropdown-menu" role="menu"     {{if len(styles_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
-							<li><a id = "all_styles_filter" href="{{=URL(vars=dict(make = make, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
+							<li><a id = "all_styles_filter" href="{{=URL(vars=dict(multiple=multiple_string, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
 							<li class="divider"></li>
 							{{for each_trim in styles_list:}}
-								<li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, make=make, year=year ,sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
+								<li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
 							{{pass}}
 						</ul>
 					{{else:}}
@@ -103,19 +113,20 @@ Get rid of dummies and lorem ipsums
 	 		</div>
 
 	 		<!-- Colors dropdown -->
+			{{color_swatch = lambda hex: XML('<i class="fa fa-square fa-fw" rel="tooltip" style="color:#%s; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;"></i>'%hex)}}
 	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
 				<div class="btn-group">
 					{{if trim:}}
 						<a id="color_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
-							{{if color in colors_list:}}{{=colors_list[color]}}{{else:}}All Colors{{pass}}
+							{{if color in colors_list:}}{{=color_swatch(colors_list[color][1])}}{{=colors_list[color][0]}}{{else:}}All Colors{{pass}}
 							{{#the key is the id#, the value is the name}}
 							<span class="caret"></span>
 						</a>
 						<ul class="dropdown-menu" role="menu"     {{if len(colors_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
-							<li><a id = "all_colors_filter" href="{{=URL(vars=dict(make = make, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
+							<li><a id = "all_colors_filter" href="{{=URL(vars=dict(multiple=multiple_string, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
 							 <li class="divider"></li>
 							{{for each_color in colors_list:}}
-								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, make=make, year=year ,sortby=sortby))}}"><i class="fa fa-square" rel="tooltip" style="color:#{{=colors_list[each_color][1]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;"></i> {{=colors_list[each_color][0]}}</a></li>
+								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=color_swatch(colors_list[each_color][1])}}{{#Todo-move to glob}} {{=colors_list[each_color][0]}}</a></li>
 							{{pass}}
 						</ul>
 					{{else:}}
@@ -147,12 +158,12 @@ Get rid of dummies and lorem ipsums
 						{{if sortby in each_column[1]:}}
 							{{sort_pair = each_column[1][:]}}{{#create copy}}
 							{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
-							<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, make=make ) ) }}">
+							<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, multiple=multiple_string ) ) }}">
 								{{=each_column[0]}}
 							</a>
 						&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
 						{{else:}}
-							<a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, make=make) ) }}">
+							<a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, multiple=multiple_string) ) }}">
 								{{=each_column[0]}}
 							</a>
 						{{pass}}

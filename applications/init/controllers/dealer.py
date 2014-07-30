@@ -35,18 +35,21 @@ def auction_requests():
 	#brands_list = dict([[each_niceName , brands_list[each_niceName]] for each_niceName in dealer_specialty]) #niceName, name #HACK - limit the brandslist to only whats in the dealer's speciality
 	brands_list = OD(sorted(brands_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
 		
-	make = request.vars['make']
+	multiple = request.vars['multiple'].split("|") if request.vars['multiple'] else []
 	models_list = {}
-	if make in brands_list: #TEMP
-		query &= db.auction_request.make==make
+	if all(map(lambda make: make in brands_list, multiple)): #TEMP
+		for i, each_make in enumerate(multiple):
+			if not i: #if first iteration
+				query &= db.auction_request.make==each_make #FIRST QUERY IN THE QUERY BUILDER *MUST* BE &=, SO THE |= LATER WILL MAKE SENSE
+			else:
+				query |= db.auction_request.make==each_make
 		for each_year in year_list:
-			for each_model in ed_call(MAKE_URI%(make, each_year))['models']:
-				models_list.update(
-					{each_model ['niceName'] : each_model ['name'] }
-				)
+			for each_make in multiple:
+				for each_model in ed_call(MAKE_URI%(each_make, each_year))['models']:
+					models_list.update(
+						{each_model ['niceName'] : [each_model['name'], each_make]} #the make of the model
+					)
 		models_list = OD(sorted(models_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
-	else:
-		make = None #simpler for view
 	#
 	model = request.vars['model']
 	model_styles = []
@@ -54,7 +57,7 @@ def auction_requests():
 	if model in models_list:
 		query &= db.auction_request.model==model
 		for each_year in year_list:
-			model_styles+=(ed_call( STYLES_URI%(make, model, each_year))['styles'])
+			model_styles+=(ed_call( STYLES_URI%(models_list[model][1], model, each_year))['styles'])
 		for each_style in model_styles:
 			styles_list.update(
 				{str(each_style['id']) : '%s (%s)'%(each_style['name'], each_style['year']['year']) if not year else each_style['name']} #json returns int but request.vars returns string, make them compatible
@@ -234,13 +237,14 @@ def auction_requests():
 	number = len(auction_requests)
 	plural = ''
 	verb = 'is'
-	car = brands_list[make] if make else 'car'
+	car = ''.join([("%s, " if not len(multiple) == i+1 else "or %s")%each for i,each in enumerate(map(lambda brand_nice_name: brands_list[brand_nice_name], multiple))]) if len(multiple) > 1 else ('car' if not multiple else brands_list[multiple[0]]) #sentence maker
 	if not number or number > 1:
 		plural = 's'
 		verb = 'are'
 	response.message = 'Showing %s %s buyer%s who %s near "%s" in %s, %s.'% (number, car ,plural, verb, name, city, state)
 	#
-	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, make=make, color=color, colors_list=colors_list, trim=trim, styles_list=styles_list, blank_after_filter_message=blank_after_filter_message)
+
+	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, multiple=multiple, multiple_string='|'.join(multiple), color=color, colors_list=colors_list, trim=trim, styles_list=styles_list, blank_after_filter_message=blank_after_filter_message)
 
 #@auth.requires_login() #make dealer only
 @auth.requires(request.args(0))

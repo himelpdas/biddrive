@@ -15,6 +15,7 @@ add text message alerts
 calculate msrp in page 2
 
 *Complete
+multiple brand filtering in auction requests 
 hmac verify twilio
 include colors in msrp
 hmac verify all ajax in page 2
