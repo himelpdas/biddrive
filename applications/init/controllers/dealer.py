@@ -1220,7 +1220,7 @@ def my_auctions():
 			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
-			'color': exterior_color_names[each_offer.auction_request_offer.exterior_color],
+			'exterior_color': exterior_color_names[each_offer.auction_request_offer.exterior_color],
 			'offer_expires':each_offer.auction_request.offer_expires,
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -1243,7 +1243,7 @@ def winner():
 	auction_validator = __auction_validator__()
 
 	#get the color chart
-	colors=auction_validator['exterior_color_names']
+	exterior_colors=auction_validator['exterior_color_names']
 	
 	#get the auction request
 	auction_request=auction_validator['auction_request']
@@ -1266,7 +1266,7 @@ def winner():
 				'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s)
 			})
 	#color stuff
-	color = colors[auction_request_offer.exterior_color]
+	exterior_color = exterior_colors[auction_request_offer.exterior_color]
 	#options stuff
 	options =  {
 		'Interior':auction_request_offer.interior_options,
@@ -1327,7 +1327,7 @@ def winner():
 		trim = auction_request.trim_name,
 		make_name = auction_request.make_name, 
 		model_name = auction_request.model_name, 
-		color = color,
+		exterior_color = exterior_color,
 		option_names= option_names,
 		dealer=dealer,
 		dealership = dealership,
