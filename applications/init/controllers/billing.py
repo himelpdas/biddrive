@@ -47,7 +47,7 @@ def paypal_return():
 			db.credit_orders.insert(owner = auth.user_id,payment_executed = request.now, payer_id = request.vars['PayerID'], sale_id = sale_id, **session.purchase)
 			my_credits = db(db.credits.owner_id == auth.user_id).select().first()
 			if not my_credits: #credits row for dealer doesn't exist for some reason
-				db.credits.insert(owner=auth.user_id, credits = session.purchase['credits'])
+				db.credits.insert(owner_id=auth.user_id, credits = session.purchase['credits'])
 			else:
 				my_credits.update_record(credits = my_credits['credits'] + session.purchase['credits'])
 				db.credits_history.insert(change=session.purchase['credits'], owner_id=auth.user_id, reason="Purchase")

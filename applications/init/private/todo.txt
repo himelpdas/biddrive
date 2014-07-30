@@ -7,7 +7,7 @@ make auction page more responsive
 cache auction requests
 add interior colors (big job)
 change must_haves to features
-
+negative credits message 
 
 
 *Optional
