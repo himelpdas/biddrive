@@ -33,8 +33,8 @@
 				
 				<div class="row text-center slogan">
 						
-					<span style="line-height:1.5em; border-radius:5px; padding:5px; padding-left:10px; background-color:rgba(0,0,0,0.5)">
-						Choose your new car.
+					<span style="line-height:1.5em; border-radius:5px; padding:5px; padding-left:10px; background-color:rgba(0,0,0,0.6)">
+						Choose your new car
 						<div class="btn-group" style="display:inline-block;">
 							<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
 								<strong style="font-size:22px; color:#f5f5f5"><i class="fa fa-fw fa-caret-square-o-down"></i>{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}</strong>
