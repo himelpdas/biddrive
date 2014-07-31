@@ -463,13 +463,13 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 #feature_slider #introduction {
     text-align: center;
     position: relative;
-    top: 80px;
+    top: 70px;
     width: 100%;
 }
 #feature_slider h1{
     font-weight: 100;
     color: #fff;
-    font-size: 72px;
+    font-size: 64px;
     line-height: 1em;
 	padding-bottom:70px;
     text-shadow: 1px 1px 1px #070707;
