@@ -185,7 +185,7 @@
 	</style>
 </head>
 {{if request.function == "index" and request.controller=="default":}}
-	<div id = "y_parallax" style="z-index:-1000;width:100%;height:100%;position:fixed;background-image:url({{=URL('static','images/bg_2c.jpg')}})"></div> 
+	<div id = "y_parallax" style="z-index:-1000;width:100%;height:100%;position:fixed;background-image:url({{=URL('static','images/bg_2c.jpg')}});-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover; -ms-background-size: cover; background-size: cover;"></div> {{#http://goo.gl/jqvp1K}}
 	{{"""}}
 	<script>
 		function y_parallax(element, rate, offset){

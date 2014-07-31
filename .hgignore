@@ -52,6 +52,8 @@ applications/admin/cron/cron.master
 applications/admin/private/hosts.deny
 cron.master
 
+./__trash
+
 syntax: re
 ^applications/(?!(admin|init|examples|welcome|__init__)).*$
 
