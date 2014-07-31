@@ -16,7 +16,7 @@
 
         <div class="container main-container">
 			<div id="introduction">
-				<h1>Let the dealers bid on you.</h1>
+				<h1>Let dealers bid on you.</h1>
 				<div class="row-fluid">
 					<div class="col-md-5 col-sm-12">
 						<a href="javascript:void(0);"><button id="show_me_how_button" class="btn btn-info btn-xl"><i class="fa fa-fw fa-hand-o-down"></i> How does it work?</i></button></a>
@@ -69,14 +69,14 @@
 					</div>
 
 					<script>
-						$(document).ready(function(){
+						$(document).ready(function(){ //{{#each document ready function has its own name-space like any other function}}
 							function setBoxesHeight(){
 								$("#mainrow").height($("#mainbox").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
 								$("#sidebox").height($("#mainrow").height());
 							}
-							//setBoxesHeight();
+							//{{#setBoxesHeight();}}
 							
-							$('#pick_your_car_button').click(function(){
+							function showBrandsListOnClick(){
 
 								$("#introduction").fadeOut(400, function(){
 									$("#brands_selection").removeClass("hidden"); //{{#jQ-UI allows for remove class animations}}
@@ -100,8 +100,26 @@
 									});
 									resize_background();
 								});
+							}
 
+							$('#pick_your_car_button').click(showBrandsListOnClick);
+							
+							$('#back_to_top_button').click(function(){ //{{#http://bit.ly/1lgWPfS}}
+
+								$('html, body').animate({
+									scrollTop: $("#feature_slider").offset().top
+								}, 2000, function(){
+									showBrandsListOnClick();
+								});
 							});
+							
+							$('#show_me_how_button').click(function(){
+
+								$('html, body').animate({
+									scrollTop: $("#features").offset().top - 64
+								}, 2000);
+							});
+							
 						});
 					</script>
 					
@@ -348,22 +366,6 @@
 				
 			}); 
 		
-		});
-		
-		$('#back_to_top_button').click(function(){ //{{#http://bit.ly/1lgWPfS}}
-
-			$('html, body').animate({
-				scrollTop: $("#feature_slider").offset().top
-			}, 2000);
-
-		});
-		
- 		$('#show_me_how_button').click(function(){
-
-			$('html, body').animate({
-				scrollTop: $("#features").offset().top - 64
-			}, 2000);
-
 		});
 	});
 </script>
