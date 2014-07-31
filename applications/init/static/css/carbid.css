@@ -481,7 +481,8 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 	margin-left:-5px;
     font-size: 48px;
     line-height: 1em;
-    text-shadow: 1px 1px 1px #070707;}
+    text-shadow: 1px 1px 1px #070707;
+}
 /******/
 #feature_slider h1 strong {
     text-transform: uppercase;
