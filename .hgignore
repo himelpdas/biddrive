@@ -44,7 +44,6 @@ applications/*/sessions/*
 applications/*/errors/*
 applications/*/cache/*
 applications/*/uploads/*
-applications/*/static/images/trash/*
 applications/*/static/thumbnails/*
 applications/examples/static/epydoc
 applications/examples/static/sphinx
