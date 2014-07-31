@@ -459,16 +459,30 @@ header { background: rgba(0, 0, 0, 0.6) !important }
     z-index: 1;
     margin-bottom: 0px;
 }
-#feature_slider h1 {
-    font-weight: 100;
-    color: #ccc;
-    font-size: 60px;
-    line-height: 66px;
+/***BIDRIVE CUSTOM***/
+#feature_slider #introduction {
     text-align: center;
-    position: absolute;
-    top: 180px;
+    position: relative;
+    top: 80px;
     width: 100%;
 }
+#feature_slider h1{
+    font-weight: 100;
+    color: #fff;
+    font-size: 72px;
+    line-height: 1em;
+	padding-bottom:70px;
+    text-shadow: 1px 1px 1px #070707;
+}
+#feature_slider h2 {
+    font-weight: 100;
+    color: #fff;
+	margin-top: 10px;
+	margin-left:-5px;
+    font-size: 48px;
+    line-height: 1em;
+    text-shadow: 1px 1px 1px #070707;}
+/******/
 #feature_slider h1 strong {
     text-transform: uppercase;
     font-size: 14px;

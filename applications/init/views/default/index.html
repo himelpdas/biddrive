@@ -15,61 +15,99 @@
         <article class="slide active" id="showcasing" style="display: block;">
 
         <div class="container main-container">
-            <div class="row text-center slogan">
-                We take the hassle out of car buying.
-            </div>
-            <div class="row text-center small-slogan">
-                Choose your new car. We'll contact local dealers.
-			
-				<div class="btn-group" style="display:inline-block;">
-					<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-						<strong style="color:#f5f5f5">{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}</strong>
-						<span class="caret"></span>
-					</a>
-					<ul class="dropdown-menu">
-						{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
-					</ul>
+			<div id="introduction">
+				<h1>Let the dealers bid on you.</h1>
+				<div class="row-fluid">
+					<div class="col-md-5 col-sm-12">
+						<a href="javascript:void(0);"><button id="show_me_how_button" class="btn btn-info btn-xl"><i class="fa fa-fw fa-hand-o-down"></i> How does it work?</i></button></a>
+					</div>
+					<div class="col-md-2 col-sm-12">
+						<h2>—OR—</h2>
+					</div>
+					<div class="col-md-5 col-sm-12">
+						<a href="javascript:void(0);"><button id="pick_your_car_button" class="btn btn-warning btn-xl"><i class="fa fa-fw fa-hand-o-right"></i> Pick your vehicle!</i></button></a>
+					</div>
 				</div>
 			</div>
-			
-			<div id="small_screen_only_back_to_makes" class="row text-center small-slogan visible-xs">
-				<button id="reset_mainbox"  class="btn btn-info" href="javascript:void(0);" onclick="reset_mainbox()">Reset</button>
+			<div id="brands_selection" class="hidden">
+				
+				<div class="row text-center slogan">
+						
+					<span style="border-radius:5px; padding:5px; padding-left:10px; background-color:rgba(0,0,0,0.5)">
+						Choose your new car.
+						<div class="btn-group" style="display:inline-block;">
+							<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+								<strong style="font-size:22px; color:#f5f5f5">{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}</strong>
+								<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								{{for each in YEAR_RANGE:}}<li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">{{=each}} model year</a></li>{{pass}}
+							</ul>
+						</div>
+					</span>
+				</div>
+				
+				<div id="small_screen_only_back_to_makes" class="row text-center small-slogan visible-xs">
+					<button id="reset_mainbox"  class="btn btn-info" href="javascript:void(0);" onclick="reset_mainbox()">Reset</button>
+				</div>
+				
+				<div class="clearfix">&nbsp;</div>
+
+				<div id="mainrow" class="row mainrow" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
+					<div id="mainbox" class="col-xs-12 col-sm-6 col-sm-offset-3 mainbox backdrop"> {{# @480px or so it'll fill all 12 columns, but higher will fill 6}}
+						
+						<div class="row" style="padding-top:5px">
+							{{for each_brand in brands_list:}}
+								<div class="col-xs-4 car-make">
+									<a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a> {{#prevent linebreak on overflow http://goo.gl/tCoek4}}
+								</div>
+							{{pass}}
+						</div>
+					</div>
+					
+					<div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
+						loading...
+					</div>
+
+					<script>
+						$(document).ready(function(){
+							function setBoxesHeight(){
+								$("#mainrow").height($("#mainbox").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
+								$("#sidebox").height($("#mainrow").height());
+							}
+							//setBoxesHeight();
+							
+							$('#pick_your_car_button').click(function(){
+
+								$("#introduction").fadeOut(400, function(){
+									$("#brands_selection").removeClass("hidden"); //{{#jQ-UI allows for remove class animations}}
+									$("#mainbox").css({
+										'-webkit-transition': 'all 0.7s ease-out',
+										'-moz-transition': 'all 0.7s ease-out',
+										'-ms-transition': 'all 0.7s ease-out',
+										'-o-transition': 'all 0.7s ease-out',
+										'transition': 'all 0.7s ease-out',
+									}); {{#transition effect when that div moves}}
+									setBoxesHeight();
+									//define event functions
+									function resize_background(){  {{#adjust background to encompass the mainbox}}
+										$("#feature_slider").css({
+											'height':$("#mainrow").offset().top + $("#mainrow").height() + 72
+										});
+									}
+									//initialize resize
+									$(window).resize(function(){
+										resize_background();
+									});
+									resize_background();
+								});
+
+							});
+						});
+					</script>
+					
+				</div>
 			</div>
-			
-            <div class="clearfix">&nbsp;</div>
-
-            <div id="mainrow" class="row mainrow" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
-                <div id="mainbox" class="col-xs-12 col-sm-6 col-sm-offset-3 mainbox backdrop"> {{# @480px or so it'll fill all 12 columns, but higher will fill 6}}
-                    
-                    <div class="row" style="padding-top:5px">
-                        {{for each_brand in brands_list:}}
-                            <div class="col-xs-4 car-make">
-                                <a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a> {{#prevent linebreak on overflow http://goo.gl/tCoek4}}
-                            </div>
-                        {{pass}}
-                    </div>
-                </div>
-				
-                <div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
-                    loading...
-                </div>
-
-				<script>
-					function setBoxesHeight(){
-						$("#mainrow").height($("#mainbox").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
-						$("#sidebox").height($("#mainrow").height());
-					}
-					setBoxesHeight();
-					$("#mainbox").css({
-					    '-webkit-transition': 'all 0.7s ease-out',
-						'-moz-transition': 'all 0.7s ease-out',
-						'-ms-transition': 'all 0.7s ease-out',
-						'-o-transition': 'all 0.7s ease-out',
-						'transition': 'all 0.7s ease-out',
-					}); {{#transition effect when that div moves}}
-				</script>
-				
-            </div>
         </div>
 
         <script> {{#hides mainbox on smaller devices}}
@@ -139,10 +177,10 @@
     </section>
 
     <div id="showcase">
-        <div class="container">
-            <div class="row feature_wrapper" style="position:relative;">
+        <div class="container" style="position:relative;">
+            <div class="row feature_wrapper" style="position:relative; top:35px; border-radius:5px; background-color:rgba(0,0,0,0.5);">
                 <!-- Features Row -->
-                <div class="features_op1_row" style="position:relative; top:35px;">
+                <div class="features_op1_row" style="padding-top:10px;">
                     <!-- Feature -->
                     <div class="col-sm-4 feature">
                         <div class="img_box" style="text-align: center;">
@@ -150,7 +188,7 @@
                         </div>
                         <div class="index_text">
                             <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center;">Save Time</h3>
-                            <p style= "font-weight:bold; font-size: 20px; color:#f5f5f5; text-align:center">
+                            <p style= " font-size: 20px; color:#f5f5f5; text-align:center">
                                 Connect with dealers from your computer. No more driving to every dealership to get the best price.
                             </p>
                         </div>
@@ -162,7 +200,7 @@
                         </div>
                         <div class="index_text">
                             <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Save Money</h3>
-                            <p style= "font-weight:bold; font-size: 20px; color:#f5f5f5; text-align:center">
+                            <p style= " font-size: 20px; color:#f5f5f5; text-align:center">
                                 Dealers compete for your business, giving you the best possible price for your brand new car.
                             </p>
                         </div>
@@ -170,18 +208,18 @@
                     <!-- Feature -->
                     <div class="col-sm-4 feature">
                         <div class="img_box" style="text-align: center;">
+							{{"""}}
                             <span class="fa-stack fa-lg" style="color: lightgreen;">
-								{{"""}}
                                 <i class="fa fa-circle-o fa-stack-2x"></i>
                                 <i class="fa fa-check fa-stack-1x"></i>
-								{{"""}}
-								<i class="fa fa-shield fa-2x"></i>
                             </span>
-                        </div>
+							{{"""}}
+							<i class="fa fa-shield fa-3x" style="color: lightgreen;"></i>
+						</div>
                         <div class="index_text">
                             <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Hassle Free</h3>
-                            <p style= "font-weight:bold; font-size: 20px; color:#f5f5f5; text-align:center">
-                                Watch as dealers compete for your business — no emails, calls, or haggling face-to-face with dealers.
+                            <p style= " font-size: 20px; color:#f5f5f5; text-align:center">
+                                Watch as BidDrive does all the work for you — no emails, calls, or haggling face-to-face with dealers.
                             </p>
                         </div>
                     </div>
@@ -195,7 +233,7 @@
         <div class="container">
 			<br>
             <div class="row text-center" style="margin-bottom:50px">
-                <h1 style="font-size: 64px"><i class="fa fa-fw fa-cog fa-spin"></i> How BidDrive Works</h1>
+                <h1 style="font-size: 64px; line-height:1.2em;"><i class="fa fa-fw fa-cog fa-spin"></i> How BidDrive Works</h1>
             </div>
 			
             <div class="row feature">
@@ -206,10 +244,10 @@
                     <h2>
                         <i class="fa fa-fw fa-car"></i> Choose Your Car.
                     </h2>
-                    <h3 style="color:#3f3f3f">
-                        Select the Car you want to buy.  Choose by make or type.  
-                        BidDrive works best for those who are ready to buy.  We're here to help you with the last mile of the car buying marathon.  
-                    </h3>
+                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
+                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Select the Car you want to buy.  Choose by make or type.  
+                       BidDrive works best for those who are ready to buy.  We're here to help you with the last mile of the car buying marathon.<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
+					</p>
                 </div>
             </div>
 			<br>
@@ -221,10 +259,10 @@
                     <h2>
                         <i class="fa fa-fw fa-tachometer"></i> Give us the details.
                     </h2>
-                    <h3 style="color:#3f3f3f">
-                        Tell us the make, color, trim or any special features you would like.
-                        Then select your dealer radius. We will only send your request to dealers within that radius.   
-                    </h3>
+                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
+                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Tell us the make, color, trim or any special features you would like.
+                        Then select your dealer radius and answer a few questions. We will only send your request to dealers within that radius.<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
+					</p>
                 </div>
             </div>
 			<br>
@@ -236,10 +274,11 @@
                     <h2>
                         <i class="fa fa-fw fa-cloud-upload"></i> Submit your request.
                     </h2>
-                    <h3 style="color:#3f3f3f">
-                        When you are ready, submit your <u>anonymous</u> request to our dealer network.  Before you submit, 
-                        we will ask you a few simple questions to gauge where you are in the car buying process.  
-                    </h3>
+                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
+                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>When you are ready, submit your <u>anonymous</u> request to our dealer network. 
+						Communication will be handled through our website and our advanced automated hotline system.
+						<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
+					</p>
                 </div>
             </div>
 			<br>
@@ -251,11 +290,11 @@
                     <h2>
                         <i class="fa fa-fw fa-gavel"></i> Auction Begins!
                     </h2>
-                    <h3 style="color:#3f3f3f">
-                        Local dealers are alerted that you are ready to enter an auction. 
+                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
+                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Local dealers are alerted that you are ready to enter an auction. 
                         If they have a car that matches your request, they will enter it in your auction—with a bid.  
-                        Watch as dealers compete for you in the 72-hour long auction.
-                    </h3>
+                        Watch as dealers compete for you in the 72-hour long auction.<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
+					</p>
                 </div>
             </div> 
 			<br>
@@ -267,11 +306,11 @@
                     <h2>
 						<i class="fa fa-fw fa-trophy"></i> May the best dealer win!
                     </h2>
-                    <h3 style="color:#3f3f3f">
-                        Once you select a guaranteed bid, you will have 48 hours to contact the winning dealer.
+                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
+                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Once you select a guaranteed bid, you will have 48 hours to contact the winning dealer.
 						Then you simply print your voucher and take it to the dealership.
-						You and the dealer will take it from there!
-                    </h3>
+						You and the dealer will take it from there!<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
+					</p>
                 </div>
             </div>
 			<br>
@@ -283,27 +322,15 @@
             <div class="row feature_wrapper" style="position:relative;">
                 <!-- Features Row -->
                 <div class="features_op1_row" style="text-align:center; position:relative; top:65px;">
-					<a href="#"><button class="btn btn-warning btn-xl"><i class="fa fa-fw fa-car"></i> Select your vehicle now!<i class="fa fa-fw fa-level-up"></i></button></a>
+					<a href="javascript:void(0);"><button id="back_to_top_button" class="btn btn-warning btn-xl"><i class="fa fa-fw fa-car"></i> Select your vehicle now!<i class="fa fa-fw fa-level-up"></i></button></a>
 				</div>
 			</div>
 		</div>
 	</div>
-<script>
-	//define event functions
-	function resize_background(){  {{#adjust background to encompass the mainbox}}
-		$("#feature_slider").css({
-			'height':$("#mainrow").offset().top + $("#mainrow").height() + 64
-		});
-	}
-	//initialize resize
-	$(window).resize(function(){
-		resize_background();
-	});
-	resize_background();
-</script>
+	
 <script>
 	$(document).ready(function() { //{{#http://goo.gl/7LNvFi}}
-		$('.hideme').css({'opacity':'0.1'});
+		$('.hideme').css({'opacity':'0.2'});
 		/* Every time the window is scrolled ... */
 		$(window).scroll( function(){
 		
@@ -324,6 +351,21 @@
 		
 		});
 		
+		$('#back_to_top_button').click(function(){
+
+			$('html, body').animate({
+				scrollTop: $("#feature_slider").offset().top
+			}, 2000);
+
+		});
+		
+ 		$('#show_me_how_button').click(function(){
+
+			$('html, body').animate({
+				scrollTop: $("#features").offset().top - 64
+			}, 2000);
+
+		});
 	});
 </script>
 {{###SCRIPT GRAVE###}}
