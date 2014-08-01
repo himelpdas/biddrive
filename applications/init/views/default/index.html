@@ -194,7 +194,7 @@
 
     <div id="showcase">
         <div class="container" style="position:relative;">
-            <div class="row feature_wrapper" style="position:relative; top:35px; border-radius:5px; background-color:rgba(0,0,0,0.5);">
+            <div class="row feature_wrapper" style='position:relative; top:20px;'> {{"""}}style='position:relative; top:35px; border-radius:5px; background-color:rgba(0,0,0,0.5);'>
                 <!-- Features Row -->
                 <div class="features_op1_row" style="padding-top:10px;">
                     <!-- Feature -->
@@ -224,12 +224,12 @@
                     <!-- Feature -->
                     <div class="col-sm-4 feature">
                         <div class="img_box" style="text-align: center;">
-							{{"""}}
+							{{'''}}
                             <span class="fa-stack fa-lg" style="color: lightgreen;">
                                 <i class="fa fa-circle-o fa-stack-2x"></i>
                                 <i class="fa fa-check fa-stack-1x"></i>
                             </span>
-							{{"""}}
+							{{'''}}
 							<i class="fa fa-shield fa-3x" style="color: yellowgreen;"></i>
 						</div>
                         <div class="index_text">
@@ -239,19 +239,49 @@
                             </p>
                         </div>
                     </div>
-                   
                 </div>
+				{{"""}}
+                <div class="features_op1_row" style="padding-top:10px;">
+                    <!-- Feature -->
+                    <div class="col-sm-4 feature index_text">
+                        <div class="img_box" style="text-align: center;">
+                          <i class="fa fa-clock-o fa-3x" style="color: tomato;"></i>
+                        </div>
+                        <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center;">Save Time</h3>
+                    </div>
+                    <!-- Feature -->
+                    <div class="col-sm-4 feature index_text">
+                        <div class="img_box" style="text-align: center;">
+                            <i class="fa fa-dollar fa-3x" style="color: gold;"></i>
+                        </div>
+                           <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Save Cash</h3>
+                    </div>
+                    <!-- Feature -->
+                    <div class="col-sm-4 feature index_text">
+                        <div class="img_box" style="text-align: center;">
+							<i class="fa fa-shield fa-3x" style="color: yellowgreen;"></i>
+						</div>
+                        <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">No Hassle</h3>
+                    </div>
+				</div>
+				<div class="features_op1_row" style="position:relative; top:35px;">
+					<div class="col-xs-12 feature">
+						<div class="img_box" style="text-align: center;">
+							<img src="{{=URL('static','images/coverage_sample.png')}}" class="img-responsive"/>
+						</div>
+					</div>
+				</div>
             </div>
-        </div>
+		</div>
     </div>
     
     <div id="features" style="background: url({{=URL('static','images/scbg_1.jpg')}})">
         <div class="container">
 			<br>
-            <div class="row text-center" style="margin-bottom:50px">
+            <div class="row text-center" {{#style='margin-bottom:50px'}}>
                 <h1 style="font-size: 64px; line-height:1.2em;"><i class="fa fa-fw fa-cog fa-spin"></i> How BidDrive Works</h1>
             </div>
-			
+			<hr>
             <div class="row feature">
                 <div class="col-sm-6 hideme">
                     <img src="{{=URL('static','images/sc_1.png')}}" width="369" class="img-responsive"/>
@@ -261,7 +291,7 @@
                         <i class="fa fa-fw fa-car"></i> Choose Your Car.
                     </h2>
                     <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
-                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Select the Car you want to buy.  Choose by make or type.  
+                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Select the car you want to by make and model.
                        BidDrive works best for those who are ready to buy.  We're here to help you with the last mile of the car buying marathon.<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
 					</p>
                 </div>
@@ -330,7 +360,6 @@
                 </div>
             </div>
 			<br>
-            
         </div>
     </div>
 	<div id="lets_begin">
