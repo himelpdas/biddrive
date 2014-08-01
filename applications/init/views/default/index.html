@@ -16,13 +16,14 @@
 
         <div class="container main-container">
 			<div id="introduction">
-				<h1>Dealers compete for the car of your dreams.</h1>
+				<h1 class="visible-lg-block visible-md-block hidden-xs hidden-sm">Dealers compete for the car of your dreams.</h1>
+				<h1 style="font-size:64px;" class="visible-xs-block visible-sm-block hidden-md hidden-lg">Dealers compete for the car of your dreams.</h1>
 				<div class="row-fluid">
 					<div class="col-md-5 col-sm-12">
 						<a href="javascript:void(0);"><button id="pick_your_car_button" class="btn btn-warning btn-xl"><i class="fa fa-fw fa-hand-o-right"></i> Pick your vehicle!</i></button></a>
 					</div>
 					<div class="col-md-2 col-sm-12">
-						<h2 style="white-space: nowrap;"><span class="hidden-xs hidden-sm" style="margin-left:-12px;">—OR—</span</h2>
+						<h2 style="white-space: nowrap; margin-top: 10px; margin-left:-13px;"><span class="hidden-xs hidden-sm">—OR—</span</h2>
 					</div>
 					<div class="col-md-5 col-sm-12">
 						<a href="javascript:void(0);"><button id="show_me_how_button" class="btn btn-info btn-xl"><i class="fa fa-fw fa-hand-o-down"></i> How does it work?</i></button></a>
@@ -58,19 +59,19 @@
 						<div class="row" style="padding-top:5px">
 							{{for each_brand in brands_list:}}
 								<div class="col-xs-4 car-make">
-									<a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a> {{#prevent linebreak on overflow http://goo.gl/tCoek4}}
+									<a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a> <!--{{#prevent linebreak on overflow http://goo.gl/tCoek4}}-->
 								</div>
 							{{pass}}
 						</div>
 					</div>
 					
-					<div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;"> {{#overflow-y auto to show scrollbar only when needed}}
+					<div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;"> <!--{{#overflow-y auto to show scrollbar only when needed}}-->
 						loading...
 					</div>
 
 					<script>
 						function setBoxesHeight(){
-							$("#mainrow").height($("#mainbox").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
+							$("#mainrow").height($("#mainbox").height()); //{{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
 							$("#sidebox").height($("#mainrow").height());
 						}
 						$(document).ready(function(){ //{{#each document ready function has its own name-space like any other function}}
@@ -85,15 +86,15 @@
 										'-ms-transition': 'all 0.7s ease-out',
 										'-o-transition': 'all 0.7s ease-out',
 										'transition': 'all 0.7s ease-out',
-									}); {{#transition effect when that div moves}}
-									setBoxesHeight();
-									//define event functions
+									}); //{{#transition effect when that div moves}}
+									setBoxesHeight();//{{#http://goo.gl/rCNN4R resize event doesn't work on maximize! need plugin for that}}
+									//{{#define event functions}}
 									function resize_background(){  {{#adjust background to encompass the mainbox}}
-										$("#feature_slider").css({
+										$("#feature_slider").animate({
 											'height':$("#mainrow").offset().top + $("#mainrow").height() + 72
-										});
+										}, 1000);
 									}
-									//initialize resize
+									//{{#initialize resize}}
 									$(window).resize(function(){
 										resize_background();
 									});
