@@ -69,12 +69,11 @@
 					</div>
 
 					<script>
+						function setBoxesHeight(){
+							$("#mainrow").height($("#mainbox").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
+							$("#sidebox").height($("#mainrow").height());
+						}
 						$(document).ready(function(){ //{{#each document ready function has its own name-space like any other function}}
-							function setBoxesHeight(){
-								$("#mainrow").height($("#mainbox").height()); {{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
-								$("#sidebox").height($("#mainrow").height());
-							}
-							//{{#setBoxesHeight();}}
 							
 							function showBrandsListOnClick(){
 
