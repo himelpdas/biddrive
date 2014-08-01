@@ -469,7 +469,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 #feature_slider h1{
     font-weight: 100;
     color: #fff;
-    font-size: 64px;
+    font-size: 72px;
     line-height: .8em;
 	padding-bottom:70px;
     text-shadow: 1px 3px 5px rgba(7,7,7,0.9); /*text-shadow: h-shadow v-shadow blur color|none|initial|inherit;*/
@@ -478,7 +478,6 @@ header { background: rgba(0, 0, 0, 0.6) !important }
     font-weight: 100;
     color: #fff;
 	margin-top: 10px;
-	margin-left:-5px;
     font-size: 48px;
     line-height: .8em;
     text-shadow: 1px 3px 5px rgba(7,7,7,0.9);

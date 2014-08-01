@@ -138,7 +138,7 @@ def auction_requests():
 		all_results = db_filtering(all_query)
 		total_requests = len(all_results)
 		#logger.debug(all_results[0].auction_request.id)
-		blank_after_filter_message = XML('<div class="text-light"><h4>There are %s requests on %s, but none are within your parameters.</h4><h5>Please try again later.</h5></div>'%(total_requests, APP_NAME) if is_blank else '')
+		blank_after_filter_message = XML('<div class="text-light"><h4>There are %s requests on %s, but none are within your parameters.</h4><h5>Please modify your parameters or try again later.</h5></div>'%(total_requests, APP_NAME) if is_blank else '')
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	for each_request in auction_requests:
 		each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.auction_request.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
