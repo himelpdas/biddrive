@@ -30,7 +30,7 @@
 					</div>
 				</div>
 			</div>
-			<div id="brands_selection" class="hidden">
+			<div id="brands_selection" style="display:none;"> <!--{{#display:none; equal too $("#id").hide();}}-->
 				
 				<div class="row text-center slogan">
 						
@@ -79,7 +79,7 @@
 							function showBrandsListOnClick(){
 
 								$("#introduction").fadeOut(400, function(){
-									$("#brands_selection").removeClass("hidden"); //{{#jQ-UI allows for remove class animations}}
+									$("#brands_selection").fadeIn(); //{{#.removeClass("hidden");}} //{{#jQ-UI allows for remove class animations}}
 									$("#mainbox").css({
 										'-webkit-transition': 'all 0.7s ease-out',
 										'-moz-transition': 'all 0.7s ease-out',
