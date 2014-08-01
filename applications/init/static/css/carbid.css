@@ -472,7 +472,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
     font-size: 64px;
     line-height: .8em;
 	padding-bottom:70px;
-    text-shadow: 1px 1px 7px #070707; /*text-shadow: h-shadow v-shadow blur color|none|initial|inherit;*/
+    text-shadow: 1px 3px 5px rgba(7,7,7,0.9); /*text-shadow: h-shadow v-shadow blur color|none|initial|inherit;*/
 }
 #feature_slider h2 {
     font-weight: 100;
@@ -481,7 +481,7 @@ header { background: rgba(0, 0, 0, 0.6) !important }
 	margin-left:-5px;
     font-size: 48px;
     line-height: .8em;
-    text-shadow: 1px 1px 7px #070707;
+    text-shadow: 1px 3px 5px rgba(7,7,7,0.9);
 }
 /******/
 #feature_slider h1 strong {
