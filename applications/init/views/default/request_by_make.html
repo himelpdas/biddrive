@@ -375,7 +375,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 </script>
 	
  <script type="text/javascript">
-	var firstload = true; {{#Need a way to preserve values on form error on first load. Checks to see If select values exist from previous form submission.}}
+	//{{#var stuff={{=XML(json.dumps(session.option_codes))}}
  	function load_exterior_colors(){
 		//{{#hmac}}
 		var loc_token =$('#auction_request_trim').val();
@@ -383,53 +383,63 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 		//
 		$("#fake_submit").addClass("disabled", 250);//{{#ajax active, disable submit button}}
 		//{{#no need to reload if multiselect has values. this is due to erroneous forms, which pre-fill the multi-selects after submission}}
-		if ($(".ms-elem-selectable").length == false || firstload==false){ {{#http://goo.gl/aZeO3n}} {{#if multiselect options is black or page already loaded}}
-			//{{#force false}}
-			firstload=false;
-			//{{#shoe spinner before ajax}}
-			$('.options_spinner').addClass("fa-spinner");
-			//{{#exterior_colors}}
-			$('#ms-auction_request_exterior_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
-			//{{#must_haves}}
-			$('#ms-auction_request_must_haves').fadeTo(500, 0.2);
-			////{{#ajax}}
-			$('#trim_stats').slideUp(400)
-			$.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
-				.done(function( data ) {
-					//{{#exterior_colors}}
+		//{{#http://goo.gl/aZeO3n}} {{#if multiselect options is blank or page already loaded}}
+		//{{#shoe spinner before ajax}}
+		$('.options_spinner').addClass("fa-spinner");
+		//{{#exterior_colors}}
+		$('#ms-auction_request_exterior_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
+		//{{#must_haves}}
+		$('#ms-auction_request_must_haves').fadeTo(500, 0.2);
+		////{{#ajax}}
+		$('#trim_stats').slideUp(400)
+		$.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
+			.done(function( data ) {
+				//{{#exterior_colors}}
+				var previous_colors_submissions = $("#auction_request_exterior_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+				if (previous_colors_submissions.length==0){
 					$.each( data.style_colors, function( i, item ) { //{{#similar to python enumerate}}
 						$("#auction_request_exterior_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
 					});
-					$("#auction_request_exterior_colors").multiSelect('refresh');
-					$('#ms-auction_request_exterior_colors').fadeTo(250, 1.0); //{{#fade back in}}
-					//{{#must_haves}}
-					$.each( data.option_codes, function( i, item ) { //{{#similar to python enumerate}}
-						$("#auction_request_must_haves").append("<option value='"+ item[0] + "'>" + item[1] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
-					});
-					$("#auction_request_must_haves").multiSelect('refresh');
-					$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //{{#fade back in}}
-					//{{#trim stats}}
-					$('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
-				})
-				.fail(function( xhr, status, error ) {
-					if ( status == "error" ) {
-						var msg = "Error loading options: ";
-						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_options" class="alert alert-danger"><span id="ajax_failure_warning_options_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-						$('#ajax_failure_warning_options_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-						$('#ajax_failure_warning_options').slideDown();
-						$('#ajax_failure_warning_options').click(function(){
-							$(this).slideUp();
-						});
+				};
+				$("#auction_request_exterior_colors").multiSelect('refresh');
+				$('#ms-auction_request_exterior_colors').fadeTo(250, 1.0); //{{#fade back in}}
+				//{{#must_haves}}
+				var previous_options_submissions = $("#auction_request_must_haves option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+				$("#auction_request_must_haves").children().remove();
+				$.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
+					var optgroup_id = "auction_request_must_haves_" + item[4]
+					if ($("#"+optgroup_id).length == 0) {
+						$("#auction_request_must_haves").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
 					}
-				})
-				.always(function(){
-					//{{#always hide spinner when done}}
-					$('.options_spinner').removeClass("fa-spinner");
+					var selected = ''
+					previous_options_submissions.each(function(esi, each_selected_item){
+						if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
+							selected = 'selected="selected"'
+						}
+					});
+					$("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
 				});
-		}
-		else{
-			firstload=false;
-		};
+				$("#auction_request_must_haves").multiSelect('refresh');
+				$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //{{#fade back in}}
+				//{{#trim stats}}
+				$('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
+			})
+			.fail(function( xhr, status, error ) {
+				if ( status == "error" ) {
+					var msg = "Error loading options: ";
+					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_options" class="alert alert-danger"><span id="ajax_failure_warning_options_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+					$('#ajax_failure_warning_options_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
+					$('#ajax_failure_warning_options').slideDown();
+					$('#ajax_failure_warning_options').click(function(){
+						$(this).slideUp();
+					});
+				}
+			})
+			.always(function(){
+				//{{#always hide spinner when done}}
+				$('.options_spinner').removeClass("fa-spinner");
+			});
+
 		$('#loading_reviews').slideDown();
 		$('#reviews').slideUp(600).load(
 			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim').val() , //{{#implement fail like above}}

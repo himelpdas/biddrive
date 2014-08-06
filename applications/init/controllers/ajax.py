@@ -74,11 +74,12 @@ def options_content(): #TODO get all data from single call make/model/year
 		option_codes = []
 
 		for each_option_type in options:
-			if each_option_type['category'] in ['Interior','Exterior','Mechanical','Package', 'Safety']:
+			if each_option_type['category'] in ['Interior','Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Other']:
 				for each_option in each_option_type['options']:
-					option_codes.append([each_option['id'], each_option['name'], each_option['description'] if 'description' in each_option else None])
+					option_codes.append(  [  each_option['id'], each_option['name'], each_option['description'] if 'description' in each_option else None, each_option_type['category'], each_option_type['category'].lower().replace(" ", "_")  ]  )
 		
-		session.option_codes = map(lambda each_option: [each_option[0],  each_option[1]], option_codes) #requires in default function needs id, names
+		#session.option_codes = map(lambda each_option: [each_option[0],  each_option[1]], option_codes) #requires in default function needs id, names
+		session.option_codes = option_codes #requires in default function needs id, names
 		
 		return dict(option_codes = option_codes)
 		

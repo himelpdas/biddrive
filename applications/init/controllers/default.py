@@ -90,7 +90,7 @@ def request_by_make():
 	db.auction_request.exterior_colors.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	#db.auction_request.must_haves.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
-	db.auction_request.must_haves.requires = [IS_IN_SET(option_codes, multiple=True)]
+	db.auction_request.must_haves.requires = [IS_IN_SET( map(lambda each_option: [each_option[0],  each_option[1]], option_codes), multiple=True)] #requires needs [id, name]'s
 	db.auction_request.must_haves.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
 	
 	form = SQLFORM(db.auction_request, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
