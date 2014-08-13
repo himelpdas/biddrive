@@ -355,54 +355,22 @@ db.define_table('auction_request_offer',
 	Field('exterior_color_name', 
 		readable=False, writable=False, required=True
 	),
-	Field('interior_options', 'list:string',
+	Field('options', 'list:string',
 		#requires is_in_set like trim above
 		#requires=IS_NOT_EMPTY(),
 	),
-	Field('interior_options_names', 'list:string', readable=False, writable=False, #MUST PUT READABLE = WRITABLE = FALSE, BECAUSE CUSTOM FORM WITHOUT THESE FIELDS WILL SUMBIT NONE REGARDLESS OF DEFAULTS DEFINED HERE OR IN CONTROLLER
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
-	),
-	Field('exterior_options', 'list:string',
+	Field('option_names', 'list:string', readable=True, writable=False, #MUST PUT READABLE = WRITABLE = FALSE, BECAUSE CUSTOM FORM WITHOUT THESE FIELDS WILL SUMBIT NONE REGARDLESS OF DEFAULTS DEFINED HERE OR IN CONTROLLER
 		#requires is_in_set like trim above
 		#requires=IS_NOT_EMPTY(),
 	),	
-	Field('exterior_options_names', 'list:string', readable=False, writable=False,
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
-	),
-	Field('mechanical_options', 'list:string',
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
+	Field('option_descriptions', 'list:string', readable=True, writable=False, #MUST PUT READABLE = WRITABLE = FALSE, BECAUSE CUSTOM FORM WITHOUT THESE FIELDS WILL SUMBIT NONE REGARDLESS OF DEFAULTS DEFINED HERE OR IN CONTROLLER
 	),	
-	Field('mechanical_options_names', 'list:string', readable=False, writable=False,
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
-	),
-	Field('package_options', 'list:string',
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
+	Field('option_category_names', 'list:string', readable=True, writable=False, #MUST PUT READABLE = WRITABLE = FALSE, BECAUSE CUSTOM FORM WITHOUT THESE FIELDS WILL SUMBIT NONE REGARDLESS OF DEFAULTS DEFINED HERE OR IN CONTROLLER
 	),	
-	Field('package_options_names', 'list:string', readable=False, writable=False,
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
-	),
-	Field('safety_options', 'list:string',
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
+	Field('option_categories', 'list:string', readable=False, writable=False, #MUST PUT READABLE = WRITABLE = FALSE, BECAUSE CUSTOM FORM WITHOUT THESE FIELDS WILL SUMBIT NONE REGARDLESS OF DEFAULTS DEFINED HERE OR IN CONTROLLER
 	),	
-	Field('safety_options_names', 'list:string', readable=False, writable=False,
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
+	Field('option_msrps', 'list:integer', readable=True, writable=False, #MUST PUT READABLE = WRITABLE = FALSE, BECAUSE CUSTOM FORM WITHOUT THESE FIELDS WILL SUMBIT NONE REGARDLESS OF DEFAULTS DEFINED HERE OR IN CONTROLLER
 	),
-	Field('fees_options', 'list:string',
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
-	),
-	Field('fees_options_names', 'list:string', readable=False, writable=False,
-		#requires is_in_set like trim above
-		#requires=IS_NOT_EMPTY(),
-	),	
 	Field('summary', 'text',
 		requires=IS_NOT_EMPTY(),
 	),	
@@ -574,18 +542,9 @@ db.define_table('auction_request_offer',
 		lambda row: db((db.auction_request_offer_bid.auction_request == row.auction_request_offer.auction_request) & (row.auction_request_offer.id == db.auction_request_offer_bid.auction_request_offer)).select().first() #get the bid that has this auction request, and auction request offer
 	),#continue
 	Field.Method('estimation',
-		lambda row, auction_request=None: getMsrp(
-			auction_request or db(db.auction_request.id == row.auction_request_offer.auction_request).select().first().trim_data,
-			{
-				'Interior':row.auction_request_offer.interior_options,
-				'Exterior':row.auction_request_offer.exterior_options,
-				'Mechanical':row.auction_request_offer.mechanical_options,
-				'Package':row.auction_request_offer.package_options,
-				'Additional Fees':row.auction_request_offer.fees_options,
-				'Safety':row.auction_request_offer.safety_options,
-			}
-		) + row.auction_request_offer.dealership_fees
-	),
+		lambda row:
+			db(db.auction_request.id == row.auction_request_offer.auction_request).select().last()['trim_price'] + sum(row.auction_request_offer.option_msrps) + row.auction_request_offer.dealership_fees
+	), #CACHE QUERY
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer_bid.auction_request_offer == row.auction_request_offer.id).select())
 	),

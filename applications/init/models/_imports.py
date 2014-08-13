@@ -8,7 +8,8 @@ from gluon.tools import fetch
 import time
 from ago import human
 import simplecolor
-from collections import OrderedDict as OD #http://bit.ly/OhPhQr
+from collections import OrderedDict #http://bit.ly/OhPhQr
+OD = OrderedDict #shortcut
 #import lookup_hash
 
 ####SET ZERO IN PRODUCTION####
@@ -17,7 +18,7 @@ if 1:
 	logger = logging.getLogger("web2py.app.biddrive")
 	#handler = logging.StreamHandler() #by default logs go to stdout or stderr, you can set it to file via FileH
 	#print logger.findCaller()
-	logger.setLevel(logging.DEBUG)
+	logger.setLevel(logging.DEBUG) #only will show debug level and higher
 ######## http://goo.gl/BAU6cF
 
 	

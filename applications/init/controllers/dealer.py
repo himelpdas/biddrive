@@ -138,7 +138,7 @@ def auction_requests():
 		all_results = db_filtering(all_query)
 		total_requests = len(all_results)
 		#logger.debug(all_results[0].auction_request.id)
-		blank_after_filter_message = XML('<div class="text-light"><h4>There are %s requests on %s, but none are within your parameters.</h4><h5>Please modify your parameters or try again later.</h5></div>'%(total_requests, APP_NAME) if is_blank else '')
+		blank_after_filter_message = XML('<div class="text-light"><h4>There are %s requests on %s, but none are within your parameters.</h4><h5>Please modify your parameters or come back later.</h5></div>'%(total_requests, APP_NAME) if is_blank else '')
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	for each_request in auction_requests:
 		each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.auction_request.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
@@ -281,111 +281,50 @@ def pre_auction():
 	
 	trim_data = json.loads(auction_request.trim_data)
 	options = trim_data['options']
-	#return dict(form=None, options=options) #uncomment for testing
-	interior_options = []
-	exterior_options = []
-	mechanical_options = []
-	package_options = []
-	fees_options = []
-	safety_options = []
-	for each_option_type in options:
-		if each_option_type['category'] == 'Interior':
-			interior_options = each_option_type['options']
-		if each_option_type['category'] == 'Exterior':
-			exterior_options = each_option_type['options']
-		if each_option_type['category'] == 'Mechanical':
-			mechanical_options = each_option_type['options']
-		if each_option_type['category'] == 'Package':
-			package_options = each_option_type['options']
-		if each_option_type['category'] == 'Additional Fees':
-			fees_options = each_option_type['options']		
-		if each_option_type['category'] == 'Safety':
-			safety_options = each_option_type['options']
-	#return dict(form=None, options=options, interior_options=interior_options, mechanical_options=mechanical_options) #uncomment for testing
-	#USEFUL #interior_options = options.get('interior') or [] #returns None, but get blank [] instead
-	interior_options_names = []
-	exterior_options_names = []
-	mechanical_options_names = []
-	package_options_names = []
-	fees_options_names = []
-	safety_options_names = []
-	
-	msrp_by_id = {'base':trim_data['price']['baseMSRP']}
-	logger.debug(auction_request.exterior_color_prices)
-	msrp_by_id.update(dict(zip(auction_request.exterior_colors,auction_request.exterior_color_prices) ) )
-	
-	for each_option in interior_options:
-		if 'price' in each_option and 'baseMSRP' in each_option['price']:
-			interior_options_names.append([each_option['id'],each_option['name']]) ##never safe to use names in forms stick to standard ids
-			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP'] 
-			
-	interior_options_names.sort(key=lambda each:each[1])
-	db.auction_request_offer.interior_options.requires = IS_IN_SET(interior_options_names, multiple=True)
-	db.auction_request_offer.interior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
-	
-	#now make a price dict for calculation
-	for each_option in exterior_options: #FIXED front and rear splash guard 2014 buick enclave has no msrp and causes page to fail. so if price doesn't exist don't add it#NVM JUST MAKE IT $0 LIKE HAGGLEDADDY
-		#if 'price' in each_option and 'baseMSRP' in each_option['price']:
-		exterior_options_names.append([each_option['id'],each_option['name']])
-		msrp_by_id[each_option['name']] = each_option['price']['baseMSRP'] if 'price' in each_option and 'baseMSRP' in each_option['price'] else 0
+	option_codes = {} #SAFE to verify against user submission, since user has no influence in its data
 
-		#TODO CHANGE TO $0 here N/A via ajax in view
-	exterior_options_names.sort(key=lambda each:each[1])
-	db.auction_request_offer.exterior_options.requires = IS_IN_SET(exterior_options_names, multiple=True)
-	db.auction_request_offer.exterior_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
-	
-	for each_option in mechanical_options:
-		if 'price' in each_option and 'baseMSRP' in each_option['price']:
-			mechanical_options_names.append([each_option['id'],each_option['name']])
-			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
-	mechanical_options_names.sort(key=lambda each:each[1])
-	db.auction_request_offer.mechanical_options.requires = IS_IN_SET(mechanical_options_names, multiple=True)
-	db.auction_request_offer.mechanical_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
-	
-	for each_option in package_options:
-		if 'price' in each_option and 'baseMSRP' in each_option['price']: 
-			package_options_names.append([each_option['id'],each_option['name']])
-			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
-	package_options_names.sort(key=lambda each:each[1])
-	db.auction_request_offer.package_options.requires = IS_IN_SET(package_options_names, multiple=True)
-	db.auction_request_offer.package_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
-	
-	for each_option in fees_options:
-		if 'price' in each_option and 'baseMSRP' in each_option['price']: 
-			fees_options_names.append([each_option['id'],each_option['name']])
-			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
-	fees_options_names.sort(key=lambda each:each[1])
-	db.auction_request_offer.fees_options.requires = IS_IN_SET(fees_options_names, multiple=True)
-	db.auction_request_offer.fees_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
-	
-	for each_option in safety_options:
-		if 'price' in each_option and 'baseMSRP' in each_option['price']: 
-			safety_options_names.append([each_option['id'],each_option['name']])
-			msrp_by_id[each_option['name']] = each_option['price']['baseMSRP']  
-	safety_options_names.sort(key=lambda each:each[1])
-	db.auction_request_offer.safety_options.requires = IS_IN_SET(safety_options_names, multiple=True)
-	db.auction_request_offer.safety_options.widget=SQLFORM.widgets.multiple.widget #multiple widget will not appear when IS_IN_SET is combined with other validators
+	for each_option_type in options:
+		if each_option_type['category'] in ['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Fees', 'Other']: #TODO make this dynamic
+			for each_option in each_option_type['options']:
+				option_codes.update(
+					{each_option['id'] :
+						{
+							#'id':each_option['id'],
+							'name':each_option['name'], 
+							'description': each_option['description'] if 'description' in each_option else None, 
+							'category_name' : each_option_type['category'], 
+							'category' : each_option_type['category'].lower().replace(" ", "_"), #id-like
+							'msrp': each_option['price']['baseMSRP'] if 'price' in each_option and 'baseMSRP' in each_option['price'] else 0
+						}
+					}
+				) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
+	db.auction_request_offer.options.requires = IS_IN_SET(map(lambda each_option: [each_option,  option_codes[each_option]['name']], option_codes), multiple=True)
+	db.auction_request_offer.options.widget=SQLFORM.widgets.multiple.widget
+
+	#get prices
+	msrp_by_id = {'base':trim_data['price']['baseMSRP']} #TODO put in db
+	#get prices for colors
+	msrp_by_id.update(dict(zip(auction_request.exterior_colors,auction_request.exterior_color_prices) ) )
+	#get prices for trim
+	msrp_by_id.update(dict(map(lambda each_code: [option_codes[each_code]['name'], option_codes[each_code]['msrp']], option_codes) ) )
 	
 	colors = zip(auction_request.exterior_colors, auction_request.exterior_color_names) #exterior_colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
 	
-	db.auction_request_offer.exterior_color.requires = IS_IN_SET(colors, zero=None)
+	db.auction_request_offer.exterior_color.requires = IS_IN_SET(colors, zero=None) #TODO change to allow all
 	
 	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", _id="pre_auction_form", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 				
-	def computations(form):
-		codes_to_names = dict(interior_options_names+
-			exterior_options_names+
-			mechanical_options_names+
-			package_options_names+
-			fees_options_names+
-			safety_options_names
-		)
+	def computations(form): #DONT ALLOW IF VEHICLE DOESN'T MATCH REQUEST
 		codes_to_colors = dict(colors)
-		for each_prefix in OPTIONS_PREFIXES:
-			db.auction_request_offer['%s_options_names'%each_prefix].default = [ codes_to_names[each_option_code] for each_option_code in form.vars["%s_options"%each_prefix] ]
 		db.auction_request_offer.exterior_color_name.default = codes_to_colors[form.vars["exterior_color"]]
-
+		#option db #SHOULD CAUSE INTERNAL ERROR IF USER FAKES FORM VARS, THIS IS GOOD.
+		db.auction_request_offer['option_descriptions'].default = [ option_codes[each_option_code]['description'] for each_option_code in form.vars["options"] ]
+		db.auction_request_offer['option_category_names'].default = [ option_codes[each_option_code]['category_name'] for each_option_code in form.vars["options"] ]
+		db.auction_request_offer['option_categories'].default = [ option_codes[each_option_code]['category'] for each_option_code in form.vars["options"] ]
+		db.auction_request_offer['option_names'].default = [ option_codes[each_option_code]['name'] for each_option_code in form.vars["options"] ]
+		db.auction_request_offer['option_msrps'].default = [ option_codes[each_option_code]['msrp'] for each_option_code in form.vars["options"] ]
+	
 	if form.process(onvalidation=computations, hideerror = False, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 			my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
@@ -460,7 +399,7 @@ def pre_auction():
 		zip_code =  auction_request_area.zip_code,
 	)
 	
-	return dict(form = form, options=options,msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
+	return dict(form = form, options=options, option_codes=option_codes, msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
 
 """
 @auth.requires(request.args(0))
@@ -777,25 +716,14 @@ def auction():
 		offer_id = each_offer.auction_request_offer.id
 
 		#options
-		interior_options = []
-		exterior_options = []
-		mechanical_options = []
-		package_options = []
-		fees_options = []
-		safety_options =[]
-		
-		for each_option in each_offer.auction_request_offer.interior_options:
-			interior_options.append(getOption(trim_data, 'Interior', each_option))
-		for each_option in each_offer.auction_request_offer.exterior_options:
-			exterior_options.append(getOption(trim_data, 'Exterior', each_option))
-		for each_option in each_offer.auction_request_offer.mechanical_options:
-			mechanical_options.append(getOption(trim_data, 'Mechanical', each_option))
-		for each_option in each_offer.auction_request_offer.package_options:
-			package_options.append(getOption(trim_data, 'Package', each_option))
-		for each_option in each_offer.auction_request_offer.safety_options:
-			safety_options.append(getOption(trim_data, 'Safety', each_option))
-		for each_option in each_offer.auction_request_offer.fees_options:
-			fees_options.append(getOption(trim_data, 'Additional Fees', each_option))
+		option_codes = zip(each_offer.auction_request_offer.options, each_offer.auction_request_offer.option_names, each_offer.auction_request_offer.option_descriptions, each_offer.auction_request_offer.option_categories, each_offer.auction_request_offer.option_category_names, each_offer.auction_request_offer.option_msrps,)
+		options_dict = dict(map(lambda each: [each,{}],set(each_offer.auction_request_offer.option_category_names)))
+		for each_category_name in options_dict:
+			for each_code in option_codes:
+				if each_code[4] == each_category_name: #category names ex. Interior Trim
+					options_dict[each_category_name].update({
+						each_code[0]:dict(name=each_code[1], description=each_code[2], category=each_code[3], msrp=each_code[5]) #category ex. interior_trim
+					})
 
 		#pricing stuff
 		bids = db((db.auction_request_offer_bid.owner_id == each_offer.auction_request_offer.owner_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select()
@@ -1034,7 +962,8 @@ def auction():
 			'has_message_from_buyer' : has_message_from_buyer,
 			'is_winning_offer' :is_winning_offer,
 			'is_my_offer': is_my_offer,
-			'additional_info':each_offer.auction_request_offer['dealership_fees_details'],
+			'dealership_fees':each_offer.auction_request_offer['dealership_fees'],
+			'dealership_fees_details':each_offer.auction_request_offer['dealership_fees_details'],
 			'about_us':each_offer.dealership_info['mission_statement'],
 			'bid_is_final': bool(bid_is_final),
 			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,
@@ -1055,12 +984,7 @@ def auction():
 			'number_of_bids' : number_of_bids,
 			'exterior_color' : this_color,
 			'summary' : each_offer.auction_request_offer.summary,
-			'interior_options' : interior_options,
-			'exterior_options' : exterior_options,
-			'mechanical_options' : mechanical_options,
-			'package_options' : package_options,
-			'fees_options' : fees_options,
-			'safety_options':safety_options,
+			'options_dict':options_dict,
 			#'exterior_image' : each_offer.auction_request_offer.exterior_image,
 			#'interior_image' : each_offer.auction_request_offer.interior_image,
 			'exterior_images' : each_offer.auction_request_offer.exterior_image_compressed,

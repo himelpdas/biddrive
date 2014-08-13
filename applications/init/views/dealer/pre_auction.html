@@ -14,12 +14,8 @@
 				{{ form.element("input", _name = "vin_number")["_class"] += " form-control" }}
 				{{# form.element("input", _name = "remember_data_for_30_days")["_class"] += " form-control" }}
 				{{ form.element("select", _name = "exterior_color")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "interior_options")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "exterior_options")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "mechanical_options")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "package_options")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "safety_options")["_class"] += " form-control" }}
-				{{ form.element("select", _name = "fees_options")["_class"] += " form-control" }}
+				{{ form.element("select", _name = "options")["_class"] += " form-control" }}
+				{{# form.element("select", _name = "fees_options")["_class"] += " form-control" }}
 				{{ form.element("textarea", _name = "summary")["_class"] += " form-control" }}
 				{{ form.element("input", _name = "dealership_fees")["_class"] += " form-control" }}
 				{{ form.element("input", _name = "dealership_fees")["_placeholder"] = "$$$" }}
@@ -71,65 +67,34 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label">Interior options</label>
+					<label class="col-sm-3 control-label">Options</label>
 					<div class="col-sm-9">
-						{{=form.custom.widget.interior_options}}
+						{{=form.custom.widget.options}}
 
-						{{if form.errors['interior_options']:}}
-							<div class="alert alert-warning">{{=form.errors['interior_options']}}</div>
+						{{if form.errors['options']:}}
+							<div class="alert alert-warning">{{=form.errors['options']}}</div>
 						{{pass}}
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Exterior options</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.exterior_options}}
-
-						{{if form.errors['exterior_options']:}}
-							<div class="alert alert-warning">{{=form.errors['exterior_options']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Mechanical options</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.mechanical_options}}
-
-						{{if form.errors['mechanical_options']:}}
-							<div class="alert alert-warning">{{=form.errors['mechanical_options']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Package options</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.package_options}}
-
-						{{if form.errors['package_options']:}}
-							<div class="alert alert-warning">{{=form.errors['package_options']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Safety options</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.safety_options}}
-
-						{{if form.errors['safety_options']:}}
-							<div class="alert alert-warning">{{=form.errors['safety_options']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Manufacturer fees</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.fees_options}}
-
-						{{if form.errors['fees_options']:}}
-							<div class="alert alert-warning">{{=form.errors['fees_options']}}</div>
-						{{pass}}
-					</div>
-				</div>
+				<script>
+					var option_codes = {{=XML(json.dumps(option_codes))}};
+					var previous_options_submissions = $("#auction_request_offer_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+					$("#auction_request_offer_options").children().remove();
+					$.each( option_codes, function( i, item) { //{{#similar to python enumerate, but dissimilar when it comes to dict}}
+						var optgroup_id = "auction_request_offer_options_" + item['category'];
+						if ($("#"+optgroup_id).length == 0) {
+							$("#auction_request_offer_options").append("<optgroup label='" + item['category_name'] +"' id ='" + optgroup_id +"'></optgroup>");
+						}
+						var selected = ''
+						previous_options_submissions.each(function(esi, each_selected_item){
+							if ($(each_selected_item).attr("value") == i){ //{{#this will also work}}
+								selected = 'selected="selected"';
+							}
+						});
+						$("#"+optgroup_id).append("<option value='"+ i + "'" + selected + ">" + item['name'] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
+					});
+					$("#auction_request_offer_options").multiSelect('refresh');
+				</script>
 				<div class="form-group">
 					<label class="col-sm-3 control-label"><i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="The total dollar value of ALL fees from your dealership regarding this vehicle."></i> Dealership fees total cost</label>
 					<div class="col-sm-9">
@@ -309,13 +274,11 @@
 							Color choices:
 						</th>
 						<td>
-							<ul>
-								{{for each_color_name in auction_request_info['auction_request'].exterior_color_names:}}
-									<li>
-										{{=each_color_name}}
-									</li>
-								{{pass}}
-							</ul>
+							{{for each_color_name in auction_request_info['auction_request'].exterior_color_names:}}
+								<p>
+									{{=each_color_name}}
+								</p>
+							{{pass}}
 						</td>
 					</tr>
 					
@@ -325,30 +288,34 @@
 						</th>
 
 						<td>
-							<ul>
-								{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
-								{{request_trim_data = json.loads(auction_request_info['auction_request'].trim_data)}}
-								{{must_haves = auction_request_info['auction_request'].must_haves}}
-								{{if must_haves:}}
-								{{#"""}}
-									{{for each_option in must_haves:}}
-										{{has_option_data = False}}
-										{{for each_option_type in option_names:}}
+							{{"""}}
+								<ul>
+									{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
+									{{request_trim_data = json.loads(auction_request_info['auction_request'].trim_data)}}
+									{{must_haves = auction_request_info['auction_request'].must_haves}}
+									{{if must_haves:}}
+										{{for each_option in must_haves:}}
+											{{has_option_data = False}}
+											{{for each_option_type in option_names:}}
+												{{if not has_option_data:}}
+													{{has_option_data = getOption(request_trim_data, each_option_type, each_option)}}
+													{{if has_option_data:}}
+														<li>{{=has_option_data['name']}}</li>
+													{{pass}}
+												{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
+											{{pass}}
 											{{if not has_option_data:}}
-												{{has_option_data = getOption(request_trim_data, each_option_type, each_option)}}
-												{{if has_option_data:}}
-													<li>{{=has_option_data['name']}}</li>
-												{{pass}}
-											{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
+												</li>{{=each_option}}</li> {{#then just show the id number}}
+											{{pass}}
 										{{pass}}
-										{{if not has_option_data:}}
-											</li>{{=each_option}}</li> {{#then just show the id number}}
-										{{pass}}
+									{{else:}}<li>No preference</li>
 									{{pass}}
-								{{#"""}}
-								{{else:}}<li>No preference</li>
-								{{pass}}
-							</ul>
+								</ul>
+							{{"""}}
+							{{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2])],zip(auction_request_info['auction_request'].must_haves, auction_request_info['auction_request'].must_have_names, auction_request_info['auction_request'].must_have_prices) ), key=lambda each: each[1]['name'] ) ) }}
+							{{for each_option in auction_request_options_dict:}}
+								<p>{{=auction_request_options_dict[each_option]['name']}}</p>
+							{{pass}}
 						</td>
 					</tr>
 					
@@ -614,10 +581,7 @@ $(document).ready(function(){
 {{#=BEAUTIFY(options)}}
 {{#'''}}
 <script>
-	{{offer_types = ['interior','exterior','mechanical','package','fees','safety']}}
-	{{for each_offer_type in offer_types:}}
-		$("#auction_request_offer_{{=each_offer_type}}_options").multiSelect('refresh'); //{{#initialize multiselect}}
-	{{pass}}
+	//$("#auction_request_offer_options").multiSelect('refresh'); //{{#initialize multiselect}}
 
 	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; //{{#ok to use name instead of id because there is no character limitations like at get url}}
 	function update_estimation(){
