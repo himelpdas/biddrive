@@ -61,22 +61,38 @@
 							Colors
 						</th>
 						<td>
-							{{for each_color in auction_request_info['colors']:}}
-								{{=COLOR_SWATCH(each_color[1],each_color[0])}}
-							{{pass}}
+							<div>
+								<strong style="width: 55px; display:inline-block">Exterior:</strong>
+								{{for each_color_id in auction_request_info['colors_dict']:}}
+									{{each_color=auction_request_info['colors_dict'][each_color_id]}}
+									{{if each_color['category'] == "exterior":}}
+										{{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
+									{{pass}}
+								{{pass}}
+							</div>
+							<div>
+								<strong style="width: 55px; display:inline-block">Interior:</strong>
+								{{for each_color_id in auction_request_info['colors_dict']:}}
+									{{each_color=auction_request_info['colors_dict'][each_color_id]}}
+									{{if each_color['category'] == "interior":}}
+										{{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
+									{{pass}}
+								{{pass}}
+							</div>
 						</td>
 					</tr>
+
 					<tr>
 						<th>
-							Must haves {{#TODO use info directly from model}}
+							Options {{#TODO use info directly from model}}
 						</th>
 
 						<td>{{"""}}{{#old inefficient way of getting data}}
 							{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
 							{{each_request_trim_data = json.loads(auction_request_info['auction_request']['trim_data'])}}
-							{{must_haves = auction_request_info['auction_request']['must_haves']}}
-							{{if must_haves:}}
-								{{for each_option in must_haves:}}
+							{{options = auction_request_info['auction_request']['options']}}
+							{{if options:}}
+								{{for each_option in options:}}
 									{{has_option_data = False}}
 									{{for each_option_type in option_names:}}
 										{{if not has_option_data:}}
@@ -93,7 +109,7 @@
 							{{else:}}<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;No preference</div>
 							{{pass}}
 							{{"""}}
-							{{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2])],zip(auction_request_info['auction_request'].must_haves, auction_request_info['auction_request'].must_have_names, auction_request_info['auction_request'].must_have_prices) ), key=lambda each: each[1]['name'] ) ) }}
+							{{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2])],zip(auction_request_info['auction_request'].options, auction_request_info['auction_request'].option_names, auction_request_info['auction_request'].option_msrps) ), key=lambda each: each[1]['name'] ) ) }}
 							{{option_keys = auction_request_options_dict.keys()}}
 							{{if len(option_keys)%2:}}{{option_keys.append(None)}}{{pass}} {{#must be even or one option will be excluded}}
 							{{two_cols = zip(option_keys[0::2], option_keys[1::2])}} {{#iterate every two items in a list http://goo.gl/kpTBq8}}
@@ -103,7 +119,7 @@
 										<i class="fa fa-fw fa-shield fa-rotate-270"></i>{{=auction_request_options_dict[each_pair[0]]['name']}}
 									</div>
 									<div class="col-xs-12 col-sm-6">
-										{{if auction_request_options_dict[each_pair[1]]:}}<i class="fa fa-fw fa-shield fa-rotate-270"></i>{{=auction_request_options_dict[each_pair[1]]['name']}}{{pass}}{{#last item may be missing}}
+										{{if auction_request_options_dict.get(each_pair[1]):}}<i class="fa fa-fw fa-shield fa-rotate-270"></i>{{=auction_request_options_dict[each_pair[1]]['name']}}{{pass}}{{#last item may be missing, so use get}}
 									</div>
 								{{pass}}
 							</div>
@@ -152,10 +168,13 @@
 
 					<tr>
 						<th>
-							Best prices
+							Prices
 						</th>
 
 						<td>
+							<div>
+								<strong style="width: 55px; display:inline-block">MSRP:</strong> ${{=auction_request_info['auction_request'].estimation()}}
+							</div>							
 							<div>
 								<strong style="width: 55px; display:inline-block">Lowest:</strong> {{=auction_request_info['lowest_price']}}
 							</div>
@@ -534,11 +553,11 @@
 
 						<tr>
 							<th>
-								Exterior color
+								Color
 							</th>
 
 							<td>
-								{{=each_offer['exterior_color']}}
+								Exterior: {{=COLOR_SWATCH(each_offer['exterior_color']['hex'],each_offer['exterior_color']['name'])}} <span class="text-sm text-light pull-right">Interior: {{=COLOR_SWATCH(each_offer['interior_color']['hex'],each_offer['interior_color']['name'])}}</span>
 							</td>
 						</tr>
 
@@ -548,7 +567,7 @@
 							</th>
 
 							<td>
-								{{=each_offer['number_of_bids']}}
+								{{=each_offer['number_of_bids']}} {{if each_offer['last_bid_ago']:}}<span class="text-sm text-light pull-right">Latest {{=each_offer['last_bid_ago']}} ago</span>{{pass}}
 							</td>
 						</tr>
 						

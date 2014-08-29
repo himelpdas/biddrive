@@ -1,7 +1,7 @@
-#ms-auction_request_exterior_colors { 
+#ms-auction_request_colors { 
 	width:100%; {{#align the multi-select jquery with the bootrap form}}
 }
-#ms-auction_request_must_haves { 
+#ms-auction_request_options { 
 	width:100%; {{#align the multi-select jquery with the bootrap form}}
 }
 

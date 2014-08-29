@@ -39,11 +39,11 @@ def options_content(): #TODO get all data from single call make/model/year
 		raise HTTP(404)
 	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
 	(make, model, year, style_id) = (request.args[0], request.args[1], request.args[2],  request.args[3])
-	def __exterior_colors__():
+	def __colors__():
 		style_colors=style['colors']#[1]['options']
 		#make sure color data is safe for the multiselect form submission in request_by_make
 		"""
-		for each_color in style_colors:#replacced with colorChipsErrorFix()
+		for each_color in style_colors:#replaced with colorChipsErrorFix()
 			if each_color['category'] == 'Exterior':
 				counter=0#USE ENUMERATE
 				for each_option in each_color['options']:
@@ -51,19 +51,19 @@ def options_content(): #TODO get all data from single call make/model/year
 						del each_color['options'][counter]
 					counter+=1
 		"""
-		colorChipsErrorFix(style_colors)
-		style_colors = style['colors'] [[each['category']=='Exterior' for each in style['colors']].index(True)] ['options']
-		style_color_codes = []
+		#colorChipsErrorFix(style_colors)
+		#style_colors = style['colors'] [[each['category']=='Exterior' for each in style['colors']].index(True)] ['options']
+		color_codes = []
 		for each_color in style_colors:
-			style_color_codes.append([
-				each_color['id'],
-				each_color['name']
-			])
-		#style_color_codes.sort(key=lambda x: x[1])
-		session.style_color_codes = style_color_codes
-		return dict(style_colors=style_colors)
+			if  each_color['category'] in ['Interior', 'Exterior']:
+				for each_option in each_color['options']:
+					color_codes.append(  [  each_option['id'], each_option['name'], each_option['colorChips']['primary']['hex'] if 'colorChips' in each_option else "fffff", each_color['category'] , each_color['category'].lower().replace(" ", "_")  ]  ) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
+					#TODO - Use rare color hex to hack a "question mark" icon over a swatch of unknown color
+		#color_codes.sort(key=lambda x: x[1])
+		session.color_codes = color_codes
+		return dict(color_codes=color_codes)
 		
-	def __must_haves__():
+	def __options__():
 		#each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.id], hmac_key=each_request.temp_id, hash_vars=[each_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
 		#arg 0,1,2,3 is year make model and style id, make hmac key style id, even though it doesn't matter what is used as style id, as long as they're hashed together. salt is a hidden random string defined in _imports.py
 		#if not URL.verify(request, hmac_key=request.args[3], salt = session.salt, hash_vars=[request.args[0], request.args[1], request.args[2]): #verifys all args (or ones specified) in a url
@@ -84,14 +84,12 @@ def options_content(): #TODO get all data from single call make/model/year
 		return dict(option_codes = option_codes)
 		
 	def __style_details__(): #OLD#getting details by style id rather than parsing through make/model/year makes it harder for hackers to fake get values# FIXED WITH DIGITALLY SIGNED URLS
-		#NO NEED TO HMAC VERIFY IT IS DONE IN EXTERIOR_COLORS AND MUST_HAVES, ONLY DO IN CLIENT VIEW #DRY?
-		style_colors = __exterior_colors__()
-		colors=[]
-		for each_color in style_colors['style_colors']:
-			colors.append([each_color['name'], each_color['colorChips']['primary']['hex']])
+		#NO NEED TO HMAC VERIFY IT IS DONE IN colors AND options, ONLY DO IN CLIENT VIEW #DRY?
+		style_colors = __colors__()
+		colors=style_colors['color_codes'][:]
 		
 		options_descriptions = []
-		for each_option in __must_haves__()['option_codes']:
+		for each_option in __options__()['option_codes']:
 			if each_option[2] and each_option[2] != each_option[1]:
 				options_descriptions.append([each_option[1],each_option[2]]) #append name and description
 			
@@ -110,7 +108,7 @@ def options_content(): #TODO get all data from single call make/model/year
 			#speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
 			base_msrp = ['Base MSRP', '$%0.0f'%style['price']['baseMSRP']],
 			estimate = ['%s estimate'%APP_NAME.replace('(Alpha)', ''), '$%0.0f'%(int(style['price']['baseMSRP'])-random.randrange(3000,6000),)],
-			colors=['Color options', colors],
+			colors=['Colors', colors],
 			#manufacturer_code = ['Code', style['manufacturerCode'] if 'manufacturerCode' in style else 'N/A'],
 			#fuel = ['Fuel type', style['engine']['type'].capitalize()],
 			#doors = ['Doors' , style['numOfDoors']],
@@ -119,7 +117,7 @@ def options_content(): #TODO get all data from single call make/model/year
 		return dict(stats = stats, options_descriptions=options_descriptions, make = make, model = model, year = year, style_id = style_id)
 	
 	return dict(
-		style_colors=__exterior_colors__()['style_colors'], option_codes = __must_haves__()['option_codes'], style_details_html_string=XML(response.render('ajax/style_details.html', __style_details__() ) ),
+		color_codes=__colors__()['color_codes'], option_codes = __options__()['option_codes'], style_details_html_string=XML(response.render('ajax/style_details.html', __style_details__() ) ),
 	)
 
 def reviews():

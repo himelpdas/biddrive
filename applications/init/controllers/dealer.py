@@ -38,11 +38,12 @@ def auction_requests():
 	multiple = request.vars['multiple'].split("|") if request.vars['multiple'] else []
 	models_list = {}
 	if all(map(lambda make: make in brands_list, multiple)): #TEMP
-		for i, each_make in enumerate(multiple):
-			if not i: #if first iteration
-				query &= db.auction_request.make==each_make #FIRST QUERY IN THE QUERY BUILDER *MUST* BE &=, SO THE |= LATER WILL MAKE SENSE
-			else:
-				query |= db.auction_request.make==each_make
+		query &= db.auction_request.make.belongs(multiple) #old method below resulted in OR of auction_expires >= request.now, resulting in expired auction_requests to show
+		#for i, each_make in enumerate(multiple):
+			#if not i: #if first iteration
+			#	query &= db.auction_request.make==each_make #FIRST QUERY IN THE QUERY BUILDER *MUST* BE &=, SO THE |= LATER WILL MAKE SENSE
+			#else:
+			#	query |= db.auction_request.make==each_make
 		for each_year in year_list:
 			for each_make in multiple:
 				for each_model in ed_call(MAKE_URI%(each_make, each_year))['models']:
@@ -82,7 +83,7 @@ def auction_requests():
 	#
 	color = str(request.vars['color'])
 	if color in colors_list:
-		query &= db.auction_request.exterior_colors.contains(color)
+		query &= db.auction_request.colors.contains(color)
 	else:
 		color = None
 	#
@@ -147,7 +148,7 @@ def auction_requests():
 		reverse = False
 		if sortby == "colors-least":
 			reverse = True
-		auction_requests = auction_requests.sort(lambda row: len(row.auction_request.exterior_colors), reverse=reverse)#the sort function takes a rows object and applies a function with each row as the argument. Then it compares the returned numerical value of each row and sorts it 
+		auction_requests = auction_requests.sort(lambda row: len(row.auction_request.colors), reverse=reverse)#the sort function takes a rows object and applies a function with each row as the argument. Then it compares the returned numerical value of each row and sorts it 
 	
 	if sortby == 'closest' or sortby == 'farthest':
 		reverse = False
@@ -304,20 +305,26 @@ def pre_auction():
 	#get prices
 	msrp_by_id = {'base':trim_data['price']['baseMSRP']} #TODO put in db
 	#get prices for colors
-	msrp_by_id.update(dict(zip(auction_request.exterior_colors,auction_request.exterior_color_prices) ) )
+	msrp_by_id.update(dict(zip(auction_request.colors,auction_request.color_msrps) ) )
 	#get prices for trim
 	msrp_by_id.update(dict(map(lambda each_code: [option_codes[each_code]['name'], option_codes[each_code]['msrp']], option_codes) ) )
 	
-	colors = zip(auction_request.exterior_colors, auction_request.exterior_color_names) #exterior_colors means color_ids please do sitewide replace
+	colors = zip(auction_request.colors, auction_request.color_names, auction_request.color_categories) #OLD colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
+	exterior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "exterior", colors))
+	logger.debug(auction_request.colors)
+	interior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "interior", colors))
 	
-	db.auction_request_offer.exterior_color.requires = IS_IN_SET(colors, zero=None) #TODO change to allow all
+	db.auction_request_offer.exterior_color.requires = IS_IN_SET(exterior_colors, zero=None) #TODO change to allow all
+	db.auction_request_offer.interior_color.requires = IS_IN_SET(interior_colors, zero=None) #TODO change to allow all
 	
 	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", _id="pre_auction_form", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 				
 	def computations(form): #DONT ALLOW IF VEHICLE DOESN'T MATCH REQUEST
-		codes_to_colors = dict(colors)
-		db.auction_request_offer.exterior_color_name.default = codes_to_colors[form.vars["exterior_color"]]
+		codes_to_exterior_colors = dict(exterior_colors)
+		codes_to_interior_colors = dict(interior_colors)
+		db.auction_request_offer.exterior_color_name.default = codes_to_exterior_colors[form.vars["exterior_color"]]
+		db.auction_request_offer.interior_color_name.default = codes_to_interior_colors[form.vars["interior_color"]]
 		#option db #SHOULD CAUSE INTERNAL ERROR IF USER FAKES FORM VARS, THIS IS GOOD.
 		db.auction_request_offer['option_descriptions'].default = [ option_codes[each_option_code]['description'] for each_option_code in form.vars["options"] ]
 		db.auction_request_offer['option_category_names'].default = [ option_codes[each_option_code]['category_name'] for each_option_code in form.vars["options"] ]
@@ -393,7 +400,8 @@ def pre_auction():
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
 		auction_request=auction_request,
-		colors = colors,
+		exterior_colors = exterior_colors,
+		interior_colors = interior_colors,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
 		zip_code =  auction_request_area.zip_code,
@@ -463,12 +471,8 @@ def __auction_validator__():
 	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
 	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
 	
-	colors=[]
-	exterior_color_names = dict(map(lambda id,name: [id,name], auction_request.exterior_colors, auction_request.exterior_color_names)) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
-	exterior_color_names = OD(sorted(exterior_color_names.items(), key=lambda x: x[1])) #exterior_color_names.sort()
-	for id, each_name in exterior_color_names.items(): #just get names here for auction_request_info
-		color_hex=getColorHexByNameOrID(each_name, trim_data) #don't forget color hex
-		colors.append([each_name, color_hex])
+	colors_dict = dict(map(lambda id,name,hex,category,category_name: [id,dict(name=name, hex=hex, category=category, category_name=category_name)], auction_request.colors, auction_request.color_names, auction_request.color_hexes, auction_request.color_categories, auction_request.color_category_names ) ) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+	#colors_dict = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
 		
 	is_lease = auction_request.funding_source == 'lease'
 	
@@ -491,9 +495,8 @@ def __auction_validator__():
 		auction_is_completed = auction_is_completed,
 		auction_request_area=auction_request_area,
 		auction_request_user=auction_request_user,
-		colors=colors,
 		is_lease=is_lease,
-		exterior_color_names=exterior_color_names,)
+		colors_dict=colors_dict,)
 
 def auction():
 	auction_validator = __auction_validator__()
@@ -516,8 +519,7 @@ def auction():
 	auction_is_completed = auction_validator['auction_is_completed']
 	auction_request_area=auction_validator['auction_request_area']
 	auction_request_user=auction_validator['auction_request_user']
-	colors=auction_validator['colors']
-	exterior_color_names=auction_validator['exterior_color_names']
+	colors_dict=auction_validator['colors_dict']
 	is_lease=auction_validator['is_lease']
 	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 	
@@ -640,7 +642,7 @@ def auction():
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
 		auction_request=auction_request,
-		colors = colors,
+		colors_dict = colors_dict,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
 		zip_code =  auction_request_area.zip_code,
@@ -731,9 +733,10 @@ def auction():
 		msrp = each_offer.auction_request_offer.estimation()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
 		#last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
-		last_bid_price = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = final_bid_ended = None
+		last_bid_price = last_bid_ago = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = final_bid_ended = None
 		if last_bid:
 			last_bid_price = is_not_awaiting_offer = last_bid.bid  #last bid means latest
+			last_bid_ago = human(last_bid.created_on - request.now, precision=1, past_tense='{}', future_tense='{}')
 			#final bid
 			bid_is_final=final_bid_ends_on = last_bid.final_bid
 			final_bid_ended = (request.now > final_bid_ends_on) if bid_is_final else None #DO NOT USE ALONE OR ONLY TEST TRUE
@@ -761,15 +764,21 @@ def auction():
 		if is_my_offer:
 			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
 			if highest_message_in_this_offer:
-				all_messages_read = db.unread_auction_messages.insert(highest_id = highest_message_in_this_offer.id, auction_request = auction_request_id, auction_request_offer = each_offer.auction_request_offer.id)
+				all_messages_read = db.auction_request_unread_messages.insert(highest_id = highest_message_in_this_offer.id, auction_request = auction_request_id, auction_request_offer = each_offer.auction_request_offer.id)
 	
 		#dealer stuff
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
 		this_dealer_distance = distance_to_auction_request(each_offer)
 		
 		#color stuff
-		this_color = exterior_color_names[each_offer.auction_request_offer.exterior_color]#since the pictures will have colors, no need to add a color square, so just map id to name
-			
+		this_exterior_color = {
+			'name':colors_dict[each_offer.auction_request_offer.exterior_color]['name'], #since the pictures will have colors, no need to add a color square, so just map id to name
+			'hex':colors_dict[each_offer.auction_request_offer.exterior_color]['hex']
+		}		
+		this_interior_color = {
+			'name':colors_dict[each_offer.auction_request_offer.interior_color]['name'],
+			'hex':colors_dict[each_offer.auction_request_offer.interior_color]['hex']
+		}
 		#message stuff buyer
 		my_message_form_buyer = ''
 		has_message_from_buyer = None
@@ -843,7 +852,7 @@ def auction():
 				response.message = "$You picked a winner! Click the green button below to view your certificate!" #keep as response.message so it always shows
 			#blinking new message stuff
 			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == offer_id).select().last()
-			highest_message_id_that_owner_read = db(db.unread_auction_messages.auction_request == auction_request_id).select().last()
+			highest_message_id_that_owner_read = db(db.auction_request_unread_messages.auction_request == auction_request_id).select().last()
 			if highest_message_id_that_owner_read and highest_message_in_this_offer:
 				if highest_message_id_that_owner_read.highest_id <= highest_message_in_this_offer.id and highest_message_in_this_offer.owner_id!=auth.user_id :
 					has_message_from_buyer =True
@@ -980,9 +989,11 @@ def auction():
 			'is_not_awaiting_offer':is_not_awaiting_offer,
 			'is_awaiting_offer': not is_not_awaiting_offer,
 			'last_bid_price' : last_bid_price,
+			'last_bid_ago':last_bid_ago,
 			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,
-			'exterior_color' : this_color,
+			'exterior_color' : this_exterior_color,
+			'interior_color' : this_interior_color,
 			'summary' : each_offer.auction_request_offer.summary,
 			'options_dict':options_dict,
 			#'exterior_image' : each_offer.auction_request_offer.exterior_image,
@@ -1019,7 +1030,7 @@ def auction():
 	if is_owner:
 		highest_message_in_this_auction = db(db.auction_request_offer_message.auction_request == auction_request_id).select().last()
 		if highest_message_in_this_auction:
-			marked_as_read = db.unread_auction_messages.insert(highest_id = highest_message_in_this_auction.id, auction_request = auction_request_id)
+			marked_as_read = db.auction_request_unread_messages.insert(highest_id = highest_message_in_this_auction.id, auction_request = auction_request_id)
 	
 	auction_request_offers_info = auction_request_offers_info.values() #convert back to list to be compatible with current view
 	
@@ -1103,7 +1114,7 @@ def my_auctions():
 	for each_offer in my_offers:
 		#auction_request = db(db.auction_request.id == each_offer.auction_request).select().first() don't needed #make sure not abandoned or expired!
 		#auction_request.expired()
-		exterior_color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.exterior_colors, each_offer.auction_request.exterior_color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.colors, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
 		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
@@ -1120,7 +1131,7 @@ def my_auctions():
 		
 		has_unread_messages = False
 		highest_message_for_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
-		my_highest_message_for_this_offer = db((db.unread_auction_messages.auction_request_offer == each_offer.auction_request_offer.id)&(db.unread_auction_messages.owner_id == auth.user_id)).select().last()
+		my_highest_message_for_this_offer = db((db.auction_request_unread_messages.auction_request_offer == each_offer.auction_request_offer.id)&(db.auction_request_unread_messages.owner_id == auth.user_id)).select().last()
 		if my_highest_message_for_this_offer and highest_message_for_this_offer: #maybe no messages
 			if my_highest_message_for_this_offer.highest_id < highest_message_for_this_offer.id:
 				has_unread_messages = True
@@ -1144,7 +1155,7 @@ def my_auctions():
 			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
-			'exterior_color': exterior_color_names[each_offer.auction_request_offer.exterior_color],
+			'exterior_color': color_names[each_offer.auction_request_offer.exterior_color],
 			'offer_expires':each_offer.auction_request.offer_expires,
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -1167,7 +1178,7 @@ def winner():
 	auction_validator = __auction_validator__()
 
 	#get the color chart
-	exterior_colors=auction_validator['exterior_color_names']
+	colors=auction_validator['colors_dict']
 	
 	#get the auction request
 	auction_request=auction_validator['auction_request']
@@ -1190,7 +1201,7 @@ def winner():
 				'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s)
 			})
 	#color stuff
-	exterior_color = exterior_colors[auction_request_offer.exterior_color]
+	exterior_color = colors[auction_request_offer.exterior_color]
 	#options stuff
 	options =  {
 		'Interior':auction_request_offer.interior_options,

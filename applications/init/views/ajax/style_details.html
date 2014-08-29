@@ -6,9 +6,22 @@
 	<div class="col-xs-6">
 		<strong>
 			{{if each_stat == 'colors':}}
-				{{for each_color in stats[each_stat][1]:}}
-					<i class="fa fa-square" rel="tooltip" style="color:#{{=each_color[1]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_color[0]}}"></i>
-				{{pass}}
+				<div>Interior:</div>
+				<div>
+					{{for each_swatch in stats[each_stat][1]:}}
+						{{if each_swatch[4] == 'interior':}}
+							<i class="fa fa-square" rel="tooltip" style="color:#{{=each_swatch[2]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_swatch[1]}}"></i>
+						{{pass}}
+					{{pass}}
+				</div>					
+				<div>Exterior:</div>				
+				<div>
+					{{for each_swatch in stats[each_stat][1]:}}
+						{{if each_swatch[4] == 'exterior':}}
+							<i class="fa fa-square" rel="tooltip" style="color:#{{=each_swatch[2]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_swatch[1]}}"></i>
+						{{pass}}
+					{{pass}}
+				</div>					
 			{{elif each_stat == 'estimate':}}
 					{{=stats[each_stat][1]}} <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="Based on base MSRP and average percent discount saved by actual {{=APP_NAME}} users."></i>
 			{{else:}}

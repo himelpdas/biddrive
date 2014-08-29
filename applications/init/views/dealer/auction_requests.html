@@ -211,16 +211,16 @@ Get rid of dummies and lorem ipsums
 
 											<tr>
 												<th>
-													Must haves 
+													Options 
 												</th>
 
 												<td>
 													<ul>
 														{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
 														{{each_request_trim_data = json.loads(each_request.auction_request.trim_data)}}
-														{{must_haves = each_request.auction_request.must_haves}}
-														{{if must_haves:}}
-															{{for each_option in must_haves:}}
+														{{options = each_request.auction_request.options}}
+														{{if options:}}
+															{{for each_option in options:}}
 																{{has_option_data = False}}
 																{{for each_option_type in option_names:}}
 																	{{if not has_option_data:}}
@@ -352,17 +352,23 @@ Get rid of dummies and lorem ipsums
 					</td>
 
 					<td>
-						{{exterior_color_names=each_request.auction_request.exterior_color_names}}
-						{{exterior_color_names.sort()}}
-						{{for each_name in exterior_color_names:}}
-							{{trim_data=json.loads(each_request.auction_request.trim_data)}}
-							{{for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options']:}}
-								{{if each_color['name'] == each_name:}}
-									{{color_hex = each_color['colorChips']['primary']['hex']}}
+						{{color_swatches = zip(each_request.auction_request.color_hexes,each_request.auction_request.color_names, each_request.auction_request.color_categories)}}
+						<div>Interior:</div>
+						<div>
+							{{for each_swatch in color_swatches:}}
+								{{if each_swatch[2] == 'interior':}}
+									{{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
 								{{pass}}
 							{{pass}}
-							{{=COLOR_SWATCH(color_hex,each_name)}}
-						{{pass}}
+						</div>					
+						<div>Exterior:</div>
+						<div>
+							{{for each_swatch in color_swatches:}}
+								{{if each_swatch[2] == 'exterior':}}
+									{{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
+								{{pass}}
+							{{pass}}
+						</div>
 					</td>
 
 					<td class="jcorgFilterTextChild">

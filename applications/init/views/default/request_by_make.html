@@ -45,8 +45,8 @@
 			{{ form.element("textarea", _name = "describe_trade_in")["_class"] += " form-control" }}
 			{{ form.element("textarea", _name = "describe_trade_in")["_placeholder"] = "Example: Red 2002 Honda Accord LX with 130k miles (mostly highway). It runs great with no mechanical or electrical problems. New tires and battery. It has a spoiler and clean tan leather interior with 6 disc CD changer. It has 5 or 6 quarter-sized dents and several visible scratches on the outside." }}
 			
-            {{ form.element("select", _name = "exterior_colors")["_class"] += " form-control" }}
-            {{ form.element("select", _name = "must_haves")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "colors")["_class"] += " form-control" }}
+            {{ form.element("select", _name = "options")["_class"] += " form-control" }}
             {{ form.element("select", _name = "radius")["_class"] += " form-control" }}
             {{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
             {{ form.element("input", _name = "expected_down_payment")["_class"] += " form-control" }}
@@ -72,21 +72,20 @@
                 <div class="form-group">
                     <label  class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors</label>
                     <div class="col-sm-9">
-                        {{=form.custom.widget.exterior_colors}}
-
-						{{if form.errors['exterior_colors']:}}
-							<div class="alert alert-warning">{{=form.errors['exterior_colors']}}</div>
+                        {{=form.custom.widget.colors}}{{#logger.debug(form.errors['colors'])}}
+						{{if form.errors['colors']:}}
+							<div class="alert alert-warning">{{=form.errors['colors']}}</div>
 						{{pass}}                            
                     </div>
                 </div>                
 				
 				<div class="form-group">
-                    <label  class="col-sm-3 control-label"><i id="must_haves_spinner" class="fa fa-spin options_spinner"></i> Must haves <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
+                    <label  class="col-sm-3 control-label"><i id="options_spinner" class="fa fa-spin options_spinner"></i> Options <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
                     <div class="col-sm-9">
-                        {{=form.custom.widget.must_haves}}
+                        {{=form.custom.widget.options}}
 
-						{{if form.errors['must_haves']:}}
-							<div class="alert alert-warning">{{=form.errors['must_haves']}}</div>
+						{{if form.errors['options']:}}
+							<div class="alert alert-warning">{{=form.errors['options']}}</div>
 						{{pass}}                            
                     </div>
                 </div>
@@ -376,7 +375,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 	
  <script type="text/javascript">
 	//{{#var stuff={{=XML(json.dumps(session.option_codes))}}
- 	function load_exterior_colors(){
+ 	function load_colors(){
 		//{{#hmac}}
 		var loc_token =$('#auction_request_trim').val();
 		var loc_hash = CryptoJS.HmacMD5(glob_message_string+loc_token, glob_session_key ); //{{#CryptoJS.HmacMD5("Message", "Secret Passphrase");}}
@@ -386,30 +385,28 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 		//{{#http://goo.gl/aZeO3n}} {{#if multiselect options is blank or page already loaded}}
 		//{{#shoe spinner before ajax}}
 		$('.options_spinner').addClass("fa-spinner");
-		//{{#exterior_colors}}
-		$('#ms-auction_request_exterior_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
-		//{{#must_haves}}
-		$('#ms-auction_request_must_haves').fadeTo(500, 0.2);
+		//{{#colors}}
+		$('#ms-auction_request_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
+		//{{#options}}
+		$('#ms-auction_request_options').fadeTo(500, 0.2);
 		////{{#ajax}}
 		$('#trim_stats').slideUp(400)
 		$.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
 			.done(function( data ) {
-				//{{#exterior_colors}}
-				var previous_colors_submissions = $("#auction_request_exterior_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+				/*/{{#colors}}
+				var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
 				if (previous_colors_submissions.length==0){
 					$.each( data.style_colors, function( i, item ) { //{{#similar to python enumerate}}
-						$("#auction_request_exterior_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
+						$("#auction_request_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
 					});
 				};
-				$("#auction_request_exterior_colors").multiSelect('refresh');
-				$('#ms-auction_request_exterior_colors').fadeTo(250, 1.0); //{{#fade back in}}
-				//{{#must_haves}}
-				var previous_options_submissions = $("#auction_request_must_haves option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
-				$("#auction_request_must_haves").children().remove();
-				$.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
-					var optgroup_id = "auction_request_must_haves_" + item[4]
+				/*/
+				var previous_options_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+				$("#auction_request_colors").children().remove();
+				$.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
+					var optgroup_id = "auction_request_colors_" + item[4]
 					if ($("#"+optgroup_id).length == 0) {
-						$("#auction_request_must_haves").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
+						$("#auction_request_colors").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
 					}
 					var selected = ''
 					previous_options_submissions.each(function(esi, each_selected_item){
@@ -419,8 +416,26 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 					});
 					$("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
 				});
-				$("#auction_request_must_haves").multiSelect('refresh');
-				$('#ms-auction_request_must_haves').fadeTo(250, 1.0); //{{#fade back in}}
+				$("#auction_request_colors").multiSelect('refresh');
+				$('#ms-auction_request_colors').fadeTo(250, 1.0); //{{#fade back in}}
+				//{{#options}}
+				var previous_options_submissions = $("#auction_request_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+				$("#auction_request_options").children().remove();
+				$.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
+					var optgroup_id = "auction_request_options_" + item[4]
+					if ($("#"+optgroup_id).length == 0) {
+						$("#auction_request_options").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
+					}
+					var selected = ''
+					previous_options_submissions.each(function(esi, each_selected_item){
+						if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
+							selected = 'selected="selected"'
+						}
+					});
+					$("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
+				});
+				$("#auction_request_options").multiSelect('refresh');
+				$('#ms-auction_request_options').fadeTo(250, 1.0); //{{#fade back in}}
 				//{{#trim stats}}
 				$('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
 			})
@@ -479,10 +494,10 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 		);
 	//close main function
 	}
- 	$('#auction_request_trim').change(load_exterior_colors); //{{#change color preference options when you change trim dropdown}}
+ 	$('#auction_request_trim').change(load_colors); //{{#change color preference options when you change trim dropdown}}
 	
 	$(document).ready(function(){
-		load_exterior_colors(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
+		load_colors(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
 	})
 	.ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
 		$("#fake_submit").removeClass("disabled", 250);
@@ -490,17 +505,17 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 	</script>
 
 <script>
-	$("#auction_request_exterior_colors").multiSelect({
+	$("#auction_request_colors").multiSelect({
 		selectableHeader: '<div style="text-align:center" class="text-light">Available colors</div>',
 		selectionHeader: '<div style="text-align:center" class="text-light">Colors I want</div>',
 	}); 
-	$("#auction_request_exterior_colors").multiSelect('refresh');//{{#initialize multiselect}}
+	$("#auction_request_colors").multiSelect('refresh');//{{#initialize multiselect}}
 
-	$("#auction_request_must_haves").multiSelect({
+	$("#auction_request_options").multiSelect({
 		selectableHeader: '<div style="text-align:center" class="text-light">Available options</div>',
 		selectionHeader: '<div style="text-align:center" class="text-light">Options I must have</div>',
 	}); 
-	$("#auction_request_must_haves").multiSelect('refresh');//initialize multiselect
+	$("#auction_request_options").multiSelect('refresh');//initialize multiselect
 </script>
 
 <script>
@@ -534,10 +549,10 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 {{"""}}
 <script>
 	function resize_bootstrap_multiselect(){
-		$('.multiselect').css({'width':$("#auction_request_must_haves").parent().width()});
+		$('.multiselect').css({'width':$("#auction_request_options").parent().width()});
 	}
 
- 	$('#auction_request_must_haves').multiselect();
+ 	$('#auction_request_options').multiselect();
 	$(window).resize(function(){
 		resize_bootstrap_multiselect();
 	});

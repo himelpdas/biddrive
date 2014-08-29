@@ -205,36 +205,52 @@ db.define_table('auction_request',
 		readable=True,
 		writable=False,
 	),
-	Field('exterior_colors', 'list:string', #otherwise queries will return string not list!
+	Field('colors', 'list:string', #otherwise queries will return string not list!
 		requires=IS_NOT_EMPTY(), #IS_IN_SET in default controller completely overrides this, but leave here for admin
 		#widget = SQLFORM.widgets.checkboxes.widget,
 	),	
-	Field('exterior_color_names', 'list:string',
+	Field('color_names', 'list:string',
 		required=True, #tells the DAL that no insert should be allowed on this table if a value for this field is not explicitly specified.
 		readable=False,
 		writable=False,
-		#compute = lambda row: [ each_color['name'] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['exterior_colors'] ], #make a list of color names based on ids in exterior_colors field
+		#compute = lambda row: [ each_color['name'] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['colors'] ], #make a list of color names based on ids in colors field
 	),
-	Field('exterior_color_prices', 'list:integer',
+	Field('color_categories', 'list:string',
+		required=True,
+		readable=False,
+		writable=False
+	),	
+	Field('color_category_names', 'list:string',
+		required=True,
+		readable=True,
+		writable=False
+	),	
+	Field('color_hexes', 'list:string',
+		required=True,
+		readable=True,
+		writable=False
+	),
+	Field('color_msrps', 'list:integer',
 		required=True, #tells the DAL that no insert should be allowed on this table if a value for this field is not explicitly specified.
 		readable=True,
 		writable=False,
 	),
-	Field('simple_exterior_color_names','list:string',
+	Field('color_simple_names','list:string',
 		required=True,
 		readable=False,
 		writable =False,
-		#compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['exterior_colors'] ], 
+		#compute = lambda row: [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in json.loads(row['trim_data'])['colors'][1]['options'] if each_color['id'] in row['colors'] ], 
 	), #FIXED WITH required=True #WARNING COMPUTE FIELD WILL NOT BREAK INSERTION ON ERROR! COMMON ERROR: KeyError colorChips #WILL RESULT IN FAILURE IN LATER VIEWS
-	Field('must_haves', 'list:string',
+	Field('options', 'list:string',
 		#requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
 	),	
-	Field('must_have_names', 'list:string',
+	Field('option_names', 'list:string',
 		writable =False,
 	),	
-	Field('must_have_prices', 'list:integer',
+	Field('option_msrps', 'list:integer',
 		writable =False,
 	),
+	#add description field
 	Field('FICO_credit_score',
 		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '620 or less', ]), multiple=False, zero="I don't know")),
 	),
@@ -304,6 +320,10 @@ db.define_table('auction_request',
 	Field.Method('offer_expired',
 		lambda row: row.auction_request.offer_expires < request.now
 	),
+	Field.Method('estimation',
+		lambda row:
+			row.auction_request.trim_price + sum(row.auction_request.option_msrps)  #add up the base, the options, and the most expensive interior and exterior color choices
+	),
 	#Field user ID
 	#Block dealers
 	auth.signature #http://goo.gl/3u2l7r
@@ -328,7 +348,7 @@ def resize_offer_image_upload(image, x=1080, y=720, center=True):
 		center,
 	)
 	
-OPTIONS_PREFIXES = ['interior', 'exterior', 'mechanical', 'package', 'fees', 'safety']
+options_PREFIXES = ['interior', 'exterior', 'mechanical', 'package', 'fees', 'safety']
 	
 db.define_table('auction_request_offer',
 	Field('auction_request', db.auction_request,
@@ -353,6 +373,12 @@ db.define_table('auction_request_offer',
 		requires=IS_NOT_EMPTY(), required=True
 	),	
 	Field('exterior_color_name', 
+		readable=False, writable=False, required=True
+	),	
+	Field('interior_color',
+		requires=IS_NOT_EMPTY(), required=True,
+	),	
+	Field('interior_color_name', 
 		readable=False, writable=False, required=True
 	),
 	Field('options', 'list:string',
@@ -658,7 +684,7 @@ db.define_table('auction_request_winning_offer',
 	auth.signature,
 )
 
-db.define_table('unread_auction_messages',
+db.define_table('auction_request_unread_messages',
 	Field('highest_id', 'reference auction_request_offer_message',
 		readable=False,
 		writable=False,

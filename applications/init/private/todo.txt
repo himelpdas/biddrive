@@ -8,6 +8,7 @@ cache auction requests
 add interior colors (big job)
 change must_haves to features
 negative credits message 
+Use rare color hex to hack a "question mark" icon over a swatch of unknown color
 
 
 *Optional
