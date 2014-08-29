@@ -148,7 +148,7 @@ def request_by_make():
 					color_msrps_list.append(int(float(each_color_option['price']['baseMSRP'])) if ('price' in each_color_option and 'baseMSRP' in each_color_option['price']) else 0)
 					if 'colorChips' in each_color_option:
 						color_hexes_list.append(each_color_option['colorChips']['primary']['hex'])
-						color_simple_names_list.append(simplecolor.predict((each_color_option['colorChips']['primary']['r'],each_color_option['colorChips']['primary']['g'],each_color_option['colorChips']['primary']['b']), each_color_option['name']))
+						color_simple_names_list.append(simplecolor.predict((each_color_option['colorChips']['primary']['r'],each_color_option['colorChips']['primary']['g'],each_color_option['colorChips']['primary']['b']), each_color_option['name'])[1]) #(0.06822856993575846, 'BROWN')
 					else:
 						color_hexes_list.append('FFFFF')
 						color_simple_names_list.append('unspecified')
