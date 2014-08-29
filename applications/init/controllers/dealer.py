@@ -1256,6 +1256,7 @@ def winner():
 		make_name = auction_request.make_name, 
 		model_name = auction_request.model_name, 
 		exterior_color = exterior_color,
+		interior_color=interior_color,
 		options= options,
 		dealer=dealer,
 		dealership = dealership,
