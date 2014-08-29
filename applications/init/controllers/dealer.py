@@ -1203,19 +1203,11 @@ def winner():
 	#color stuff
 	exterior_color = colors[auction_request_offer.exterior_color]
 	#options stuff
-	options =  {
-		'Interior':auction_request_offer.interior_options,
-		'Exterior':auction_request_offer.exterior_options,
-		'Mechanical':auction_request_offer.mechanical_options,
-		'Package':auction_request_offer.package_options,
-		'Additional Fees':auction_request_offer.fees_options,
-		'Safety':auction_request_offer.safety_options,
-	}
-	option_names = []
-	for each_option_type in options:
-		for each_option in options[each_option_type]:
-			option_names.append(getOption(trim_data, each_option_type, each_option)['name'])
-			
+	options = {}
+	for category, option in zip(auction_request_offer.options, auction_request_offer.option_category_names):
+		options.update(
+			{category: options.get(category)+[option] if category in options else [option]}
+		)
 	#prices stuff
 	last_bid = auction_request_offer.latest_bid()
 	last_bid_price = ('$%s'%last_bid.bid) if not auction_validator['is_lease'] else ('$%s per month'%last_bid.bid)
@@ -1263,7 +1255,7 @@ def winner():
 		make_name = auction_request.make_name, 
 		model_name = auction_request.model_name, 
 		exterior_color = exterior_color,
-		option_names= option_names,
+		options= options,
 		dealer=dealer,
 		dealership = dealership,
 		is_lease = auction_validator['is_lease'],

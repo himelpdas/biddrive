@@ -85,10 +85,13 @@
 				</tr>
 
 				<tr>
-					<th>options:</th>
+					<th>Options:</th>
 					<td>
-						{{for each_option in option_names:}}
-							<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;{{=text_scrambler(each_option)}}</div>
+						{{for each_option_category_name in options:}}
+							<strong>{{=each_option_category_name}}:</strong>
+							{{for each_option in options[each_option_category_name]:}}
+								<div><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;&nbsp;{{=text_scrambler(each_option)}}</div>
+							{{pass}}
 						{{pass}}
 					</td>
 				</tr>            
