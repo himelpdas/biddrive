@@ -1201,10 +1201,11 @@ def winner():
 				'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s)
 			})
 	#color stuff
-	exterior_color = colors[auction_request_offer.exterior_color]
+	exterior_color = auction_request_offer.exterior_color_name
+	interior_color = auction_request_offer.interior_color_name
 	#options stuff
 	options = {}
-	for option, category in zip(auction_request_offer.options, auction_request_offer.option_category_names):
+	for option, category in zip(auction_request_offer.option_names, auction_request_offer.option_category_names):
 		options.update(
 			{category: options.get(category)+[option] if category in options else [option]}
 		)
