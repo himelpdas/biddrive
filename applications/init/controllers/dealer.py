@@ -1204,7 +1204,7 @@ def winner():
 	exterior_color = colors[auction_request_offer.exterior_color]
 	#options stuff
 	options = {}
-	for category, option in zip(auction_request_offer.options, auction_request_offer.option_category_names):
+	for option, category in zip(auction_request_offer.options, auction_request_offer.option_category_names):
 		options.update(
 			{category: options.get(category)+[option] if category in options else [option]}
 		)
