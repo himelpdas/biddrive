@@ -1,0 +1,16 @@
+.overlay{
+	position: absolute;
+} 
+.dark-overlay{
+	background-color: rgba(0,0,0,0.2);
+}
+.filmgrain-overlay{
+	background-image: url('/assets/images/overlay/filmgrain.gif');
+	background-repeat: repeat;
+	opacity: 0.3;
+}
+.dotgrain-overlay{
+	background-image: url('/assets/images/overlay/dotgrain.gif');
+	background-repeat: repeat;
+	opacity: 0.1;
+}

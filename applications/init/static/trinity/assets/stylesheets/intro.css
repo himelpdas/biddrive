@@ -1,0 +1,241 @@
+.intro-01{
+    background-image: url('http://www.placehold.it/1980x1320.jpg');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: cover;
+}
+.intro-01 h3{
+    font-family: 'Raleway',sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    line-height: 58px;
+    margin-bottom: 0;
+    padding: 0;
+    text-transform: uppercase;
+}
+.intro-01 h1 > span {
+    border: 1px solid;
+    font-family: 'Raleway',sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 8px;
+    line-height: 19px;
+    padding: 15px;
+    text-transform: uppercase;
+}
+
+.intro-carousel .owl-controls{
+    margin-top: -150px !important;
+}
+.intro-02 h1{
+    font-family: 'Raleway',sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    line-height: 31px;
+    padding: 30px 10% 0 10%;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+}
+
+.intro-02 h6{
+    font-family: 'Raleway',sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    line-height: 19px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+.intro-02 h6 > span{
+    padding: 10px;
+}
+.intro-02 h6 .bullet{
+    margin: 0 5px;
+    opacity: 0.7;
+}
+.intro-02-carousel-item{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.intro-02-carousel-item-01{
+    background-image:url(http://www.placehold.it/1980x1320.jpg);
+}
+
+.intro-02-carousel-item-02{
+    background-image:url(http://www.placehold.it/1980x1320.jpg);
+}
+
+.intro-02-carousel-item-03{
+    background-image:url(http://www.placehold.it/1980x1320.jpg);
+}
+
+.intro-03 .pad-inner{
+    padding-left: 10%;
+    padding-right: 10%;
+}
+
+.intro-03 h1{
+    font-family: 'Montserrat',sans-serif;
+    font-size: 96px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    line-height: 103px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.intro-03 h4{
+    font-family: 'Raleway',sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    line-height: 31px;
+    margin-bottom: 30px;
+}
+
+.intro-03-carousel-item{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.intro-03-carousel-item-01{
+    background-image:url(http://www.placehold.it/1980x1320.jpg);
+}
+
+.intro-03-carousel-item-02{
+    background-image:url(http://www.placehold.it/1980x1320.jpg);
+}
+
+.intro-03-carousel-item-03{
+    background-image:url(http://www.placehold.it/1980x1320.jpg);
+}
+
+.intro-04{
+    background:transparent;
+}
+.intro-04 h3{
+    font-family: 'Raleway',sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    line-height: 58px;
+    margin-bottom: 0;
+    padding: 0;
+    text-transform: uppercase;
+}
+.intro-04 h1 > span {
+    border: 1px solid;
+    font-family: 'Raleway',sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 8px;
+    line-height: 19px;
+    padding: 15px;
+    text-transform: uppercase;
+}
+.intro-05{
+    background: url('http://www.placehold.it/1980x1320.jpg') 50% 0 no-repeat fixed;
+    background-size: cover;
+}
+.intro-05 h1{
+    font-family: 'Raleway',sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    line-height: 31px;
+    padding: 30px 10% 0 10%;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+}
+
+.intro-05 h6{
+    font-family: 'Raleway',sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    line-height: 19px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+.intro-05 h6 > span{
+    padding: 10px;
+}
+.intro-05 h6 .bullet{
+    margin: 0 5px;
+    opacity: 0.7;
+}
+
+.intro-06 h1{
+    font-family: 'Raleway',sans-serif;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    line-height: 40px;
+    padding: 30px 10% 0 10%;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+}
+
+.intro-06 h1>span{
+    padding: 10px;
+}
+
+.intro-06 h3{
+    font-family: 'Raleway',sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    line-height: 40px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+.intro-06 h3 > span{
+    padding: 10px;
+}
+
+.intro-06-carousel-item{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.intro-06-carousel-item-01{
+    background-image:url(/assets/images/homepage/stock-photo-36956204-woman-looking-out-of-a-car-window-at-the-beach.jpg);
+}
+
+.intro-06-carousel-item-02{
+    background-image:url(/assets/images/homepage/467179567.jpg);
+}
+
+.intro-06-carousel-item-03{
+    background-image:url(/assets/images/homepage/stock-photo-16108579-happy-family-sitting-in-the-back-of-a-car.jpg);
+}
+
+.intro-06-carousel-item-actions {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.intro-07{
+    background: url('http://www.placehold.it/1980x1320.jpg') 50% 0 no-repeat fixed;
+    background-size: cover;
+}
+.intro-07 h3{
+    font-family: 'Raleway',sans-serif;
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    line-height: 48px;
+    margin-bottom: 0;
+    padding: 0;
+    text-transform: uppercase;
+}
+
+.poster-img{
+    background-image: url('http://www.placehold.it/1980x1320.jpg') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
+}

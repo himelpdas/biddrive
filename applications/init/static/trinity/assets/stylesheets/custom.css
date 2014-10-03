@@ -1,0 +1,94 @@
+.brand {
+    font-family: 'Days One', sans-serif;
+}
+
+#standard-header a.brand {
+    font-size: 40px;
+    letter-spacing: 8px;
+    color: #4c4c4c;
+    line-height: 88px;
+}
+
+#intro-header a.brand {
+    font-size: 40px;
+    letter-spacing: 8px;
+    color: #ffffff;
+    line-height: 88px;
+}
+
+#mastfoot a.brand {
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: #e7e7e7;
+}
+
+#about .howitworks-box {
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+#intro h1>span {
+    font-weight: 600;
+    font-size: 60px;
+}
+
+#intro h3>span {
+    font-weight: 400;
+}
+
+.main-heading {
+    font-weight: 600;
+}
+
+.intro-nav li > a,
+.standard-nav li > a {
+    font-weight: 600;
+}
+
+.intro-nav li > a:hover {
+    color: #c4c4c4;
+}
+
+#intro .btn-cta,
+#about .btn-cta {
+    border:1px solid #0087C3;
+    background: #0087C3;
+    color: #fff;
+}
+#intro .btn-cta:hover,
+#about .btn-cta:hover{
+    border:1px solid #0067A8;
+    background: #0067A8;
+    color: #fff;
+}
+
+.intro-header {
+    height: 100px;
+    background: rgba(0, 0, 0, 0.2);
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid #adadad;
+}
+
+.standard-header {
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid #adadad;
+}
+
+.foot-logo {
+    margin-top: 21px;
+}
+
+.footer-nav {
+    list-style: none outside none;
+    margin: 26px 0 0 0;
+    padding: 0;
+}
+.footer-nav li > a {
+    color: #c4c4c4;
+}
+
+.footer-nav li {
+    display: inline-block;
+    float: left;
+    margin-left: 16px;
+}

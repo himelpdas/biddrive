@@ -1,390 +1,135 @@
-<!DOCTYPE HTML>
-<html>
-{{#####Functions#####}}
-{{COLOR_SWATCH = lambda hex, title='': XML('<i class="fa fa-square fa-fw" style="color:#%s; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;" title="%s"></i>'%(hex,title) )}} {{#add border so that whites can show}} {{#http://goo.gl/2j2bP}} {{#http://goo.gl/R9EI3h}}
-{{##########}}
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
     <title>{{=APP_NAME}} {{if response.title:}}{{=response.title}}{{else:}}{{=request.function.replace('_',' ').capitalize()}}{{pass}}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	
-	<meta name="google-site-verification" content="24LLTceTLyCoSLg5XrgKhz2udcpXFx2Ka6nThOfxP_Y" />
-    
-    <!-- Styles -->
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
-    
-    <link rel="stylesheet" href="{{=URL('static', 'css/carbid.css')}}" type="text/css" />
-	<link rel="stylesheet" href="{{=URL('static', 'css/_custom.css')}}" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
-    <link href='http://fonts.googleapis.com/css?family=Lato:300,400,700,900,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css' />
+    <!-- Standard Favicon-->
+    <link rel="shortcut icon" href="{{=URL('static','trinity/assets/images/favicon/favicon.ico')}}">
 
-    <link rel="stylesheet" type="text/css" href="http://cdnjs.cloudflare.com/ajax/libs/animate.css/3.0.0/animate.min.css" media="screen, projection" />
+    <!-- Standard iPhone Touch Icon-->
+    <link rel="apple-touch-icon" sizes="57x57" href="{{=URL('static','trinity/assets/images/touchicon/apple-touch-icon-57-precomposed')}}" />
+    <!-- Retina iPhone Touch Icon-->
+    <link rel="apple-touch-icon" sizes="114x114" href="{{=URL('static','trinity/assets/images/touchicon/apple-touch-icon-114-precomposed')}}" />
+    <!-- Standard iPad Touch Icon-->
+    <link rel="apple-touch-icon" sizes="72x72" href="{{=URL('static','trinity/assets/images/touchicon/apple-touch-icon-72-precomposed')}}" />
+    <!-- Retina iPad Touch Icon-->
+    <link rel="apple-touch-icon" sizes="144x144" href="{{=URL('static','trinity/assets/images/touchicon/apple-touch-icon-144-precomposed')}}" />
 
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
-	
-	{{if request.function in ['dealership_form', 'dealer_info', 'pre_auction']:}}
-		<script src="{{=URL('static','js/jquery.maskedinput.min.js')}}"  type="text/javascript"></script>{{#http://bit.ly/1ck85cy}}
-	{{pass}}
-	{{if request.function in ['request_by_make']:}}
-		<script src="{{=URL('static','js/imagesloaded.pkgd.min.js')}}"  type="text/javascript"></script> {{#http://goo.gl/edQvam}}
-	{{pass}}
-	{{if request.function in ['request_by_make', 'pre_auction']:}}
-		<link rel="stylesheet" type="text/css" href="{{=URL('static','css/multi-select.css')}}"> {{#http://bit.ly/OOENrP}}
-		<script src="{{=URL('static','js/jquery.multi-select.js')}}"  type="text/javascript"></script>
-	{{pass}}
-	{{if request.function in ['dealership_form', 'dealer_info', 'user']:}}
-		<script type="text/javascript" src="{{=URL('static','js/bootstrap-multiselect.js')}}"></script> {{#http://goo.gl/dh1z2}}
-		<link rel="stylesheet" href="{{=URL('static','css/bootstrap-multiselect.css')}}" type="text/css"/>
-	{{pass}}
-	{{if request.function in ['auction_requests']:}}
-		<script src="{{=URL('static','js/jcfilter.min.js')}}"  type="text/javascript"></script>{{#http://goo.gl/LYpoNj}}
-	{{pass}}
+    <!-- Bootstrap CSS Files -->
+    <link href="{{=URL('static','trinity/assets/bootstrap/css/bootstrap.min.css')}}" rel="stylesheet">
+    <!-- Custom Fonts Setup via Font-face CSS3 -->
+    <link href="{{=URL('static','trinity/assets/fonts/fonts.css')}}" rel="stylesheet">
+    <!-- CSS files for plugins -->
+    <link href="{{=URL('static','trinity/assets/stylesheets/pace.preloader.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/owl.carousel.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/owl.theme.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/venobox.css')}}" rel="stylesheet" />
+    <link href="{{=URL('static','trinity/assets/stylesheets/animate.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/jquery.tweet.css')}}" rel="stylesheet"/>
+    <link href="{{=URL('static','trinity/assets/stylesheets/slidingmenu.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/jquery.bxslider.css')}}" rel="stylesheet" />
+    <link href="{{=URL('static','trinity/assets/stylesheets/venobox.css')}}" rel="stylesheet" />
+    <link href="{{=URL('static','trinity/assets/stylesheets/animate.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/portfolio.css')}}" rel="stylesheet" />
+    <link href="{{=URL('static','trinity/assets/stylesheets/overlay.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/toppanel.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/intro.css')}}" rel="stylesheet">
+    <!-- Main Template Styles -->
+    <link href="{{=URL('static','trinity/assets/stylesheets/main.css')}}" rel="stylesheet">
+    <!-- Main Template Responsive Styles -->
+    <link href="{{=URL('static','trinity/assets/stylesheets/main-responsive.css')}}" rel="stylesheet">
+    <!-- Main Template Retina Optimizaton Rules -->
+    <link href="{{=URL('static','trinity/assets/stylesheets/main-retina.css')}}" rel="stylesheet">
+    <link href="{{=URL('static','trinity/assets/stylesheets/color.css')}}" rel="stylesheet">
+    <!-- Google Web Fonts-->
+    <link href='//fonts.googleapis.com/css?family=Raleway:300,400,500,600,700,800,900%7COpen+Sans:300,400,700,800%7CMontserrat:400,700%7CDays+One:400' rel='stylesheet' type='text/css'>
 
-	{{if request.function in ['auction']:}}
-		<link rel="stylesheet" type="text/css" href="{{=URL('static','css/jquery.cssemoticons.css')}}"> {{#http://goo.gl/OsAit7}}
-		<script src="{{=URL('static','js/jquery.cssemoticons.min.js')}}"  type="text/javascript"></script>
-		<script src="{{=URL('static','js/jquery-blink.js')}}"  type="text/javascript"></script>
-	{{pass}}
+    <!-- customizations -->
+    <link href="{{=URL('static','trinity/assets/stylesheets/custom.css')}}" rel="stylesheet">
 
-	{{"""}}
-    <script type="text/javascript"
-      src="https://maps.googleapis.com/maps/api/js?key=%s&sensor=false"%GMAPS_KEY>
-    </script>
-	{{"""}}
-
-    <!-- UI -->
-    <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script> {{#BS3}}
-	<script src="{{=URL('static','js/bootbox.min.js')}}"  type="text/javascript"></script>
-    {{"""}}<script type="text/javascript" src="{{=URL('static', 'js/carbid.js')}}"></script>{{"""}} {{#useless nanoscroller stuff}}
-	
-	{{if request.controller in ["admin", "appadmin", "billing"]:}}{{#use default forms for now}}
-		{{include "web2py_ajax.html"}}
-		<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script> {{#http://goo.gl/cPFP9a}}
-		{{"""}}<script type="text/javascript" src="{{=URL('static','js/web2py.js')}}"></script>{{"""}}{{#not needed it web2py_ajax}}
-		<link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}" type="text/css"/>
-		{{"""}}<link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap3.css')}}" type="text/css"/>{{"""}}{{#messes up navbar}}
-		<style type="text/css">
-			.web2py_counter {color:red;} {{#make error message red}}
-		</style>
-		{{#hidden class in bootstrap.min.css has !important declaration which prevents changes to those classes via jquery or css overrides! This causes some problems with the admin page, especially in sqlform.grid}}
-		<script type="text/javascript"> 
-			$(document).ready(function(){
-				$(".w2p_query_row").removeClass("hidden");
-			});
-		</script>
-	{{pass}}
-	
-	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />{{#JQUI}}
-	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>{{#leave global because of better enhancements like wider tooltips}}
-	
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <script src="{{=URL('static','trinity/assets/bootstrap/js/html5shiv.js')}}"></script>
+    <script src="{{=URL('static','trinity/assets/bootstrap/js/respond.min.js')}}"></script>
     <![endif]-->
-	
-	<style type="text/css">
-		{{if request.controller in ['default'] and request.function in ['index']:}}
 
-			.absolute-center {
-				margin: auto;
-				position: absolute;
-				top: 0; left: 0; bottom: 0; right: 0;
-				height:80px; width:80px;
-				color: #fff;
-				text-shadow: 1px 1px 1px #31393d;
-			}
 
-			.slogan {
-				margin-top: 20px;
-				color: white;
-				font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-				font-size: 32px;
-				font-style: normal;
-				font-variant: normal;
-				font-weight: bold;
-				text-shadow: 1px 3px 5px rgba(7, 7, 7, 0.9);
-				vertical-align: baseline;                
-			}
-
-			.small-slogan {
-				margin-top: 20px;
-				color: white;
-				font-family: HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-				font-size: 16px;
-				font-style: normal;
-				font-variant: normal;
-				font-weight: bold;
-				text-shadow: 1px 3px 5px rgba(7, 7, 7, 0.9);
-				vertical-align: baseline;                
-			}            
-
-			.mainbox {
-				border-top-left-radius: 5px;
-				border-bottom-left-radius: 5px;
-				border-top-right-radius: 5px;
-				border-bottom-right-radius: 5px;
-				color: #f5f5f5;
-
-			}
-			
-			.mainrow{
-				border-top-left-radius: 5px;
-				border-bottom-left-radius: 5px;
-				border-top-right-radius: 5px;
-				border-bottom-right-radius: 5px;
-			}
-
-			.mainbox a { 
-				color: #f5f5f5;
-				text-transform: uppercase;
-				font-size: 14px;
-			}
-
-			.sidebox {
-				
-				border-top-right-radius: 5px;
-				border-bottom-right-radius: 5px;
-				color: #111;
-			}
-
-			.main-container {
-				margin-top: 100px;
-			}
-
-			.backdrop {
-				background-color: rgba(0,0,0,0.8);
-			}
-			
-			.index_text{
-				text-shadow: 1px 3px 5px rgba(7, 7, 7, 0.9);
-			}
-			a:visited, a:link, a:active{
-				color:#f5f5f5;
-			}
-			a:hover {
-				text-decoration:underline;
-			}
-			.dropdown-toggle:hover{
-				color:#f5f5f5;
-				text-decoration:underline;
-			}
-			#features{
-				text-shadow: 1px 2px 3px #9f9f9f;
-			}
-		{{pass}}
-	{{#GLOBAL RULES}}
-		#footer a:visited, #footer a:link, #footer a:active{
-			color:#f5f5f5;
-		}
-		#footer a:hover {
-			text-decoration:underline;
-		}
-		.site-links, .footer_social_buttons {
-			padding-left:10px;
-		}
-	</style>
 </head>
-{{if request.function == "index" and request.controller=="default":}}
-	<div id = "y_parallax" style="z-index:-1000;width:100%;height:100%;position:fixed;background-image:url({{=URL('static','images/bg_2c.jpg')}});-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover; -ms-background-size: cover; background-size: cover;"></div> {{#http://goo.gl/jqvp1K}}
-	<!--{{"""}}
-	<script>
-		function y_parallax(element, rate, offset){
-			element.css({
-				"bottom":rate*($(this).scrollTop()+offset),
-			});
-		}
-		$(window).scroll(function(){
-			y_parallax($("#y_parallax"), 0.12, 0);
-		});
-		y_parallax($("#y_parallax").css({'position':'absolute','-webkit-transition': 'all 0.7s ease-out','-moz-transition': 'all 0.7s ease-out','-ms-transition': 'all 0.7s ease-out','-o-transition': 'all 0.7s ease-out','transition': 'all 0.7s ease-out',}), 0.25, 0);
-	</script>
-	{{"""}}-->
-{{pass}}
-<body class="pull_top">
+<body>
 
-    <div class="navbar navbar-inverse navbar-fixed-top hidden-print {{ if request.function == "index": }} navbar-homepage {{pass}}" role="navigation" {{if request.controller in ['default','dealer'] and request.function in ['index', 'winner']:}}style="z-index:9999;"{{pass}}>{{#z-index higher than message divs in homepage}}
+{{include}}
+
+
+
+<!-- Footer : starts -->
+<footer id="mastfoot" class="mastfoot color-bg">
+
+    <!-- inner-section:starts -->
+    <section class="inner-section social-wrap">
         <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle pull-right" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a href="{{=URL('default','index')}}" class="navbar-brand">
-                    <!--<strong style="text-shadow: 1px 1px 1px #000; margin-top: -10px">{{=APP_NAME}}</strong>-->
-					<img height="24" src="{{=URL('static', 'images/logo.png')}}"/><small style="font-size: 13px;opacity:0.7">™</small>
-                    <div class="clearfix"></div>
-                    <small style="font-size: 11px;opacity:0.7">Reverse auction car marketplace.</small>
-                </a>
-            </div>
-
-            <div class="collapse navbar-collapse navbar-ex1-collapse" role="navigation">
-                <ul class="nav navbar-nav navbar-right">
-					{{for each_item in response.menu:}}
-						{{if len(each_item) == 4:}} {{#if/then fix for appadmin as menu items provided by appadmin controller are of different lengths than that of menu.py}}
-							{{sub_items = each_item[3]}}
-							<li {{if sub_items:}}class="dropdown"{{pass}}>
-								<a href="{{=each_item[2]}}" {{if sub_items:}}class="dropdown-toggle" data-toggle="dropdown"{{pass}}>{{=each_item[0]}}{{if sub_items:}} <b class="caret"></b>{{pass}}</a>
-								{{if sub_items:}}
-									<ul class="dropdown-menu">
-										{{for each_sub_item in sub_items:}}
-											<li><a href="{{=each_sub_item[2]}}">{{=each_sub_item[0]}}</a></li>
-										{{pass}}
-									</ul>
-								{{pass}}
-							</li>
-						{{else:}}
-							<li><a href="{{=each_item[2]}}">{{=each_item[0]}}</a></li>
-						{{pass}}
-					{{pass}}
-					<li class="divider-vertical"></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {{if auth.is_logged_in():}}Hello, {{=auth.user.first_name.capitalize()}}!{{else:}}Account{{pass}} <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-							{{#auth_next = '/%s/%s/%s/'%(request.application, request.controller, request.function)}} {{#make sure user redirected to proper pages after auth form submissions}}
-							{{#auth_next_portal = '/%s/%s/%s'%(request.application, 'default', 'after_login_portal')}}
-							{{if auth.is_logged_in() and not auth.has_membership(user_id = auth.user_id, role = "dealers"):}}
-								<li><a href="{{=URL('default', 'auction_history',)}}"><i class="fa fa-gavel fa-fw"></i>Auction history</a></li>
-								<li class="divider"></li>
-							{{pass}}
-							{{"""}}<li><a href="{{=URL('default', 'user', args=['profile' if auth.is_logged_in() else 'register'])}}"><i class="fa fa-user fa-fw"></i>{{if auth.is_logged_in():}}Profile{{else:}}Register{{pass}}</a></li>{{"""}}
-							<li><a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-gears fa-fw"></i>Profile</a></li>
-                            <li><a href="{{=URL('default', 'user', args=['change_password' if auth.is_logged_in() else 'request_reset_password'])}}"><i class="fa fa-lock fa-fw"></i>{{if auth.is_logged_in():}}Password{{else:}}Lost password?{{pass}}</a></li>
-							<li class="divider"></li>
-							{{if auth.is_logged_in():}}
-								<li><a href="{{=URL('default', 'user', args=['logout'])}}"><i class="fa fa-power-off fa-fw"></i>Log out</a></li>
-							{{else:}}
-								<li><a href="{{=URL('default', 'user', args=['login'])}}"><i class="fa fa-sign-in fa-fw"></i>Log in</a></li> {{#login/register should be taken to portal}}
-							{{pass}}
-                        </ul>
-                    </li>
-					{{if not auth.user:}}
-						<li class="navbar-btn">
-							<button onClick="location.href='{{=URL('default', 'user', args=['register'] )}}'" class="btn btn-primary btn-xs"><i class="fa fa-fw fa-thumbs-up"></i> Register</button> {{#have to use href because "a" tag will mess up button styling #http://bit.ly/1tkUb0l}}
-						</li>
-					{{pass}}
-                </ul>
+            <div class="row">
+                <article class="col-md-3 text-left foot-logo">
+                    <a class="brand" href="index.html">{{=APP_NAME}}</a>
+                </article>
+                <article class="col-md-6 text-center footer-nav">
+                    <ul>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Help / FAQ</a></li>
+                        <li><a href="#">Contact us</a></li>
+                        <li><a href="#">Sitemap</a></li>
+                    </ul>
+                </article>
+                <article class="col-md-3 text-right">
+                    <ul class="foot-social">
+                        <li><a href="#"><img alt="trinity" title="trinity" src="{{=URL('static','trinity/assets/images/social/01.png')}}"/></a></li>
+                        <li><a href="#"><img alt="trinity" title="trinity" src="{{=URL('static','trinity/assets/images/social/03.png')}}"/></a></li>
+                    </ul>
+                    <p class="credits">Copyright &copy; 2014 Biddrive</p>
+                </article>
             </div>
         </div>
-    </div>
-    
-        {{include}}
+    </section>
+    <!-- inner-section:ends -->
 
-    <!-- starts footer -->
-    <footer id="footer" class="hidden-print"> {{#ISSUESZAKI the footer needs a powered by edmunds logo in the footer. Check 5874 and below of default branch to find it.}}
-        <div class="container">
-            <div class="row sections">
-                <div class="col-sm-4 recent_posts">
-                    <h3 class="footer_header">
-                        Site Links
-                    </h3>
+</footer>
+<!-- Footer : ends -->
 
-                    <div class="site-links">
-                        Site Map
-                    </div>
 
-                    <div class="site-links">
-                        <a href="{{=URL('default', 'faq')}}">Frequently Asked Questions</a>
-                    </div>
 
-                    <div class="site-links">
-                        Privacy Policy
-                    </div>
-                    
-                    <div class="site-links">
-                        Terms of Use
-                    </div>
-
-                    <div class="site-links">
-                        Contact Us
-                    </div>
-
-                </div>
-                <div class="col-sm-4 testimonials">
-                    <h3 class="footer_header">
-                        Testimonials
-                    </h3>
-                    <div class="wrapper">
-                        <div class="quote">
-                            <i class="fa fa-quote-left"></i>
-                            {{=APP_NAME}} is so easy to use.
-                            <div class="clearfix"></div>
-                            <div class="pull-right">- Barret</div>
-                        </div>
-
-                        <div class="quote" style="margin-top: 40px;">
-                            <i class="fa fa-quote-left"></i>
-                            You saved me over $5000! Thanks!
-                            <div class="clearfix"></div>
-                            <div class="pull-right">- Christy</div>
-                        </div>                        
-
-                        <div class="quote" style="margin-top: 40px;">
-                            <i class="fa fa-quote-left"></i>
-                            My sales are up 30% this year!
-                            <div class="clearfix"></div>
-                            <div class="pull-right">- Robert</div>
-                        </div>  
-						
-                    </div>
-                </div>
-                <div class="col-sm-4">
-                    <h3 class="footer_header">
-                        Social
-                    </h3>
-                    
-                    <div class="footer_social_buttons">
-                        <div class="fa-stack fa-lg">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-facebook fa-stack-1x fa-inverse" style="color: #000"></i>
-                        </div>
-
-                        <div class="fa-stack fa-lg">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-twitter fa-stack-1x fa-inverse" style="color: #000"></i>
-                        </div>
-
-                        <div class="fa-stack fa-lg">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-pinterest fa-stack-1x fa-inverse" style="color: #000"></i>
-                        </div>
-
-                        <div class="fa-stack fa-lg">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-linkedin fa-stack-1x fa-inverse" style="color: #000"></i>
-                        </div>
-
-                        <div class="fa-stack fa-lg">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-tumblr fa-stack-1x fa-inverse" style="color: #000"></i>
-                        </div>   
-
-						<div class="fa-stack fa-lg">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-google-plus fa-stack-1x fa-inverse" style="color: #000"></i>
-                        </div>                        
-                    </div>
-
-                    <div style="margin-top:75px" class="text-center">
-                        <img src="{{=URL('static','images/edmunds.png')}}" alt="Powered by Edmunds">
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </footer>
+<!-- Core JS Libraries -->
+<script src="{{=URL('static','trinity/assets/bootstrap/js/jquery.min.js')}}" type="text/javascript"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.easing.1.3.js')}}" type="text/javascript"></script>
+<script src="{{=URL('static','trinity/assets/bootstrap/js/bootstrap.min.js')}}" ></script>
+<!-- JS Plugins -->
+<script src="{{=URL('static','trinity/assets/javascripts/pace.min.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/retina.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/device.min.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/classie.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.touchSwipe.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/waypoints.min.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/appear.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/smooth-scroll.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/slidingmenu.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.tweet.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/owl.carousel.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/venobox.min.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.bxslider.min.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.cycle.all.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.maximage.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/isotope.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.backstretch.min.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.parallax-1.1.3.js')}}"></script>
+<!-- JS Custom Codes -->
+<script src="{{=URL('static','trinity/assets/javascripts/parallax-init.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/animations-init.js')}}"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/portfolio-engine.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/form-validation.js')}}" ></script>
+<script src="{{=URL('static','trinity/assets/javascripts/main.js')}}" ></script>
 
 </body>
 </html>
-
-{{if request.function in ["request_by_make", 'faq']:}}
-	<script type='text/javascript'>(function () { var done = false; var script = document.createElement('script'); script.async = true; script.type = 'text/javascript'; script.src = 'https://widget.purechat.com/VisitorWidget/WidgetScript'; document.getElementsByTagName('HEAD').item(0).appendChild(script); script.onreadystatechange = script.onload = function (e) { if (!done && (!this.readyState || this.readyState == 'loaded' || this.readyState == 'complete')) { var w = new PCWidget({ c: 'a0feaac4-9a5d-43ad-878d-1976554b9022', f: true }); done = true; } }; })();</script>
-{{pass}}
-
-{{#enable prettier jquery UI tooltips}}
-<script>
-	$(function () {
-        $(document).tooltip();
-    });
-</script>
