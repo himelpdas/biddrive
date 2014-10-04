@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="aaa">
+    <meta name="google-site-verification" content="24LLTceTLyCoSLg5XrgKhz2udcpXFx2Ka6nThOfxP_Y" />
 
     <!-- Standard Favicon-->
     <link rel="shortcut icon" href="{{=URL('static','trinity/assets/images/favicon/favicon.ico')}}">
@@ -21,6 +22,11 @@
 
     <!-- Bootstrap CSS Files -->
     <link href="{{=URL('static','trinity/assets/bootstrap/css/bootstrap.min.css')}}" rel="stylesheet">
+
+    <!-- from old layout -->
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="http://cdnjs.cloudflare.com/ajax/libs/animate.css/3.0.0/animate.min.css" media="screen, projection" />
+
     <!-- Custom Fonts Setup via Font-face CSS3 -->
     <link href="{{=URL('static','trinity/assets/fonts/fonts.css')}}" rel="stylesheet">
     <!-- CSS files for plugins -->
@@ -107,6 +113,12 @@
 <script src="{{=URL('static','trinity/assets/javascripts/portfolio-engine.js')}}" ></script>
 <script src="{{=URL('static','trinity/assets/javascripts/form-validation.js')}}" ></script>
 <script src="{{=URL('static','trinity/assets/javascripts/main.js')}}" ></script>
+
+{{block message_scripts}}
+{{end}}
+
+{{block page_scripts}}
+{{end}}
 
 </body>
 </html>

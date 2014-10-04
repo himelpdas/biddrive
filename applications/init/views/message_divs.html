@@ -18,6 +18,9 @@
 	{{pass}}
 {{pass}}
 {{response.flash = session.flash = response.message = response.message2 = response.message3 = session.message = session.message2 = None}} {{# http://goo.gl/7t2HKR must put session.flash in a different variable in controller because response.flash overrides it}}
+
+
+{{block message_scripts}}
 <script>
 	$('.alert_headers').hide();
 	$('.alert_headers').slideDown();
@@ -25,3 +28,4 @@
 		$(this).slideUp();
 	});
 </script>
+{{end}}

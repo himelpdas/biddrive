@@ -17,11 +17,11 @@ pass
 }}
 </div>
 <script language="javascript"><!--
-jQuery("#web2py_user_form input:visible:enabled:first").focus();
+$("#web2py_user_form input:visible:enabled:first").focus();
 {{if request.args(0)=='register':}}
-    web2py_validate_entropy(jQuery('#auth_user_password'),100);
+    web2py_validate_entropy($('#auth_user_password'),100);
 {{elif request.args(0)=='change_password':}}
-    web2py_validate_entropy(jQuery('#no_table_new_password'),100);
+    web2py_validate_entropy($('#no_table_new_password'),100);
 {{pass}}
 //--></script>
 {{"""}}
@@ -99,13 +99,13 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 					</div>
 				 <script>
 					function resize_bootstrap_multiselect(){
-						$('.multiselect').css({
+                        $('.multiselect').css({
 							'width':$("#auth_user_email").parent().width()
 						});
 					}
 					$(document).ready(function(){ //{{#use document ready because some elements might not be ready and getting things like width from them may be wrong}}
-						$('#auth_user_alerts').multiselect({'maxHeight':240, 'numberDisplayed':1});
-						$(window).resize(function(){
+                        $('#auth_user_alerts').multiselect({'maxHeight':240, 'numberDisplayed':1});
+                        $(window).resize(function(){
 							resize_bootstrap_multiselect();
 						});
 						resize_bootstrap_multiselect(); //{{#http://goo.gl/dh1z2}}
@@ -328,10 +328,12 @@ jQuery("#web2py_user_form input:visible:enabled:first").focus();
 		</div>
 	</div>
 	{{#auth() has poor parent customization compared to SQLFORM}}
-	<script>
-		$('form').attr({"class":"form-horizontal"}); {{#add horizontal Class to form tag as it cant be done via controller due to auth not sqlform}}
-		$('.error').hide(); {{#hide Default web2py error behavior}}
+    {{block page_scripts}}
+    <script>
+        $('form').attr({"class":"form-horizontal"}); {{#add horizontal Class to form tag as it cant be done via controller due to auth not sqlform}}
+        $('.error').hide(); {{#hide Default web2py error behavior}}
 	</script>
+    {{end}}
 {{else:}}
 <h3>Sorry, either you were inactive or you're not authorized to view this page.</h3>
 {{pass}}

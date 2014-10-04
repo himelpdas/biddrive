@@ -931,6 +931,7 @@ font-family: 'Open Sans', sans-serif; font-weight:300;
     margin-bottom: 0;
     padding: 0;
 }
+/*
 input {
     background: transparent !important;
     border: none !important;
@@ -981,7 +982,7 @@ textarea {
 		-ms-transition: all .8s linear;
 		 -o-transition: all .8s linear;
 			transition: all .8s linear;
-}
+}*/
 input.send_message {
     background: none repeat scroll 0 0 #EF4A4A;
     color: #FFFFFF;
