@@ -1,421 +1,94 @@
 {{extend 'layout.html'}}
-{{#TODO- MOVE TO LAYOUT.HTML HEAD TAG WITH IF TEST}}
 
-{{#############ERROR DIVS################}}
-<div style="position:fixed; padding-left:10px; right:10px;top:75px;width:100%;min-width:120px;max-width:480px;{{if request.controller =='default' and request.function=='index':}}z-index:9998{{pass}};">{{#we only want high z-index for navbar in homepage for message divs, but not any page else because it can interfere with modals}}
-	{{include 'message_divs.html'}}
-<script>
-	$('.alert_headers').fadeTo("slow", 0.75);
-</script>
-</div>
-{{#############ERROR DIVS################}}
 
-    <section id="feature_slider" style="background-image: url({{=URL('static','images/bg_1.jpg')}}{{#http://goo.gl/GzBK3w}}{{#http://i.imgur.com/IKOzzNH.jpg}}); background-position: center;">
-	{{#Feature slider default max-width makes this disappear in xs, reducing it shows it again}}
-        <article class="slide active" id="showcasing" style="display: block;">
 
-        <div class="container main-container">
-			<div id="introduction">
-				<h1 class="visible-lg-block visible-md-block hidden-xs hidden-sm">Dealers compete for the car of your dreams.</h1>
-				<h1 style="font-size:64px;" class="visible-xs-block visible-sm-block hidden-md hidden-lg">Dealers compete for the car of your dreams.</h1>
-				<div class="row-fluid">
-					<div class="col-md-5 col-sm-12">
-						<a href="javascript:void(0);"><button id="pick_your_car_button" class="btn btn-warning btn-xl"><i class="fa fa-fw fa-hand-o-right"></i> Pick your vehicle!</i></button></a>
-					</div>
-					<div class="col-md-2 col-sm-12">
-						<h2 style="white-space: nowrap; margin-top: 10px; margin-left:-13px;"><span class="hidden-xs hidden-sm">—OR—</span</h2>
-					</div>
-					<div class="col-md-5 col-sm-12">
-						<a href="javascript:void(0);"><button id="show_me_how_button" class="btn btn-info btn-xl"><i class="fa fa-fw fa-hand-o-down"></i> How does it work?</i></button></a>
-					</div>
-				</div>
-			</div>
-			<div id="brands_selection" style="display:none;"> <!--{{#display:none; equal too $("#id").hide();}}-->
-				
-				<div class="row text-center slogan">
-						
-					<span style="line-height:1.5em;">
-						Choose your new car
-						<div class="btn-group" style="display:inline-block;">
-							<a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-								<strong style="font-size:22px; color:#f5f5f5"><i class="fa fa-fw fa-caret-square-o-down"></i>{{if request.args(0) and int(request.args[0]) in YEAR_RANGE:}}{{year=request.args[0]}}{{=year}} model year{{else:}}{{year=datetime.date.today().year}}{{=year}} model year{{pass}}</strong>
-							</a>
-							<ul class="dropdown-menu">
-								{{for each in YEAR_RANGE:}}<li><a  style="text-shadow:none;" id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}"><i class="fa fa-fw fa-chevron-circle-right"></i>{{=each}} model year</a></li>{{pass}}
-							</ul>
-						</div>
-					</span>
-				</div>
-				
-				<div id="small_screen_only_back_to_makes" class="row text-center small-slogan visible-xs">
-					<button id="reset_mainbox"  class="btn btn-info" href="javascript:void(0);" onclick="reset_mainbox()">Reset</button>
-				</div>
-				
-				<div class="clearfix">&nbsp;</div>
 
-				<div id="mainrow" class="row mainrow" style="overflow-y:hidden;"> {{# show child divs will not appear outside the max height}}
-					<div id="mainbox" class="col-xs-12 col-sm-6 col-sm-offset-3 mainbox backdrop"> {{# @480px or so it'll fill all 12 columns, but higher will fill 6}}
-						
-						<div class="row" style="padding-top:5px">
-							{{for each_brand in brands_list:}}
-								<div class="col-xs-4 car-make">
-									<a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a> <!--{{#prevent linebreak on overflow http://goo.gl/tCoek4}}-->
-								</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;"> <!--{{#overflow-y auto to show scrollbar only when needed}}-->
-						loading...
-					</div>
+<!-- masthead-section (this nav bar is visible only on home page) : starts -->
+<header id="intro-header" class="intro-header">
 
-					<script>
-						function setBoxesHeight(){
-							$("#mainrow").height($("#mainbox").height()); //{{#keep everything at constant height, as show / hide child elements momentarily resizes parent div}}
-							$("#sidebox").height($("#mainrow").height());
-						}
-						$(document).ready(function(){ //{{#each document ready function has its own name-space like any other function}}
-							
-							function showBrandsListOnClick(){
-
-								$("#introduction").fadeOut(400, function(){
-									$("#brands_selection").fadeIn(); //{{#.removeClass("hidden");}} //{{#jQ-UI allows for remove class animations}}
-									$("#mainbox").css({
-										'-webkit-transition': 'all 0.7s ease-out',
-										'-moz-transition': 'all 0.7s ease-out',
-										'-ms-transition': 'all 0.7s ease-out',
-										'-o-transition': 'all 0.7s ease-out',
-										'transition': 'all 0.7s ease-out',
-									}); //{{#transition effect when that div moves}}
-									setBoxesHeight();//{{#http://goo.gl/rCNN4R resize event doesn't work on maximize! need plugin for that}}
-									//{{#define event functions}}
-									function resize_background(){  {{#adjust background to encompass the mainbox}}
-										$("#feature_slider").animate({
-											'height':$("#mainrow").offset().top + $("#mainrow").height() + 72
-										}, 1000);
-									}
-									//{{#initialize resize}}
-									$(window).resize(function(){
-										resize_background();
-									});
-									resize_background();
-								});
-							}
-
-							$('#pick_your_car_button').click(showBrandsListOnClick);
-							
-							$('#back_to_top_button').click(function(){ //{{#http://bit.ly/1lgWPfS}}
-
-								$('html, body').animate({
-									scrollTop: $("#feature_slider").offset().top
-								}, 2000, function(){
-									showBrandsListOnClick();
-								});
-							});
-							
-							$('#show_me_how_button').click(function(){
-
-								$('html, body').animate({
-									scrollTop: $("#features").offset().top - 64
-								}, 2000);
-							});
-							
-						});
-					</script>
-					
-				</div>
-			</div>
-        </div>
-
-        <script> {{#hides mainbox on smaller devices}}
-
-			function hide_mainbox_for_small_screens(){
-				if ($('#reset_mainbox').is(':visible')) { {{# better than (window).width() < 768 #http://goo.gl/pxeXf3}}
-					if ($('#sidebox').is(':visible')){ {{#when sidebox is not there, leave mainbox alone #http://goo.gl/xdHbtj}}
-						$('#mainbox').hide();
-					}
-				} else {
-					$('#mainbox').show();
-				}
-			}			
-			
-			function reset_mainbox(){
-				setBoxesHeight();
-				$("#sidebox").hide();
-				$("#mainbox").show();
-			}
-						
-			$(window).resize(function(){ 
-				setBoxesHeight();
-				hide_mainbox_for_small_screens();
-			});
-
-            {{for each_brand in brands_list:}}
-
-                $('#{{=each_brand}}_switch').click(
-				
-                    function(evt){
-						
-						$("#switch_selected_icon").remove(); $(this).prepend('<i id="switch_selected_icon" class="fa fa-fw fa-arrow-right"></i>'); //remove and add icon
-
-						$('#mainbox').removeClass('col-sm-offset-3 backdrop');
-
-                        $('#mainrow').addClass('backdrop', 700); {{#jquery UI transistion}}
-
-                        $('#sidebox')
-						
-                            .html('<div id="loading_spinner" class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
-                            .show()
-                            .load("{{=URL('ajax','vehicle_content', args=[each_brand, year])}}",
-								function( response, status, xhr ) {
-									if ( status == "error" ) {
-										var msg = "Error loading {{=each_brand.upper()}}: ";
-										$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_reviews_{{=each_brand}}" class="alert alert-danger"><span id="ajax_failure_warning_reviews_message_{{=each_brand}}"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-										$('#ajax_failure_warning_reviews_message_{{=each_brand}}').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-										$('#ajax_failure_warning_reviews_{{=each_brand}}').slideDown().fadeTo("slow", 0.75); {{# similar to request_by_make, but add =each_brand to ids so we can have multiple error divs}}
-										$('#ajax_failure_warning_reviews_{{=each_brand}}').click(function(){
-											$(this).slideUp();
-										});
-									}
-								}
-							);
-						
-						hide_mainbox_for_small_screens(); {{#click was made force hide mainbox}}
-                    }
-                );
-            {{pass}}
-
-            $('.browse').click(function(e) {
-                $('.browse').toggle();
-            });                                                
-        </script>
-
-        </article>       
-    </section>
-
-    <div id="showcase">
-        <div class="container" style="position:relative;">
-            <div class="row feature_wrapper" style='position:relative; top:20px;'> {{"""}}style='position:relative; top:35px; border-radius:5px; background-color:rgba(0,0,0,0.5);'>
-                <!-- Features Row -->
-                <div class="features_op1_row" style="padding-top:10px;">
-                    <!-- Feature -->
-                    <div class="col-sm-4 feature">
-                        <div class="img_box" style="text-align: center;">
-                          <i class="fa fa-clock-o fa-3x" style="color: tomato;"></i>
-                        </div>
-                        <div class="index_text">
-                            <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center;">Save Time</h3>
-                            <p style= " font-size: 20px; color:#f5f5f5; text-align:center">
-                                Connect with dealers from your computer. No more driving to every dealership to get the best price.
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Feature -->
-                    <div class="col-sm-4 feature">
-                        <div class="img_box" style="text-align: center;">
-                            <i class="fa fa-dollar fa-3x" style="color: gold;"></i>
-                        </div>
-                        <div class="index_text">
-                            <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Save Money</h3>
-                            <p style= " font-size: 20px; color:#f5f5f5; text-align:center">
-                                Dealers compete for your business, giving you the best possible price for your brand new car.
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Feature -->
-                    <div class="col-sm-4 feature">
-                        <div class="img_box" style="text-align: center;">
-							{{'''}}
-                            <span class="fa-stack fa-lg" style="color: lightgreen;">
-                                <i class="fa fa-circle-o fa-stack-2x"></i>
-                                <i class="fa fa-check fa-stack-1x"></i>
-                            </span>
-							{{'''}}
-							<i class="fa fa-shield fa-3x" style="color: yellowgreen;"></i>
-						</div>
-                        <div class="index_text">
-                            <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Hassle Free</h3>
-                            <p style= " font-size: 20px; color:#f5f5f5; text-align:center">
-                                Watch as BidDrive does all the work for you — no emails, calls, or haggling face-to-face with dealers.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-				{{"""}}
-                <div class="features_op1_row" style="padding-top:10px;">
-                    <!-- Feature -->
-                    <div class="col-sm-4 feature index_text">
-                        <div class="img_box" style="text-align: center;">
-                          <i class="fa fa-clock-o fa-3x" style="color: tomato;"></i>
-                        </div>
-                        <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center;">Save Time</h3>
-                    </div>
-                    <!-- Feature -->
-                    <div class="col-sm-4 feature index_text">
-                        <div class="img_box" style="text-align: center;">
-                            <i class="fa fa-dollar fa-3x" style="color: gold;"></i>
-                        </div>
-                           <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">Save Cash</h3>
-                    </div>
-                    <!-- Feature -->
-                    <div class="col-sm-4 feature index_text">
-                        <div class="img_box" style="text-align: center;">
-							<i class="fa fa-shield fa-3x" style="color: yellowgreen;"></i>
-						</div>
-                        <h3 style="text-transform:uppercase; color:#f5f5f5; letter-spacing: 4px; text-align:center">No Hassle</h3>
-                    </div>
-				</div>
-				<div class="features_op1_row" style="position:relative; top:35px;">
-					<div class="col-xs-12 feature">
-						<div class="img_box" style="text-align: center;">
-							<img src="{{=URL('static','images/coverage_sample.png')}}" class="img-responsive"/>
-						</div>
-					</div>
-				</div>
-            </div>
-		</div>
-    </div>
-    
-    <div id="features" style="background: url({{=URL('static','images/scbg_1.jpg')}})">
-        <div class="container">
-			<br>
-            <div class="row text-center" {{#style='margin-bottom:50px'}}>
-                <h1 style="font-size: 64px; line-height:1.2em;"><i class="fa fa-fw fa-cog fa-spin"></i> How BidDrive Works</h1>
-            </div>
-			<hr>
-            <div class="row feature">
-                <div class="col-sm-6 hideme">
-                    <img src="{{=URL('static','images/sc_1.png')}}" width="369" class="img-responsive"/>
-                </div>
-                <div class="col-sm-6 info">
-                    <h2>
-                        <i class="fa fa-fw fa-car"></i> Choose Your Car.
-                    </h2>
-                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
-                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Select the car you want to by make and model.
-                       BidDrive works best for those who are ready to buy.  We're here to help you with the last mile of the car buying marathon.<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
-					</p>
-                </div>
-            </div>
-			<br>
-            <div class="row feature">
-                <div class="col-sm-6 pic-right hideme">
-                    <img src="{{=URL('static','images/sc_2.png')}}" width="369" class="pull-right img-responsive"/>
-                </div>
-                <div class="col-sm-6 info info-left">
-                    <h2>
-                        <i class="fa fa-fw fa-tachometer"></i> Give us the details.
-                    </h2>
-                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
-                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Tell us the make, color, trim or any special features you would like.
-                        Then select your dealer radius and answer a few questions. We will only send your request to dealers within that radius.<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
-					</p>
-                </div>
-            </div>
-			<br>
-            <div class="row feature">
-                <div class="col-sm-6 hideme">
-                    <img src="{{=URL('static','images/sc_3.png')}}" width="369" class="img-responsive"/>
-                </div>
-                <div class="col-sm-6 info">
-                    <h2>
-                        <i class="fa fa-fw fa-cloud-upload"></i> Submit your request.
-                    </h2>
-                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
-                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>When you are ready, submit your <u>anonymous</u> request to our dealer network. 
-						Communication will be handled through our website and our advanced automated hotline system.
-						<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
-					</p>
-                </div>
-            </div>
-			<br>
-            <div class="row feature">
-                <div class="col-sm-6 pic-right hideme">
-                    <img src="{{=URL('static','images/sc_4.png')}}" width="369" class="pull-right img-responsive"/>
-                </div>
-                <div class="col-sm-6 info info-left">
-                    <h2>
-                        <i class="fa fa-fw fa-gavel"></i> Auction Begins!
-                    </h2>
-                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
-                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Local dealers are alerted that you are ready to enter an auction. 
-                        If they have a car that matches your request, they will enter it in your auction—with a bid.  
-                        Watch as dealers compete for you in the 72-hour long auction.<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
-					</p>
-                </div>
-            </div> 
-			<br>
-            <div class="row feature">
-                <div class="col-sm-6 hideme">
-                    <img src="{{=URL('static','images/sc_5.png')}}" width="369" class="img-responsive"/>
-                </div>
-                <div class="col-sm-6 info">
-                    <h2>
-						<i class="fa fa-fw fa-trophy"></i> May the best dealer win!
-                    </h2>
-                    <p style="color:#3f3f3f; font-size: 30px; line-height:1.2em;">
-                        <i class="fa fa-fw fa-quote-left text-light" style="opacity:0.2"></i>Once you select a guaranteed bid, you will have 48 hours to contact the winning dealer.
-						Then you simply print your voucher and take it to the dealership.
-						You and the dealer will take it from there!<i class="fa fa-fw fa-quote-right text-light" style="opacity:0.2"></i>
-					</p>
-                </div>
-            </div>
-			<br>
+    <div class="container">
+        <div class="row">
+            <article class="col-md-2 text-left">
+                <a class="brand" href="index.html">{{=APP_NAME}}</a>
+            </article>
+            <article class="col-md-10 text-right">
+                <ul class="intro-nav  intro-nav-white-text">
+                    {{include "trinity/site-menu.html"}}
+                </ul>
+            </article>
         </div>
     </div>
-	<div id="lets_begin">
-        <div class="container">
-            <div class="row feature_wrapper" style="position:relative;">
-                <!-- Features Row -->
-                <div class="features_op1_row" style="text-align:center; position:relative; top:65px;">
-					<a href="javascript:void(0);"><button id="back_to_top_button" class="btn btn-warning btn-xl"><i class="fa fa-fw fa-car"></i> Select your vehicle now!<i class="fa fa-fw fa-level-up"></i></button></a>
-				</div>
-			</div>
-		</div>
-	</div>
-	
-<script>
-	$(document).ready(function() { //{{#http://goo.gl/7LNvFi}}
-		$('.hideme').css({'opacity':'0.2'});
-		/* Every time the window is scrolled ... */
-		$(window).scroll( function(){
-		
-			/* Check the location of each desired element */
-			$('.hideme').each( function(i){
-				
-				var bottom_of_object = $(this).position().top + $(this).outerHeight();
-				var bottom_of_window = $(window).scrollTop() + $(window).height();
-				
-				/* If the object is completely visible in the window, fade it it */
-				if( bottom_of_window > bottom_of_object ){
-					
-					$(this).animate({'opacity':'1'},500);
-						
-				}
-				
-			}); 
-		
-		});
-	});
-</script>
-{{###SCRIPT GRAVE###}}
-{{"""}}
-	function x_parallax(element, rate, offset){
-		element.css({
-			"background-position":(0,-rate*($(this).scrollTop()+offset)),
-		});
-	}
-	//initialize x_parallax
-	$(window).scroll(function(){
-		x_parallax($("#feature_slider"), 0.10, 640);
-	});
-	x_parallax($("#feature_slider").css({'-webkit-transition': 'all 0.7s ease-out','-moz-transition': 'all 0.7s ease-out','-ms-transition': 'all 0.7s ease-out','-o-transition': 'all 0.7s ease-out','transition': 'all 0.7s ease-out',}), 0.25, 640);
-{{"""}}
-{{"""}}
-	$("#feature_slider").css({"background-position":(0,-.25*300)})
-	$(window).scroll(function(){
-		$("#feature_slider").css({
-			"background-position":(0,-.25*($(this).scrollTop()+300)),
-		});
-	});
-{{"""}}
+
+</header>
+<!-- masthead-section:ends -->
+
+
+
+<!-- Home / Intro : starts -->
+<section id="intro" class="intro intro-06 text-center homepage-carousel">
+
+    <div id="intro-06-carousel" class="intro-carousel owl-carousel  owl-nav-sticky-wide full-height color-bg">
+
+
+        <div class="item intro-06-carousel-item intro-06-carousel-item-01  text-center full-height">
+            <div class="trans-dark  full-height">
+                <div class="valign">
+                    <h1 class="white"><span class="trans-dark white">Game Changer</span></h1>
+                    <h3 class="white"><span class="white">Dealers compete for <br/> the car of your dreams</span></h3>
+                    <div class="row intro-06-carousel-item-actions">
+                        <div class="col-xs-6 hero-caps-button">
+                            <a class="btn btn-trinity btn-trinity-big btn-cta scroll" href="#about">How it works</a>
+                        </div>
+                        <div class="col-xs-6 hero-caps-button">
+                            <a class="btn btn-trinity btn-trinity-big btn-cta scroll" href="#portfolio">Get started</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- item:ends -->
+
+        <div class="item intro-06-carousel-item intro-06-carousel-item-02  text-center full-height">
+            <div class="trans-dark  full-height">
+                <div class="valign">
+                    <h1 class="white"><span class="trans-dark white">Time Management</span></h1>
+                    <h3 class="white"><span class="white">Connect to multiple dealers at once, <br/> from the comfort of your home.</span></h3>
+                    <div class="row intro-06-carousel-item-actions">
+                        <div class="col-xs-6 hero-caps-button">
+                            <a class="btn btn-trinity btn-trinity-big btn-cta scroll" href="#about">How it works</a>
+                        </div>
+                        <div class="col-xs-6 hero-caps-button">
+                            <a class="btn btn-trinity btn-trinity-big btn-cta scroll" href="#portfolio">Get started</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- item:ends -->
+
+        <div class="item intro-06-carousel-item intro-06-carousel-item-03  text-center full-height">
+            <div class="trans-dark  full-height">
+                <div class="valign">
+                    <h1 class="white"><span class="trans-dark white">Role Reversal</span></h1>
+                    <h3 class="white"><span class="white">Dealers compete to give you <br/> the best price on your new car.</span></h3>
+                    <div class="row intro-06-carousel-item-actions">
+                        <div class="col-xs-6 hero-caps-button">
+                            <a class="btn btn-trinity btn-trinity-big btn-cta scroll" href="#about">How it works</a>
+                        </div>
+                        <div class="col-xs-6 hero-caps-button">
+                            <a class="btn btn-trinity btn-trinity-big btn-cta scroll" href="#portfolio">Get started</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- item:ends -->
+
+
+
+
+    </div>
+    <!-- carousel:ends -->
+
+</section>
+<!-- Home / Intro : ends -->

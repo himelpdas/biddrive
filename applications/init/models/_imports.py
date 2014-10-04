@@ -28,7 +28,7 @@ def quickRaise(error):
 	"""
 	raise Exception(error)
 	
-APP_NAME="BidDrive(Alpha)"
+APP_NAME="BidDrive"
 EDMUNDS_KEY ="qmnpjbhe9p5g5cw3yv2vaehv"
 EDMUNDS_SECRET="zA6vs797nVgqGaSK58QJe2KW"
 AUCTION_DAYS_EXPIRE = AUCTION_FAVS_EXPIRE = 3

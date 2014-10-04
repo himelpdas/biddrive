@@ -1,0 +1,33 @@
+
+<!-- Mobile only Navigation : starts -->
+<nav class="menu" id="sm">
+    <div class="sm-wrap">
+        <a class="brand" href="index.html">{{=APP_NAME}}</a>
+        <i class="icon-remove menu-close"></i>
+        {{include "trinity/site-menu.html"}}
+    </div>
+    <!-- Navigation Trigger Button -->
+    <div id="sm-trigger"></div>
+</nav>
+<!-- Mobile only  Navigation : ends -->
+
+
+
+<!-- masthead-section (this nav bar is initially hidden but will be visible only on inner pages) : starts -->
+<header id="standard-header" class="standard-header standard-header-top">
+
+    <div class="container">
+        <div class="row">
+            <article class="col-md-2 text-left">
+                <a class="brand" href="index.html">{{=APP_NAME}}</a>
+            </article>
+            <article class="col-md-10 text-right">
+                <ul class="standard-nav standard-nav-dark-text">
+                    {{include "trinity/site-menu.html"}}
+                </ul>
+            </article>
+        </div>
+    </div>
+
+</header>
+<!-- masthead-section:ends -->

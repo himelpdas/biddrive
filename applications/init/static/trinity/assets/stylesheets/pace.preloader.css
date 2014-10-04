@@ -22,7 +22,7 @@
 .pace .pace-activity:before {
   content: '';
   background-color: rgba(100, 100, 100, 1);
-  background-image: url('/assets/images/bd-logo-pace.png');
+  background-image: url(/init/static/trinity/assets/images/bd-logo-pace.png);
   background-repeat: no-repeat;
   background-position: center center;
   display: block;

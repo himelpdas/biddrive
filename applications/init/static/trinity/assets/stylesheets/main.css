@@ -604,7 +604,7 @@ h1,h2,h3,h4,h5,h6{
 	border:solid 1px;
 }
 .item:hover > a > .thumb-title{
-    cursor: url("/assets/images/plus.png") 40 40, crosshair;
+    cursor: url("/init/static/trinity/assets/images/plus.png") 40 40, crosshair;
 	-webkit-transition: all .4s ease-in-out;
 	   -moz-transition: all .4s ease-in-out;
 		-ms-transition: all .4s ease-in-out;
@@ -624,7 +624,7 @@ h1,h2,h3,h4,h5,h6{
 /*SERVICES*/
 
 .service-list-wrap{
-	background-image: url('/assets/images/triangle.png');
+	background-image: url('/init/static/trinity/assets/images/triangle.png');
 	background-repeat: no-repeat;
 	background-position: bottom center;
 }
@@ -669,7 +669,7 @@ font-family: 'Open Sans', sans-serif; font-weight:300;
 	cursor: pointer;
 }
 .features-icon.current{
-	background:url(/assets/images/arrow.png) center bottom no-repeat;
+	background:url(/init/static/trinity/assets/images/arrow.png) center bottom no-repeat;
 }
 .features-icon > h5{
 	margin-top: 10px;
@@ -825,10 +825,10 @@ font-family: 'Open Sans', sans-serif; font-weight:300;
 	margin-top: -10px !important;
 }
 .clients-carousel .owl-next{
-	background: transparent url(/assets/images/next-dark.png) no-repeat center center !important;
+	background: transparent url(/init/static/trinity/assets/images/next-dark.png) no-repeat center center !important;
 }
 .clients-carousel .owl-prev{
-	background: transparent url(/assets/images/prev-dark.png) no-repeat center center !important;
+	background: transparent url(/init/static/trinity/assets/images/prev-dark.png) no-repeat center center !important;
 }
 .client-stage > img{
 	margin-top: 25px;

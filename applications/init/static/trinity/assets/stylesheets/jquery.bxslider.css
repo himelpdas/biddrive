@@ -48,7 +48,7 @@
 
 .bx-wrapper .bx-loading {
 	min-height: 50px;
-	background: url(/assets/images/bx_loader.gif) center center no-repeat #fff;
+	background: url(/init/static/trinity/assets/images/bx_loader.gif) center center no-repeat #fff;
 	height: 100%;
 	width: 100%;
 	position: absolute;
@@ -97,7 +97,7 @@
 
 .bx-wrapper .bx-prev {
 	left: 20px;
-	background: url(/assets/images/slider_left_white.png) no-repeat 0 0;
+	background: url(/init/static/trinity/assets/images/slider_left_white.png) no-repeat 0 0;
 	background-size:18px 34px;
 }
 
@@ -105,7 +105,7 @@
 
 .bx-wrapper .bx-next {
 	right: 20px;
-	background: url(/assets/images/slider_right_white.png) no-repeat 0px 0px;
+	background: url(/init/static/trinity/assets/images/slider_right_white.png) no-repeat 0px 0px;
 	background-size:18px 34px;
 }
 

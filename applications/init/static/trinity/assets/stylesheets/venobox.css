@@ -38,7 +38,7 @@ body{
     top:50%; 
     margin-left:-16px; 
     margin-top:-16px;
-    background-image: url(/assets/images/venobox/preload-circle.png);
+    background-image: url(/init/static/trinity/assets/images/venobox/preload-circle.png);
     text-indent: -100px;
     overflow: hidden;
     -webkit-animation: playload 1.4s steps(18) infinite;
@@ -77,7 +77,7 @@ body{
     top:50%; 
     margin-left:-16px; 
     margin-top:-16px;
-    background-image: url(/assets/images/venobox/preload-ios.png);
+    background-image: url(/init/static/trinity/assets/images/venobox/preload-ios.png);
     text-indent: -100px;
     overflow: hidden;
     -webkit-animation: playload 1.4s steps(12) infinite;
@@ -118,7 +118,7 @@ body{
     top:50%; 
     margin-left:-16px; 
     margin-top:-16px;
-    background-image: url(/assets/images/venobox/preload-dots.png);
+    background-image: url(/init/static/trinity/assets/images/venobox/preload-dots.png);
     text-indent: -100px;
     overflow: hidden;
     -webkit-animation: playload 1.4s steps(24) infinite;
@@ -159,7 +159,7 @@ body{
     top:50%; 
     margin-left:-16px; 
     margin-top:-16px;
-    background-image: url(/assets/images/venobox/preload-quads.png);
+    background-image: url(/init/static/trinity/assets/images/venobox/preload-quads.png);
     text-indent: -100px;
     overflow: hidden;
     -webkit-animation: playload 1.4s steps(12) infinite;
@@ -199,7 +199,7 @@ body{
     height: 40px;
     padding: 10px 20px 10px 0;
     display: block;
-    background: url(/assets/images/venobox/close.gif) no-repeat #161617;
+    background: url(/init/static/trinity/assets/images/venobox/close.gif) no-repeat #161617;
     background-position:10px center;
     color: #fff;
     text-indent: -100px;
@@ -218,11 +218,11 @@ body{
 }
 .vbox-prev{
     left: 10px;
-    background: url(/assets/images/venobox/prev.gif) center center no-repeat;
+    background: url(/init/static/trinity/assets/images/venobox/prev.gif) center center no-repeat;
 }
 .vbox-next{
     right: 10px;
-    background: url(/assets/images/venobox/next.gif) center center no-repeat;
+    background: url(/init/static/trinity/assets/images/venobox/next.gif) center center no-repeat;
 }
 
 .vbox-title{
