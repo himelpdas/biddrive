@@ -6,15 +6,15 @@
         <div class="container">
             <div class="row">
                 <article class="col-md-3 text-left foot-logo">
-                    <a class="brand" href="index.html">{{=APP_NAME}}</a>
+                    <a class="brand" href="{{=URL('index', anchor='intro')}}">{{=APP_NAME}}</a>
                 </article>
                 <article class="col-md-6 text-center footer-nav">
                     <ul>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Help / FAQ</a></li>
-                        <li><a href="#">Contact us</a></li>
-                        <li><a href="#">Sitemap</a></li>
+                        <li><a href="{{=URL('about')}}">About</a></li>
+                        <li><a href="{{=URL('careers')}}">Careers</a></li>
+                        <li><a href="{{=URL('faq')}}">Help / FAQ</a></li>
+                        <li><a href="{{=URL('contact')}}">Contact us</a></li>
+                        <li><a href="{{=URL('sitemap')}}">Sitemap</a></li>
                     </ul>
                 </article>
                 <article class="col-md-3 text-right">

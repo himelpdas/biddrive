@@ -181,6 +181,12 @@ h1,h2,h3,h4,h5,h6{
 	display: none;
 	top: 0;
 }
+.standard-header-top.initially-shown{
+    display: inline;
+}
+.standard-header-top.initially-hidden{
+
+}
 .standard-header-bottom{
 	position: fixed;
 	display: block;
@@ -829,6 +835,7 @@ font-family: 'Open Sans', sans-serif; font-weight:300;
 }
 .clients-carousel .owl-prev{
 	background: transparent url(/init/static/trinity/assets/images/prev-dark.png) no-repeat center center !important;
+	background: transparent url(/init/static/trinity/assets/images/prev-dark.png) no-repeat center center !important;
 }
 .client-stage > img{
 	margin-top: 25px;
@@ -1287,4 +1294,7 @@ font-family: 'Raleway', sans-serif; font-weight:300;
 
 
 
-
+.page-container {
+    padding-top: 120px;
+    padding-bottom: 120px;
+}

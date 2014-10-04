@@ -14,7 +14,13 @@
 
 
 <!-- masthead-section (this nav bar is initially hidden but will be visible only on inner pages) : starts -->
-<header id="standard-header" class="standard-header standard-header-top">
+<header id="standard-header" class="standard-header standard-header-top
+    {{ if 'site_nav_initially_hidden' in locals() and site_nav_initially_hidden: }}
+    initially-hidden
+    {{ else: }}
+    initially-shown
+    {{ pass }}
+">
 
     <div class="container">
         <div class="row">
