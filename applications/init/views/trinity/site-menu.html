@@ -1,5 +1,13 @@
-<li><a href="{{=URL('index', anchor='intro')}}" class="scroll">Home</a></li>
-<li><a href="{{=URL('index', anchor='about')}}" class="scroll">How it works</a></li>
-<li><a href="#signin" class="scroll">Sign in</a></li>
-<li><a href="#signup" class="scroll">Sign up</a></li>
+<li><a href="{{=URL('default', 'index', anchor='intro')}}" class="
+{{if 'site_nav_page_scroll' in locals() and site_nav_page_scroll:}}
+scroll
+{{pass}}
+">Home</a></li>
+<li><a href="{{=URL('default', 'index', anchor='about')}}" class="
+{{if 'site_nav_page_scroll' in locals() and site_nav_page_scroll:}}
+scroll
+{{pass}}
+">How it works</a></li>
+<li><a href="{{=URL('default', 'user', args=['login'])}}" class="">Sign in</a></li>
+<li><a href="{{=URL('default', 'user', args=['register'])}}" class="">Sign up</a></li>
 <li><a href="#dealers" class="scroll">Dealers</a></li>
