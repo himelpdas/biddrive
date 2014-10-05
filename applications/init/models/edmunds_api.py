@@ -7,7 +7,7 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 	URI = repr(URI)
 	def disk():
 		backup_cache = cache.disk
-		if False and '127.0.0.1' in request.env.http_host: #disk cache doesn't play well across all local development environments
+		if True and '127.0.0.1' in request.env.http_host: #disk cache doesn't play well across all local development environments
 			backup_cache = cache.ram #just use ram cache longer on localhosts
 		#response = cache.disk(
 		response = backup_cache(	
