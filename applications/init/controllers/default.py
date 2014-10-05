@@ -26,6 +26,23 @@ def index():
 		
 	return dict(brands_list=getBrandsList(year))
 
+def index_old():
+	"""
+	example action using the internationalization operator T and flash
+	rendered by views/default/index.html or views/generic.html
+
+	if you need a simple wiki simply replace the two lines below with:
+	return auth.wiki()
+	"""
+
+	year = datetime.date.today().year
+	if request.args(0):
+		year = request.args[0]
+
+	response.message2="!%s is currently under development"%APP_NAME
+
+	return dict(brands_list=getBrandsList(year))
+
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
 @auth.requires(URL.verify(request, hmac_key = str(session.salt), hash_vars=[request.args(0),request.args(1),request.args(2)]),  requires_login=False)
 def request_by_make():
