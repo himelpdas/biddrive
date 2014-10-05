@@ -131,3 +131,93 @@ def getColorHexByNameOrID(identifier, trim_data):
 		#raise Exception("Couldn't find color hex by name or ID!")
 		color_hex="000" #Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of color_simple_names with color_pref in auction request, but this is unlikely.
 	return color_hex
+
+
+
+def getFeaturedCars():
+     cars = []
+     cars.append({
+        'year' :  u'2014',
+        'make' :  u'honda',
+        'model' : u'accord',
+        'types' : u'sedan',
+        'image' : u'2014_honda_accord_sedan_ex-l-v-6-wnavigation_fq_oem_2_300.jpg'
+     })
+     cars.append({
+        'year' :  u'2014',
+        'make' :  u'ford',
+        'model' : u'fusion',
+        'types' : u'sedan hybrid',
+        'image' : u'2014_ford_fusion_sedan_se_fq_oem_2_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'jeep',
+        'model' : u'cherokee',
+        'types' : u'suv',
+        'image' : u'2014_jeep_cherokee_4dr-suv_trailhawk_fq_oem_1_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'ford',
+        'model' : u'f-150',
+        'types' : u'pickup',
+        'image' : u'2015_ford_f-150_crew-cab-pickup_platinum_fq_oem_2_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'mazda',
+        'model' : u'cx-5',
+        'types' : u'suv',
+        'image' : u'2014_mazda_cx-5_4dr-suv_grand-touring_fq_oem_1_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'tesla',
+        'model' : u'model-s',
+        'types' : u'hybrid sedan sporty',
+        'image' : u'2014_tesla_model-s_sedan_p85_fq_oem_1_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'toyota',
+        'model' : u'venza',
+        'types' : u'suv',
+        'image' : u'2013_toyota_venza_wagon_limited_fq_oem_1_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'subaru',
+        'model' : u'forester',
+        'types' : u'suv',
+        'image' : u'2014_subaru_forester_4dr-suv_25i-premium-pzev_fq_oem_1_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'bmw',
+        'model' : u'3-series',
+        'types' : u'sedan',
+        'image' : u'2014_bmw_3-series_sedan_320i_fq_oem_1_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'toyota',
+        'model' : u'sienna',
+        'types' : u'minivan',
+        'image' : u'2015_toyota_sienna_passenger-minivan_limited-premium-7-passenger_fq_oem_1_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'chrysler',
+        'model' : u'town-and-country',
+        'types' : u'minivan',
+        'image' : u'2013_chrysler_town-and-country_passenger-minivan_limited_fq_oem_2_815.jpg'
+     })
+     cars.append({
+        'year' :  u'2015',
+        'make' :  u'nissan',
+        'model' : u'370z',
+        'types' : u'sporty',
+        'image' : u'2013_nissan_370z_coupe_touring_fq_oem_2_815.jpg'
+     })
+     return cars

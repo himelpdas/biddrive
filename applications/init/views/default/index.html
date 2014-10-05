@@ -200,197 +200,34 @@
 
                 <ul class="clearfix">
                     <li><a id="all" href="#" data-filter="*" class="active"><h5>All</h5></a></li>
-                    <li><a href="#" data-filter=".branding"><h5>Sedan</h5></a></li>
-                    <li><a href="#" data-filter=".design"><h5>Compact</h5></a></li>
-                    <li><a href="#" data-filter=".photography"><h5>Minivan</h5></a></li>
-                    <li><a href="#" data-filter=".videography"><h5>Hybrid</h5></a></li>
-                    <li><a href="#" data-filter=".web"><h5>Sporty</h5></a></li>
+                    <li><a href="#" data-filter=".sedan"><h5>Sedan</h5></a></li>
+                    <li><a href="#" data-filter=".suv"><h5>SUV</h5></a></li>
+                    <li><a href="#" data-filter=".minivan"><h5>Minivan</h5></a></li>
+                    <li><a href="#" data-filter=".hybrid"><h5>Hybrid</h5></a></li>
+                    <li><a href="#" data-filter=".sporty"><h5>Sporty</h5></a></li>
                 </ul>
             </div>
             <!--/Portfolio Filters -->
 
-
             <!-- Portfolio Wrap -->
             <div id="portfolio-wrap" class="white-bg">
+                {{ for car in cars: }}
+                    <div class="portfolio-item one-four {{=car['types']}}">
+                        <div class="portfolio-image">
+                            <img alt="trinity" title="trinity" src="{{=URL('static','/ed_images/')}}{{=car['image']}}"/>
+                        </div>
 
-
-                <!-- Portfolio Item With Lightbox Gallery -->
-                <div class="portfolio-item one-four   branding web">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
-                    </div>
-
-                    <a class="venobox" data-gall="portfolio-gallery" href="{{=URL('static','trinity/assets/images/portfolio/portfolio2.jpg')}}">
-                        <div class="project-overlay">
-                            <div class="project-info">
-                                <div class="zoom-icon"></div>
-                                <h4 class="project-name">Image Gallery</h4>
-
-                                <p class="project-categories">Lightbox Popup</p>
+                        <a class="" data-gall="portfolio-gallery" href="{{=URL('init','default','request_by_make', args=[ car['year'], car['make'], car['model'] ], hmac_key=str(session.salt), hash_vars=[ car['year'], car['make'], car['model'] ] )}}">
+                            <div class="project-overlay">
+                                <div class="project-info">
+                                    <div class="zoom-icon"></div>
+                                    <h4 class="project-name">{{=car['make']}} {{=car['model']}}</h4>
+                                    <p class="project-categories">{{=car['year']}}</p>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-
-                </div>
-                <!--/Portfolio Item With Lightbox Gallery  -->
-
-
-                <!-- Portfolio Item Video Expander  -->
-                <div class="portfolio-item one-four  design  photography   web">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
+                        </a>
                     </div>
-
-                    <div class="project-overlay">
-                        <div class="open-project-link">
-                            <a class="open-project" href="ajax/project-video.html" title="Open Project"></a>
-                        </div>
-                        <div class="project-info">
-                            <div class="zoom-icon"></div>
-                            <h4 class="project-name">Project with Video</h4>
-
-                            <p class="project-categories">Ajax Expander</p>
-                        </div>
-                    </div>
-
-                </div>
-                <!--/Portfolio Item Video Expander  -->
-
-
-                <!-- Portfolio Item Normal Slider -->
-                <div class="portfolio-item one-four  design    videography ">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
-                    </div>
-
-                    <div class="project-overlay">
-                        <div class="open-project-link">
-                            <a class="open-project" href="ajax/project-slider.html" title="Open Project"></a>
-                        </div>
-                        <div class="project-info">
-                            <div class="zoom-icon"></div>
-                            <h4 class="project-name">Project with Slider</h4>
-
-                            <p class="project-categories">Ajax Expander</p>
-                        </div>
-                    </div>
-
-                </div>
-                <!--/Portfolio Item Normal Slider -->
-
-
-                <!-- Portfolio Item FullScreen Slider -->
-                <div class="portfolio-item one-four  photography  branding web">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
-                    </div>
-
-                    <div class="project-overlay">
-                        <div class="open-project-link">
-                            <a class="open-project" href="ajax/project-fullscreen.html" title="Open Project"></a>
-                        </div>
-                        <div class="project-info">
-                            <div class="zoom-icon"></div>
-                            <h4 class="project-name">Fullscreen Slider</h4>
-
-                            <p class="project-categories">Ajax Expander</p>
-                        </div>
-                    </div>
-
-                </div>
-                <!-- Portfolio Item FullScreen Slider -->
-
-
-                <!-- Portfolio Item With Lightbox Video -->
-                <div class="portfolio-item one-four   branding web">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
-                    </div>
-
-                    <a class="venobox" data-type="youtube" href="http://youtu.be/d85gkOXeXG4">
-                        <div class="project-overlay">
-                            <div class="project-info">
-                                <div class="zoom-icon"></div>
-                                <h4 class="project-name">Youtube Video</h4>
-
-                                <p class="project-categories">Lightbox Popup</p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <!--/Portfolio Item With Lightbox Video  -->
-
-
-                <!-- Portfolio Item With Lightbox Video -->
-                <div class="portfolio-item one-four   branding web">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
-                    </div>
-
-                    <a class="venobox" data-type="vimeo" href="http://vimeo.com/75976293">
-                        <div class="project-overlay">
-                            <div class="project-info">
-                                <div class="zoom-icon"></div>
-                                <h4 class="project-name">Vimeo Video</h4>
-
-                                <p class="project-categories">Lightbox Popup</p>
-                            </div>
-                        </div>
-                    </a>
-
-                </div>
-                <!--/Portfolio Item With Lightbox Video  -->
-
-
-                <!-- Portfolio Item External Project  -->
-                <div class="portfolio-item one-four  design     videography web">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
-                    </div>
-
-                    <a href="single-project.html">
-                        <div class="project-overlay">
-                            <div class="project-info">
-                                <div class="zoom-icon"></div>
-                                <h4 class="project-name">External Page</h4>
-
-                                <p class="project-categories">View Single Project</p>
-                            </div>
-                        </div>
-                    </a>
-
-                </div>
-                <!--/Portfolio Item External Project  -->
-
-
-                <!-- Portfolio Item With Lightbox Gallery  -->
-                <div class="portfolio-item one-four   photography   design web">
-
-                    <div class="portfolio-image">
-                        <img alt="trinity" title="trinity" src="http://www.placehold.it/750x750.jpg"/>
-                    </div>
-
-                    <a class="venobox" data-gall="portfolio-gallery" href="{{=URL('static','trinity/assets/images/portfolio/portfolio8.jpg')}}">
-                        <div class="project-overlay">
-                            <div class="project-info">
-                                <div class="zoom-icon"></div>
-                                <h4 class="project-name">Image Gallery</h4>
-
-                                <p class="project-categories">Lightbox Popup</p>
-                            </div>
-                        </div>
-                    </a>
-
-                </div>
-                <!--/Portfolio Item With Lightbox Gallery  -->
-
+                {{pass}}
 
             </div>
             <!--/Portfolio Wrap -->

@@ -24,7 +24,7 @@ def index():
 		
 	response.message2="!%s is currently under development"%APP_NAME
 		
-	return dict(brands_list=getBrandsList(year))
+	return dict(brands_list=getBrandsList(year), cars=getFeaturedCars())
 
 def index_old():
 	"""
