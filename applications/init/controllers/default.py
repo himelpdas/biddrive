@@ -433,3 +433,18 @@ def contact():
 
 def sitemap():
 	return dict()
+
+def car_chooser():
+	"""
+	example action using the internationalization operator T and flash
+	rendered by views/default/index.html or views/generic.html
+
+	if you need a simple wiki simply replace the two lines below with:
+	return auth.wiki()
+	"""
+
+	year = datetime.date.today().year
+	if request.args(0):
+		year = request.args[0]
+
+	return dict(brands_list=getBrandsList(year))
