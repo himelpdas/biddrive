@@ -1,31 +1,46 @@
 {{extend 'page_layout_new.html'}}
 
-<h1>Choose your new car</h1>
+<style>
+    .mainbox a {
+        text-transform: uppercase;
+        font-size: 14px;
+    }
+    #model-year-selection .dropdown-menu li {
+        font-size: 24px;
+    }
+    #model-year-selection a {
+        font-size: 24px;
+        color: #000;
+    }
+</style>
 
 <div id="brands_selection">
 
-    <div class="row text-center slogan">
-
-        <div class="btn-group">
-            <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-                <strong><i class="fa fa-fw fa-caret-square-o-down"></i>
-                    {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
-                        {{year=request.args[0]}}
-                        {{=year}} model year
-                    {{else:}}
-                        {{year=datetime.date.today().year}}
-                        {{=year}} model year
-                    {{pass}}
-                </strong>
-            </a>
-            <ul class="dropdown-menu">
-                {{for each in YEAR_RANGE:}}
-                    <li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">
-                        <i class="fa fa-fw fa-chevron-circle-right"></i>{{=each}} model year</a></li>
-                {{pass}}
-            </ul>
+    <div class="row">
+        <div class="col-md-9">
+            <h1>Choose your new car</h1>
         </div>
-
+        <div id="model-year-selection" class="col-md-3">
+            <div class="btn-group">
+                <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+                    <strong><i class="fa fa-fw fa-caret-square-o-down"></i>
+                        {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
+                            {{year=request.args[0]}}
+                            {{=year}} model year
+                        {{else:}}
+                            {{year=datetime.date.today().year}}
+                            {{=year}} model year
+                        {{pass}}
+                    </strong>
+                </a>
+                <ul class="dropdown-menu">
+                    {{for each in YEAR_RANGE:}}
+                        <li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">
+                            <i class="fa fa-fw fa-chevron-circle-right"></i>{{=each}} model year</a></li>
+                    {{pass}}
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div id="small_screen_only_back_to_makes" class="row text-center small-slogan visible-xs">
