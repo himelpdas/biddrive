@@ -1,4 +1,7 @@
 import hmac
+import logging
+logger = logging.getLogger("web2py.app.biddrive")
+logger.setLevel(logging.DEBUG)
 
 def vehicle_content():
 	if not request.args:
@@ -24,8 +27,8 @@ def vehicle_content():
 				if each_photo.split('.')[-2].split('_')[-1] == '150':  #but change to proper ratio if found
 					photo = each_photo
 			first_image = 'http://media.ed.edmunds-media.com'+photo  #errors will not be cached! :)
-		except (IndexError, KeyError, TypeError): #indexError
-			pass
+		except Exception, e:
+			logger.exception(e)
 		finally:
 			make_photos.update({each_model['niceName']:first_image})
 
