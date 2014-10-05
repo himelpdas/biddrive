@@ -142,7 +142,7 @@ div#portfolio_thumbs ul li div.item_info p > span {
   border-color: #ffffff;
 }
 .alert {
-  background: #0087c3;
+  /*background: #0087c3;*/
 }
 .alert > p {
   color: #ffffff !important;
