@@ -1,12 +1,12 @@
 #ms-auction_request_colors { 
-	width:100%; {{#align the multi-select jquery with the bootrap form}}
+	width:100%; /*#align the multi-select jquery with the bootrap form*/
 }
 #ms-auction_request_options { 
-	width:100%; {{#align the multi-select jquery with the bootrap form}}
+	width:100%; /*#align the multi-select jquery with the bootrap form*/
 }
 
 #ms-auction_request_offer_options { 
-	width:100%; {{#align the multi-select jquery with the bootrap form}}
+	width:100%; /*#align the multi-select jquery with the bootrap form*/
 }
 /*{{#verticle divider bs3 http://goo.gl/JHPAAw }}*/
 .navbar .divider-vertical {
