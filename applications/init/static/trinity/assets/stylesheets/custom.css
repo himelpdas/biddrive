@@ -4,27 +4,39 @@
 
 #standard-header a.brand {
     font-size: 40px;
-    letter-spacing: 8px;
     color: #4c4c4c;
-    line-height: 88px;
+    line-height: 78px;
 }
 
 #intro-header a.brand {
     font-size: 40px;
-    letter-spacing: 8px;
     color: #ffffff;
-    line-height: 88px;
+    line-height: 78px;
 }
+
+#intro-header .brand-tagline {
+    color: #ffffff;
+}
+
+#standard-header .brand-tagline,
+#intro-header .brand-tagline {
+    margin-top: -20px;
+    margin-left: 4px;
+}
+
 
 #mastfoot a.brand {
     font-size: 20px;
-    letter-spacing: 4px;
     color: #e7e7e7;
 }
 
 #about .howitworks-box {
     padding-left: 30px;
     padding-right: 30px;
+}
+
+#intro h1 {
+    padding: 30px 10%;
 }
 
 #intro h1>span {
@@ -36,6 +48,13 @@
     font-weight: 400;
 }
 
+#intro-header,
+#standard-header,
+#standard-footer {
+    padding-left: 2%;
+    padding-right: 2%;
+}
+
 .main-heading {
     font-weight: 600;
 }
@@ -43,6 +62,7 @@
 .intro-nav li > a,
 .standard-nav li > a {
     font-weight: 600;
+    font-size: 18px;
 }
 
 .intro-nav li > a:hover {
@@ -51,13 +71,13 @@
 
 #intro .btn-cta,
 #about .btn-cta {
-    border:1px solid #0087C3;
+    border:1px solid #ffffff;
     background: #0087C3;
     color: #fff;
 }
 #intro .btn-cta:hover,
 #about .btn-cta:hover{
-    border:1px solid #0067A8;
+    border:1px solid #ffffff;
     background: #0067A8;
     color: #fff;
 }

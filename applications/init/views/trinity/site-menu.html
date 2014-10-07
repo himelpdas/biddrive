@@ -1,13 +1,3 @@
-<li><a href="{{=URL('default', 'index', anchor='intro')}}" class="
-{{if 'site_nav_page_scroll' in locals() and site_nav_page_scroll:}}
-scroll
-{{pass}}
-">Home</a></li>
-<li><a href="{{=URL('default', 'index', anchor='about')}}" class="
-{{if 'site_nav_page_scroll' in locals() and site_nav_page_scroll:}}
-scroll
-{{pass}}
-">How it works</a></li>
 <li><a href="{{=URL('default', 'user', args=['login'])}}" class="">Sign in</a></li>
 <li><a href="{{=URL('default', 'user', args=['register'])}}" class="">Sign up</a></li>
 <li><a href="{{=URL('dealership_form', args=['force_register'])}}" class="">Dealers</a></li>

@@ -2,14 +2,15 @@
 <footer id="mastfoot" class="mastfoot color-bg">
 
     <!-- inner-section:starts -->
-    <section class="inner-section social-wrap">
-        <div class="container">
+    <section id="standard-footer" class="inner-section social-wrap">
+        <div class="container-fluid">
             <div class="row">
-                <article class="col-md-3 text-left foot-logo">
+                <article class="col-md-3 col-md-offset-1 text-left foot-logo">
                     <a class="brand" href="{{=URL('index', anchor='intro')}}">{{=APP_NAME}}</a>
+                    <span>When dealers compete, you win.</span>
                 </article>
-                <article class="col-md-6 text-center footer-nav">
-                    <ul>
+                <article class="col-md-4 text-center footer-nav">
+                    <ul class="">
                         <li><a href="{{=URL('about')}}">About</a></li>
                         <li><a href="{{=URL('careers')}}">Careers</a></li>
                         <li><a href="{{=URL('faq')}}">Help / FAQ</a></li>
