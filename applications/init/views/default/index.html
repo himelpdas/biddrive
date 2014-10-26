@@ -174,9 +174,12 @@
             <div class="row">
                 <div class="col-md-10 col-md-offset-1 text-center animated" data-fx="fadeInUpBig">
                     <div class="liner-wide text-center"><span class="white-bg"></span></div>
-                    <h1 class="main-heading white pad-top">Step 1. Choose your car below</h1>
+                    <h1 class="main-heading white pad-top">Choose your car below</h1>
 
-                    <div class="liner-wide text-center"><span class="white-bg"></span></div>
+                    <div class="liner-wide text-center">
+                        <span class="white-bg">
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -185,14 +188,20 @@
 
 
     <!-- inner-section:starts -->
-    <section class="inner-section">
+    <section id="car-chooser-switcher" class="inner-section">
 
 
-        <div class="portfolio-top"></div>
+        <div class="portfolio-top">
+            <div class="liner-wide text-center">
+                <a id="car-chooser-switch-toppicks" class="btn btn-trinity btn-trinity-big btn-cta">Top Picks</a>
+                &nbsp;
+                <a id="car-chooser-switch-allmakes" class="btn btn-trinity btn-trinity-big btn-cta">All Makes</a>
+            </div>
+        </div>
 
 
         <!-- Portfolio Plus Filters -->
-        <div class="portfolio">
+        <div id="car-chooser-toppicks" class="portfolio">
 
 
             <!-- Portfolio Filters -->
@@ -210,7 +219,8 @@
             <!--/Portfolio Filters -->
 
             <!-- Portfolio Wrap -->
-            <div id="portfolio-wrap" class="white-bg">
+            <div id="portfolio-wrap" class="">
+                {{year=datetime.date.today().year}}
                 {{ for car in cars: }}
                     <div class="portfolio-item one-four {{=car['types']}}">
                         <div class="portfolio-image">
@@ -235,6 +245,14 @@
         </div>
         <!--/Portfolio Plus Filters -->
 
+
+        <div id="car-chooser-allmakes" class="portfolio" style="display:none;">
+            <div class="row" style="padding-bottom: 20px">
+                <div class=" col-md-offset-1 col-md-10 col-md-offset-1">
+                    {{include "default/car_chooser_select_make_model.html"}}
+                </div>
+            </div>
+        </div>
 
         <div class="portfolio-bottom"></div>
 
@@ -289,3 +307,11 @@
 
 </section>
 <!-- page:ends -->
+
+
+
+
+
+{{block page_scripts}}
+    {{include "default/car_chooser_script.html"}}
+{{end}}

@@ -1,19 +1,5 @@
 {{extend 'page_layout_new.html'}}
 
-<style>
-    .mainbox a {
-        text-transform: uppercase;
-        font-size: 14px;
-    }
-    #model-year-selection .dropdown-menu li {
-        font-size: 24px;
-    }
-    #model-year-selection a {
-        font-size: 24px;
-        color: #000;
-    }
-</style>
-
 <div id="brands_selection">
 
     <div class="row">
@@ -21,25 +7,7 @@
             <h1>Choose your new car</h1>
         </div>
         <div id="model-year-selection" class="col-md-3">
-            <div class="btn-group">
-                <a id="make_dropdown" class="btn btn-large dropdown-toggle" data-toggle="dropdown" href="#">
-                    <strong><i class="fa fa-fw fa-caret-square-o-down"></i>
-                        {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
-                            {{year=request.args[0]}}
-                            {{=year}} model year
-                        {{else:}}
-                            {{year=datetime.date.today().year}}
-                            {{=year}} model year
-                        {{pass}}
-                    </strong>
-                </a>
-                <ul class="dropdown-menu">
-                    {{for each in YEAR_RANGE:}}
-                        <li><a id="{{=str(each)+'_year'}}" href="{{=URL(args=[each])}}">
-                            <i class="fa fa-fw fa-chevron-circle-right"></i>{{=each}} model year</a></li>
-                    {{pass}}
-                </ul>
-            </div>
+            {{include "default/car_chooser_select_year.html"}}
         </div>
     </div>
 
@@ -50,75 +18,11 @@
 
     <div class="clearfix">&nbsp;</div>
 
-    <div id="mainrow" class="row mainrow" style="overflow-y:hidden;">
-        <div id="mainbox" class="col-xs-12 col-sm-6 col-sm-offset-3 mainbox backdrop">
-            <div class="row" style="padding-top:5px">
-                {{for each_brand in brands_list:}}
-                    <div class="col-xs-4 car-make">
-                        <a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a>
-                    </div>
-                {{pass}}
-            </div>
-        </div>
-
-        <div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;">
-            loading...
-        </div>
-    </div>
+    {{include "default/car_chooser_select_make_model.html"}}
 
 </div>
 
+
 {{block page_scripts}}
-    <script>
-
-        function hide_mainbox_for_small_screens(){
-            if ($('#reset_mainbox').is(':visible')) {
-                if ($('#sidebox').is(':visible')) {
-                    $('#mainbox').hide();
-                }
-            } else {
-                $('#mainbox').show();
-            }
-        }
-
-        function reset_mainbox(){
-            setBoxesHeight();
-            $("#sidebox").hide();
-            $("#mainbox").show();
-        }
-
-        $(window).resize(function(){
-            setBoxesHeight();
-            hide_mainbox_for_small_screens();
-        });
-
-
-    {{for each_brand in brands_list:}}
-
-        $('#{{=each_brand}}_switch').click(function(evt){
-
-            $("#switch_selected_icon").remove(); $(this).prepend('<i id="switch_selected_icon" class="fa fa-fw fa-arrow-right"></i>'); //remove and add icon
-            $('#mainbox').removeClass('col-sm-offset-3 backdrop');
-            $('#mainrow').addClass('backdrop', 700);
-            $('#sidebox')
-                .html('<div id="loading_spinner" class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
-                .show()
-                .load("{{=URL('ajax','vehicle_content', args=[each_brand, year])}}",
-                    function( response, status, xhr ) {
-                        if ( status == "error" ) {
-                            var msg = "Error loading {{=each_brand.upper()}}: ";
-                            $("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_reviews_{{=each_brand}}" class="alert alert-danger"><span id="ajax_failure_warning_reviews_message_{{=each_brand}}"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-                            $('#ajax_failure_warning_reviews_message_{{=each_brand}}').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-                            $('#ajax_failure_warning_reviews_{{=each_brand}}').slideDown().fadeTo("slow", 0.75); {{# similar to request_by_make, but add =each_brand to ids so we can have multiple error divs}}
-                            $('#ajax_failure_warning_reviews_{{=each_brand}}').click(function(){
-                                $(this).slideUp();
-                            });
-                        }
-                    }
-                );
-
-            hide_mainbox_for_small_screens();
-        });
-    {{pass}}
-    </script>
+    {{include "default/car_chooser_script.html"}}
 {{end}}

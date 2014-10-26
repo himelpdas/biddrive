@@ -1,0 +1,38 @@
+<style>
+    .mainbox a {
+        text-transform: uppercase;
+        font-size: 14px;
+    }
+    #model-year-selection .dropdown-menu li {
+        font-size: 24px;
+    }
+    #model-year-selection a {
+        font-size: 24px;
+        color: #000;
+    }
+</style>
+
+
+
+
+
+<div id="mainrow" class="row mainrow" style="overflow-y:hidden;">
+    <div id="mainbox" class="col-xs-12 col-sm-6 col-sm-offset-3 mainbox backdrop">
+        <div class="row" style="padding-top:5px">
+            {{for each_brand in brands_list:}}
+            <div class="col-xs-4 car-make">
+                <a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a>
+            </div>
+            {{pass}}
+        </div>
+    </div>
+
+    <div id="sidebox" class="col-xs-12 col-sm-6" style="display:none; overflow-y:auto;">
+        loading...
+    </div>
+</div>
+
+
+
+
+

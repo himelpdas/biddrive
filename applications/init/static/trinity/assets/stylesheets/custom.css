@@ -70,13 +70,15 @@
 }
 
 #intro .btn-cta,
-#about .btn-cta {
+#about .btn-cta,
+#car-chooser-switcher .btn-cta {
     border:1px solid #ffffff;
     background: #0087C3;
     color: #fff;
 }
 #intro .btn-cta:hover,
-#about .btn-cta:hover{
+#about .btn-cta:hover,
+#car-chooser-switcher .btn-cta:hover {
     border:1px solid #ffffff;
     background: #0067A8;
     color: #fff;

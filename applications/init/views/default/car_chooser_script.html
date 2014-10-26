@@ -1,0 +1,51 @@
+<script>
+    function hide_mainbox_for_small_screens(){
+        if ($('#reset_mainbox').is(':visible')) {
+            if ($('#sidebox').is(':visible')) {
+                $('#mainbox').hide();
+            }
+        } else {
+            $('#mainbox').show();
+        }
+    }
+
+    function reset_mainbox(){
+        setBoxesHeight();
+        $("#sidebox").hide();
+        $("#mainbox").show();
+    }
+
+    $(window).resize(function(){
+        setBoxesHeight();
+        hide_mainbox_for_small_screens();
+    });
+
+
+    {{for each_brand in brands_list:}}
+
+    $('#{{=each_brand}}_switch').click(function(evt){
+
+        $("#switch_selected_icon").remove(); $(this).prepend('<i id="switch_selected_icon" class="fa fa-fw fa-arrow-right"></i>'); //remove and add icon
+        $('#mainbox').removeClass('col-sm-offset-3 backdrop');
+        $('#mainrow').addClass('backdrop', 700);
+        $('#sidebox')
+                .html('<div id="loading_spinner" class="absolute-center"><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
+                .show()
+                .load("{{=URL('ajax','vehicle_content', args=[each_brand, year])}}",
+                function( response, status, xhr ) {
+                    if ( status == "error" ) {
+                        var msg = "Error loading {{=each_brand.upper()}}: ";
+                        $("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_reviews_{{=each_brand}}" class="alert alert-danger"><span id="ajax_failure_warning_reviews_message_{{=each_brand}}"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+                        $('#ajax_failure_warning_reviews_message_{{=each_brand}}').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+                        $('#ajax_failure_warning_reviews_{{=each_brand}}').slideDown().fadeTo("slow", 0.75); {{# similar to request_by_make, but add =each_brand to ids so we can have multiple error divs}}
+                        $('#ajax_failure_warning_reviews_{{=each_brand}}').click(function(){
+                            $(this).slideUp();
+                        });
+                    }
+                }
+        );
+
+        hide_mainbox_for_small_screens();
+    });
+    {{pass}}
+</script>
