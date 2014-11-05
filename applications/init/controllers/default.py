@@ -172,8 +172,10 @@ def request_by_make():
 					color_categories_list.append(each_color_type['category'].lower().replace(" ", "_"))
 					color_category_names_list.append(each_color_type['category'])
 
-		if not all(map(lambda each: each in ['interior', 'exterior'], color_categories_list)): #make sure there is at least one interior and one exterior color, or raise form error
+		#if not all(map(lambda each: each in ['interior', 'exterior'], color_categories_list)):
+		if not ('interior' in color_categories_list and 'exterior' in color_categories_list): #make sure there is at least one interior and one exterior color, or raise form error
 			form.errors.colors = "Select at least one interior color and one exterior color!"
+		#form.errors.colors = "Select at least one interior color and one exterior color!"
 		#logger.debug(form.errors)
 		db.auction_request.color_names.default = color_names_list
 		db.auction_request.color_msrps.default = color_msrps_list
