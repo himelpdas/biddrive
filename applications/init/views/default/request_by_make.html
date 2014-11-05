@@ -401,15 +401,15 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 					});
 				};
 				/*/
-				var previous_options_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
-				$("#auction_request_colors").children().remove();
+				var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+				$("#auction_request_colors").children().remove(); //{{#it appears there are no saved values from form submission}}
 				$.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
 					var optgroup_id = "auction_request_colors_" + item[4]
 					if ($("#"+optgroup_id).length == 0) {
 						$("#auction_request_colors").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
 					}
 					var selected = ''
-					previous_options_submissions.each(function(esi, each_selected_item){
+					previous_colors_submissions.each(function(esi, each_selected_item){
 						if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
 							selected = 'selected="selected"'
 						}
@@ -502,7 +502,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 	.ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
 		$("#fake_submit").removeClass("disabled", 250);
 	});
-	</script>
+</script>
 
 <script>
 	$("#auction_request_colors").multiSelect({
