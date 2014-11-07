@@ -206,7 +206,7 @@ db.define_table('auction_request',
 		writable=False,
 	),
 	Field('colors', 'list:string', #otherwise queries will return string not list!
-		requires=IS_NOT_EMPTY(), #IS_IN_SET in default controller completely overrides this, but leave here for admin
+		#requires=IS_NOT_EMPTY(), #IS_IN_SET in default controller completely overrides this, but leave here for admin
 		#widget = SQLFORM.widgets.checkboxes.widget,
 	),	
 	Field('color_names', 'list:string',

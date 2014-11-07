@@ -373,7 +373,7 @@ var glob_message_string = "{{=make}}"+"{{=model}}"+"{{=year}}";
 var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT IN ITS ORIGINAL FORM #HASH IS WEAK (64-bit) BUT DOES ITS JOB}}
 </script>
 	
- <script type="text/javascript">
+<script type="text/javascript">
 	//{{#var stuff={{=XML(json.dumps(session.option_codes))}}
  	function load_colors(){
 		//{{#hmac}}
