@@ -1,3 +1,4 @@
+/*Make the multi-select widget responsive*/
 #ms-auction_request_colors { 
 	width:100%; /*#align the multi-select jquery with the bootrap form*/
 }
@@ -8,7 +9,11 @@
 #ms-auction_request_offer_options { 
 	width:100%; /*#align the multi-select jquery with the bootrap form*/
 }
-/*{{#verticle divider bs3 http://goo.gl/JHPAAw }}*/
+.ms-container .ms-optgroup-label { /*Make the multi-select widget labels more noticeable*/
+	font-weight: bold;
+}
+/*WONT NEED ANYTHING BELOW FOR TRINITY THEME*/
+/*Vertical divider bs3 http://goo.gl/JHPAAw */
 .navbar .divider-vertical {
 height: 40px;
 margin: 0 9px;
@@ -26,7 +31,7 @@ border-left-color: #111111;
     display: none;
   }
 }
-/*{{#Bootstrap XL button http://goo.gl/Pzi08w}}*/
+/*Bootstrap XL button http://goo.gl/Pzi08w */
 .btn-xl {
 	padding: 15px 22px;
 	font-size: 24px;

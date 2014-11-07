@@ -406,7 +406,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 				$.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
 					var optgroup_id = "auction_request_colors_" + item[4]
 					if ($("#"+optgroup_id).length == 0) {
-						$("#auction_request_colors").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
+						$("#auction_request_colors").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
 					}
 					var selected = ''
 					previous_colors_submissions.each(function(esi, each_selected_item){
@@ -424,7 +424,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 				$.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
 					var optgroup_id = "auction_request_options_" + item[4]
 					if ($("#"+optgroup_id).length == 0) {
-						$("#auction_request_options").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
+						$("#auction_request_options").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
 					}
 					var selected = ''
 					previous_options_submissions.each(function(esi, each_selected_item){
