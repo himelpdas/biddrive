@@ -10,13 +10,13 @@
     }
 
     function reset_mainbox(){
-        setBoxesHeight();
+		//{{#  setBoxesHeight();}}
         $("#sidebox").hide();
         $("#mainbox").show();
     }
 
     $(window).resize(function(){
-        setBoxesHeight();
+       //{{#  setBoxesHeight();}}
         hide_mainbox_for_small_screens();
     });
 
