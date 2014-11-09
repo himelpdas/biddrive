@@ -373,9 +373,9 @@ var glob_message_string = "{{=make}}"+"{{=model}}"+"{{=year}}";
 var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT IN ITS ORIGINAL FORM #HASH IS WEAK (64-bit) BUT DOES ITS JOB}}
 </script>
 	
- <script type="text/javascript">
+<script type="text/javascript">
 	//{{#var stuff={{=XML(json.dumps(session.option_codes))}}
- 	function load_colors(){
+ 	function load_content(){
 		//{{#hmac}}
 		var loc_token =$('#auction_request_trim').val();
 		var loc_hash = CryptoJS.HmacMD5(glob_message_string+loc_token, glob_session_key ); //{{#CryptoJS.HmacMD5("Message", "Secret Passphrase");}}
@@ -401,15 +401,15 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 					});
 				};
 				/*/
-				var previous_options_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
-				$("#auction_request_colors").children().remove();
+				var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+				$("#auction_request_colors").children().remove(); //{{#it appears there are no saved values from form submission}}
 				$.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
 					var optgroup_id = "auction_request_colors_" + item[4]
 					if ($("#"+optgroup_id).length == 0) {
-						$("#auction_request_colors").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
+						$("#auction_request_colors").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
 					}
 					var selected = ''
-					previous_options_submissions.each(function(esi, each_selected_item){
+					previous_colors_submissions.each(function(esi, each_selected_item){
 						if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
 							selected = 'selected="selected"'
 						}
@@ -424,7 +424,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 				$.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
 					var optgroup_id = "auction_request_options_" + item[4]
 					if ($("#"+optgroup_id).length == 0) {
-						$("#auction_request_options").append("<optgroup label='" + item[3] +"' id ='" + optgroup_id +"'></optgroup>");
+						$("#auction_request_options").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
 					}
 					var selected = ''
 					previous_options_submissions.each(function(esi, each_selected_item){
@@ -494,15 +494,15 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 		);
 	//close main function
 	}
- 	$('#auction_request_trim').change(load_colors); //{{#change color preference options when you change trim dropdown}}
+ 	$('#auction_request_trim').change(load_content); //{{#change color preference options when you change trim dropdown}}
 	
 	$(document).ready(function(){
-		load_colors(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
+		load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
 	})
 	.ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
 		$("#fake_submit").removeClass("disabled", 250);
 	});
-	</script>
+</script>
 
 <script>
 	$("#auction_request_colors").multiSelect({
