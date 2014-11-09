@@ -195,7 +195,34 @@
             <div class="liner-wide text-center">
                 <a id="car-chooser-switch-toppicks" class="btn btn-trinity btn-trinity-big btn-cta">Top Picks</a>
                 &nbsp;
-                <a id="car-chooser-switch-allmakes" class="btn btn-trinity btn-trinity-big btn-cta">All Makes</a>
+                <!-- Split button -->
+                <div class="btn-group">
+                    <button id="car-chooser-switch-allmakes" type="button" class="btn btn-trinity btn-trinity-big btn-cta" style="border-right: none;">
+                        {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
+                        {{year=request.args[0]}}
+                        All {{=year}} Cars
+                        {{else:}}
+                        {{year=datetime.date.today().year}}
+                        All {{=year}} Cars
+                        {{pass}}
+                    </button>
+
+                    <button type="button" class="btn btn-trinity btn-trinity-big btn-cta dropdown-toggle" style="border-left: none;" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+
+                        {{for each in YEAR_RANGE:}}
+                        <li>
+                            <a id="{{=str(each)+'_year'}}" class="car-chooser-switch-allmakes-year-selector" href="{{=URL(args=[each])}}#portfolio">
+                                All {{=each}} Cars
+                            </a>
+                        </li>
+                        {{pass}}
+
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -314,4 +341,18 @@
 
 {{block page_scripts}}
     {{include "default/car_chooser_script.html"}}
+
+    {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
+    <script>
+        (function(){
+            "use strict";
+            $(function ($) {
+                $(document).ready(function() {
+                    $('#car-chooser-switch-allmakes').click();
+                });
+            });
+        })();
+    </script>
+    {{pass}}
+
 {{end}}
