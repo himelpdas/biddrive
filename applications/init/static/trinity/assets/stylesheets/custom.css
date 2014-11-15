@@ -31,8 +31,11 @@
 }
 
 #about .howitworks-box {
-    padding-left: 30px;
-    padding-right: 30px;
+}
+
+#about .howitworks-box img {
+    height: 200px;
+    border-radius: 5%;
 }
 
 #intro h1 {
