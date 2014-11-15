@@ -201,12 +201,11 @@
                 <div class="btn-group">
                     <button id="car-chooser-switch-allmakes" type="button" class="btn btn-trinity btn-trinity-big btn-cta" style="border-right: none;">
                         {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
-                        {{year=request.args[0]}}
-                        All {{=year}} Cars
+							{{year=request.args[0]}}
                         {{else:}}
-                        {{year=datetime.date.today().year}}
-                        All {{=year}} Cars
+							{{year=datetime.date.today().year}}
                         {{pass}}
+                        All {{=year}} Vehicles
                     </button>
 
                     <button type="button" class="btn btn-trinity btn-trinity-big btn-cta dropdown-toggle" style="border-left: none;" data-toggle="dropdown">
@@ -218,7 +217,7 @@
                         {{for each in YEAR_RANGE:}}
                         <li>
                             <a id="{{=str(each)+'_year'}}" class="car-chooser-switch-allmakes-year-selector" href="{{=URL(args=[each])}}#portfolio">
-                                All {{=each}} Cars
+                                All {{=each}} Vehicles
                             </a>
                         </li>
                         {{pass}}

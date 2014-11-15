@@ -20,7 +20,7 @@
     <div id="mainbox" class="col-xs-12 col-sm-6 col-sm-offset-3 mainbox backdrop">
         <div class="row" style="padding-top:5px">
             {{for each_brand in brands_list:}}
-            <div class="col-xs-4 car-make">
+            <div class="col-xs-4 car-make" style="padding-bottom:5px;">
                 <a id="{{=each_brand}}_switch" href="javascript:void(0);" style="white-space: nowrap;">{{=each_brand}}</a>
             </div>
             {{pass}}
