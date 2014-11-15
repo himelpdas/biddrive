@@ -91,6 +91,10 @@
     color: #fff;
 }
 
+#standard-footer .foot-logo p {
+    color: #e7e7e7;
+}
+
 .testimonial{
     background: url('/init/static/trinity/assets/images/testimonials/bg.jpg') 50% 0 no-repeat fixed;
 }
