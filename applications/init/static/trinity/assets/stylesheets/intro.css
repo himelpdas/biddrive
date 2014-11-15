@@ -203,7 +203,8 @@
 }
 .intro-06-carousel-item-01{
     /*background-image:url(/init/static/trinity/assets/images/homepage/stock-photo-36956204-woman-looking-out-of-a-car-window-at-the-beach.jpg);*/
-    background-image:url(/init/static/images/rearview_woman.jpg);
+    /*background-image:url(/init/static/images/rearview_woman.jpg);*/
+    background-image:url(/init/static/images/rearview_woman_h-flip_lossy_compressed.jpg);
 }
 
 .intro-06-carousel-item-02{
