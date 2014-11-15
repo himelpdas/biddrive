@@ -35,7 +35,11 @@
 
 #about .howitworks-box img {
     height: 200px;
-    border-radius: 5%;
+    border-radius: 2%;
+}
+
+#about .howitworks-box h3 {
+    padding-top: 20px;
 }
 
 #intro h1 {
