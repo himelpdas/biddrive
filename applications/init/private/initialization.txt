@@ -1,7 +1,7 @@
 ####dependancies####
 pip
 pytz
-pillow
+Pillow
 requests
 twilio
 paypalrestsdk
