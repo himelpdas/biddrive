@@ -1,5 +1,7 @@
 {{show_progress_bar = False}}
-{{icon_1_name = "Select"}}
+{{icon_1_name = "Select your vehicle"}}
+{{icon_2_name = "Get offers from dealers"}}
+{{icon_3_name = "Connect with winner"}}
 {{bold_inactive=["ccc","text-muted", False]}}
 {{icon_1_bold = bold_active=["000","", True]}}
 {{icon_2_bold = icon_3_bold = bold_inactive}}
@@ -15,39 +17,55 @@
 		{{pass}}
 	{{pass}}
 	{{if auth.has_membership(user_id = auth.user_id, role = "dealers"):}}
-		{{icon_1_name = "Submit"}}
+		{{icon_1_name = "Bid your vehicle"}}
+		{{icon_2_name = "Compete with dealers"}}
+		{{icon_3_name = "Connect with buyer"}}
 	{{pass}}
 {{pass}}
 
 {{if show_progress_bar:}}
 	<!-- progress -->
-	<div class="row text-center" style="margin-bottom:25px;">
-		<div class="col-xs-2 col-xs-offset-1 text-center {{=icon_1_bold[1]}}">
-			<div class="center-block" style="border-radius: 50%; border: 4px solid #{{=icon_1_bold[0]}}; padding: 10px; width: 60px; height: 60px">
+	<div id="progress_bar" class="row text-center" style="margin-top:-45px;margin-bottom:45px;">
+		<div class="col-xs-2 text-center {{=icon_1_bold[1]}}">
+			<div class="center-block" style="border-radius: 50%; border: 4px solid #{{=icon_1_bold[0]}}; padding: 10px; width: 60px; height: 60px; position:absolute;">
 				<i class="fa fa-car fa-2x" style="color:#32bec0"></i>
-				<small style="text-transform: uppercase; display:block; margin-top: 15px; margin-left:0px;"><font size="1em">{{=icon_1_name}}</font></small>
+				<div id="centerto1">&nbsp;</div>
+				<div id="centerfrom1" style="text-transform: uppercase; white-space: nowrap; position:absolute;"><font size="1em">{{=icon_1_name}}</font></div>
 			</div> 
 		</div>
-		<div class="col-xs-2 {{=icon_1_bold[1]}}">
+		<div class="col-xs-3 {{=icon_1_bold[1]}}">
 			<i class="fa fa-long-arrow-right fa-3x" style="margin-top: 17px; border-color: #ccc;"></i>
 		</div>
 
 		<div class="col-xs-2 text-center {{=icon_2_bold[1]}}">
-			<div class="center-block" style="border-radius: 50%; border: 4px solid #{{=icon_2_bold[0]}}; padding: 12px; width: 60px; height: 60px">
+			<div class="center-block" style="border-radius: 50%; border: 4px solid #{{=icon_2_bold[0]}}; padding: 12px; width: 60px; height: 60px; position:relative;">
 				<i class="fa fa-dollar fa-2x" style="color:#32bec0"></i>
-				<small style="text-transform: uppercase; display:block; margin-top: 15px; margin-left:0px;"><font size="1em">Bid</font></small>
+				<div id="centerto2">&nbsp;</div>
+				<div id="centerfrom2" style="text-transform: uppercase; white-space: nowrap; position:absolute;"><font size="1em">{{=icon_2_name}}</font></div>
 			</div>
 		</div>
-		<div class="col-xs-2 {{=icon_2_bold[1]}}">
+		<div class="col-xs-3 {{=icon_2_bold[1]}}">
 			<i class="fa fa-long-arrow-right fa-3x" style="margin-top: 17px; border-color: #ccc;"></i>
 		</div>
 
 		<div class="col-xs-2 text-center {{=icon_3_bold[1]}}">
-			<div class="center-block" style="border-radius: 50%; border: 4px solid #{{=icon_3_bold[0]}}; padding: 13px; width: 60px; height: 60px" align="center">
+			<div class="center-block" style="border-radius: 50%; border: 4px solid #{{=icon_3_bold[0]}}; padding: 13px; width: 60px; height: 60px; position:relative;" align="center">
 				<i class="fa fa-phone fa-2x" style="color:#32bec0"></i>
-				<small style="text-transform: uppercase; display:block; margin-top: 15px; margin-left:-9px;"><font size="1em">Connect</font></small>
+				<div id="centerto3">&nbsp;</div>
+				<div id="centerfrom3" style="text-transform: uppercase; white-space: nowrap; position:absolute;"><font size="1em">{{=icon_3_name}}</font></div>
 			</div>
 		</div>
 	</div>
 	<!-- / -->
+	<script>
+		function center_progress_bar_icon_names(){
+		//{{for each in range(1,4):}}
+			centerto_x_{{=each}} = $("#centerto{{=each}}").position().left; //{{#left}}
+			centerfrom_w_{{=each}} = $("#centerfrom{{=each}}").width(); //{{#width}}
+			$("#centerfrom{{=each}}").css({"left":centerto_x_{{=each}}-centerfrom_w_{{=each}}/2+15});
+		//{{pass}}
+		}
+		center_progress_bar_icon_names();
+		$(window).resize(center_progress_bar_icon_names);
+	</script>
 {{pass}}
