@@ -22,6 +22,13 @@
 
     <!-- Bootstrap CSS Files -->
     <link href="{{=URL('static','trinity/assets/bootstrap/css/bootstrap.min.css')}}" rel="stylesheet">
+	
+	{{#<!--moving jquery here fixes the "Uncaught ReferenceError: $ is not defined" error... this is probably due to $(document).ready() calls before jquery was loaded-->}}
+	<script src="{{=URL('static','trinity/assets/bootstrap/js/jquery.min.js')}}"></script>
+	{{#<!--still need these until redesign-->}}
+	<link rel="stylesheet" type="text/css" href="{{=URL('static','css/multi-select.css')}}"> {{#http://bit.ly/OOENrP}}
+	<script src="{{=URL('static','js/jquery.multi-select.js')}}"  type="text/javascript"></script>
+	<link rel="stylesheet" href="{{=URL('static', 'css/_custom.css')}}" type="text/css" />
 
     <!-- from old layout -->
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
@@ -97,9 +104,8 @@
 <!-- End Google Analytics -->
 
 <!-- Core JS Libraries -->
-<script src="{{=URL('static','trinity/assets/bootstrap/js/jquery.min.js')}}" type="text/javascript"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
-<script src="{{=URL('static','trinity/assets/javascripts/jquery.easing.1.3.js')}}" type="text/javascript"></script>
+<script src="{{=URL('static','trinity/assets/javascripts/jquery.easing.1.3.js')}}"></script>
 <script src="{{=URL('static','trinity/assets/bootstrap/js/bootstrap.min.js')}}" ></script>
 <!-- JS Plugins -->
 <script src="{{=URL('static','trinity/assets/javascripts/retina.js')}}" ></script>
