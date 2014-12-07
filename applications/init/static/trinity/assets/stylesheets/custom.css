@@ -135,3 +135,7 @@
     float: left;
     margin-left: 16px;
 }
+
+.panel {
+    border-radius: 0;
+}
