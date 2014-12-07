@@ -78,6 +78,7 @@
 
 #intro .btn-cta,
 #about .btn-cta,
+#request_by_make .btn,
 #car-chooser-switcher .btn-cta {
     border:1px solid #ffffff;
     background: #0087C3;
@@ -85,6 +86,7 @@
 }
 #intro .btn-cta:hover,
 #about .btn-cta:hover,
+#request_by_make .btn:hover,
 #car-chooser-switcher .btn-cta:hover {
     border:1px solid #ffffff;
     background: #0067A8;
@@ -138,4 +140,16 @@
 
 .panel {
     border-radius: 0;
+}
+
+/*.form-control {*/
+    /*-webkit-appearance: none;*/
+    /*-moz-border-radius: 0px;*/
+    /*-webkit-border-radius: 0px;*/
+    /*border-radius: 0px;*/
+/*}*/
+
+#request_by_make .ms-selectable .text-light,
+#request_by_make .ms-selection .text-light {
+    background-color: #f2f2f2;
 }
