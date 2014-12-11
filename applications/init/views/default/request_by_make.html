@@ -1,369 +1,410 @@
-{{extend 'page_layout.html'}}
+{{extend 'page_layout_new.html'}}
 {{#=BEAUTIFY(response._vars)}}
-    <div id="photos_and_reviews" class="row hidden-xs" style="background: rgba(0,0,0,.1); padding:10px; border-radius: 5px;">
-        <div class="col-xs-5" id="style_photos">
-			...
-        </div>
-        <div class="col-xs-7" id="loading_reviews">
-			<h4><i class="fa fa-spin fa-spinner"></i> Loading...</h4>
-		</div>
-		<div class="col-xs-7" id="reviews">
-			...
+
+<div id="request_by_make">
+
+    {{ form.element("select", _name = "trim")["_class"] += " form-control" }}
+
+    {{ form.element("select", _name = "FICO_credit_score")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "financing")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "funding_source")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "lease_term")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "lease_mileage")["_class"] += " form-control" }}
+
+    {{ form.element("textarea", _name = "describe_trade_in")["_class"] += " form-control" }}
+    {{ form.element("textarea", _name = "describe_trade_in")["_placeholder"] = "Example: Red 2002 Honda Accord LX with 130k miles (mostly highway). It runs great with no mechanical or electrical problems. New tires and battery. It has a spoiler and clean tan leather interior with 6 disc CD changer. It has 5 or 6 quarter-sized dents and several visible scratches on the outside." }}
+
+    {{ form.element("select", _name = "colors")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "options")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "radius")["_class"] += " form-control" }}
+    {{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
+    {{ form.element("input", _name = "expected_down_payment")["_class"] += " form-control" }}
+    {{ form.element("input", _name = "expected_down_payment")["_placeholder"] = "$$$" }}
+    {{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+    {{ form.element("input", _type = "submit")["_id"] = "submit" }}
+    {{ form.element("input", _type = "submit")["_value"] = "Go to auction" }}
+
+    {{=form.custom.begin}}
+
+    <div class="row" style="padding: 20px 0;">
+        <div class="page-header col-xs-12 text-center">
+            <h1 class="color">Build your {{=year}} {{=make.title()}} {{=model.title()}}</h1>
         </div>
     </div>
-	<script>
- 		function resize_reviews(){
- 			$(".review_and_rating").each(function(i){
- 				$(this).css(
-					{
-						'height':$("#photos_carousel").height(),
-						'overflow-y':'auto'
-					}
-				); //{{#don't use image as height can go to zero on carousel slide, use carousel itself instead}}
- 			}) 
- 		}
-		$(window).resize(function(){
-			resize_reviews();
-		});
-		$(document).ajaxComplete(function(){ //{{#resize reviews after ajax calls. ajax complete only works on document}}
-			$(this).imagesLoaded(function(){ //{{#make sure all images are loaded before resizing reviews or else height could be zero http://goo.gl/WSuKPP}}
-				resize_reviews();
-			})
-		});
-	</script>
-    <div class="row-fluid" style="margin-top: 25px">
-        <div id="mainform" class="col-sm-8 col-xs-12"> {{#http://goo.gl/qZqegs}}
 
-            {{ form.element("select", _name = "trim")["_class"] += " form-control" }}
-			
-            {{ form.element("select", _name = "FICO_credit_score")["_class"] += " form-control" }}
-            {{ form.element("select", _name = "financing")["_class"] += " form-control" }}
-            {{ form.element("select", _name = "funding_source")["_class"] += " form-control" }}
-            {{ form.element("select", _name = "lease_term")["_class"] += " form-control" }}
-            {{ form.element("select", _name = "lease_mileage")["_class"] += " form-control" }}
-            
-			{{ form.element("textarea", _name = "describe_trade_in")["_class"] += " form-control" }}
-			{{ form.element("textarea", _name = "describe_trade_in")["_placeholder"] = "Example: Red 2002 Honda Accord LX with 130k miles (mostly highway). It runs great with no mechanical or electrical problems. New tires and battery. It has a spoiler and clean tan leather interior with 6 disc CD changer. It has 5 or 6 quarter-sized dents and several visible scratches on the outside." }}
-			
-            {{ form.element("select", _name = "colors")["_class"] += " form-control" }}
-            {{ form.element("select", _name = "options")["_class"] += " form-control" }}
-            {{ form.element("select", _name = "radius")["_class"] += " form-control" }}
-            {{ form.element("input", _name = "zip_code")["_class"] += " form-control" }}
-            {{ form.element("input", _name = "expected_down_payment")["_class"] += " form-control" }}
-			{{ form.element("input", _name = "expected_down_payment")["_placeholder"] = "$$$" }}
-            {{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
-            {{ form.element("input", _type = "submit")["_id"] = "submit" }}
-            {{ form.element("input", _type = "submit")["_value"] = "Go to auction" }}
-			
-			<h5 class="text-light">Request a {{=year.upper()}} {{=make_name}} {{=model_name}}:</h5>
-            {{=form.custom.begin}} 
-						
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">Trim</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.trim}}
+    <div class="row" style="padding: 20px 0;">
+        <div class="col-xs-12 text-center">
+            <h2 class="color">Step 1. Customize your vehicle</h2>
+        </div>
+    </div>
 
-                        {{if form.errors['trim']:}}
-                        	<div class="alert alert-warning">{{=form.errors['trim']}}</div>
-                        {{pass}}
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default silver-bg">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-6 " id="style_photos">
+
+                        </div>
+                        <div class="hidden-xs col-sm-6" id="summary">
+
+                            <div class="panel panel-default white-bg" style="min-height: 289px;">
+                                <div class="panel-body">
+                                    <div id="trim_stats"></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.trim['_id']}}" class="col-sm-3 control-label">Trim <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title='Select the TRIM of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a trim that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.trim}}
+
+                                    {{if form.errors['trim']:}}
+                                    <div class="alert alert-warning">{{=form.errors['trim']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.colors['_id']}}" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select at least one interior AND one exterior style or color you want your vehicle to have."></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.colors}}{{#logger.debug(form.errors['colors'])}}
+                                    {{if form.errors['colors']:}}
+                                    <div class="alert alert-warning">{{=form.errors['colors']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.options['_id']}}" class="col-sm-3 control-label"><i id="options_spinner" class="fa fa-spin options_spinner"></i> Options <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.options}}
+
+                                    {{if form.errors['options']:}}
+                                    <div class="alert alert-warning">{{=form.errors['options']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="form-group">
-                    <label  class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.colors}}{{#logger.debug(form.errors['colors'])}}
-						{{if form.errors['colors']:}}
-							<div class="alert alert-warning">{{=form.errors['colors']}}</div>
-						{{pass}}                            
+    <div class="row" style="padding: 20px 0;">
+        <div class="col-xs-12 text-center">
+            <h2 class="color">Step 2. Where do you live?</h2>
+            <span>(This information helps us find dealers near you.)</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default silver-bg">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-offset-2 col-md-8 col-md-offset-2">
+                            <div id="dealer_radius_map" class="text-center grey-bg" style="max-width: 100%; min-height: 100px; max-height: 400px; margin: 0 auto 20px auto; border: 1px solid #ddd; padding-top: 40px;">
+                                <em>Enter your zip code and a search radius to reveal a map of nearby dealers.</em>
+                            </div>
+                        </div>
                     </div>
-                </div>                
-				
-				<div class="form-group">
-                    <label  class="col-sm-3 control-label"><i id="options_spinner" class="fa fa-spin options_spinner"></i> Options <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.options}}
+                    <div class="row">
+                        <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2">
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.zip_code['_id']}}" class="col-sm-3 control-label">Zip Code</label>
+                                <div class="col-sm-9">
+                                    <!--<input type="password" class="form-control" id="inputPassword3" placeholder="10010">-->
+                                    {{=form.custom.widget.zip_code}}
 
-						{{if form.errors['options']:}}
-							<div class="alert alert-warning">{{=form.errors['options']}}</div>
-						{{pass}}                            
-                    </div>
-                </div>
+                                    {{if form.errors['zip_code']:}}
+                                    <div class="alert alert-warning">{{=form.errors['zip_code']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
 
-                <div class="form-group">
-                    <label  class="col-sm-3 control-label">Zip Code</label>
-                    <div class="col-sm-9">
-                        <!--<input type="password" class="form-control" id="inputPassword3" placeholder="10010">-->
-                        {{=form.custom.widget.zip_code}}
+                            <div class="form-group">
+                                <label  for="{{=form.custom.widget.radius['_id']}}" class="col-sm-3 control-label">Radius</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.radius}}
 
-						{{if form.errors['zip_code']:}}
-							<div class="alert alert-warning">{{=form.errors['zip_code']}}</div>
-						{{pass}}                            
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">Radius</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.radius}}
-
-						{{if form.errors['radius']:}}
-							<div class="alert alert-warning">{{=form.errors['radius']}}</div>
-						{{pass}}
-                    </div>
-                </div>
-
-			<h5 class="text-light">Describe yourself:</h5>
-
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">FICO credit score</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.FICO_credit_score}}
-
-						{{if form.errors['FICO_credit_score']:}}
-							<div class="alert alert-warning">{{=form.errors['FICO_credit_score']}}</div>
-						{{pass}}
+                                    {{if form.errors['radius']:}}
+                                    <div class="alert alert-warning">{{=form.errors['radius']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-				
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">How will you pay?</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.funding_source}}
+            </div>
+        </div>
+    </div>
 
-						{{if form.errors['funding_source']:}}
-							<div class="alert alert-warning">{{=form.errors['funding_source']}}</div>
-						{{pass}}
+    <div class="row" style="padding: 20px 0;">
+        <div class="col-xs-12 text-center">
+            <h2 class="color">Step 3. Tell us about yourself</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default silver-bg">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2">
+                            <div class="form-group">
+                                <label  for="{{=form.custom.widget.FICO_credit_score['_id']}}" class="col-sm-3 control-label">FICO credit score</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.FICO_credit_score}}
+
+                                    {{if form.errors['FICO_credit_score']:}}
+                                    <div class="alert alert-warning">{{=form.errors['FICO_credit_score']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.funding_source['_id']}}" class="col-sm-3 control-label">How will you pay?</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.funding_source}}
+
+                                    {{if form.errors['funding_source']:}}
+                                    <div class="alert alert-warning">{{=form.errors['funding_source']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div id="financing" class="form-group">
+                                <label for="{{=form.custom.widget.financing['_id']}}" class="col-sm-3 control-label">Financing</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.financing}}
+
+                                    {{if form.errors['financing']:}}
+                                    <div class="alert alert-warning">{{=form.errors['financing']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>{{#TODO ADD UPDATE TO FIELDS THAT ARE DEPENDANT ON OTHER FIELDS, THEN RETURN NONE FOR INCORRECT ENTRIES}}
+
+                            <div id="expected_down_payment" class="form-group">
+                                <label for="{{=form.custom.widget.expected_down_payment['_id']}}" class="col-sm-3 control-label">Expected down payment</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.expected_down_payment}}
+
+                                    {{if form.errors['expected_down_payment']:}}
+                                    <div class="alert alert-warning">{{=form.errors['expected_down_payment']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div id="lease_term" class="form-group">
+                                <label for="{{=form.custom.widget.lease_term['_id']}}" class="col-sm-3 control-label">Lease term</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.lease_term}}
+
+                                    {{if form.errors['lease_term']:}}
+                                    <div class="alert alert-warning">{{=form.errors['lease_term']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div id="lease_mileage" class="form-group">
+                                <label for="{{=form.custom.widget.lease_mileage['_id']}}" class="col-sm-3 control-label">Lease mileage</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.lease_mileage}}
+
+                                    {{if form.errors['lease_mileage']:}}
+                                    <div class="alert alert-warning">{{=form.errors['lease_mileage']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div id="trading_in" class="form-group">
+                                <label for="{{=form.custom.widget.trading_in['_id']}}" class="col-sm-3 control-label">Trading in</label>
+                                <div class="col-sm-9">
+                                    <div style="margin-top:6px">{{=form.custom.widget.trading_in}}</div>
+
+                                    {{if form.errors['trading_in']:}}
+                                    <div class="alert alert-warning">{{=form.errors['trading_in']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div id="describe_trade_in" class="form-group">
+                                <label for="{{=form.custom.widget.describe_trade_in['_id']}}" class="col-sm-3 control-label">Trade in description</label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.describe_trade_in}}
+
+                                    {{if form.errors['describe_trade_in']:}}
+                                    <div class="alert alert-warning">{{=form.errors['describe_trade_in']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+                            <script>
+                                //functions
+                                function funding_source_additional_questions(that){
+                                    if ($(that).val() != "cash") { //{{#cash}}
+                                        $("#expected_down_payment").slideDown();
+                                    }
+                                    else {
+                                        $("#auction_request_expected_down_payment").val('');
+                                        $("#expected_down_payment").hide();
+                                    }
+                                    if ($(that).val() == "loan") { //{{#loan}}
+                                        $("#financing").slideDown();
+                                    }
+                                    else {
+                                        $("#financing").hide();
+                                    }
+                                    if ($(that).val() == "lease") { //{{#lease}}
+                                        $("#lease_term").slideDown();
+                                        $("#lease_mileage").slideDown();
+                                    }
+                                    else {
+                                        $("#lease_term").hide();
+                                        $("#lease_mileage").hide();
+                                    }
+                                }
+                                function trade_in_description_box(that){
+                                    if ($(that).is(":checked") ) {
+                                        $("#describe_trade_in").slideDown();
+                                    }
+                                    else {
+                                        $("#auction_request_describe_trade_in").val(''); //{{#the actual input}}
+                                        $("#describe_trade_in").hide(); //{{#the parent div}}
+                                    }
+                                }
+                                //events
+                                $("#auction_request_funding_source").change(function(){
+                                    funding_source_additional_questions(this);
+                                });
+                                $("#auction_request_trading_in").change(function(){
+                                    trade_in_description_box(this);
+                                });
+                                //initialize
+                                funding_source_additional_questions("#auction_request_funding_source");
+                                trade_in_description_box("#auction_request_trading_in");
+                            </script>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-				<div id="financing" class="form-group">
-                    <label class="col-sm-3 control-label">Financing</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.financing}}
+    <div class="row">
+        <div class="col-xs-12">
 
-						{{if form.errors['financing']:}}
-							<div class="alert alert-warning">{{=form.errors['financing']}}</div>
-						{{pass}}
-                    </div>
-                </div>{{#TODO ADD UPDATE TO FIELDS THAT ARE DEPENDANT ON OTHER FIELDS, THEN RETURN NONE FOR INCORRECT ENTRIES}}
-				
-				<div id="expected_down_payment" class="form-group">
-                    <label class="col-sm-3 control-label">Expected down payment</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.expected_down_payment}}
-
-						{{if form.errors['expected_down_payment']:}}
-							<div class="alert alert-warning">{{=form.errors['expected_down_payment']}}</div>
-						{{pass}}
-                    </div>
-                </div>
-				
-				<div id="lease_term" class="form-group">
-                    <label class="col-sm-3 control-label">Lease term</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.lease_term}}
-
-						{{if form.errors['lease_term']:}}
-							<div class="alert alert-warning">{{=form.errors['lease_term']}}</div>
-						{{pass}}
-                    </div>
-                </div>
-				
-				<div id="lease_mileage" class="form-group">
-                    <label class="col-sm-3 control-label">Lease mileage</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.lease_mileage}}
-
-						{{if form.errors['lease_mileage']:}}
-							<div class="alert alert-warning">{{=form.errors['lease_mileage']}}</div>
-						{{pass}}
-                    </div>
-                </div>				
-				
-				<div id="trading_in" class="form-group">
-                    <label class="col-sm-3 control-label">Trading in</label>
-                    <div class="col-sm-9">
-                        <div style="margin-top:6px">{{=form.custom.widget.trading_in}}</div>
-
-						{{if form.errors['trading_in']:}}
-							<div class="alert alert-warning">{{=form.errors['trading_in']}}</div>
-						{{pass}}
-                    </div>
-                </div>
-				
-				<div id="describe_trade_in" class="form-group">
-                    <label class="col-sm-3 control-label">Trade in description</label>
-                    <div class="col-sm-9">
-                        {{=form.custom.widget.describe_trade_in}}
-
-						{{if form.errors['describe_trade_in']:}}
-							<div class="alert alert-warning">{{=form.errors['describe_trade_in']}}</div>
-						{{pass}}
-                    </div>
-                </div>
-				<script>
-					//functions
-					function funding_souce_additional_questions(that){
-						if ($(that).val() != "cash") { //{{#cash}}
-							$("#expected_down_payment").slideDown();
-						}
-						else {
-							$("#auction_request_expected_down_payment").val('');
-							$("#expected_down_payment").hide();
-						}
-						if ($(that).val() == "loan") { //{{#loan}}
-							$("#financing").slideDown();
-						}
-						else {
-							$("#financing").hide();
-						}						
-						if ($(that).val() == "lease") { //{{#lease}}
-							$("#lease_term").slideDown();
-							$("#lease_mileage").slideDown();
-						}
-						else {
-							$("#lease_term").hide();
-							$("#lease_mileage").hide();
-						}
-					}
-					function trade_in_description_box(that){
-						if ($(that).is(":checked") ) {
-							$("#describe_trade_in").slideDown();
-						}
-						else {
-							$("#auction_request_describe_trade_in").val(''); //{{#the actual input}}
-							$("#describe_trade_in").hide(); //{{#the parent div}}
-						}
-					}
-					//events
-					$("#auction_request_funding_source").change(function(){
-						funding_souce_additional_questions(this);
-					});
-					$("#auction_request_trading_in").change(function(){
-						trade_in_description_box(this);
-					});
-					//initialize
-					funding_souce_additional_questions("#auction_request_funding_source");
-					trade_in_description_box("#auction_request_trading_in");
-				</script>
-				
-                <div class="form-group">
-                    <div class="col-sm-offset-2 col-sm-10 ">
-						{{"""}}
-							{{=form.custom.submit}}
-							<script type="text/javascript">
-								$('#submit').click(function(e) {
-									e.preventDefault();
-									$('#login_modal').modal('show');
-								});
-							</script>
-						{{"""}}
-						<button id="fake_submit" type="button" class="btn btn-default pull-right">Submit</button>
-                    </div>
-
+            <div class="form-group">
+                <div class="col-sm-offset-5 col-sm-7 ">
+                    {{"""}}
+                    {{=form.custom.submit}}
                     <script type="text/javascript">
-                    	$('#fake_submit').click(function() {
-                    		$('#login_modal').modal('show');
-                    	});
+                        $('#submit').click(function(e) {
+                            e.preventDefault();
+                            $('#login_modal').modal('show');
+                        });
                     </script>
-
-					<div class="modal fade" id="login_modal">
-						<div class="modal-dialog">
-							<div class="modal-content">
-								<div class="modal-header">
-									<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-									<h4 class="modal-title">What's Next?</h4>
-								</div>
-								<div class="modal-body">
-
-									<div class="row">
-										<div class="col-xs-12">
-											<ul class="fa-ul" style="font-size: 24px">
-												<li>
-													<i class="fa-li fa fa-tags"></i>
-													After you register or login, dealers will begin making offers to your auction page.
-												</li>
-												<li>&nbsp;</li>
-												<li>
-													<i class="fa-li fa fa-clock-o"></i>
-													Dealers have 72 hours to submit bids. Feel free to communicate with the dealers.
-												</li>
-												<li>&nbsp;</li>
-												<li>
-													<i class="fa-li fa fa-car"></i>
-													When the auction ends, select your best offer and we'll connect you with that dealer.
-												</li>
-											</ul>
-										</div>
-									</div>
-									
-									<hr />
-								{{if not auth.is_logged_in():}}
-									<div class="row">
-										<div class="col-xs-8" style="border-right: 1px solid #eee">
-											<div class="form-group">
-												{{"""}}<label for="inputEmail3" class="col-sm-2 control-label">Email</label>{{"""}}
-												<div class="input-group col-sm-12" style="padding-left:15px; padding-right:15px">
-													<span class="input-group-addon"><i class="fa fa-envelope fa-fw"></i></span>
-													<input name="email" type="email" class="form-control" id="inputEmail3" placeholder="Email">
-												</div>
-											</div>
-											<div class="form-group">
-												{{"""}}<label for="inputPassword3" class="col-sm-2 control-label">Password</label>{{"""}}
-												<div class="input-group col-sm-12" style="padding-left:15px; padding-right:15px">
-													<span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-													<input name="password" type="password" class="form-control" id="inputPassword3" placeholder="Password">
-												</div>
-											</div>
-											<div class="form-group">
-												<div class="col-sm-offset-2 col-sm-10">
-													<button id="submit_with_login" type="submit" class="btn btn-default pull-right">Login</button>
-												</div>
-											</div>
-										</div>
-
-										<div class="col-xs-4 pull-right" style="margin-top: 50px">
-											<small style="padding-right:12px;">- OR -</small><button id ="submit_with_register" type="submit" class="btn btn-primary"> <i class="fa fa-thumbs-up"></i> Register</button>
-										</div>
-
-									</div>									
-								{{else:}}
-									<div class="row">
-										<div style="padding-right:12px;">
-											{{=form.custom.submit}}
-										</div>
-									</div>
-								{{pass}}
-								</div>
-							</div>
-						</div>
-					</div>
-
+                    {{"""}}
+                    <button id="fake_submit" type="button" class="btn btn-trinity btn-trinity-big">Submit</button>
                 </div>
-				<script>
-					$("#submit_with_register").click(function(){
-						$("#inputEmail3").val('');
-						$("#inputPassword3").val('');
-					})
-				</script>                
-            {{=form.custom.end}}
 
+                <script type="text/javascript">
+                    $('#fake_submit').click(function() {
+                        $('#login_modal').modal('show');
+                    });
+                </script>
+            </div>
         </div>
-
-        <div class="col-xs-4 hidden-xs">
-			<div class="row">
-				<h5 class="text-light">Trim Specific Details: <i id="stats_spinner " class="fa fa-spin options_spinner"></i></h5>
-				<div id="trim_stats"></div>
-			</div>
-
-			<div id="dealer_radius_map">
-				<h5 class="pull-right">Input zip code and radius to reveal a map of dealers.</h5>
-			</div>
-
-        </div>        
-
     </div>
+
+    <div class="modal fade" id="login_modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">What's Next?</h4>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <ul class="fa-ul" style="font-size: 24px">
+                                <li>
+                                    <i class="fa-li fa fa-tags"></i>
+                                    After you register or login, dealers will begin making offers to your auction page.
+                                </li>
+                                <li>&nbsp;</li>
+                                <li>
+                                    <i class="fa-li fa fa-clock-o"></i>
+                                    Dealers have 72 hours to submit bids. Feel free to communicate with the dealers.
+                                </li>
+                                <li>&nbsp;</li>
+                                <li>
+                                    <i class="fa-li fa fa-car"></i>
+                                    When the auction ends, select your best offer and we'll connect you with that dealer.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr />
+                    {{if not auth.is_logged_in():}}
+                    <div class="row">
+                        <div class="col-xs-8" style="border-right: 1px solid #eee">
+                            <div class="form-group">
+                                {{"""}}<label for="inputEmail3" class="col-sm-2 control-label">Email</label>{{"""}}
+                                <div class="input-group col-sm-12" style="padding-left:15px; padding-right:15px">
+                                    <span class="input-group-addon"><i class="fa fa-envelope fa-fw"></i></span>
+                                    <input name="email" type="email" class="form-control" id="inputEmail3" placeholder="Email">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                {{"""}}<label for="inputPassword3" class="col-sm-2 control-label">Password</label>{{"""}}
+                                <div class="input-group col-sm-12" style="padding-left:15px; padding-right:15px">
+                                    <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
+                                    <input name="password" type="password" class="form-control" id="inputPassword3" placeholder="Password">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <button id="submit_with_login" type="submit" class="btn btn-default pull-right">Login</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-4 pull-right" style="margin-top: 50px">
+                            <small style="padding-right:12px;">- OR -</small><button id ="submit_with_register" type="submit" class="btn btn-primary"> <i class="fa fa-thumbs-up"></i> Register</button>
+                        </div>
+
+                    </div>
+                    {{else:}}
+                    <div class="row">
+                        <div style="padding-right:12px;">
+                            {{=form.custom.submit}}
+                        </div>
+                    </div>
+                    {{pass}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#submit_with_register").click(function(){
+        $("#inputEmail3").val('');
+        $("#inputPassword3").val('');
+    })
+</script>
+
+{{=form.custom.end}}
 
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-md5.js"></script> {{#quick configure-less function}}{{#https://code.google.com/p/crypto-js/}}
 
@@ -372,190 +413,171 @@
 var glob_message_string = "{{=make}}"+"{{=model}}"+"{{=year}}";
 var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT IN ITS ORIGINAL FORM #HASH IS WEAK (64-bit) BUT DOES ITS JOB}}
 </script>
-	
+
 <script type="text/javascript">
-	//{{#var stuff={{=XML(json.dumps(session.option_codes))}}
- 	function load_content(){
-		//{{#hmac}}
-		var loc_token =$('#auction_request_trim').val();
-		var loc_hash = CryptoJS.HmacMD5(glob_message_string+loc_token, glob_session_key ); //{{#CryptoJS.HmacMD5("Message", "Secret Passphrase");}}
-		//
-		$("#fake_submit").addClass("disabled", 250);//{{#ajax active, disable submit button}}
-		//{{#no need to reload if multiselect has values. this is due to erroneous forms, which pre-fill the multi-selects after submission}}
-		//{{#http://goo.gl/aZeO3n}} {{#if multiselect options is blank or page already loaded}}
-		//{{#shoe spinner before ajax}}
-		$('.options_spinner').addClass("fa-spinner");
-		//{{#colors}}
-		$('#ms-auction_request_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
-		//{{#options}}
-		$('#ms-auction_request_options').fadeTo(500, 0.2);
-		////{{#ajax}}
-		$('#trim_stats').slideUp(400)
-		$.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
-			.done(function( data ) {
-				/*/{{#colors}}
-				var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
-				if (previous_colors_submissions.length==0){
-					$.each( data.style_colors, function( i, item ) { //{{#similar to python enumerate}}
-						$("#auction_request_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
-					});
-				};
-				/*/
-				var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
-				$("#auction_request_colors").children().remove(); //{{#it appears there are no saved values from form submission}}
-				$.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
-					var optgroup_id = "auction_request_colors_" + item[4]
-					if ($("#"+optgroup_id).length == 0) {
-						$("#auction_request_colors").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
-					}
-					var selected = ''
-					previous_colors_submissions.each(function(esi, each_selected_item){
-						if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
-							selected = 'selected="selected"'
-						}
-					});
-					$("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
-				});
-				$("#auction_request_colors").multiSelect('refresh');
-				$('#ms-auction_request_colors').fadeTo(250, 1.0); //{{#fade back in}}
-				//{{#options}}
-				var previous_options_submissions = $("#auction_request_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
-				$("#auction_request_options").children().remove();
-				$.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
-					var optgroup_id = "auction_request_options_" + item[4]
-					if ($("#"+optgroup_id).length == 0) {
-						$("#auction_request_options").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
-					}
-					var selected = ''
-					previous_options_submissions.each(function(esi, each_selected_item){
-						if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
-							selected = 'selected="selected"'
-						}
-					});
-					$("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
-				});
-				$("#auction_request_options").multiSelect('refresh');
-				$('#ms-auction_request_options').fadeTo(250, 1.0); //{{#fade back in}}
-				//{{#trim stats}}
-				$('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
-			})
-			.fail(function( xhr, status, error ) {
-				if ( status == "error" ) {
-					var msg = "Error loading options: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_options" class="alert alert-danger"><span id="ajax_failure_warning_options_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_options_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-					$('#ajax_failure_warning_options').slideDown();
-					$('#ajax_failure_warning_options').click(function(){
-						$(this).slideUp();
-					});
-				}
-			})
-			.always(function(){
-				//{{#always hide spinner when done}}
-				$('.options_spinner').removeClass("fa-spinner");
-			});
+    //{{#var stuff={{=XML(json.dumps(session.option_codes))}}
+    function load_content(){
+        //{{#hmac}}
+        var loc_token =$('#auction_request_trim').val();
+        var loc_hash = CryptoJS.HmacMD5(glob_message_string+loc_token, glob_session_key ); //{{#CryptoJS.HmacMD5("Message", "Secret Passphrase");}}
+        //
+        $("#fake_submit").addClass("disabled", 250);//{{#ajax active, disable submit button}}
+        //{{#no need to reload if multiselect has values. this is due to erroneous forms, which pre-fill the multi-selects after submission}}
+        //{{#http://goo.gl/aZeO3n}} {{#if multiselect options is blank or page already loaded}}
+        //{{#shoe spinner before ajax}}
+        $('.options_spinner').addClass("fa-spinner");
+        //{{#colors}}
+        $('#ms-auction_request_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
+        //{{#options}}
+        $('#ms-auction_request_options').fadeTo(500, 0.2);
+        ////{{#ajax}}
+        $('#trim_stats').slideUp(400)
+        $.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
+            .done(function( data ) {
+                /*/{{#colors}}
+                var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+                if (previous_colors_submissions.length==0){
+                    $.each( data.style_colors, function( i, item ) { //{{#similar to python enumerate}}
+                        $("#auction_request_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
+                    });
+                };
+                /*/
+                var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+                $("#auction_request_colors").children().remove(); //{{#it appears there are no saved values from form submission}}
+                $.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
+                    var optgroup_id = "auction_request_colors_" + item[4]
+                    if ($("#"+optgroup_id).length == 0) {
+                        $("#auction_request_colors").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
+                    }
+                    var selected = ''
+                    previous_colors_submissions.each(function(esi, each_selected_item){
+                        if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
+                            selected = 'selected="selected"'
+                        }
+                    });
+                    $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
+                });
+                $("#auction_request_colors").multiSelect('refresh');
+                $('#ms-auction_request_colors').fadeTo(250, 1.0); //{{#fade back in}}
+                //{{#options}}
+                var previous_options_submissions = $("#auction_request_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+                $("#auction_request_options").children().remove();
+                $.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
+                    var optgroup_id = "auction_request_options_" + item[4]
+                    if ($("#"+optgroup_id).length == 0) {
+                        $("#auction_request_options").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
+                    }
+                    var selected = ''
+                    previous_options_submissions.each(function(esi, each_selected_item){
+                        if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
+                            selected = 'selected="selected"'
+                        }
+                    });
+                    $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
+                });
+                $("#auction_request_options").multiSelect('refresh');
+                $('#ms-auction_request_options').fadeTo(250, 1.0); //{{#fade back in}}
+                //{{#trim stats}}
+                $('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
+            })
+            .fail(function( xhr, status, error ) {
+                if ( status == "error" ) {
+                    var msg = "Error loading options: ";
+                    $("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_options" class="alert alert-danger"><span id="ajax_failure_warning_options_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+                    $('#ajax_failure_warning_options_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
+                    $('#ajax_failure_warning_options').slideDown();
+                    $('#ajax_failure_warning_options').click(function(){
+                        $(this).slideUp();
+                    });
+                }
+            })
+            .always(function(){
+                //{{#always hide spinner when done}}
+                $('.options_spinner').removeClass("fa-spinner");
+            });
 
-		$('#loading_reviews').slideDown();
-		$('#reviews').slideUp(600).load(
-			"{{=URL('ajax','reviews')}}{{='/'}}"+$('#auction_request_trim').val() , //{{#implement fail like above}}
-			function( response, status, xhr ) {
-				if ( status == "error" ) {
-					var msg = "Error loading reviews: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_reviews" class="alert alert-danger"><span id="ajax_failure_warning_reviews_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_reviews_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-					$('#ajax_failure_warning_reviews').slideDown();
-					$('#ajax_failure_warning_reviews').click(function(){
-						$(this).slideUp();
-					});
-				}
-				else {
-					$('#loading_reviews').slideUp();
-					$(this).slideDown(300); //{{#fade back in}}
-				}
-			}
-		);
-		//{{#display images}}
-		$('#style_photos').html('<img src="http://placehold.it/815x543&text=loading..." class="img-responsive"/>').load(
-			"{{=URL('ajax','style_photos')}}{{='/'}}"+$('#auction_request_trim').val() , //{{#implement fail like above}}
-			function( response, status, xhr ) {
-				if ( status == "error" ) {
-					var msg = "Error loading photos: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_photos" class="alert alert-danger"><span id="ajax_failure_warning_photos_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_photos_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
-					$('#ajax_failure_warning_photos').slideDown();
-					$('#ajax_failure_warning_photos').click(function(){
-						$(this).slideUp();
-					});
-				}
-				else {
-					//{{#$('#reviews_spinner').toggleClass("fa-spinner");}}
-				}
-			}
-		);
-	//close main function
-	}
- 	$('#auction_request_trim').change(load_content); //{{#change color preference options when you change trim dropdown}}
-	
-	$(document).ready(function(){
-		load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
-	})
-	.ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
-		$("#fake_submit").removeClass("disabled", 250);
-	});
+        //{{#display images}}
+        $('#style_photos').html('<img src="http://placehold.it/815x543&text=loading..." class="img-responsive"/>').load(
+            "{{=URL('ajax','style_photos')}}{{='/'}}"+$('#auction_request_trim').val() , //{{#implement fail like above}}
+            function( response, status, xhr ) {
+                if ( status == "error" ) {
+                    var msg = "Error loading photos: ";
+                    $("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_photos" class="alert alert-danger"><span id="ajax_failure_warning_photos_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+                    $('#ajax_failure_warning_photos_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
+                    $('#ajax_failure_warning_photos').slideDown();
+                    $('#ajax_failure_warning_photos').click(function(){
+                        $(this).slideUp();
+                    });
+                }
+                else {
+                    //{{#$('#reviews_spinner').toggleClass("fa-spinner");}}
+                }
+            }
+        );
+    //close main function
+    }
+    $('#auction_request_trim').change(load_content); //{{#change color preference options when you change trim dropdown}}
+
+    $(document).ready(function(){
+        load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
+    })
+    .ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
+        $("#fake_submit").removeClass("disabled", 250);
+    });
 </script>
 
 <script>
-	$("#auction_request_colors").multiSelect({
-		selectableHeader: '<div style="text-align:center" class="text-light">Available colors</div>',
-		selectionHeader: '<div style="text-align:center" class="text-light">Colors I want</div>',
-	}); 
-	$("#auction_request_colors").multiSelect('refresh');//{{#initialize multiselect}}
+    $("#auction_request_colors").multiSelect({
+        selectableHeader: '<div style="text-align:center" class="text-light">Available colors</div>',
+        selectionHeader: '<div style="text-align:center" class="text-light">Colors I want</div>',
+    });
+    $("#auction_request_colors").multiSelect('refresh');//{{#initialize multiselect}}
 
-	$("#auction_request_options").multiSelect({
-		selectableHeader: '<div style="text-align:center" class="text-light">Available options</div>',
-		selectionHeader: '<div style="text-align:center" class="text-light">Options I must have</div>',
-	}); 
-	$("#auction_request_options").multiSelect('refresh');//initialize multiselect
+    $("#auction_request_options").multiSelect({
+        selectableHeader: '<div style="text-align:center" class="text-light">Available options</div>',
+        selectionHeader: '<div style="text-align:center" class="text-light">Options I must have</div>',
+    });
+    $("#auction_request_options").multiSelect('refresh');//initialize multiselect
 </script>
 
 <script>
-	function load_radius_map(){
-		$('#dealer_radius_map').html('<img src="http://placehold.it/600x400&text=loading..." class="img-responsive"/>').load(
-			"{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + $('#auction_request_zip_code').val(), //implement fail like above
-			function( response, status, xhr ) {
-				if ( status == "error" ) {
-					var msg = "Error loading map: ";
-					$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_radius" class="alert alert-danger"><span id="ajax_failure_warning_radius_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-					$('#ajax_failure_warning_radius_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-					$('#ajax_failure_warning_radius').slideDown();
-					$('#ajax_failure_warning_radius').click(function(){
-						$(this).slideUp();
-					});
-				}
-				else {
-					//
-				}
-			}
-		);
-	}
-	$('#auction_request_radius').change(load_radius_map);
-	$('#auction_request_zip_code').change(load_radius_map);
-	$(document).ready(function(){
-		if ($('#auction_request_zip_code').val().length==5){ //{{#if length is of zipcode}}
-			load_radius_map();
-		}
-	});
+    function load_radius_map(){
+        $('#dealer_radius_map').html('<img src="http://placehold.it/600x400&text=loading..." class="img-responsive"/>').load(
+            "{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + $('#auction_request_zip_code').val(), //implement fail like above
+            function( response, status, xhr ) {
+                if ( status == "error" ) {
+                    var msg = "Error loading map: ";
+                    $("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_radius" class="alert alert-danger"><span id="ajax_failure_warning_radius_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+                    $('#ajax_failure_warning_radius_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+                    $('#ajax_failure_warning_radius').slideDown();
+                    $('#ajax_failure_warning_radius').click(function(){
+                        $(this).slideUp();
+                    });
+                }
+                else {
+                    //
+                }
+            }
+        );
+    }
+    $('#auction_request_radius').change(load_radius_map);
+    $('#auction_request_zip_code').change(load_radius_map);
+    $(document).ready(function(){
+        if ($('#auction_request_zip_code').val().length==5){ //{{#if length is of zipcode}}
+            load_radius_map();
+        }
+    });
 </script>
 {{"""}}
 <script>
-	function resize_bootstrap_multiselect(){
-		$('.multiselect').css({'width':$("#auction_request_options").parent().width()});
-	}
+    function resize_bootstrap_multiselect(){
+        $('.multiselect').css({'width':$("#auction_request_options").parent().width()});
+    }
 
- 	$('#auction_request_options').multiselect();
-	$(window).resize(function(){
-		resize_bootstrap_multiselect();
-	});
-	resize_bootstrap_multiselect();
+    $('#auction_request_options').multiselect();
+    $(window).resize(function(){
+        resize_bootstrap_multiselect();
+    });
+    resize_bootstrap_multiselect();
 </script> {{#http://goo.gl/dh1z2}}
 {{"""}}

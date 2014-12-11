@@ -95,8 +95,18 @@ def options_content(): #TODO get all data from single call make/model/year
 		for each_option in __options__()['option_codes']:
 			if each_option[2] and each_option[2] != each_option[1]:
 				options_descriptions.append([each_option[1],each_option[2]]) #append name and description
-			
+
+		msrp = int(style['price']['baseMSRP'])
+		biddrive_estimate = int(int(style['price']['baseMSRP'])-random.randrange(3000,6000))
+
 		stats = dict(
+			base_msrp = ['Base MSRP', "${:,.0f}".format(msrp)],
+			estimate = ['%s price (est.)'%APP_NAME.replace('(Alpha)', ''), "${:,.0f}".format(biddrive_estimate)],
+			savings = ["Savings (est.)", "${:,.0f}".format(msrp - biddrive_estimate)],
+		)
+		stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
+
+		details = dict(
 			mpg_city = ['MPG city, hwy' , '%s, %s'%(style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A', style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A')],
 			#mpg_city = ['MPG city' , style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A'],
 			#mpg_hwy = ['MPG highway' , style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A'], #do this for rest!
@@ -109,15 +119,13 @@ def options_content(): #TODO get all data from single call make/model/year
 			trans = ['Transmission' ,'%s speed %s'%(str(style['transmission']['numberOfSpeeds']).capitalize(), style['transmission']['transmissionType'].lower().replace('_', ' '))],
 			#trans = ['Transmission type' , style['transmission']['transmissionType'].capitalize().replace('_', ' ')],
 			#speed = ['Transmission speed' , str(style['transmission']['numberOfSpeeds']).capitalize()],
-			base_msrp = ['Base MSRP', '$%0.0f'%style['price']['baseMSRP']],
-			estimate = ['%s estimate'%APP_NAME.replace('(Alpha)', ''), '$%0.0f'%(int(style['price']['baseMSRP'])-random.randrange(3000,6000),)],
 			colors=['Colors', colors],
 			#manufacturer_code = ['Code', style['manufacturerCode'] if 'manufacturerCode' in style else 'N/A'],
 			#fuel = ['Fuel type', style['engine']['type'].capitalize()],
 			#doors = ['Doors' , style['numOfDoors']],
 		)
-		stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
-		return dict(stats = stats, options_descriptions=options_descriptions, make = make, model = model, year = year, style_id = style_id)
+
+		return dict(stats = stats, details=details, options_descriptions=options_descriptions, make = make, model = model, year = year, style_id = style_id)
 	
 	return dict(
 		color_codes=__colors__()['color_codes'], option_codes = __options__()['option_codes'], style_details_html_string=XML(response.render('ajax/style_details.html', __style_details__() ) ),
