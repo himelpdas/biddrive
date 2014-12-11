@@ -1,4 +1,5 @@
 {{extend 'layout_new.html'}}
+{{COLOR_SWATCH = lambda hex, title='': XML('<i class="fa fa-square fa-fw" style="color:#%s; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;" title="%s"></i>'%(hex,title) )}} {{#add border so that whites can show}} {{#http://goo.gl/2j2bP}} {{#http://goo.gl/R9EI3h}}
 <div class="container page-container">
     {{include 'progress_bar.html'}}
 	{{include 'message_divs.html'}}
