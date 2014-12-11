@@ -157,7 +157,7 @@ def dealer_radius_map(): #CACHE CACHE CACHE!!
 	zipcode = request.args(2)
 	radius = request.args[1]
 	make = request.args[0]
-	error_img = "http://placehold.it/600x400&text=%s"
+	error_img = "http://placehold.it/589x400&text=%s"
 	urls = [error_img%"Error loading map."]
 	dealers = []
 	if not zipcode:
@@ -175,7 +175,7 @@ def dealer_radius_map(): #CACHE CACHE CACHE!!
 				for counter, each_dealer in enumerate(dealers):
 					#dmap.add_marker(AddressMarker('%s,%s,%s,%s'%(each_dealer.address_line_1, each_dealer.city, each_dealer.state, each_dealer.zip_code),label=str(counter+1)))
 					dmap.add_marker(LatLonMarker(lat=each_dealer.latitude,lon=each_dealer.longitude, label=str(counter+1))) #latlon marker not documented had to check source of motionless.py #BIG DIFFERENCE, SHORTER URL FOR MORE POINTERS AND MORE "HIDDEN" -- http://maps.google.com/maps/api/staticmap?maptype=roadmap&format=png&size=600x400&sensor=false&markers=|color:green|label:0|11106&markers=|label:1|3518%2033rd%20st%2CAstoria%2CNY%2C11106 --VS-- http://maps.google.com/maps/api/staticmap?maptype=roadmap&format=png&size=600x400&sensor=false&markers=|label:1|40.757096,-73.927133&markers=|color:green|label:0|11106
-				urls.append(dmap.generate_url().replace('400x400', '600x400'))
+				urls.append(dmap.generate_url().replace('400x400', '589x400'))
 		else:
 			urls=[error_img%"Not a zip code."]
 
