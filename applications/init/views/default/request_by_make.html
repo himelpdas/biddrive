@@ -542,7 +542,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 
 <script>
     function load_radius_map(){
-        $('#dealer_radius_map').html('<img src="http://placehold.it/600x400&text=loading..." class="img-responsive"/>').load(
+        $('#dealer_radius_map').css({"padding-top":"0px"}).html('<img src="http://placehold.it/600x338&text=loading..." class="img-responsive"/>').load(
             "{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + $('#auction_request_zip_code').val(), //implement fail like above
             function( response, status, xhr ) {
                 if ( status == "error" ) {
@@ -555,7 +555,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                     });
                 }
                 else {
-                    //
+					//
                 }
             }
         );
