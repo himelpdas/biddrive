@@ -2,6 +2,19 @@
 
 <h3><i class="fa fa-user"></i> {{=request.vars.custom_title or T( request.args(0).replace('_',' ').capitalize() )}}</h3>
 <hr>
+<div class="row" style="padding-top: 10px">
+    <div class="col-sm-12 text-right">
+        {{if request.args(0)=='profile':}}
+        <a href="{{=URL('default', 'user', args=['change_password'], vars={'custom_title':'Profile > Change Password'})}}"><i class="fa fa-lock fa-fw"></i> Change Password</a>
+        {{elif request.args(0)=='change_password':}}
+        <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i> Back to Profile</a>
+        {{elif request.args(0)=='login':}}
+        <a href="{{=URL('default', 'user', args=['request_reset_password'], vars={'custom_title':'Login > Reset Password'})}}"><i class="fa fa-lock fa-fw"></i> Lost password?</a>
+        {{elif request.args(0)=='request_reset_password':}}
+        <a href="{{=URL('default', 'user', args=['login'])}}"><i class="fa fa-user"></i> Back to Login</a>
+        {{pass}}
+    </div>
+</div>
 {{"""}}<!--
 <div id="web2py_user_form">
 {{
@@ -97,6 +110,7 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 							{{pass}}
 						</div>
 					</div>
+
 				 <script>
 					function resize_bootstrap_multiselect(){
                         $('.multiselect').css({

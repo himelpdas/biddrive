@@ -153,3 +153,7 @@
 #request_by_make .ms-selection .text-light {
     background-color: #f2f2f2;
 }
+
+hr {
+    margin: 0;
+}

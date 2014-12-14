@@ -1,3 +1,34 @@
-<li><a href="{{=URL('default', 'user', args=['login'])}}" class="">Sign in</a></li>
-<li><a href="{{=URL('default', 'user', args=['register'])}}" class="">Sign up</a></li>
-<li><a href="{{=URL('dealership_form', args=['force_register'])}}" class="">Dealers</a></li>
+{{if auth.is_logged_in():}}
+    {{if not auth.has_membership(user_id = auth.user_id, role = "dealers"):}}
+        <li><a href="{{=URL('default', 'auction_history',)}}"><i class="fa fa-gavel fa-fw"></i>Auction history</a></li>
+    {{pass}}
+
+    <li>
+        <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i>Profile</a>
+    </li>
+
+    {{#TODO (ALEX): what is this? not sure how it works}}
+    {{for each_item in response.menu:}}
+        {{if len(each_item) == 4:}} {{#if/then fix for appadmin as menu items provided by appadmin controller are of different lengths than that of menu.py}}
+            {{sub_items = each_item[3]}}
+            <li {{if sub_items:}}class="dropdown"{{pass}}>
+                <a href="{{=each_item[2]}}" {{if sub_items:}}class="dropdown-toggle" data-toggle="dropdown"{{pass}}>{{=each_item[0]}}{{if sub_items:}} <b class="caret"></b>{{pass}}</a>
+                {{if sub_items:}}
+                    <ul class="dropdown-menu">
+                        {{for each_sub_item in sub_items:}}
+                        <li><a href="{{=each_sub_item[2]}}">{{=each_sub_item[0]}}</a></li>
+                        {{pass}}
+                    </ul>
+                {{pass}}
+            </li>
+        {{else:}}
+            <li><a href="{{=each_item[2]}}">{{=each_item[0]}}</a></li>
+        {{pass}}
+    {{pass}}
+
+    <li><a href="{{=URL('default', 'user', args=['logout'])}}"><i class="fa fa-power-off fa-fw"></i>Log out</a></li>
+{{else:}}
+    <li><a href="{{=URL('default', 'user', args=['login'])}}" class="">Sign in</a></li>
+    <li><a href="{{=URL('default', 'user', args=['register'])}}" class="">Sign up</a></li>
+    <li><a href="{{=URL('dealership_form', args=['force_register'])}}" class="">Dealers</a></li>
+{{pass}}
