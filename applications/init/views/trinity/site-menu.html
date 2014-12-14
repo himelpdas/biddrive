@@ -1,10 +1,10 @@
 {{if auth.is_logged_in():}}
     {{if not auth.has_membership(user_id = auth.user_id, role = "dealers"):}}
-        <li><a href="{{=URL('default', 'auction_history',)}}"><i class="fa fa-gavel fa-fw"></i>Auction history</a></li>
+        <li><a href="{{=URL('default', 'auction_history',)}}"><i class="fa fa-gavel fa-fw"></i> Auction history</a></li>
     {{pass}}
 
     <li>
-        <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i>Profile</a>
+        <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i> Profile</a>
     </li>
 
     {{#TODO (ALEX): what is this? not sure how it works}}
@@ -26,7 +26,7 @@
         {{pass}}
     {{pass}}
 
-    <li><a href="{{=URL('default', 'user', args=['logout'])}}"><i class="fa fa-power-off fa-fw"></i>Log out</a></li>
+    <li><a href="{{=URL('default', 'user', args=['logout'])}}"><i class="fa fa-power-off fa-fw"></i> Log out</a></li>
 {{else:}}
     <li><a href="{{=URL('default', 'user', args=['login'])}}" class="">Sign in</a></li>
     <li><a href="{{=URL('default', 'user', args=['register'])}}" class="">Sign up</a></li>
