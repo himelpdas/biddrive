@@ -3,26 +3,60 @@
 	<div class="carousel-inner">
 	{{active=False}}
 	{{for numb, each_photo in enumerate(photos):}}
-		<div class="{{if not active:}}active {{active=True}}{{pass}}item"><a data-toggle="modal" data-target="#vehicle_image_{{=numb}}" href="javascript:void(0);"><img class="vehicle_image" src="{{=each_photo}}"/></a></div>
+		<div class="{{if not active:}}active {{active=True}}{{pass}}item">
+            <a data-toggle="modal" data-target="#vehicle_image_modal" href="" data-slide-to="{{=numb}}">
+                <img class="vehicle_image" src="{{=each_photo}}"/>
+            </a>
+        </div>
 	{{pass}}
 	</div>
-  <!-- Carousel nav -->
-  <a class="carousel-control left" href="#photos_carousel" data-slide="prev">&lsaquo;</a>
-  <a class="carousel-control right" href="#photos_carousel" data-slide="next">&rsaquo;</a>
+
+    <!-- Controls -->
+    <a class="left carousel-control" href="#photos_carousel" role="button" data-slide="prev">
+        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+    </a>
+    <a class="right carousel-control" href="#photos_carousel" role="button" data-slide="next">
+        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+    </a>
+
 </div>
 
-{{for numb, each_photo in enumerate(photos):}}
-	<div id="vehicle_image_{{=numb}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="vehicle_image_{{=numb}}" aria-hidden="true">
-	  <div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-body">
-				<img src="{{=each_photo}}" class="img-responsive">
-			</div>
-		</div>
-	  </div>
-	</div>
-{{pass}}
+<div id="vehicle_image_modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" aria-labelledby="Vehicle Images" >
+  <div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-body">
+
+            <div id="photos_carousel_modal" class="carousel slide">
+                <!-- Carousel items -->
+                <div class="carousel-inner">
+                    {{active=False}}
+                    {{for numb, each_photo in enumerate(photos):}}
+                    <div class="{{if not active:}}active {{active=True}}{{pass}}item">
+                        <img class="vehicle_image" src="{{=each_photo}}"/>
+                    </div>
+                    {{pass}}
+                </div>
+
+                <!-- Controls -->
+                <a class="left carousel-control" href="#photos_carousel_modal" role="button" data-slide="prev">
+                    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="right carousel-control" href="#photos_carousel_modal" role="button" data-slide="next">
+                    <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
 
 <script>
 	$('#photos_carousel').hide().fadeIn(1000).carousel();
+    $('#photos_carousel_modal').carousel();
 </script>
