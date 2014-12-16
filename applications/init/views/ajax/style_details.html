@@ -22,30 +22,8 @@
     <div class="col-xs-12">
         {{for each_stat in details:}}
             <span style="padding-right: 4px;">
-                {{if each_stat == 'colors':}}
-                    Interior:
-
-                        {{for each_swatch in details[each_stat][1]:}}
-                        {{if each_swatch[4] == 'interior':}}
-                        <!--
-                        <i class="fa fa-square" rel="tooltip" style="color:#{{=each_swatch[2]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_swatch[1]}}"></i>
-                        -->
-                        {{pass}}
-                        {{pass}}
-
-                    Exterior:
-
-                        {{for each_swatch in details[each_stat][1]:}}
-                        {{if each_swatch[4] == 'exterior':}}
-
-                        <!--
-                        <i class="fa fa-square" rel="tooltip" style="color:#{{=each_swatch[2]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_swatch[1]}}"></i>
-                        -->
-                        {{pass}}
-                        {{pass}}
-
-                {{else:}}
-                    {{=details[each_stat][0]}}: <b>{{=details[each_stat][1]}}</b>,
+                {{if each_stat != 'colors':}}
+                    {{=details[each_stat][0]}}: <b>{{=details[each_stat][1]}}</b>
                 {{pass}}
             </span>
         {{pass}}
