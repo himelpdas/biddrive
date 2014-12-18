@@ -567,16 +567,3 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
         }
     });
 </script>
-{{"""}}
-<script>
-    function resize_bootstrap_multiselect(){
-        $('.multiselect').css({'width':$("#auction_request_options").parent().width()});
-    }
-
-    $('#auction_request_options').multiselect();
-    $(window).resize(function(){
-        resize_bootstrap_multiselect();
-    });
-    resize_bootstrap_multiselect();
-</script> {{#http://goo.gl/dh1z2}}
-{{"""}}

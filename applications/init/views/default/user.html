@@ -129,7 +129,8 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 
 				{{elif request.args(0) == "login":}}
 					{{if 'force_register' in after_login_string:}}
-						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_title="Join our dealer network" if "dealer_registration" in after_login_string else "", _next=after_login_string)))}} {{#cannot use custom_title var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
+						{{#logger.debug(after_login_string)}}
+						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_title="Join our dealer team" if "dealership_form" in after_login_string else "", _next=after_login_string)))}} {{#cannot use custom_title var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
 					{{pass}}
 					<div class="form-group">
 						<label class="col-sm-3 control-label">Email</label>

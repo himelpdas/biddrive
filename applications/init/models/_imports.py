@@ -10,10 +10,11 @@ from ago import human
 import simplecolor
 from collections import OrderedDict #http://bit.ly/OhPhQr
 OD = OrderedDict #shortcut
+import platform #check the platform web2py is running from
 #import lookup_hash
 
-####SET ZERO IN PRODUCTION####
-if 1:
+####ENABLE LOGGING FOR MACs AND PCs, which are probably development environments####
+if platform.system() in ["Darwin", "Windows"]:
 	import logging
 	logger = logging.getLogger("web2py.app.biddrive")
 	#handler = logging.StreamHandler() #by default logs go to stdout or stderr, you can set it to file via FileH

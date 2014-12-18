@@ -1,5 +1,4 @@
 from edmunds import Edmunds
-import platform
 
 ed = Edmunds(EDMUNDS_KEY)
 
