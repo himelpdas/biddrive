@@ -228,50 +228,33 @@ def pre_auction():
 	#remove dealerships not in range
 	all_specialty_dealerships_in_range_of_auction_request = all_specialty_dealerships.exclude(lambda row: auction_request.auction_request['radius'] >= calcDist(row.dealership_info.latitude, row.dealership_info.longitude, auction_request.auction_request.latitude, auction_request.auction_request.longitude) )
 	for each_dealership in all_specialty_dealerships_in_range_of_auction_request:
-		if "new_request" in each_dealership.auth_user.alerts:
-			scheduler.queue_task(
-				send_alert_task,
-				pargs=['email', each_dealership.auth_user.email, response.render('email_alert_template.html', 
-					dict(
-						APPNAME=APP_NAME,
-						NAME = each_dealership.auth_user.first_name.capitalize(), 
-						MESSAGE =  XML("There is a new request for a <i>%s <b>%s</b> %s</i> near your area."%(auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name ) ),
-						MESSAGE_TITLE = "%s wants a new %s!"%("%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize()), auction_request.auction_request.make_name),
-						WHAT_NOW = "Hurry! Other nearby dealers %s have been alerted as well."%auction_request.auction_request.make_name,
-						INSTRUCTIONS = "Submit your %s vehicle now to grab the buyer's attention first!"%auction_request.auction_request.make_name,
-						CLICK_HERE = "View auction requests",
-						CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
-					)
-				), 
-					"%s: New request for a %s %s %s near your area."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name),
-				],
-				retry_failed = 10,
-				period = 3, # run 5s after previous
-				timeout = 30, # should take less than 30 seconds
-			)
+		'''SEND_ALERT_TO_QUEUE(
+			CHECK='on_buyer_request', 
+			USER=each_dealership.auth_user, 
+			EMAIL_TITLE  =  "%s: New request for a %s %s %s near your area."%(APP_NAME, auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name),
+			MESSAGE =  XML("There is a new request for a <i>%s <b>%s</b> %s</i> near your area."%(auction_request.auction_request.year, auction_request.auction_request.make_name, auction_request.auction_request.model_name ) ),
+			MESSAGE_TITLE = "%s wants a new %s!"%("%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize()), auction_request.auction_request.make_name),
+			WHAT_NOW = "Hurry! Other nearby dealers %s have been alerted as well."%auction_request.auction_request.make_name,
+			INSTRUCTIONS = "Submit your %s vehicle now to grab the buyer's attention first!"%auction_request.auction_request.make_name,
+			CLICK_HERE = "View auction requests",
+			CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
+		)'''
 	########
-	#send email to owner reminding him he created an auction
-	if "new_request" in auth.user.alerts:
-		scheduler.queue_task(
-			send_alert_task,
-			pargs=['email', auth.user.email, response.render('email_alert_template.html', 
-				dict(
-					APPNAME=APP_NAME,
-					NAME = auth.user.first_name.capitalize(), 
-					MESSAGE_TITLE =  XML("You requested a <i>{year} <b>{make}</b> {model}</i>.".format(year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name ) ),
-					MESSAGE = "Within a {mile} mile radius of {zip}.".format(mile = auction_request.auction_request.radius, zip=auction_request.auction_request.zip_code),
-					WHAT_NOW = "Stay tuned for offers!",
-					INSTRUCTIONS = "Dealers near you have been alerted about your request.",
-					CLICK_HERE = "Go to auction!",
-					CLICK_HERE_URL = URL('default', 'auction', args=[auction_request_id], host=True, scheme=True),
-				)
-			), 
-				"{app}: You requested a {year} {make} {model} near you!".format(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name),
-			],
-			retry_failed = 10,
-			period = 3, # run 5s after previous
-			timeout = 30, # should take less than 30 seconds
+		SEND_ALERT_TO_QUEUE(
+			CHECK='on_new_request', 
+			USER=each_dealership.auth_user,
+			MESSAGE_TYPE= "DEALER_on_new_request",
+			**dict(app=APP_NAME, 
+				she="%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize() ), 
+				year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name, url=URL('default', 'auction', args=[auction_request_id], host=True, scheme=True), )
 		)
+	#send email to owner reminding him he created an auction
+	SEND_ALERT_TO_QUEUE(
+		CHECK='on_new_request', 
+		USER=auth.user,
+		MESSAGE_TYPE= "BUYER_on_new_request",
+		**dict(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name, mile = auction_request.auction_request.radius, zip=auction_request.auction_request.zip_code, url=URL('default', 'auction', args=[auction_request_id], host=True, scheme=True), )
+	)
 	redirect(
 		URL('dealer','auction.html', args=auction_request_id) #http://goo.gl/twPSTK
 	)
@@ -467,3 +450,7 @@ def car_chooser():
 		year = request.args[0]
 
 	return dict(brands_list=getBrandsList(year))
+	
+def test():
+	test_form = SQLFORM(db.blockalert)
+	return dict(test_form=test_form)

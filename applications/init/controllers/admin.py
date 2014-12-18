@@ -45,22 +45,7 @@ def dealership_form():
 		if form.vars.verification == "approved":
 			auth.add_membership(**membership) #unpack keyword args
 			#alert new dealer
-			scheduler.queue_task(
-				send_alert_task,
-				pargs=['email', record_owner.email, response.render('email_alert_template.html', dict(
-					APPNAME=APP_NAME,
-					NAME = record_owner.first_name.capitalize(), 
-					MESSAGE_TITLE = "Congratulations! You are now an approved dealer!",
-					MESSAGE =  "Your request to join the %s dealer network was approved! So what now?"%APP_NAME,
-					WHAT_NOW = "Click the button below to look for potential buyers.",
-					INSTRUCTIONS = "We'll also alert you when we see new %s requests near your area."%' '.join(record.specialty),
-					CLICK_HERE = "See buyer requests!",
-					CLICK_HERE_URL = URL('dealer', 'auction_requests', host=True, scheme=True),
-				)), "%s: You have been approved!"%APP_NAME],
-				retry_failed = 10,
-				period = 3, # run 5s after previous
-				timeout = 30, # should take less than 30 seconds
-			)
+			SEND_ALERT_TO_QUEUE(CHECK="force", USER=record_owner, MESSAGE_TYPE = "DEALER_approved_dealership", **dict(app=APP_NAME, specialize=' '.join(record.specialty) , url=URL('dealer', 'auction_requests', host=True, scheme=True) ) )
 		else:
 			auth.del_membership(**membership)
 		#alert user
