@@ -13,7 +13,7 @@ OD = OrderedDict #shortcut
 import platform #check the platform web2py is running from
 #import lookup_hash
 
-####ENABLE LOGGING FOR MACs AND PCs, which are probably development environments####
+####ENABLE LOGGING FOR Macs AND PCs, which are probably development environments####
 if platform.system() in ["Darwin", "Windows"]:
 	import logging
 	logger = logging.getLogger("web2py.app.biddrive")
