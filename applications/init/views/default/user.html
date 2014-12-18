@@ -130,7 +130,8 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 				{{elif request.args(0) == "login":}}
 					{{if 'force_register' in after_login_string:}}
 						{{#logger.debug(after_login_string)}}
-						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_title="Join our dealer team" if "dealership_form" in after_login_string else "", _next=after_login_string)))}} {{#cannot use custom_title var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
+						{{new_dealers_only="Join our dealer team" if "dealership_form" in after_login_string else ""}}
+						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_title=new_dealers_only, _next=after_login_string)))}} {{#cannot use custom_title var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
 					{{pass}}
 					<div class="form-group">
 						<label class="col-sm-3 control-label">Email</label>
@@ -235,6 +236,7 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 					{{=form.custom.submit}}
 
 				{{elif request.args(0) == "register":}}
+					{{is_new_dealer= "dealership_form" in after_login_string}}
 					<div class="form-group">
 						<label class="col-sm-3 control-label">First Name</label>
 						<div class="col-sm-9">
@@ -304,9 +306,15 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 							{{pass}}
 						</div>
 					</div>
-					{{form.element("input", _type = "submit")["_value"] = "Join Us!" }}
-					{{form.element("input", _type = "submit")["_class"] += " btn-primary" }}
-					{{=form.custom.submit}}
+					<div class="row">
+						{{form.element("input", _type = "submit")["_value"] = "Join Us!" }}
+						{{form.element("input", _type = "submit")["_class"] += " btn-primary" }}
+						<div class="col-sm-3"></div>
+						<div class="col-sm-9">
+							{{if is_new_dealer:}}<a href="{{=URL('dealership_form')}}" class="btn btn-default">Already have an account?</a>{{pass}}
+							{{=form.custom.submit}}
+						</div>
+					</div>
 				{{elif request.args(0) == "reset_password":}}
 					<div class="form-group">
 						<label class="col-sm-3 control-label">New Password</label>
