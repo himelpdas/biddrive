@@ -45,29 +45,19 @@ from gluon.tools import Auth, Crud, Service, PluginManager, prettydate
 auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
-#######CUSTOM FIELDS#######
-auth_user_alerts_requires_list = [
-	["new_request", "a new vehicle request"],
-	["new_offer", "a new vehicle offer",],
-	["new_bid", "changes to an offer's price",], #also for final bid
-	["new_message", "a new message about an offer"],
-	["new_favorite", "choice of a new favorite offer"],
-	["new_winner", "choice of a winning offer"],
+
+auth.settings.register_onaccept += [
+	lambda form: SEND_ALERT_TO_QUEUE(CHECK="force", USER=db(db.auth_user.id==form.vars.id).select().last(), MESSAGE_TYPE = "GENERIC_welcome_to_biddrive", **dict(first_name=form.vars.first_name) ) ,
+	lambda form: get_alert_setting_table_for_user(form.vars.id)
 ]
-auth_user_alerts_readable_writable = True if 'profile' in request.args else False #modify only when user is in profile, otherwise force default
-auth.settings.extra_fields['auth_user']= [
-	Field('alerts', "list:string", #WHENEVER you use IS_IN_SET use list:integer!!
-		requires=IS_IN_SET(auth_user_alerts_requires_list, zero=None, multiple=True),
-		default=map(lambda each: each[0], auth_user_alerts_requires_list), #check off all by default ["new_request", new_offer, ...]
-		readable=auth_user_alerts_readable_writable, writable=auth_user_alerts_readable_writable, #IN CUSTOM FORMS, IF FIELD IS MISSING, THEN IT'LL DEFAULT TO NONE INSTEAD, NOT DEFAULT ABOVE!!
-	),
-]
+
+####Extra Fields############################
 #auth.settings.extra_fields['auth_user']= [
 #  Field('address'),
 #  Field('city'),
 #  Field('zip'),
 #  Field('phone')]
-###########################
+############################################
 
 ## create all tables needed by auth if not custom tables
 auth.define_tables(username=False, signature=False)

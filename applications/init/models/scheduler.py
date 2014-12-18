@@ -56,27 +56,16 @@ def get_alert_setting_table_for_user(USER):
 	return user_alert_setting
 			
 def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VARS):
-	"""
-		#original DRY
-		if "new_offer" in auction_request_user.alerts:
-					scheduler.queue_task(
-						send_alert_task,
-						pargs=['email', auction_request_user.email, response.render('email_alert_template.html', dict(
-							APPNAME=APP_NAME,
-							NAME = auction_request_user.first_name.capitalize(), 
-							MESSAGE = XML("%s joined your auction just moments ago! So what now?"%(my_initials,) ),
-							MESSAGE_TITLE = "A dealer submitted a %s!"%(car, ),
-							WHAT_NOW = "Say hello!",
-							INSTRUCTIONS = "You can message this or any dealer at any time during the duration of this auction.",
-							CLICK_HERE = "Go to auction",
-							CLICK_HERE_URL = URL(args=request.args, host=True, scheme=True),
-						)), "%s: A new dealer submitted a %s!"%(APP_NAME, car)],
-						retry_failed = 10,
-						period = 3, # run 5s after previous
-						timeout = 30, # should take less than 30 seconds
-					)
-		"""
 	MESSAGE_DATA = {
+		"GENERIC_welcome_to_biddrive": lambda: dict(
+			SUBJECT="Welcome to BidDrive, {first_name}!".format(**MESSAGE_VARS),
+			MESSAGE="The most efficient way to buy a car!",
+			MESSAGE_TITLE=XML("Welcome to <a href='http://www.biddrive.com'>BidDrive.com</a>"),
+			WHAT_NOW="What are you waiting for? Submit a request for the car of your dreams!",
+			INSTRUCTIONS=XML("If you're a dealer join our team <a href='http://www.biddrive.com/init/default/dealership_form/'>here</a>"),
+			CLICK_HERE="Start here!",
+			CLICK_HERE_URL="http://www.biddrive.com/",
+		),
 		"BUYER_on_new_request" : lambda: dict( #need to use lambda because not all {variables} will be available from the dealer, default, and admin controllers... a keyerror would occur
 			SUBJECT  =  "{app}: You requested a {year} {make} {model} near you!".format(**MESSAGE_VARS), 
 			MESSAGE =  "Within a {mile} mile radius of {zip}.".format(**MESSAGE_VARS), 
