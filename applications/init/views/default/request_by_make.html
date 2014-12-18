@@ -335,17 +335,15 @@
 
                     <div class="row">
                         <div class="col-xs-12">
-                            <ul class="fa-ul" style="font-size: 24px">
+                            <ul class="fa-ul">
                                 <li>
                                     <i class="fa-li fa fa-tags"></i>
                                     After you register or login, dealers will begin making offers to your auction page.
                                 </li>
-                                <li>&nbsp;</li>
                                 <li>
                                     <i class="fa-li fa fa-clock-o"></i>
                                     Dealers have 72 hours to submit bids. Feel free to communicate with the dealers.
                                 </li>
-                                <li>&nbsp;</li>
                                 <li>
                                     <i class="fa-li fa fa-car"></i>
                                     When the auction ends, select your best offer and we'll connect you with that dealer.
@@ -354,10 +352,11 @@
                         </div>
                     </div>
 
-                    <hr />
                     {{if not auth.is_logged_in():}}
                     <div class="row">
-                        <div class="col-xs-8" style="border-right: 1px solid #eee">
+                        <div class="col-xs-6 text-center" style="border-right: 1px solid #f2f2f2;">
+                            <h4>Have an account?</h4>
+                            <h5>Login to submit your order</h5>
                             <div class="form-group">
                                 {{"""}}<label for="inputEmail3" class="col-sm-2 control-label">Email</label>{{"""}}
                                 <div class="input-group col-sm-12" style="padding-left:15px; padding-right:15px">
@@ -374,15 +373,15 @@
                             </div>
                             <div class="form-group">
                                 <div class="col-sm-offset-2 col-sm-10">
-                                    <button id="submit_with_login" type="submit" class="btn btn-default pull-right">Login</button>
+                                    <button id="submit_with_login" type="submit" class="btn btn-default">Login</button>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="col-xs-4 pull-right" style="margin-top: 50px">
-                            <small style="padding-right:12px;">- OR -</small><button id ="submit_with_register" type="submit" class="btn btn-primary"> <i class="fa fa-thumbs-up"></i> Register</button>
+                        <div class="col-xs-6 text-center">
+                            <h4>New User?</h4>
+                            <h5>Register to submit your order</h5>
+                            <button id ="submit_with_register" type="submit" class="btn btn-primary"> <i class="fa fa-thumbs-up"></i> Register</button>
                         </div>
-
                     </div>
                     {{else:}}
                     <div class="row">

@@ -157,3 +157,33 @@
 hr {
     margin: 0;
 }
+
+.modal-dialog .modal-content {
+    border-radius: 0;
+}
+
+.modal-dialog .modal-title {
+    padding: 10px;
+    font-family: 'Raleway',sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 2px;
+    line-height: 1em;
+    text-transform: uppercase;
+}
+
+.modal-dialog ul li {
+    color: #686868;
+    font-family: 'Raleway',sans-serif;
+    font-size: 16px;
+    font-weight: normal;
+    line-height: 1.8em;
+    padding-bottom: 1em;
+}
+.modal-dialog ul li i {
+    padding: 4px 8px 0 0 ;
+}
+
+.modal-dialog .modal-header {
+    border-bottom: none;
+}
