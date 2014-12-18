@@ -4,10 +4,9 @@
     {{pass}}
 
     <li>
-        <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i> Profile</a>
+        <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i> {{='%s %s.'%(auth.user.first_name.capitalize(),auth.user.last_name.capitalize()[:1])}}</a>
     </li>
 
-    {{#TODO (ALEX): what is this? not sure how it works}}
     {{for each_item in response.menu:}}
         {{if len(each_item) == 4:}} {{#if/then fix for appadmin as menu items provided by appadmin controller are of different lengths than that of menu.py}}
             {{sub_items = each_item[3]}}
@@ -30,5 +29,5 @@
 {{else:}}
     <li><a href="{{=URL('default', 'user', args=['login'])}}" class="">Sign in</a></li>
     <li><a href="{{=URL('default', 'user', args=['register'])}}" class="">Sign up</a></li>
-    <li><a href="{{=URL('dealership_form', args=['force_register'])}}" class="">Dealers</a></li>
+    <li><a href="{{=URL('dealership_form', args=['force_register', 'Join our dealer team!'])}}" class="">Dealers</a></li>
 {{pass}}
