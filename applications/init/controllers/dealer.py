@@ -526,7 +526,7 @@ def auction():
 				response.message = '$Your new bid is $%s.'%form_bid_price #redirect not needed since we're dealing with POST
 				#alert buyer about lower bid from this dealer
 				bidding_dealer_name='%s %s'%(auth.user.first_name.capitalize(), auth.user.last_name.capitalize()[:1]+'.')
-				SEND_ALERT_TO_QUEUE(CHECK="on_new_bid", USER=auction_request_user, MESSAGE_TYPE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME,  dealer_name= bidding_dealer_name, car=car, is_final_bid=is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
+				SEND_ALERT_TO_QUEUE(CHECK="on_new_bid", USER=auction_request_user, MESSAGE_TYPE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME, change="finalized" if is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, is_final_bid=is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
 				#broadcast to dealers
 				session.BROADCAST_BID_ALERT=True
 				if final_message:
