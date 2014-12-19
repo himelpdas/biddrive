@@ -528,7 +528,7 @@ def auction():
 				bidding_dealer_name='%s %s'%(auth.user.first_name.capitalize(), auth.user.last_name.capitalize()[:1]+'.')
 				SEND_ALERT_TO_QUEUE(CHECK="on_new_bid", USER=auction_request_user, MESSAGE_TYPE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME, change="finalized" if is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, is_final_bid=is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
 				#broadcast to dealers
-				session.BROADCAST_BID_ALERT=True
+				session.BROADCAST_BID_ALERT=form_bid_price #also True
 				if final_message:
 					session.message2 = final_message
 				redirect(URL(args=request.args))
@@ -796,6 +796,7 @@ def auction():
 		if session.BROADCAST_WINNER_ALERT:
 			SEND_ALERT_TO_QUEUE(CHECK="on_new_winner", USER=send_to, MESSAGE_TYPE = "DEALER_on_new_winner", **dict(app=APP_NAME, is_winning_offer=is_winning_offer, buyer=auction_request_user, you_or_him='you' if is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_BID_ALERT:
+			form_bid_price = session.BROADCAST_BID_ALERT #since there is a refresh we must access from session
 			SEND_ALERT_TO_QUEUE(CHECK="on_new_bid", USER=send_to, MESSAGE_TYPE = "DEALER_on_new_bid", **dict(app=APP_NAME, price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if is_my_offer else "You", is_my_offer= is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		each_offer_dict = {
 			'id' : offer_id,
