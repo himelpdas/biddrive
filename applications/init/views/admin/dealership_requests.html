@@ -1,4 +1,4 @@
-{{extend 'page_layout.html'}}
+{{extend 'page_layout_new.html'}}
 {{"""}}
 <h3>
 	<div class="row-fluid"  style="text-align:center;">
@@ -14,7 +14,8 @@
 {{"""}}
 <h3>{{=response.title or request.function.capitalize().replace('_', ' ')}}</h3>
 <hr>
-<div style="overflow-x: auto;">
+{{#<div style="overflow-x: auto;">}}
+<div>
 	<table class="table table-stripe">
 		<thead>
 			<tr>
