@@ -37,13 +37,13 @@ def dealership_form():
 	#db.dealership_info.changed_by.readable = True
 	db.dealership_info.owner_id.readable = True
 	#db.dealership_info.owner_id.writable = True
-		
 	form = SQLFORM(db.dealership_info, record)
-	
 	if form.process().accepted:
-		membership = dict(user_id = form.vars.owner_id, role = "dealers") #user_id = form.vars.owner_id will not work unless writable set to True.
+		#form.vars.owner_id returns None for some reason maybe after web2py upgrade, will use ID from record instead
+		membership = dict(user_id = record.owner_id, role = "dealers") #user_id = form.vars.owner_id will not work unless writable set to True.
 		if form.vars.verification == "approved":
-			auth.add_membership(**membership) #unpack keyword args
+			membership_id = auth.add_membership(**membership) #unpack keyword args
+			#quickRaise(form.vars.owner_id) #testing for reason why add membership fails, turns out form.vars.owner_id stopped working possibly after web2py upgrade. Now form.vars appears to work only if writable=True.
 			#alert new dealer
 			SEND_ALERT_TO_QUEUE(CHECK="force", USER=record_owner, MESSAGE_TYPE = "DEALER_approved_dealership", **dict(app=APP_NAME, specialize=' '.join(record.specialty) , url=URL('dealer', 'auction_requests', host=True, scheme=True) ) )
 		else:

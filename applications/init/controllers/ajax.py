@@ -37,7 +37,7 @@ def vehicle_content():
 def options_content(): #TODO get all data from single call make/model/year
 	server_side_digest = hmac.new(str(hash(session.salt)), '%s%s%s%s'%(request.args[0], request.args[1], request.args[2], request.args[3])).hexdigest() #http://goo.gl/BtlcAZ #Make, Model, Year, StyleID, 4 = SESSION_ID #hmac.new("Secret Passphrase", Message);
 	client_side_digest = request.args[-1]
-	logger.debug("sEC:%s"%server_side_digest); logger.debug("cEC:%s"%client_side_digest)
+	#logger.debug("sEC:%s"%server_side_digest); logger.debug("cEC:%s"%client_side_digest)
 	if not server_side_digest == client_side_digest:
 		raise HTTP(404)
 	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
