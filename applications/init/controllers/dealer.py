@@ -312,7 +312,7 @@ def pre_auction():
 	colors = zip(auction_request.colors, auction_request.color_names, auction_request.color_categories) #OLD colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
 	exterior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "exterior", colors))
-	logger.debug(auction_request.colors)
+	#logger.debug(auction_request.colors)
 	interior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "interior", colors))
 	
 	db.auction_request_offer.exterior_color.requires = IS_IN_SET(exterior_colors, zero=None) #TODO change to allow all
