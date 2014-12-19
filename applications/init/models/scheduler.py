@@ -12,6 +12,12 @@ TWILIO_NUMBER = "(857) 453-8317"
 TWILIO_NUMBER_CALLER_ID = "1-857-453-8317"
 twilio_client = TwilioRestClient(TWILIO_SID, TWILIO_KEY)
 
+"""
+Example SMS
+sms = twilio_client.sms.messages.create(body="Jenny please?! I love you <3",
+    to="+14159352345",
+    from=TWILIO_NUMBER_CALLER_ID)
+"""
 
 #http://goo.gl/L05FHS
 #http://goo.gl/An6V4P
@@ -44,6 +50,11 @@ def send_email_task(contact, message, subject = None):
 		)
 		return sent
 	return False
+	
+def send_sms_task(contact, shortmessage):
+	sms = twilio_client.sms.messages.create(body=shortmessage,
+	to=contact,
+	from_=TWILIO_NUMBER_CALLER_ID)
 	
 	
 scheduler = Scheduler(db) #from gluon.scheduler import Scheduler
@@ -94,7 +105,7 @@ def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VA
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_offer" : lambda: dict(
-			SUBJECT  =  "{app}: {you_or_he} submitted a {car} in auction {aid}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app}: {you_or_he} submitted a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{you_or_he} joined auction {aid} just moments ago! So what now?".format(**MESSAGE_VARS),
 			MESSAGE_TITLE = XML("{you_or_he} submitted a <i>{car}</i>!".format(**MESSAGE_VARS)),
 			WHAT_NOW = "Compare offers from other dealers and adjust your price!",
@@ -150,7 +161,7 @@ def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VA
 		"DEALER_on_new_favorite" : lambda: dict(
 			SUBJECT  =  "{app}: A new favorite was chosen for a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("The buyer for a <i>{car}</i> picked <b>{you_or_him}</b> as the favorite! So what now?".format(**MESSAGE_VARS)),
-			MESSAGE_TITLE = "{buyer} picked a new favorite!",
+			MESSAGE_TITLE = "{buyer} picked a new favorite!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Act fast!" if not MESSAGE_VARS['is_favorite'] else 'Keep it up!',
 			INSTRUCTIONS = "Make a better offer to convince the buyer that your vehicle is the best deal!" if not MESSAGE_VARS['is_favorite'] else 'But stay alert for competing offers that may convince the buyer to have a change of mind!',
 			CLICK_HERE = "Go to auction",
@@ -175,9 +186,9 @@ def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VA
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_bid" : lambda: dict(
-			SUBJECT  =  "{app}: {dealer} lowered the {car}'s bid price to ${price}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app}: {dealer} lowered the {car} bid price to ${price}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("A dealer lowered the price for the <i>{car}</i>!".format(**MESSAGE_VARS)),
-			MESSAGE_TITLE = "{dealer} lowered the {car}'s bid price to ${price}!".format(**MESSAGE_VARS),
+			MESSAGE_TITLE = "{dealer} lowered the {car} bid price to ${price}!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Other dealers have been alerted as well!",
 			INSTRUCTIONS = "Make sure you look at other offers and adjust your bid price carefully.",
 			CLICK_HERE = "Go to auction",
@@ -200,3 +211,11 @@ def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VA
 			period = 3, # run 5s after previous
 			timeout = 30, # should take less than 30 seconds
 		)
+		if user_alert_setting["SMS_enabled"] and "DEALER" in MESSAGE_TYPE: #TEMP latter will make sure it's a dealer #TODO add phone number to registration itself.
+			#TODO send_to_number = USER.mobile_phone_number
+			tel_number = db(db.dealership_info.owner_id == USER.id).select().last().phone #just get dealer's number for now
+			scheduler.queue_task(
+				send_sms_task,
+				pargs=[tel_number, MESSAGE_DATA[MESSAGE_TYPE]()["SUBJECT"]],
+				retry_failed = 5, period = 2, timeout = 10, #less important
+			)
