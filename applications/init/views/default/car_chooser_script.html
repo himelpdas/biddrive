@@ -26,8 +26,7 @@
     $('#{{=each_brand}}_switch').click(function(evt){
 
         $("#switch_selected_icon").remove(); $(this).prepend('<i id="switch_selected_icon" class="fa fa-fw fa-arrow-right"></i>'); //remove and add icon
-        $('#mainbox').removeClass('col-sm-offset-3 backdrop');
-        $('#mainrow').addClass('backdrop', 700);
+        $('#mainbox').removeClass('col-sm-offset-3'); <!--{{#jquery UI transition possible via add/removeClass('class', 999)}}-->
         $('#sidebox')
                 .html('<div id="loading_spinner" class="absolute-center"><big style="font-size:25px">Searching latest vehicles...</big><i class="fa fa-spinner fa-5x fa-spin"></i></div>')
                 .show()

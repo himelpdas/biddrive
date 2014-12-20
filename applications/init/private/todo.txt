@@ -1,22 +1,25 @@
 *Todo
 dont allow more than one auction request at a time
 add more tooltips to everything
-fix progress bar to allow more than one word
 add pagination to auction_request
 make auction page more responsive
 cache auction requests
-add interior colors (big job)
-change must_haves to features
 negative credits message 
 Use rare color hex to hack a "question mark" icon over a swatch of unknown color
-
+allow N/A for interior/exterior colors
+bring sms alerts to buyers, add number field to registration
+add "are you sure?" modals to auction page
 
 *Optional
 add twilio verification in page 2
-add text message alerts
 calculate msrp in page 2
 
 *Complete
+jquery ui tooltips not showing
+add text message alerts
+change must_haves to features
+fix progress bar to allow more than one word
+add interior colors (big job)
 add are you sure modals to favorite and winner
 show grid fields in reverse
 multiple brand filtering in auction requests 

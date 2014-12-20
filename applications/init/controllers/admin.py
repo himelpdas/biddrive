@@ -213,15 +213,14 @@ def manage_offers():
 	query = db.auction_request_offer
 	links = [		
 		dict(header='Auction',body=lambda row: A('Show%s'% (' auction' if 'auction_request_offer' in request.args else ''),_href=URL('admin','manage_auctions', args=[row.auction_request] ) ) ), 
-		dict(header='Winning offer',body=lambda row: A('Show%s'% (' offer' if 'auction_request_offer' in request.args else ''),_href=URL('admin','manage_winning_offer', args=[row.auction_request] ) ) ), 
+		dict(header='Winning offer',body=lambda row: A('Show%s'% (' winning offer' if 'auction_request_offer' in request.args else ''),_href=URL('admin','manage_winning_offer', args=[row.auction_request] ) ) ), 
 	]
 	
-	options_prefixes = ['interior', 'exterior', 'mechanical', 'package', 'fees', 'safety']
-	for each_prefix in options_prefixes:
-		db.auction_request_offer['%s_options_names'%each_prefix].readable = True
-		db.auction_request_offer['%s_options_names'%each_prefix].writable = False #even though it's handled in models_edmunds do it again anyway
-		db.auction_request_offer['%s_options'%each_prefix].readable = False
-		db.auction_request_offer['%s_options'%each_prefix].writable = False
+	#options_prefixes = ['interior', 'exterior', 'mechanical', 'package', 'fees', 'safety']
+	db.auction_request_offer['option_names'].readable = True
+	db.auction_request_offer['option_names'].writable = False #even though it's handled in models_edmunds do it again anyway
+	db.auction_request_offer['options'].readable = False
+	db.auction_request_offer['options'].writable = False
 	db.auction_request_offer.exterior_color.readable = False
 	db.auction_request_offer.exterior_color.writable = False
 	db.auction_request_offer.exterior_color_name.readable = True

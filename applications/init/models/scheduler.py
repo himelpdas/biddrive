@@ -52,9 +52,11 @@ def send_email_task(contact, message, subject = None):
 	return False
 	
 def send_sms_task(contact, shortmessage):
-	sms = twilio_client.sms.messages.create(body=shortmessage,
-	to=contact,
-	from_=TWILIO_NUMBER_CALLER_ID)
+	if not IS_MATCH('^1?((-)\d{3}-?|\(\d{3}\))\d{3}-?\d{4}$',)(contact)[1]: #check if phone number
+		sms = twilio_client.sms.messages.create(body=shortmessage,
+		to=contact,
+		from_=TWILIO_NUMBER_CALLER_ID)
+	return False
 	
 	
 scheduler = Scheduler(db) #from gluon.scheduler import Scheduler

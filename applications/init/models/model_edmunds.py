@@ -1,7 +1,6 @@
 #do caching and db stuff here!
 
 #json.loads(fetch(URI)), #equivalent to urllib.urlopen(URI).read()
-
 #####GENERATE BRANDSLIST#####
 all_brands_list = OD() #TEMP
 for each_year in YEAR_RANGE:

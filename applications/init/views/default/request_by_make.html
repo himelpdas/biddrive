@@ -60,7 +60,7 @@
                         <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
 
                             <div class="form-group">
-                                <label for="{{=form.custom.widget.trim['_id']}}" class="col-sm-3 control-label">Trim <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title='Select the TRIM of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a trim that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
+                                <label for="{{=form.custom.widget.trim['_id']}}" class="col-sm-3 control-label">Trim <i class="fa fa-question-circle" title='Select the TRIM of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a trim that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.trim}}
 
@@ -71,7 +71,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="{{=form.custom.widget.colors['_id']}}" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select at least one interior AND one exterior style or color you want your vehicle to have."></i></label>
+                                <label for="{{=form.custom.widget.colors['_id']}}" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors <i class="fa fa-question-circle" title="Select at least one interior AND one exterior style or color you want your vehicle to have."></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.colors}}{{#logger.debug(form.errors['colors'])}}
                                     {{if form.errors['colors']:}}
@@ -81,7 +81,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="{{=form.custom.widget.options['_id']}}" class="col-sm-3 control-label"><i id="options_spinner" class="fa fa-spin options_spinner"></i> Options <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="top" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
+                                <label for="{{=form.custom.widget.options['_id']}}" class="col-sm-3 control-label"><i id="options_spinner" class="fa fa-spin options_spinner"></i> Options <i class="fa fa-question-circle" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.options}}
 

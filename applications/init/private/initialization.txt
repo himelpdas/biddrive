@@ -23,6 +23,7 @@ create an account
 login to appadmin
 upload zipgeo.csv
 add new account to admins and dealers memberships
+for email/sms: nohup python  web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8889
 
 --------
 ####useful tools####

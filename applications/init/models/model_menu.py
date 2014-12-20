@@ -44,11 +44,16 @@ if AUTH_ADMIN:
 			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage dealers'), False, URL('admin', 'manage_dealers'), []),
 		]),
 	)
-# if not session.last_auction_visited else URL('dealer', 'auction', args=[session.last_auction_visited]
+
+if AUTH_DEALER:
+	AUCTION_REQUESTS_URL = URL('dealer', 'auction_requests',
+							vars=dict(year=None, sortby="newest", multiple = '|'.join(db(db.dealership_info.owner_id == auth.user.id).select().last().specialty) ), 
+						)
+else:
+	AUCTION_REQUESTS_URL=None
+
 dealer_portal_menu_list=[
-		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, URL('dealer', 'auction_requests',
-			vars=dict(year=None, sortby="newest", multiple = '|'.join(db(db.dealership_info.owner_id == auth.user.id).select().last().specialty) ),
-		), []),
+		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, AUCTION_REQUESTS_URL, []),
 		(XML('<i class="fa fa-fw fa-info-circle"></i> Dealership info'), False, URL('dealer', 'dealer_info'), []),
 		#(T('Messages'), False, URL('dealer', 'messages'), []),
 		#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
@@ -63,7 +68,3 @@ if (not auth.user) or (AUTH_DEALER or AUTH_ADMIN): #non-buyers and visitors only
 	response.menu.append(
 		(T( 'Dealer%s'%('s' if not auth.user else ' Portal') ), False, URL('dealer', 'auction_requests'), dealer_portal_menu_list),
 	)
-"""
-if not auth.user:
-	response.menu.append((XML(;<button class="btn btn-default btn-xs navbar-btn"><i class="fa fa-fw fa-star"></i> Register</button>'), False, URL('default', 'user', args=['register'] ), []))
-"""

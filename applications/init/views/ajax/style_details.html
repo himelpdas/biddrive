@@ -9,7 +9,7 @@
 			{{if each_stat == 'savings':}}
                 <span style="color: green">{{=stats[each_stat][1]}}</span>
 			{{elif each_stat == 'estimate':}}
-					{{=stats[each_stat][1]}} <i class="fa fa-question-circle" rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="Based on base MSRP and average percent discount saved by actual {{=APP_NAME}} users."></i>
+					{{=stats[each_stat][1]}} <i class="fa fa-question-circle" title="Based on base MSRP and average percent discount saved by actual {{=APP_NAME}} users."></i>
 			{{else:}}
 				{{=stats[each_stat][1]}}
 			{{pass}}
@@ -38,18 +38,18 @@
                 Interior Colors:
                     <br/>
                     {{for each_swatch in details[each_stat][1]:}}
-                    {{if each_swatch[4] == 'interior':}}
-                    <i class="fa fa-square" rel="tooltip" style="color:#{{=each_swatch[2]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding:0 4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_swatch[1]}}"></i>
-                    {{pass}}
+						{{if each_swatch[4] == 'interior':}}
+							{{=COLOR_SWATCH(each_swatch[2],each_swatch[1])}}
+						{{pass}}
                     {{pass}}
                 </div>
                 <div class="col-xs-7">
                 Exterior Colors:
                     <br/>
                     {{for each_swatch in details[each_stat][1]:}}
-                    {{if each_swatch[4] == 'exterior':}}
-                    <i class="fa fa-square" rel="tooltip" style="color:#{{=each_swatch[2]}}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black; padding-right:4px;" data-toggle="tooltip" data-placement="bottom" title="{{=each_swatch[1]}}"></i>
-                    {{pass}}
+						{{if each_swatch[4] == 'exterior':}}
+							{{=COLOR_SWATCH(each_swatch[2],each_swatch[1])}}
+						{{pass}}
                     {{pass}}
                 </div>
             {{pass}}

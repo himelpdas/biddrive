@@ -35,7 +35,7 @@ def auction_requests():
 	#brands_list = dict([[each_niceName , brands_list[each_niceName]] for each_niceName in dealer_specialty]) #niceName, name #HACK - limit the brandslist to only whats in the dealer's speciality
 	brands_list = OD(sorted(brands_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
 		
-	multiple = request.vars['multiple'].split("|") if request.vars['multiple'] else []
+	multiple = request.vars['multiple'].split("|") if request.vars['multiple'] else brands_list.keys() #if multiple not in vars, that means "show all" makes has been selected
 	models_list = {}
 	if all(map(lambda make: make in brands_list, multiple)): #TEMP
 		query &= db.auction_request.make.belongs(multiple) #old method below resulted in OR of auction_expires >= request.now, resulting in expired auction_requests to show
