@@ -9,7 +9,6 @@ Use rare color hex to hack a "question mark" icon over a swatch of unknown color
 allow N/A for interior/exterior colors
 bring sms alerts to buyers, add number field to registration
 add "are you sure?" modals to auction page
-enforce 24 hour winner selection period
 
 *Optional
 add twilio verification in page 2
@@ -45,6 +44,7 @@ create an admin interface that allows safe addition and deletion of rows from im
 alert dealer of certain specialty and radius when theres a new auction request
 allow messaging DURING final offer
 a stats messege in blank auction requests
+remeberme is None on 2.9.11
 
 *Not needed
 add balance history to dealer buy credits page (let paypal handle that)
@@ -54,5 +54,7 @@ alert dealer through call and text when he is accepted to biddrive.
 *Ongoing
 Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of simple_color_names with color_pref in auction request, but this is unlikely.
 
-nohup python  web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8889
-killall python
+mysql
+
+mysql.biddrive.com
+himdas ekFh2E4t4VKF

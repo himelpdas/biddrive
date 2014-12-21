@@ -11,8 +11,10 @@
 
 if not request.env.web2py_runtime_gae:
     ## if NOT running on Google App Engine use SQLite or other DB
-
-    db = DAL('sqlite://storage18.sqlite',pool_size=1, adapter_args=dict(foreign_keys=False),) #check_reserved=['all']) #http://bit.ly/1fkDk3w
+	if platform.system() in ["Darwin", "Windows"]:
+		db = DAL('sqlite://storage18.sqlite',pool_size=1, adapter_args=dict(foreign_keys=False),) #check_reserved=['all']) #http://bit.ly/1fkDk3w
+	else: #db = DAL('mysql://<mysql_user>:<mysql_password>@localhost/<mysql_database>')
+		db = DAL('mysql://himdas:ekFh2E4t4VKF@mysql.biddrive.com/biddrive', migrate_enabled=False) #http://goo.gl/g7cXti #PROBLEMS FIXED BY SETTING migrate_enabled=False AND VISITING DB ADMIN INTERFACE
 else:
     ## connect to Google BigTable (optional 'google:datastore://namespace')
     db = DAL('google:datastore')

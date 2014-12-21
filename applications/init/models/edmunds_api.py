@@ -7,7 +7,7 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 	URI = repr(URI)
 	def disk():
 		backup_cache = cache.disk
-		if platform.system() == "Darwin": #disable disk cache on Macs #disk cache doesn't play well across all local development environments, particularly macs #http://stackoverflow.com/questions/1854/python-what-os-am-i-running-on
+		if platform.system() in ["Darwin", "Windows"]: #disable disk cache on Macs #disk cache doesn't play well across all local development environments, particularly macs #http://stackoverflow.com/questions/1854/python-what-os-am-i-running-on #Problems with windows too on 2.9.11
 			backup_cache = cache.ram #so just use ram cache longer instead
 		#response = cache.disk(
 		response = backup_cache(	
