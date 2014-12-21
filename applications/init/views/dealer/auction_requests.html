@@ -173,7 +173,7 @@
 					<td>
 						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"  title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a>
 
-						<a class="btn btn-default btn-sm btn-action" style="margin-top:3px"  data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" title="{{=each_request.auth_user.first_name[:1]}}. {{=each_request.auth_user.last_name}}">Info<i class="fa fa-fw fa-user"></i></a>
+						<a class="btn btn-default btn-sm btn-action" style="margin-top:3px"  data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" title="{{=each_request.auth_user.first_name}} {{=each_request.auth_user.last_name[:1]}}.">Info<i class="fa fa-fw fa-user"></i></a>
 
 						<div class="modal fade" id="modal_{{=each_request.auction_request.id}}">
 							<div class="modal-dialog">
@@ -190,7 +190,7 @@
 												</th>
 
 												<td style="border-top: none">
-													{{=each_request.auth_user.first_name[:1]}}. {{=each_request.auth_user.last_name}}
+													{{=each_request.auth_user.first_name}} {{=each_request.auth_user.last_name[:1]}}
 												</td>
 											</tr>
 

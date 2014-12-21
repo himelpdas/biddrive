@@ -9,6 +9,7 @@ Use rare color hex to hack a "question mark" icon over a swatch of unknown color
 allow N/A for interior/exterior colors
 bring sms alerts to buyers, add number field to registration
 add "are you sure?" modals to auction page
+enforce 24 hour winner selection period
 
 *Optional
 add twilio verification in page 2
