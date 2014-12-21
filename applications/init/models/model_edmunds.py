@@ -675,7 +675,7 @@ db.define_table('auction_request_winning_offer',
 	Field('winner_code',
 		readable=False,
 		writable=False,
-		unique = True, #UNCOMMENT IN PRODUCTION
+		unique = True, length=255, #length=255 needed in mysql #UNCOMMENT IN PRODUCTION
 	),
 	Field('contact_made', 'boolean',
 		default=False,
