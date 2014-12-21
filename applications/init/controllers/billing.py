@@ -50,7 +50,7 @@ def paypal_return():
 				db.credits.insert(owner_id=auth.user_id, credits = session.purchase['credits'])
 			else:
 				my_credits.update_record(credits = my_credits['credits'] + session.purchase['credits'])
-				db.credits_history.insert(change=session.purchase['credits'], owner_id=auth.user_id, reason="Purchase")
+				db.credits_history.insert(changed = session.purchase['credits'], owner_id=auth.user_id, reason="Purchase")
 			session.purchase = None #successful payment so remove purchase session
 			session.message2 = "$Payment [%s] made successfully"%(payment.id)
 		else:

@@ -49,7 +49,7 @@ db.define_table("credit_orders",
 )
 
 db.define_table('credits_history',
-	Field("change", 'integer',
+	Field("changed", 'integer', #change is a reserved keyword, changed to changed #Field("change", 'integer',
 		required=True,
 	),	
 	Field("reason",

@@ -289,7 +289,7 @@ def dealership_form():
 		if form.process().accepted:
 			#email alert to admin
 			db.credits.insert(owner_id=auth.user_id, credits = INTRODUCTORY_CREDITS) #create a record for this dealers credit balance
-			db.credits_history.insert(change= INTRODUCTORY_CREDITS, owner_id=auth.user_id, reason="Welcome :)")
+			db.credits_history.insert(changed = INTRODUCTORY_CREDITS, owner_id=auth.user_id, reason="Welcome :)")
 			response.message = '$Form accepted. Please wait a few days for our response!'
 	elif AUTH_DEALER:
 		redirect(URL('dealer','auction_requests'))

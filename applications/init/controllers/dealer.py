@@ -336,7 +336,7 @@ def pre_auction():
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
 			my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
-			db.credits_history.insert(change= -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
+			db.credits_history.insert(changed = -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
 			auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
 			#####send a messages to all involved in this auction#####
 			auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries

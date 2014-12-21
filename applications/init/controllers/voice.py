@@ -129,7 +129,7 @@ def screen_for_machine():
 		#collect money
 		winners_piggy = db(db.credits.owner_id==winning_offer.owner_id).select().last()
 		winners_piggy.update_record( credits = winners_piggy.credits - CREDITS_PER_SUCCESS) #remove one credit
-		db.credits_history.insert(change= -CREDITS_PER_SUCCESS, owner_id=winning_offer.owner_id, reason="Success fee", modified_by=winning_offer.owner_id)
+		db.credits_history.insert(changed = -CREDITS_PER_SUCCESS, owner_id=winning_offer.owner_id, reason="Success fee", modified_by=winning_offer.owner_id)
 		resp.say("Connecting. ")
 	else:
 		resp.say("Goodbye. ") #IF POUND PRESSED ACTION WILL NOT BE CALLED!
