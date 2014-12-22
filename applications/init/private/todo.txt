@@ -45,6 +45,7 @@ alert dealer of certain specialty and radius when theres a new auction request
 allow messaging DURING final offer
 a stats messege in blank auction requests
 remeberme is None on 2.9.11
+cache leak, seems to get to 2gb!! -fixed in 2.9.11
 
 *Not needed
 add balance history to dealer buy credits page (let paypal handle that)

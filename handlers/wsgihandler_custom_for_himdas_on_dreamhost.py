@@ -35,7 +35,7 @@ if not os.path.isdir('applications'):
 
 sys.path = [path] + [p for p in sys.path if not p == path]
 
-sys.stdout = sys.stderr
+#sys.stdout = sys.stderr #comment out as this causes problems in dreamhost
 
 import gluon.main
 
