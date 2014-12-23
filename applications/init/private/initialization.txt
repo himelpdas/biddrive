@@ -14,6 +14,7 @@ simplecolor (custom module)
 note pythonanywhere has most modules built in, but since this is technically a shared host you can't use pip to install to root python installation
 therefore python anywhere allows installation in a local directory pip install --user
 sometimes a local pip installation might not manifest immediatley, therefore you should restart the server, if that doesn't work see if running the local web2py.py webserver does the trick.
+
 --------
 ####setting up site####
 
@@ -29,14 +30,21 @@ for email/sms: nohup python  web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8
 ####useful tools####
 
 #to run rocket server locally (assumes linux)
-python web2py.py -a password -i 127.0.0.1 -p 8888
+python web2py.py -a password -i 127.0.0.1 -p 8889
+
 #to start up scheduler background process (nohup means no heads up, meaning you can close ssh/shell connection and it'll stay on
-nohup python web2py.py -K init -X -a password -i 127.0.0.1 -p 8889
+nohup python web2py.py -K init -X -a password -i 127.0.0.1 -p 8888
+
+#to ensure this process runs all the time, put this in crontab every 6 hours without locking... Note the local python binary, as this is where our custom python is, and will avoid import errors from using the system python, since crontab doesn't respect bash_rc:
+cd biddrive.com && killall python && nohup ~/python/bin/python web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8888
+
 #to start shell with models
 python web2py -S init -M
-#when having cache problems (look for words like "shelve" in traceback) with cache start shell
+
+#when having cache problems (look for words like "shelve" in traceback) with cache start shell #shelve no longer used in 2.9.11
 >>>cache.ram.clear()
 >>>cache.disk.clear()
+
 --------
 ####test commits/push here####
 

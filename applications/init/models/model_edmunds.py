@@ -187,7 +187,7 @@ db.define_table('auction_request',
 	Field('trim', #change to trim_choice #trim and style are the same
 		requires=IS_NOT_EMPTY(),
 	),	
-	Field('trim_data', #maybe get rid of this field.
+	Field('trim_data', 'text', #Must be text or blob (65,535) or else 512 character limit in MYSQL (char). Don't use blob because padding error will occur if previous string data in row, blobs are good for binaries.
 		required=True, #prevents None insertions! since compute is runned on insertion/update it may be possible that a failed update will result in a None. This can happen when edmunds cache fails and returns None
 		readable=False,
 		writable=False,
