@@ -1,4 +1,4 @@
- {{extend 'page_layout.html'}}
+ {{extend 'page_layout_new.html'}}
  {{#BEAUTIFY(response._vars)}}
  <h3><i class="fa fa-fw fa-info-circle"></i> {{=heading}}</h3>
  <hr>
@@ -6,7 +6,7 @@
 {{ form.element("input", _name = "dealership_name")["_class"] += " form-control" }}
 {{ form.element("select", _name = "specialty")["_class"] += " form-control" }}
 {{ form.element("textarea", _name = "mission_statement")["_class"] += " form-control" }}
-{{ form.element("input", _name = "phone")["_class"] += " form-control" }}
+{{ form.element("input", _name = "office_phone")["_class"] += " form-control" }}
 {{ form.element("input", _name = "address_line_1")["_class"] += " form-control" }}
 {{ form.element("input", _name = "address_line_2")["_class"] += " form-control" }}
 {{ form.element("input", _name = "city")["_class"] += " form-control" }}
@@ -67,12 +67,12 @@
 		</div>
 
 		<div class="form-group">
-			<label class="col-sm-3 control-label">Phone</label>
+			<label class="col-sm-3 control-label">Office phone</label>
 			<div class="col-sm-9">
-				{{=form.custom.widget.phone}}
+				{{=form.custom.widget.office_phone}}
 
-				{{if form.errors['phone']:}}
-					<div class="alert alert-warning">{{=form.errors['phone']}}</div>
+				{{if form.errors['office_phone']:}}
+					<div class="alert alert-warning">{{=form.errors['office_phone']}}</div>
 				{{pass}}
 			</div>
 		</div>
@@ -314,7 +314,7 @@
 </div>
 {{=form.custom.end}}
  <script>
-	$("#dealership_info_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
+	$("#dealership_info_office_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
  </script>
  <script>
 	function resize_bootstrap_multiselect(){

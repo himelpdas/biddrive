@@ -1,4 +1,4 @@
-{{extend 'page_layout.html'}}
+{{extend 'page_layout_new.html'}}
 
 <h3><i class="fa fa-user"></i> {{=request.vars.custom_title or T( request.args(0).replace('_',' ').capitalize() )}}</h3>
 <hr>
@@ -36,7 +36,7 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 {{elif request.args(0)=='change_password':}}
     web2py_validate_entropy($('#no_table_new_password'),100);
 {{pass}}
-//--></script>
+</script>-->
 {{"""}}
 {{if not request.args(0) == "not_authorized":}} {{#form stuff}}
 	{{#global}}
@@ -45,6 +45,9 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 	{{pass}}
 	{{for el in form.elements(_type = "password"):}}
 		{{el["_class"] += " form-control" }}
+	{{pass}}	
+	{{for el in form.elements(_type = "checkbox"):}}
+		{{el["_style"] = " margin-top: 10px; margin-left: 15px;" }}
 	{{pass}}
 	{{form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
 	
@@ -85,6 +88,19 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 					</div>
 					
 					<div class="form-group">
+						<label class="col-sm-3 control-label">Email alerts</label>
+						<div class="col-sm-9">
+							<div class="input-group margin-bottom-sm">
+								{{=form.custom.widget.enable_email_alerts}}
+							</div>
+
+							{{if form.errors['enable_email_alerts']:}}
+								<div class="alert alert-warning">{{=form.errors['enable_email_alerts']}}</div>
+							{{pass}}
+						</div>
+					</div>
+					
+					<div class="form-group">
 						<label class="col-sm-3 control-label">Email</label>
 						<div class="col-sm-9">
 							<div class="input-group margin-bottom-sm">
@@ -99,19 +115,33 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 					</div>
 					
 					<div class="form-group">
-						<label class="col-sm-3 control-label">Email me on</label>
+						<label class="col-sm-3 control-label">SMS alerts <i class="fa fa-question-circle"  title="Your carrier may charge fees."></i></label>
 						<div class="col-sm-9">
 							<div class="input-group margin-bottom-sm">
-								{{=form.custom.widget.alerts}}
+								{{=form.custom.widget.enable_sms_alerts}}
 							</div>
 
-							{{if form.errors['alerts']:}}
-								<div class="alert alert-warning">{{=form.errors['alerts']}}</div>
+							{{if form.errors['enable_sms_alerts']:}}
+								<div class="alert alert-warning">{{=form.errors['enable_sms_alerts']}}</div>
 							{{pass}}
 						</div>
 					</div>
+					
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Mobile phone</label>
+						<div class="col-sm-9">
+							<div class="input-group margin-bottom-sm">
+								<span class="input-group-addon"><i class="glyphicon glyphicon-phone fa-fw"></i></span>
+								{{=form.custom.widget.mobile_phone}}
+							</div>
 
-				 <script>
+							{{if form.errors['mobile_phone']:}}
+								<div class="alert alert-warning">{{=form.errors['mobile_phone']}}</div>
+							{{pass}}
+						</div>
+					</div>
+<!--{{"""}}
+				<script>
 					function resize_bootstrap_multiselect(){
                         $('.multiselect').css({
 							'width':$("#auth_user_email").parent().width()
@@ -125,6 +155,7 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 						resize_bootstrap_multiselect(); //{{#http://goo.gl/dh1z2}}
 					});
 				</script>
+{{"""}}-->
 					{{=form.custom.submit}}
 
 				{{elif request.args(0) == "login":}}
@@ -164,7 +195,7 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 					<div class="form-group">
 						<label class="col-sm-3 control-label">Remember me</label>
 						<div class="col-sm-9">
-							{{=form.element('input#auth_user_remember')}} {{#http://goo.gl/gfoKbq}}
+							{{=form.element('input#auth_user_remember_me')}} {{#http://goo.gl/gfoKbq http://goo.gl/KGiWWL}}
 						</div>
 					</div>
 
@@ -278,6 +309,20 @@ $("#web2py_user_form input:visible:enabled:first").focus();
 							{{pass}}
 						</div>
 					</div>
+					
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Mobile phone</label>
+						<div class="col-sm-9">
+							<div class="input-group margin-bottom-sm">
+								<span class="input-group-addon"><i class="glyphicon glyphicon-phone fa-fw"></i></span>
+								{{=form.custom.widget.mobile_phone}}
+							</div>
+
+							{{if form.errors['mobile_phone']:}}
+								<div class="alert alert-warning">{{=form.errors['mobile_phone']}}</div>
+							{{pass}}
+						</div>
+					</div>
 
 					<div class="form-group">
 						<label class="col-sm-3 control-label">Password</label>
@@ -356,7 +401,11 @@ $("#web2py_user_form input:visible:enabled:first").focus();
         $('form').attr({"class":"form-horizontal"}); {{#add horizontal Class to form tag as it cant be done via controller due to auth not sqlform}}
         $('.error').hide(); {{#hide Default web2py error behavior}}
 	</script>
+	<!--{{#mask/validate to us phone}}-->
+	<script>
+		$("#auth_user_mobile_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
+	</script>
     {{end}}
 {{else:}}
-<h3>Sorry, either you were inactive or you're not authorized to view this page.</h3>
+	<h3>Sorry, either you were inactive or you're not authorized to view this page.</h3>
 {{pass}}

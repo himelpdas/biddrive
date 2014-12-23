@@ -347,10 +347,10 @@ def pre_auction():
 				send_to = each_offer.auth_user
 				this_dealer_initials='%s %s'%(send_to.first_name.capitalize(), send_to.last_name.capitalize()[:1]+'.')
 				is_my_offer = me.id == send_to.id #since I'm the one submitting and it's my offer
-				SEND_ALERT_TO_QUEUE(CHECK="on_new_offer", USER=send_to, MESSAGE_TYPE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he="You" if is_my_offer else this_dealer_initials, url=URL(args=request.args, host=True, scheme=True) ) )
+				SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he="You" if is_my_offer else this_dealer_initials, url=URL(args=request.args, host=True, scheme=True) ) )
 			
 			my_initials='%s %s'%(me.first_name.capitalize(), me.last_name.capitalize()[:1]+'.')
-			SEND_ALERT_TO_QUEUE(CHECK="on_new_offer", USER=auction_request_user, MESSAGE_TYPE = "BUYER_on_new_offer", **dict(app=APP_NAME, car=car, dealer_name = my_initials, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_offer", **dict(app=APP_NAME, car=car, dealer_name = my_initials, url=URL(args=request.args, host=True, scheme=True) ) )
 
 		session.message = '$Your vehicle was submitted!'
 		redirect(
@@ -526,7 +526,7 @@ def auction():
 				response.message = '$Your new bid is $%s.'%form_bid_price #redirect not needed since we're dealing with POST
 				#alert buyer about lower bid from this dealer
 				bidding_dealer_name='%s %s'%(auth.user.first_name.capitalize(), auth.user.last_name.capitalize()[:1]+'.')
-				SEND_ALERT_TO_QUEUE(CHECK="on_new_bid", USER=auction_request_user, MESSAGE_TYPE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME, change="finalized" if is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, is_final_bid=is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
+				SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME, change="finalized" if is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, is_final_bid=is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
 				#broadcast to dealers
 				session.BROADCAST_BID_ALERT=form_bid_price #also True
 				if final_message:
@@ -539,7 +539,7 @@ def auction():
 			if my_message_form_dealer.process().accepted: #EMAILALERT
 				response.message = '$Your message was submitted to the buyer.'
 				me = auth.user
-				SEND_ALERT_TO_QUEUE(CHECK="on_recieve_message", USER=auction_request_user, MESSAGE_TYPE = "BUYER_on_recieve_message", **dict(app=APP_NAME, car=car, he=me.first_name.capitalize(), message=my_message_form_dealer.vars.message, url=URL(args=request.args, host=True, scheme=True) ) )
+				SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_recieve_message", **dict(app=APP_NAME, car=car, he=me.first_name.capitalize(), message=my_message_form_dealer.vars.message, url=URL(args=request.args, host=True, scheme=True) ) )
 			elif my_message_form_dealer.errors:
 				response.message = '!Your message had errors. Please fix!'
 	
@@ -727,7 +727,7 @@ def auction():
 					response.message = '$Your message was submitted to the dealer.'
 					me_buyer = auth.user
 					send_to_dealer = each_offer.auth_user
-					SEND_ALERT_TO_QUEUE(CHECK="on_recieve_message", USER=send_to_dealer, MESSAGE_TYPE = "DEALER_on_recieve_message", **dict(app= APP_NAME, he=me_buyer.first_name.capitalize(), message=my_message_form_buyer.vars.message, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+					SEND_ALERT_TO_QUEUE(USER=send_to_dealer, MESSAGE_TEMPLATE = "DEALER_on_recieve_message", **dict(app= APP_NAME, he=me_buyer.first_name.capitalize(), message=my_message_form_buyer.vars.message, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 				elif my_message_form_buyer.errors:
 					response.message = '!Your message had errors. Please fix!'
 			#winner insert stuff
@@ -739,7 +739,7 @@ def auction():
 					a_winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice, winner_code=winner_code)#insert new winner
 					is_winning_offer=True #now make it true
 					session.BROADCAST_WINNER_ALERT=True
-					SEND_ALERT_TO_QUEUE(CHECK="on_new_winner", USER=auction_request_user, MESSAGE_TYPE = "DEALER_on_new_winner", **dict(app= APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+					SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app= APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 					#session.BROADCAST_WINNER_ALERT = True
 					#session.message = "$All dealers will be alerted about your new favorite!"
 				else:
@@ -769,7 +769,7 @@ def auction():
 					session.BROADCAST_FAVORITE_ALERT = True #To be handled after page reload
 					session.message = "$All dealers will be alerted about your new favorite!"
 					send_to_buyer = auction_request_user
-					SEND_ALERT_TO_QUEUE(CHECK="on_new_favorite", USER=send_to_buyer, MESSAGE_TYPE = "BUYER_on_new_favorite", **dict(app=APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+					SEND_ALERT_TO_QUEUE(USER=send_to_buyer, MESSAGE_TEMPLATE = "BUYER_on_new_favorite", **dict(app=APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 				redirect(URL(args=request.args)) #get rid of vars
 		#response messaging stuff
 		if not is_owner and is_my_offer:#if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer. do same with dealer via is_my_offer
@@ -792,12 +792,12 @@ def auction():
 		send_to = each_offer.auth_user #each offer in this auction will get an email if conditions are met
 		this_dealer_name='%s %s'%(send_to.first_name.capitalize(), send_to.last_name.capitalize()[:1]+'.')
 		if session.BROADCAST_FAVORITE_ALERT:
-			SEND_ALERT_TO_QUEUE(CHECK="on_new_favorite", USER=send_to, MESSAGE_TYPE = "DEALER_on_new_favorite", **dict(app=APP_NAME, is_favorite=is_favorite, buyer=auction_request_user, you_or_him='you' if is_favorite else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_favorite", **dict(app=APP_NAME, is_favorite=is_favorite, buyer=auction_request_user, you_or_him='you' if is_favorite else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_WINNER_ALERT:
-			SEND_ALERT_TO_QUEUE(CHECK="on_new_winner", USER=send_to, MESSAGE_TYPE = "DEALER_on_new_winner", **dict(app=APP_NAME, is_winning_offer=is_winning_offer, buyer=auction_request_user, you_or_him='you' if is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app=APP_NAME, is_winning_offer=is_winning_offer, buyer=auction_request_user, you_or_him='you' if is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_BID_ALERT:
 			form_bid_price = session.BROADCAST_BID_ALERT #since there is a refresh we must access from session
-			SEND_ALERT_TO_QUEUE(CHECK="on_new_bid", USER=send_to, MESSAGE_TYPE = "DEALER_on_new_bid", **dict(app=APP_NAME, price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if is_my_offer else "You", is_my_offer= is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_bid", **dict(app=APP_NAME, price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if is_my_offer else "You", is_my_offer= is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		each_offer_dict = {
 			'id' : offer_id,
 			'has_message_from_buyer' : has_message_from_buyer,

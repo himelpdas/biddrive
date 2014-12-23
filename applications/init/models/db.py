@@ -47,18 +47,24 @@ from gluon.tools import Auth, Crud, Service, PluginManager, prettydate
 auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
-
+##############EXTRA SETTINGS###############
 auth.settings.register_onaccept += [
-	lambda form: SEND_ALERT_TO_QUEUE(CHECK="force", USER=db(db.auth_user.id==form.vars.id).select().last(), MESSAGE_TYPE = "GENERIC_welcome_to_biddrive", **dict(first_name=form.vars.first_name) ) ,
-	lambda form: get_alert_setting_table_for_user(form.vars.id)
+	lambda form: SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=True, USER=db(db.auth_user.id==form.vars.id).select().last(), MESSAGE_TEMPLATE = "GENERIC_welcome_to_biddrive", **dict(first_name=form.vars.first_name) ) ,
+	#lambda form: get_alert_setting_table_for_user(form.vars.id) #no longer needed since email alert settings were simplified, and now resides in db.auth_user
 ]
 
-####Extra Fields############################
-#auth.settings.extra_fields['auth_user']= [
-#  Field('address'),
-#  Field('city'),
-#  Field('zip'),
-#  Field('phone')]
+force_default_on_register = False if not auth.is_logged_in() else True  #since auth doesn't allow changing fields after db.define_tables(auth), default can be forced here
+auth.settings.extra_fields['auth_user']= [
+	Field('mobile_phone',
+		requires = IS_MATCH(
+			REGEX_TELEPHONE,
+			error_message='not a phone number',
+		)
+	),
+	Field('enable_email_alerts', 'boolean', default = True, readable = force_default_on_register, writable = force_default_on_register),
+	Field('enable_sms_alerts', 'boolean', default = False, readable = force_default_on_register, writable=force_default_on_register),
+]
+
 ############################################
 
 ## create all tables needed by auth if not custom tables

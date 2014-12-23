@@ -10,7 +10,6 @@ allow N/A for interior/exterior colors
 bring sms alerts to buyers, add number field to registration
 add "are you sure?" modals to auction page
 false/erroroneous address in dealership form raises "Nonetype not iterable error"
-simplify email alert settings (on/off for phone/email)
 
 *Optional
 add twilio verification in page 2
@@ -48,6 +47,8 @@ allow messaging DURING final offer
 a stats messege in blank auction requests
 remeberme is None on 2.9.11
 cache leak, seems to get to 2gb!! -fixed in 2.9.11
+simplify email alert settings (on/off for phone/email)
+"fix remember me?" 2.9.11
 
 *Not needed
 add balance history to dealer buy credits page (let paypal handle that)

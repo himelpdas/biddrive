@@ -21,22 +21,6 @@ sms = twilio_client.sms.messages.create(body="Jenny please?! I love you <3",
 
 #http://goo.gl/L05FHS
 #http://goo.gl/An6V4P
-
-db.define_table('alert_setting',
-	Field('owner_id', db.auth_user,
-		readable=False,
-		writable=False,
-		#notnull=True,
-		default=auth.user_id,
-	),
-	Field('SMS_enabled', 'boolean', default=True),
-	Field('on_new_request', 'boolean', default=True),
-	Field('on_new_offer', 'boolean', default=True),
-	Field('on_new_bid', 'boolean', default=True),
-	Field('on_recieve_message', 'boolean', default=True),
-	Field('on_new_favorite', 'boolean', default=True),
-	Field('on_new_winner', 'boolean', default=True),
-)
 			
 def send_email_task(contact, message, subject = None):
 	if not IS_EMAIL()(contact)[1]: #for admin stuff #save the api call/resources if false#no error message if its either a tel or email>>> IS_EMAIL()('a@b.com') >>>('a@b.com', None)
@@ -58,15 +42,8 @@ def send_sms_task(contact, shortmessage):
 	
 	
 scheduler = Scheduler(db) #from gluon.scheduler import Scheduler
-
-def get_alert_setting_table_for_user(USER):
-	user_alert_setting=db(db.alert_setting.owner_id==USER.id).select().last()
-	if not user_alert_setting: #create the table for user
-		new_alert_setting_id = db.alert_setting.insert(owner_id=USER.id)		
-		user_alert_setting=db(db.alert_setting.id==new_alert_setting_id).select().last()
-	return user_alert_setting
 			
-def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VARS):
+def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLATE = None, **MESSAGE_VARS): #setting OVERRIDE_ALERT_SETTING to false means check USERs alert settings before sending
 	MESSAGE_DATA = {
 		"GENERIC_welcome_to_biddrive": lambda: dict(
 			SUBJECT="Welcome to BidDrive, {first_name}!".format(**MESSAGE_VARS),
@@ -195,27 +172,26 @@ def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VA
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 	}
-	user_alert_setting=get_alert_setting_table_for_user(USER)
-	if user_alert_setting and (CHECK=="force" or user_alert_setting[CHECK]):
+
+	if OVERRIDE_ALERT_SETTING or USER.enable_email_alerts:
 		scheduler.queue_task(
 			send_email_task,
 			pargs=[USER.email, response.render(
 				'email_alert_template.html', dict(
 					APPNAME=APP_NAME,
 					NAME = USER.first_name.capitalize(), 
-					**MESSAGE_DATA[MESSAGE_TYPE]()
+					**MESSAGE_DATA[MESSAGE_TEMPLATE]()
 					)
-				), MESSAGE_DATA[MESSAGE_TYPE]()["SUBJECT"]
+				), MESSAGE_DATA[MESSAGE_TEMPLATE]()["SUBJECT"]
 			],
 			retry_failed = 10,
 			period = 3, # run 5s after previous
 			timeout = 30, # should take less than 30 seconds
 		)
-		if user_alert_setting["SMS_enabled"] and "DEALER" in MESSAGE_TYPE: #TEMP latter will make sure it's a dealer #TODO add phone number to registration itself.
-			#TODO send_to_number = USER.mobile_phone_number
-			tel_number = db(db.dealership_info.owner_id == USER.id).select().last().phone #just get dealer's number for now
-			scheduler.queue_task(
-				send_sms_task,
-				pargs=[tel_number, MESSAGE_DATA[MESSAGE_TYPE]()["SUBJECT"]],
-				retry_failed = 5, period = 2, timeout = 10, #less important
-			)
+	if USER.enable_sms_alerts: #since user can be charged, do not allow OVERRIDE_ALERT_SETTING, only explicitly determined by enable_sms_alerts
+		tel_number = USER.mobile_phone
+		scheduler.queue_task(
+			send_sms_task,
+			pargs=[tel_number, MESSAGE_DATA[MESSAGE_TEMPLATE]()["SUBJECT"]],
+			retry_failed = 5, period = 2, timeout = 10, #less important
+		)

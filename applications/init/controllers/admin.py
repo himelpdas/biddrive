@@ -45,7 +45,7 @@ def dealership_form():
 			membership_id = auth.add_membership(**membership) #unpack keyword args
 			#quickRaise(form.vars.owner_id) #testing for reason why add membership fails, turns out form.vars.owner_id stopped working possibly after web2py upgrade. Now form.vars appears to work only if writable=True.
 			#alert new dealer
-			SEND_ALERT_TO_QUEUE(CHECK="force", USER=record_owner, MESSAGE_TYPE = "DEALER_approved_dealership", **dict(app=APP_NAME, specialize=' '.join(record.specialty) , url=URL('dealer', 'auction_requests', host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=True, USER=record_owner, MESSAGE_TEMPLATE = "DEALER_approved_dealership", **dict(app=APP_NAME, specialize=' '.join(record.specialty) , url=URL('dealer', 'auction_requests', host=True, scheme=True) ) )
 		else:
 			auth.del_membership(**membership)
 		#alert user
@@ -54,29 +54,6 @@ def dealership_form():
 	response.title = 'Admin interface'
 	response.subtitle = 'to modify dealership request #%s'%request.args[0]
 	return dict(form = form)
-	
-"""
-@auth.requires_membership("admins") # uncomment to enable security 
-def list_users(): #http://goo.gl/PDylze
-	btn = lambda row: A("Edit", _href=URL('admin', 'manage_user', args=row.auth_user.id))
-	btn2 = lambda row: A("Edit", _href=URL('admin', 'manage_membership', args=row.auth_user.id))
-	db.auth_user.edit_user = Field.Virtual(btn)
-	db.auth_user.edit_membership = Field.Virtual(btn2)
-	rows = db(db.auth_user).select()
-	headers = ["ID", "Name", "Last Name", "Email", "User", "Membership"]
-	fields = ['id', 'first_name', 'last_name', "email", "edit_user", "edit_membership"]
-	table = TABLE(THEAD(TR(*[B(header) for header in headers])),
-				  TBODY(*[TR(*[TD(row[field]) for field in fields]) \
-						for row in rows]))
-	table["_class"] = "table table-striped table-bordered table-condensed"
-	return dict(table=table)
-	
-@auth.requires_membership("admins") # uncomment to enable security 
-def manage_user():
-	user_id = request.args(0) or redirect(URL('admin','list_users'))
-	form = SQLFORM(db.auth_user, user_id).process()
-	return dict(form=form)
-"""
 
 if not request.function in ['dealership_requests', 'dealership_form']:
 	response.view = 'admin/manage_generic.html'
