@@ -22,8 +22,6 @@ sms = twilio_client.sms.messages.create(body="Jenny please?! I love you <3",
 #http://goo.gl/L05FHS
 #http://goo.gl/An6V4P
 
-#EMAIL_NEW_FAVORITE_OFFER_SUBJECT = """%s You're the new favorite! (Auction #%s)"""
-
 db.define_table('alert_setting',
 	Field('owner_id', db.auth_user,
 		readable=False,
@@ -89,7 +87,7 @@ def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VA
 			CLICK_HERE_URL =  "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_request" : lambda: dict(
-			SUBJECT  =  "{app}: New request for a {year} {make} {model} near your area.".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app}: {she} requested a {year} {make} {model} near your area.".format(**MESSAGE_VARS),
 			MESSAGE =  XML("There is a new request for a <i>{year} <b>{make}</b> {model}</i>.".format(**MESSAGE_VARS) ),
 			MESSAGE_TITLE = "{she} wants a new {make}!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Hurry! Other nearby dealers {make} have been alerted as well.".format(**MESSAGE_VARS),
@@ -98,7 +96,7 @@ def SEND_ALERT_TO_QUEUE(CHECK=None, USER=None, MESSAGE_TYPE = None, **MESSAGE_VA
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_approved_dealership" : lambda: dict(
-			SUBJECT  =  "{app}: You have been approved!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app}: Your application has just been approved!".format(**MESSAGE_VARS),
 			MESSAGE =  "Your request to join the {app} dealer network was approved! So what now?".format(**MESSAGE_VARS),
 			MESSAGE_TITLE = "Congratulations! You are now an approved dealer!",
 			WHAT_NOW = "Click the button below to look for potential buyers.",

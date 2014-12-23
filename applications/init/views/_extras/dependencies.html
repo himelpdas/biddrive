@@ -34,7 +34,7 @@
 <link rel="stylesheet" href="{{=URL('static', 'css/_custom.css')}}" type="text/css" />
 
 {{if request.controller in ["admin", "appadmin", "billing"]:}}{{#use default forms for now}}
-	{{include "web2py_ajax.html"}}
+	{{include "_extras/web2py_ajax.html"}}
 	<script type="text/javascript" src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script> {{#http://goo.gl/cPFP9a}}
 	{{"""}}<script type="text/javascript" src="{{=URL('static','js/web2py.js')}}"></script>{{"""}}{{#not needed it web2py_ajax}}
 	<link rel="stylesheet" href="{{=URL('static','css/web2py.css')}}" type="text/css"/>
