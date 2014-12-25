@@ -168,7 +168,7 @@ def request_by_make():
 						color_hexes_list.append(each_color_option['colorChips']['primary']['hex'])
 						color_simple_names_list.append(simplecolor.predict((each_color_option['colorChips']['primary']['r'],each_color_option['colorChips']['primary']['g'],each_color_option['colorChips']['primary']['b']), each_color_option['name'])[1]) #(0.06822856993575846, 'BROWN')
 					else:
-						color_hexes_list.append('FFFFF')
+						color_hexes_list.append('ff00ff')
 						color_simple_names_list.append('unspecified')
 					color_categories_list.append(each_color_type['category'].lower().replace(" ", "_"))
 					color_category_names_list.append(each_color_type['category'])

@@ -43,25 +43,13 @@ def options_content(): #TODO get all data from single call make/model/year
 	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
 	(make, model, year, style_id) = (request.args[0], request.args[1], request.args[2],  request.args[3])
 	def __colors__():
-		style_colors=style['colors']#[1]['options']
-		#make sure color data is safe for the multiselect form submission in request_by_make
-		"""
-		for each_color in style_colors:#replaced with colorChipsErrorFix()
-			if each_color['category'] == 'Exterior':
-				counter=0#USE ENUMERATE
-				for each_option in each_color['options']:
-					if not 'colorChips' in each_option:
-						del each_color['options'][counter]
-					counter+=1
-		"""
-		#colorChipsErrorFix(style_colors)
-		#style_colors = style['colors'] [[each['category']=='Exterior' for each in style['colors']].index(True)] ['options']
+		style_colors=style['colors']
 		color_codes = []
 		for each_color in style_colors:
 			if each_color['category'] in ['Interior', 'Exterior']:
 				for each_option in each_color['options']:
-					color_codes.append(  [  each_option['id'], each_option['name'], each_option['colorChips']['primary']['hex'] if 'colorChips' in each_option else "fffff", each_color['category'] , each_color['category'].lower().replace(" ", "_")  ]  ) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
-					#TODO - Use rare color hex to hack a "question mark" icon over a swatch of unknown color
+					color_codes.append(  [  each_option['id'], each_option['name'], each_option['colorChips']['primary']['hex'] if 'colorChips' in each_option else "ff00ff", each_color['category'] , each_color['category'].lower().replace(" ", "_")  ]  ) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
+					#TODO - Use rare color hex to hack a "question mark" icon over a swatch of unknown color# DONE- ff00ff magenta
 		#color_codes.sort(key=lambda x: x[1])
 		session.color_codes = color_codes
 		return dict(color_codes=color_codes)

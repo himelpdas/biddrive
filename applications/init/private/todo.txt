@@ -5,7 +5,6 @@ add pagination to auction_request
 make auction page more responsive
 cache auction requests
 negative credits message 
-Use rare color hex to hack a "question mark" icon over a swatch of unknown color
 allow N/A for interior/exterior colors
 add "are you sure?" modals to auction page
 false/erroroneous address in dealership form raises "Nonetype not iterable error"
@@ -15,6 +14,7 @@ add twilio verification in page 2
 calculate msrp in page 2
 
 *Complete
+Use rare color hex to hack a "question mark" icon over a swatch of unknown color
 bring sms alerts to buyers, add number field to registration
 jquery ui tooltips not showing
 add text message alerts

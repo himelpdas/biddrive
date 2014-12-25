@@ -74,9 +74,13 @@ def auction_requests():
 		for each_style in model_styles:
 			if trim == str(each_style['id']):
 				safe_style_colors = each_style['colors']
-				colorChipsErrorFix(safe_style_colors)
-				for each_color in safe_style_colors[1]['options']:
-					colors_list.update( {str(each_color['id']) : [each_color['name'], each_color['colorChips']['primary']['hex'] ],} )
+				#colorChipsErrorFix(safe_style_colors) #fixed below
+				for each_color_option in safe_style_colors[1]['options']:
+					if 'colorChips' in each_color_option:
+						hex = each_color_option['colorChips']['primary']['hex']
+					else:
+						hex = 'ff00ff'
+					colors_list.update( {str(each_color_option['id']) : [each_color_option['name'], hex ],} )
 		colors_list = OD(sorted(colors_list.items(), key=lambda x: x[1])) #FIXED#TODO: ADD LOGIC TO PREVENT STUPID COLORCHIPS ERROR 
 	else:
 		trim = None
