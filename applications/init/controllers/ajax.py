@@ -35,7 +35,7 @@ def vehicle_content():
 	return dict(make_details=make_details, make_photos=make_photos, year=year)
 	
 def options_content(): #TODO get all data from single call make/model/year
-	server_side_digest = hmac.new(str(hash(session.salt)), '%s%s%s%s'%(request.args[0], request.args[1], request.args[2], request.args[3])).hexdigest() #http://goo.gl/BtlcAZ #Make, Model, Year, StyleID, 4 = SESSION_ID #hmac.new("Secret Passphrase", Message);
+	server_side_digest = hmac.new(str(hash(session.salt)), '%s%s%s%s'%(request.args[0], request.args[1], request.args[2], request.args[3])).hexdigest() #Prevents XSS #http://goo.gl/BtlcAZ #Make, Model, Year, StyleID, 4 = SESSION_ID #hmac.new("Secret Passphrase", Message);
 	client_side_digest = request.args[-1]
 	#logger.debug("sEC:%s"%server_side_digest); logger.debug("cEC:%s"%client_side_digest)
 	if not server_side_digest == client_side_digest:
@@ -58,7 +58,7 @@ def options_content(): #TODO get all data from single call make/model/year
 		#style_colors = style['colors'] [[each['category']=='Exterior' for each in style['colors']].index(True)] ['options']
 		color_codes = []
 		for each_color in style_colors:
-			if  each_color['category'] in ['Interior', 'Exterior']:
+			if each_color['category'] in ['Interior', 'Exterior']:
 				for each_option in each_color['options']:
 					color_codes.append(  [  each_option['id'], each_option['name'], each_option['colorChips']['primary']['hex'] if 'colorChips' in each_option else "fffff", each_color['category'] , each_color['category'].lower().replace(" ", "_")  ]  ) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
 					#TODO - Use rare color hex to hack a "question mark" icon over a swatch of unknown color

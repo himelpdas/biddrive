@@ -55,7 +55,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL="http://www.biddrive.com/",
 		),
 		"BUYER_on_new_request" : lambda: dict( #need to use lambda because not all {variables} will be available from the dealer, default, and admin controllers... a keyerror would occur
-			SUBJECT  =  "{app}: You requested a {year} {make} {model} near you!".format(**MESSAGE_VARS), 
+			SUBJECT  =  "{app}: You requested a {year} {make} {model} near your area!".format(**MESSAGE_VARS), 
 			MESSAGE =  "Within a {mile} mile radius of {zip}.".format(**MESSAGE_VARS), 
 			MESSAGE_TITLE =  XML("You requested a <i>{year} <b>{make}</b> {model}</i>.".format(**MESSAGE_VARS) ),
 			WHAT_NOW =  "Stay tuned for offers!", 
