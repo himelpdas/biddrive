@@ -158,7 +158,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			MESSAGE =  XML("The buyer for a <i>{car}</i> picked <b>{you_or_him}</b> as the winner! So what now?".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "{buyer} picked a new winner!",
 			WHAT_NOW = "Try again! You'll have better luck next time." if not MESSAGE_VARS['is_winning_offer'] else "Wait for the buyer's call!",
-			INSTRUCTIONS = "Tip: Look out for new buyer requests and bid quickly! Having the early attention of a buyer goes a long way." if not is_winning_offer else "The buyer will call you soon via our automatic validation system within your business hours!",
+			INSTRUCTIONS = "Tip: Look out for new buyer requests and bid quickly! Having the early attention of a buyer goes a long way." if not MESSAGE_VARS['is_winning_offer'] else "The buyer will call you soon via our automatic validation system within your business hours!",
 			CLICK_HERE = "Go to auction",
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
