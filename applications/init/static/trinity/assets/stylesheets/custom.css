@@ -1,5 +1,6 @@
 .brand {
-    font-family: 'Days One', sans-serif;
+    font-family: 'Days One', sans-serif !important;
+    text-transform: none !important;
 }
 
 #standard-header a.brand {
@@ -12,6 +13,16 @@
     font-size: 40px;
     color: #ffffff;
     line-height: 78px;
+}
+
+.menu a.brand {
+    font-size: 24px;
+    color: #ffffff;
+    line-height: 36px;
+}
+
+.menu .intro-nav {
+    margin-top: 0;
 }
 
 #intro-header .brand-tagline {
