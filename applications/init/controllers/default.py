@@ -155,8 +155,8 @@ def request_by_make():
 		#exterior colors
 		color_names_list = []
 		color_msrps_list = []
-		color_hexes_list = []
 		color_categories_list = []
+		color_hexes_list = []
 		color_category_names_list = []
 		color_simple_names_list = []
 		for each_color_type in trim_data['colors']:
@@ -169,10 +169,24 @@ def request_by_make():
 						color_simple_names_list.append(simplecolor.predict((each_color_option['colorChips']['primary']['r'],each_color_option['colorChips']['primary']['g'],each_color_option['colorChips']['primary']['b']), each_color_option['name'])[1]) #(0.06822856993575846, 'BROWN')
 					else:
 						color_hexes_list.append('ff00ff')
-						color_simple_names_list.append('unspecified')
+						color_simple_names_list.append('')
 					color_categories_list.append(each_color_type['category'].lower().replace(" ", "_"))
 					color_category_names_list.append(each_color_type['category'])
-
+		#for to be determined (missing interior or exterior categories
+		if any(map(lambda each: each in ['0','1'], form.vars['colors']) ):
+			for missing_colors in ['0','1']:
+				if missing_colors in form.vars['colors']:
+					if missing_colors == '0':
+						missing_category = "Interior"				
+					if missing_colors == '1':
+						missing_category = "Exterior"
+					color_names_list.append('%s color to be determined'%missing_category)
+					color_msrps_list.append(0)
+					color_category_names_list.append(missing_category)
+					color_hexes_list.append('ff00ff')
+					color_categories_list.append(missing_category.lower().replace(" ", "_")) #id safe
+					color_simple_names_list.append('')
+		#print map(lambda each: each in [0,1], form.vars['colors'])
 		#if not ('interior' in color_categories_list and 'exterior' in color_categories_list): #make sure there is at least one interior and one exterior color, or raise form error
 		if not set(['interior', 'exterior']).issubset(color_categories_list): #more flexible than above
 			form.errors.colors = "Select at least one interior color and one exterior color!" #will only show after built-in validations ex. zip code

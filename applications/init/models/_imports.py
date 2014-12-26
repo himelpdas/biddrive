@@ -17,9 +17,8 @@ import platform #check the platform web2py is running from
 if platform.system() in ["Darwin", "Windows"]:
 	import logging
 	logger = logging.getLogger("web2py.app.biddrive")
-	#handler = logging.StreamHandler() #by default logs go to stdout or stderr, you can set it to file via FileH
+	handler = logging.StreamHandler() #by default logs go to stdout or stderr, you can set it to file via FileH
 	#print logger.findCaller()
-	logger.setLevel(logging.DEBUG) #only will show debug level and higher
 ######## http://goo.gl/BAU6cF
 
 	

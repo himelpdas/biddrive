@@ -50,6 +50,11 @@ def options_content(): #TODO get all data from single call make/model/year
 				for each_option in each_color['options']:
 					color_codes.append(  [  each_option['id'], each_option['name'], each_option['colorChips']['primary']['hex'] if 'colorChips' in each_option else "ff00ff", each_color['category'] , each_color['category'].lower().replace(" ", "_")  ]  ) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
 					#TODO - Use rare color hex to hack a "question mark" icon over a swatch of unknown color# DONE- ff00ff magenta
+		all_color_categories = map(lambda each: each[3], color_codes) 
+		if not 'Interior' in all_color_categories:
+			color_codes.append(  [  0, 'Interior color to be determined', "ff00ff", 'Interior' , 'interior'  ]  )
+		if not 'Exterior' in all_color_categories:
+			color_codes.append(  [  1, 'Exterior color to be determined', "ff00ff", 'Exterior' , 'exterior'  ]  )
 		#color_codes.sort(key=lambda x: x[1])
 		session.color_codes = color_codes
 		return dict(color_codes=color_codes)
