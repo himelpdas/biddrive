@@ -1,6 +1,7 @@
 *Todo
 dont allow more than one auction request at a time
 false/erroroneous address in dealership form raises "Nonetype not iterable error"
+email when auction almost/ends (softcron?)
 
 *Optional
 add more tooltips to everything
