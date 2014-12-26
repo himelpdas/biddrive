@@ -1,0 +1,128 @@
+
+    .portfolio-item .project-overlay {
+        opacity:0.8;
+        transition:all 0.4s ease 0s;
+        -moz-transition:all 0.4s ease 0s;
+        -webkit-transition:all 0.4s ease 0s;
+        -ms-transition:all 0.4s ease 0s;
+        -o-transition:all 0.4s ease 0s;
+    }
+
+    .project-overlay {
+        width:100%;
+        height:20%;
+        position:absolute;
+        top:80%;
+        left:0;
+        opacity:0;
+        transition:all 0.3s ease 0s;
+        -moz-transition:all 0.3s ease 0s;
+        -webkit-transition:all 0.3s ease 0s;
+        -o-transition:all 0.3s ease 0s;
+        cursor:pointer;
+    }
+
+    .portfolio-item:hover .project-overlay {
+        height:100%;
+        top:0;
+    }
+
+    .open-project-link {
+        width:100%;
+        height:100%;
+        position:absolute;
+        z-index:99;
+    }
+
+    .project-info {
+        position:absolute;
+        height:100px;
+        width:100%;
+        top:50%;
+        margin-top:-62px;
+        text-align:center;
+    }
+
+    .portfolio-item:hover .project-info {
+        margin-top:-50px;
+    }
+    
+    .project-name {
+        color:#fff;
+        text-transform:uppercase;
+        margin-top:50px;
+        opacity:0;    
+        font-family: 'Montserrat',sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 3px;
+        line-height: 24px;
+        text-transform: uppercase;
+        transition:all 0.2s ease 0s;
+        -moz-transition:all 0.2s ease 0s;
+        -webkit-transition:all 0.2s ease 0s;
+        -ms-transition:all 0.2s ease 0s;
+        -o-transition:all 0.2s ease 0s;
+    }
+    .portfolio-item .project-name {
+        opacity:1;
+        -webkit-transition: opacity .4s .5s;
+        -moz-transition: opacity .4s .5s;
+        -ms-transition: opacity .4s .5s;
+        -o-transition: opacity .4s .5s;
+        transition: opacity .3s .5s;
+    }
+    
+    
+    .project-categories{
+        font-family: 'Raleway',sans-serif;
+        font-size: 14px;
+        font-weight: 300;
+        line-height: 25px;
+        opacity:0;
+        margin-top:3px;
+        transition:all 0.2s ease 0s;
+        -moz-transition:all 0.2s ease 0s;
+        -webkit-transition:all 0.2s ease 0s;
+        -ms-transition:all 0.2s ease 0s;
+        -o-transition:all 0.2s ease 0s;
+        
+    }
+    
+    .portfolio-item .project-categories {
+        opacity:1;
+        -webkit-transition: opacity .4s .8s;
+        -moz-transition: opacity .4s .8s;
+        -ms-transition: opacity .4s .8s;
+        -o-transition: opacity .3s .8s;
+        transition: opacity .3s .8s;        
+    }
+
+    .zoom-icon {
+        left: 50%;
+        margin-left:-20px;
+        position:inherit;
+        width:40px;
+        height:40px;
+        margin-top:40px;
+        opacity:0;
+        background:url(/init/static/trinity/assets/images/zoom.png);
+        background-size:40px 40px;
+        transition:all 0.3s ease 0.1s;
+        -moz-transition:all 0.3s ease 0.2s;
+        -webkit-transition:all 0.3s ease 0.2s;
+        -ms-transition:all 0.3s ease 0.2s;
+        -o-transition:all 0.3s ease 0.2s;   
+    }
+    
+    .portfolio-item:hover .zoom-icon {
+        opacity:1;
+        margin-top:0px;
+        -webkit-transition: opacity .3s .2s, margin-top .3s .2s;
+        -moz-transition: opacity .3s .2s, margin-top .3s .2s;
+        -ms-transition: opacity .3s .2s, margin-top .3s .2s;
+        -o-transition: opacity .3s .2s, margin-top .3s .2s;
+        transition: opacity .3s .2s, margin-top .3s .2s;
+    }
+    
+    
