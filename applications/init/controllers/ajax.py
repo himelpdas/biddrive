@@ -70,7 +70,7 @@ def options_content(): #TODO get all data from single call make/model/year
 		option_codes = []
 
 		for each_option_type in options:
-			if each_option_type['category'] in ['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Other']:
+			if each_option_type['category'] in OPTION_CATEGORIES: #['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Other']:
 				for each_option in each_option_type['options']:
 					option_codes.append(  [  each_option['id'], each_option['name'], each_option['description'] if 'description' in each_option else None, each_option_type['category'], each_option_type['category'].lower().replace(" ", "_")  ]  ) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
 		

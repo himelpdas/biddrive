@@ -641,11 +641,11 @@
 										Dealership fees:
 									</div>
 									<div class="col-xs-9">
-										${{=int(each_offer['dealership_fees'])}} <i>(included in bid)</i> —
-										{{if not each_offer['dealership_fees_details']:}}
+										${{=int(each_offer['additional_costs'])}} <i>(included in bid)</i> —
+										{{if not each_offer['additional_costs_details']:}}
 											<i>Not specified</i>
 										{{else:}}
-											{{=each_offer['dealership_fees_details']}}
+											{{=each_offer['additional_costs_details']}}
 										{{pass}}
 									</div>
 								</div>

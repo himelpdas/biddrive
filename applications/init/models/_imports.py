@@ -65,8 +65,3 @@ def calcDist(lat_A, long_A, lat_B, long_B): #DEPRECATED USE GEOPY NOW!
 
 	return distance
 """
-
-#color swatch
-COLOR_SWATCH = lambda hex, title='': XML('<i class="fa {fa} fa-fw" style="color:#{hex}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;" title="{title}"></i>'.format(hex=hex,title=title, fa="fa-square" if not hex == "ff00ff" else "fa-minus-square") ) #add border so that whites can show #http://goo.gl/2j2bP #http://goo.gl/R9EI3h
-
-	

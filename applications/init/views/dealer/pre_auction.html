@@ -18,9 +18,9 @@
 				{{ form.element("select", _name = "options")["_class"] += " form-control" }}
 				{{# form.element("select", _name = "fees_options")["_class"] += " form-control" }}
 				{{ form.element("textarea", _name = "summary")["_class"] += " form-control" }}
-				{{ form.element("input", _name = "dealership_fees")["_class"] += " form-control" }}
-				{{ form.element("input", _name = "dealership_fees")["_placeholder"] = "$$$" }}
-				{{ form.element("textarea", _name = "dealership_fees_details")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "additional_costs")["_class"] += " form-control" }}
+				{{ form.element("input", _name = "additional_costs")["_placeholder"] = "$$$" }}
+				{{ form.element("textarea", _name = "additional_costs_details")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "exterior_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "interior_image")["_class"] += " form-control" }}
 				{{ form.element(_type="file", _name = "front_image")["_class"] += " form-control" }}
@@ -45,18 +45,6 @@
 						{{pass}}
 					</div>
 				</div>
-				{{"""}}
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Remember for 45 days</label>
-					<div class="col-sm-9">
-						{{=form.custom.widget.remember_data_for_30_days}}
-
-						{{if form.errors['remember_data_for_30_days']:}}
-							<div class="alert alert-warning">{{=form.errors['remember_data_for_30_days']}}</div>
-						{{pass}}
-					</div>
-				</div>
-				{{"""}}
 				<div class="form-group">
 					<label class="col-sm-3 control-label">Exterior color</label>
 					<div class="col-sm-9">
@@ -109,20 +97,20 @@
 				<div class="form-group">
 					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="The total dollar value of ALL fees from your dealership regarding this vehicle."></i> Dealership fees total cost</label>
 					<div class="col-sm-9">
-						{{=form.custom.widget.dealership_fees}}
+						{{=form.custom.widget.additional_costs}}
 
-						{{if form.errors['dealership_fees']:}}
-							<div class="alert alert-warning">{{=form.errors['dealership_fees']}}</div>
+						{{if form.errors['additional_costs']:}}
+							<div class="alert alert-warning">{{=form.errors['additional_costs']}}</div>
 						{{pass}}
 					</div>
 				</div>
 				<div class="form-group">
 					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="Describe ALL additional fees from your dealership regarding this vehicle."></i> Dealership fees description</label>
 					<div class="col-sm-9">
-						{{=form.custom.widget.dealership_fees_details}}
+						{{=form.custom.widget.additional_costs_details}}
 
-						{{if form.errors['dealership_fees_details']:}}
-							<div class="alert alert-warning">{{=form.errors['dealership_fees_details']}}</div>
+						{{if form.errors['additional_costs_details']:}}
+							<div class="alert alert-warning">{{=form.errors['additional_costs_details']}}</div>
 						{{pass}}
 					</div>
 				</div>
@@ -276,68 +264,58 @@
 						</th>
 
 						<td style="border-top:none;">
-							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
+							<p>{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction</p>
 						</td>
 					</tr>
 					
 					<tr>
 						<th>
-							Color choices:
+							Color preferences:
 						</th>
 						<td>
-							{{for each_color_name in auction_request_info['auction_request'].color_names:}}
+							<h5><u>Interior:</u></h5>
+							{{for each_color in auction_request_info['interior_colors']:}}
 								<p>
-									{{=each_color_name}}
+									{{=BULLET}}{{=each_color[1]}}
 								</p>
 							{{pass}}
+							<h5><u>Exterior:</u></h5>
+							{{for each_color in auction_request_info['exterior_colors']:}}
+								<p>
+									{{=BULLET}}{{=each_color[1]}}
+								</p>
+							{{pass}}
+							
 						</td>
 					</tr>
 					
 					<tr>
 						<th>
-							Must haves 
+							Option preferences:
 						</th>
 
 						<td>
-							{{"""}}
-								<ul>
-									{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
-									{{request_trim_data = json.loads(auction_request_info['auction_request'].trim_data)}}
-									{{options = auction_request_info['auction_request'].options}}
-									{{if options:}}
-										{{for each_option in options:}}
-											{{has_option_data = False}}
-											{{for each_option_type in option_names:}}
-												{{if not has_option_data:}}
-													{{has_option_data = getOption(request_trim_data, each_option_type, each_option)}}
-													{{if has_option_data:}}
-														<li>{{=has_option_data['name']}}</li>
-													{{pass}}
-												{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
-											{{pass}}
-											{{if not has_option_data:}}
-												</li>{{=each_option}}</li> {{#then just show the id number}}
-											{{pass}}
-										{{pass}}
-									{{else:}}<li>No preference</li>
+							{{for each_category, options_data in categorized_options.items():}}
+								{{if categorized_options[each_category] !=[] :}}
+									<h5><u>{{=each_category}}:</u></h5> <!--{{#don't allow blanks}}-->
+									{{for each_option in options_data:}}
+										<p tooltip="{{=each_option[3] or ''}}">{{=BULLET}}{{=each_option[1]}}</p>
 									{{pass}}
-								</ul>
-							{{"""}}
-							{{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2])],zip(auction_request_info['auction_request'].options, auction_request_info['auction_request'].option_names, auction_request_info['auction_request'].option_msrps) ), key=lambda each: each[1]['name'] ) ) }}
-							{{for each_option in auction_request_options_dict:}}
-								<p>{{=auction_request_options_dict[each_option]['name']}}</p>
+								{{pass}}
 							{{pass}}
 						</td>
 					</tr>
-					
+
 					<tr>
 						<th>
 							Credit score
 						</th>
 
 						<td>
-							{{credit_score=auction_request_info['auction_request']['FICO_credit_score']}}
-							{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}
+							<p>
+								{{credit_score=auction_request_info['auction_request']['FICO_credit_score']}}
+								{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}
+							</p>
 						</td>
 					</tr>
 
@@ -347,8 +325,10 @@
 						</th>
 
 						<td>
-							{{funding=auction_request_info['auction_request']['funding_source']}}
-							{{=funding.capitalize()}}
+							<p>
+								{{funding=auction_request_info['auction_request']['funding_source']}}
+								{{=funding.capitalize()}}
+							</p>
 						</td>
 					</tr>
 				{{if funding in ['lease', 'loan']:}}
@@ -358,7 +338,7 @@
 						</th>
 
 						<td>
-							${{=auction_request_info['auction_request']['expected_down_payment']}}
+							<p>${{=auction_request_info['auction_request']['expected_down_payment']}}</p>
 						</td>
 					</tr>
 				{{pass}}
@@ -369,7 +349,7 @@
 						</th>
 
 						<td>
-							{{=auction_request_info['auction_request']['financing']}}
+							<p>{{=auction_request_info['auction_request']['financing']}}</p>
 						</td>
 					</tr>
 				{{pass}}										
@@ -380,7 +360,7 @@
 						</th>
 
 						<td>
-							{{=auction_request_info['auction_request']['lease_mileage']}} miles
+							<p>{{=auction_request_info['auction_request']['lease_mileage']}} miles</p>
 						</td>
 					</tr>
 					<tr>
@@ -389,7 +369,7 @@
 						</th>
 
 						<td>
-							{{=auction_request_info['auction_request']['lease_term']}}
+							<p>{{=auction_request_info['auction_request']['lease_term']}}</p>
 						</td>
 					</tr>
 				{{pass}}
@@ -399,8 +379,10 @@
 						</th>
 
 						<td>
-							{{trading=auction_request_info['auction_request']['trading_in']}}
-							{{if trading:}}Yes{{else:}}No{{pass}}
+							<p>
+								{{trading=auction_request_info['auction_request']['trading_in']}}
+								{{if trading:}}Yes{{else:}}No{{pass}}
+							</p>
 						</td>
 					</tr>
 				{{if trading:}}
@@ -410,7 +392,7 @@
 						</th>
 
 						<td>
-							{{=auction_request_info['auction_request']['describe_trade_in']}}
+							<p>{{=auction_request_info['auction_request']['describe_trade_in']}}</p>
 						</td>
 					</tr>
 				{{pass}}
@@ -429,171 +411,9 @@ $(document).ready(function(){
 		}
 	});
 });
-</script>{{#important to put in document ready because an element may not be yet defined in the DOM so an error will occur when trying to access that element}}
-{{"""}}<!--
-<div class="modal fade" id="info_modal">
-	<div class="modal-dialog">
-		<div class="modal-content" style="background-color:rgba(246,246,246,0.9);">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-				<h4 class="modal-title">Information about {{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}}</h4>
-			</div>
-			<div class="modal-body" style="max-height:480px;overflow-y:auto;">
-				<table class="table">
-					<tr>
-						<th style="border-top:none;">
-							Entering
-						</th>
+</script><!-- {{#important to put in document ready because an element may not be yet defined in the DOM so an error will occur when trying to access that element}} -->
 
-						<td style="border-top:none;">
-							{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
-						</td>
-					</tr>
-					
-					<tr>
-						<th>
-							Color choices:
-						</th>
-						<td>
-							<ul>
-								{{for each_color_name in auction_request_info['auction_request'].color_names:}}
-									<li>
-										{{=each_color_name}}
-									</li>
-								{{pass}}
-							</ul>
-						</td>
-					</tr>
-					
-					<tr>
-						<th>
-							Must haves 
-						</th>
-
-						<td>
-							<ul>
-								{{option_names = ['Interior','Exterior','Mechanical','Package', 'Safety']}}
-								{{request_trim_data = json.loads(auction_request_info['auction_request'].trim_data)}}
-								{{options = auction_request_info['auction_request'].options}}
-								{{if options:}}
-									{{for each_option in options:}}
-										{{has_option_data = False}}
-										{{for each_option_type in option_names:}}
-											{{if not has_option_data:}}
-												{{has_option_data = getOption(request_trim_data, each_option_type, each_option)}}
-												{{if has_option_data:}}
-													<li>{{=has_option_data['name']}}</li>
-												{{pass}}
-											{{pass}}{{#cannot break nested loops so use boolean method http://goo.gl/K8iwMT}}
-										{{pass}}
-										{{if not has_option_data:}}
-											</li>{{=each_option}}</li> {{#then just show the id number}}
-										{{pass}}
-									{{pass}}
-								{{else:}}<li>No preference</li>
-								{{pass}}
-							</ul>
-						</td>
-					</tr>
-					
-					<tr>
-						<th>
-							Credit score
-						</th>
-
-						<td>
-							{{credit_score=auction_request_info['auction_request']['FICO_credit_score']}}
-							{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							Funding:
-						</th>
-
-						<td>
-							{{funding=auction_request_info['auction_request']['funding_source']}}
-							{{=funding.capitalize()}}
-						</td>
-					</tr>
-				{{if funding in ['lease', 'loan']:}}
-					<tr>
-						<th>
-							Expected down payment:
-						</th>
-
-						<td>
-							${{=auction_request_info['auction_request']['expected_down_payment']}}
-						</td>
-					</tr>
-				{{pass}}
-				{{if funding == 'loan':}}
-					<tr>
-						<th>
-							Financing:
-						</th>
-
-						<td>
-							{{=auction_request_info['auction_request']['financing']}}
-						</td>
-					</tr>
-				{{pass}}										
-				{{if funding == 'lease':}}
-					<tr>
-						<th>
-							Lease mileage:
-						</th>
-
-						<td>
-							{{=auction_request_info['auction_request']['lease_mileage']}} miles
-						</td>
-					</tr>
-					<tr>
-						<th>
-							Lease term:
-						</th>
-
-						<td>
-							{{=auction_request_info['auction_request']['lease_term']}}
-						</td>
-					</tr>
-				{{pass}}
-					<tr>
-						<th>
-							Trading in:
-						</th>
-
-						<td>
-							{{trading=auction_request_info['auction_request']['trading_in']}}
-							{{if trading:}}Yes{{else:}}No{{pass}}
-						</td>
-					</tr>
-				{{if trading:}}
-					<tr>
-						<th>
-							Trade in description
-						</th>
-
-						<td>
-							{{=auction_request_info['auction_request']['describe_trade_in']}}
-						</td>
-					</tr>
-				{{pass}}
-				</table>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-			</div>
-		</div>
-	</div>
-</div>
--->{{"""}}
-{{#=BEAUTIFY(options)}}
-{{#'''}}
 <script>
-	//$("#auction_request_offer_options").multiSelect('refresh'); //{{#initialize multiselect}}
-
 	var msrp_by_id = {{=XML(json.dumps(msrp_by_id))}}; //{{#ok to use name instead of id because there is no character limitations like at get url}}
 	function update_estimation(){
 		var msrp = msrp_by_id['base'];
@@ -602,13 +422,12 @@ $(document).ready(function(){
 		list.map( function(item) {
 			msrp = msrp + msrp_by_id[item]
 		});
-		msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_dealership_fees").val() || 0)) || 0); //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
+		msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_additional_costs").val() || 0)) || 0); //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
 		$('#msrp').html(msrp);
 	}
 	$("#auction_request_offer_exterior_color").change(update_estimation);
 	$("#auction_request_offer_interior_color").change(update_estimation);
-	$("#auction_request_offer_dealership_fees").change(update_estimation);
+	$("#auction_request_offer_additional_costs").change(update_estimation);
 	$('.ms-container').click(update_estimation);
 	$('.ms-container').click(update_estimation);
-</script>{{#http://goo.gl/IpBLpn http://goo.gl/cB089T http://goo.gl/IpBLpn http://goo.gl/WvuDbj http://goo.gl/HwI81Q}}
-{{#"""}}
+</script><!-- {{#http://goo.gl/IpBLpn http://goo.gl/cB089T http://goo.gl/IpBLpn http://goo.gl/WvuDbj http://goo.gl/HwI81Q}} -->

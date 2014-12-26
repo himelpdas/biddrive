@@ -244,11 +244,27 @@ db.define_table('auction_request',
 		#requires = IS_IN_SET(sorted(['Sunroof', 'Leather', 'Navigation', 'Heated seats', 'Premium sound', 'Third row seating', 'Cruise Control', 'Video System', 'Bluetooth', 'Satellite Radio', 'Tow Hitch']), multiple=True, zero=None)
 	),	
 	Field('option_names', 'list:string',
+		required=True,
 		writable =False,
 	),	
 	Field('option_msrps', 'list:integer',
+		required=True,
+		writable =False,
+	),	
+	Field('option_descriptions', 'list:string',
+		required=True,
 		writable =False,
 	),
+	Field('option_categories', 'list:string',
+		required=True,
+		readable=False,
+		writable=False
+	),	
+	Field('option_category_names', 'list:string',
+		required=True,
+		readable=True,
+		writable=False
+	),	
 	#add description field
 	Field('FICO_credit_score',
 		requires = IS_EMPTY_OR(IS_IN_SET(sorted(['780+', '750-799', '720-749', '690-719', '670-689', '650-669', '621-649', '620 or less', ]), multiple=False, zero="I don't know")),
@@ -399,10 +415,10 @@ db.define_table('auction_request_offer',
 	Field('summary', 'text',
 		requires=IS_NOT_EMPTY(),
 	),	
-	Field('dealership_fees', 'integer',
+	Field('additional_costs', 'integer',
 		requires=IS_INT_IN_RANGE(0,20000),
 	),
-	Field('dealership_fees_details', 'text',
+	Field('additional_costs_details', 'text',
 	),	
 	#about us
 	###################IMGS#####################
@@ -568,7 +584,7 @@ db.define_table('auction_request_offer',
 	),#continue
 	Field.Method('estimation',
 		lambda row:
-			db(db.auction_request.id == row.auction_request_offer.auction_request).select().last()['trim_price'] + sum(row.auction_request_offer.option_msrps) + row.auction_request_offer.dealership_fees
+			db(db.auction_request.id == row.auction_request_offer.auction_request).select().last()['trim_price'] + sum(row.auction_request_offer.option_msrps) + row.auction_request_offer.additional_costs
 	), #CACHE QUERY
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer_bid.auction_request_offer == row.auction_request_offer.id).select())

@@ -289,7 +289,7 @@ def pre_auction():
 	option_codes = {} #SAFE to verify against user submission, since user has no influence in its data
 
 	for each_option_type in options:
-		if each_option_type['category'] in ['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Fees', 'Other']: #TODO make this dynamic
+		if each_option_type['category'] in OPTION_CATEGORIES: #['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Fees', 'Other']: #TODO make this dynamic
 			for each_option in each_option_type['options']:
 				option_codes.update(
 					{each_option['id'] :
@@ -316,11 +316,12 @@ def pre_auction():
 	colors = zip(auction_request.colors, auction_request.color_names, auction_request.color_categories) #OLD colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])
 	exterior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "exterior", colors))
+	#print exterior_colors
 	#logger.debug(auction_request.colors)
 	interior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "interior", colors))
 	
-	db.auction_request_offer.exterior_color.requires = IS_IN_SET(exterior_colors, zero=None) #TODO change to allow all
-	db.auction_request_offer.interior_color.requires = IS_IN_SET(interior_colors, zero=None) #TODO change to allow all
+	db.auction_request_offer.exterior_color.requires = IS_IN_SET(exterior_colors, zero=None)
+	db.auction_request_offer.interior_color.requires = IS_IN_SET(interior_colors, zero=None)
 	
 	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", _id="pre_auction_form", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 				
@@ -364,7 +365,7 @@ def pre_auction():
 	auction_request_info = dict(
 		id = str(auction_request.id),
 		auction_requests_user_entered = len(db(db.auction_request.owner_id == auction_request_user.id).select()),
-		first_name =auction_request_user.first_name,
+		first_name =auction_request_user.first_name.capitalize(),
 		last_init =auction_request_user.last_name.capitalize()[:1]+'.',
 		year = auction_request.year,
 		make = auction_request.make_name,
@@ -380,7 +381,7 @@ def pre_auction():
 		zip_code =  auction_request_area.zip_code,
 	)
 	
-	return dict(form = form, options=options, option_codes=option_codes, msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
+	return dict(form = form, options=options, option_codes=option_codes, categorized_options=CATEGORIZED_OPTIONS(auction_request), msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
 
 """
 @auth.requires(request.args(0))
@@ -807,8 +808,8 @@ def auction():
 			'has_message_from_buyer' : has_message_from_buyer,
 			'is_winning_offer' :is_winning_offer,
 			'is_my_offer': is_my_offer,
-			'dealership_fees':each_offer.auction_request_offer['dealership_fees'],
-			'dealership_fees_details':each_offer.auction_request_offer['dealership_fees_details'],
+			'additional_costs':each_offer.auction_request_offer['additional_costs'],
+			'additional_costs_details':each_offer.auction_request_offer['additional_costs_details'],
 			'about_us':each_offer.dealership_info['mission_statement'],
 			'bid_is_final': bool(bid_is_final),
 			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,

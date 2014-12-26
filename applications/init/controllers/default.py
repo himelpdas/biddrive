@@ -131,28 +131,32 @@ def request_by_make():
 	def computations(form): #these defaults need form vars, so must do it in onvalidation
 		#initialize
 		trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim)
-		#colorChipsErrorFix(trim_data['colors']) #FIXED BELOW #make sure all db entries are safe. protect trim_data from this error
-		#trim stuff
+		##trim stuff
 		db.auction_request.trim_data.default = json.dumps(trim_data)
 		db.auction_request.trim_name.default = trim_data['name']
 		db.auction_request.trim_price.default = trim_data['price']['baseMSRP']
-		#get options id:name and id:price
-		option_ids_to_names = {} 
-		option_ids_to_prices = {} 
+		##options stuff
+		option_names_list = []
+		option_msrps_list = []
+		option_descriptions_list = []
+		option_categories_list = []
+		option_category_names_list = []
 		for each_option_type in trim_data['options']:
 			for each_option in each_option_type['options']:
 				#logger.debug(each_option)
-				option_ids_to_names.update({str(each_option['id']):each_option['name']})
-				option_ids_to_prices.update( { str(each_option['id']) : ( each_option['price']['baseMSRP'] if ('price' in each_option and 'baseMSRP' in each_option['price']) else 0 ) } )
+				if str(each_option['id']) in form.vars['options']:
+					option_names_list.append(each_option['name'])
+					option_msrps_list.append(each_option['price']['baseMSRP'] if ('price' in each_option and 'baseMSRP' in each_option['price']) else 0 )
+					option_descriptions_list.append(each_option['description'] if 'description' in each_option else None) 
+					option_categories_list.append(each_option_type['category'])
+					option_category_names_list.append(each_option_type['category'].lower().replace(" ", "_"))
 		#put them in db
-		option_names_list = []
-		option_prices_list = []
-		for each_option_id in form.vars['options']: #THIS ALSO VALIDATES THAT THESE VALUES ARE WITHIN THIS TRIM, AND NOT FAKE IDS, ALSO SOLVES THE PROBLEM WHERE COLORS OAD BEFORE MUST HAVES WHEN DIFFERENT TRIM IS SELECTED, AND SUBMIT IS PRESSED.
-			option_names_list.append(option_ids_to_names[str(each_option_id)])
-			option_prices_list.append(option_ids_to_prices[str(each_option_id)])
 		db.auction_request.option_names.default = option_names_list
-		db.auction_request.option_msrps.default = option_prices_list
-		#exterior colors
+		db.auction_request.option_msrps.default = option_msrps_list
+		db.auction_request.option_descriptions.default = option_descriptions_list
+		db.auction_request.option_categories.default = option_categories_list
+		db.auction_request.option_category_names.default = option_category_names_list
+		##exterior colors
 		color_names_list = []
 		color_msrps_list = []
 		color_categories_list = []

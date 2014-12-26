@@ -45,14 +45,18 @@ COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 REVIEWS_URI = "/api/vehiclereviews/v2/styles/%s?sortby=created:ADESC&pagenum=1&pagesize=10"
 IMG_PREFIX = "http://media.ed.edmunds-media.com/"
 
-OD([(u'acura', u'Acura'), (u'aston-martin', u'Aston Martin'), (u'audi',
- u'Audi'), (u'bmw', u'BMW'), (u'bentley', u'Bentley'), (u'buick', u'Buick'), (u'cadillac', u'Cadillac'), (u'chevrolet', u'Chevrolet'), (u'chrysler', u'Chrysler'
-), (u'dodge', u'Dodge'), (u'fiat', u'FIAT'), (u'ford', u'Ford'), (u'gmc', u'GMC'
-), (u'honda', u'Honda'), (u'hyundai', u'Hyundai'), (u'infiniti', u'Infiniti'), (
-u'jaguar', u'Jaguar'), (u'jeep', u'Jeep'), (u'kia', u'Kia'), (u'lamborghini', u'Lamborghini'), (u'land-rover', u'Land Rover'), (u'lexus', u'Lexus'), (u'lincoln'
-, u'Lincoln'), (u'lotus', u'Lotus'), (u'mini', u'MINI'), (u'maserati', u'Maserati'), (u'mazda', u'Mazda'), (u'mclaren', u'McLaren'), (u'mercedes-benz', u'Mercedes-Benz'), (u'mitsubishi', u'Mitsubishi'), (u'nissan', u'Nissan'), (u'porsche',
-u'Porsche'), (u'ram', u'Ram'), (u'rolls-royce', u'Rolls-Royce'), (u'scion', u'Scion'), (u'subaru', u'Subaru'), (u'suzuki', u'Suzuki'), (u'tesla', u'Tesla'), (u'toyota', u'Toyota'), (u'volkswagen', u'Volkswagen'), (u'volvo', u'Volvo'), (u'smart', u'smart')])
-#if then in case ed_call fails
+#color swatch
+COLOR_SWATCH = lambda hex, title='': XML('<i class="fa {fa} fa-fw" style="color:#{hex}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;" title="{title}"></i>'.format(hex=hex,title=title, fa="fa-square" if not hex == "ff00ff" else "fa-minus-square") ) #add border so that whites can show #http://goo.gl/2j2bP #http://goo.gl/R9EI3h
+BULLET=XML('&nbsp;<i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;')
+OPTION_CATEGORIES = sorted(['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Fees', 'Other'])
+def CATEGORIZED_OPTIONS(auction_request):
+	ar = auction_request
+	options_database = zip(ar.options, ar.option_names, ar.option_msrps, ar.option_descriptions, ar.option_categories, ar.option_category_names)
+	options_dictionary = OD(map(lambda each_category: [each_category , [] ], OPTION_CATEGORIES)) #make an ordered dict (option_categories already sorted) with all the option categories holding a blank list 
+	for each_option in options_database:
+		options_dictionary[each_option[4]].append(each_option)
+	#print options_dictionary
+	return options_dictionary
 
 def getBrandsList(year):
 	brands_list = OD()
@@ -103,13 +107,6 @@ def getMsrp(trim_data, option_ids={}):
 				if int(each_option['id']) == int(each_choice):
 					price+=int(each_option['price']['baseMSRP'] if 'price' in each_option else 0)
 	return price
-	
-def colorChipsErrorFix(style_colors): #experimental
-	for each_color in style_colors:
-		if each_color['category'] == 'Exterior':
-			for counter,each_option in enumerate(each_color['options']):
-				if not 'colorChips' in each_option:
-					del each_color['options'][counter]
 					
 def getColorHexByNameOrID(identifier, trim_data):
 	name_or_id="id"
@@ -221,3 +218,14 @@ def getFeaturedCars():
         'image' : u'2013_nissan_370z_coupe_touring_fq_oem_2_815.jpg'
      })
      return cars
+
+"""
+OD([(u'acura', u'Acura'), (u'aston-martin', u'Aston Martin'), (u'audi',
+ u'Audi'), (u'bmw', u'BMW'), (u'bentley', u'Bentley'), (u'buick', u'Buick'), (u'cadillac', u'Cadillac'), (u'chevrolet', u'Chevrolet'), (u'chrysler', u'Chrysler'
+), (u'dodge', u'Dodge'), (u'fiat', u'FIAT'), (u'ford', u'Ford'), (u'gmc', u'GMC'
+), (u'honda', u'Honda'), (u'hyundai', u'Hyundai'), (u'infiniti', u'Infiniti'), (
+u'jaguar', u'Jaguar'), (u'jeep', u'Jeep'), (u'kia', u'Kia'), (u'lamborghini', u'Lamborghini'), (u'land-rover', u'Land Rover'), (u'lexus', u'Lexus'), (u'lincoln'
+, u'Lincoln'), (u'lotus', u'Lotus'), (u'mini', u'MINI'), (u'maserati', u'Maserati'), (u'mazda', u'Mazda'), (u'mclaren', u'McLaren'), (u'mercedes-benz', u'Mercedes-Benz'), (u'mitsubishi', u'Mitsubishi'), (u'nissan', u'Nissan'), (u'porsche',
+u'Porsche'), (u'ram', u'Ram'), (u'rolls-royce', u'Rolls-Royce'), (u'scion', u'Scion'), (u'subaru', u'Subaru'), (u'suzuki', u'Suzuki'), (u'tesla', u'Tesla'), (u'toyota', u'Toyota'), (u'volkswagen', u'Volkswagen'), (u'volvo', u'Volvo'), (u'smart', u'smart')])
+#if then in case ed_call fails
+"""
