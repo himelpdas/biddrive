@@ -127,14 +127,7 @@
 					{{pass}}
 				</div>
 	 		</div>
-		{{"""}}
-	 		<!-- modal summon button -->
-			<div  class="pull-right" style="margin-left:15px; margin-right:15px; display:inline-block">
-				<a class="btn btn-info" href="#{{=request.function}}_alerts" data-toggle="modal" data-target="#{{=request.function}}_alerts">
-					<i class="fa fa-exclamation-circle"></i>
-				</a>
-			</div>	 		 		
-		{{"""}}
+			
 			<div  class="pull-right" style="margin-left:15px; margin-right:15px; display:inline-block">
 				<a class="btn btn-info" href="{{=AUCTION_REQUESTS_URL}}" title="Reset">
 					<i class="fa fa-undo"></i>
@@ -171,9 +164,9 @@
 			{{for each_request in auction_requests:}}
 				<tr class="jcorgFilterTextParent">
 					<td>
-						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"  title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a>
+						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"  style="width:100%" title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a>
 
-						<a class="btn btn-default btn-sm btn-action" style="margin-top:3px"  data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" title="{{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}.">Info<i class="fa fa-fw fa-user"></i></a>
+						<a class="btn btn-default btn-sm btn-action" style="margin-top:3px; width:100%"  data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" title="{{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}.">Info<i class="fa fa-fw fa-user"></i></a>
 
 						<div class="modal fade" id="modal_{{=each_request.auction_request.id}}">
 							<div class="modal-dialog">
@@ -216,7 +209,9 @@
 														{{if categorized_options[each_category] !=[] :}}
 															<h5><u>{{=each_category}}:</u></h5> <!--{{#don't allow blanks}}-->
 															{{for each_option in options_data:}}
-																<p tooltip="{{=each_option[3] or ''}}">{{=BULLET}}{{=each_option[1]}}</p>
+																<p {{if each_option[3] and each_option[3] != "None":}}title="{{=each_option[3]}}"{{pass}} >
+																	{{=BULLET}}{{=each_option[1]}}
+																</p>
 															{{pass}}
 														{{pass}}
 													{{pass}}
@@ -367,17 +362,6 @@
 					<td>
 						{{=each_request.auction_request.number_of_bids()}}
 					</td>
-{{"""}}
-					<td>
-						{{#='$' + str(int(each_request.auction_request.lowest_offer().bid)) if each_request.auction_request.lowest_offer() else 'No bids!'}} {{#http://goo.gl/b4hKx}}
-						{{lowest_offer = each_request.auction_request.lowest_offer()}} {{#one db call instead of two like above}}
-						{{if lowest_offer:}}
-							{{=lowest_offer.bid}}
-						{{else:}}
-							No bids!
-						{{pass}}
-					</td>
-{{"""}}
 				</tr>
 				<script>
 					$("#sifter").jcOnPageFilter({caseSensitive:false, animateHideNShow:true, hideNegatives:true, highlightColor:'lightgreen'}); {{#http://goo.gl/LYpoNj}}
@@ -389,80 +373,3 @@
 		{{=blank_after_filter_message}}
 	{{pass}}
 </div>
-
-{{#MODALS}}
-{{"""}}
-<!--  {{request.function}}_alerts modal -->
-<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="{{=request.function}}_alerts">
-	<div class="modal-dialog">
-    	<div class="modal-content">
-      		<div class="modal-header">
-        		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        		<h4 class="modal-title"> <i class="fa fa-exclamation-circle"></i> Set Alerts  (Cost per alert) </h4>
-      		</div>
-
-      		<div class="modal-body">
-				<h2>
-					How would you like to be alerted?
-				</h2>
-					<h5>
-						Reminder for: <span id="alert_description"></span>
-					</h5>
-				<script>
-					make = $("#make_dropdown").text()
-					model = $("#model_dropdown").text()
-					trim = $("#trim_dropdown").text()
-					color = $("#color_dropdown").text()
-					$("#alert_description").text(make+'-'+model+'-'+trim+'-'+color);
-				</script>
-				<div class="btn-group" data-toggle="buttons-checkbox">
-					<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-envelope"></i> Email (1 credit)</button>
-					<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-mobile-phone"></i> SMS 3 (credits)</button>
-					<button type="button" class="btn btn-primary btn-large btn-info"><i class="fa fa-phone"></i>Call (5 credits)</button>
-				</div>
-      		</div>
-
-      		<div class="modal-footer">
-				<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-				<button class="btn btn-primary">Save changes</button>
-      		</div>
-    	</div>
-  	</div>
-</div>
-
-<button id="to-agreement-button-{{=each_request.auction_request.id}}" class="btn btn-default btn-action" href="#{{=request.function}}_agreement" data-toggle="modal"><i class="fa fa-arrow-right"></i></button>
-						<script> {{#always add id to id attr when theres more than one}}
-							$('#to-agreement-button-{{=each_request.auction_request.id}}').click(
-								function(){
-									$('#to-auction-url').attr("href", "{{=URL('authorize_auction_for_dealer',args=[each_request.auction_request.id])}}");
-								}
-							);
-						</script>
-<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="{{=request.function}}_agreement">
-	<div class="modal-dialog">
-    	<div class="modal-content">
-      		<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-				<h4><i class="fa fa-thumbs-o-up"></i> Agreement</h4>
-			</div>
-
-			<div class="modal-body" style="max-height: 400px; overflow-y: scroll">
-				<h5>
-					You must agree to the following to join this auction:
-				</h5>
-				<p>
-					"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-				</p>
-				<p>
-					"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-				</p>
-			</div>
-
-      		<div class="modal-footer">
-				<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-				<a id="to-auction-url" href="{{=URL('authorize_auction_for_dealer')}}{{#maybe make error redirect}}" class="btn btn-primary">I Agree</a>
-      		</div>
-		</div>
-	</div>
-</div>
-{{"""}}

@@ -323,6 +323,9 @@ def pre_auction():
 	db.auction_request_offer.exterior_color.requires = IS_IN_SET(exterior_colors, zero=None)
 	db.auction_request_offer.interior_color.requires = IS_IN_SET(interior_colors, zero=None)
 	
+	#get dealer's credits banks for view/update
+	my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
+	
 	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", _id="pre_auction_form", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
 				
 	def computations(form): #DONT ALLOW IF VEHICLE DOESN'T MATCH REQUEST
@@ -339,7 +342,6 @@ def pre_auction():
 	
 	if form.process(onvalidation=computations, hideerror = False, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
-			my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
 			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
 			db.credits_history.insert(changed = -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
 			auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
@@ -381,7 +383,7 @@ def pre_auction():
 		zip_code =  auction_request_area.zip_code,
 	)
 	
-	return dict(form = form, options=options, option_codes=option_codes, categorized_options=CATEGORIZED_OPTIONS(auction_request), msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
+	return dict(form = form, my_piggy=my_piggy, options=options, option_codes=option_codes, categorized_options=CATEGORIZED_OPTIONS(auction_request), msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
 
 """
 @auth.requires(request.args(0))

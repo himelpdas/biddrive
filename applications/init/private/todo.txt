@@ -1,19 +1,19 @@
 *Todo
 dont allow more than one auction request at a time
-add more tooltips to everything
-add pagination to auction_request
-make auction page more responsive
-cache auction requests
-negative credits message 
-allow N/A for interior/exterior colors
-add "are you sure?" modals to auction page
 false/erroroneous address in dealership form raises "Nonetype not iterable error"
 
 *Optional
+add more tooltips to everything
+add pagination to auction_request
+make auction page more responsive
 add twilio verification in page 2
 calculate msrp in page 2
 
 *Complete
+add "are you sure?" modals to auction page
+credits reminder in pre auction 
+allow N/A for interior/exterior colors
+cache auction requests
 Use rare color hex to hack a "question mark" icon over a swatch of unknown color
 bring sms alerts to buyers, add number field to registration
 jquery ui tooltips not showing

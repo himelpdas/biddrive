@@ -95,7 +95,7 @@
 					$("#auction_request_offer_options").multiSelect('refresh');
 				</script>
 				<div class="form-group">
-					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="The total dollar value of ALL fees from your dealership regarding this vehicle."></i> Dealership fees total cost</label>
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="The total dollar value of ALL additional costs regarding this vehicle."></i> Additional costs</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.additional_costs}}
 
@@ -105,7 +105,7 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="Describe ALL additional fees from your dealership regarding this vehicle."></i> Dealership fees description</label>
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="Are there any missing features? What fees are associated with this vehicle? Describe them all here!"></i> Additional costs description</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.additional_costs_details}}
 
@@ -238,7 +238,7 @@
 				<button id="fake_submit" type="button" class="btn btn-default pull-right">Submit</button>
 				<script>
 					$("#fake_submit").click(function(){
-						var message = "{{='You will now be charged %s credits (auction fee) to enter this auction. If you win this auction and the buyer initiates contact, you will be charged %s credits (success fee).'%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS)}}"
+						var message = "{{=XML('''<p>You will now be charged <b>%s credits</b> <i>(auction fee)</i> to enter this auction. If you win this auction and the buyer initiates contact, you will be charged an additional <b>%s credits</b> <i>(success fee)</i>.</p> <h5 class='pull-right'>You have <b>%s credits remaining</b>.</h5>'''%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS, my_piggy.credits) ) }}" <!--{{#MUST use XML() to style bootbox http://goo.gl/7OaP6m}}-->
 						bootbox.confirm(message, function(agreed){
 							if (agreed){
 								$("form#pre_auction_form").trigger('submit'); //{{#needs id needs form befoe it to work}}
@@ -299,7 +299,9 @@
 								{{if categorized_options[each_category] !=[] :}}
 									<h5><u>{{=each_category}}:</u></h5> <!--{{#don't allow blanks}}-->
 									{{for each_option in options_data:}}
-										<p tooltip="{{=each_option[3] or ''}}">{{=BULLET}}{{=each_option[1]}}</p>
+										<p {{if each_option[3] and each_option[3]!="None":}}title="{{=each_option[3]}}"{{pass}} >
+											{{=BULLET}}{{=each_option[1]}}
+										</p>
 									{{pass}}
 								{{pass}}
 							{{pass}}

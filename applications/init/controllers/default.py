@@ -262,16 +262,6 @@ def pre_auction():
 	redirect(
 		URL('dealer','auction.html', args=auction_request_id) #http://goo.gl/twPSTK
 	)
-	
-@auth.requires_login()
-def my_auctions(): #FIX GUEST AUCTIONS
-	guest_auction_requests = db((db.auction_request.owner_id == None) & (db.auction_request.temp_id == session.guest_temp_id)).select()
-	for each_guest_auction_request in guest_auction_requests:
-		each_guest_auction_request.update_record(owner_id=auth.user_id) #link guest id to user id
-	
-	my_auctions = db(db.auction_request.owner_id == auth.user_id).select()
-	response.title="My auctions"
-	return dict(guest_temp_id=session.guest_temp_id, my_auctions=my_auctions)
 
 def how_it_works():
 	return dict()
