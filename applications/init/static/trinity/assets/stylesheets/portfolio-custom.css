@@ -1,4 +1,3 @@
-
     .portfolio-item .project-overlay {
         opacity:0.8;
         transition:all 0.4s ease 0s;
@@ -25,6 +24,7 @@
     .portfolio-item:hover .project-overlay {
         height:100%;
         top:0;
+        opacity: 0.8;
     }
 
     .open-project-link {
