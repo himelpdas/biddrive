@@ -746,7 +746,7 @@ def auction():
 					a_winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice, winner_code=winner_code)#insert new winner
 					is_winning_offer=True #now make it true
 					session.BROADCAST_WINNER_ALERT=True
-					SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app= APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+					SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_winner", **dict(app= APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 					#session.BROADCAST_WINNER_ALERT = True
 					#session.message = "$All dealers will be alerted about your new favorite!"
 				else:
