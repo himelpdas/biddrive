@@ -189,7 +189,7 @@ def request_by_make():
 					color_category_names_list.append(missing_category)
 					color_hexes_list.append('ff00ff')
 					color_categories_list.append(missing_category.lower().replace(" ", "_")) #id safe
-					color_simple_names_list.append('')
+					color_simple_names_list.append('N/A')
 		#print map(lambda each: each in [0,1], form.vars['colors'])
 		#if not ('interior' in color_categories_list and 'exterior' in color_categories_list): #make sure there is at least one interior and one exterior color, or raise form error
 		if not set(['interior', 'exterior']).issubset(color_categories_list): #more flexible than above
