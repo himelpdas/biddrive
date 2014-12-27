@@ -1079,7 +1079,7 @@ def winner():
 	#string scramble stuff
 	def text_scrambler(text):
 		if not contact_made:
-			text = str(uuid.uuid4().get_hex().upper()[:len(text)]) #http://goo.gl/GAfp26 #randomize a string, this function matches the length of the initial string
+			text = str(uuid.uuid4().get_hex().upper()[:len(text or '')]) #http://goo.gl/GAfp26 #randomize a string, this function matches the length of the initial string
 		return text
 
 	return dict(

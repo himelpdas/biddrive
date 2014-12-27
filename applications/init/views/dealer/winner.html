@@ -139,7 +139,7 @@
 	</div>
 </div>
 
-{{if contact_made:}}
+{{if not contact_made:}}
 <div id="myModal" class="modal fade">
   <h1>&nbsp;</h1>
   <h1>&nbsp;</h1>
@@ -183,7 +183,7 @@
 	}); //{{#http://goo.gl/EMJBKz IE10 and FF23 does not support yet so use this #http://goo.gl/yhclo}}
     $('.modal').modal('show');
 </script>
-{{"""}}
+<!--{{"""}}
 <script>{{#polling to see whether connection was made #http://goo.gl/17YuW}}
 (function poll(){
 	$.ajax({ url: "{{=URL('init', 'ajax', 'contact_made.json', args=[winner_code])}}{{#TODO hmac enforce}}", success: function(data){
@@ -195,7 +195,7 @@
     }, dataType: "json", complete: poll, timeout: 7777 });
 })(); {{#self executing func #http://goo.gl/2fJHT}}
 </script>
-{{"""}}
+{{"""}}-->
 <script>{{#polling to see whether connection was made #http://goo.gl/17YuW}}
 setInterval(function(){
 	$.ajax({ url: "{{=URL('init', 'ajax', 'contact_made.json', args=[winner_code])}}{{#TODO hmac enforce}}", success: function(data){
