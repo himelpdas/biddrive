@@ -500,14 +500,14 @@ def auction():
 	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 	
 	#only allow form functionality to show for dealers as long as auction is active
-	bid_form = my_message_form_dealer = my_auction_request_offer_id = is_final_bid = None
+	bid_form = my_message_form_dealer = my_auction_request_offer_id = form_is_final_bid = None
 	if not a_winning_offer and not auction_request_expired: #do not allow any insertions for expired or winning
 		#create offer form
 		if is_authorized_dealer_with_offer:# and not is_dealer_and_with_final_bid:
 			#see if final offer
 			final_message = None
-			is_final_bid = request.vars['final_bid']
-			if is_final_bid:
+			form_is_final_bid = request.vars['final_bid']
+			if form_is_final_bid:
 				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, (auction_request_ends-request.now).total_seconds()/3600.0)
 				final_message = "@This was your final bid! The buyer has been notified."
 			#make sure new bid can't be higher than previous
@@ -533,7 +533,7 @@ def auction():
 				response.message = '$Your new bid is $%s.'%form_bid_price #redirect not needed since we're dealing with POST
 				#alert buyer about lower bid from this dealer
 				bidding_dealer_name='%s %s'%(auth.user.first_name.capitalize(), auth.user.last_name.capitalize()[:1]+'.')
-				SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME, change="finalized" if is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, is_final_bid=is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
+				SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME, change="finalized" if form_is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, form_is_final_bid=form_is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
 				#broadcast to dealers
 				session.BROADCAST_BID_ALERT=form_bid_price #also True
 				if final_message:
@@ -804,7 +804,7 @@ def auction():
 			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app=APP_NAME, is_winning_offer=is_winning_offer, buyer=auction_request_user, you_or_him='you' if is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_BID_ALERT:
 			form_bid_price = session.BROADCAST_BID_ALERT #since there is a refresh we must access from session
-			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_bid", **dict(app=APP_NAME, price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if is_my_offer else "You", is_my_offer= is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_bid", **dict(app=APP_NAME, change="finalized" if bid_is_final else "dropped", price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if not is_my_offer else "You", is_my_offer= is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		each_offer_dict = {
 			'id' : offer_id,
 			'has_message_from_buyer' : has_message_from_buyer,
@@ -878,7 +878,7 @@ def auction():
 	#title stuff
 	response.title="Auction"
 	response.subtitle="for %s's new %s %s %s" % (auth.user.first_name, auction_request.year, auction_request.make, auction_request.model)
-	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_dealer = is_dealer_with_offer, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_is_completed=auction_is_completed, auction_request_expired=auction_request_expired, auction_ended_offer_expired=auction_ended_offer_expired, a_winning_offer=a_winning_offer, is_final_bid=is_final_bid)
+	return dict(auction_request_info=auction_request_info, auction_request_offers_info=auction_request_offers_info, is_dealer = is_dealer_with_offer, is_owner=is_owner, bid_form=bid_form, sortlist=sortlist, auction_is_completed=auction_is_completed, auction_request_expired=auction_request_expired, auction_ended_offer_expired=auction_ended_offer_expired, a_winning_offer=a_winning_offer, form_is_final_bid=form_is_final_bid)
 	
 @auth.requires_membership('dealers')
 def my_auctions():
