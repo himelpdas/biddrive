@@ -104,13 +104,13 @@
 							<div class="row" style="max-height:250px; overflow-y:auto;" >
 								{{for each_pair in two_cols:}}
 									<div class="col-xs-12 col-sm-6">
-										<p title="{{=auction_request_options_dict[each_pair[0]]['description']}}">
+										<p title="{{=auction_request_options_dict[each_pair[0]]['description'].replace('None', 'No description')}}">
 											{{=BULLET}}{{=auction_request_options_dict[each_pair[0]]['name']}}
 										</p>
 									</div>
 									<div class="col-xs-12 col-sm-6">
 										{{if auction_request_options_dict.get(each_pair[1]):}}
-											<p title="{{=auction_request_options_dict[each_pair[1]]['description']}}">
+											<p title="{{=auction_request_options_dict[each_pair[1]]['description'].replace('None', 'No description')}}">
 												{{=BULLET}}{{=auction_request_options_dict[each_pair[1]]['name']}}
 											</p>
 										{{pass}}<!--{{#last item may be missing, so use get}}-->
@@ -319,7 +319,9 @@
 							</th>
 
 							<td style="border-top:none;">
-								{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
+								<p>
+									{{entered=auction_request_info['auction_requests_user_entered']}}{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction
+								</p>
 							</td>
 						</tr>
 
@@ -329,8 +331,10 @@
 							</th>
 
 							<td>
-								{{credit_score=auction_request_info['auction_request']['FICO_credit_score']}}
-								{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}
+								<p>
+									{{credit_score=auction_request_info['auction_request']['FICO_credit_score']}}
+									{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}
+								</p>
 							</td>
 						</tr>
 
@@ -340,8 +344,10 @@
 							</th>
 
 							<td>
-								{{funding=auction_request_info['auction_request']['funding_source']}}
-								{{=funding.capitalize()}}
+								<p>
+									{{funding=auction_request_info['auction_request']['funding_source']}}
+									{{=funding.capitalize()}}
+								</p>
 							</td>
 						</tr>
 					{{if funding in ['lease', 'loan']:}}
@@ -351,7 +357,7 @@
 							</th>
 
 							<td>
-								${{=auction_request_info['auction_request']['expected_down_payment']}}
+								<p>${{=auction_request_info['auction_request']['expected_down_payment']}}</p>
 							</td>
 						</tr>
 					{{pass}}
@@ -362,7 +368,7 @@
 							</th>
 
 							<td>
-								{{=auction_request_info['auction_request']['financing']}}
+								<p>{{=auction_request_info['auction_request']['financing']}}</p>
 							</td>
 						</tr>
 					{{pass}}										
@@ -373,7 +379,7 @@
 							</th>
 
 							<td>
-								{{=auction_request_info['auction_request']['lease_mileage']}} miles
+								<p>{{=auction_request_info['auction_request']['lease_mileage']}} miles</p>
 							</td>
 						</tr>
 						<tr>
@@ -382,7 +388,7 @@
 							</th>
 
 							<td>
-								{{=auction_request_info['auction_request']['lease_term']}}
+								<p>{{=auction_request_info['auction_request']['lease_term']}}</p>
 							</td>
 						</tr>
 					{{pass}}
@@ -392,8 +398,10 @@
 							</th>
 
 							<td>
-								{{trading=auction_request_info['auction_request']['trading_in']}}
-								{{if trading:}}Yes{{else:}}No{{pass}}
+								<p>
+									{{trading=auction_request_info['auction_request']['trading_in']}}
+									{{if trading:}}Yes{{else:}}No{{pass}}
+								</p>
 							</td>
 						</tr>
 					{{if trading:}}
@@ -403,7 +411,7 @@
 							</th>
 
 							<td>
-								{{=auction_request_info['auction_request']['describe_trade_in']}}
+								<p>{{=auction_request_info['auction_request']['describe_trade_in']}}</p>
 							</td>
 						</tr>
 					{{pass}}
@@ -613,9 +621,9 @@
 												{{for each_option in each_offer['options_dict'][each_category]:}}
 													<li>{{=each_offer['options_dict'][each_category][each_option]['name']}}{{each_option_description=each_offer['options_dict'][each_category][each_option]['description']}}{{if each_option_description != "None":}} <i class="fa fa-fw fa-info" title="{{=each_option_description}}"></i>{{pass}}
 												{{pass}}
-												{{"""}}{{if not each_offer['options_dict'][each_category]:}}
+												<!--{{"""}}{{if not each_offer['options_dict'][each_category]:}}
 													<li><i>Not specified</i>
-												{{pass}}{{"""}}
+												{{pass}}{{"""}}-->
 												</ul>
 											</div>
 										</div>

@@ -11,6 +11,8 @@ add twilio verification in page 2
 calculate msrp in page 2
 
 *Complete
+remove none decsriptions in auction
+p tags to user info in auctions
 add "are you sure?" modals to auction page
 credits reminder in pre auction 
 allow N/A for interior/exterior colors

@@ -91,7 +91,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"BUYER_on_new_offer" : lambda: dict(
-			SUBJECT  =  "{app}: A new dealer ({dealer_name}) just submitted a %s!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app}: A new dealer ({dealer_name}) just submitted a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{dealer_name} joined your auction just moments ago! So what now?".format(**MESSAGE_VARS),
 			MESSAGE_TITLE = "A dealer submitted a {car}!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Say hello!",
@@ -154,7 +154,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_winner" : lambda: dict(
-			SUBJECT  =  "{app}: {you_or_him} is the winner for a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app}: {buyer} picked {you_or_him} the winner for a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("The buyer for a <i>{car}</i> picked <b>{you_or_him}</b> as the winner! So what now?".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "{buyer} picked a new winner!",
 			WHAT_NOW = "Try again! You'll have better luck next time." if not MESSAGE_VARS['is_winning_offer'] else "Wait for the buyer's call!",
