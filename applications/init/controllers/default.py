@@ -344,9 +344,7 @@ def auction_history():
 		elif not ends_in_human: #that means time ran out so auction ended but no winner chosen
 			how_auction_ended = "No winner was chosen"
 		each_request['how_auction_ended'] = how_auction_ended
-		#color stuff
-		for each_color in each_request['color_names']:
-			each_request['color_names_and_codes'].append([each_color, getColorHexByNameOrID(each_color, trim_data)])
+		#color stuff done in view
 	return dict(my_auctions=my_auctions,heading =heading)
 
 def user():

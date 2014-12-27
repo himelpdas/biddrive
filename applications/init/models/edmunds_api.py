@@ -107,7 +107,8 @@ def getMsrp(trim_data, option_ids={}):
 				if int(each_option['id']) == int(each_choice):
 					price+=int(each_option['price']['baseMSRP'] if 'price' in each_option else 0)
 	return price
-					
+
+"""
 def getColorHexByNameOrID(identifier, trim_data):
 	name_or_id="id"
 	try: int(identifier)
@@ -128,7 +129,7 @@ def getColorHexByNameOrID(identifier, trim_data):
 		#raise Exception("Couldn't find color hex by name or ID!")
 		color_hex="000" #Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of color_simple_names with color_pref in auction request, but this is unlikely.
 	return color_hex
-
+"""
 
 
 def getFeaturedCars():
