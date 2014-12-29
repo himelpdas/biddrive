@@ -212,7 +212,7 @@ def auction_requests():
 			2
 		],
 		[
-			'Area', 
+			'Proximity', 
 			['closest','farthest'],
 			1
 		],
