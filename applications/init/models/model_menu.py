@@ -37,7 +37,7 @@ AUTH_DEALER = auth.has_membership(user_id = auth.user_id, role = "dealers")
 if AUTH_ADMIN:
 	response.menu.append(
 		(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
-			(XML('<i class="fa fa-fw fa-caret-right"></i> DB management'), False, URL('appadmin', 'index'), []),
+			(XML('<i class="fa fa-fw fa-caret-right"></i> App management'), False, URL('appadmin', 'index'), []),
 			(XML('<i class="fa fa-fw fa-caret-right"></i> Dealership requests'), False, URL('admin', 'dealership_requests'), []),
 			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage auctions'), False, URL('admin', 'manage_auctions'), []),
 			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage buyers'), False, URL('admin', 'manage_buyers'), []),
