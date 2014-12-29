@@ -2,6 +2,7 @@
 dont allow more than one auction request at a time
 false/erroroneous address in dealership form raises "Nonetype not iterable error"
 email when auction almost/ends (softcron?)
+translucent message divs in home
 
 *Optional
 add more tooltips to everything
@@ -61,3 +62,20 @@ change "already have an account?" to "already applied?"
 
 *Ongoing
 Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of simple_color_names with color_pref in auction request, but this is unlikely.
+
+index menu fix
+<!--{{#fix the unreadable .dropdown-menu in default/index}}-->
+
+{{if ['default', 'index'] == [request.controller, request.function]:}}
+
+	<style>
+
+		.dropdown-menu {
+
+			background-color: rgba(30,31,33,0.3);
+
+		}
+
+	</style>
+
+{{pass}}

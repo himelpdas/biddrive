@@ -69,6 +69,13 @@
 </head>
 <body>
 
+{{#Do comment-out or remove}}
+{{IS_HOMEPAGE=['default','index'] == [request.controller,request.function]}}
+{{include '_extras/message_divs.html'}}
+{{if IS_HOMEPAGE:}}
+	{{message_divs()}}
+{{pass}}
+
 {{include "trinity/site-nav.html"}}
 
 <!-- Master Wrap : starts -->

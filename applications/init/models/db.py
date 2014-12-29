@@ -52,6 +52,7 @@ auth.settings.register_onaccept += [
 	lambda form: SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=True, USER=db(db.auth_user.id==form.vars.id).select().last(), MESSAGE_TEMPLATE = "GENERIC_welcome_to_biddrive", **dict(first_name=form.vars.first_name) ) ,
 	#lambda form: get_alert_setting_table_for_user(form.vars.id) #no longer needed since email alert settings were simplified, and now resides in db.auth_user
 ]
+auth.settings.login_next = URL('default','after_login_portal')
 
 force_default_on_register = False if not auth.is_logged_in() else True  #since auth doesn't allow changing fields after db.define_tables(auth), default can be forced here
 auth.settings.extra_fields['auth_user']= [
