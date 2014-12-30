@@ -3,8 +3,8 @@ def index():
 
 @auth.requires_membership('dealers')
 def auction_requests():
-	if not "sortby" in request.vars:
-		redirect(URL(vars=dict(sortby='newest')))
+	if not request.vars: #redirect dealer to show auction requests of his default brands
+		redirect(AUCTION_REQUESTS_URL)
 	"""
 	It is also possible to build queries using in-place logical operators:
 	>>> query = db.person.name!='Alex'
@@ -34,7 +34,7 @@ def auction_requests():
 	#dealer_specialty = my_info.specialty
 	#brands_list = dict([[each_niceName , brands_list[each_niceName]] for each_niceName in dealer_specialty]) #niceName, name #HACK - limit the brandslist to only whats in the dealer's speciality
 	brands_list = OD(sorted(brands_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
-		
+	
 	multiple = request.vars['multiple'].split("|") if request.vars['multiple'] else brands_list.keys() #if multiple not in vars, that means "show all" makes has been selected
 	models_list = {}
 	if all(map(lambda make: make in brands_list, multiple)): #TEMP

@@ -53,7 +53,7 @@ else:
 	AUCTION_REQUESTS_URL=None
 
 dealer_portal_menu_list=[
-		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, AUCTION_REQUESTS_URL, []),
+		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, AUCTION_REQUESTS_URL, []), #by default .../auction_requests/ redirects to this URL, but save resources by direct linking instead.
 		(XML('<i class="fa fa-fw fa-info-circle"></i> Dealership info'), False, URL('dealer', 'dealer_info'), []),
 		#(T('Messages'), False, URL('dealer', 'messages'), []),
 		#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),
