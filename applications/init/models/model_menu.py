@@ -7,7 +7,6 @@
 
 response.logo = A(B(APP_NAME.capitalize() ),XML('&trade;&nbsp;'),
                   _class="brand",_href=URL('default', 'index.html') )
-response.title = APP_NAME.capitalize() or request.application.replace('_',' ').title()
 response.subtitle = ''
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
