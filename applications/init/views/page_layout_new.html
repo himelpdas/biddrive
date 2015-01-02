@@ -13,8 +13,8 @@
 {{#enable prettier jquery UI tooltips}}
 <script>
 
-	$(":submit").click(function(){
-	
+	//{{# $(":submit").click(function(){ }} //not good because :submit will select anything inside a form, input[type="submit"] more specific to submit buttons
+	$('[type="submit"]').click(function(){
 		$('.modal').modal('hide'); //{{# hide all modals for loading_modal below}}
 		
 		{{loading_modal_jquery("Processing")}} //{{#show loading modal, with random default titles... can be overridden ie in buy_credits page}}
