@@ -7,7 +7,6 @@
 
 response.logo = A(B(APP_NAME.capitalize() ),XML('&trade;&nbsp;'),
                   _class="brand",_href=URL('default', 'index.html') )
-response.title = APP_NAME.capitalize() or request.application.replace('_',' ').title()
 response.subtitle = ''
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
@@ -37,7 +36,7 @@ AUTH_DEALER = auth.has_membership(user_id = auth.user_id, role = "dealers")
 if AUTH_ADMIN:
 	response.menu.append(
 		(T('Admin Portal'), False, URL('admin', 'dealership_requests'), [
-			(XML('<i class="fa fa-fw fa-caret-right"></i> DB management'), False, URL('appadmin', 'index'), []),
+			(XML('<i class="fa fa-fw fa-caret-right"></i> App management'), False, URL('appadmin', 'index'), []),
 			(XML('<i class="fa fa-fw fa-caret-right"></i> Dealership requests'), False, URL('admin', 'dealership_requests'), []),
 			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage auctions'), False, URL('admin', 'manage_auctions'), []),
 			(XML('<i class="fa fa-fw fa-caret-right"></i> Manage buyers'), False, URL('admin', 'manage_buyers'), []),
@@ -53,7 +52,7 @@ else:
 	AUCTION_REQUESTS_URL=None
 
 dealer_portal_menu_list=[
-		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, AUCTION_REQUESTS_URL, []),
+		(XML('<i class="fa fa-fw fa-car"></i> Buyer requests'), False, AUCTION_REQUESTS_URL, []), #by default .../auction_requests/ redirects to this URL, but save resources by direct linking instead.
 		(XML('<i class="fa fa-fw fa-info-circle"></i> Dealership info'), False, URL('dealer', 'dealer_info'), []),
 		#(T('Messages'), False, URL('dealer', 'messages'), []),
 		#(T('Manage alerts'), False, URL('dealer', 'reminders'), []),

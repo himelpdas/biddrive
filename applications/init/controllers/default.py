@@ -22,10 +22,11 @@ def index():
 	if request.args(0):
 		year = request.args[0]
 		
-	response.message2="!%s is currently under development"%APP_NAME
+	response.message2="@%s is currently under development"%APP_NAME
 		
 	return dict(brands_list=getBrandsList(year), cars=getFeaturedCars())
 
+'''
 def index_old():
 	"""
 	example action using the internationalization operator T and flash
@@ -42,6 +43,7 @@ def index_old():
 	response.message2="!%s is currently under development"%APP_NAME
 
 	return dict(brands_list=getBrandsList(year))
+'''
 
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
 @auth.requires(URL.verify(request, hmac_key = str(session.salt), hash_vars=[request.args(0),request.args(1),request.args(2)]),  requires_login=False)
@@ -189,7 +191,7 @@ def request_by_make():
 					color_category_names_list.append(missing_category)
 					color_hexes_list.append('ff00ff')
 					color_categories_list.append(missing_category.lower().replace(" ", "_")) #id safe
-					color_simple_names_list.append('')
+					color_simple_names_list.append('N/A')
 		#print map(lambda each: each in [0,1], form.vars['colors'])
 		#if not ('interior' in color_categories_list and 'exterior' in color_categories_list): #make sure there is at least one interior and one exterior color, or raise form error
 		if not set(['interior', 'exterior']).issubset(color_categories_list): #more flexible than above
@@ -207,18 +209,12 @@ def request_by_make():
 		db.auction_request.color_simple_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.colors ]
 		"""
 	if form.process(keepvalues=True, onvalidation=computations, hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
-		guest_msg = '! Register or login to view it.'
-		msg_color = '$'
 		pre_auction_id = [form.vars.id]
 		if request.post_vars['password'] or request.post_vars['email']: #can't use form.vars for some reason, probably because process removed non SQLFORM vars like email and password
 			if not auth.login_bare(request.post_vars['email'],request.post_vars['password']): #will login automatically if true
-				guest_msg = ', but your email or password was incorrect. Try again!' 
-				msg_color = "!"
+				session.message = '!Your request was submitted, but your email or password was incorrect! Please try again.' 
 		else: #user didn't login so force registration, use "force_register" arg in URL redirect to modify default behaviour in user.html
 			pre_auction_id.append('force_register')
-		if auth.user_id:
-			guest_msg='! Dealers have been notified.' #user is logged in no need for guest msg
-		session.message = msg_color + 'Auction submitted%s' % guest_msg
 		auth.add_group('dealers_in_auction_%s'%form.vars.id, 'The group of dealers that entered a particular auction by agreeing to its terms and charges.')
 		auth.add_group('owner_of_auction_%s'%form.vars.id, 'The owner of a particular auction who made the initial request.')
 		redirect(
@@ -259,6 +255,7 @@ def pre_auction():
 		MESSAGE_TEMPLATE= "BUYER_on_new_request",
 		**dict(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name, mile = auction_request.auction_request.radius, zip=auction_request.auction_request.zip_code, url=URL('default', 'auction', args=[auction_request_id], host=True, scheme=True), )
 	)
+	session.message="$Request completed! Dealers nearby were notified."
 	redirect(
 		URL('dealer','auction.html', args=auction_request_id) #http://goo.gl/twPSTK
 	)
@@ -302,9 +299,10 @@ def after_login_portal():
 	session.message = "!Successfully logged in. Welcome %s!"%auth.user.first_name.capitalize()
 	if AUTH_DEALER:
 		redirect(URL('dealer', 'auction_requests'))
-	if AUTH_ADMIN:
+	elif AUTH_ADMIN:
 		redirect(URL('admin', 'dealership_requests'))
-	redirect(URL('index'))
+	else:
+		redirect(URL('default', 'auction_history'))
 	
 @auth.requires(not auth.has_membership(role='dealers'))
 def auction_history():
@@ -344,9 +342,7 @@ def auction_history():
 		elif not ends_in_human: #that means time ran out so auction ended but no winner chosen
 			how_auction_ended = "No winner was chosen"
 		each_request['how_auction_ended'] = how_auction_ended
-		#color stuff
-		for each_color in each_request['color_names']:
-			each_request['color_names_and_codes'].append([each_color, getColorHexByNameOrID(each_color, trim_data)])
+		#color stuff done in view
 	return dict(my_auctions=my_auctions,heading =heading)
 
 def user():

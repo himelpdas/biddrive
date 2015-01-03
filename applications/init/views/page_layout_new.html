@@ -1,12 +1,25 @@
 {{extend 'layout_new.html'}}
 
+{{def loading_modal_jquery(loading_title):}}
+	$('<div class="modal fade" id="pleaseWaitDialog" data-backdrop="static" data-keyboard="false" role="dialog" aria-labelledby="basicModal" aria-hidden="true" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h1>{{=loading_title}}...</h1><h3>Did you know? {{=random.choice(LOADING_FUNFACTS)}}</h3></div><div class="modal-body"><div class="progress progress-striped active"><div class="progress-bar" style="width: 100%;"></div></div></div></div></div></div></div></div>').modal(); <!--{{#use in points of long load time #modified from http://goo.gl/xzUsL6 & http://pastebucket.com/47776}}-->
+{{return}}
+
 <div class="container page-container">
     {{include '_extras/progress_bar.html'}}
-	{{include '_extras/message_divs.html'}}
+	{{message_divs()}}
 	{{include}}
 </div>
 
 {{#enable prettier jquery UI tooltips}}
 <script>
-    $( document ).tooltip();
+
+	//{{# $(":submit").click(function(){ }} //not good because :submit will select anything inside a form, input[type="submit"] more specific to submit buttons
+	$('[type="submit"]').click(function(){
+		$('.modal').modal('hide'); //{{# hide all modals for loading_modal below}}
+		
+		{{loading_modal_jquery("Processing")}} //{{#show loading modal, with random default titles... can be overridden ie in buy_credits page}}
+	});
+	
+    $( document ).tooltip(); //{{#show jquery ui tooltips}}
+
 </script>

@@ -48,7 +48,7 @@ IMG_PREFIX = "http://media.ed.edmunds-media.com/"
 #color swatch
 COLOR_SWATCH = lambda hex, title='': XML('<i class="fa {fa} fa-fw" style="color:#{hex}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;" title="{title}"></i>'.format(hex=hex,title=title, fa="fa-square" if not hex == "ff00ff" else "fa-minus-square") ) #add border so that whites can show #http://goo.gl/2j2bP #http://goo.gl/R9EI3h
 BULLET=XML('&nbsp;<i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;')
-OPTION_CATEGORIES = sorted(['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Fees', 'Other'])
+OPTION_CATEGORIES = sorted(['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Additional Fees', 'Other'])
 def CATEGORIZED_OPTIONS(auction_request):
 	ar = auction_request
 	options_database = zip(ar.options, ar.option_names, ar.option_msrps, ar.option_descriptions, ar.option_categories, ar.option_category_names)
@@ -107,7 +107,9 @@ def getMsrp(trim_data, option_ids={}):
 				if int(each_option['id']) == int(each_choice):
 					price+=int(each_option['price']['baseMSRP'] if 'price' in each_option else 0)
 	return price
-					
+
+
+"""
 def getColorHexByNameOrID(identifier, trim_data):
 	name_or_id="id"
 	try: int(identifier)
@@ -128,7 +130,7 @@ def getColorHexByNameOrID(identifier, trim_data):
 		#raise Exception("Couldn't find color hex by name or ID!")
 		color_hex="000" #Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of color_simple_names with color_pref in auction request, but this is unlikely.
 	return color_hex
-
+"""
 
 
 def getFeaturedCars():
@@ -218,6 +220,17 @@ def getFeaturedCars():
         'image' : u'2013_nissan_370z_coupe_touring_fq_oem_2_815.jpg'
      })
      return cars
+	 
+LOADING_FUNFACTS=[
+	"In 1902 the first speeding ticket was issued.", 
+	"19 people can be crammed into a smart car.", 
+	"A modern F1 car can drive upside down in a tunnel at 120 mph.", 
+	"Steve Jobs never had a license plate due to a loophole in California state law.",
+	"It is compulsory to carry a breathalyser kit in France.",
+	"If it were possible, it would take you 6 months to drive straight to the moon at 60 mph.",
+	"Over 1 billion cars are in active use across the world today.",
+	"60 million cars are produced in a single year.",
+]
 
 """
 OD([(u'acura', u'Acura'), (u'aston-martin', u'Aston Martin'), (u'audi',

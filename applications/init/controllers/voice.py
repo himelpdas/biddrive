@@ -97,8 +97,8 @@ def handle_key_check():
 			else: #make vehicle details to pass to dealer	and CALL the dealer
 				resp.say("Thank you. I will now connect you to your winning dealer. Please hold for up to 5 minutes.")
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
-				color_simple_names = dict(zip(auction_request.colors, auction_request.color_simple_names)) #dict(map(lambda id,name: [id,name], auction_request.colors, auction_request.color_simple_names))
-				auction_request_vehicle = dict(_color = color_simple_names[winning_offer.exterior_color], _year = auction_request.year, _make = auction_request.make, _model = auction_request.model, _id=auction_request.id) #trim = auction_request.trim_name)
+				color_ids_to_color_simple_names = dict(zip(auction_request.colors, map(lambda each_color: ' ' if each_color == "N/A" else each_color, auction_request.color_simple_names) ) ) #Turn N/A into ' ' so speechbot can skip. #dict(map(lambda id,name: [id,name], auction_request.colors, auction_request.color_simple_names))
+				auction_request_vehicle = dict(_color = color_ids_to_color_simple_names[winning_offer.exterior_color], _year = auction_request.year, _make = auction_request.make, _model = auction_request.model, _id=auction_request.id) #trim = auction_request.trim_name)
 				winning_dealer_phone_number = "+"+''.join(winning_dealer.office_phone.split("-"))#http://goo.gl/JhE2V
 				screen_for_machine_url = URL("screen_for_machine.xml", args=[winning_offer.id, winner_code], vars = auction_request_vehicle, scheme=True, host=True)#.split('/')[-1] #url MUST BE absolute, action can be absolute or relative!
 				dialer = resp.dial(callerId = TWILIO_NUMBER_CALLER_ID) #convert init/voice/screen_for_machine.xml?model=... into screen_for_machine.xml?model=...

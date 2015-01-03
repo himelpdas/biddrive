@@ -67,6 +67,7 @@
 
 <h3><i class="fa fa-fw fa-clock-o"></i> Credits history</h3>
 <hr>
+
 {{=my_credits_history_grid}}
 
 <script>
@@ -81,5 +82,6 @@
 	).click(function(){
 		$(this).removeClass('buy_buttons', 100);
 		$(this).addClass('panel-danger', 150);
+		{{loading_modal_jquery("Contacting Paypal")}}
 	});
 </script>
