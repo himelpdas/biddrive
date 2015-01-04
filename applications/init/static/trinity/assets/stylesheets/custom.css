@@ -3,6 +3,17 @@
     text-transform: none !important;
 }
 
+.main-subheading{
+    padding: 0px;
+    margin-bottom: 0;
+    font-family: 'Raleway',sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    line-height: 24px;
+}
+
+
 #standard-header a.brand {
     font-size: 40px;
     color: #4c4c4c;
@@ -86,6 +97,13 @@
         line-height: 8vw;
         letter-spacing: 2vw;
     }
+
+    #car-chooser-switcher-buttons {
+        padding-left: 40px;
+    }
+    #mainbox {
+        padding-left: 20px;
+    }
 }
 
 #intro .content {
@@ -118,8 +136,7 @@
 
 #intro .btn-cta,
 #about .btn-cta,
-#request_by_make .btn,
-#car-chooser-switcher .btn-cta {
+#request_by_make .btn {
     border:1px solid #ffffff;
     background: #0087C3;
     color: #fff;
@@ -127,13 +144,29 @@
 }
 #intro .btn-cta:hover,
 #about .btn-cta:hover,
-#request_by_make .btn:hover,
-#car-chooser-switcher .btn-cta:hover {
+#request_by_make .btn:hover {
     border:1px solid #ffffff;
     background: #0067A8;
     color: #fff;
     width: auto;
 }
+
+#car-chooser-switcher .btn {
+    border:none;
+    background: #fff;
+    color: #000;
+    width: auto;
+}
+#car-chooser-switcher .btn:hover {
+    background: #0067A8;
+    color: #fff;
+}
+
+#car-chooser-switcher .btn-selected {
+    background: #0087C3;
+    color: #fff;
+}
+
 
 #standard-footer .foot-logo p {
     color: #e7e7e7;

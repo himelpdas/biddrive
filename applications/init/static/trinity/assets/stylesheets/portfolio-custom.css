@@ -21,6 +21,14 @@
         cursor:pointer;
     }
 
+    .portfolio-item .project-categories {
+        display: none;
+    }
+
+    .portfolio-item:hover .project-categories {
+        display: inherit;
+    }
+
     .portfolio-item:hover .project-overlay {
         height:100%;
         top:0;

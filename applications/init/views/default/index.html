@@ -116,7 +116,7 @@
             </div>
             <div class="row pad-top-half pad-bottom">
                 <div class="col-md-12 text-center howitworks-box">
-                    <a class="btn btn-trinity btn-trinity-big btn-cta" href="#portfolio">Let's get started...</a>
+                    <a class="btn btn-trinity btn-trinity-big btn-cta" style="width: 100%; max-width: 254px;" href="#portfolio">Let's get started...</a>
                 </div>
             </div>
         </div>
@@ -128,20 +128,15 @@
 
 
 <!-- page:starts -->
-<section id="portfolio" class="page page-section portfolio">
+<section id="portfolio" class="page page-section portfolio silver-bg">
 
     <!-- inner-section:starts -->
-    <div class="inner-section color-bg  pad-top-half pad-bottom-half">
+    <div class="inner-section color-bg pad-top-half pad-bottom-half">
         <div class="container">
             <div class="row">
-                <div class="col-md-10 col-md-offset-1 text-center animated" data-fx="fadeInUpBig">
-                    <div class="liner-wide text-center"><span class="white-bg"></span></div>
-                    <h1 class="main-heading white pad-top">Choose your car below</h1>
-
-                    <div class="liner-wide text-center">
-                        <span class="white-bg">
-                        </span>
-                    </div>
+                <div class="col-md-12 text-center animated" data-fx="fadeInUpBig">
+                    <h1 class="main-heading white">Step 1. Choose your car below</h1>
+                    <h3 class="main-subheading white pad-top-eighth">Select from our Top Picks or view all vehicles by model year.</h3>
                 </div>
             </div>
         </div>
@@ -150,51 +145,52 @@
 
 
     <!-- inner-section:starts -->
-    <div id="car-chooser-switcher" class="inner-section">
+    <div id="car-chooser-switcher" class="pad-top-half">
 
 
-        <div class="portfolio-top">
-            <div class="liner-wide text-center">
-                <a id="car-chooser-switch-toppicks" class="btn btn-trinity btn-trinity-big btn-cta">Top Picks</a>
-                &nbsp;
-                <!-- Split button -->
-                <div class="btn-group">
-                    <button id="car-chooser-switch-allmakes" type="button" class="btn btn-trinity btn-trinity-big btn-cta" style="border-right: none;">
-                        {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
-							{{year=request.args[0]}}
-                        {{else:}}
-							{{year=datetime.date.today().year}}
-                        {{pass}}
-                        All {{=year}} Vehicles
-                    </button>
-
-                    <button type="button" class="btn btn-trinity btn-trinity-big btn-cta dropdown-toggle" style="border-left: none;" data-toggle="dropdown">
-                        <span class="caret"></span>
-                        <span class="sr-only">Toggle Dropdown</span>
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-
-                        {{for each in YEAR_RANGE:}}
-                        <li>
-                            <a id="{{=str(each)+'_year'}}" class="car-chooser-switch-allmakes-year-selector" href="{{=URL(args=[each])}}#portfolio">
-                                All {{=each}} Vehicles
-                            </a>
-                        </li>
-                        {{pass}}
-
-                    </ul>
-                </div>
+        <div id="car-chooser-switcher-buttons" class="portfolio-top text-center">
+            <!-- Split button -->
+            <div class="btn-group">
+                <button id="car-chooser-switch-toppicks" type="button" class="btn btn-trinity btn-trinity-big btn-selected car-chooser-switch-toppicks-cls" onclick="carChooserSwitcherActivate('.car-chooser-switch-toppicks-cls')">Top Picks</button>
+                <button id="car-chooser-switch-allmakes" type="button" class="btn btn-trinity btn-trinity-big car-chooser-switch-allmakes-cls" onclick="carChooserSwitcherActivate('.car-chooser-switch-allmakes-cls')">
+                    {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
+                        {{year=request.args[0]}}
+                    {{else:}}
+                        {{year=datetime.date.today().year}}
+                    {{pass}}
+                    All {{=year}} Vehicles
+                </button>
+                <button type="button" class="btn btn-trinity btn-trinity-big dropdown-toggle car-chooser-switch-allmakes-cls" data-toggle="dropdown">
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    {{for each in YEAR_RANGE:}}
+                    <li>
+                        <a id="{{=str(each)+'_year'}}" class="car-chooser-switch-allmakes-year-selector" href="{{=URL(args=[each])}}#portfolio">
+                            All {{=each}} Vehicles
+                        </a>
+                    </li>
+                    {{pass}}
+                </ul>
             </div>
         </div>
-
+        <script>
+            function carChooserSwitcherActivate(id) {
+                $('#car-chooser-switcher').find('button').each(function(index,elem) {
+                   $(elem).removeClass('btn-selected');
+                });
+                $(id).each(function(index,elem) {
+                    $(elem).addClass('btn-selected');
+                });
+            }
+        </script>
 
         <!-- Portfolio Plus Filters -->
         <div id="car-chooser-toppicks" class="portfolio">
 
-
             <!-- Portfolio Filters -->
-            <div id="filters" class="silver-bg col-md-12">
-
+            <div id="filters" class="silver-bg">
                 <ul class="clearfix">
                     <li><a id="all" href="#" data-filter="*" class="active"><h5>All</h5></a></li>
                     <li><a href="#" data-filter=".sedan"><h5>Sedan</h5></a></li>
@@ -207,7 +203,7 @@
             <!--/Portfolio Filters -->
 
             <!-- Portfolio Wrap -->
-            <div id="portfolio-wrap" class="">
+            <div id="portfolio-wrap">
                 {{ for car in cars: }}
                     <div class="portfolio-item one-four {{=car['types']}}">
                         <div class="portfolio-image">
@@ -219,7 +215,7 @@
                                 <div class="project-info">
                                     <div class="zoom-icon"></div>
                                     <h4 class="project-name">{{=car['make']}} {{=car['model']}}</h4>
-                                    <p class="project-categories">{{=car['year']}}</p>
+                                    <p class="project-categories">Model year: {{=car['year']}}</p>
                                 </div>
                             </div>
                         </a>
@@ -234,7 +230,7 @@
 
 
         <div id="car-chooser-allmakes" class="portfolio" style="display:none;">
-            <div class="row" style="padding-bottom: 20px">
+            <div class="row" style="padding: 40px 0">
                 <div class=" col-md-offset-1 col-md-10 col-md-offset-1">
                     {{include "default/car_chooser_select_make_model.html"}}
                 </div>
