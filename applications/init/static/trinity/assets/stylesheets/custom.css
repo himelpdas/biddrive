@@ -84,7 +84,7 @@
     padding: 0 10px;
 }
 
-@media (max-width: 480px) {
+@media screen and (max-width: 480px) {
     #intro h1 {
         font-size: 10vw;
         line-height: 12vw;
@@ -127,7 +127,7 @@
 .intro-nav li > a,
 .standard-nav li > a {
     font-weight: 600;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .intro-nav li > a:hover {
@@ -182,14 +182,14 @@
     border-radius: 5%;
 }
 
-@media (max-width: 620px) {
+@media screen and (max-width: 620px) {
     .testimonial-wrap > img {
         width: 480px;
         height: 320px;
     }
 }
 
-@media (max-width: 500px) {
+@media screen and (max-width: 500px) {
     .testimonial-wrap > img {
         width: 300px;
         height: 200px;
@@ -286,4 +286,10 @@ hr {
 }
 .pad-bottom-eighth {
     padding-bottom: 15px;
+}
+
+@media screen and (max-width: 1024px) {
+    .page-container {
+        padding-top: 80px;
+    }
 }
