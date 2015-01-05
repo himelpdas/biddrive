@@ -353,8 +353,8 @@ def pre_auction():
 			for each_offer in auction_request_offers:
 				send_to = each_offer.auth_user
 				this_dealer_initials='%s %s'%(send_to.first_name.capitalize(), send_to.last_name.capitalize()[:1]+'.')
-				is_my_offer = me.id == send_to.id #since I'm the one submitting and it's my offer
-				SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he="You" if is_my_offer else this_dealer_initials, url=URL(args=request.args, host=True, scheme=True) ) )
+				each_is_my_offer = me.id == send_to.id #since I'm the one submitting and it's my offer
+				SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he="You" if each_is_my_offer else this_dealer_initials, url=URL(args=request.args, host=True, scheme=True) ) )
 			
 			my_initials='%s %s'%(me.first_name.capitalize(), me.last_name.capitalize()[:1]+'.')
 			SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_offer", **dict(app=APP_NAME, car=car, dealer_name = my_initials, url=URL(args=request.args, host=True, scheme=True) ) )
@@ -440,6 +440,11 @@ def __auction_validator__():
 	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 	last_favorite_choice = db(db.auction_request_favorite_choice.auction_request == auction_request_id).select().last()  #no need for further testing aside from auction_request_id because of previous if/else
 	a_winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select().last()
+	is_winning_dealer = False
+	if a_winning_offer:
+		winning_dealer = db(db.auction_request_offer.id == a_winning_offer.auction_request_offer).select().last()
+		if winning_dealer:
+			is_winning_dealer = winning_dealer.owner_id == auth.user_id
 	
 	auction_is_completed = (a_winning_offer or auction_ended_offer_expired)
 
@@ -460,6 +465,7 @@ def __auction_validator__():
 		auction_ended_offer_ends=auction_ended_offer_ends,
 		auction_ended_offer_expired=auction_ended_offer_expired,
 		is_owner=is_owner,
+		is_winning_dealer=is_winning_dealer,
 		is_dealer_with_offer=is_dealer_with_offer,
 		is_authorized_dealer=is_authorized_dealer,
 		is_participant=is_participant,
@@ -484,6 +490,7 @@ def auction():
 	auction_ended_offer_ends=auction_validator['auction_ended_offer_ends']
 	auction_ended_offer_expired=auction_validator['auction_ended_offer_expired']
 	is_owner=auction_validator['is_owner']
+	is_winning_dealer = auction_validator['is_winning_dealer']
 	is_dealer_with_offer=auction_validator['is_dealer_with_offer']
 	is_authorized_dealer=auction_validator['is_authorized_dealer']
 	is_participant=auction_validator['is_participant']
@@ -501,9 +508,10 @@ def auction():
 	
 	#only allow form functionality to show for dealers as long as auction is active
 	bid_form = my_message_form_dealer = my_auction_request_offer_id = form_is_final_bid = None
-	if not a_winning_offer and not auction_request_expired: #do not allow any insertions for expired or winning
-		#create offer form
-		if is_authorized_dealer_with_offer:# and not is_dealer_and_with_final_bid:
+	if is_dealer_with_offer:
+		my_auction_request_offer_id = is_dealer_with_offer.id
+		if not a_winning_offer and not auction_request_expired: #do not allow any insertions for expired or winning
+			#create offer form
 			#see if final offer
 			final_message = None
 			form_is_final_bid = request.vars['final_bid']
@@ -515,17 +523,10 @@ def auction():
 			highest_bid_allowed = my_previous_bid.bid if my_previous_bid else (5000 if is_lease else 1000000)
 			db.auction_request_offer_bid.bid.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(49 if is_lease else 999, highest_bid_allowed)]
 			#bid form
-			my_auction_request_offer_id = is_dealer_with_offer.id
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
 			db.auction_request_offer_bid.auction_request_offer.default = my_auction_request_offer_id
 			db.auction_request_offer_bid.owner_id.default = auth.user_id
 			bid_form = SQLFORM(db.auction_request_offer_bid ,_class="form-horizontal") #update form!! #to add class to form #http://goo.gl/g5EMrY
-
-			#message form
-			db.auction_request_offer_message.auction_request_offer.default = my_auction_request_offer_id #make sure the message form has the dealers offer_id for submission
-			db.auction_request_offer_message.auction_request.default = auction_request_id
-			db.auction_request_offer_message.owner_id.default = auth.user.id
-			my_message_form_dealer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
 			
 			#dealer bid process
 			if bid_form.process(hideerror = True).accepted:
@@ -543,6 +544,13 @@ def auction():
 				response.message = '!Bid not submitted! Please check for mistakes in form.'
 			
 			#dealer message process
+		if is_winning_dealer or (not a_winning_offer and not auction_request_expired): #let the winning dealer communicate with the byer
+			#message form
+			db.auction_request_offer_message.auction_request_offer.default = my_auction_request_offer_id #make sure the message form has the dealers offer_id for submission
+			db.auction_request_offer_message.auction_request.default = auction_request_id
+			db.auction_request_offer_message.owner_id.default = auth.user.id
+			my_message_form_dealer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
+
 			if my_message_form_dealer.process().accepted: #EMAILALERT
 				response.message = '$Your message was submitted to the buyer.'
 				me = auth.user
@@ -569,7 +577,7 @@ def auction():
 	auction_ended_offer_expires_datetime = auction_request.offer_expires - request.now
 	auction_ended_offer_expires = auction_ended_offer_expires_datetime.total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
-	if bidding_ended: #or use bidding_ended
+	if bidding_ended and not a_winning_offer: #or use bidding_ended
 		response.message3 = "!Bidding has ended. Now %s can choose a winner within %s."%("the buyer" if not is_owner else "you", human(auction_ended_offer_expires_datetime, precision=2, past_tense='{}', future_tense='{}') )
 	auction_request_info = dict(
 		id = str(auction_request.id),
@@ -583,6 +591,7 @@ def auction():
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
 		auction_request=auction_request,
+		my_message_form_dealer = my_message_form_dealer,
 		colors_dict = colors_dict,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
@@ -674,35 +683,35 @@ def auction():
 		msrp = each_offer.auction_request_offer.estimation()
 		last_bid = bids.last() #already have bids objects no need to run twice with auction_request.last_bid()
 		#last_bid_price = is_not_awaiting_offer = last_bid.bid if last_bid else None; is_awaiting_offer = not is_not_awaiting_offer
-		last_bid_price = last_bid_ago = is_not_awaiting_offer = bid_is_final = final_bid_ends_on = final_bid_ended = None
+		last_bid_price = last_bid_ago = is_not_awaiting_offer = each_bid_is_final = final_bid_ends_on = final_bid_ended = None
 		if last_bid:
 			last_bid_price = is_not_awaiting_offer = last_bid.bid  #last bid means latest
 			last_bid_ago = human(last_bid.created_on - request.now, precision=1, past_tense='{}', future_tense='{}')
 			#final bid
-			bid_is_final=final_bid_ends_on = last_bid.final_bid
-			final_bid_ended = (request.now > final_bid_ends_on) if bid_is_final else None #DO NOT USE ALONE OR ONLY TEST TRUE
-			bid_is_final_and_not_ended = bid_is_final and not final_bid_ended
+			each_bid_is_final=final_bid_ends_on = last_bid.final_bid
+			final_bid_ended = (request.now > final_bid_ends_on) if each_bid_is_final else None #DO NOT USE ALONE OR ONLY TEST TRUE
+			each_bid_is_final_and_not_ended = each_bid_is_final and not final_bid_ended
 		is_awaiting_offer = not is_not_awaiting_offer
 		
 		#favorite and winning checks
-		is_winning_offer=False
+		each_is_winning_offer=False
 		if a_winning_offer:
-			is_winning_offer = a_winning_offer.auction_request_offer == offer_id
-		is_favorite = None		
+			each_is_winning_offer = a_winning_offer.auction_request_offer == offer_id
+		each_is_favorite = None		
 		if last_favorite_choice:
 			if last_favorite_choice.auction_request_offer == offer_id: #see if the fave is this offer
-				if bid_is_final: #DO NOT ALLOW FINAL OR EXPIRED BIDS
-					is_favorite = last_favorite_choice = auction_request_info['favorite_price']= None
+				if each_bid_is_final: #DO NOT ALLOW FINAL OR EXPIRED BIDS
+					each_is_favorite = last_favorite_choice = auction_request_info['favorite_price']= None
 				else:
-					is_favorite = True #all good
+					each_is_favorite = True #all good
 		
 		#stuff to do if this offer is owned by viewing dealer
-		is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
-		if is_my_offer and is_awaiting_offer and not (auction_is_completed or bidding_ended): #auction_request_expired: #FIXED: please make a bid now after buy it now pressed
+		each_is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
+		if each_is_my_offer and is_awaiting_offer and not (auction_is_completed or bidding_ended): #auction_request_expired: #FIXED: please make a bid now after buy it now pressed
 			response.message2 = "!Please make a bid now!"
 		
 		#mark all messages as read
-		if is_my_offer:
+		if each_is_my_offer:
 			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
 			if highest_message_in_this_offer:
 				all_messages_read = db.auction_request_unread_messages.insert(highest_id = highest_message_in_this_offer.id, auction_request = auction_request_id, auction_request_offer = each_offer.auction_request_offer.id)
@@ -725,7 +734,7 @@ def auction():
 		has_message_from_buyer = None
 		if is_owner:
 			#message stuff
-			if not a_winning_offer and not auction_request_expired: #do not allow any insertions for expired or winning
+			if each_is_winning_offer or (not a_winning_offer and not auction_request_expired): #except for winning offer, do not allow any insertions for expired or winning
 				db.auction_request_offer_message.auction_request_offer.default = offer_id #my_auction_request_offer_id meant for the dealer viewing this page, offer_id means the one in this loop 
 				db.auction_request_offer_message.owner_id.default = auth.user.id
 				db.auction_request_offer_message.auction_request.default = auction_request_id
@@ -744,7 +753,7 @@ def auction():
 					digits = 999999999999 #12 digits
 					winner_code = str(random.randint(0, digits + 1)).zfill(len(str(digits))) #http://goo.gl/2IkFe #up to but not including 10 trillion. zero fill to 12 places. #ONE IN 9.999... TRILLION CHANCE FOR CONFLICT, SO NEED UNIQUE=TRUE TO CAUSE INTERNAL ERROR
 					a_winning_offer = db.auction_request_winning_offer.insert(auction_request = auction_request_id, owner_id = is_owner, auction_request_offer = winning_choice, winner_code=winner_code)#insert new winner
-					is_winning_offer=True #now make it true
+					each_is_winning_offer=True #now make it true
 					session.BROADCAST_WINNER_ALERT=True
 					SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_winner", **dict(app= APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 					#session.BROADCAST_WINNER_ALERT = True
@@ -766,7 +775,7 @@ def auction():
 			if each_offer.auction_request_offer['id'] == new_favorite_choice and not a_winning_offer and not auction_ended_offer_expired:
 				if last_favorite_choice and last_favorite_choice.not_until > request.now: #make sure is real favorite, make sure buyer can't constantly change favorite choice, make sure new favorite choice = old one, make sure auction hasn't expired, make sure the favorite is not an awaiting bid
 					session.message = "!Dealers not alerted! You can't change your favorite until %s."%human(last_favorite_choice.not_until - request.now, precision=2, past_tense='{}', future_tense='{}')
-				elif is_awaiting_offer or bid_is_final:
+				elif is_awaiting_offer or each_bid_is_final:
 					session.message = "!You cannot choose an this bid as your favorite." #and change the message for the owner.
 				elif final_bid_ended:
 					session.message = "!You cannot choose an expired bid as your favorite." #and change the message for the owner.
@@ -779,13 +788,13 @@ def auction():
 					SEND_ALERT_TO_QUEUE(USER=send_to_buyer, MESSAGE_TEMPLATE = "BUYER_on_new_favorite", **dict(app=APP_NAME, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 				redirect(URL(args=request.args)) #get rid of vars
 		#response messaging stuff
-		if not is_owner and is_my_offer:#if you don't do this check, since each_offer loops for buyer as well, eventually is_winning_offer will be true and message below will show for buyer. do same with dealer via is_my_offer
+		if not is_owner and each_is_my_offer:#if you don't do this check, since each_offer loops for buyer as well, eventually each_is_winning_offer will be true and message below will show for buyer. do same with dealer via each_is_my_offer
 			if auction_request_info['auction_completed']: 
-				if is_winning_offer:
+				if each_is_winning_offer:
 					response.message3 = "$You are the winner! We will connect you to the buyer when the buyer contacts us."
-				elif not is_winning_offer and a_winning_offer: #make sure that there is a winner before making the following claim
+				elif not each_is_winning_offer and a_winning_offer: #make sure that there is a winner before making the following claim
 					response.message3 = "@Buyer picked a winner, but you did not win. Sorry :-("
-				elif not is_winning_offer and not a_winning_offer:
+				elif not each_is_winning_offer and not a_winning_offer:
 					response.message3 = "@Buyer did not pick a winner."
 				
 		#message stuff dealer, keep below SQLFORM so that new messages show on submission
@@ -799,32 +808,31 @@ def auction():
 		send_to = each_offer.auth_user #each offer in this auction will get an email if conditions are met
 		this_dealer_name='%s %s'%(send_to.first_name.capitalize(), send_to.last_name.capitalize()[:1]+'.')
 		if session.BROADCAST_FAVORITE_ALERT:
-			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_favorite", **dict(app=APP_NAME, is_favorite=is_favorite, buyer=auction_request_user, you_or_him='you' if is_favorite else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_favorite", **dict(app=APP_NAME, each_is_favorite=each_is_favorite, buyer=auction_request_user, you_or_him='you' if each_is_favorite else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_WINNER_ALERT:
-			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app=APP_NAME, is_winning_offer=is_winning_offer, buyer=auction_request_user, you_or_him='you' if is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app=APP_NAME, each_is_winning_offer=each_is_winning_offer, buyer=auction_request_user, you_or_him='you' if each_is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_BID_ALERT:
 			form_bid_price = session.BROADCAST_BID_ALERT #since there is a refresh we must access from session
-			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_bid", **dict(app=APP_NAME, change="finalized" if bid_is_final else "dropped", price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if not is_my_offer else "You", is_my_offer= is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_bid", **dict(app=APP_NAME, change="finalized" if each_bid_is_final else "dropped", price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if not each_is_my_offer else "You", each_is_my_offer= each_is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		each_offer_dict = {
 			'id' : offer_id,
 			'has_message_from_buyer' : has_message_from_buyer,
-			'is_winning_offer' :is_winning_offer,
-			'is_my_offer': is_my_offer,
+			'each_is_winning_offer' :each_is_winning_offer,
+			'each_is_my_offer': each_is_my_offer,
 			'additional_costs':each_offer.auction_request_offer['additional_costs'],
 			'additional_costs_details':each_offer.auction_request_offer['additional_costs_details'],
 			'about_us':each_offer.dealership_info['mission_statement'],
-			'bid_is_final': bool(bid_is_final),
-			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if bid_is_final else None,
+			'each_bid_is_final': bool(each_bid_is_final),
+			'final_bid_ends_in_hours': (final_bid_ends_on - request.now).total_seconds()/3600 if each_bid_is_final else None,
 			'final_bid_ended': final_bid_ended,
-			'show_buy_now_btn': True if is_owner and not auction_request_info['auction_completed'] and not auction_request_info['bidding_ended'] and is_not_awaiting_offer and not a_winning_offer and bid_is_final_and_not_ended else False,
-			'is_favorite': is_favorite,
+			'show_buy_now_btn': True if is_owner and not auction_request_info['auction_completed'] and not auction_request_info['bidding_ended'] and is_not_awaiting_offer and not a_winning_offer and each_bid_is_final_and_not_ended else False,
+			'each_is_favorite': each_is_favorite,
 			'offer_messages' : offer_messages,
-			'my_message_form_dealer': my_message_form_dealer if my_auction_request_offer_id == offer_id else '', #add message form to this bid cell, only one needed hence why logic is outside this loop
 			'my_message_form_buyer': my_message_form_buyer,
 			'dealer_first_name':each_offer.auth_user.first_name,
 			'dealer_area':'%s, %s'%(each_offer.dealership_info.city.capitalize(), each_offer.dealership_info.state),
 			'dealer_id' : each_offer.auction_request_offer.owner_id,
-			'show_winner_btn': True if is_owner and not auction_request_info['auction_completed'] and auction_request_info['bidding_ended'] and is_not_awaiting_offer and not a_winning_offer and not bid_is_final else False,
+			'show_winner_btn': True if is_owner and not auction_request_info['auction_completed'] and auction_request_info['bidding_ended'] and is_not_awaiting_offer and not a_winning_offer and not each_bid_is_final else False,
 			'is_not_awaiting_offer':is_not_awaiting_offer,
 			'is_awaiting_offer': not is_not_awaiting_offer,
 			'last_bid_price' : last_bid_price,

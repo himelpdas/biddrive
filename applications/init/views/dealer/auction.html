@@ -429,9 +429,9 @@
 {{pass}}
 {{for counter, each_offer in enumerate(auction_request_offers_info):}}
 	{{if not (auction_is_completed or auction_request_expired):}}
-		<div class="panel {{if each_offer['is_my_offer'] and not each_offer['is_favorite']:}}panel-warning{{elif not each_offer['is_my_offer'] and each_offer['is_favorite']:}}{{if is_owner:}}panel-success{{else:}}panel-danger{{pass}}{{elif each_offer['is_my_offer'] and each_offer['is_favorite']:}}panel-success{{else:}}panel-default{{pass}}">
+		<div class="panel {{if each_offer['each_is_my_offer'] and not each_offer['each_is_favorite']:}}panel-warning{{elif not each_offer['each_is_my_offer'] and each_offer['each_is_favorite']:}}{{if is_owner:}}panel-success{{else:}}panel-danger{{pass}}{{elif each_offer['each_is_my_offer'] and each_offer['each_is_favorite']:}}panel-success{{else:}}panel-default{{pass}}">
 	{{else:}}
-		<div class="panel {{if each_offer['is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
+		<div class="panel {{if each_offer['each_is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	{{pass}}
 		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
 			<strong>{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-question"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
@@ -453,21 +453,21 @@
 							</button>
 						</a>
 					</div>
-				{{elif each_offer['is_winning_offer']:}}
+				{{elif each_offer['each_is_winning_offer']:}}
 					<div style="position:absolute;width:100%;">
-						<button class="btn btn-danger btn-xs center-block disabled">
+						<button class="btn btn-danger btn-xs center-block">
 							<i class="fa fa-fw fa-trophy"></i> Winner!
 						</button>
 					</div>
 				{{elif each_offer['final_bid_ended']:}}
 					<div style="position:absolute;width:100%;">
-						<button class="btn btn-danger btn-xs center-block disabled">
+						<button class="btn btn-danger btn-xs center-block">
 							<i class="fa fa-fw fa-bell"></i> Expired!
 						</button>
 					</div>
-				{{elif each_offer['bid_is_final'] and is_dealer:}}
+				{{elif each_offer['each_bid_is_final'] and is_dealer:}}
 					<div style="position:absolute;width:100%;">
-						<button class="btn btn-danger btn-xs center-block disabled">
+						<button class="btn btn-danger btn-xs center-block">
 							<i class="fa fa-fw fa-bell"></i> Expires in less than {{=final_bid_hours_left}}!
 						</button>
 					</div>
@@ -476,7 +476,7 @@
 			<span class="pull-right">
 				{{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
 				{{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-heart"></i></button></a>
-				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['is_favorite']:}}<i class="fa fw fa-heart" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
+				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['each_is_favorite']:}}<i class="fa fw fa-heart" title="{{=is_was}} the favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" title="{{=is_was}} not the favorite."></i>{{pass}}</span>{{pass}}
 				{{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-envelope {{if each_offer['has_message_from_buyer']:}}blink{{pass}}"></i></button>{{pass}}
 				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-plus"></i></button>
 			</span>
@@ -700,8 +700,9 @@
 		{{pass}}
 	{{pass}}
 	{{######MESSAGE######}}
-	{{message_form = each_offer['my_message_form_dealer'] or each_offer['my_message_form_buyer']}}
-	{{if (is_owner or each_offer['is_my_offer']):}} 
+	{{message_form = auction_request_info['my_message_form_dealer'] or each_offer['my_message_form_buyer']}}
+	{{if (is_owner or each_offer['each_is_my_offer']):}} 
+	{{print "is message form: %s"%bool(message_form)}}
 		<div id="message_form_{{=each_offer['id']}}" class="modal fade message_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
@@ -710,22 +711,24 @@
 						<h4 class="modal-title">Messaging with {{if is_dealer:}}{{=auction_request_info['first_name'].capitalize()}}{{else:}}{{=each_offer['dealer_first_name'].capitalize()}}{{pass}}</h4>
 					</div>
 					<div class="modal-body">
-						<div class="buyer_dealer_messages" style="height:275px; overflow-y:scroll;">
+						<div class="buyer_dealer_messages" style="height:300px; overflow-y:scroll;">
 							{{if each_offer['offer_messages']:}}
 								{{for i, each_message in enumerate(each_offer['offer_messages']):}}
-									<p>
-										<strong>{{if each_message.is_auction_requester:}}Buyer{{else:}}Dealer{{pass}} wrote:</strong> {{=each_message.message}}
+									<br><br>
+									<p style="font-size:xx-large; line-height:1.25em">
+										<strong class="{{if each_message.is_auction_requester:}}text-info">Buyer{{else:}}text-success">Dealer{{pass}}:</strong> {{=each_message.message}}
 										<br>
-										<span class="text-sm text-light pull-right">{{=human(request.now-each_message.created_on, precision=2, past_tense='{}', future_tense='{}')}} ago</span>
 									</p>
+									<span class="text-sm text-light pull-right">{{=human(request.now-each_message.created_on, precision=2, past_tense='{}', future_tense='{}')}} ago</span>
 									{{if not i == len(each_offer['offer_messages'])-1:}}<hr>{{pass}}{{#hide the line below the last message}}
 								{{pass}}
 							{{else:}}
-								<h4>No messages :(</h4>
+								<h3>No messages :(</h3>
 							{{pass}}
 						</div>
 					</div>
-				{{if message_form and not each_offer['final_bid_ended']:}}{{#if it's a dealer only print his form (if its not final), if it's a buyer print all forms (invoke via id for owner class for dealer)}}
+				{{print "is message form: %s"%bool(message_form)}}
+				{{if bool(message_form):}}
 					<hr>
 					{{message_form.element("textarea", _name = "message")["_class"] += " form-control" }}
 					{{message_form.element("textarea", _name = "message")["_style"] = " height:125px;" }}
@@ -735,6 +738,9 @@
 					{{=message_form.custom.begin}}
 						<div class="modal-body">
 							{{=message_form.custom.widget.message}}
+							<br>
+							<div class="text-warning pull-left">DO NOT share personal information through here! Messages are reviewed by administrators. Violating this rule may result in a ban!</div>
+							<br>
 						</div>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
