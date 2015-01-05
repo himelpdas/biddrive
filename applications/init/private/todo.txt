@@ -2,7 +2,6 @@
 dont allow more than one auction request at a time
 false/erroroneous address in dealership form raises "Nonetype not iterable error"
 email when auction almost/ends (softcron?)
-translucent message divs in home
 
 *Optional
 add more tooltips to everything
@@ -12,6 +11,8 @@ add twilio verification in page 2
 calculate msrp in page 2
 
 *Complete
+translucent message divs in home
+allow winning dealers to continue chat
 remove none decsriptions in auction
 p tags to user info in auctions
 add "are you sure?" modals to auction page
