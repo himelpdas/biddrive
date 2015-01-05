@@ -148,9 +148,9 @@
         <div id="car-chooser-switcher-buttons" class="portfolio-top text-center">
             <!-- Split button -->
             <div class="btn-group">
-				<!--{{button_wider_xs=XML('<span class="button_wider_xs hidden-sm hidden-md hidden-lg">{space}</span>'.format(space="&nbsp;"*8) ) }}-->
-                <button id="car-chooser-switch-toppicks" type="button" class="btn btn-trinity btn-trinity-big btn-selected car-chooser-switch-toppicks-cls" onclick="carChooserSwitcherActivate('.car-chooser-switch-toppicks-cls')">{{=button_wider_xs}}Top Picks{{=button_wider_xs}}</button>
-					<div id="button_spacer_xs" class="hidden-sm hidden-md hidden-lg"><br><br><br><br></div>
+				<!-- {{button_wider_xs=XML('<span class="button_wider_xs hidden-sm hidden-md hidden-lg">{space}</span>'.format(space="&nbsp;"*8) ) }} -->
+                <button id="car-chooser-switch-toppicks" type="button" class="btn btn-trinity btn-trinity-big btn-selected car-chooser-switch-toppicks-cls" onclick="carChooserSwitcherActivate('.car-chooser-switch-toppicks-cls')">{{=button_wider_xs}}Top Picks{{=button_wider_xs}}</button><!-- {{# button_wider_xs adds a space around the buttons title in xs.}} -->
+				<div id="button_spacer_xs" class="hidden-sm hidden-md hidden-lg"><br><br><br><br></div> <!--{{# adds a space between the stacked buttons in xs}}-->
                 <button id="car-chooser-switch-allmakes" type="button" class="btn btn-trinity btn-trinity-big car-chooser-switch-allmakes-cls" onclick="carChooserSwitcherActivate('.car-chooser-switch-allmakes-cls')">
                     {{if request.args(0) and int(request.args[0]) in YEAR_RANGE: }}
                         {{year=request.args[0]}}

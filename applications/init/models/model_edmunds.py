@@ -420,17 +420,6 @@ db.define_table('auction_request_offer',
 	),
 	Field('additional_costs_details', 'text',
 	),	
-	#about us
-	###################IMGS#####################
-#	Field('exterior_image', 'upload',
-#		requires=[IS_NOT_EMPTY(), 
-#			IS_IMAGE( #http://goo.gl/r3UizI
-#				maxsize=(10000, 10000),
-#				minsize=(800,600), #min HD
-#				error_message='Need an image of at least 800x600 pixels!', 
-#			)
-#		]
-#	),
 	Field('exterior_image', 'upload',
 		requires=IS_EMPTY_OR(
 			IS_IMAGE(
