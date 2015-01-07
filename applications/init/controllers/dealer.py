@@ -810,7 +810,7 @@ def auction():
 		if session.BROADCAST_FAVORITE_ALERT:
 			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_favorite", **dict(app=APP_NAME, each_is_favorite=each_is_favorite, buyer=auction_request_user, you_or_him='you' if each_is_favorite else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_WINNER_ALERT:
-			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app=APP_NAME, each_is_winning_offer=each_is_winning_offer, buyer=auction_request_user, you_or_him='you' if each_is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app=APP_NAME, each_is_winning_offer=each_is_winning_offer, buyer='%s %s'%(auction_request_user.first_name.capitalize(), auction_request_user.last_name.capitalize()[:1]+'.'), you_or_him='you' if each_is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_BID_ALERT:
 			form_bid_price = session.BROADCAST_BID_ALERT #since there is a refresh we must access from session
 			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_bid", **dict(app=APP_NAME, change="finalized" if each_bid_is_final else "dropped", price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if not each_is_my_offer else "You", each_is_my_offer= each_is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
