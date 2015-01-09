@@ -426,9 +426,9 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
         //{{#shoe spinner before ajax}}
         $('.options_spinner').addClass("fa-spinner");
         //{{#colors}}
-        $('#ms-auction_request_colors').fadeTo(500, 0.2); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
+        $('#auction_request_colors').multiselect("disable"); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
         //{{#options}}
-        $('#ms-auction_request_options').fadeTo(500, 0.2);
+        $('#auction_request_options').multiselect("disable");
         ////{{#ajax}}
         $('#trim_stats').slideUp(400)
         $.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
@@ -457,7 +457,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                     $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
                 });
                 $("#auction_request_colors").multiselect('rebuild');
-                $('#ms-auction_request_colors').fadeTo(250, 1.0); //{{#fade back in}}
+                $('#auction_request_colors').multiselect("enable"); //{{#fade back in}}
                 //{{#options}}
                 var previous_options_submissions = $("#auction_request_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
                 $("#auction_request_options").children().remove();
@@ -475,7 +475,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                     $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
                 });
                 $("#auction_request_options").multiselect('rebuild');
-                $('#ms-auction_request_options').fadeTo(250, 1.0); //{{#fade back in}}
+                $('#auction_request_options').multiselect("enable"); //{{#fade back in}}
                 //{{#trim stats}}
                 $('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
             })
