@@ -405,7 +405,7 @@
 
 {{=form.custom.end}}
 
-<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-md5.js"></script> {{#quick configure-less function}}{{#https://code.google.com/p/crypto-js/}}
+<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-md5.js"></script> <!--{{#quick configure-less function}}{{#https://code.google.com/p/crypto-js/}}-->
 
 <script>
 //{{#client side hmac verification}}
@@ -515,7 +515,8 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
         );
     //close main function
     }
-    $('#auction_request_trim').change(load_content); //{{#change color preference options when you change trim dropdown}}
+    $('#auction_request_trim').change(load_content) //{{#change color preference options when you change trim dropdown}}
+	.multiselect(); //use multiselect widget for consistance, though it is not actually single select
 
     $(document).ready(function(){
         load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
