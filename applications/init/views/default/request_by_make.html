@@ -526,7 +526,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
     });
 </script>
 
-{{bootstrap_multiselect([['auction_request_colors', 'Pick interior and exterior colors'], ['auction_request_options','Pick must have options (optional)']])}}
+{{bootstrap_multiselect([['auction_request_colors', 'Pick interior and exterior colors'], ['auction_request_options','Pick must have options (optional)']], max_height=480)}}
 
 <script>
     function load_radius_map(){
