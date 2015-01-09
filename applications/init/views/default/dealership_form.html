@@ -316,6 +316,10 @@
  <script>
 	$("#dealership_info_office_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
  </script>
+
+ {{bootstrap_multiselect([['dealership_info_specialty', 'Pick the brands you sell']], max_height=240)}}
+
+<!--{{"""}}
  <script>
 	function resize_bootstrap_multiselect(){
 		$('.multiselect').css({
@@ -329,3 +333,4 @@
 	});
 	resize_bootstrap_multiselect();
 </script> {{#http://goo.gl/dh1z2}}
+{{"""}}-->

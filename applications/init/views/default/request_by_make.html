@@ -456,7 +456,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                     });
                     $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
                 });
-                $("#auction_request_colors").multiSelect('refresh');
+                $("#auction_request_colors").multiselect('rebuild');
                 $('#ms-auction_request_colors').fadeTo(250, 1.0); //{{#fade back in}}
                 //{{#options}}
                 var previous_options_submissions = $("#auction_request_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
@@ -474,7 +474,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                     });
                     $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
                 });
-                $("#auction_request_options").multiSelect('refresh');
+                $("#auction_request_options").multiselect('rebuild');
                 $('#ms-auction_request_options').fadeTo(250, 1.0); //{{#fade back in}}
                 //{{#trim stats}}
                 $('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
@@ -525,19 +525,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
     });
 </script>
 
-<script>
-    $("#auction_request_colors").multiSelect({
-        selectableHeader: '<div style="text-align:center" class="text-light">Available colors</div>',
-        selectionHeader: '<div style="text-align:center" class="text-light">Colors I want</div>',
-    });
-    $("#auction_request_colors").multiSelect('refresh');//{{#initialize multiselect}}
-
-    $("#auction_request_options").multiSelect({
-        selectableHeader: '<div style="text-align:center" class="text-light">Available options</div>',
-        selectionHeader: '<div style="text-align:center" class="text-light">Options I need</div>',
-    });
-    $("#auction_request_options").multiSelect('refresh');//initialize multiselect
-</script>
+{{bootstrap_multiselect([['auction_request_colors', 'Pick interior and exterior colors'], ['auction_request_options','Pick must have options (optional)']])}}
 
 <script>
     function load_radius_map(){

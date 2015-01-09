@@ -75,6 +75,7 @@
 						{{pass}}
 					</div>
 				</div>
+
 				<script>
 					var option_codes = {{=XML(json.dumps(option_codes))}};
 					var previous_options_submissions = $("#auction_request_offer_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
@@ -92,8 +93,9 @@
 						});
 						$("#"+optgroup_id).append("<option value='"+ i + "'" + selected + ">" + item['name'] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
 					});
-					$("#auction_request_offer_options").multiSelect('refresh');
 				</script>
+				{{bootstrap_multiselect([['auction_request_offer_options', 'Select options in this vehicle']], max_height=480)}}
+				
 				<div class="form-group">
 					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="The total dollar value of ALL additional costs regarding this vehicle."></i> Additional costs</label>
 					<div class="col-sm-9">
