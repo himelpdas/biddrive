@@ -154,7 +154,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_winner" : lambda: dict(
-			SUBJECT  =  "{app}: {buyer} picked {you_or_him} the winner for a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app}: {buyer} picked {you_or_him} as the winner for a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("The buyer for a <i>{car}</i> picked <b>{you_or_him}</b> as the winner! So what now?".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "{buyer} picked a new winner!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Try again! You'll have better luck next time." if not MESSAGE_VARS['each_is_winning_offer'] else "Wait for the buyer's call!",
