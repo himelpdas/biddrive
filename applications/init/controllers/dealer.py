@@ -311,7 +311,7 @@ def pre_auction():
 	#get prices for colors
 	msrp_by_id.update(dict(zip(auction_request.colors,auction_request.color_msrps) ) )
 	#get prices for trim
-	msrp_by_id.update(dict(map(lambda each_code: [option_codes[each_code]['name'], option_codes[each_code]['msrp']], option_codes) ) )
+	msrp_by_id.update(dict(map(lambda each_code: [each_code, option_codes[each_code]['msrp']], option_codes) ) )
 	
 	colors = zip(auction_request.colors, auction_request.color_names, auction_request.color_categories) #OLD colors means color_ids please do sitewide replace
 	colors.sort(key = lambda each: each[1])

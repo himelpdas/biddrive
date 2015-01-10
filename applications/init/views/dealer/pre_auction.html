@@ -408,7 +408,7 @@
 <script>
 $(document).ready(function(){
 	$(window).scroll(function(){
-		if ($("#follow_me").offset().top + $("#follow_me").height() > ($("#footer").offset().top) ) {
+		if ($("#follow_me").offset().top + $("#follow_me").height() > ($("#mastfoot").offset().top) ) {
 			$("#follow_me").fadeOut(100);
 		} else {
 			$("#follow_me").fadeIn(100);
@@ -422,16 +422,16 @@ $(document).ready(function(){
 	function update_estimation(){
 		var msrp = msrp_by_id['base'];
 		var msrp = msrp + msrp_by_id[$("#auction_request_offer_exterior_color").val()] + msrp_by_id[$("#auction_request_offer_interior_color").val()]; //{{#note val returns ids not names}}
-		var list = $(".ms-selected").map(function(){return $(this).children().text();}).get(); //{{#map runs a function on each element}}
-		list.map( function(item) {
-			msrp = msrp + msrp_by_id[item]
+		var list = $("li.active").map(function(){return $(this).children().children().children().attr('value') }); //{{#map runs a function on each element}} {{#tested with alert( $(this).children().children().children().attr('value') ) }}
+		list.map( function(item, identifier) {
+			msrp = msrp + msrp_by_id[parseInt(identifier)];
+			//alert(identifier);
 		});
 		msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_additional_costs").val() || 0)) || 0); //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
-		$('#msrp').html(msrp);
+		$('#msrp').html(msrp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")); //http://stackoverflow.com/questions/13621769/adding-comma-as-thousands-separator-javascript-output-being-deleted-instead
 	}
 	$("#auction_request_offer_exterior_color").change(update_estimation);
 	$("#auction_request_offer_interior_color").change(update_estimation);
 	$("#auction_request_offer_additional_costs").change(update_estimation);
-	$('.ms-container').click(update_estimation);
-	$('.ms-container').click(update_estimation);
+	$("#auction_request_offer_options").change(update_estimation);
 </script><!-- {{#http://goo.gl/IpBLpn http://goo.gl/cB089T http://goo.gl/IpBLpn http://goo.gl/WvuDbj http://goo.gl/HwI81Q}} -->
