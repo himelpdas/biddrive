@@ -552,7 +552,7 @@
 					</a>
 				{{elif is_owner and each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
 					<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-						<button class="btn btn-danger  center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer, valid for a limited time. Are you sure you want to buy this now (this will end the auction)?')">
+						<button class="btn btn-danger  center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer that is valid for less than {{=final_bid_hours_left}}. Are you sure you want to buy this now (this will conclude the auction)?')">
 							<i class="fa fa-fw fa-bell"></i> Final offer!
 						</button>
 					</a>
