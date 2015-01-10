@@ -762,7 +762,7 @@ def auction():
 					session.message = "!Awaiting or expired bids cannot be chosen as a winner."
 				redirect(URL(args=request.args)) #get rid of vars
 			if a_winning_offer:
-				response.message = "$You picked a winner! Click the green button below to view your certificate!" #keep as response.message so it always shows
+				response.message = '$You picked a winner! Click the "Winner!" button below to connect with the dealer and view your certificate!' #keep as response.message so it always shows
 			#blinking new message stuff
 			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == offer_id).select().last()
 			highest_message_id_that_owner_read = db(db.auction_request_unread_messages.auction_request == auction_request_id).select().last()
@@ -791,7 +791,11 @@ def auction():
 		if not is_owner and each_is_my_offer:#if you don't do this check, since each_offer loops for buyer as well, eventually each_is_winning_offer will be true and message below will show for buyer. do same with dealer via each_is_my_offer
 			if auction_request_info['auction_completed']: 
 				if each_is_winning_offer:
-					response.message3 = "$You are the winner! We will connect you to the buyer when the buyer contacts us."
+					contact_made = a_winning_offer.contact_made
+					if bool(contact_made): 
+						response.message3 = "$You are the winner! Our records show the buyer connected with you on %s"%contact_made
+					else:
+						response.message3 = "$You are the winner! We will connect you to the buyer when the buyer contacts us."
 				elif not each_is_winning_offer and a_winning_offer: #make sure that there is a winner before making the following claim
 					response.message3 = "@Buyer picked a winner, but you did not win. Sorry :-("
 				elif not each_is_winning_offer and not a_winning_offer:
@@ -1073,7 +1077,7 @@ def winner():
 	winner_code_spaced = ' '.join([winner_code[i:i+3] for i in range(0,len(winner_code),3)]) #http://goo.gl/0ra6oM
 		
 	#was call verification complete and buyer/dealer talked?
-	contact_made=winner.contact_made
+	contact_made=bool(winner.contact_made)
 	
 	#map stuff
 	dmap = DecoratedMap()

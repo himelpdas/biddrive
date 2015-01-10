@@ -1,11 +1,10 @@
 {{extend 'page_layout_new.html'}}
 {{#=BEAUTIFY(response._vars)}}
 {{#"""}}
-<hr>
 <h3>Submit your vehicle</h3>
 <h4 class="text-light">{{="%s %s %s"%(year, make_name, model_name)}}{{#="%s %s %s"%tuple(map(lambda each: each.upper(), [year, make_name, model_name]))}}</h4>
 <span class="text-light text-md pull-right">{{=trim_name}}</span>
-<hr>
+<br><hr><br>
 
 <div class="row-fluid">
 	<div id = "pre_auction_form" class = "col-md-7 col-sm-8 col-xs-12">
@@ -117,7 +116,7 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="Only put info about this vehicle! Ex. Condition, miles, defects, additional features, etc."></i> Vehicle summary</label>
+					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="Only put info about this vehicle! Ex. Condition, miles, defects, etc."></i> Vehicle summary</label>
 					<div class="col-sm-9">
 						{{=form.custom.widget.summary}}
 
@@ -255,7 +254,7 @@
 			<h4>
 				<span class="text-light">Retail estimate — </span class="pull-right"><span>$<span id='msrp'>{{="{:,}".format(int(msrp_by_id['base']))}}</span></span>{{#http://goo.gl/aOI4}}
 			</h4>
-			<hr>
+			<br><hr><br>
 			<div id="user_info_box" style="border: #ccc solid; border-radius:8px; height:240px;overflow-y:scroll;">
 				<!--{{#<button class="btn btn-info" href="#info_modal" data-target="#info_modal" data-toggle="modal"><i class="fa fa-fw fa-user"></i>View buyer info</button>}}-->
 				<pre>Details of {{=auction_request_info['first_name']}} {{=auction_request_info['last_init']}} from {{=auction_request_info['city']}}, {{=auction_request_info['state']}}, {{=auction_request_info['zip_code']}}</pre>

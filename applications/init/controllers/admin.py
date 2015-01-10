@@ -138,6 +138,7 @@ def manage_auctions():
 	db.auction_request.year.readable = True
 	db.auction_request.make_name.readable = True
 	db.auction_request.model_name.readable = True
+	db.auction_request.auction_expires.readable = True
 	links = [		
 		dict(header='Offers',body=lambda row: A('Show all%s'% (' offers' if 'auction_request' in request.args else ''), #this logic tests to see if its the grid or edit form and names the URL accordingly
 			_href=URL('admin','manage_offers', args=[row.auction_request.id if 'auction_request' in row else row.id] ) ) ), 

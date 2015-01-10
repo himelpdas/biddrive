@@ -125,7 +125,7 @@ def screen_for_machine():
 				g.pause(length=3)
 	if "screen_complete" in request.args and URL.verify(request, hmac_key=winning_offer_id, salt = winner_code): #HMAC PROTECT HERE!! Can do it manually too http://goo.gl/SLXU3d
 		winning_offer = db(db.auction_request_winning_offer.auction_request_offer == winning_offer_id).select().last()
-		contact_made = winning_offer.update_record(contact_made=True)
+		contact_made = winning_offer.update_record(contact_made=request.now)
 		#collect money
 		winners_piggy = db(db.credits.owner_id==winning_offer.owner_id).select().last()
 		winners_piggy.update_record( credits = winners_piggy.credits - CREDITS_PER_SUCCESS) #remove one credit

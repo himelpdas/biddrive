@@ -1,7 +1,7 @@
 {{extend 'page_layout_new.html'}}
 
 <h3><i class="fa fa-user"></i> {{=request.vars.custom_title or T( request.args(0).replace('_',' ').capitalize() )}}</h3>
-<hr>
+<br><hr><br>
 <div class="row" style="padding-top: 10px">
     <div class="col-sm-12 text-right">
         {{if request.args(0)=='profile':}}

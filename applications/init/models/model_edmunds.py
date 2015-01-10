@@ -682,8 +682,8 @@ db.define_table('auction_request_winning_offer',
 		writable=False,
 		unique = True, length=255, #length=255 needed in mysql #UNCOMMENT IN PRODUCTION
 	),
-	Field('contact_made', 'boolean',
-		default=False,
+	Field('contact_made', 'datetime',
+		default=None,
 	),
 	auth.signature,
 )

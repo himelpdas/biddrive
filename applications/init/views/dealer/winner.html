@@ -24,14 +24,14 @@
 			<img src="https://api.qrserver.com/v1/create-qr-code/?size=75x75&data={{=winner_code_spaced}}" alt="Winning QR Code" class="fa-rotate-90 img-responsive pull-right">
 		</div>
 	</div>
-	<hr>
+	<br><hr><br>
 	<div class="row">
 
 		<div class="col-xs-5">
 			<div class = "row">
 				<img src="{{=map_url}}" alt="Dealer Map" class="img-responsive">
 			</div>
-			<hr>
+			<br><hr><br>
 			{{for i, each_image_url in enumerate(image_urls):}}
 				{{new_row=False if (i%2) else True}}
 				{{if new_row:}}

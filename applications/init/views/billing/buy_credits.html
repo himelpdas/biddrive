@@ -1,7 +1,7 @@
 {{extend 'page_layout_new.html'}}
 
 <h3><i class="fa fa-fw fa-btc"></i> Credits remaining: <span class="{{if my_credits < 10:}}text-danger{{elif my_credits < 100:}}text-warning{{else:}}text-success{{pass}}">{{=my_credits}}</span><div class="pull-right"><img class="img-responsive" src="{{=URL('static', 'images/paypal-secure-payments.png')}}"/></div></h3>
-<hr>
+<br><hr><br>
 <h3>&nbsp;</h3>
 <a href="{{=buy_credits_urls['tier_1']}}">
 	<div class=" col-md-3 col-sm-6">
@@ -66,7 +66,7 @@
 {{"""}}<div class="row"><div class="col-xs-4 col-xs-offset-4"><img class="img-responsive" src="{{=URL('static', 'images/paypal-secure-payments.png')}}"/></div></div>{{"""}}
 
 <h3><i class="fa fa-fw fa-clock-o"></i> Credits history</h3>
-<hr>
+<br><hr><br>
 
 {{=my_credits_history_grid}}
 

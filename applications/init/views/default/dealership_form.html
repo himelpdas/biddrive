@@ -1,7 +1,7 @@
  {{extend 'page_layout_new.html'}}
  {{#BEAUTIFY(response._vars)}}
  <h3><i class="fa fa-fw fa-info-circle"></i> {{=heading}}</h3>
- <hr>
+ <br><hr><br>
 {{=form.custom.begin}}
 {{ form.element("input", _name = "dealership_name")["_class"] += " form-control" }}
 {{ form.element("select", _name = "specialty")["_class"] += " form-control" }}
