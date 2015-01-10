@@ -635,7 +635,7 @@
 												<br>
 												{{for each_option in each_offer['options_dict'][each_category]:}}
 													{{each_option_description=each_offer['options_dict'][each_category][each_option]['description']}}
-													<p>{{if each_option_description != "None":}}<i class="fa fa-fw fa-info-circle" title="{{=each_option_description}}"></i>{{pass}}{{=each_offer['options_dict'][each_category][each_option]['name']}}</p>
+													<p><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;{{if each_option_description != "None":}}<i class="fa fa-fw fa-info-circle" title="{{=each_option_description}}"></i>{{pass}}{{=each_offer['options_dict'][each_category][each_option]['name']}}</p>
 												{{pass}}
 												<!--{{"""}}{{if not each_offer['options_dict'][each_category]:}}
 													<li><i>Not specified</i>
@@ -658,12 +658,14 @@
 									</div>
 									<div class="col-xs-7">
 										<br>
-										${{=int(each_offer['additional_costs'])}} <i>(included in bid)</i> —
-										{{if not each_offer['additional_costs_details']:}}
-											<i>Not specified</i>
-										{{else:}}
-											{{=each_offer['additional_costs_details']}}
-										{{pass}}
+										<p>
+											${{=int(each_offer['additional_costs'])}} <i>(included in bid)</i> —
+											{{if not each_offer['additional_costs_details']:}}
+												<i>Not specified</i>
+											{{else:}}
+												{{=each_offer['additional_costs_details']}}
+											{{pass}}
+										</p>
 									</div>
 								</div>
 							</div>
@@ -674,11 +676,13 @@
 									</div>
 									<div class="col-xs-7">
 										<br>
-										{{if not each_offer['about_us']:}}
-											<i>Not specified</i>
-										{{else:}}
-											{{=each_offer['about_us']}}
-										{{pass}}
+										<p>
+											{{if not each_offer['about_us']:}}
+												<i>Not specified</i>
+											{{else:}}
+												{{=each_offer['about_us']}}
+											{{pass}}
+										</p>
 									</div>
 								</div>
 							</div>
