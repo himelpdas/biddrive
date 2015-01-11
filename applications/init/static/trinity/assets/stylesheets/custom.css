@@ -281,6 +281,26 @@ hr {
     border-bottom: none;
 }
 
+#help_modal .help_image {
+    border-radius: 50px;
+    -moz-border-radius: 50px;
+    -khtml-border-radius: 50px;
+    -webkit-border-radius: 50px;
+    width: 100px;
+    height: 100px;
+}
+
+#help_modal .help_step_id {
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 42px;
+    text-align: right;
+}
+
+@media screen and (min-width: 768px) {
+    #help_modal .modal-dialog  {width:900px;}
+}
+
 .pad-top-eighth {
     padding-top: 15px;
 }
