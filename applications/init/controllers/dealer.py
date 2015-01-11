@@ -793,7 +793,7 @@ def auction():
 				if each_is_winning_offer:
 					contact_made = a_winning_offer.contact_made
 					if bool(contact_made): 
-						response.message3 = "$You are the winner! Our records show the buyer connected with you on %s"%contact_made
+						response.message3 = "$Our records show the buyer connected with you on %s, %s."%(contact_made,time.tzname)
 					else:
 						response.message3 = "$You are the winner! We will connect you to the buyer when the buyer contacts us."
 				elif not each_is_winning_offer and a_winning_offer: #make sure that there is a winner before making the following claim
