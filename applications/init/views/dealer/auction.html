@@ -6,7 +6,7 @@
 	<div class= "panel-heading text-uppercase text-md" style="position:relative;">
 		<strong style="font-size:large;"><i class="fa fa-fw fa-legal"></i> Auction for {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
 		<span class="pull-right text-xs text-light">Auction ID: {{=auction_request_info['id']}}&nbsp;
-			<button id="show_help_modal" class="btn btn-default btn-xs" title="Show help dialog." data-toggle="modal" data-target="#help_modal"><i class="fa fa-fw fa-question"></i></button>
+			<button id="show_help_modal" class="btn btn-default btn-xs" title="Show help dialog" data-toggle="modal" data-target="#help_modal"><i class="fa fa-fw fa-question"></i></button>&nbsp;{{if is_dealer:}}<button class="btn btn-default btn-xs" title="Show message dialog" href="#" data-toggle="modal" data-target=".message_form"><i class="fa fa-fw fa-envelope {{if auction_request_info['auth_dealer_has_unread_messages']:}}blink{{pass}}"></i></button>{{pass}}
 		</span>
 	</div>
 	<div class="panel-body">
@@ -135,6 +135,21 @@
 					
 					<tr>
 						<th>
+							Winner
+						</th>
+						<td>
+							<p>
+								{{if auction_request_info['a_winning_offer_and_dealer']:}}
+									{{='%s %s'%(auction_request_info['a_winning_offer_and_dealer'].auth_user.first_name.capitalize(), auction_request_info['a_winning_offer_and_dealer'].auth_user.last_name.capitalize()[:1]+'.') }} from {{=auction_request_info['a_winning_offer_and_dealer'].dealership_info.dealership_name.capitalize()}}
+								{{else:}}
+									None
+								{{pass}}
+							</p>
+						</td>
+					</tr>
+					
+					<tr>
+						<th>
 							Dealers bidding
 						</th>
 
@@ -250,7 +265,6 @@
 								</button>
 								<ul class="dropdown-menu" role="menu">
 									<li><a id = "final_bid" href="{{if not form_is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}">{{if form_is_final_bid:}}<i class="fa fa-fw fa-times-circle-o"></i> Cancel{{else:}}<i class="fa fa-fw fa-bell-o"></i> Make a{{pass}} final offer</a></li>
-									<li><a href="#" data-toggle="modal" data-target=".message_form"><i class="fa fa-fw fa-envelope-o"></i> Message buyer</a></li>
 								</ul>
 							</div>
 							
@@ -278,15 +292,6 @@
 						
 					</tr>
 					{{=bid_form.custom.end}}
-				{{elif is_dealer:}}
-					<tr>
-						<th>
-							<div style="margin-top:9px;">Bidding disabled</div>
-						</th>
-						<td>
-							<button type="button" class="btn btn-default"  data-toggle="modal" data-target=".message_form"><i class="fa fa-fw fa-envelope-o"></i> View messages</button>
-						</td>
-					</tr>
 				{{pass}}
 				</table>
 
@@ -433,7 +438,7 @@
 				{{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
 				{{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button></a>
 				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>{{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>{{pass}}</span>{{pass}}
-				{{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['has_message_from_buyer']:}}blink{{pass}}"></i></button>{{pass}}
+				{{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['each__has_message_buyer']:}}blink{{pass}}"></i></button>{{pass}}
 				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-fw fa-plus"></i></button>
 			</span>
 
@@ -722,9 +727,9 @@
 		{{pass}}
 	{{pass}}
 	{{######MESSAGE######}}
-	{{message_form = auction_request_info['my_message_form_dealer'] or each_offer['my_message_form_buyer']}}
+	{{message_form = auction_request_info['auth_dealer_message_form'] or each_offer['each__message_form_buyer']}}
 	{{if (is_owner or each_offer['each_is_my_offer']):}} 
-	{{print "is message form: %s"%bool(message_form)}}
+	{{#print "is message form: %s"%bool(message_form)}}
 		<div id="message_form_{{=each_offer['id']}}" class="modal fade message_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
@@ -749,7 +754,7 @@
 							{{pass}}
 						</div>
 					</div>
-				{{print "is message form: %s"%bool(message_form)}}
+				{{#print "is message form: %s"%bool(message_form)}}
 				{{if bool(message_form):}}
 					<br><hr><br>
 					{{message_form.element("textarea", _name = "message")["_class"] += " form-control" }}

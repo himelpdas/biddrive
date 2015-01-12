@@ -440,11 +440,16 @@ def __auction_validator__():
 	auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
 	last_favorite_choice = db(db.auction_request_favorite_choice.auction_request == auction_request_id).select().last()  #no need for further testing aside from auction_request_id because of previous if/else
 	a_winning_offer = db(db.auction_request_winning_offer.auction_request == auction_request_id).select().last()
-	is_winning_dealer = False
+	is_winning_dealer = a_winning_offer_and_dealer = False
 	if a_winning_offer:
-		winning_dealer = db(db.auction_request_offer.id == a_winning_offer.auction_request_offer).select().last()
-		if winning_dealer:
-			is_winning_dealer = winning_dealer.owner_id == auth.user_id
+		a_winning_offer_and_dealer = db((db.auction_request_offer.id == a_winning_offer.auction_request_offer)&(db.dealership_info.owner_id!=None)&(db.auth_user.id!=None)).select( #must explicitly do a query for the tables you want to be joined for multiple left to work
+			left=[
+				db.dealership_info.on(db.auction_request_offer.owner_id==db.dealership_info.owner_id),
+				db.auth_user.on(db.auction_request_offer.owner_id==db.auth_user.id)
+			]
+		).last()
+		if a_winning_offer_and_dealer:
+			is_winning_dealer = a_winning_offer_and_dealer.auth_user.id == auth.user_id
 	
 	auction_is_completed = (a_winning_offer or auction_ended_offer_expired)
 
@@ -474,6 +479,7 @@ def __auction_validator__():
 		auction_request_offers = auction_request_offers,
 		last_favorite_choice = last_favorite_choice,
 		a_winning_offer = a_winning_offer,
+		a_winning_offer_and_dealer = a_winning_offer_and_dealer,
 		auction_is_completed = auction_is_completed,
 		auction_request_area=auction_request_area,
 		auction_request_user=auction_request_user,
@@ -499,6 +505,7 @@ def auction():
 	auction_request_offers=auction_validator['auction_request_offers']
 	last_favorite_choice=auction_validator['last_favorite_choice']
 	a_winning_offer=auction_validator['a_winning_offer']
+	a_winning_offer_and_dealer=auction_validator['a_winning_offer_and_dealer']
 	auction_is_completed = auction_validator['auction_is_completed']
 	auction_request_area=auction_validator['auction_request_area']
 	auction_request_user=auction_validator['auction_request_user']
@@ -507,9 +514,10 @@ def auction():
 	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 	
 	#only allow form functionality to show for dealers as long as auction is active
-	bid_form = my_message_form_dealer = my_auction_request_offer_id = form_is_final_bid = None
+	bid_form = auth_dealer_message_form = auth_dealer_has_unread_messages = my_auction_request_offer_id = form_is_final_bid = None
 	if is_dealer_with_offer:
 		my_auction_request_offer_id = is_dealer_with_offer.id
+		highest_message_for_my_offer = db(db.auction_request_offer_message.auction_request_offer == my_auction_request_offer_id).select().last()
 		if not a_winning_offer and not auction_request_expired: #do not allow any insertions for expired or winning
 			#create offer form
 			#see if final offer
@@ -549,14 +557,27 @@ def auction():
 			db.auction_request_offer_message.auction_request_offer.default = my_auction_request_offer_id #make sure the message form has the dealers offer_id for submission
 			db.auction_request_offer_message.auction_request.default = auction_request_id
 			db.auction_request_offer_message.owner_id.default = auth.user.id
-			my_message_form_dealer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
+			auth_dealer_message_form = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
 
-			if my_message_form_dealer.process().accepted: #EMAILALERT
+			auth_dealer_message_form_process = auth_dealer_message_form.process()
+			if auth_dealer_message_form_process.accepted: #EMAILALERT
+				#mark as read
+				highest_message_for_my_offer = db(db.auction_request_offer_message.id == auth_dealer_message_form_process.vars['id']).select().last() #new_message_process.vars only returns <Storage {'message': 'nigger', 'id': 39L}>, not full row object, so do a query #make this new message the highest. #could've got the latest row, but that could be race condition. #not in web2py manual, but this returns the storage object just created on process... had to find this out by using print statement below and each__message_form_buyer.process(...).__dict__
+				db.auction_request_unread_messages.insert(owner_id = auth.user_id, highest_id = highest_message_for_my_offer.id, auction_request = auction_request_id, auction_request_offer = my_auction_request_offer_id)
+				#alert everyone
 				response.message = '$Your message was submitted to the buyer.'
 				me = auth.user
-				SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_recieve_message", **dict(app=APP_NAME, car=car, he=me.first_name.capitalize(), message=my_message_form_dealer.vars.message, url=URL(args=request.args, host=True, scheme=True) ) )
-			elif my_message_form_dealer.errors:
+				SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_recieve_message", **dict(app=APP_NAME, car=car, he=me.first_name.capitalize(), message=auth_dealer_message_form.vars.message, url=URL(args=request.args, host=True, scheme=True) ) )
+			elif auth_dealer_message_form.errors:
 				response.message = '!Your message had errors. Please fix!'
+				
+			#blinking stuff
+			highest_message_read_for_my_offer = db((db.auction_request_unread_messages.auction_request_offer == my_auction_request_offer_id)&(db.auction_request_unread_messages.owner_id == auth.user_id)).select().last() or {'highest_id':None} #'owner_id': None, for debug #auction_request_unread_messages is initialized when auth_dealer submits message, but buyer might have sent a message, therefore icon wont blink without this 
+			if (highest_message_read_for_my_offer and highest_message_for_my_offer): #maybe no messages
+				if highest_message_read_for_my_offer['highest_id'] < highest_message_for_my_offer.id:
+					auth_dealer_has_unread_messages = True
+					
+			#print '%s\n\nhighest_message_read_for_my_offer:%s, highest_message_for_my_offer:%s, auth_dealer_has_unread_messages:%s'%(my_auction_request_offer_id,highest_message_read_for_my_offer,highest_message_for_my_offer.id, auth_dealer_has_unread_messages)
 	
 	##################
 	lowest_offer_row = auction_request.lowest_offer() #one db call instead of two like above
@@ -587,11 +608,13 @@ def auction():
 		year = auction_request.year,
 		make = auction_request.make_name,
 		model = auction_request.model_name,
+		a_winning_offer_and_dealer=a_winning_offer_and_dealer,
 		is_lease = is_lease,
 		trim_name = auction_request.trim_name,
 		trim_data = trim_data,
 		auction_request=auction_request,
-		my_message_form_dealer = my_message_form_dealer,
+		auth_dealer_has_unread_messages=auth_dealer_has_unread_messages,
+		auth_dealer_message_form = auth_dealer_message_form,
 		colors_dict = colors_dict,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
@@ -666,6 +689,7 @@ def auction():
 	#trim_data = json.loads(auction_request_info['trim_data'])
 	for each_offer in auction_request_offers:
 		offer_id = each_offer.auction_request_offer.id
+		highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == offer_id).select().last()
 
 		#options
 		option_codes = zip(each_offer.auction_request_offer.options, each_offer.auction_request_offer.option_names, each_offer.auction_request_offer.option_descriptions, each_offer.auction_request_offer.option_categories, each_offer.auction_request_offer.option_category_names, each_offer.auction_request_offer.option_msrps,)
@@ -709,13 +733,7 @@ def auction():
 		each_is_my_offer = each_offer.auction_request_offer.owner_id == auth.user.id #i'm a dealer
 		if each_is_my_offer and is_awaiting_offer and not (auction_is_completed or bidding_ended): #auction_request_expired: #FIXED: please make a bid now after buy it now pressed
 			response.message2 = "!Please make a bid now!"
-		
-		#mark all messages as read
-		if each_is_my_offer:
-			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
-			if highest_message_in_this_offer:
-				all_messages_read = db.auction_request_unread_messages.insert(highest_id = highest_message_in_this_offer.id, auction_request = auction_request_id, auction_request_offer = each_offer.auction_request_offer.id)
-	
+			
 		#dealer stuff
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
 		this_dealer_distance = distance_to_auction_request(each_offer)
@@ -730,21 +748,27 @@ def auction():
 			'hex':colors_dict[each_offer.auction_request_offer.interior_color]['hex']
 		}
 		#message stuff buyer
-		my_message_form_buyer = ''
-		has_message_from_buyer = None
+		each__message_form_buyer = ''
+		each__has_message_buyer = None
 		if is_owner:
 			#message stuff
 			if each_is_winning_offer or (not a_winning_offer and not auction_request_expired): #except for winning offer, do not allow any insertions for expired or winning
 				db.auction_request_offer_message.auction_request_offer.default = offer_id #my_auction_request_offer_id meant for the dealer viewing this page, offer_id means the one in this loop 
 				db.auction_request_offer_message.owner_id.default = auth.user.id
 				db.auction_request_offer_message.auction_request.default = auction_request_id
-				my_message_form_buyer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
-				if my_message_form_buyer.process(formname="buyer_message_form_%s"%offer_id).accepted: #The hidden field called "_formname" is generated by web2py as a name for the form, but the name can be overridden. This field is necessary to allow pages that contain and process multiple forms. web2py distinguishes the different submitted forms by their names. http://goo.gl/gTct7C
+				each__message_form_buyer = SQLFORM(db.auction_request_offer_message, _class="form-horizontal") #the message form to show if user is dealer
+				#process form
+				new_message_process = each__message_form_buyer.process(formname="buyer_message_form_%s"%offer_id) #The hidden field called "_formname" is generated by web2py as a name for the form, but the name can be overridden. This field is necessary to allow pages that contain and process multiple forms. web2py distinguishes the different submitted forms by their names. http://goo.gl/gTct7C
+				if new_message_process.accepted:
+					#mark as read
+					highest_message_in_this_offer = db(db.auction_request_offer_message.id == new_message_process.vars['id']).select().last() #new_message_process.vars only returns <Storage {'message': 'nigger', 'id': 39L}>, not full row object, so do a query #make this new message the highest. #could've got the latest row, but that could be race condition. #not in web2py manual, but this returns the storage object just created on process... had to find this out by using print statement below and each__message_form_buyer.process(...).__dict__
+					db.auction_request_unread_messages.insert( highest_id = highest_message_in_this_offer.id, auction_request = auction_request_id, auction_request_offer=offer_id)
+					#alertd
 					response.message = '$Your message was submitted to the dealer.'
 					me_buyer = auth.user
 					send_to_dealer = each_offer.auth_user
-					SEND_ALERT_TO_QUEUE(USER=send_to_dealer, MESSAGE_TEMPLATE = "DEALER_on_recieve_message", **dict(app= APP_NAME, he=me_buyer.first_name.capitalize(), message=my_message_form_buyer.vars.message, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
-				elif my_message_form_buyer.errors:
+					SEND_ALERT_TO_QUEUE(USER=send_to_dealer, MESSAGE_TEMPLATE = "DEALER_on_recieve_message", **dict(app= APP_NAME, he=me_buyer.first_name.capitalize(), message=each__message_form_buyer.vars.message, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+				elif each__message_form_buyer.errors:
 					response.message = '!Your message had errors. Please fix!'
 			#winner insert stuff
 			winning_choice=int(request.vars['winner'] or 0)
@@ -764,11 +788,12 @@ def auction():
 			if a_winning_offer:
 				response.message = '$You picked a winner! Click the "Winner!" button below to connect with the dealer and view your certificate!' #keep as response.message so it always shows
 			#blinking new message stuff
-			highest_message_in_this_offer = db(db.auction_request_offer_message.auction_request_offer == offer_id).select().last()
-			highest_message_id_that_owner_read = db(db.auction_request_unread_messages.auction_request == auction_request_id).select().last()
+			highest_message_id_that_owner_read = db((db.auction_request_unread_messages.auction_request_offer == offer_id) & (db.auction_request_unread_messages.owner_id==auth.user_id)).select().last() or {'highest_id':None} #'owner_id': None, for debug
 			if highest_message_id_that_owner_read and highest_message_in_this_offer:
-				if highest_message_id_that_owner_read.highest_id <= highest_message_in_this_offer.id and highest_message_in_this_offer.owner_id!=auth.user_id :
-					has_message_from_buyer =True
+				if highest_message_id_that_owner_read['highest_id'] < highest_message_in_this_offer.id:
+					each__has_message_buyer =True
+					
+			#print '%s by %s:\nnew_message:%s\nhighest_message_id_that_owner_read.highest_id:%s\nhighest_message_in_this_offer:%s\neach__has_message_buyer:%s\n###'%(offer_id, auth.user_id, 'new_message_process.__dict__', highest_message_id_that_owner_read['highest_id'], highest_message_in_this_offer['id'], each__has_message_buyer)
 			
 			#favorite insert stuff
 			new_favorite_choice = int(request.vars['favorite'] or 0)
@@ -820,7 +845,7 @@ def auction():
 			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_bid", **dict(app=APP_NAME, change="finalized" if each_bid_is_final else "dropped", price=form_bid_price, buyer=auction_request_user, dealer=this_dealer_name if not each_is_my_offer else "You", each_is_my_offer= each_is_my_offer, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		each_offer_dict = {
 			'id' : offer_id,
-			'has_message_from_buyer' : has_message_from_buyer,
+			'each__has_message_buyer' : each__has_message_buyer,
 			'each_is_winning_offer' :each_is_winning_offer,
 			'each_is_my_offer': each_is_my_offer,
 			'additional_costs':each_offer.auction_request_offer['additional_costs'],
@@ -832,7 +857,7 @@ def auction():
 			'show_buy_now_btn': True if is_owner and not auction_request_info['auction_completed'] and not auction_request_info['bidding_ended'] and is_not_awaiting_offer and not a_winning_offer and each_bid_is_final_and_not_ended else False,
 			'each_is_favorite': each_is_favorite,
 			'offer_messages' : offer_messages,
-			'my_message_form_buyer': my_message_form_buyer,
+			'each__message_form_buyer': each__message_form_buyer,
 			'dealer_first_name':each_offer.auth_user.first_name,
 			'dealer_area':'%s, %s'%(each_offer.dealership_info.city.capitalize(), each_offer.dealership_info.state),
 			'dealer_id' : each_offer.auction_request_offer.owner_id,
@@ -876,13 +901,7 @@ def auction():
 		}
 		#auction_request_offers_info.append(each_offer_dict)
 		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction
-	
-	#MARK ALL MESSAGES AS READ FOR USER. unread message stuff# keep below each offer to prevent new message icon from showing to owner when owner submits a message
-	if is_owner:
-		highest_message_in_this_auction = db(db.auction_request_offer_message.auction_request == auction_request_id).select().last()
-		if highest_message_in_this_auction:
-			marked_as_read = db.auction_request_unread_messages.insert(highest_id = highest_message_in_this_auction.id, auction_request = auction_request_id)
-	
+		
 	auction_request_offers_info = auction_request_offers_info.values() #convert back to list to be compatible with current view
 	
 	session.BROADCAST_FAVORITE_ALERT = session.BROADCAST_BID_ALERT = session.BROADCAST_WINNER_ALERT = False #make sure send alert
@@ -982,9 +1001,9 @@ def my_auctions():
 		
 		has_unread_messages = False
 		highest_message_for_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
-		my_highest_message_for_this_offer = db((db.auction_request_unread_messages.auction_request_offer == each_offer.auction_request_offer.id)&(db.auction_request_unread_messages.owner_id == auth.user_id)).select().last()
+		my_highest_message_for_this_offer = db((db.auction_request_unread_messages.auction_request_offer == each_offer.auction_request_offer.id)&(db.auction_request_unread_messages.owner_id == auth.user_id)).select().last() or {'highest_id':None} #{'highest_id':None} needed just in case auction_request_unread_messages not initialized
 		if my_highest_message_for_this_offer and highest_message_for_this_offer: #maybe no messages
-			if my_highest_message_for_this_offer.highest_id < highest_message_for_this_offer.id:
+			if my_highest_message_for_this_offer['highest_id'] < highest_message_for_this_offer.id:
 				has_unread_messages = True
 				
 		how_auction_ended = False
