@@ -4,7 +4,7 @@
 
 <div id = "panel-top" class="panel panel-primary">
 	<div class= "panel-heading text-uppercase text-md" style="position:relative;">
-		<strong style="font-size:large;"><i class="fa fa-legal"></i> Auction for {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
+		<strong style="font-size:large;"><i class="fa fa-fw fa-legal"></i> Auction for {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
 		<span class="pull-right text-xs text-light">Auction ID: {{=auction_request_info['id']}}&nbsp;
 			<button id="show_help_modal" class="btn btn-default btn-xs" title="Show help dialog." data-toggle="modal" data-target="#help_modal"><i class="fa fa-fw fa-question"></i></button>
 		</span>
@@ -20,7 +20,7 @@
 
 						<td style="border-top: none">
 							<p>
-								<a href="#info_modal" data-target="#info_modal" data-toggle="modal">{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}} <i class="fa fa-info-circle"></i></a>
+								<a href="#info_modal" data-target="#info_modal" data-toggle="modal">{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}} <i class="fa fa-fw fa-info-circle"></i></a>
 							</p>
 						</td>
 					</tr>					
@@ -427,14 +427,14 @@
 		<div class="panel {{if each_offer['each_is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	{{pass}}
 		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
-			<strong style="font-size:large;">{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-clock-o"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
+			<strong style="font-size:large;">{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-fw fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-fw fa-clock-o"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
 
 			<span class="pull-right">
 				{{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
-				{{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-heart"></i></button></a>
-				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['each_is_favorite']:}}<i class="fa fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>{{else:}}<i class="fa fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>{{pass}}</span>{{pass}}
-				{{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-envelope {{if each_offer['has_message_from_buyer']:}}blink{{pass}}"></i></button>{{pass}}
-				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-plus"></i></button>
+				{{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button></a>
+				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>{{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>{{pass}}</span>{{pass}}
+				{{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['has_message_from_buyer']:}}blink{{pass}}"></i></button>{{pass}}
+				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-fw fa-plus"></i></button>
 			</span>
 
 			{{"""}}<span class="text-center text-sm text-light text-uppercase margin-right-10"> Bid ID: {{=each_offer['id']}} | Dealer ID: 00</span>{{"""}}
@@ -636,7 +636,7 @@
 												<br>
 												{{for each_option in each_offer['options_dict'][each_category]:}}
 													{{each_option_description=each_offer['options_dict'][each_category][each_option]['description']}}
-													<p><i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;{{if each_option_description != "None":}}<i class="fa fa-fw fa-info-circle" title="{{=each_option_description}}"></i>{{pass}}{{=each_offer['options_dict'][each_category][each_option]['name']}}</p>
+													<p><i class="fa fa-fw fa-shield fa-rotate-270"></i>{{if each_option_description != "None":}}<i class="fa fa-fw fa-info-circle" title="{{=each_option_description}}"></i>{{pass}}{{=each_offer['options_dict'][each_category][each_option]['name']}}</p>
 												{{pass}}
 												<!--{{"""}}{{if not each_offer['options_dict'][each_category]:}}
 													<li><i>Not specified</i>
