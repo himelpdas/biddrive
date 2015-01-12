@@ -599,7 +599,11 @@ def auction():
 	auction_ended_offer_expires = auction_ended_offer_expires_datetime.total_seconds() if not auction_ended_offer_expired and not a_winning_offer else 0 #set a timer for offer expire, but only if there is no winner and not auction_ended_offer_expired
 	bidding_ended = auction_request_expired
 	if bidding_ended and not a_winning_offer: #or use bidding_ended
-		response.message3 = "!Bidding has ended. Now %s can choose a winner within %s."%("the buyer" if not is_owner else "you", human(auction_ended_offer_expires_datetime, precision=2, past_tense='{}', future_tense='{}') )
+		you_or_him = "the buyer" if not is_owner else "you"
+		if auction_is_completed:
+			response.message3 = "@Bidding has ended but %s did not pick a winner."%you_or_him
+		else:
+			response.message3 = "!Bidding has ended and now %s can choose a winner within %s."%(you_or_him, human(auction_ended_offer_expires_datetime, precision=2, past_tense='{}', future_tense='{}') )
 	auction_request_info = dict(
 		id = str(auction_request.id),
 		auction_requests_user_entered = len(db(db.auction_request.owner_id == auction_request_user.id).select()),
@@ -818,7 +822,7 @@ def auction():
 				if each_is_winning_offer:
 					contact_made = a_winning_offer.contact_made
 					if bool(contact_made): 
-						response.message3 = "$Our records show the buyer connected with you on %s, %s."%(contact_made,time.tzname)
+						response.message3 = "$Our records show the buyer connected with you on %s, %s."%(contact_made,time.tzname[0])
 					else:
 						response.message3 = "$You are the winner! We will connect you to the buyer when the buyer contacts us."
 				elif not each_is_winning_offer and a_winning_offer: #make sure that there is a winner before making the following claim
