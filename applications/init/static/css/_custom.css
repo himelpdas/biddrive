@@ -7,3 +7,11 @@ hr {
     background-image:     -ms-linear-gradient(left, rgba(112,112,112,0), rgba(112,112,112,0.75), rgba(112,112,112,0)); 
     background-image:      -o-linear-gradient(left, rgba(112,112,112,0), rgba(112,112,112,0.75), rgba(112,112,112,0)); 
 } /*http://css-tricks.com/examples/hrs/*/
+
+/*help modal in auction page*/
+#help_modal > .modal-dialog > .modal-content > .modal-body {
+	max-height:640px;overflow-y:auto;
+}
+#help_modal > .modal-dialog > .modal-content > .modal-body > div > div > p {
+	font-size: x-large;
+}
