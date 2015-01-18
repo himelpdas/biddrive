@@ -46,10 +46,12 @@ def auction_requests():
 			#	query |= db.auction_request.make==each_make
 		for each_year in year_list:
 			for each_make in multiple:
-				for each_model in ed_call(MAKE_URI%(each_make, each_year))['models']:
-					models_list.update(
-						{each_model ['niceName'] : [each_model['name'], each_make]} #the make of the model
-					)
+				year_models = ed_call(MAKE_URI%(each_make, each_year))
+				if year_models:
+					for each_model in year_models['models']:
+						models_list.update(
+							{each_model ['niceName'] : [each_model['name'], each_make]} #the make of the model
+						)
 		models_list = OD(sorted(models_list.items(), key=lambda x: x[1])) #sort a dict by values #http://bit.ly/OhPhQr
 	#
 	model = request.vars['model']
