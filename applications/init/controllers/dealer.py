@@ -47,7 +47,7 @@ def auction_requests():
 		for each_year in year_list:
 			for each_make in multiple:
 				year_models = ed_call(MAKE_URI%(each_make, each_year))
-				if year_models:
+				if year_models: #prevent new year bug that returns None
 					for each_model in year_models['models']:
 						models_list.update(
 							{each_model ['niceName'] : [each_model['name'], each_make]} #the make of the model

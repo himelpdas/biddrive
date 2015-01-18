@@ -15,7 +15,7 @@ days_of_the_week = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'fri
 def get_coordinates_data(row):
 	us = geocoders.GeocoderDotUS() #https://code.google.com/p/geopy/wiki/GettingStarted
 	location = us.geocode("{str1} {str2} {city} {state} {zip_code}".format(str1 = row['address_line_1'], str2 = row['address_line_2'] or '', city = row['city'], state = row['state'], zip_code = row['zip_code']))
-	place, coords = location
+	place, coords = location or (None, None) #fixes latitude longitude compute error when geocoding fails
 	return coords
 
 def get_most_accurate_longitude_from_address(row):

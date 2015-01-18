@@ -89,8 +89,7 @@
 						</th>
 
 						<td>
-							{{#auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2], description=each[3])],zip(auction_request_info['auction_request'].options, auction_request_info['auction_request'].option_names, auction_request_info['auction_request'].option_msrps, auction_request_info['auction_request'].option_descriptions ) ), key=lambda each: each[1]['name'] ) ) }}
-                            {{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2], description=each[3])],zip(auction_request_info['auction_request'].options, auction_request_info['auction_request'].option_names, auction_request_info['auction_request'].option_msrps, [] ) ), key=lambda each: each[1]['name'] ) ) }}
+							{{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2], description=each[3])],zip(auction_request_info['auction_request'].options, auction_request_info['auction_request'].option_names, auction_request_info['auction_request'].option_msrps, auction_request_info['auction_request'].option_descriptions ) ), key=lambda each: each[1]['name'] ) ) }}
                             {{option_keys = auction_request_options_dict.keys()}}
 							{{if len(option_keys)%2:}}{{option_keys.append(None)}}{{pass}} {{#must be even or one option will be excluded}}
 							{{two_cols = zip(option_keys[0::2], option_keys[1::2])}} {{#iterate every two items in a list http://goo.gl/kpTBq8}}
