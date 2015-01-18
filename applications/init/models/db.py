@@ -14,7 +14,7 @@ if not request.env.web2py_runtime_gae:
 	if platform.system() in ["Darwin", "Windows"]:
 		db = DAL('sqlite://storage18.sqlite',pool_size=1, adapter_args=dict(foreign_keys=False), check_reserved=['mysql']) #check_reserved=['all']) #http://bit.ly/1fkDk3w
 	else: #db = DAL('mysql://<mysql_user>:<mysql_password>@localhost/<mysql_database>')
-		db = DAL('mysql://himdas:ekFh2E4t4VKF@mysql.biddrive.com/db_0', check_reserved=['mysql']) #always check for reserved keywords in future possible DBs. #http://goo.gl/g7cXti #PROBLEMS FIXED by making new db, erase inside /database folder, reload... Also clear cache on browser to remove previous login
+		db = DAL('mysql://himdas2:ekFh2E4t4VKF@mysql.biddrive.com/db_00', check_reserved=['mysql']) #always check for reserved keywords in future possible DBs. #http://goo.gl/g7cXti #PROBLEMS FIXED by making new db, erase inside /database folder, reload... Also clear cache on browser to remove previous login
 else:
     ## connect to Google BigTable (optional 'google:datastore://namespace')
     db = DAL('google:datastore')
