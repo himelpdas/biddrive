@@ -15,40 +15,19 @@ try:
 except:
     from io import StringIO
 
-def fix_sys_path():
-    """
-    logic to have always the correct sys.path
-     '', web2py/gluon, web2py/site-packages, web2py/ ...
-    """
+from fix_path import fix_sys_path
 
-    def add_path_first(path):
-        sys.path = [path] + [p for p in sys.path if (
-            not p == path and not p == (path + '/'))]
-
-    path = os.path.dirname(os.path.abspath(__file__))
-
-    if not os.path.isfile(os.path.join(path,'web2py.py')):
-        i = 0
-        while i<10:
-            i += 1
-            if os.path.exists(os.path.join(path,'web2py.py')):
-                break
-            path = os.path.abspath(os.path.join(path, '..'))
-
-    paths = [path,
-             os.path.abspath(os.path.join(path, 'site-packages')),
-             os.path.abspath(os.path.join(path, 'gluon')),
-             '']
-    [add_path_first(path) for path in paths]
-
-fix_sys_path()
+fix_sys_path(__file__)
 
 #for travis-ci
-DEFAULT_URI = os.environ.get('DB', 'sqlite:memory')
+DEFAULT_URI = os.getenv('DB', 'sqlite:memory')
 
 print 'Testing against %s engine (%s)' % (DEFAULT_URI.partition(':')[0], DEFAULT_URI)
 
-from dal import DAL, Field, Table, SQLALL
+from dal import DAL, Field
+from dal.objects import Table
+from dal.helpers.classes import SQLALL
+from gluon.cache import CacheInRam
 
 ALLOWED_DATATYPES = [
     'string',
@@ -63,7 +42,11 @@ ALLOWED_DATATYPES = [
     'upload',
     'password',
     'json',
+    'bigint'
     ]
+
+IS_POSTGRESQL = 'postgres' in DEFAULT_URI
+
 
 
 def setUpModule():
@@ -425,6 +408,13 @@ class TestLike(unittest.TestCase):
             self.assertEqual(db(db.tt.aa.upper().like('A%')).count(), 1)
             self.assertEqual(db(db.tt.aa.upper().like('%B%')).count(),1)
             self.assertEqual(db(db.tt.aa.upper().like('%C')).count(), 1)
+
+        # startswith endswith tests
+        self.assertEqual(db(db.tt.aa.startswith('a')).count(), 1)
+        self.assertEqual(db(db.tt.aa.endswith('c')).count(), 1)
+        self.assertEqual(db(db.tt.aa.startswith('c')).count(), 0)
+        self.assertEqual(db(db.tt.aa.endswith('a')).count(), 0)
+
         db.tt.drop()
         db.define_table('tt', Field('aa', 'integer'))
         self.assertEqual(db.tt.insert(aa=1111111111), 1)
@@ -471,6 +461,25 @@ class TestExpressions(unittest.TestCase):
         self.assertEqual(db(db.tt.aa == 2).select(sum).first()[sum], 3)
         self.assertEqual(db(db.tt.aa == -2).select(sum).first()[sum], None)
         db.tt.drop()
+
+    def testSubstring(self):
+        db = DAL(DEFAULT_URI, check_reserved=['all'])
+        t0 = db.define_table('t0', Field('name'))
+        input_name = "web2py"
+        t0.insert(name=input_name)
+        exp_slice = t0.name.lower()[4:6]
+        exp_slice_no_max = t0.name.lower()[4:]
+        exp_slice_neg_max = t0.name.lower()[2:-2]
+        exp_slice_neg_start = t0.name.lower()[-2:]
+        exp_item = t0.name.lower()[3]
+        out = db(t0).select(exp_slice, exp_item, exp_slice_no_max, exp_slice_neg_max, exp_slice_neg_start).first()
+        self.assertEqual(out[exp_slice], input_name[4:6])
+        self.assertEqual(out[exp_item], input_name[3])
+        self.assertEqual(out[exp_slice_no_max], input_name[4:])
+        self.assertEqual(out[exp_slice_neg_max], input_name[2:-2])
+        self.assertEqual(out[exp_slice_neg_start], input_name[-2:])
+        t0.drop()
+        return
 
 
 class TestJoin(unittest.TestCase):
@@ -564,9 +573,8 @@ class TestMinMaxSumAvg(unittest.TestCase):
         db.tt.drop()
 
 
-class TestCache(unittest.TestCase):
+class TestCacheSelect(unittest.TestCase):
     def testRun(self):
-        from cache import CacheInRam
         cache = CacheInRam()
         db = DAL(DEFAULT_URI, check_reserved=['all'])
         db.define_table('tt', Field('aa'))
@@ -615,27 +623,28 @@ class TestMigrations(unittest.TestCase):
 class TestReference(unittest.TestCase):
 
     def testRun(self):
-        db = DAL(DEFAULT_URI, check_reserved=['all'])
-        if DEFAULT_URI.startswith('mssql'):
-            #multiple cascade gotcha
-            for key in ['reference','reference FK']:
-                db._adapter.types[key]=db._adapter.types[key].replace(
-                '%(on_delete_action)s','NO ACTION')
-        db.define_table('tt', Field('name'), Field('aa','reference tt'))
-        db.commit()
-        x = db.tt.insert(name='max')
-        assert x.id == 1
-        assert x['id'] == 1
-        x.aa = x
-        assert x.aa == 1
-        x.update_record()
-        y = db.tt[1]
-        assert y.aa == 1
-        assert y.aa.aa.aa.aa.aa.aa.name == 'max'
-        z=db.tt.insert(name='xxx', aa = y)
-        assert z.aa == y.id
-        db.tt.drop()
-        db.commit()
+        for b in [True, False]:
+            db = DAL(DEFAULT_URI, check_reserved=['all'], bigint_id=b)
+            if DEFAULT_URI.startswith('mssql'):
+                #multiple cascade gotcha
+                for key in ['reference','reference FK']:
+                    db._adapter.types[key]=db._adapter.types[key].replace(
+                    '%(on_delete_action)s','NO ACTION')
+            db.define_table('tt', Field('name'), Field('aa','reference tt'))
+            db.commit()
+            x = db.tt.insert(name='max')
+            assert x.id == 1
+            assert x['id'] == 1
+            x.aa = x
+            assert x.aa == 1
+            x.update_record()
+            y = db.tt[1]
+            assert y.aa == 1
+            assert y.aa.aa.aa.aa.aa.aa.name == 'max'
+            z=db.tt.insert(name='xxx', aa = y)
+            assert z.aa == y.id
+            db.tt.drop()
+            db.commit()
 
 class TestClientLevelOps(unittest.TestCase):
 
@@ -1459,7 +1468,6 @@ class TestQuoting(unittest.TestCase):
                 db._adapter.types[key]=db._adapter.types[key].replace(
                 '%(on_delete_action)s','NO ACTION')
 
-                
         t0 = db.define_table('t0',
                         Field('f', 'string'))
         t1 = db.define_table('b',
@@ -1536,7 +1544,7 @@ class TestQuoting(unittest.TestCase):
 
 class TestTableAndFieldCase(unittest.TestCase):
     """
-    at the Python level we should not allow db.C and db.c because of .table conflicts on windows 
+    at the Python level we should not allow db.C and db.c because of .table conflicts on windows
     but it should be possible to map two different names into distinct tables "c" and "C" at the Python level
     By default Python models names should be mapped into lower case table names and assume case insensitivity.
     """
@@ -1549,6 +1557,110 @@ class TestQuotesByDefault(unittest.TestCase):
     all default tables names should be quoted unless an explicit mapping has been given for a table.
     """
     def testme(self):
+        return
+
+
+class TestGis(unittest.TestCase):
+
+    def testGeometry(self):
+        from gluon.dal import geoPoint, geoLine, geoPolygon
+        if not IS_POSTGRESQL: return
+        db = DAL(DEFAULT_URI, check_reserved=['all'])
+        t0 = db.define_table('t0', Field('point', 'geometry()'))
+        t1 = db.define_table('t1', Field('line', 'geometry(public, 4326, 2)'))
+        t2 = db.define_table('t2', Field('polygon', 'geometry(public, 4326, 2)'))
+        t0.insert(point=geoPoint(1,1))
+        text = db(db.t0.id).select(db.t0.point.st_astext()).first()[db.t0.point.st_astext()]
+        self.assertEqual(text, "POINT(1 1)")
+        t1.insert(line=geoLine((1,1),(2,2)))
+        text = db(db.t1.id).select(db.t1.line.st_astext()).first()[db.t1.line.st_astext()]
+        self.assertEqual(text, "LINESTRING(1 1,2 2)")
+        t2.insert(polygon=geoPolygon((0,0),(2,0),(2,2),(0,2),(0,0)))
+        text = db(db.t2.id).select(db.t2.polygon.st_astext()).first()[db.t2.polygon.st_astext()]
+        self.assertEqual(text, "POLYGON((0 0,2 0,2 2,0 2,0 0))")
+        query = t0.point.st_intersects(geoLine((0,0),(2,2)))
+        output = db(query).select(db.t0.point).first()[db.t0.point]
+        self.assertEqual(output, "POINT(1 1)")
+        query = t2.polygon.st_contains(geoPoint(1,1))
+        n = db(query).count()
+        self.assertEqual(n, 1)
+        x=t0.point.st_x()
+        y=t0.point.st_y()
+        point = db(t0.id).select(x, y).first()
+        self.assertEqual(point[x], 1)
+        self.assertEqual(point[y], 1)
+        t0.drop()
+        t1.drop()
+        t2.drop()
+        return
+
+    def testGeometryCase(self):
+        from gluon.dal import geoPoint, geoLine, geoPolygon
+        if not IS_POSTGRESQL: return
+        db = DAL(DEFAULT_URI, check_reserved=['all'], ignore_field_case=False)
+        t0 = db.define_table('t0', Field('point', 'geometry()'), Field('Point', 'geometry()'))
+        t0.insert(point=geoPoint(1,1))
+        t0.insert(Point=geoPoint(2,2))
+        t0.drop()
+
+    def testGisMigration(self):
+        if not IS_POSTGRESQL: return
+        for b in [True, False]:
+            db = DAL(DEFAULT_URI, check_reserved=['all'], ignore_field_case=b)
+            t0 = db.define_table('t0', Field('Point', 'geometry()'))
+            db.commit()
+            db.close()
+            db = DAL(DEFAULT_URI, check_reserved=['all'], ignore_field_case=b)
+            t0 = db.define_table('t0', Field('New_point', 'geometry()'))
+            t0.drop()
+            db.commit()
+            db.close()
+        return
+
+class TestSQLCustomType(unittest.TestCase):
+
+    def testRun(self):
+        db = DAL(DEFAULT_URI, check_reserved=['all'])
+        from dal.helpers.classes import SQLCustomType
+        native_double = "double"
+        native_string = "string"
+        if hasattr(db._adapter, 'types'):
+            native_double = db._adapter.types['double']
+            native_string = db._adapter.types['string'] % {'length': 256}
+        basic_t = SQLCustomType(type = "double", native = native_double)
+        basic_t_str = SQLCustomType(type = "string", native = native_string)
+        t0=db.define_table('t0', Field("price", basic_t), Field("product", basic_t_str))
+        r_id = t0.insert(price=None, product=None)
+        row = db(t0.id == r_id).select(t0.ALL).first()
+        self.assertEqual(row['price'], None)
+        self.assertEqual(row['product'], None)
+        r_id = t0.insert(price=1.2, product="car")
+        row=db(t0.id == r_id).select(t0.ALL).first()
+        self.assertEqual(row['price'], 1.2)
+        self.assertEqual(row['product'], 'car')
+        t0.drop()
+        import zlib
+        compressed = SQLCustomType(
+             type ='text',
+             native='text',
+             encoder =(lambda x: zlib.compress(x or '', 1)),
+             decoder = (lambda x: zlib.decompress(x))
+        )
+        t1=db.define_table('t0',Field('cdata', compressed))
+        #r_id=t1.insert(cdata="car")
+        #row=db(t1.id == r_id).select(t1.ALL).first()
+        #self.assertEqual(row['cdata'], "'car'")
+        t1.drop()
+
+class TestLazy(unittest.TestCase):
+
+    def testRun(self):
+        db = DAL(DEFAULT_URI, check_reserved=['all'], lazy_tables=True)
+        t0 = db.define_table('t0', Field('name'))
+        self.assertTrue(('t0' in db._LAZY_TABLES.keys()))
+        db.t0.insert(name='1')
+        self.assertFalse(('t0' in db._LAZY_TABLES.keys()))
+        db.t0.drop()
         return
 
 if __name__ == '__main__':

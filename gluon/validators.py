@@ -22,7 +22,7 @@ import decimal
 import unicodedata
 from cStringIO import StringIO
 from gluon.utils import simple_hash, web2py_uuid, DIGEST_ALG_BY_SIZE
-from gluon.dal import FieldVirtual, FieldMethod
+from gluon.dal.objects import FieldVirtual, FieldMethod
 
 regex_isint = re.compile('^[+-]?\d+$')
 
@@ -506,7 +506,7 @@ class IS_IN_DB(Validator):
         sort=False,
         _and=None,
     ):
-        from dal import Table
+        from dal.objects import Table
         if isinstance(field, Table):
             field = field._id
 
@@ -603,7 +603,7 @@ class IS_IN_DB(Validator):
                 if not [v for v in values if not v in self.theset]:
                     return (values, None)
             else:
-                from dal import GoogleDatastoreAdapter
+                from dal.adapters import GoogleDatastoreAdapter
 
                 def count(values, s=self.dbset, f=field):
                     return s(f.belongs(map(int, values))).count()
@@ -648,7 +648,7 @@ class IS_NOT_IN_DB(Validator):
         ignore_common_filters=False,
     ):
 
-        from dal import Table
+        from dal.objects import Table
         if isinstance(field, Table):
             field = field._id
 
@@ -1168,11 +1168,8 @@ class IS_LIST_OF_EMAILS(object):
 
     def __call__(self, value):
         bad_emails = []
-        emails = []
         f = IS_EMAIL()
         for email in self.split_emails.findall(value):
-            if not email in emails:
-                emails.append(email)
             error = f(email)[1]
             if error and not email in bad_emails:
                 bad_emails.append(email)
@@ -2520,7 +2517,7 @@ class IS_LIST_OF(Validator):
             if not isinstance(other, (list,tuple)):
                 other = [other]
             for item in ivalue:
-                if item.strip():
+                if str(item).strip():
                     v = item
                     for validator in other:
                         (v, e) = validator(v)

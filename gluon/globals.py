@@ -25,6 +25,7 @@ from gluon.serializers import json, custom_json
 import gluon.settings as settings
 from gluon.utils import web2py_uuid, secure_dumps, secure_loads
 from gluon.settings import global_settings
+from gluon.dal import Field
 from gluon import recfile
 import hashlib
 import portalocker
@@ -197,7 +198,7 @@ class Request(Storage):
     def parse_get_vars(self):
         """Takes the QUERY_STRING and unpacks it to get_vars
         """
-        query_string = self.env.get('QUERY_STRING', '')        
+        query_string = self.env.get('QUERY_STRING', '')
         dget = urlparse.parse_qs(query_string, keep_blank_values=1)  # Ref: https://docs.python.org/2/library/cgi.html#cgi.parse_qs
         get_vars = self._get_vars = Storage(dget)
         for (key, value) in get_vars.iteritems():
@@ -254,7 +255,7 @@ class Request(Storage):
                 # its value else leave it alone
 
                 pvalue = listify([(_dpk if _dpk.filename else _dpk.value)
-                                  for _dpk in dpk] 
+                                  for _dpk in dpk]
                                  if isinstance(dpk, list) else
                                  (dpk if dpk.filename else dpk.value))
                 if len(pvalue):
@@ -393,7 +394,7 @@ class Response(Storage):
         self._view_environment = None
         self._custom_commit = None
         self._custom_rollback = None
-        self.generic_patterns = ['*']                                          
+        self.generic_patterns = ['*']
         self.delimiters = ('{{','}}')
         self.formstyle = 'table3cols'
         self.form_label_separator = ': '
@@ -550,7 +551,7 @@ class Response(Storage):
             else:
                 attname = filename
             headers["Content-Disposition"] = \
-                "attachment;filename=%s" % attname
+                'attachment;filename="%s"' % attname
 
         if not request:
             request = current.request
@@ -625,6 +626,8 @@ class Response(Storage):
         return self.stream(stream, chunk_size=chunk_size, request=request)
 
     def json(self, data, default=None):
+        if 'Content-Type' not in self.headers:
+            self.headers['Content-Type'] = 'application/json'
         return json(data, default=default or custom_json)
 
     def xmlrpc(self, request, methods):
@@ -691,10 +694,10 @@ class Response(Storage):
             DIV(BEAUTIFY(current.response), backtotop,
                 _class="w2p-toolbar-hidden", _id="response-%s" % u),
             DIV(BEAUTIFY(dbtables), backtotop,
-                _class="w2p-toolbar-hidden",_id="db-tables-%s" % u),                
+                _class="w2p-toolbar-hidden",_id="db-tables-%s" % u),
             DIV(BEAUTIFY(dbstats), backtotop,
                 _class="w2p-toolbar-hidden", _id="db-stats-%s" % u),
-            SCRIPT("jQuery('.w2p-toolbar-hidden').hide()"), 
+            SCRIPT("jQuery('.w2p-toolbar-hidden').hide()"),
             _id="totop-%s" % u
         )
 
@@ -868,7 +871,7 @@ class Session(Storage):
                 table_migrate = False
             tname = tablename + '_' + masterapp
             table = db.get(tname, None)
-            Field = db.Field
+            #Field = db.Field
             if table is None:
                 db.define_table(
                     tname,
