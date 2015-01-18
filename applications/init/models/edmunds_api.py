@@ -2,7 +2,7 @@ from edmunds import Edmunds
 
 ed = Edmunds(EDMUNDS_KEY)
 
-def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure data is ok
+def ed_cache(URI, function, time_expire=60*60*24): #time_expire = s * m * h = 1 day #fixed? ed cache flawed make sure data is ok
 	#will call ram >> disk >> API
 	URI = repr(URI)
 	def disk():
@@ -13,7 +13,7 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 		response = backup_cache(	
 			URI, #<type 'exceptions.TypeError'> String or Integer object expected for key, unicode found
 			function,
-			time_expire*7,
+			time_expire*30, #how many days?
 		)
 		return response
 	#
@@ -24,7 +24,7 @@ def ed_cache(URI, function, time_expire=60*60*24): #ed cache flawed make sure da
 	)
 
 	if not response or 'error' in response or 'status' in response or 'errorType' in response:
-		cache.ram(URI, None)
+		cache.ram(URI, None) #erase cache for this URI
 		cache.disk(URI, None)
 		return None
 		#raise HTTP(response['code'], response['message']) 
