@@ -541,12 +541,12 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
     function load_radius_map(){
 		if ($('#auction_request_zip_code').val().length==5){
 			$('#dealer_radius_map').css({"padding-top":"0px"}).html('<img src="http://placehold.it/600x338&text=loading..." class="img-responsive"/>').load(
-				"{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + $('#auction_request_zip_code').val(), //implement fail like above
+				"{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + encodeURIComponent($('#auction_request_zip_code').val()), //{{#encodeURIComponent is needed because a space can destroy the url, thus user won't get any image. ALWAYS encode user generated input http://stackoverflow.com/questions/6544564/url-encode-a-string-in-jquery-for-an-ajax-request}}
 				function( response, status, xhr ) {
 					if ( status == "error" ) {
 						var msg = "Error loading map: ";
 						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_radius" class="alert alert-danger"><span id="ajax_failure_warning_radius_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-						$('#ajax_failure_warning_radius_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+						$('#ajax_failure_warning_radius_message').html( msg + xhr.status + " " + xhr.statusText ); 
 						$('#ajax_failure_warning_radius').slideDown();
 						$('#ajax_failure_warning_radius').click(function(){
 							$(this).slideUp();
