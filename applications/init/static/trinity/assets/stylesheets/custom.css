@@ -281,6 +281,13 @@ hr {
     border-bottom: none;
 }
 
+#help_modal h1 span {
+    background-color: #0087c3;
+    color: #ffffff;
+    padding: 4px 8px;
+    line-height: 60px;
+}
+
 #help_modal .help_image {
     border-radius: 50px;
     -moz-border-radius: 50px;
