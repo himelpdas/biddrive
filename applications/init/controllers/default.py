@@ -22,7 +22,7 @@ def index():
 	if request.args(0):
 		year = request.args[0]
 		
-	response.message2="@%s is currently under development"%APP_NAME
+	#response.message2="@%s is currently under development"%APP_NAME
 		
 	return dict(brands_list=getBrandsList(year), cars=getFeaturedCars())
 

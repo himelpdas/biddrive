@@ -171,7 +171,7 @@ def getFeaturedCars():
         'image' : u'2014_mazda_cx-5_4dr-suv_grand-touring_fq_oem_1_815.jpg'
      })
      cars.append({
-        'year' :  u'2015',
+        'year' :  u'2014',
         'make' :  u'tesla',
         'model' : u'model-s',
         'types' : u'hybrid sedan sporty',

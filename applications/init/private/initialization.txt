@@ -46,6 +46,21 @@ python web2py -S init -M
 >>>cache.disk.clear()
 
 --------
+
+#####MISSING SYSTEM PACKAGES DURING PIP INSTALL#####
+
+When running pip install paypalrestsdk, you get an error like
+
+Package libffi was not found in the pkg-config search path.
+    Perhaps you should add the directory containing `libffi.pc'
+    to the PKG_CONFIG_PATH environment variable
+    No package 'libffi' found
+
+if you have admin access try sudo apt-get libffi
+
+if you only have local access try 
+
+
 ####test commits/push here####
 
 test1
