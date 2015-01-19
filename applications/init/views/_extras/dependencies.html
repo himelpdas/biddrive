@@ -53,6 +53,7 @@
 				{{if max_height:}}'maxHeight':{{=max_height}},{{pass}}
 				'buttonClass': 'form-control',
 				'nonSelectedText': '{{=each[1]}}',
+				'numberDisplayed':1,
 				'onDropdownShow':	 function(event) {
 						$( document ).tooltip( "destroy" ); //{{#tooltips distract in mobile}}
 				},

@@ -36,7 +36,9 @@ python web2py.py -a password -i 127.0.0.1 -p 8889
 nohup python web2py.py -K init -X -a password -i 127.0.0.1 -p 8888
 
 #to ensure this process runs all the time, put this in crontab every 6 hours without locking... Note the local python binary, as this is where our custom python is, and will avoid import errors from using the system python, since crontab doesn't respect bash_rc:
-cd biddrive.com && killall python && nohup ~/python/bin/python web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8888
+cd biddrive.com && killall python && nohup ~/local_bin/python/bin/python web2py.py -K init -X -a gbkyjh78u -i 127.0.0.1 -p 8888
+
+#note how we had to put full path to python binary because dreamhost cron interface doesn't respect the PATH in .bash_rc (which runs on shell startup)
 
 #to start shell with models
 python web2py -S init -M

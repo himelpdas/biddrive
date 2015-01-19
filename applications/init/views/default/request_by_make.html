@@ -408,7 +408,7 @@
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-md5.js"></script> <!--{{#quick configure-less function}}{{#https://code.google.com/p/crypto-js/}}-->
 
 <script>
-//{{#client side hmac verification}}
+//{{#client side of hmac verification used to protect against fraudulent ajax calls (perhaps by data miners)}}
 var glob_message_string = "{{=make}}"+"{{=model}}"+"{{=year}}";
 var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT IN ITS ORIGINAL FORM #HASH IS WEAK (64-bit) BUT DOES ITS JOB}}
 </script>
@@ -516,7 +516,16 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
     //close main function
     }
     $('#auction_request_trim').change(load_content) //{{#change color preference options when you change trim dropdown}}
-	.multiselect(); //use multiselect widget for consistance, though it is not actually single select
+	.multiselect({ //{{#onetime styling of this single-select to match the multi-selects below}}
+				'maxHeight':480,
+				'buttonClass': 'form-control btn-primary',
+				'onDropdownShow':	 function(event) {
+						$( document ).tooltip( "destroy" ); //{{#tooltips distract in mobile}}
+				},
+				'onDropdownHide':	 function(event) {
+						$( document ).tooltip();
+				},
+			}); //use multiselect widget for consistance, though it is not actually single select
 
     $(document).ready(function(){
         load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
@@ -530,26 +539,31 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 
 <script>
     function load_radius_map(){
-        $('#dealer_radius_map').css({"padding-top":"0px"}).html('<img src="http://placehold.it/600x338&text=loading..." class="img-responsive"/>').load(
-            "{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + $('#auction_request_zip_code').val(), //implement fail like above
-            function( response, status, xhr ) {
-                if ( status == "error" ) {
-                    var msg = "Error loading map: ";
-                    $("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_radius" class="alert alert-danger"><span id="ajax_failure_warning_radius_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
-                    $('#ajax_failure_warning_radius_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
-                    $('#ajax_failure_warning_radius').slideDown();
-                    $('#ajax_failure_warning_radius').click(function(){
-                        $(this).slideUp();
-                    });
-                }
-                else {
-					//
-                }
-            }
-        );
+		if ($('#auction_request_zip_code').val().length==5){
+			$('#dealer_radius_map').css({"padding-top":"0px"}).html('<img src="http://placehold.it/600x338&text=loading..." class="img-responsive"/>').load(
+				"{{=URL('ajax','dealer_radius_map', args=[make])}}{{='/'}}" + $('#auction_request_radius').val()  + "/" + $('#auction_request_zip_code').val(), //implement fail like above
+				function( response, status, xhr ) {
+					if ( status == "error" ) {
+						var msg = "Error loading map: ";
+						$("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_radius" class="alert alert-danger"><span id="ajax_failure_warning_radius_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+						$('#ajax_failure_warning_radius_message').html( msg + xhr.status + " " + xhr.statusText ); //TODO- implement fail element
+						$('#ajax_failure_warning_radius').slideDown();
+						$('#ajax_failure_warning_radius').click(function(){
+							$(this).slideUp();
+						});
+					}
+					else {
+						//
+					}
+				}
+			);
+		}
+		else {
+			$('#dealer_radius_map').css({"padding-top":"0px"}).html('<img src="http://placehold.it/600x338&text=Not%20a%20zip%20code." class="img-responsive"/>')
+		}
     }
     $('#auction_request_radius').change(load_radius_map);
-    $('#auction_request_zip_code').change(load_radius_map);
+    $('#auction_request_zip_code').keyup(load_radius_map);
     $(document).ready(function(){
         if ($('#auction_request_zip_code').val().length==5){ //{{#if length is of zipcode}}
             load_radius_map();
