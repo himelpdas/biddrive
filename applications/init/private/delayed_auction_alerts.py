@@ -59,11 +59,11 @@ class delayed_alert_send():
 			self.try_email()
 			#self.try_sms
 		
-	def try_email(self, number=5, timeout=5):
+	def try_email(self, number=5, retry_timeout=5):
 		for each_attempt in range(number):
 			if self.send_email():
 				break
-			time.sleep(timeout)
+			time.sleep(retry_timeout)
 
 	def send_email(self):
 		message_type_vars = self.get_message_type_vars()
@@ -104,8 +104,13 @@ class delayed_alert_send():
 			),
 		}
 		return rendered[self.message_type]
-		
+	
+delayed_alert_iterations = 0
+
+delayed_alert_timeout = 60*30 # check every half hour
+
 while True:
+
 	try:
 		non_completed_auctions = db( #auctions where buyer can pick a winner
 			db.auction_request.offer_expires > request.now #exclude auctions where offers expired (completed)
@@ -153,5 +158,13 @@ while True:
 
 	finally:
 		db.commit() #will leave SQLITE locked if exception, not sure about MYSQL
-
-	time.sleep(60*30) # check every 0.5 hour
+	
+	delayed_alert_iterations+=1
+	
+	mail.send(
+		to="himeldas@live.com", #TODO change to "admin@biddrive.com"
+		subject="OK in delayed_auction_alerts.py",
+		message="Uptime: %s minutes."%delayed_alert_timeout*delayed_alert_iterations/60.0,
+	)
+		
+	time.sleep(delayed_alert_timeout)
