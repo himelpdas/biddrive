@@ -25,6 +25,7 @@ class delayed_alert_send():
 		self.name = self.buyer.first_name.capitalize()
 		self.pronoun = 'You'
 		self.instructions = 'In the auction, press the red "buy it now" button to pick the offer that is best for you! After that follow the insructions to connect with the dealer!'
+		
 		self.try_email()
 		#self.try_sms
 		
@@ -164,7 +165,7 @@ while True:
 	mail.send(
 		to="himeldas@live.com", #TODO change to "admin@biddrive.com"
 		subject="OK in delayed_auction_alerts.py",
-		message="Uptime: %s minutes."%delayed_alert_timeout*delayed_alert_iterations/60.0,
+		message="Uptime: %s minutes."%str(delayed_alert_timeout*delayed_alert_iterations/60.0),
 	)
 		
 	time.sleep(delayed_alert_timeout)
