@@ -195,3 +195,10 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			pargs=[tel_number, MESSAGE_DATA[MESSAGE_TEMPLATE]()["SUBJECT"]],
 			retry_failed = 5, period = 2, timeout = 10, #less important
 		)
+
+db.define_table('delayed_auction_alert_queue',
+	Field('auction_request', db.auction_request),
+	Field('sent_auction_ending_soon', 'boolean', default = False),
+	Field('sent_auction_ended_now', 'boolean', default = False),
+	auth.signature,
+)

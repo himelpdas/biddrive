@@ -251,7 +251,7 @@
 					{{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
 					{{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}
 					
-					{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-left" + (" btn-danger" if form_is_final_bid else "")  }}
+					{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-primary pull-left" + (" btn-danger" if form_is_final_bid else "")  }}
 					{{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if form_is_final_bid else "Place Bid!") }}
 					{{=bid_form.custom.begin}}
 					<tr>
@@ -749,7 +749,7 @@
 									{{if not i == len(each_offer['offer_messages'])-1:}}<br><hr><br>{{pass}}{{#hide the line below the last message}}
 								{{pass}}
 							{{else:}}
-								<h3>No messages :/</h3>
+								<h3>No messages :-(</h3>
 							{{pass}}
 						</div>
 					</div>

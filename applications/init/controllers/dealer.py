@@ -527,7 +527,7 @@ def auction():
 			form_is_final_bid = request.vars['final_bid']
 			if form_is_final_bid:
 				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, (auction_request_ends-request.now).total_seconds()/3600.0)
-				final_message = "@This was your final bid! The buyer has been notified."
+				final_message = "!This was your final bid! The buyer has been notified."
 			#make sure new bid can't be higher than previous
 			my_previous_bid = db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select().last()
 			highest_bid_allowed = my_previous_bid.bid if my_previous_bid else (5000 if is_lease else 1000000)

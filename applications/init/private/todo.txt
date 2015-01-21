@@ -1,8 +1,8 @@
 *Todo
 dont allow more than one auction request at a time
-email when auction almost/ends (softcron?)
 add expiration to call center
 heading color different for auction loser
+enforce is_active on auction_request and add the same for auction_request_offer
 
 *Optional
 add more tooltips to everything
@@ -12,6 +12,7 @@ add twilio verification in page 2
 calculate msrp in page 2
 
 *Complete
+email when auction almost/ends (softcron?)
 false/erroroneous address in dealership form raises "Nonetype not iterable error"
 added help modal in auction page, auto loads on new session 
 add readable ends_on in admin interface for auction
