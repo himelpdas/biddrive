@@ -81,7 +81,7 @@ class delayed_alert_send():
 			headers = {'Content-Type' : 'text/html'}, #http://goo.gl/h6N78b #otherwise text/plain
 		)
 
-	def get_message_type_vars(self):
+	def get_message_type_vars(self): #vulnerable to error because some variables may not be initialized in self.
 		rendered = {
 			"auction_ended_now" : dict(
 				NAME = self.name,
