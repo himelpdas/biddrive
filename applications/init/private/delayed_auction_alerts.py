@@ -6,7 +6,7 @@
 
 ##DO NOT use with sqlite, as there will be long locks 
 
-import time, datetime
+import time, datetime, sys
 
 class delayed_alert_send():
 	
