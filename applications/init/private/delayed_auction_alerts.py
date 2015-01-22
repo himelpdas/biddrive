@@ -154,7 +154,7 @@ while True:
 		mail.send(
 			to="himeldas@live.com", #TODO change to "admin@biddrive.com"
 			subject="Error in delayed_auction_alerts.py",
-			message=str(e)
+			message='%s\n%s\n%s'%s(e, '-'*15, sys.exc_info()[0]), #http://goo.gl/cmtlsL
 		)
 
 	finally:
