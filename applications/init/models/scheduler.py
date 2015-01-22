@@ -178,7 +178,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			send_email_task,
 			pargs=[USER.email, response.render(
 				'email_alert_template.html', dict(
-					APP=APP_NAME,
+					APP = APP_NAME,
 					NAME = USER.first_name.capitalize(), 
 					**MESSAGE_DATA[MESSAGE_TEMPLATE]()
 					)
