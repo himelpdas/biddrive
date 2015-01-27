@@ -122,7 +122,7 @@ while True:
 		#print len(non_completed_auctions)
 		
 		for each_auction in non_completed_auctions:
-			alert_queue = db(db.delayed_auction_alert_queue.auction_request==each_auction.id).select()
+			alert_queue = db(db.delayed_auction_alert_queue.auction_request==each_auction.id).select().last()
 			
 			if not alert_queue:
 				alert_queue_new_id = db.delayed_auction_alert_queue.insert(auction_request=each_auction.id)
