@@ -12,7 +12,7 @@ class delayed_alert_send():
 	
 	def __init__(self, auction_request): #is defined in self not global
 		self.auction_request = auction_request
-		self.url = URL('dealer', 'auction', args=[auction_request.id])
+		self.url = URL('init', 'dealer', 'auction', args=[auction_request.id], host=True, scheme=True)
 		self.vehicle = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 		
 		self.buyer = db(db.auth_user.id == auction_request.owner_id).select().last()
@@ -24,7 +24,7 @@ class delayed_alert_send():
 		self.contact = self.buyer.email
 		self.name = self.buyer.first_name.capitalize()
 		self.pronoun = 'You'
-		self.instructions = 'In the auction, press the red "buy it now" button to pick the offer that is best for you! After that follow the insructions to connect with the dealer!'
+		self.instructions = 'In the auction, press the red "Buy It Now" button to pick the offer that is best for you! After that, follow the insructions to connect with the dealer!'
 		
 		self.try_email()
 		#self.try_sms
