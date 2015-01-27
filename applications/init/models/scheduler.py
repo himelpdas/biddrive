@@ -102,7 +102,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 		"BUYER_on_new_bid" : lambda: dict(
 			SUBJECT  =  "{app}: {dealer_name} {change} the {car} price to {price}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{dealer_name} {change} the price to {price}. So what now?".format(**MESSAGE_VARS),
-			MESSAGE_TITLE = "A dealer {change} the price for the <i>{car}</i>!".format(**MESSAGE_VARS),
+			MESSAGE_TITLE = XML("A dealer {change} the price for the <i>{car}</i>!".format(**MESSAGE_VARS)),
 			WHAT_NOW = "This was the dealer's final bid!" if MESSAGE_VARS['form_is_final_bid'] else "Let other dealers know if you like it!",
 			INSTRUCTIONS = 'You can buy this car now! Just press the "buy it now" button for this offer in the auction page.' if MESSAGE_VARS['form_is_final_bid'] else "If you like this bid, go to the auction page and choose this price as your favorite. You can also message other dealers to bargain for better prices.",
 			CLICK_HERE = "Go to auction",
