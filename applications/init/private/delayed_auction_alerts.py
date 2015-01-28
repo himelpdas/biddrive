@@ -19,46 +19,48 @@ class delayed_alert_send():
 		self.dealers = db(db.auction_request_offer.auction_request == auction_request.id).select(left=db.auth_user.on(db.auth_user.id == db.auction_request_offer.owner_id)) 
 		
 	def send_auction_ended_now(self):
-		self.message_type = 'auction_ended_now'
-		#buyer send
-		self.contact = self.buyer.email
-		self.name = self.buyer.first_name.capitalize()
-		self.pronoun = 'You'
-		self.instructions = 'In the auction, press the red "Buy It Now" button to pick the offer that is best for you! After that, follow the insructions to connect with the dealer!'
-		
-		self.try_email()
-		#self.try_sms
-		
-		#dealer send
-		self.pronoun='The buyer'
-		self.instructions = 'If you win, we will let you know. After that, the auction the buyer will call you (via our automated hotline) during your business hours. You will be charged a success fee only if you answer the call.'
-		for each_dealer in self.dealers:
-			self.contact = each_dealer.auth_user.email
-			self.name = each_dealer.auth_user.first_name.capitalize()
+		if self.buyer: #possible that auction is abandoned
+			self.message_type = 'auction_ended_now'
+			#buyer send
+			self.contact = self.buyer.email
+			self.name = self.buyer.first_name.capitalize()
+			self.pronoun = 'You'
+			self.instructions = 'In the auction, press the red "Buy It Now" button to pick the offer that is best for you! After that, follow the insructions to connect with the dealer!'
 			
 			self.try_email()
 			#self.try_sms
+			
+			#dealer send
+			self.pronoun='The buyer'
+			self.instructions = 'If you win, we will let you know. After that, the auction the buyer will call you (via our automated hotline) during your business hours. You will be charged a success fee only if you answer the call.'
+			for each_dealer in self.dealers:
+				self.contact = each_dealer.auth_user.email
+				self.name = each_dealer.auth_user.first_name.capitalize()
+				
+				self.try_email()
+				#self.try_sms
 
 	def send_auction_ending_soon(self):
-		self.message_type = 'auction_ending_soon'
-		#buyer send
-		self.contact = self.buyer.email
-		self.name = self.buyer.first_name.capitalize()
-		self.pronoun = 'the dealers'
-		self.instructions = XML('Communicate with the dealers now to get the best possible price. Remember, you have <b>no obligation</b> to buy anything if it is not to your liking!')
-		
-		self.try_email()
-		#self.try_sms
-		
-		#dealer send
-		self.pronoun='the buyer and lower your price'
-		self.instructions = XML('Try to convince the buyer in these final hours that <b>you</b> have the vehicle he/she wants. Lowering your price just a bit and communicating the buyer can make all the difference.')
-		for each_dealer in self.dealers:
-			self.contact = each_dealer.auth_user.email
-			self.name = each_dealer.auth_user.first_name.capitalize()
+		if self.buyer: #possible that auction is abandoned
+			self.message_type = 'auction_ending_soon'
+			#buyer send
+			self.contact = self.buyer.email
+			self.name = self.buyer.first_name.capitalize()
+			self.pronoun = 'the dealers'
+			self.instructions = XML('Communicate with the dealers now to get the best possible price. Remember, you have <b>no obligation</b> to buy anything if it is not to your liking!')
 			
 			self.try_email()
 			#self.try_sms
+			
+			#dealer send
+			self.pronoun='the buyer and lower your price'
+			self.instructions = XML('Try to convince the buyer in these final hours that <b>you</b> have the vehicle he/she wants. Lowering your price just a bit and communicating the buyer can make all the difference.')
+			for each_dealer in self.dealers:
+				self.contact = each_dealer.auth_user.email
+				self.name = each_dealer.auth_user.first_name.capitalize()
+				
+				self.try_email()
+				#self.try_sms
 		
 	def try_email(self, number=5, retry_timeout=5):
 		for each_attempt in range(number):
