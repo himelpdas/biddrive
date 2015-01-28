@@ -12,7 +12,7 @@ class delayed_alert_send():
 	
 	def __init__(self, auction_request): #is defined in self not global
 		self.auction_request = auction_request
-		self.url = URL('init', 'dealer', 'auction', args=[auction_request.id], host=True, scheme=True)
+		self.url = "http://biddrive.com/init/dealer/auction/%s"%auction_request.id
 		self.vehicle = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 		
 		self.buyer = db(db.auth_user.id == auction_request.owner_id).select().last()
@@ -137,7 +137,7 @@ while True:
 				
 				delayed_alert_send(each_auction).send_auction_ended_now()
 				
-				alert_queue.update_record(sent_auction_ending_now=True)
+				alert_queue.update_record(sent_auction_ended_now=True)
 			
 			elif (request.now > (each_auction.auction_expires - datetime.timedelta(hours = 6) ) ) and alert_queue['sent_auction_ending_soon'] == False: #if it's now 6 hours or more before auction expires
 				
