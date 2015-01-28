@@ -6,7 +6,7 @@
 
 ##DO NOT use with sqlite, as there will be long locks 
 
-import time, datetime, sys
+import time, datetime, traceback #, sys
 
 class delayed_alert_send():
 	
@@ -126,35 +126,30 @@ while True:
 			
 			if not alert_queue:
 				alert_queue_new_id = db.delayed_auction_alert_queue.insert(auction_request=each_auction.id)
-				alert_queue = dict(auction_request = alert_queue_new_id , sent_auction_ending_soon = False, sent_auction_ended_now = False) #fake record to save from a commit
+				db.commit()
+				alert_queue = db(db.delayed_auction_alert_queue.id==alert_queue_new_id).select().last()
 			
 			change = False
 			
-			if each_auction.auction_expired():
+			if each_auction.auction_expired() and alert_queue['sent_auction_ended_now'] == False:
 				
 				delayed_alert_send(each_auction).send_auction_ended_now()
 				
-				alert_queue['sent_auction_ended_now'] = change = True
+				alert_queue.update_record(sent_auction_ending_now=True)
 			
-			elif request.now > each_auction.auction_expires - datetime.timedelta(hours = 6): #if it's now 6 hours or more before auction expires
+			elif (request.now > (each_auction.auction_expires - datetime.timedelta(hours = 6) ) ) and alert_queue['sent_auction_ending_soon'] == False: #if it's now 6 hours or more before auction expires
 				
 				delayed_alert_send(each_auction).send_auction_ending_soon()
 				
-				alert_queue['sent_auction_ending_soon'] = change =  True
+				alert_queue.update_record(sent_auction_ending_soon=True)
 			
-			else:
-				pass
-			
-			if change:
-				pass
-				db(db.delayed_auction_alert_queue.auction_request==each_auction.id).update(sent_auction_ended_now = alert_queue['sent_auction_ended_now'], sent_auction_ending_soon = alert_queue['sent_auction_ending_soon'] ) #update the records
-				db.commit() #No create, drop, insert, truncate, delete, or update operation is actually committed until web2py issues the commit command. In models, views and controllers, web2py does this for you, but in modules you are required to do the commit.
-		
+			db.commit()
+	
 	except Exception,e: 
 		mail.send(
 			to="himeldas@live.com", #TODO change to "admin@biddrive.com"
 			subject="Error in delayed_auction_alerts.py",
-			message='%s\n%s\n%s'%(e, '-'*15, sys.exc_info()[0]), #http://goo.gl/cmtlsL
+			message='%s\n%s\n%s'%(e, '-'*15, traceback.format_exc()) #sys.exc_info()[0]), #http://goo.gl/cmtlsL
 		)
 
 	finally:
