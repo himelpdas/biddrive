@@ -158,6 +158,19 @@
     color: #fff;
     width: auto;
 }
+
+#request_by_make .btn-cancel {
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+}
+
+#request_by_make .btn-cancel:hover {
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+}
+
 #intro .btn-cta:hover,
 #about .btn-cta:hover,
 #request_by_make .btn:hover {
