@@ -20,6 +20,22 @@
     line-height: 78px;
 }
 
+.intro-nav li > ul.dropdown-menu > li,
+.standard-nav li > ul.dropdown-menu > li,
+.top-nav li > ul.dropdown-menu > li {
+    margin-left: 0;
+}
+.intro-nav li > ul.dropdown-menu > li > a,
+.standard-nav li > ul.dropdown-menu > li > a,
+.top-nav li > ul.dropdown-menu > li > a {
+    color: #2d2d2d;
+}
+.intro-nav li > a.highlighted,
+.standard-nav li > a.highlighted,
+.top-nav li > a.highlighted {
+    border-width: 0;
+}
+
 #intro-header a.brand {
     font-size: 40px;
     color: #ffffff;
