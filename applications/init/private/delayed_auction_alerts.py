@@ -12,7 +12,7 @@ class delayed_alert_send():
 	
 	def __init__(self, auction_request): #is defined in self not global
 		self.auction_request = auction_request
-		self.url = "http://biddrive.com/init/dealer/auction/%s"%auction_request.id
+		self.url = "http://biddrive.com/init/dealer/auction/%s"%auction_request.id #MUST build URL as this scheduler is running locally and absolute URL will not work, (will show 12.0.0.1:8000 instead)
 		self.vehicle = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 		
 		self.buyer = db(db.auth_user.id == auction_request.owner_id).select().last()
