@@ -1,11 +1,22 @@
 {{extend 'page_layout_new.html'}}
 
-<h3><i class="fa fa-fw fa-gavel"></i>{{=heading}}</h3><br><hr><br>
+<section class="inner-section full-width-bg color-bg  pad-top-eighth pad-bottom-eighth">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="liner-wide text-center"><span class="white-bg"></span></div>
+                <h1 class="main-heading white text-center">My Auction History</h1>
+                <div class="liner-wide text-center"><span class="white-bg"></span></div>
+            </div>
+        </div>
+    </div>
+</section>
 
-<table class="table table-striped table-hover">
+<div class="panel panel-default" style="margin-top:40px">
+    <table class="table ">
 	<thead>
-		<tr>
-			<th>Your request</th>
+		<tr bgcolor="#f2f2f2">
+			<th>Vehicle</th>
 			<th>Colors</th>
 			<th>Latest bid</th>
 			<th>Concludes in</th> <!--{{#<i class="fa fa-fw fa-info-circle" title="Includes 24 hour winner selection period."></i>}}-->
@@ -60,3 +71,4 @@
 		{{pass}}
 	</tbody>
 </table>
+</div>

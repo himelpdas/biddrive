@@ -344,6 +344,26 @@ hr {
     padding-bottom: 15px;
 }
 
+.inner-section.full-width-bg {
+    padding-left: 3000px;
+    margin-left: -3000px;
+    padding-right: 3000px;
+    margin-right: -3000px;
+}
+
+.icon-circled {
+    font-size: 3em;
+    display: inline-block;
+    border: 4px solid #ffffff;
+    -moz-border-radius: 60px;
+    -webkit-border-radius: 60px;
+    border-radius: 60px;
+    -moz-box-shadow: 0px 0px 2px #888;
+    -webkit-box-shadow: 0px 0px 2px #888;
+    box-shadow: 0px 0px 2px #888;
+    padding: 100px;
+}
+
 @media screen and (max-width: 1024px) {
     .page-container {
         padding-top: 80px;

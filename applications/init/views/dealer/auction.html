@@ -1,304 +1,251 @@
-{{#extend 'page_layout.html'}}
 {{extend 'page_layout_new.html'}}
 {{#=BEAUTIFY(response._vars)}}
 
-<div id = "panel-top" class="panel panel-primary">
-	<div class= "panel-heading text-uppercase text-md" style="position:relative;">
-		<strong style="font-size:large;"><i class="fa fa-fw fa-legal"></i> Auction for {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}</strong>
-		<span class="pull-right text-xs text-light">Auction ID: {{=auction_request_info['id']}}&nbsp;
-			<button id="show_help_modal" class="btn btn-default btn-xs" title="Show help dialog" data-toggle="modal" data-target="#help_modal"><i class="fa fa-fw fa-question"></i></button>&nbsp;{{if is_dealer:}}<button class="btn btn-default btn-xs" title="Show message dialog" href="#" data-toggle="modal" data-target=".message_form"><i class="fa fa-fw fa-envelope {{if auction_request_info['auth_dealer_has_unread_messages']:}}blink{{pass}}"></i></button>{{pass}}
-		</span>
-	</div>
-	<div class="panel-body">
-		<div class="row">
-			<div class="col-sm-6 col-xs-12">
-				<table class="table table-hover text-sm">
-					<tr>
-						<th style="border-top: none">
-							Name
-						</th>
+    <section class="inner-section full-width-bg color-bg  pad-top-eighth pad-bottom-eighth">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="liner-wide text-center"><span class="white-bg"></span></div>
+                    <h1 class="main-heading white text-center">Reverse Auction for {{if is_dealer:}}this{{else:}}my{{pass}} {{=auction_request_info['year']}}  {{=auction_request_info['make']}} {{=auction_request_info['model']}}</h1>
+                    <div class="liner-wide text-center"><span class="white-bg"></span></div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-						<td style="border-top: none">
-							<p>
-								<a href="#info_modal" data-target="#info_modal" data-toggle="modal">{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}} <i class="fa fa-fw fa-info-circle"></i></a>
-							</p>
-						</td>
-					</tr>					
+    <div class="row" style="margin: 20px 0;">
+        <div class="col-sm-12">
+            <a class="pull-right" href="#" data-toggle="modal" data-target="#help_modal">How does this auction work?</a>
+        </div>
+    </div>
 
-					<tr>
-						<th>
-							Location
-						</th>
+    <div class="row">
+        <div class="col-sm-6 col-xs-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <strong>{{if is_dealer:}}Buyer's{{else:}}My{{pass}} Bid Request</strong>
+                    {{if is_dealer:}}
+                        <span style="float: right"><a href="#" data-toggle="modal" data-target=".message_form"><i class="fa fa-fw fa-envelope {{if auction_request_info['auth_dealer_has_unread_messages']:}}blink{{pass}}"></i> Send a message to Buyer</a></span>
+                    {{pass}}
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <tr>
+                            <th style="border-top: none;">
+                                Name
+                            </th>
 
-						<td>
-							<p>
-								{{=auction_request_info['city']}}, {{=auction_request_info['state']}} {{=auction_request_info['zip_code']}}
-							</p>
-						</td>
-					</tr>
+                            <td style="border-top: none;">
+                                <p>
+                                    <a href="#info_modal" data-target="#info_modal" data-toggle="modal">{{=auction_request_info['first_name'].capitalize()}} {{=auction_request_info['last_init'].capitalize()}} <i class="fa fa-fw fa-info-circle"></i></a>
+                                </p>
+                            </td>
+                        </tr>
 
-					<tr>
-						<th>
-							Vehicle
-						</th>
+                        <tr>
+                            <th>
+                                Location
+                            </th>
 
-						<td>
-							<div>
-								<p>
-									<strong style="width: 65px; display:inline-block">Model:</strong> {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}
-								</p>
-							</div>
+                            <td>
+                                <p>
+                                    {{=auction_request_info['city']}}, {{=auction_request_info['state']}} {{=auction_request_info['zip_code']}}
+                                </p>
+                            </td>
+                        </tr>
 
-							<div>
-								<p>
-									<strong style="width: 65px; display:inline-block">Trim:</strong> {{=auction_request_info['trim_name']}}
-								</p>
-							</div>
-						</td>
-					</tr>
+                        <tr>
+                            <th>
+                                Vehicle
+                            </th>
 
-					<tr>
-						<th>
-							Colors
-						</th>
-						<td>
-							<p>
-								<strong style="width: 65px; display:inline-block">Exterior:</strong>
-								{{for each_color_id in auction_request_info['colors_dict']:}}
-									{{each_color=auction_request_info['colors_dict'][each_color_id]}}
-									{{if each_color['category'] == "exterior":}}
-										{{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
-									{{pass}}
-								{{pass}}
-							</p>
-							<p>
-								<strong style="width: 65px; display:inline-block">Interior:</strong>
-								{{for each_color_id in auction_request_info['colors_dict']:}}
-									{{each_color=auction_request_info['colors_dict'][each_color_id]}}
-									{{if each_color['category'] == "interior":}}
-										{{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
-									{{pass}}
-								{{pass}}
-							</p>
-						</td>
-					</tr>
+                            <td>
+                                <div>
+                                    <p>
+                                        <strong style="width: 65px; display:inline-block">Model:</strong> {{=auction_request_info['year']}} {{=auction_request_info['make']}} {{=auction_request_info['model']}}
+                                    </p>
+                                </div>
 
-					<tr>
-						<th>
-							Options {{#TODO use info directly from model}}
-						</th>
+                                <div>
+                                    <p>
+                                        <strong style="width: 65px; display:inline-block">Trim:</strong> {{=auction_request_info['trim_name']}}
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
 
-						<td>
-							{{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2], description=each[3])],zip(auction_request_info['auction_request'].options, auction_request_info['auction_request'].option_names, auction_request_info['auction_request'].option_msrps, auction_request_info['auction_request'].option_descriptions ) ), key=lambda each: each[1]['name'] ) ) }}
-                            {{option_keys = auction_request_options_dict.keys()}}
-							{{if len(option_keys)%2:}}{{option_keys.append(None)}}{{pass}} {{#must be even or one option will be excluded}}
-							{{two_cols = zip(option_keys[0::2], option_keys[1::2])}} {{#iterate every two items in a list http://goo.gl/kpTBq8}}
-							<div class="row" style="max-height:250px; overflow-y:auto;" >
-								{{for each_pair in two_cols:}}
-									<div class="col-xs-12 col-sm-6">
-										<p title="{{=auction_request_options_dict[each_pair[0]]['description'].replace('None', 'No description')}}">
-											{{=BULLET}}{{=auction_request_options_dict[each_pair[0]]['name']}}
-										</p>
-									</div>
-									<div class="col-xs-12 col-sm-6">
-										{{if auction_request_options_dict.get(each_pair[1]):}}
-											<p title="{{=auction_request_options_dict[each_pair[1]]['description'].replace('None', 'No description')}}">
-												{{=BULLET}}{{=auction_request_options_dict[each_pair[1]]['name']}}
-											</p>
-										{{pass}}<!--{{#last item may be missing, so use get}}-->
-									</div>
-								{{pass}}
-							</div>
-						</td>
-					</tr>
-				</table>
-			</div>
-			<div class="col-sm-6 col-xs-12">
-				<table class="table table-hover text-sm">
+                        <tr>
+                            <th>
+                                Colors
+                            </th>
+                            <td>
+                                <p>
+                                    <strong style="width: 65px; display:inline-block">Exterior:</strong>
+                                    {{for each_color_id in auction_request_info['colors_dict']:}}
+                                        {{each_color=auction_request_info['colors_dict'][each_color_id]}}
+                                        {{if each_color['category'] == "exterior":}}
+                                            {{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
+                                        {{pass}}
+                                    {{pass}}
+                                </p>
+                                <p>
+                                    <strong style="width: 65px; display:inline-block">Interior:</strong>
+                                    {{for each_color_id in auction_request_info['colors_dict']:}}
+                                        {{each_color=auction_request_info['colors_dict'][each_color_id]}}
+                                        {{if each_color['category'] == "interior":}}
+                                            {{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
+                                        {{pass}}
+                                    {{pass}}
+                                </p>
+                            </td>
+                        </tr>
 
-					<tr>
-						<th style="border-top: none">
-							Auction status
-						</th>
+                        <tr>
+                            <th>
+                                Options {{#TODO use info directly from model}}
+                            </th>
 
-						<td style="border-top: none">
-							{{if auction_request_info['auction_completed']:}}
-								<p class="text-danger"><strong>Ended</strong></p>
-							{{elif auction_request_info['bidding_ended']:}}
-								<p class="text-warning"><strong>Awaiting winner</strong></p>
-							{{else:}}
-								<p class="text-success"><strong>Active</strong></p>
-							{{pass}}
-						</td>
-					</tr>
-					
-					<tr>
-						<th>
-							Winner
-						</th>
-						<td>
-							<p>
-								{{if auction_request_info['a_winning_offer_and_dealer']:}}
-									{{='%s %s'%(auction_request_info['a_winning_offer_and_dealer'].auth_user.first_name.capitalize(), auction_request_info['a_winning_offer_and_dealer'].auth_user.last_name.capitalize()[:1]+'.') }} from {{=auction_request_info['a_winning_offer_and_dealer'].dealership_info.dealership_name.capitalize()}}
-								{{else:}}
-									None
-								{{pass}}
-							</p>
-						</td>
-					</tr>
-					
-					<tr>
-						<th>
-							Dealers bidding
-						</th>
+                            <td>
+                                {{auction_request_options_dict = OrderedDict(sorted(map(lambda each: [each[0], dict(name=each[1], msrp=each[2], description=each[3])],zip(auction_request_info['auction_request'].options, auction_request_info['auction_request'].option_names, auction_request_info['auction_request'].option_msrps, auction_request_info['auction_request'].option_descriptions ) ), key=lambda each: each[1]['name'] ) ) }}
+                                {{option_keys = auction_request_options_dict.keys()}}
+                                {{if len(option_keys)%2:}}{{option_keys.append(None)}}{{pass}} {{#must be even or one option will be excluded}}
+                                {{two_cols = zip(option_keys[0::2], option_keys[1::2])}} {{#iterate every two items in a list http://goo.gl/kpTBq8}}
+                                <div class="row" style="max-height:250px; overflow-y:auto;" >
+                                    {{for each_pair in two_cols:}}
+                                        <div class="col-xs-12 col-sm-6">
+                                            <p title="{{=auction_request_options_dict[each_pair[0]]['description'].replace('None', 'No description')}}">
+                                                {{=BULLET}}{{=auction_request_options_dict[each_pair[0]]['name']}}
+                                            </p>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-6">
+                                            {{if auction_request_options_dict.get(each_pair[1]):}}
+                                                <p title="{{=auction_request_options_dict[each_pair[1]]['description'].replace('None', 'No description')}}">
+                                                    {{=BULLET}}{{=auction_request_options_dict[each_pair[1]]['name']}}
+                                                </p>
+                                            {{pass}}<!--{{#last item may be missing, so use get}}-->
+                                        </div>
+                                    {{pass}}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xs-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <strong>Auction Summary</strong>
+                </div>
+                <div class="panel-body">
+                    <table class="table">
 
-						<td>
-							<p>{{=auction_request_info['number_of_dealers']}}</p>
-						</td>
-					</tr>
+                    <tr>
+                        <th style="border-top: none;">
+                            Auction ID
+                        </th>
+                        <td style="border-top: none;">
+                            <p>{{=auction_request_info['id']}}</p>
+                        </td>
+                    </tr>
 
-					<tr>
-						<th>
-							Total bids
-						</th>
+                    <tr>
+                        <th>
+                            Auction status
+                        </th>
 
-						<td>
-							<p>{{=auction_request_info['number_of_bids']}}</p>
-						</td>
-					</tr>
+                        <td>
+                            {{if auction_request_info['auction_completed']:}}
+                                <p class="text-danger"><strong>Ended</strong></p>
+                            {{elif auction_request_info['bidding_ended']:}}
+                                <p class="text-warning"><strong>Awaiting winner</strong></p>
+                            {{else:}}
+                                <p class="text-success"><strong>Active</strong></p>
+                            {{pass}}
+                        </td>
+                    </tr>
 
-					<tr>
-						<th>
-							Prices
-						</th>
+                    <tr>
+                        <th>
+                            Winner
+                        </th>
+                        <td>
+                            <p>
+                                {{if auction_request_info['a_winning_offer_and_dealer']:}}
+                                    {{='%s %s'%(auction_request_info['a_winning_offer_and_dealer'].auth_user.first_name.capitalize(), auction_request_info['a_winning_offer_and_dealer'].auth_user.last_name.capitalize()[:1]+'.') }} from {{=auction_request_info['a_winning_offer_and_dealer'].dealership_info.dealership_name.capitalize()}}
+                                {{else:}}
+                                    No winner yet
+                                {{pass}}
+                            </p>
+                        </td>
+                    </tr>
 
-						<td>
-							<div>
-								<p><strong style="width: 65px; display:inline-block">MSRP:</strong> ${{=auction_request_info['auction_request'].estimation()}}</p>
-							</div>							
-							<div>
-								<p><strong style="width: 65px; display:inline-block">Lowest:</strong> {{=auction_request_info['lowest_price']}}</p>
-							</div>
-							<div>
-								<p><strong style="width: 65px; display:inline-block">Favorite:</strong> {{=auction_request_info['favorite_price']}}</p>
-							</div>
-						</td>
-					</tr>
+                    <tr>
+                        <th>
+                            Dealers bidding <br/> Total bids
+                        </th>
 
-					<tr>
-						<th>
-							{{if a_winning_offer:}}Ending{{elif not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offers end in{{pass}}
-						</th>
+                        <td>
+                            <p>{{=auction_request_info['number_of_dealers']}} <br/> {{=auction_request_info['number_of_bids']}}</p>
+                        </td>
+                    </tr>
 
-						<td>
-							{{if not a_winning_offer:}}
-								{{clock = auction_request_info['ends_in_seconds'] if not auction_request_info['bidding_ended'] else auction_request_info['auction_ended_offer_expires']}}
-							{{else:}}
-								{{clock=0}}
-							{{pass}}
-							<div id="clock" {{if clock<=86400/2:}}{{#style="color:red"}}class="text-danger"{{pass}}></div>
-							<script src="{{=URL('static','js/jquery.countdown.js')}}"></script>
-							<script type="text/javascript">
-								$('#clock').countdown({
-									'date': new Date({{=(int(time.time()) + abs(clock))*1000}}), {{#add seconds remaining to epoch time, and times by thousand to get milliseconds which javascript Date object needs http://goo.gl/OGWwz}}
-									'render': function(data) {
-										var el = $(this.el);
-										el.empty() {{#empty element and reappend the data below. without empty it would duplicate itself every second}}
-										$(el).append(this.leadingZeros(data.days, 2) + " days : ");
-										$(el).append(this.leadingZeros(data.hours, 2) + " hours : ");
-										$(el).append(this.leadingZeros(data.min, 2) + " min : ");
-										$(el).append(this.leadingZeros(data.sec, 2) + " sec ");
-									},
-									'onEnd': function(){
-										{{if clock:}} {{#prevent infinite loop when time left is already zero from controller}}
-											location.reload(); {{#http://goo.gl/Um9jh}}
-										{{pass}}
-									},
-								});
-							</script><!--{{#http://goo.gl/VPtnxU simplest countdown timer... check source code to understand render function}}-->
-						</td>
-					</tr>
-					
-					<tr>
-						<th>
-							<div style="margin-top:9px;">Sort offers by</div>
-						</th>
-						
-						<td>
-							<div class="btn-group">
-								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-									{{sortby = request.vars['sortby']}}
-									{{if sortby:}}
-										{{sort_words = sortby.split('-')}}
-										{{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
-									{{else:}}
-										Select<i class="fa fa-caret-down fa-fw"></i>
-									{{pass}}
-								</button>
-								<ul class="dropdown-menu" role="menu">
-									{{for each in sortlist:}}
-										{{each_sort_words = each.split('-')}}
-										<li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each_sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=each_sort_words[-1]}} fa-fw"></i></a></li>
-									{{pass}}
-								</ul>
-							</div>
-						</td>
-					<tr>
-				{{if bid_form:}}
-					{{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
-					{{bid_form.element("input", _name = "bid")["_placeholder"] = "$$$" if not auction_request_info['is_lease'] else "$ (per month)" }}
-					
-					{{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
-					{{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}
-					
-					{{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-primary pull-left" + (" btn-danger" if form_is_final_bid else "")  }}
-					{{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if form_is_final_bid else "Place Bid!") }}
-					{{=bid_form.custom.begin}}
-					<tr>
-						<th>
-							<div class="btn-group">
-								{{=bid_form.custom.submit}}
-								<button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
-									<span class="caret"></span>
-									<span class="sr-only">Toggle Dropdown</span>
-								</button>
-								<ul class="dropdown-menu" role="menu">
-									<li><a id = "final_bid" href="{{if not form_is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}">{{if form_is_final_bid:}}<i class="fa fa-fw fa-times-circle-o"></i> Cancel{{else:}}<i class="fa fa-fw fa-bell-o"></i> Make a{{pass}} final offer</a></li>
-								</ul>
-							</div>
-							
-							{{if form_is_final_bid:}} {{#also check not winning and not expired etc.}}
-								<div id="final_bid_hours_header" style="padding-top:10px;"> {{#if there is an error with the subform, don't auto hide the subform}}
-									<i class="fa fa-fw fa-bell"></i>End my offer in 
-								</div>
-							{{pass}}
-						</th>
-						<td>
-							{{=bid_form.custom.widget.bid}}
-							{{if bid_form.errors['bid']:}}
-								<div class="alert alert-warning">{{=bid_form.errors['bid']}}</div>
-							{{pass}}
-							
-							{{if form_is_final_bid:}}
-								<div id="final_bid_hours_form">
-									{{=bid_form.custom.widget.end_sooner_in_hours}}
-									{{if bid_form.errors['end_sooner_in_hours']:}}
-										<div class="alert alert-warning">{{=bid_form.errors['end_sooner_in_hours']}}</div>
-									{{pass}}
-								</div>
-							{{pass}}
-						</td>
-						
-					</tr>
-					{{=bid_form.custom.end}}
-				{{pass}}
-				</table>
+                    <tr>
+                        <th>
+                            Prices
+                        </th>
 
+                        <td>
+                            <div>
+                                <p><strong style="width: 65px; display:inline-block">MSRP:</strong> ${{=auction_request_info['auction_request'].estimation()}}</p>
+                            </div>
+                            <div>
+                                <p><strong style="width: 65px; display:inline-block">Lowest:</strong> {{=auction_request_info['lowest_price']}}</p>
+                            </div>
+                            <div>
+                                <p><strong style="width: 65px; display:inline-block">Favorite:</strong> {{=auction_request_info['favorite_price']}}</p>
+                            </div>
+                        </td>
+                    </tr>
 
-			</div>
-		</div>
-	</div>
-</div>
+                    <tr>
+                        <th>
+                            {{if a_winning_offer:}}Ending{{elif not auction_request_info['bidding_ended']:}}Bidding ends in{{else:}}Offers end in{{pass}}
+                        </th>
+
+                        <td>
+                            {{if not a_winning_offer:}}
+                                {{clock = auction_request_info['ends_in_seconds'] if not auction_request_info['bidding_ended'] else auction_request_info['auction_ended_offer_expires']}}
+                            {{else:}}
+                                {{clock=0}}
+                            {{pass}}
+                            <div id="clock" {{if clock<=86400/2:}}{{#style="color:red"}}class="text-danger"{{pass}}></div>
+                            <script src="{{=URL('static','js/jquery.countdown.js')}}"></script>
+                            <script type="text/javascript">
+                                $('#clock').countdown({
+                                    'date': new Date({{=(int(time.time()) + abs(clock))*1000}}), {{#add seconds remaining to epoch time, and times by thousand to get milliseconds which javascript Date object needs http://goo.gl/OGWwz}}
+                                    'render': function(data) {
+                                        var el = $(this.el);
+                                        el.empty() {{#empty element and reappend the data below. without empty it would duplicate itself every second}}
+                                        $(el).append(this.leadingZeros(data.days, 2) + " days : ");
+                                        $(el).append(this.leadingZeros(data.hours, 2) + " hours : ");
+                                        $(el).append(this.leadingZeros(data.min, 2) + " min : ");
+                                        $(el).append(this.leadingZeros(data.sec, 2) + " sec ");
+                                    },
+                                    'onEnd': function(){
+                                        {{if clock:}} {{#prevent infinite loop when time left is already zero from controller}}
+                                            location.reload(); {{#http://goo.gl/Um9jh}}
+                                        {{pass}}
+                                    },
+                                });
+                            </script><!--{{#http://goo.gl/VPtnxU simplest countdown timer... check source code to understand render function}}-->
+                        </td>
+                    </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
 {{#info modal}}
 	<div class="modal fade" id="info_modal">
@@ -422,283 +369,390 @@
 	</div>
 
 {{if not auction_request_offers_info:}}
-	<h3>Offers will appear here, please come back later.</h3><h4>Click <a href="{{=URL(args=request.args, vars=request.vars)}}">here</a> to refresh.</a></h4>
+    <div class="row">
+        <div class="col-sm-12">
+            <h4>Offers will appear here, please come back later.</h4>
+            <h4>Click <a href="{{=URL(args=request.args, vars=request.vars)}}">here</a> to refresh.</a></h4>
+        </div>
+    </div>
+{{else:}}
+    <section class="inner-section color-bg  pad-top-eighth pad-bottom-eighth" style="overflow: hidden;">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    {{if is_dealer:}}
+                    <h4 class="main-heading white text-center">My Offer in Response to Buyer Request</h4>
+                    {{else:}}
+                    <h4 class="main-heading white text-center">Offers Received from Dealers</h4>
+                    {{pass}}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row" style="margin-top: 20px; margin-bottom: 20px;">
+        <div class="col-sm-12">
+            {{if not is_dealer:}}
+            <div class="pull-right">
+                Sort offers by
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        {{sortby = request.vars['sortby']}}
+                        {{if sortby:}}
+                        {{sort_words = sortby.split('-')}}
+                        {{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
+                        {{else:}}
+                        Select <i class="fa fa-caret-down fa-fw"></i>
+                        {{pass}}
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        {{for each in sortlist:}}
+                        {{each_sort_words = each.split('-')}}
+                        <li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each_sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=each_sort_words[-1]}} fa-fw"></i></a></li>
+                        {{pass}}
+                    </ul>
+                </div>
+            </div>
+            {{pass}}
+        </div>
+    </div>
 {{pass}}
+
 {{for counter, each_offer in enumerate(auction_request_offers_info):}}
+<div class="row" style="margin-top: 10px;">
+    <div class="col-sm-12">
 	{{if not (auction_is_completed or auction_request_expired):}}
 		<div class="panel {{if each_offer['each_is_my_offer'] and not each_offer['each_is_favorite']:}}panel-warning{{elif not each_offer['each_is_my_offer'] and each_offer['each_is_favorite']:}}{{if is_owner:}}panel-success{{else:}}panel-danger{{pass}}{{elif each_offer['each_is_my_offer'] and each_offer['each_is_favorite']:}}panel-success{{else:}}panel-default{{pass}}">
 	{{else:}}
 		<div class="panel {{if each_offer['each_is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	{{pass}}
-		<div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
-			<strong style="font-size:large;">{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-fw fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-fw fa-clock-o"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
+            <div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
+                <strong style="font-size:large;">{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-fw fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-fw fa-clock-o"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
 
-			<span class="pull-right">
-				{{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
-				{{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button></a>
-				{{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>{{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>{{pass}}</span>{{pass}}
-				{{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['each__has_message_buyer']:}}blink{{pass}}"></i></button>{{pass}}
-				<button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-fw fa-plus"></i></button>
-			</span>
+                <span class="pull-right">
+                    {{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
+                    {{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button></a>
+                    {{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>{{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>{{pass}}</span>{{pass}}
+                    {{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['each__has_message_buyer']:}}blink{{pass}}"></i></button>{{pass}}
+                    <button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-fw fa-plus"></i></button>
+                </span>
 
-			{{"""}}<span class="text-center text-sm text-light text-uppercase margin-right-10"> Bid ID: {{=each_offer['id']}} | Dealer ID: 00</span>{{"""}}
-		</div>
-		<div class="panel-body">
-			<div class="col-sm-4 hidden-xs">
-				<div id="images_{{=each_offer['id']}}" class="carousel slide" data-ride="carousel">
+                {{"""}}<span class="text-center text-sm text-light text-uppercase margin-right-10"> Bid ID: {{=each_offer['id']}} | Dealer ID: 00</span>{{"""}}
+            </div>
+            <div class="panel-body">
 
-				  	<!-- IMAGE SLIDER -->
-				  	<div class="carousel-inner">
-						{{list_of_image_types = ['exterior', 'interior', 'front', 'rear', 'tire', 'dashboard', 'passenger', 'trunk', 'underhood', 'roof', 'other']}}
-						{{has_images = had_active =False}}
-				    	{{for n, each_image_type in enumerate(list_of_image_types):}}
-							{{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
-							{{if small_and_large_file_names:}} {{#did dealer submit images?}}
-								<div class="item {{if not had_active:}}active{{pass}}"> {{#need one active label or image won't show!}}
-									{{had_active=True}}
-									{{#image_s = each_offer['exterior_images'][0]}}
-									{{image_s = small_and_large_file_names[0]}}
-									{{image_l = small_and_large_file_names[1]}}
-									{{has_images=True}}
-									<a href="#{{=each_image_type}}_{{=each_offer['id']}}" data-toggle="modal" data-target="#{{=each_image_type}}_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
-								</div>							
-							{{pass}}
-						{{pass}}
-						{{if not has_images:}}
-							<div class="item active"><img src="http://placehold.it/500x400&text=No image available"></div>
-						{{pass}}
-				  	</div>
-					{{if has_images:}}
-						<!-- Controls -->
-						<a class="left carousel-control" href="#images_{{=each_offer['id']}}" data-slide="prev">
-							<span class="glyphicon glyphicon-chevron-left"></span>
-						</a>
-						<a class="right carousel-control" href="#images_{{=each_offer['id']}}" data-slide="next">
-							<span class="glyphicon glyphicon-chevron-right"></span>
-						</a>
-					{{pass}}
-				</div>			
-			</div>
-			
-			<div class="col-xs-12 col-sm-4">
-				<div class="row">
-					<table class="table table-hover text-sm">
-						<tr>
-							<th style="border-top: none">
-								Retails for
-							</th>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <table style="margin: 10px auto 20px auto;">
+                                {{if bid_form:}}
+                                {{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
+                                {{bid_form.element("input", _name = "bid")["_placeholder"] = "$$$" if not auction_request_info['is_lease'] else "$ (per month)" }}
 
-							<td style="border-top: none">
-								{{=each_offer['estimation']}}
-							</td>
-						</tr>
-					{{if not auction_request_info['is_lease']:}}
-						<tr>
-							<th>
-								Discount
-							</th>
+                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
+                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}
 
-							<td>
-								{{=each_offer['estimation_discount_percent']}} off <i class="pull-right fa fa-fw fa-info-circle" title="{{if is_owner:}}You'll{{else:}}Buyer will{{pass}} save an estimated {{=each_offer['estimation_discount_dollars']}}"></i>
-							</td>
-						</tr>
-					{{pass}}
-						<tr>
-							<th>
-								Distance
-							</th>
+                                {{bid_form.element("input", _type = "submit")["_class"] = " btn  btn-primary pull-left" + (" btn-danger" if form_is_final_bid else "")  }}
+                                {{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if form_is_final_bid else "Place Bid!") }}
+                                {{=bid_form.custom.begin}}
+                                <tr>
+                                    <th>
+                                        <div class="btn-group">
+                                            {{=bid_form.custom.submit}}
+                                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+                                                <span class="caret"></span>
+                                                <span class="sr-only">Toggle Dropdown</span>
+                                            </button>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li><a id = "final_bid" href="{{if not form_is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}">{{if form_is_final_bid:}}<i class="fa fa-fw fa-times-circle-o"></i> Cancel{{else:}}<i class="fa fa-fw fa-bell-o"></i> Make a{{pass}} final offer</a></li>
+                                            </ul>
+                                        </div>
 
-							<td>
-								{{offer_distance=each_offer['offer_distance_to_auction_request']}}{{if offer_distance == "0.00":}}In {{if is_owner:}}your{{else:}}buyer's{{pass}} area!{{else:}}{{=offer_distance}} miles away{{pass}}
-							</td>
-						</tr>
+                                        {{if form_is_final_bid:}} {{#also check not winning and not expired etc.}}
+                                        <div id="final_bid_hours_header" style="padding-top:10px;"> {{#if there is an error with the subform, don't auto hide the subform}}
+                                            <i class="fa fa-fw fa-bell"></i>End my offer in
+                                        </div>
+                                        {{pass}}
+                                    </th>
+                                    <td>
+                                        {{=bid_form.custom.widget.bid}}
+                                        {{if bid_form.errors['bid']:}}
+                                        <div class="alert alert-warning">{{=bid_form.errors['bid']}}</div>
+                                        {{pass}}
 
-						<tr>
-							<th>
-								Color
-							</th>
+                                        {{if form_is_final_bid:}}
+                                        <div id="final_bid_hours_form">
+                                            {{=bid_form.custom.widget.end_sooner_in_hours}}
+                                            {{if bid_form.errors['end_sooner_in_hours']:}}
+                                            <div class="alert alert-warning">{{=bid_form.errors['end_sooner_in_hours']}}</div>
+                                            {{pass}}
+                                        </div>
+                                        {{pass}}
+                                    </td>
 
-							<td>
-								Exterior: {{=COLOR_SWATCH(each_offer['exterior_color']['hex'],each_offer['exterior_color']['name'])}} <span class="text-sm text-light pull-right">Interior: {{=COLOR_SWATCH(each_offer['interior_color']['hex'],each_offer['interior_color']['name'])}}</span>
-							</td>
-						</tr>
+                                </tr>
+                                {{=bid_form.custom.end}}
+                                {{pass}}
+                            </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-4 hidden-xs">
+                        <div id="images_{{=each_offer['id']}}" class="carousel slide" data-ride="carousel">
 
-						<tr>
-							<th>
-								Bids
-							</th>
+                            <!-- IMAGE SLIDER -->
+                            <div class="carousel-inner">
+                                {{list_of_image_types = ['exterior', 'interior', 'front', 'rear', 'tire', 'dashboard', 'passenger', 'trunk', 'underhood', 'roof', 'other']}}
+                                {{has_images = had_active =False}}
+                                {{for n, each_image_type in enumerate(list_of_image_types):}}
+                                    {{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
+                                    {{if small_and_large_file_names:}} {{#did dealer submit images?}}
+                                        <div class="item {{if not had_active:}}active{{pass}}"> {{#need one active label or image won't show!}}
+                                            {{had_active=True}}
+                                            {{#image_s = each_offer['exterior_images'][0]}}
+                                            {{image_s = small_and_large_file_names[0]}}
+                                            {{image_l = small_and_large_file_names[1]}}
+                                            {{has_images=True}}
+                                            <a href="#{{=each_image_type}}_{{=each_offer['id']}}" data-toggle="modal" data-target="#{{=each_image_type}}_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
+                                        </div>
+                                    {{pass}}
+                                {{pass}}
+                                {{if not has_images:}}
+                                    <div class="item active"><img src="http://placehold.it/500x400&text=No image available"></div>
+                                {{pass}}
+                            </div>
+                            {{if has_images:}}
+                                <!-- Controls -->
+                                <a class="left carousel-control" href="#images_{{=each_offer['id']}}" data-slide="prev">
+                                    <span class="glyphicon glyphicon-chevron-left"></span>
+                                </a>
+                                <a class="right carousel-control" href="#images_{{=each_offer['id']}}" data-slide="next">
+                                    <span class="glyphicon glyphicon-chevron-right"></span>
+                                </a>
+                            {{pass}}
+                        </div>
+                    </div>
 
-							<td>
-								{{=each_offer['number_of_bids']}} {{if each_offer['last_bid_ago']:}}<span class="text-sm text-light pull-right">Latest {{=each_offer['last_bid_ago']}} ago</span>{{pass}}
-							</td>
-						</tr>
-						
-						<tr>
-							<th>
-								Info
-							</th>
+                    <div class="col-xs-12 col-sm-4">
+                        <div class="row">
+                            <table class="table table-hover text-sm">
+                                <tr>
+                                    <th style="border-top: none">
+                                        Retails for
+                                    </th>
 
-							<td>
-								Dealer ID: {{=each_offer['dealer_id']}} <span class="text-sm text-light pull-right">Offer ID: {{=each_offer['id']}}</span>
-							</td>
-						</tr>
-					</table>
-				</div>
-			</div>
+                                    <td style="border-top: none">
+                                        {{=each_offer['estimation']}}
+                                    </td>
+                                </tr>
+                            {{if not auction_request_info['is_lease']:}}
+                                <tr>
+                                    <th>
+                                        Discount
+                                    </th>
 
-			<div class="col-xs-12 col-sm-4">
-				{{final_bid_hours_left=(int(each_offer['final_bid_ends_in_hours'])+1) if each_offer['final_bid_ends_in_hours'] else 'N/A'}}
-				{{final_bid_hours_left='%s hour%s'%(final_bid_hours_left, '' if final_bid_hours_left==1 else 's')}}
-				{{if each_offer['show_winner_btn']:}}
-					<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-						<button class="btn btn-danger center-block" title="Choose this offer (auction will conclude)." onClick="return confirm('Are you sure you want to pick this as the winner (auction will conclude)?')">
-							<i class="fa fa-fw fa-trophy"></i> Buy it now!
-						</button>
-					</a>
-				{{elif is_owner and each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
-					<a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-						<button class="btn btn-danger  center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer that is valid for less than {{=final_bid_hours_left}}. Are you sure you want to buy this now (this will conclude the auction)?')">
-							<i class="fa fa-fw fa-bell"></i> Final offer!
-						</button>
-					</a>
-				{{elif each_offer['each_is_winning_offer'] and is_owner:}}
-						<a href="{{=auction_request_info['view_certificate_url']}}">
-							<button class="btn btn-danger center-block" title="This dealer won the auction! Click here to connect with the dealer and print your certificate.">
-								<i class="blink fa fa-fw fa-trophy"></i> Winner!
-							</button>
-						</a>
-				{{elif each_offer['each_is_winning_offer']:}}
-					<div title="This dealer won the auction!">
-						<button class="btn btn-danger disabled center-block">
-							<i class="blink fa fa-fw fa-trophy"></i> Winner!
-						</button>
-					</div>
-				{{elif each_offer['final_bid_ended']:}}
-					<div title="This dealer's final offer expired.">
-						<button class="btn btn-warning disabled center-block">
-							<i class="fa fa-fw fa-ban"></i> Expired!
-						</button>
-					</div>
-				{{elif each_offer['each_bid_is_final'] and is_dealer:}}
-					<div title="Expires in less than {{=final_bid_hours_left}}!">
-						<button class="btn btn-danger disabled center-block">
-							<i class="fa fa-fw fa-bell"></i> Final offer!
-						</button>
-					</div>
-				{{else:}}
-					{{if a_winning_offer or auction_ended_offer_expired:}}
-						<div title="This dealer did not win the auction.">
-							<button class="btn btn-warning disabled center-block">
-								<i class="fa fa-fw fa-ban"/></i> Refused!
-							</button>
-						</div>
-					{{elif is_owner:}}
-						<div title="You will be able to buy this vehicle when the countdown ends.">
-							<button class="btn btn-default disabled center-block">
-								<i class="fa fa-fw fa-ban"></i> Buy it now!
-							</button>
-						</div>
-					{{else:}}
-						<div title="We'll let you know when something happens."> <!--{{#keep disabled in divs so title/tooltip works}}-->
-							<button class="btn btn-default disabled center-block">
-								<i class="fa fa-fw fa-ban"></i> No action
-							</button>
-						</div>
-					{{pass}}
-				{{pass}}{{#http://goo.gl/eLX2w6}} {{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
-				<br><hr><br>
-				<div class="text-bold">Description:</div>
-				<p>{{truncate=345}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></p>
-				<script>
-					$("#untruncate{{=counter}}").hide();
-				</script>
-			</div>
+                                    <td>
+                                        {{=each_offer['estimation_discount_percent']}} off <i class="pull-right fa fa-fw fa-info-circle" title="{{if is_owner:}}You'll{{else:}}Buyer will{{pass}} save an estimated {{=each_offer['estimation_discount_dollars']}}"></i>
+                                    </td>
+                                </tr>
+                            {{pass}}
+                                <tr>
+                                    <th>
+                                        Distance
+                                    </th>
 
-			<div class="col-xs-12 collapse text-sm" id="expand_{{=each_offer['id']}}">
-				<br><hr><br><br>
-				<!-- Nav tabs -->
-				<ul class="nav nav-tabs nav-justified ">
-					<li class="active"><a href="#dd_{{=each_offer['id']}}" data-toggle="tab">Vehicle details</a></li>
-					<li><a href="#ques_{{=each_offer['id']}}" data-toggle="tab">Dealer details</a></li>
-				</ul>
-				<br><br>
-				<!-- Tab panes -->
-				<div class="tab-content">
-					<div class="tab-pane active" id="dd_{{=each_offer['id']}}">
-						{{#logger.debug(each_offer['options_dict'])}}
-						{{for i, each_category in enumerate(each_offer['options_dict']):}}
-							{{is_new_row = i==0 or (i+1)%3 == 0}}
-							{{if is_new_row:}}
-								<div class="row-fluid margin-top-10">
-							{{pass}}
-									<div class="col-sm-4 col-xs-12">
-										<div class="row-fluid">
-											<div class="col-xs-2 text-bold">
-												<strong><u>{{=each_category}}:</u></strong>
-											</div>
-											<div class="col-xs-10">
-												<br>
-												{{for each_option in each_offer['options_dict'][each_category]:}}
-													{{each_option_description=each_offer['options_dict'][each_category][each_option]['description']}}
-													<p><i class="fa fa-fw fa-shield fa-rotate-270"></i>{{if each_option_description != "None":}}<i class="fa fa-fw fa-info-circle" title="{{=each_option_description}}"></i>{{pass}}{{=each_offer['options_dict'][each_category][each_option]['name']}}</p>
-												{{pass}}
-												<!--{{"""}}{{if not each_offer['options_dict'][each_category]:}}
-													<li><i>Not specified</i>
-												{{pass}}{{"""}}-->
-											</div>
-										</div>
-									</div>
-							{{if is_new_row:}}
-								</div>
-							{{pass}}
-						{{pass}}
-					</div>
-					
-					<div class="tab-pane" id="ques_{{=each_offer['id']}}">
-						<div class="row-fluid margin-top-10">
-							<div class="col-sm-6 col-xs-12">
-								<div class="row-fluid">
-									<div class="col-xs-5 text-bold">
-										<strong><u>Dealership fees:</u></strong>
-									</div>
-									<div class="col-xs-7">
-										<br>
-										<p>
-											${{=int(each_offer['additional_costs'])}} <i>(included in bid)</i> —
-											{{if not each_offer['additional_costs_details']:}}
-												<i>Not specified</i>
-											{{else:}}
-												{{=each_offer['additional_costs_details']}}
-											{{pass}}
-										</p>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-6 col-xs-12">
-								<div class="row-fluid">
-									<div class="col-xs-5 text-bold">
-										<strong><u>About dealer:</u></strong>
-									</div>
-									<div class="col-xs-7">
-										<br>
-										<p>
-											{{if not each_offer['about_us']:}}
-												<i>Not specified</i>
-											{{else:}}
-												{{=each_offer['about_us']}}
-											{{pass}}
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					
-				</div>
-			</div>
-		</div>
-	</div>
-	<script>
+                                    <td>
+                                        {{offer_distance=each_offer['offer_distance_to_auction_request']}}{{if offer_distance == "0.00":}}In {{if is_owner:}}your{{else:}}buyer's{{pass}} area!{{else:}}{{=offer_distance}} miles away{{pass}}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th>
+                                        Color
+                                    </th>
+
+                                    <td>
+                                        Exterior: {{=COLOR_SWATCH(each_offer['exterior_color']['hex'],each_offer['exterior_color']['name'])}} <span class="text-sm text-light pull-right">Interior: {{=COLOR_SWATCH(each_offer['interior_color']['hex'],each_offer['interior_color']['name'])}}</span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th>
+                                        Bids
+                                    </th>
+
+                                    <td>
+                                        {{=each_offer['number_of_bids']}} {{if each_offer['last_bid_ago']:}}<span class="text-sm text-light pull-right">Latest {{=each_offer['last_bid_ago']}} ago</span>{{pass}}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th>
+                                        Info
+                                    </th>
+
+                                    <td>
+                                        Dealer ID: {{=each_offer['dealer_id']}} <span class="text-sm text-light pull-right">Offer ID: {{=each_offer['id']}}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-xs-12 col-sm-4">
+                        {{final_bid_hours_left=(int(each_offer['final_bid_ends_in_hours'])+1) if each_offer['final_bid_ends_in_hours'] else 'N/A'}}
+                        {{final_bid_hours_left='%s hour%s'%(final_bid_hours_left, '' if final_bid_hours_left==1 else 's')}}
+                        {{if each_offer['show_winner_btn']:}}
+                            <a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
+                                <button class="btn btn-danger center-block" title="Choose this offer (auction will conclude)." onClick="return confirm('Are you sure you want to pick this as the winner (auction will conclude)?')">
+                                    <i class="fa fa-fw fa-trophy"></i> Buy it now!
+                                </button>
+                            </a>
+                        {{elif is_owner and each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
+                            <a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
+                                <button class="btn btn-danger  center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer that is valid for less than {{=final_bid_hours_left}}. Are you sure you want to buy this now (this will conclude the auction)?')">
+                                    <i class="fa fa-fw fa-bell"></i> Final offer!
+                                </button>
+                            </a>
+                        {{elif each_offer['each_is_winning_offer'] and is_owner:}}
+                                <a href="{{=auction_request_info['view_certificate_url']}}">
+                                    <button class="btn btn-danger center-block" title="This dealer won the auction! Click here to connect with the dealer and print your certificate.">
+                                        <i class="blink fa fa-fw fa-trophy"></i> Winner!
+                                    </button>
+                                </a>
+                        {{elif each_offer['each_is_winning_offer']:}}
+                            <div title="This dealer won the auction!">
+                                <button class="btn btn-danger disabled center-block">
+                                    <i class="blink fa fa-fw fa-trophy"></i> Winner!
+                                </button>
+                            </div>
+                        {{elif each_offer['final_bid_ended']:}}
+                            <div title="This dealer's final offer expired.">
+                                <button class="btn btn-warning disabled center-block">
+                                    <i class="fa fa-fw fa-ban"></i> Expired!
+                                </button>
+                            </div>
+                        {{elif each_offer['each_bid_is_final'] and is_dealer:}}
+                            <div title="Expires in less than {{=final_bid_hours_left}}!">
+                                <button class="btn btn-danger disabled center-block">
+                                    <i class="fa fa-fw fa-bell"></i> Final offer!
+                                </button>
+                            </div>
+                        {{else:}}
+                            {{if a_winning_offer or auction_ended_offer_expired:}}
+                                <div title="This dealer did not win the auction.">
+                                    <button class="btn btn-warning disabled center-block">
+                                        <i class="fa fa-fw fa-ban"/></i> Refused!
+                                    </button>
+                                </div>
+                            {{elif is_owner:}}
+                                <div title="You will be able to buy this vehicle when the countdown ends.">
+                                    <button class="btn btn-default disabled center-block">
+                                        <i class="fa fa-fw fa-ban"></i> Buy it now!
+                                    </button>
+                                </div>
+                            {{else:}}
+                                <div title="We'll let you know when something happens."> <!--{{#keep disabled in divs so title/tooltip works}}-->
+                                    <button class="btn btn-default disabled center-block">
+                                        <i class="fa fa-fw fa-ban"></i> No action
+                                    </button>
+                                </div>
+                            {{pass}}
+                        {{pass}}{{#http://goo.gl/eLX2w6}} {{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
+                        <br><hr><br>
+                        <div class="text-bold">Description:</div>
+                        <p>{{truncate=345}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></p>
+                        <script>
+                            $("#untruncate{{=counter}}").hide();
+                        </script>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12 collapse text-sm" id="expand_{{=each_offer['id']}}">
+                    <br><hr><br><br>
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs nav-justified ">
+                        <li class="active"><a href="#dd_{{=each_offer['id']}}" data-toggle="tab">Vehicle details</a></li>
+                        <li><a href="#ques_{{=each_offer['id']}}" data-toggle="tab">Dealer details</a></li>
+                    </ul>
+                    <br><br>
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="dd_{{=each_offer['id']}}">
+                            {{#logger.debug(each_offer['options_dict'])}}
+                            {{for i, each_category in enumerate(each_offer['options_dict']):}}
+                                {{is_new_row = i==0 or (i+1)%3 == 0}}
+                                {{if is_new_row:}}
+                                    <div class="row-fluid margin-top-10">
+                                {{pass}}
+                                        <div class="col-sm-4 col-xs-12">
+                                            <div class="row-fluid">
+                                                <div class="col-xs-2 text-bold">
+                                                    <strong><u>{{=each_category}}:</u></strong>
+                                                </div>
+                                                <div class="col-xs-10">
+                                                    <br>
+                                                    {{for each_option in each_offer['options_dict'][each_category]:}}
+                                                        {{each_option_description=each_offer['options_dict'][each_category][each_option]['description']}}
+                                                        <p><i class="fa fa-fw fa-shield fa-rotate-270"></i>{{if each_option_description != "None":}}<i class="fa fa-fw fa-info-circle" title="{{=each_option_description}}"></i>{{pass}}{{=each_offer['options_dict'][each_category][each_option]['name']}}</p>
+                                                    {{pass}}
+                                                    <!--{{"""}}{{if not each_offer['options_dict'][each_category]:}}
+                                                        <li><i>Not specified</i>
+                                                    {{pass}}{{"""}}-->
+                                                </div>
+                                            </div>
+                                        </div>
+                                {{if is_new_row:}}
+                                    </div>
+                                {{pass}}
+                            {{pass}}
+                        </div>
+
+                        <div class="tab-pane" id="ques_{{=each_offer['id']}}">
+                            <div class="row-fluid margin-top-10">
+                                <div class="col-sm-6 col-xs-12">
+                                    <div class="row-fluid">
+                                        <div class="col-xs-5 text-bold">
+                                            <strong><u>Dealership fees:</u></strong>
+                                        </div>
+                                        <div class="col-xs-7">
+                                            <br>
+                                            <p>
+                                                ${{=int(each_offer['additional_costs'])}} <i>(included in bid)</i> —
+                                                {{if not each_offer['additional_costs_details']:}}
+                                                    <i>Not specified</i>
+                                                {{else:}}
+                                                    {{=each_offer['additional_costs_details']}}
+                                                {{pass}}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xs-12">
+                                    <div class="row-fluid">
+                                        <div class="col-xs-5 text-bold">
+                                            <strong><u>About dealer:</u></strong>
+                                        </div>
+                                        <div class="col-xs-7">
+                                            <br>
+                                            <p>
+                                                {{if not each_offer['about_us']:}}
+                                                    <i>Not specified</i>
+                                                {{else:}}
+                                                    {{=each_offer['about_us']}}
+                                                {{pass}}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+	    <script>
 		$("#expand_switch{{=counter}}").click(function(){
 			$("#dotdotdot{{=counter}}").toggle();
 			$("#untruncate{{=counter}}").toggle();
@@ -706,78 +760,83 @@
 			//$("#expand_offer_btn{{=counter}}
 		});
 	</script>
-	{{#####MODALS#####}}
-	{{if has_images:}} {{#cpu saver, since for loop can do the same}}
-		{{for each_image_type in list_of_image_types:}}
-			{{#image_s = each_offer['exterior_images'][0]}}
-			{{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
-			{{if small_and_large_file_names:}} {{#did dealer submit images?}}
-				{{image_l = small_and_large_file_names[1]}}
-				<div id="{{=each_image_type}}_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_type}}_image_l_{{=each_offer['id']}}" aria-hidden="true">
-				  <div class="modal-dialog modal-md">
-					<div class="modal-content">
-						<div class="modal-body">
-							<img src="{{=URL('static', 'thumbnails/%s'%image_l)}}" class="img-responsive">
-						</div>
-					</div>
-				  </div>
-				</div>
-			{{pass}}
-		{{pass}}
-	{{pass}}
-	{{######MESSAGE######}}
-	{{message_form = auction_request_info['auth_dealer_message_form'] or each_offer['each__message_form_buyer']}}
-	{{if (is_owner or each_offer['each_is_my_offer']):}} 
-	{{#print "is message form: %s"%bool(message_form)}}
-		<div id="message_form_{{=each_offer['id']}}" class="modal fade message_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-						<h4 class="modal-title">Messaging with {{if is_dealer:}}{{=auction_request_info['first_name'].capitalize()}}{{else:}}{{=each_offer['dealer_first_name'].capitalize()}}{{pass}}</h4>
-					</div>
-					<div class="modal-body">
-						<div class="buyer_dealer_messages" style="height:300px; overflow-y:scroll;">
-							{{if each_offer['offer_messages']:}}
-								{{for i, each_message in enumerate(each_offer['offer_messages']):}}
-									<br><br>
-									<p style="font-size:xx-large; line-height:1.25em">
-										<strong class="{{if each_message.is_auction_requester:}}text-info">Buyer{{else:}}text-success">Dealer{{pass}}:</strong> {{=each_message.message}}
-										<br>
-									</p>
-									<span class="text-sm text-light pull-right">{{=human(request.now-each_message.created_on, precision=2, past_tense='{}', future_tense='{}')}} ago</span>
-									{{if not i == len(each_offer['offer_messages'])-1:}}<br><hr><br>{{pass}}{{#hide the line below the last message}}
-								{{pass}}
-							{{else:}}
-								<h3>No messages :-(</h3>
-							{{pass}}
-						</div>
-					</div>
-				{{#print "is message form: %s"%bool(message_form)}}
-				{{if bool(message_form):}}
-					<br><hr><br>
-					{{message_form.element("textarea", _name = "message")["_class"] += " form-control" }}
-					{{message_form.element("textarea", _name = "message")["_style"] = " height:125px;" }}
-					{{message_form.element("textarea", _name = "message")["_placeholder"] = 'Type your message here, then press "Send message" below.' }}
-					{{message_form.element("input", _type = "submit")["_class"] = "btn btn-primary"}}
-					{{message_form.element("input", _type = "submit")["_value"] = "Send message" }}
-					{{=message_form.custom.begin}}
-						<div class="modal-body">
-							{{=message_form.custom.widget.message}}
-							<br>
-							<div class="text-danger pull-left">DO NOT share personal information through here! Messages are reviewed by administrators. Violating this rule may result in a ban!</div>
-							<br>
-						</div>
-						<div class="modal-footer">
-							<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-							{{=message_form.custom.submit}}
-						</div>
-					{{=message_form.custom.end}}
-				{{pass}}
-				</div><!-- /.modal-content -->
-			</div><!-- /.modal-dialog -->
-		</div><!-- /.modal -->
-	{{pass}}
+
+        {{#####MODALS#####}}
+        {{if has_images:}} {{#cpu saver, since for loop can do the same}}
+            {{for each_image_type in list_of_image_types:}}
+                {{#image_s = each_offer['exterior_images'][0]}}
+                {{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
+                {{if small_and_large_file_names:}} {{#did dealer submit images?}}
+                    {{image_l = small_and_large_file_names[1]}}
+                    <div id="{{=each_image_type}}_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_type}}_image_l_{{=each_offer['id']}}" aria-hidden="true">
+                      <div class="modal-dialog modal-md">
+                        <div class="modal-content">
+                            <div class="modal-body">
+                                <img src="{{=URL('static', 'thumbnails/%s'%image_l)}}" class="img-responsive">
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                {{pass}}
+            {{pass}}
+        {{pass}}
+
+
+        {{######MESSAGE######}}
+        {{message_form = auction_request_info['auth_dealer_message_form'] or each_offer['each__message_form_buyer']}}
+        {{if (is_owner or each_offer['each_is_my_offer']):}}
+        {{#print "is message form: %s"%bool(message_form)}}
+            <div id="message_form_{{=each_offer['id']}}" class="modal fade message_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">Messaging with {{if is_dealer:}}{{=auction_request_info['first_name'].capitalize()}}{{else:}}{{=each_offer['dealer_first_name'].capitalize()}}{{pass}}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="buyer_dealer_messages" style="height:300px; overflow-y:scroll;">
+                                {{if each_offer['offer_messages']:}}
+                                    {{for i, each_message in enumerate(each_offer['offer_messages']):}}
+                                        <br><br>
+                                        <p style="font-size:xx-large; line-height:1.25em">
+                                            <strong class="{{if each_message.is_auction_requester:}}text-info">Buyer{{else:}}text-success">Dealer{{pass}}:</strong> {{=each_message.message}}
+                                            <br>
+                                        </p>
+                                        <span class="text-sm text-light pull-right">{{=human(request.now-each_message.created_on, precision=2, past_tense='{}', future_tense='{}')}} ago</span>
+                                        {{if not i == len(each_offer['offer_messages'])-1:}}<br><hr><br>{{pass}}{{#hide the line below the last message}}
+                                    {{pass}}
+                                {{else:}}
+                                    <h3>No messages :-(</h3>
+                                {{pass}}
+                            </div>
+                        </div>
+                    {{#print "is message form: %s"%bool(message_form)}}
+                    {{if bool(message_form):}}
+                        <br><hr><br>
+                        {{message_form.element("textarea", _name = "message")["_class"] += " form-control" }}
+                        {{message_form.element("textarea", _name = "message")["_style"] = " height:125px;" }}
+                        {{message_form.element("textarea", _name = "message")["_placeholder"] = 'Type your message here, then press "Send message" below.' }}
+                        {{message_form.element("input", _type = "submit")["_class"] = "btn btn-primary"}}
+                        {{message_form.element("input", _type = "submit")["_value"] = "Send message" }}
+                        {{=message_form.custom.begin}}
+                            <div class="modal-body">
+                                {{=message_form.custom.widget.message}}
+                                <br>
+                                <div class="text-danger pull-left">DO NOT share personal information through here! Messages are reviewed by administrators. Violating this rule may result in a ban!</div>
+                                <br>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                {{=message_form.custom.submit}}
+                            </div>
+                        {{=message_form.custom.end}}
+                    {{pass}}
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+        {{pass}}
+    </div>
+</div>
 {{pass}}
 
 {{###HELP MODAL####}}
