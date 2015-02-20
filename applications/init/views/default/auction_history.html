@@ -4,29 +4,31 @@
     <div class="container">
         <div class="row">
             <div class="col-sm-12">
-                <div class="liner-wide text-center"><span class="white-bg"></span></div>
                 <h1 class="main-heading white text-center">My Auction History</h1>
-                <div class="liner-wide text-center"><span class="white-bg"></span></div>
             </div>
         </div>
     </div>
 </section>
 
 <div class="panel panel-default" style="margin-top:40px">
-    <table class="table ">
+    <table class="table table-hover">
 	<thead>
 		<tr bgcolor="#f2f2f2">
+            <th>Auction</th>
 			<th>Vehicle</th>
 			<th>Colors</th>
 			<th>Latest bid</th>
 			<th>Concludes in</th> <!--{{#<i class="fa fa-fw fa-info-circle" title="Includes 24 hour winner selection period."></i>}}-->
-			<th>View auction</th>
+			<th>Details</th>
 		</tr>
 	</thead>
 	<tbody>
 		{{for each_request in my_auctions:}}
-			<tr>
-				<td>
+			<tr onclick="window.location.href='{{=each_request['auction_url']}}'">
+                <td align="center">
+                    {{=each_request.id}}
+                </td>
+				<td width="260px">
 					<div>{{=each_request['year']}} {{=each_request['make_name']}} {{=each_request['model_name']}}</div>
 					<p class="text-sm text-light">{{=each_request['trim_name']}}</p>
 				</td>
@@ -60,12 +62,12 @@
 					</p>
 				</td>
 				<td>
-					<div style="width:125px;">{{if each_request['ends_in_human']:}}{{=each_request['ends_in_human']}}{{else:}}Auction ended{{pass}}</div>
+					<div style="width:125px;">{{if each_request['ends_in_human']:}}<strong>{{=each_request['ends_in_human']}}</strong> {{else:}}Auction ended{{pass}}</div>
 					{{if each_request['how_auction_ended']:}}<div class="text-sm text-light">{{=each_request['how_auction_ended']}}</div>{{pass}}
 					{{"""}}<div class="text-sm text-light">{{=each_request['offer_expires']}}</div>{{"""}}
 				</td>
-				<td> 
-					<a class="btn btn-default" href="{{=each_request['auction_url']}}">ID: {{=each_request.id}}<i class="fa fa-fw fa-arrow-right"></i></a> 
+				<td>
+					<a class="btn btn-trinity" href="{{=each_request['auction_url']}}" title="View details for Auction {{=each_request.id}}" ><i class="fa fa-fw fa-chevron-right"></i></a>
 				</td>
 			</tr>
 		{{pass}}
