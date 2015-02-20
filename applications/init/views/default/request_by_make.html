@@ -1,6 +1,12 @@
 {{extend 'page_layout_new.html'}}
 {{#=BEAUTIFY(response._vars)}}
 
+<style>
+    body {
+        background-color: #ffffff !important;
+    }
+</style>
+
 <div id="request_by_make">
 
     {{ form.element("select", _name = "trim")["_class"] += " form-control" }}

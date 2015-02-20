@@ -12,65 +12,65 @@
 
 <div class="panel panel-default" style="margin-top:40px">
     <table class="table table-hover">
-	<thead>
-		<tr bgcolor="#f2f2f2">
-            <th>Auction</th>
-			<th>Vehicle</th>
-			<th>Colors</th>
-			<th>Latest bid</th>
-			<th>Concludes in</th> <!--{{#<i class="fa fa-fw fa-info-circle" title="Includes 24 hour winner selection period."></i>}}-->
-			<th>Details</th>
-		</tr>
-	</thead>
-	<tbody>
-		{{for each_request in my_auctions:}}
-			<tr onclick="window.location.href='{{=each_request['auction_url']}}'">
-                <td align="center">
-                    {{=each_request.id}}
-                </td>
-				<td width="260px">
-					<div>{{=each_request['year']}} {{=each_request['make_name']}} {{=each_request['model_name']}}</div>
-					<p class="text-sm text-light">{{=each_request['trim_name']}}</p>
-				</td>
-				<td>
-					{{color_swatches = zip(each_request.color_hexes,each_request.color_names, each_request.color_categories)}}
-					<div>Interior:</div>
-					<div>
-						{{for each_swatch in color_swatches:}}
-							{{if each_swatch[2] == 'interior':}}
-								{{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
-							{{pass}}
-						{{pass}}
-					</div>					
-					<div>Exterior:</div>
-					<div>
-						{{for each_swatch in color_swatches:}}
-							{{if each_swatch[2] == 'exterior':}}
-								{{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
-							{{pass}}
-						{{pass}}
-					</div>
-				</td>
-				<td>
-					{{=each_request['last_bid_price']}}{{if each_request['has_unread_messages']:}} <i class="fa fa-fw fa-envelope" rel="tooltip" data-toggle="tooltip" data-placement="top" title="You have unread messages."></i>{{pass}}
-					<p  class="text-sm text-light">
-						{{if each_request['last_bid_time']:}}
-							{{=each_request['last_bid_time']}} ago
-						{{else:}}
-							Awaiting bids.
-						{{pass}}
-					</p>
-				</td>
-				<td>
-					<div style="width:125px;">{{if each_request['ends_in_human']:}}<strong>{{=each_request['ends_in_human']}}</strong> {{else:}}Auction ended{{pass}}</div>
-					{{if each_request['how_auction_ended']:}}<div class="text-sm text-light">{{=each_request['how_auction_ended']}}</div>{{pass}}
-					{{"""}}<div class="text-sm text-light">{{=each_request['offer_expires']}}</div>{{"""}}
-				</td>
-				<td>
-					<a class="btn btn-trinity" href="{{=each_request['auction_url']}}" title="View details for Auction {{=each_request.id}}" ><i class="fa fa-fw fa-chevron-right"></i></a>
-				</td>
-			</tr>
-		{{pass}}
-	</tbody>
-</table>
+        <thead>
+            <tr>
+                <th class="text-center">Auction</th>
+                <th>Vehicle</th>
+                <th>Colors</th>
+                <th>Latest bid</th>
+                <th>Concludes in</th> <!--{{#<i class="fa fa-fw fa-info-circle" title="Includes 24 hour winner selection period."></i>}}-->
+                <th class="text-center">View Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{for each_request in my_auctions:}}
+                <tr onclick="window.location.href='{{=each_request['auction_url']}}'">
+                    <td align="center">
+                        {{=each_request.id}}
+                    </td>
+                    <td width="260px">
+                        <div>{{=each_request['year']}} {{=each_request['make_name']}} {{=each_request['model_name']}}</div>
+                        <p class="text-sm text-light">{{=each_request['trim_name']}}</p>
+                    </td>
+                    <td>
+                        {{color_swatches = zip(each_request.color_hexes,each_request.color_names, each_request.color_categories)}}
+                        <div>Interior:</div>
+                        <div>
+                            {{for each_swatch in color_swatches:}}
+                                {{if each_swatch[2] == 'interior':}}
+                                    {{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
+                                {{pass}}
+                            {{pass}}
+                        </div>
+                        <div>Exterior:</div>
+                        <div>
+                            {{for each_swatch in color_swatches:}}
+                                {{if each_swatch[2] == 'exterior':}}
+                                    {{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
+                                {{pass}}
+                            {{pass}}
+                        </div>
+                    </td>
+                    <td>
+                        {{=each_request['last_bid_price']}}{{if each_request['has_unread_messages']:}} <i class="fa fa-fw fa-envelope" rel="tooltip" data-toggle="tooltip" data-placement="top" title="You have unread messages."></i>{{pass}}
+                        <p  class="text-sm text-light">
+                            {{if each_request['last_bid_time']:}}
+                                {{=each_request['last_bid_time']}} ago
+                            {{else:}}
+                                Awaiting bids.
+                            {{pass}}
+                        </p>
+                    </td>
+                    <td>
+                        <div style="width:125px;">{{if each_request['ends_in_human']:}}<strong>{{=each_request['ends_in_human']}}</strong> {{else:}}Auction ended{{pass}}</div>
+                        {{if each_request['how_auction_ended']:}}<div class="text-sm text-light">{{=each_request['how_auction_ended']}}</div>{{pass}}
+                        {{"""}}<div class="text-sm text-light">{{=each_request['offer_expires']}}</div>{{"""}}
+                    </td>
+                    <td class="text-center">
+                        <a class="btn btn-trinity" href="{{=each_request['auction_url']}}" title="View details for Auction {{=each_request.id}}" ><i class="fa fa-fw fa-chevron-right"></i></a>
+                    </td>
+                </tr>
+            {{pass}}
+        </tbody>
+    </table>
 </div>
