@@ -1,15 +1,14 @@
+{{
+if is_dealer:
+    this_or_my = 'this'
+else:
+    this_or_my = 'my'
+pass
+}}
+{{response.title="Reverse Auction for %s %s %s %s" % (this_or_my, auction_request_info['year'], auction_request_info['make'], auction_request_info['model'])}}
 {{extend 'page_layout_new.html'}}
-{{#=BEAUTIFY(response._vars)}}
 
-    <section class="inner-section full-width-bg color-bg  pad-top-eighth pad-bottom-eighth">
-        <div class="container">
-            <div class="row">
-                <div class="col-sm-12">
-                    <h1 class="main-heading white text-center">Reverse Auction for {{if is_dealer:}}this{{else:}}my{{pass}} {{=auction_request_info['year']}}  {{=auction_request_info['make']}} {{=auction_request_info['model']}}</h1>
-                </div>
-            </div>
-        </div>
-    </section>
+{{#=BEAUTIFY(response._vars)}}
 
     <div class="row" style="margin: 20px 0;">
         <div class="col-sm-12">

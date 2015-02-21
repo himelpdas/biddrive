@@ -6,9 +6,24 @@
 
 
 <div class="container page-container">
+
+    <section class="page-header inner-section full-width-bg color-bg pad-top-eighth pad-bottom-eighth">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1 class="main-heading white text-center">{{=response.title}}</h1>
+                </div>
+            </div>
+        </div>
+    </section>
+
     {{#include '_extras/progress_bar.html'}}
-	{{message_divs()}}
-	{{include}}
+
+    <section class="messages">
+        {{message_divs()}}
+    </section>
+
+    {{include}}
 </div>
 
 {{#enable prettier jquery UI tooltips}}
