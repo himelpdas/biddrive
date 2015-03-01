@@ -373,46 +373,41 @@ pass
         </div>
     </div>
 {{else:}}
-    <section class="inner-section color-bg  pad-top-eighth pad-bottom-eighth" style="overflow: hidden;">
+    <section class="inner-section color-bg  pad-top-eighth pad-bottom-eighth">
         <div class="container">
             <div class="row">
+                {{if is_dealer:}}
                 <div class="col-sm-12">
-                    {{if is_dealer:}}
-                    <h4 class="main-heading white text-center">My Offer in Response to Buyer Request</h4>
-                    {{else:}}
-                    <h4 class="main-heading white text-center">Offers Received from Dealers</h4>
+                    <h4 class="promo-heading white text-center">My Offer in Response to Buyer Request</h4>
+                </div>
+                {{else:}}
+                <div class="col-sm-12">
+                    <h4 class="promo-heading white text-center"  style="display: inline-block; padding-top: 10px;">Offers Received from Dealers</h4>
+                    <div class="pull-right" style="margin-right: 30px">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-trinity btn-trinity-white dropdown-toggle" data-toggle="dropdown">
+                                {{sortby = request.vars['sortby']}}
+                                {{if sortby:}}
+                                {{sort_words = sortby.split('-')}}
+                                {{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
+                                {{else:}}
+                                Sort by <i class="fa fa-caret-down fa-fw"></i>
+                                {{pass}}
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                {{for each in sortlist:}}
+                                {{each_sort_words = each.split('-')}}
+                                <li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each_sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=each_sort_words[-1]}} fa-fw"></i></a></li>
+                                {{pass}}
+                            </ul>
+                        </div>
+                    </div>
                     {{pass}}
                 </div>
+                {{pass}}
             </div>
         </div>
     </section>
-
-    <div class="row" style="margin-top: 20px; margin-bottom: 20px;">
-        <div class="col-sm-12">
-            {{if not is_dealer:}}
-            <div class="pull-right">
-                Sort offers by
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                        {{sortby = request.vars['sortby']}}
-                        {{if sortby:}}
-                        {{sort_words = sortby.split('-')}}
-                        {{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
-                        {{else:}}
-                        Select <i class="fa fa-caret-down fa-fw"></i>
-                        {{pass}}
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-                        {{for each in sortlist:}}
-                        {{each_sort_words = each.split('-')}}
-                        <li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each_sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=each_sort_words[-1]}} fa-fw"></i></a></li>
-                        {{pass}}
-                    </ul>
-                </div>
-            </div>
-            {{pass}}
-        </div>
-    </div>
 {{pass}}
 
 {{for counter, each_offer in enumerate(auction_request_offers_info):}}
@@ -596,6 +591,8 @@ pass
                     </div>
 
                     <div class="col-xs-12 col-sm-4">
+                        <div class="row">
+                            <div class="col-sm-offset-1 col-sm-11">
                         {{final_bid_hours_left=(int(each_offer['final_bid_ends_in_hours'])+1) if each_offer['final_bid_ends_in_hours'] else 'N/A'}}
                         {{final_bid_hours_left='%s hour%s'%(final_bid_hours_left, '' if final_bid_hours_left==1 else 's')}}
                         {{if each_offer['show_winner_btn']:}}
@@ -611,9 +608,10 @@ pass
                                 </button>
                             </a>
                         {{elif each_offer['each_is_winning_offer'] and is_owner:}}
+                                <h3 class="text-center" style="padding: 20px 0;">Winner! <i class="blink fa fa-fw fa-trophy"></i></h3>
                                 <a href="{{=auction_request_info['view_certificate_url']}}">
-                                    <button class="btn btn-danger center-block" title="This dealer won the auction! Click here to connect with the dealer and print your certificate.">
-                                        <i class="blink fa fa-fw fa-trophy"></i> Winner!
+                                    <button class="btn btn-success btn-raised center-block btn-trinity btn-trinity-big" title="This dealer won the auction! Click here to connect with the dealer and print your certificate.">
+                                        Get certificate
                                     </button>
                                 </a>
                         {{elif each_offer['each_is_winning_offer']:}}
@@ -655,12 +653,17 @@ pass
                                 </div>
                             {{pass}}
                         {{pass}}{{#http://goo.gl/eLX2w6}} {{#make sure parent div relative or absolute, then create child div positioned absolute so that it overlaps sister elements, then text-align center or center-block its child element}}{{#make sure not expired and made a bid}}
-                        <br><hr><br>
-                        <div class="text-bold">Description:</div>
-                        <p>{{truncate=345}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></p>
-                        <script>
-                            $("#untruncate{{=counter}}").hide();
-                        </script>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top: 20px">
+                            <div class="col-sm-12">
+                                <span class="text-bold">Description:</span>
+                                <p>{{truncate=345}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></p>
+                                <script>
+                                    $("#untruncate{{=counter}}").hide();
+                                </script>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="row">

@@ -158,6 +158,33 @@ body {
     color: #c4c4c4;
 }
 
+.btn-raised {
+    -webkit-box-shadow: 0px 4px 4px rgba(50, 50, 50, 0.75);
+    -moz-box-shadow:    0px 4px 4px rgba(50, 50, 50, 0.75);
+    box-shadow:         0px 4px 4px rgba(50, 50, 50, 0.75);
+}
+
+.btn-trinity-success{
+    border:solid 1px #4c4c4c;
+    background: transparent;
+    color: #4c4c4c;
+}
+.btn-trinity-success:hover{
+    border:solid 1px #4c4c4c;
+    background: #4c4c4c;
+    color: #fff;
+}
+.btn-trinity-white-opaque{
+    border:solid 1px #fff;
+    background: #fff;
+    color: #4c4c4c;
+}
+.btn-trinity-white-opaque:hover{
+    border:solid 1px #fff;
+    background: #fff;
+    color: #4c4c4c;
+}
+
 #intro .btn-cta,
 #about .btn-cta,
 #request_by_make .btn {
@@ -266,6 +293,11 @@ body {
 
 .panel {
     border-radius: 0;
+    min-height: 300px;
+}
+
+.panel-heading h3 {
+    margin-bottom: 0;
 }
 
 .menu a {

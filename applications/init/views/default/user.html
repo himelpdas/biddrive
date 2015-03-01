@@ -1,396 +1,445 @@
+{{if request.args(0) == "register":}}
+    {{response.title="Join BidDrive"}}
+{{pass}}
+
 {{extend 'page_layout_new.html'}}
 
-<h3><i class="fa fa-user"></i> {{=request.vars.custom_title or T( request.args(0).replace('_',' ').capitalize() )}}</h3>
-<br><hr><br>
-<div class="row" style="padding-top: 10px">
-    <div class="col-sm-12 text-right">
-        {{if request.args(0)=='profile':}}
-        <a href="{{=URL('default', 'user', args=['change_password'], vars={'custom_title':'Profile > Change Password'})}}"><i class="fa fa-lock fa-fw"></i> Change Password</a>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3>{{=request.vars.custom_title or T( request.args(0).replace('_',' ').capitalize() )}}</h3>
+    </div>
+    <div class="panel-body">
+
+        <div class="row" style="padding-top: 20px">
+            <div class="hidden-xs hidden-sm col-md-4"></div>
+            <div class="col-xs-12 col-sm-12 col-md-6 text-right">
+                {{if request.args(0)=='profile':}}
+                <a href="{{=URL('default', 'user', args=['change_password'], vars={'custom_title':'Profile > Change Password'})}}"><i class="fa fa-lock fa-fw"></i> Change Password</a>
+                {{elif request.args(0)=='change_password':}}
+                <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i> Back to Profile</a>
+                {{elif request.args(0)=='login':}}
+                <a href="{{=URL('default', 'user', args=['request_reset_password'], vars={'custom_title':'Login > Reset Password'})}}"><i class="fa fa-lock fa-fw"></i> Lost password?</a>
+                {{elif request.args(0)=='request_reset_password':}}
+                <a href="{{=URL('default', 'user', args=['login'])}}"><i class="fa fa-user"></i> Back to Login</a>
+                {{pass}}
+            </div>
+            <div class="hidden-xs hidden-sm col-md-2"></div>
+        </div>
+
+        {{"""}}<!--
+        <div id="web2py_user_form">
+        {{
+        if request.args(0)=='login':
+            if not 'register' in auth.settings.actions_disabled:
+                form.add_button(T('Register'),URL(args='register', vars={'_next': request.vars._next} if request.vars._next else None),_class='btn')
+            pass
+            if not 'request_reset_password' in auth.settings.actions_disabled:
+                form.add_button(T('Lost Password'),URL(args='request_reset_password'),_class='btn')
+            pass
+        pass
+        =form
+        }}
+        </div>
+        <script language="javascript"><!--
+        $("#web2py_user_form input:visible:enabled:first").focus();
+        {{if request.args(0)=='register':}}
+            web2py_validate_entropy($('#auth_user_password'),100);
         {{elif request.args(0)=='change_password':}}
-        <a href="{{=URL('default', 'user', args=['profile'])}}"><i class="fa fa-user"></i> Back to Profile</a>
-        {{elif request.args(0)=='login':}}
-        <a href="{{=URL('default', 'user', args=['request_reset_password'], vars={'custom_title':'Login > Reset Password'})}}"><i class="fa fa-lock fa-fw"></i> Lost password?</a>
-        {{elif request.args(0)=='request_reset_password':}}
-        <a href="{{=URL('default', 'user', args=['login'])}}"><i class="fa fa-user"></i> Back to Login</a>
+            web2py_validate_entropy($('#no_table_new_password'),100);
         {{pass}}
+        </script>-->
+        {{"""}}
+        {{if not request.args(0) == "not_authorized":}} {{#form stuff}}
+            {{#global}}
+            {{for el in form.elements(_type = "text"):}}
+                {{el["_class"] += " form-control" }}
+            {{pass}}
+            {{for el in form.elements(_type = "password"):}}
+                {{el["_class"] += " form-control" }}
+            {{pass}}
+            {{for el in form.elements(_type = "checkbox"):}}
+                {{el["_style"] = " margin-top: 10px; margin-left: 15px;" }}
+            {{pass}}
+            {{form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+
+            {{after_login_string = request.vars['_next'] or ''}}
+
+            {{#login reset_password profile}}
+            <div class="row pad-top-eighth">
+                <div class="hidden-xs hidden-sm col-md-2"></div>
+                <div class="col-xs-12 col-sm-12 col-md-8"> {{#if width greater than 480px (col-xs) then 12 columns will fill this, row. if >480px only 7 will show}}
+                    {{=form.custom.begin}}
+                        {{if request.args(0)=='profile':}}
+                            {{form.element("input", _type = "submit")["_value"] = "Save Changes" }}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">First Name</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+                                        {{=form.custom.widget.first_name}}
+                                    </div>
+
+                                    {{if form.errors['first_name']:}}
+                                        <div class="alert alert-warning">{{=form.errors['first_name']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Last Name</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+                                        {{=form.custom.widget.last_name}}
+                                    </div>
+
+                                    {{if form.errors['last_name']:}}
+                                        <div class="alert alert-warning">{{=form.errors['last_name']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Email alerts</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        {{=form.custom.widget.enable_email_alerts}}
+                                    </div>
+
+                                    {{if form.errors['enable_email_alerts']:}}
+                                        <div class="alert alert-warning">{{=form.errors['enable_email_alerts']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Email</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
+                                        {{=form.custom.widget.email}}
+                                    </div>
+
+                                    {{if form.errors['email']:}}
+                                        <div class="alert alert-warning">{{=form.errors['email']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">SMS alerts <i class="fa fa-question-circle"  title="Your carrier may charge fees."></i></label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        {{=form.custom.widget.enable_sms_alerts}}
+                                    </div>
+
+                                    {{if form.errors['enable_sms_alerts']:}}
+                                        <div class="alert alert-warning">{{=form.errors['enable_sms_alerts']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Mobile phone</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="glyphicon glyphicon-phone fa-fw"></i></span>
+                                        {{=form.custom.widget.mobile_phone}}
+                                    </div>
+
+                                    {{if form.errors['mobile_phone']:}}
+                                        <div class="alert alert-warning">{{=form.errors['mobile_phone']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-9">
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{=form.custom.submit}}
+                                </div>
+                            </div>
+
+                        {{elif request.args(0) == "login":}}
+                            {{if 'force_register' in after_login_string:}}
+                                {{#logger.debug(after_login_string)}}
+                                {{new_dealers_only="Join our dealer team" if "dealership_form" in after_login_string else ""}}
+                                {{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_title=new_dealers_only, _next=after_login_string)))}} {{#cannot use custom_title var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
+                            {{pass}}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Email</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
+                                        {{=form.custom.widget.email}}
+                                    </div>
+
+                                    {{if form.errors['email']:}}
+                                        <div class="alert alert-warning">{{=form.errors['email']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
+                                        {{=form.custom.widget.password}}
+                                    </div>
+
+                                    {{if form.errors['password']:}}
+                                        <div class="alert alert-warning">{{=form.errors['password']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Remember me</label>
+                                <div class="col-sm-9">
+                                    {{=form.element('input#auth_user_remember_me')}} {{#http://goo.gl/gfoKbq http://goo.gl/KGiWWL}}
+                                </div>
+                            </div>
+
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-9">
+                                    {{form.element("input", _type = "submit")["_value"] = "Sign in" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{=form.custom.submit}}
+                                </div>
+                            </div>
+
+
+                        {{elif request.args(0) == "request_reset_password":}}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Email</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
+                                        {{=form.custom.widget.email}}
+                                    </div>
+
+                                    {{if form.errors['email']:}}
+                                        <div class="alert alert-warning">{{=form.errors['email']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-9">
+                                    {{form.element("input", _type = "submit")["_value"] = "Send Instructions" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{=form.custom.submit}}
+                                </div>
+                            </div>
+
+                        {{elif request.args(0) == "change_password":}}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Old Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-unlock fa-fw"></i></span>
+                                        {{=form.custom.widget.old_password}}
+                                    </div>
+
+                                    {{if form.errors['old_password']:}}
+                                        <div class="alert alert-warning">{{=form.errors['old_password']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">New Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
+                                        {{=form.custom.widget.new_password}}
+                                    </div>
+
+                                    {{if form.errors['new_password']:}}
+                                        <div class="alert alert-warning">{{=form.errors['new_password']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Check Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-check fa-fw"></i></span>
+                                        {{=form.custom.widget.new_password2}}
+                                    </div>
+
+                                    {{if form.errors['new_password2']:}}
+                                        <div class="alert alert-warning">{{=form.errors['new_password2']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-9">
+                                    {{form.element("input", _type = "submit")["_value"] = "Save New Password" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{=form.custom.submit}}
+                                </div>
+                            </div>
+
+                        {{elif request.args(0) == "register":}}
+                            {{is_new_dealer= "dealership_form" in after_login_string}}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">First Name</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+                                        {{=form.custom.widget.first_name}}
+                                    </div>
+
+                                    {{if form.errors['first_name']:}}
+                                        <div class="alert alert-warning">{{=form.errors['first_name']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Last Name</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+                                        {{=form.custom.widget.last_name}}
+                                    </div>
+
+                                    {{if form.errors['last_name']:}}
+                                        <div class="alert alert-warning">{{=form.errors['last_name']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Email</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
+                                        {{=form.custom.widget.email}}
+                                    </div>
+
+                                    {{if form.errors['email']:}}
+                                        <div class="alert alert-warning">{{=form.errors['email']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Mobile phone</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="glyphicon glyphicon-phone fa-fw"></i></span>
+                                        {{=form.custom.widget.mobile_phone}}
+                                    </div>
+
+                                    {{if form.errors['mobile_phone']:}}
+                                        <div class="alert alert-warning">{{=form.errors['mobile_phone']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
+                                        {{=form.custom.widget.password}}
+                                    </div>
+
+                                    {{if form.errors['password']:}}
+                                        <div class="alert alert-warning">{{=form.errors['password']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Check Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-check fa-fw"></i></span>
+                                        {{=form.custom.widget.password_two}}
+                                    </div>
+
+                                    {{if form.errors['password_two']:}}
+                                        <div class="alert alert-warning">{{=form.errors['password_two']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-9">
+                                    {{form.element("input", _type = "submit")["_value"] = "Join Us!" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{=form.custom.submit}}
+                                    {{if is_new_dealer:}}<a href="{{=URL('dealership_form')}}" class="btn btn-default btn-trinity">Already have an account?</a>{{pass}}
+                                </div>
+                            </div>
+                        {{elif request.args(0) == "reset_password":}}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">New Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+                                        {{=form.custom.widget.new_password}}
+                                    </div>
+                                    {{#=form.errors.keys()}}
+                                    {{if form.errors['new_password']:}}
+                                        <div class="alert alert-warning">{{=form.errors['new_password']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Retype Password</label>
+                                <div class="col-sm-9">
+                                    <div class="input-group margin-bottom-sm">
+                                        <span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
+                                        {{=form.custom.widget.new_password2}}
+                                    </div>
+                                    {{if form.errors['new_password2']:}}
+                                        <div class="alert alert-warning">{{=form.errors['new_password2']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-9">
+                                    {{form.element("input", _type = "submit")["_value"] = "Set new password!" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{=form.custom.submit}}
+                                </div>
+                            </div>
+                        {{pass}}
+                    {{=form.custom.end}}
+                    {{if "dealer_registration" in after_login_string:}}
+                        <a href="{{=URL('default', 'dealership_form')}}"><button class="btn btn-default pull-right" style="margin-right:5px">Already have an account?</button></a>
+                    {{pass}}
+                </div>
+                <div class="hidden-xs hidden-sm col-md-2"></div>
+            </div>
+            {{#auth() has poor parent customization compared to SQLFORM}}
+            {{block page_scripts}}
+            <script>
+                $('form').attr({"class":"form-horizontal"}); {{#add horizontal Class to form tag as it cant be done via controller due to auth not sqlform}}
+                $('.error').hide(); {{#hide Default web2py error behavior}}
+            </script>
+            <!--{{#mask/validate to us phone}}-->
+            <script>
+                $("#auth_user_mobile_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
+            </script>
+            {{end}}
+        {{else:}}
+            <h3>Sorry, either you were inactive or you're not authorized to view this page.</h3>
+        {{pass}}
+
     </div>
 </div>
-{{"""}}<!--
-<div id="web2py_user_form">
-{{
-if request.args(0)=='login':
-    if not 'register' in auth.settings.actions_disabled:
-        form.add_button(T('Register'),URL(args='register', vars={'_next': request.vars._next} if request.vars._next else None),_class='btn')
-    pass
-    if not 'request_reset_password' in auth.settings.actions_disabled:
-        form.add_button(T('Lost Password'),URL(args='request_reset_password'),_class='btn')
-    pass
-pass
-=form
-}}
-</div>
-<script language="javascript"><!--
-$("#web2py_user_form input:visible:enabled:first").focus();
-{{if request.args(0)=='register':}}
-    web2py_validate_entropy($('#auth_user_password'),100);
-{{elif request.args(0)=='change_password':}}
-    web2py_validate_entropy($('#no_table_new_password'),100);
-{{pass}}
-</script>-->
-{{"""}}
-{{if not request.args(0) == "not_authorized":}} {{#form stuff}}
-	{{#global}}
-	{{for el in form.elements(_type = "text"):}}
-		{{el["_class"] += " form-control" }}
-	{{pass}}
-	{{for el in form.elements(_type = "password"):}}
-		{{el["_class"] += " form-control" }}
-	{{pass}}	
-	{{for el in form.elements(_type = "checkbox"):}}
-		{{el["_style"] = " margin-top: 10px; margin-left: 15px;" }}
-	{{pass}}
-	{{form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
-	
-	{{after_login_string = request.vars['_next'] or ''}}
-	
-	{{#login reset_password profile}}
-	<div class="row-fluid" style="margin-top: 50px">
-		<div class="col-md-8 col-sm-9 col-xs-11"> {{#if width greater than 480px (col-xs) then 12 columns will fill this, row. if >480px only 7 will show}}
-			{{=form.custom.begin}}
-				{{if request.args(0)=='profile':}}
-					{{form.element("input", _type = "submit")["_value"] = "Save Changes" }}
-					<div class="form-group">
-						<label class="col-sm-3 control-label">First Name</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
-								{{=form.custom.widget.first_name}}
-							</div>
-
-							{{if form.errors['first_name']:}}
-								<div class="alert alert-warning">{{=form.errors['first_name']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Last Name</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
-								{{=form.custom.widget.last_name}}
-							</div>
-
-							{{if form.errors['last_name']:}}
-								<div class="alert alert-warning">{{=form.errors['last_name']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Email alerts</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								{{=form.custom.widget.enable_email_alerts}}
-							</div>
-
-							{{if form.errors['enable_email_alerts']:}}
-								<div class="alert alert-warning">{{=form.errors['enable_email_alerts']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Email</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
-								{{=form.custom.widget.email}}
-							</div>
-
-							{{if form.errors['email']:}}
-								<div class="alert alert-warning">{{=form.errors['email']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-3 control-label">SMS alerts <i class="fa fa-question-circle"  title="Your carrier may charge fees."></i></label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								{{=form.custom.widget.enable_sms_alerts}}
-							</div>
-
-							{{if form.errors['enable_sms_alerts']:}}
-								<div class="alert alert-warning">{{=form.errors['enable_sms_alerts']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Mobile phone</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="glyphicon glyphicon-phone fa-fw"></i></span>
-								{{=form.custom.widget.mobile_phone}}
-							</div>
-
-							{{if form.errors['mobile_phone']:}}
-								<div class="alert alert-warning">{{=form.errors['mobile_phone']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					{{=form.custom.submit}}
-
-				{{elif request.args(0) == "login":}}
-					{{if 'force_register' in after_login_string:}}
-						{{#logger.debug(after_login_string)}}
-						{{new_dealers_only="Join our dealer team" if "dealership_form" in after_login_string else ""}}
-						{{redirect(URL(request.controller, request.function, args='register', vars=dict(custom_title=new_dealers_only, _next=after_login_string)))}} {{#cannot use custom_title var as the login check decorator in dealership_form puts all args and vars in encoded _next var}}
-					{{pass}}
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Email</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
-								{{=form.custom.widget.email}}
-							</div>
-
-							{{if form.errors['email']:}}
-								<div class="alert alert-warning">{{=form.errors['email']}}</div>
-							{{pass}}
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-								{{=form.custom.widget.password}}
-							</div>
-
-							{{if form.errors['password']:}}
-								<div class="alert alert-warning">{{=form.errors['password']}}</div>
-							{{pass}}
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Remember me</label>
-						<div class="col-sm-9">
-							{{=form.element('input#auth_user_remember_me')}} {{#http://goo.gl/gfoKbq http://goo.gl/KGiWWL}}
-						</div>
-					</div>
-
-					{{form.element("input", _type = "submit")["_value"] = "Sign in" }}
-					{{=form.custom.submit}}
-
-				{{elif request.args(0) == "request_reset_password":}}
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Email</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
-								{{=form.custom.widget.email}}
-							</div>
-
-							{{if form.errors['email']:}}
-								<div class="alert alert-warning">{{=form.errors['email']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					{{form.element("input", _type = "submit")["_value"] = "Send Instructions" }}
-					{{=form.custom.submit}}
-
-				{{elif request.args(0) == "change_password":}}
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Old Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-unlock fa-fw"></i></span>
-								{{=form.custom.widget.old_password}}
-							</div>
-
-							{{if form.errors['old_password']:}}
-								<div class="alert alert-warning">{{=form.errors['old_password']}}</div>
-							{{pass}}
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label class="col-sm-3 control-label">New Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-								{{=form.custom.widget.new_password}}
-							</div>
-
-							{{if form.errors['new_password']:}}
-								<div class="alert alert-warning">{{=form.errors['new_password']}}</div>
-							{{pass}}
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Check Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-check fa-fw"></i></span>
-								{{=form.custom.widget.new_password2}}
-							</div>
-
-							{{if form.errors['new_password2']:}}
-								<div class="alert alert-warning">{{=form.errors['new_password2']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					{{form.element("input", _type = "submit")["_value"] = "Save New Password" }}
-					{{=form.custom.submit}}
-
-				{{elif request.args(0) == "register":}}
-					{{is_new_dealer= "dealership_form" in after_login_string}}
-					<div class="form-group">
-						<label class="col-sm-3 control-label">First Name</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
-								{{=form.custom.widget.first_name}}
-							</div>
-
-							{{if form.errors['first_name']:}}
-								<div class="alert alert-warning">{{=form.errors['first_name']}}</div>
-							{{pass}}
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Last Name</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
-								{{=form.custom.widget.last_name}}
-							</div>
-
-							{{if form.errors['last_name']:}}
-								<div class="alert alert-warning">{{=form.errors['last_name']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Email</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
-								{{=form.custom.widget.email}}
-							</div>
-
-							{{if form.errors['email']:}}
-								<div class="alert alert-warning">{{=form.errors['email']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Mobile phone</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="glyphicon glyphicon-phone fa-fw"></i></span>
-								{{=form.custom.widget.mobile_phone}}
-							</div>
-
-							{{if form.errors['mobile_phone']:}}
-								<div class="alert alert-warning">{{=form.errors['mobile_phone']}}</div>
-							{{pass}}
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-								{{=form.custom.widget.password}}
-							</div>
-
-							{{if form.errors['password']:}}
-								<div class="alert alert-warning">{{=form.errors['password']}}</div>
-							{{pass}}
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Check Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-check fa-fw"></i></span>
-								{{=form.custom.widget.password_two}}
-							</div>
-
-							{{if form.errors['password_two']:}}
-								<div class="alert alert-warning">{{=form.errors['password_two']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					<div class="row">
-						{{form.element("input", _type = "submit")["_value"] = "Join Us!" }}
-						{{form.element("input", _type = "submit")["_class"] += " btn-primary" }}
-						<div class="col-sm-3"></div>
-						<div class="col-sm-9">
-							{{if is_new_dealer:}}<a href="{{=URL('dealership_form')}}" class="btn btn-default">Already have an account?</a>{{pass}}
-							{{=form.custom.submit}}
-						</div>
-					</div>
-				{{elif request.args(0) == "reset_password":}}
-					<div class="form-group">
-						<label class="col-sm-3 control-label">New Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
-								{{=form.custom.widget.new_password}}
-							</div>
-							{{#=form.errors.keys()}}
-							{{if form.errors['new_password']:}}
-								<div class="alert alert-warning">{{=form.errors['new_password']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					<div class="form-group">
-						<label class="col-sm-3 control-label">Retype Password</label>
-						<div class="col-sm-9">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-pencil-square-o fa-fw"></i></span>
-								{{=form.custom.widget.new_password2}}
-							</div>
-							{{if form.errors['new_password2']:}}
-								<div class="alert alert-warning">{{=form.errors['new_password2']}}</div>
-							{{pass}}
-						</div>
-					</div>
-					{{form.element("input", _type = "submit")["_value"] = "Set new password!" }}
-					{{=form.custom.submit}}
-				{{pass}}
-			{{=form.custom.end}}
-			{{if "dealer_registration" in after_login_string:}}
-				<a href="{{=URL('default', 'dealership_form')}}"><button class="btn btn-default pull-right" style="margin-right:5px">Already have an account?</button></a>
-			{{pass}}
-		</div>
-	</div>
-	{{#auth() has poor parent customization compared to SQLFORM}}
-    {{block page_scripts}}
-    <script>
-        $('form').attr({"class":"form-horizontal"}); {{#add horizontal Class to form tag as it cant be done via controller due to auth not sqlform}}
-        $('.error').hide(); {{#hide Default web2py error behavior}}
-	</script>
-	<!--{{#mask/validate to us phone}}-->
-	<script>
-		$("#auth_user_mobile_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
-	</script>
-    {{end}}
-{{else:}}
-	<h3>Sorry, either you were inactive or you're not authorized to view this page.</h3>
-{{pass}}
