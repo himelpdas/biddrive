@@ -156,7 +156,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label"></label>
                                 <div class="col-sm-9">
-                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-raised btn-primary" }}
                                     {{=form.custom.submit}}
                                 </div>
                             </div>
@@ -207,7 +207,7 @@
                                 <label class="col-sm-3 control-label"></label>
                                 <div class="col-sm-9">
                                     {{form.element("input", _type = "submit")["_value"] = "Sign in" }}
-                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-raised btn-primary" }}
                                     {{=form.custom.submit}}
                                 </div>
                             </div>
@@ -232,7 +232,7 @@
                                 <label class="col-sm-3 control-label"></label>
                                 <div class="col-sm-9">
                                     {{form.element("input", _type = "submit")["_value"] = "Send Instructions" }}
-                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-raised btn-primary" }}
                                     {{=form.custom.submit}}
                                 </div>
                             </div>
@@ -284,7 +284,7 @@
                                 <label class="col-sm-3 control-label"></label>
                                 <div class="col-sm-9">
                                     {{form.element("input", _type = "submit")["_value"] = "Save New Password" }}
-                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-raised btn-primary" }}
                                     {{=form.custom.submit}}
                                 </div>
                             </div>
@@ -379,9 +379,9 @@
                                 <label class="col-sm-3 control-label"></label>
                                 <div class="col-sm-9">
                                     {{form.element("input", _type = "submit")["_value"] = "Join Us!" }}
-                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-raised btn-primary" }}
                                     {{=form.custom.submit}}
-                                    {{if is_new_dealer:}}<a href="{{=URL('dealership_form')}}" class="btn btn-default btn-trinity">Already have an account?</a>{{pass}}
+                                    {{if is_new_dealer:}}<a href="{{=URL('dealership_form')}}" class="btn btn-default btn-trinity btn-raised ">Already have an account?</a>{{pass}}
                                 </div>
                             </div>
                         {{elif request.args(0) == "reset_password":}}
@@ -414,14 +414,14 @@
                                 <label class="col-sm-3 control-label"></label>
                                 <div class="col-sm-9">
                                     {{form.element("input", _type = "submit")["_value"] = "Set new password!" }}
-                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-primary" }}
+                                    {{form.element("input", _type = "submit")["_class"] = "btn btn-default btn-trinity btn-raised btn-primary" }}
                                     {{=form.custom.submit}}
                                 </div>
                             </div>
                         {{pass}}
                     {{=form.custom.end}}
                     {{if "dealer_registration" in after_login_string:}}
-                        <a href="{{=URL('default', 'dealership_form')}}"><button class="btn btn-default pull-right" style="margin-right:5px">Already have an account?</button></a>
+                        <a href="{{=URL('default', 'dealership_form')}}"><button class="btn btn-default btn-raised pull-right" style="margin-right:5px">Already have an account?</button></a>
                     {{pass}}
                 </div>
                 <div class="hidden-xs hidden-sm col-md-2"></div>

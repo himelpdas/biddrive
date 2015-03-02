@@ -158,7 +158,9 @@ body {
     color: #c4c4c4;
 }
 
-.btn-raised {
+.btn-cta,
+.btn-raised,
+.btn-raised.disabled {
     -webkit-box-shadow: 0px 4px 4px rgba(50, 50, 50, 0.75);
     -moz-box-shadow:    0px 4px 4px rgba(50, 50, 50, 0.75);
     box-shadow:         0px 4px 4px rgba(50, 50, 50, 0.75);
