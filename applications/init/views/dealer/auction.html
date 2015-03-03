@@ -381,26 +381,26 @@ pass
                     <h4 class="promo-heading white text-center">My Offer in Response to Buyer Request</h4>
                 </div>
                 {{else:}}
-                <div class="col-sm-12">
-                    <h4 class="promo-heading white text-center"  style="display: inline-block; padding-top: 10px;">Offers Received from Dealers</h4>
-                    <div class="pull-right" style="margin-right: 30px">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-trinity btn-trinity-white dropdown-toggle" data-toggle="dropdown">
-                                {{sortby = request.vars['sortby']}}
-                                {{if sortby:}}
-                                {{sort_words = sortby.split('-')}}
-                                {{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
-                                {{else:}}
-                                Sort by <i class="fa fa-caret-down fa-fw"></i>
-                                {{pass}}
-                            </button>
-                            <ul class="dropdown-menu" role="menu">
-                                {{for each in sortlist:}}
-                                {{each_sort_words = each.split('-')}}
-                                <li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each_sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=each_sort_words[-1]}} fa-fw"></i></a></li>
-                                {{pass}}
-                            </ul>
-                        </div>
+                <div class="col-xs-12 col-sm-8 col-md-9">
+                    <h4 class="promo-heading white"  style="display: inline-block; padding-top: 10px;">Offers Received from Dealers</h4>
+                </div>
+                <div class="col-xs-12 col-sm-4 col-md-3 text-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-trinity btn-trinity-white dropdown-toggle" data-toggle="dropdown">
+                            {{sortby = request.vars['sortby']}}
+                            {{if sortby:}}
+                            {{sort_words = sortby.split('-')}}
+                            {{=sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=sort_words[1]}} fa-fw"></i>
+                            {{else:}}
+                            Sort by <i class="fa fa-caret-down fa-fw"></i>
+                            {{pass}}
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            {{for each in sortlist:}}
+                            {{each_sort_words = each.split('-')}}
+                            <li><a id = "{{=each+'_sorter'}}" href="{{=URL(args=request.args, vars=dict(sortby=each))}}">{{=each_sort_words[0].replace('_',' ').capitalize()}}<i class="fa fa-angle-double-{{=each_sort_words[-1]}} fa-fw"></i></a></li>
+                            {{pass}}
+                        </ul>
                     </div>
                 </div>
                 {{pass}}
@@ -418,17 +418,33 @@ pass
 		<div class="panel {{if each_offer['each_is_winning_offer']:}}panel-info{{else:}}panel-default{{pass}}">
 	    {{pass}}
             <div class="panel-heading" style="position:relative;"> {{#relative position here so that child element holding the heart can be aligned http://goo.gl/S6Jzr}}
-                <strong style="font-size:large;">{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-fw fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-fw fa-clock-o"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
 
-                <span class="pull-right">
-                    {{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
-                    {{if is_owner and not (auction_request_expired or auction_is_completed):}}<a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}"><button class="btn btn-default btn-xs" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button></a>
-                    {{else:}}<span style="position:relative;top:2px;right:2px;">{{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>{{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>{{pass}}</span>{{pass}}
-                    {{if is_owner:}}<button class="btn btn-default btn-xs" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['each__has_message_buyer']:}}blink{{pass}}"></i></button>{{pass}}
-                    <button id="expand_switch{{=counter}}" class="btn btn-default btn-xs" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-fw fa-plus"></i></button>
-                </span>
+                <div class="row">
+                    <div class="col-xs-8 col-sm-10">
+                        <strong style="font-size:large;">{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-fw fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-fw fa-clock-o"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
+                    </div>
+                    <div class="col-xs-4 col-sm-2">
+                        <div class="btn-group btn-group-xs pull-right" role="group">
+                            {{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
 
-                {{"""}}<span class="text-center text-sm text-light text-uppercase margin-right-10"> Bid ID: {{=each_offer['id']}} | Dealer ID: 00</span>{{"""}}
+                            {{if is_owner and not (auction_request_expired or auction_is_completed):}}
+                            <a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}">
+                                <button class="btn btn-default" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button>
+                            </a>
+                            {{else:}}
+                            <button type="button" class="btn btn-default">
+                                {{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>
+                                {{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>
+                                {{pass}}
+                            </button>
+                            {{pass}}
+                            {{if is_owner:}}
+                                <button type="button" class="btn btn-default" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['each__has_message_buyer']:}}blink{{pass}}"></i></button>
+                            {{pass}}
+                            <button type="button" id="expand_switch{{=counter}}" class="btn btn-default" title="Expand Bid" data-toggle="collapse" data-target="#expand_{{=each_offer['id']}}"><i class="fa fa-fw fa-plus"></i></button>
+                        </div>
+                     </div>
+                </div>
             </div>
             <div class="panel-body">
                 <div class="row">
