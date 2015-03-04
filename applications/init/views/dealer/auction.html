@@ -428,9 +428,16 @@ pass
                             {{is_was = 'Was' if (auction_request_expired or auction_is_completed) else 'Is'}}
 
                             {{if is_owner and not (auction_request_expired or auction_is_completed):}}
-                            <a href="{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}">
-                                <button class="btn btn-default" onClick="return confirm('Are you sure you want to pick this as your favorite?')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button>
-                            </a>
+
+                            <button class="btn btn-default" onClick="favConfirm('Are you sure you want to pick this as your favorite?','{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button>
+                            <script>
+                                function favConfirm(msg, submitUrl) {
+                                    var isConfirmed=confirm(msg);
+                                    if (isConfirmed) {
+                                        window.location.href = submitUrl;
+                                    }
+                                }
+                            </script>
                             {{else:}}
                             <button type="button" class="btn btn-default">
                                 {{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>
