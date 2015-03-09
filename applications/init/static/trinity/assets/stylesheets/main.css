@@ -931,58 +931,7 @@ font-family: 'Open Sans', sans-serif; font-weight:300;
     margin-bottom: 0;
     padding: 0;
 }
-/*
-input {
-    background: transparent !important;
-    border: none !important;
-    border-bottom: 1px solid !important;
-    border-radius: 0px !important;
-    box-shadow: none !important;
-    color: #fff !important;
-    font-family: 'Raleway',sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 300 !important;
-    line-height: 25px !important;
-    height: 50px !important;
-    margin-bottom: 10px !important;
-    padding: 10px !important;
-    width: 100%;
-	-webkit-transition: all .8s linear;
-	   -moz-transition: all .8s linear;
-		-ms-transition: all .8s linear;
-		 -o-transition: all .8s linear;
-			transition: all .8s linear;
-}
-input:focus, textarea:focus {
-    border-bottom: none !important;
-    color: #fff !important;
-	-webkit-transition: all .8s linear;
-	   -moz-transition: all .8s linear;
-		-ms-transition: all .8s linear;
-		 -o-transition: all .8s linear;
-			transition: all .8s linear;
-}
-textarea {
-    background: transparent !important;
-    border: none !important;
-    border-bottom: 1px solid !important;
-    border-radius: 0px !important;
-    box-shadow: none !important;
-    color: #fff !important;
-    font-family: 'Raleway',sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 300 !important;
-    line-height: 25px !important;
-    margin-top: 0;
-    padding: 10px !important;
-    resize: none;
-    width: 100%;
-	-webkit-transition: all .8s linear;
-	   -moz-transition: all .8s linear;
-		-ms-transition: all .8s linear;
-		 -o-transition: all .8s linear;
-			transition: all .8s linear;
-}*/
+
 input.send_message {
     background: none repeat scroll 0 0 #EF4A4A;
     color: #FFFFFF;

@@ -184,11 +184,6 @@ def auction_requests():
 	#sort virtual fields http://goo.gl/skbNJ6
 	columns = [ #keep len 12
 		[
-			'', #title
-			['id-up','id-down'], #caret up, caret down
-			1 #span
-		],
-		[
 			'Year', 
 			['year-up','year-down'],
 			1
@@ -214,7 +209,7 @@ def auction_requests():
 			2
 		],
 		[
-			'Proximity', 
+			'Near',
 			['closest','farthest'],
 			1
 		],
@@ -233,6 +228,11 @@ def auction_requests():
 		#	['lowest','highest'],
 		#	1
 		#],
+		[
+			'Actions', #title
+			['id-up','id-down'], #caret up, caret down
+			1 #span
+		],
 	]
 	
 	#

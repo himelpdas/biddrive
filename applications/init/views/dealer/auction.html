@@ -455,58 +455,64 @@ pass
             </div>
             <div class="panel-body">
                 {{if bid_form:}}
-                    {{=bid_form.custom.begin}}
-                    <div class="row">                    
-                        <div class="col-xs-11 col-sm-offset-3 col-sm-6">                        
-                            <div class="input-group" style="margin: 20px auto; padding-right: 20px; padding-left: 20px;">
-                                {{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
-                                {{bid_form.element("input", _name = "bid")["_placeholder"] = "$$$" if not auction_request_info['is_lease'] else "$ (per month)" }}
-                                {{=bid_form.custom.widget.bid}}
-                                <span class="input-group-btn">
+                    <div class="row" style="margin-bottom: 20px;">
+                        <div class="col-xs-12">
+                            {{=bid_form.custom.begin}}
+                                <div class="row">
+                                    <div class="col-xs-offset-3 col-xs-6">
+                                        {{if bid_form.errors['bid']:}}
+                                        <div class="alert alert-warning text-center">Error: {{=bid_form.errors['bid']}}</div>
+                                        {{pass}}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-11 col-sm-offset-3 col-sm-6">
+                                        <div class="input-group" style="margin: 20px auto; padding-right: 20px; padding-left: 20px;">
+                                            {{bid_form.element("input", _name = "bid")["_class"] += " form-control" }}
+                                            {{bid_form.element("input", _name = "bid")["_placeholder"] = "$$$" if not auction_request_info['is_lease'] else "$ (per month)" }}
+                                            {{=bid_form.custom.widget.bid}}
+                                            <span class="input-group-btn">
 
-                                    {{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
-                                    {{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}
-                                    {{bid_form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-primary" + (" btn-danger" if form_is_final_bid else "")  }}
-                                    {{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if form_is_final_bid else "Place Bid!") }}
-                                    {{=bid_form.custom.submit}}
+                                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
+                                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}
+                                                {{bid_form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-primary" + (" btn-danger" if form_is_final_bid else "")  }}
+                                                {{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if form_is_final_bid else "Place Bid!") }}
+                                                {{=bid_form.custom.submit}}
 
-                                    <button type="button" class="btn btn-trinity btn-primary dropdown-toggle" style="max-width: 46px;" data-toggle="dropdown">
-                                        <span class="caret"></span>
-                                        <span class="sr-only">Toggle Dropdown</span>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                                        <li><a id = "final_bid" href="{{if not form_is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}">{{if form_is_final_bid:}}<i class="fa fa-fw fa-times-circle-o"></i> Cancel{{else:}}<i class="fa fa-fw fa-bell-o"></i> Make a{{pass}} final offer</a></li>
-                                    </ul>
+                                                <button type="button" class="btn btn-trinity btn-primary dropdown-toggle {{= "btn-danger" if form_is_final_bid else ""}}" style="max-width: 46px;" data-toggle="dropdown">
+                                                    <span class="caret"></span>
+                                                    <span class="sr-only">Toggle Dropdown</span>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                                    <li><a id = "final_bid" href="{{if not form_is_final_bid:}} {{=URL(args=request.args, vars=dict(request.vars, final_bid=True))}} {{else:}} {{=URL(args=request.args)}} {{pass}}">{{if form_is_final_bid:}}<i class="fa fa-fw fa-times-circle-o"></i> Cancel{{else:}}<i class="fa fa-fw fa-bell-o"></i> Make a{{pass}} final offer</a></li>
+                                                </ul>
 
-                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-offset-4 col-sm-4">
+
+                                        {{if form_is_final_bid:}}
+                                            <div id="final_bid_hours_header" style="padding-top:10px;"> {{#if there is an error with the subform, don't auto hide the subform}}
+                                                <i class="fa fa-fw fa-bell"></i>End my offer in
+                                            </div>
+                                            <div id="final_bid_hours_form">
+                                                {{=bid_form.custom.widget.end_sooner_in_hours}}
+                                                {{if bid_form.errors['end_sooner_in_hours']:}}
+                                                    <div class="alert alert-warning">{{=bid_form.errors['end_sooner_in_hours']}}</div>
+                                                {{pass}}
+                                            </div>
+                                        {{pass}}
+
+                                    </div>
+                                </div>
                             </div>
-                            <!--
-                                    {{if form_is_final_bid:}} {{#also check not winning and not expired etc.}}
-                                        <div id="final_bid_hours_header" style="padding-top:10px;"> {{#if there is an error with the subform, don't auto hide the subform}}
-                                            <i class="fa fa-fw fa-bell"></i>End my offer in
-                                        </div>
-                                    {{pass}}
-
-
-
-
-                                {{if bid_form.errors['bid']:}}
-                                    <div class="alert alert-warning">{{=bid_form.errors['bid']}}</div>
-                                {{pass}}
-
-                                    {{if form_is_final_bid:}}
-                                        <div id="final_bid_hours_form">
-                                            {{=bid_form.custom.widget.end_sooner_in_hours}}
-                                            {{if bid_form.errors['end_sooner_in_hours']:}}
-                                                <div class="alert alert-warning">{{=bid_form.errors['end_sooner_in_hours']}}</div>
-                                            {{pass}}
-                                        </div>
-                                    {{pass}}
-                            -->                            
-                        </div>
+                        {{=bid_form.custom.end}}
                     </div>
-                    {{=bid_form.custom.end}}
-                {{pass}}                                    
+                {{pass}}
+
                 <div class="row">
                     <div class="col-sm-4 hidden-xs">
                         <div id="images_{{=each_offer['id']}}" class="carousel slide" data-ride="carousel">
@@ -625,8 +631,8 @@ pass
                                     </a>
                                 {{elif is_owner and each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
                                     <a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-                                        <button class="btn btn-danger btn-trinity btn-raised center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer that is valid for less than {{=final_bid_hours_left}}. Are you sure you want to buy this now (this will conclude the auction)?')">
-                                            <i class="fa fa-fw fa-bell"></i> Final offer!
+                                        <button class="btn btn-success btn-trinity btn-raised center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer that is valid for less than {{=final_bid_hours_left}}. Are you sure you want to buy this now (this will conclude the auction)?')">
+                                            <i class="fa fa-fw fa-bell"></i> Accept final offer!
                                         </button>
                                     </a>
                                 {{elif each_offer['each_is_winning_offer'] and is_owner:}}

@@ -1,375 +1,398 @@
+{{response.title="Buyer Requests"}}
 {{extend 'page_layout_new.html'}}
 {{#=BEAUTIFY(response._vars}}
 
 {{#FILTERS}}
-<div class="panel panel-default">
-	<div class="panel-heading text-uppercase">
-		<strong style="font-size:large;"><i class="fa fa-fw fa-car text-light"></i> Buyer Requests</strong>
-		<div class="pull-right form-group"><input id="sifter" type="text" class="input-small form-control" placeholder="Sift rows..." style="height: 20px; font-size: 12px; line-height: 14px; padding:0"></div> {{#http://goo.gl/cC4lEn http://goo.gl/Y0w9wi http://goo.gl/LYpoNj}}
-	</div>
-	<div class="panel-body">
-	 	<div class="row">
-	 		
-	 		<!-- year dropdown -->
-	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
-				<div class="btn-group">
-				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown">
-						{{all_years = "%s - %s"%(years_list[0],years_list[-1])}}
-						{{if year in years_list:}}{{=year}} models{{else:}}{{=all_years}}{{pass}}
-				    	<span class="caret"></span>
-				  	</button>
-					<ul class="dropdown-menu" role="menu">
-						<li><a id = "all_filter" href="{{=URL(vars=dict(sortby=sortby))}}">{{=all_years}}</a></li>
-						 <li class="divider"></li>
-						{{for each_year in years_list:}}
-							<li><a id = "{{=each_year}}_year_filter" href="{{=URL(vars=dict(year=each_year, sortby=sortby))}}">{{=each_year}} models</a></li>
-						{{pass}}
-					</ul>
-				</div>
-	 		</div>
 
-	 		<!-- Brands dropdown -->
-	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
-				<div class="btn-group">
-				  	<button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown">
-						{{if len(multiple) > 1:}}Brands ({{=len(multiple)}} selected){{elif len(multiple) == 1:}}{{=brands_list[multiple[0]]}}{{else:}}All Brands{{pass}}
-				    	<span class="caret"></span>
-				  	</button>
-					<ul class="dropdown-menu" role="menu"    {{if len(brands_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}> {{#make sure to make it scroll if list too long http://goo.gl/nn4GJ7}}
-						<li><a id = "all_makes_filter" href="{{=URL(vars=dict(year=year ,sortby=sortby))}}">All Brands</a></li>
-						<li class="divider"></li>
-						{{for each_make in brands_list:}}
-							{{new_multiple=multiple[:]}}
-							{{if each_make in new_multiple:}}
-								{{check_box=XML('<i class="fa fa-fw fa-check-square-o"></i>')}}
-								{{new_multiple.remove(each_make)}} {{#uncheck box}} 
-							{{else:}}
-								{{check_box=XML('<i class="fa fa-fw fa-square-o"></i>')}}
-								{{new_multiple += [each_make]}} {{#check box}}
-							{{pass}}
-							{{new_multiple_string = '|'.join(new_multiple)}}
-							<li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(multiple=new_multiple_string, year=year ,sortby=sortby))}}">{{=check_box}} {{=brands_list[each_make]}}</a></li>
-						{{pass}}
-					</ul>
-				</div>
-	 		</div>
+<div class="panel panel-default" style="margin-top:40px">
+    <div class="panel-body" style="padding-top: 0">
 
-	 		<!-- Models dropdown -->
-	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
-				<div class="btn-group">
-					{{if multiple:}}
-						{{model_brand_name=lambda model_nice_name:" (%s)"%brands_list[models_list[ model_nice_name ][1]] if len(multiple)>1 else ''}}
-						<a id="model_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#">
-							{{if model in models_list:}}{{=models_list[model][0]}}{{=model_brand_name(model)}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
-							<span class="caret"></span>
-						</a>
-						<ul class="dropdown-menu" role="menu"    {{if len(models_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
-							<li><a id = "all_models_filter" href="{{=URL(vars=dict(multiple=multiple_string, year=year ,sortby=sortby))}}">All Models</a></li>
-							 <li class="divider"></li>
-							{{for each_model in models_list:}}
-								<li><a id = "{{=each_model}}_model_filter" href="{{=URL(vars=dict(model=each_model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=models_list[each_model][0]}}{{=model_brand_name(each_model)}}</a></li>
-							{{pass}}
-						</ul>
-					{{else:}}
-						<a  id="model_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
-							All Models
-							<span class="caret"></span>
-						</a>
-					{{pass}}
-				</div>
-	 		</div>
+        <div class="row" style="background-color: #f9f9f9; padding-top: 10px">
+            <div class="col-xs-12">
+                <div class="row" style="margin-bottom: 5px;">
+                    <div class="col-xs-6">
+                        <h4>Buyer Request Filters</h4>
+                    </div>
+                    <div class="col-xs-6">
+                        <a class="pull-right" href="{{=AUCTION_REQUESTS_URL}}" title="Reset all filters">
+                            Reset all filters
+                        </a>
+                    </div>
+                </div>
 
-	 		<!-- Trims dropdown -->
-	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
-				<div class="btn-group">
-					{{if model:}}
-						<a id="trim_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
-							{{if trim in styles_list:}}{{=styles_list[trim]}}{{else:}}All Trims{{pass}}{{#the key is the id#, the value is the name}}
-							<span class="caret"></span>
-						</a>
-						<ul class="dropdown-menu" role="menu"     {{if len(styles_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
-							<li><a id = "all_styles_filter" href="{{=URL(vars=dict(multiple=multiple_string, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
-							<li class="divider"></li>
-							{{for each_trim in styles_list:}}
-								<li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
-							{{pass}}
-						</ul>
-					{{else:}}
-						<a id="trim_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
-							All Trims
-							<span class="caret"></span>
-						</a>
-					{{pass}}
-				</div>
-	 		</div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <!-- year dropdown -->
+                        <div style="margin-left:15px; margin-right:15px; display:inline-block">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown">
+                                    {{all_years = "%s - %s"%(years_list[0],years_list[-1])}}
+                                    {{if year in years_list:}}{{=year}} models{{else:}}{{=all_years}}{{pass}}
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a id = "all_filter" href="{{=URL(vars=dict(sortby=sortby))}}">{{=all_years}}</a></li>
+                                    <li class="divider"></li>
+                                    {{for each_year in years_list:}}
+                                    <li><a id = "{{=each_year}}_year_filter" href="{{=URL(vars=dict(year=each_year, sortby=sortby))}}">{{=each_year}} models</a></li>
+                                    {{pass}}
+                                </ul>
+                            </div>
+                        </div>
 
-	 		<!-- Colors dropdown -->
-	 		<div style="margin-left:15px; margin-right:15px; display:inline-block">
-				<div class="btn-group">
-					{{if trim:}}
-						<a id="color_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
-							{{if color in colors_list:}}{{=COLOR_SWATCH(colors_list[color][1])}}{{=colors_list[color][0]}}{{else:}}All Colors{{pass}}
-							{{#the key is the id#, the value is the name}}
-							<span class="caret"></span>
-						</a>
-						<ul class="dropdown-menu" role="menu"     {{if len(colors_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
-							<li><a id = "all_colors_filter" href="{{=URL(vars=dict(multiple=multiple_string, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
-							 <li class="divider"></li>
-							{{for each_color in colors_list:}}
-								<li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=COLOR_SWATCH(colors_list[each_color][1])}}{{#Todo-move to glob}} {{=colors_list[each_color][0]}}</a></li>
-							{{pass}}
-						</ul>
-					{{else:}}
-						<a  id="color_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
-							All Colors
-							<span class="caret"></span>
-						</a>
-					{{pass}}
-				</div>
-	 		</div>
-			
-			<div  class="pull-right" style="margin-left:15px; margin-right:15px; display:inline-block">
-				<a class="btn btn-info" href="{{=AUCTION_REQUESTS_URL}}" title="Reset">
-					<i class="fa fa-undo"></i>
-				</a>
-			</div>	
-	 	</div>
-	 </div>
-</div>
+                    </div>
+                    <div class="col-xs-2">
+                        <!-- Brands dropdown -->
+                        <div >
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown">
+                                    {{if len(multiple) > 1:}}Brands ({{=len(multiple)}} selected){{elif len(multiple) == 1:}}{{=brands_list[multiple[0]]}}{{else:}}All Brands{{pass}}
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu"    {{if len(brands_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}> {{#make sure to make it scroll if list too long http://goo.gl/nn4GJ7}}
+                                <li><a id = "all_makes_filter" href="{{=URL(vars=dict(year=year ,sortby=sortby))}}">All Brands</a></li>
+                                <li class="divider"></li>
+                                {{for each_make in brands_list:}}
+                                {{new_multiple=multiple[:]}}
+                                {{if each_make in new_multiple:}}
+                                {{check_box=XML('<i class="fa fa-fw fa-check-square-o"></i>')}}
+                                {{new_multiple.remove(each_make)}} {{#uncheck box}}
+                                {{else:}}
+                                {{check_box=XML('<i class="fa fa-fw fa-square-o"></i>')}}
+                                {{new_multiple += [each_make]}} {{#check box}}
+                                {{pass}}
+                                {{new_multiple_string = '|'.join(new_multiple)}}
+                                <li><a id = "{{=each_make}}_make_filter" href="{{=URL(vars=dict(multiple=new_multiple_string, year=year ,sortby=sortby))}}">{{=check_box}} {{=brands_list[each_make]}}</a></li>
+                                {{pass}}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <!-- Models dropdown -->
+                        <div >
+                            <div class="btn-group">
+                                {{if multiple:}}
+                                {{model_brand_name=lambda model_nice_name:" (%s)"%brands_list[models_list[ model_nice_name ][1]] if len(multiple)>1 else ''}}
+                                <a id="model_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#">
+                                    {{if model in models_list:}}{{=models_list[model][0]}}{{=model_brand_name(model)}}{{else:}}All Models{{pass}}{{#TODO use name not niceName}}
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu" role="menu"    {{if len(models_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
+                                <li><a id = "all_models_filter" href="{{=URL(vars=dict(multiple=multiple_string, year=year ,sortby=sortby))}}">All Models</a></li>
+                                <li class="divider"></li>
+                                {{for each_model in models_list:}}
+                                <li><a id = "{{=each_model}}_model_filter" href="{{=URL(vars=dict(model=each_model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=models_list[each_model][0]}}{{=model_brand_name(each_model)}}</a></li>
+                                {{pass}}
+                                </ul>
+                                {{else:}}
+                                <a  id="model_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
+                                    All Models
+                                    <span class="caret"></span>
+                                </a>
+                                {{pass}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <!-- Trims dropdown -->
+                        <div >
+                            <div class="btn-group">
+                                {{if model:}}
+                                <a id="trim_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
+                                    {{if trim in styles_list:}}{{=styles_list[trim]}}{{else:}}All Trims{{pass}}{{#the key is the id#, the value is the name}}
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu" role="menu"     {{if len(styles_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
+                                <li><a id = "all_styles_filter" href="{{=URL(vars=dict(multiple=multiple_string, model = model, year=year ,sortby=sortby))}}">All Trims</a></li>
+                                <li class="divider"></li>
+                                {{for each_trim in styles_list:}}
+                                <li><a id = "{{=each_trim}}_trim_filter" href="{{=URL(vars=dict(trim=each_trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=styles_list[each_trim]}}</a></li>
+                                {{pass}}
+                                </ul>
+                                {{else:}}
+                                <a id="trim_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
+                                    All Trims
+                                    <span class="caret"></span>
+                                </a>
+                                {{pass}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <!-- Colors dropdown -->
+                        <div >
+                            <div class="btn-group">
+                                {{if trim:}}
+                                <a id="color_dropdown" class="btn btn-default dropdown-toggle overflow-hidden" data-toggle="dropdown" href="#" style="max-width: 150px;">
+                                    {{if color in colors_list:}}{{=COLOR_SWATCH(colors_list[color][1])}}{{=colors_list[color][0]}}{{else:}}All Colors{{pass}}
+                                    {{#the key is the id#, the value is the name}}
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu" role="menu"     {{if len(colors_list)>11:}}style="height: auto; max-height: 400px; overflow-x: hidden;"{{pass}}>
+                                <li><a id = "all_colors_filter" href="{{=URL(vars=dict(multiple=multiple_string, model = model, trim=trim, year=year ,sortby=sortby))}}">All Colors</a></li> {{#reset should include previous, so it would grow as you progress}}
+                                <li class="divider"></li>
+                                {{for each_color in colors_list:}}
+                                <li><a id = "{{=each_color}}_color_filter" href="{{=URL(vars=dict(color=each_color, trim = trim, model = model, multiple=multiple_string, year=year ,sortby=sortby))}}">{{=COLOR_SWATCH(colors_list[each_color][1])}}{{#Todo-move to glob}} {{=colors_list[each_color][0]}}</a></li>
+                                {{pass}}
+                                </ul>
+                                {{else:}}
+                                <a  id="color_dropdown" class="btn btn-default dropdown-toggle disabled" data-toggle="dropdown" href="#">
+                                    All Colors
+                                    <span class="caret"></span>
+                                </a>
+                                {{pass}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="form-group" style="display: inline-block">
+                            <input id="sifter" type="text" class="input-medium form-control" placeholder="Text filter...">
+                        </div> {{#http://goo.gl/cC4lEn http://goo.gl/Y0w9wi http://goo.gl/LYpoNj}}
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div style="overflow-x: auto;">
-	<table class="table table-hover ">
-		<thead>
-			<tr>
-				{{for each_column in columns:}}
-					<th style="min-width: 100px">
-						{{if sortby in each_column[1]:}}
-							{{sort_pair = each_column[1][:]}}{{#create copy}}
-							{{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
-							<a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, multiple=multiple_string ) ) }}">
-								{{=each_column[0]}}
-							</a>
-						&nbsp;<i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
-						{{else:}}
-							<a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, multiple=multiple_string) ) }}">
-								{{=each_column[0]}}
-							</a>
-						{{pass}}
-					</th>
-				{{pass}}
-			</tr>
-		</thead>
+        <div class="row">
+            <div class="col-xs-12">
+                <table class="table table-hover ">
+                    <thead>
+                        <tr>
+                            {{for each_column in columns:}}
+                                <th style="min-width: 80px">
+                                    {{if sortby in each_column[1]:}}
+                                        {{sort_pair = each_column[1][:]}}{{#create copy}}
+                                        {{sort_pair.remove(sortby)}}{{#remove the sortby that is active, so that the url can be the other sortby}}
+                                        <a href = "{{=URL(vars=dict(sortby=sort_pair[0], color=color, trim = trim, model = model, multiple=multiple_string ) ) }}">
+                                            {{=each_column[0]}}
+                                        </a>
+                                        <i class="fa fa-caret-{{if sortby == each_column[1][0]:}}up{{else:}}down{{pass}}"></i>{{#no need for elif since only 2 choices}}
+                                    {{else:}}
+                                        <a href = "{{=URL(vars=dict(sortby = each_column[1][0], color=color, trim = trim, model = model, multiple=multiple_string) ) }}">
+                                            {{=each_column[0]}}
+                                        </a>
+                                    {{pass}}
+                                </th>
+                            {{pass}}
+                        </tr>
+                    </thead>
 
-		<tbody>
-			{{for each_request in auction_requests:}}
-				<tr class="jcorgFilterTextParent">
-					<td>
-						<a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"  style="width:100%" title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a>
+                    <tbody>
+                        {{for each_request in auction_requests:}}
+                            <tr class="jcorgFilterTextParent">
+                                <td class="jcorgFilterTextChild">
+                                    {{=each_request.auction_request.year}}
+                                </td>
 
-						<a class="btn btn-default btn-sm btn-action" style="margin-top:3px; width:100%"  data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" title="{{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}.">Info<i class="fa fa-fw fa-user"></i></a>
+                                <td class="jcorgFilterTextChild">
+                                    {{=each_request.auction_request.make_name}}
+                                </td>
 
-						<div class="modal fade" id="modal_{{=each_request.auction_request.id}}">
-							<div class="modal-dialog">
-								<div class="modal-content">
-									<div class="modal-header">
-										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-										<h4 class="modal-title">Request details for a {{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make].capitalize()}} {{=each_request.auction_request.model.capitalize()}}</h4>
-									</div>
-									<div class="modal-body" style="max-height:480px;overflow-y:auto;">
-										<table class="table">
-											<tr>
-												<th style="border-top: none">
-													Name:
-												</th>
+                                <td class="jcorgFilterTextChild">
+                                    {{=each_request.auction_request.model_name}}
+                                </td>
 
-												<td style="border-top: none">
-													<p>{{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}.</p>
-												</td>
-											</tr>
+                                <td class="jcorgFilterTextChild">
+                                    {{=each_request.auction_request.trim_name}}
+                                </td>
 
-											<tr>
-												<th>
-													No. of auctions entered
-												</th>
+                                <td>
+                                    {{color_swatches = zip(each_request.auction_request.color_hexes,each_request.auction_request.color_names, each_request.auction_request.color_categories)}}
+                                    <div>Interior:</div>
+                                    <div>
+                                        {{for each_swatch in color_swatches:}}
+                                            {{if each_swatch[2] == 'interior':}}
+                                                {{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
+                                            {{pass}}
+                                        {{pass}}
+                                    </div>
+                                    <div>Exterior:</div>
+                                    <div>
+                                        {{for each_swatch in color_swatches:}}
+                                            {{if each_swatch[2] == 'exterior':}}
+                                                {{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
+                                            {{pass}}
+                                        {{pass}}
+                                    </div>
+                                </td>
 
-												<td>
-													<p>{{entered=len(db(db.auction_request.owner_id == each_request.auth_user.id).select())}}
-													{{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction</p>
-												</td>
-											</tr>
-											
-											<tr>
-												<th>
-													Option preferences:
-												</th>
+                                <td class="jcorgFilterTextChild">
+                                    {{area=db(db.zipgeo.zip_code == each_request.auction_request.zip_code).select().first()}}
+                                    {{=area.city}}, {{=area.state_abbreviation}}
+                                </td>
 
-												<td>
-													{{categorized_options=CATEGORIZED_OPTIONS(each_request.auction_request)}}
-													{{for each_category, options_data in categorized_options.items():}}
-														{{if categorized_options[each_category] !=[] :}}
-															<h5><u>{{=each_category}}:</u></h5> <!--{{#don't allow blanks}}-->
-															{{for each_option in options_data:}}
-																<p {{if each_option[3] and each_option[3] != "None":}}title="{{=each_option[3]}}"{{pass}} >
-																	{{=BULLET}}{{=each_option[1]}}
-																</p>
-															{{pass}}
-														{{pass}}
-													{{pass}}
-												</td>
-											</tr>
+                                <td>
+                                    {{=human(each_request.auction_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
+                                    {{#=each_request.auction_request.auction_expires}}
+                                </td>
 
-											<tr>
-												<th>
-													Credit score
-												</th>
+                                <td>
+                                    {{=each_request.auction_request.number_of_bids()}}
+                                </td>
 
-												<td>
-													<p>{{credit_score=each_request.auction_request.FICO_credit_score}}
-													{{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}</p>
-												</td>
-											</tr>
+                                <td>
+                                    <a class="btn btn-primary btn-trinity btn-raised btn-sm" href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" style="width:100%" title="Join this auction and submit your vehicle. Then, let the bidding begin!">Join</a>
 
-											<tr>
-												<th>
-													Funding:
-												</th>
+                                    <a class="btn btn-default btn-trinity btn-sm" style="margin-top: 10px;" data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" title="Bid request {{=str(each_request.auction_request.id).zfill(3)}} submitted by {{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}. Click to view more details.">View</a>
 
-												<td>
-													<p>{{funding=each_request.auction_request.funding_source}}
-													{{=funding.capitalize()}}</p>
-												</td>
-											</tr>
-										{{if funding in ['lease', 'loan']:}}
-											<tr>
-												<th>
-													Expected down payment:
-												</th>
+                                    <div class="modal fade" id="modal_{{=each_request.auction_request.id}}">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                                    <h4 class="modal-title">Buyer Request: {{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make].capitalize()}} {{=each_request.auction_request.model.capitalize()}}</h4>
+                                                </div>
+                                                <div class="modal-body" style="max-height:480px;overflow-y:auto;">
+                                                    <table class="table">
+                                                        <tr>
+                                                            <th style="border-top: none">
+                                                                Name:
+                                                            </th>
 
-												<td>
-													<p>${{=each_request.auction_request.expected_down_payment}}</p>
-												</td>
-											</tr>
-										{{pass}}
-										{{if funding == 'loan':}}
-											<tr>
-												<th>
-													Financing:
-												</th>
+                                                            <td style="border-top: none">
+                                                                <p>{{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}.</p>
+                                                            </td>
+                                                        </tr>
 
-												<td>
-													<p>${{=each_request.auction_request.financing}}</p>
-												</td>
-											</tr>
-										{{pass}}										
-										{{if funding == 'lease':}}
-											<tr>
-												<th>
-													Lease mileage:
-												</th>
+                                                        <tr>
+                                                            <th>
+                                                                No. of auctions entered
+                                                            </th>
 
-												<td>
-													<p>{{=each_request.auction_request.lease_mileage}} miles</p>
-												</td>
-											</tr>
-											<tr>
-												<th>
-													Lease term:
-												</th>
+                                                            <td>
+                                                                <p>{{entered=len(db(db.auction_request.owner_id == each_request.auth_user.id).select())}}
+                                                                    {{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction</p>
+                                                            </td>
+                                                        </tr>
 
-												<td>
-													<p>{{=each_request.auction_request.lease_term}}</p>
-												</td>
-											</tr>
-										{{pass}}
-											<tr>
-												<th>
-													Trading in:
-												</th>
+                                                        <tr>
+                                                            <th>
+                                                                Option preferences:
+                                                            </th>
 
-												<td>
-													<p>{{trading=each_request.auction_request.trading_in}}
-													{{if trading:}}Yes{{else:}}No{{pass}}</p>
-												</td>
-											</tr>
-										{{if trading:}}
-											<tr>
-												<th>
-													Trade in description
-												</th>
+                                                            <td>
+                                                                {{categorized_options=CATEGORIZED_OPTIONS(each_request.auction_request)}}
+                                                                {{for each_category, options_data in categorized_options.items():}}
+                                                                {{if categorized_options[each_category] !=[] :}}
+                                                                <h5><u>{{=each_category}}:</u></h5> <!--{{#don't allow blanks}}-->
+                                                                {{for each_option in options_data:}}
+                                                                <p {{if each_option[3] and each_option[3] != "None":}}title="{{=each_option[3]}}"{{pass}} >
+                                                                {{=BULLET}}{{=each_option[1]}}
+                                                                </p>
+                                                                {{pass}}
+                                                                {{pass}}
+                                                                {{pass}}
+                                                            </td>
+                                                        </tr>
 
-												<td>
-													<p>{{=each_request.auction_request.describe_trade_in}}</p>
-												</td>
-											</tr>
-										{{pass}}
-										</table>
+                                                        <tr>
+                                                            <th>
+                                                                Credit score
+                                                            </th>
 
-									</div>
-									<div class="modal-footer">
-										<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-									</div>
-								</div>
-							</div>
-						</div>
-					</td>
+                                                            <td>
+                                                                <p>{{credit_score=each_request.auction_request.FICO_credit_score}}
+                                                                    {{if credit_score:}}{{=credit_score}}{{else:}}Doesn't know or won't share.{{pass}}</p>
+                                                            </td>
+                                                        </tr>
 
-					<td class="jcorgFilterTextChild">
-						{{=each_request.auction_request.year}}
-					</td>
+                                                        <tr>
+                                                            <th>
+                                                                Funding:
+                                                            </th>
 
-					<td class="jcorgFilterTextChild">
-						{{=each_request.auction_request.make_name}}
-					</td>
+                                                            <td>
+                                                                <p>{{funding=each_request.auction_request.funding_source}}
+                                                                    {{=funding.capitalize()}}</p>
+                                                            </td>
+                                                        </tr>
+                                                        {{if funding in ['lease', 'loan']:}}
+                                                        <tr>
+                                                            <th>
+                                                                Expected down payment:
+                                                            </th>
 
-					<td class="jcorgFilterTextChild">
-						{{=each_request.auction_request.model_name}} 
-					</td>
+                                                            <td>
+                                                                <p>${{=each_request.auction_request.expected_down_payment}}</p>
+                                                            </td>
+                                                        </tr>
+                                                        {{pass}}
+                                                        {{if funding == 'loan':}}
+                                                        <tr>
+                                                            <th>
+                                                                Financing:
+                                                            </th>
 
-					<td class="jcorgFilterTextChild">
-						{{=each_request.auction_request.trim_name}}
-					</td>
+                                                            <td>
+                                                                <p>${{=each_request.auction_request.financing}}</p>
+                                                            </td>
+                                                        </tr>
+                                                        {{pass}}
+                                                        {{if funding == 'lease':}}
+                                                        <tr>
+                                                            <th>
+                                                                Lease mileage:
+                                                            </th>
 
-					<td>
-						{{color_swatches = zip(each_request.auction_request.color_hexes,each_request.auction_request.color_names, each_request.auction_request.color_categories)}}
-						<div>Interior:</div>
-						<div>
-							{{for each_swatch in color_swatches:}}
-								{{if each_swatch[2] == 'interior':}}
-									{{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
-								{{pass}}
-							{{pass}}
-						</div>					
-						<div>Exterior:</div>
-						<div>
-							{{for each_swatch in color_swatches:}}
-								{{if each_swatch[2] == 'exterior':}}
-									{{=COLOR_SWATCH(each_swatch[0],each_swatch[1])}}
-								{{pass}}
-							{{pass}}
-						</div>
-					</td>
+                                                            <td>
+                                                                <p>{{=each_request.auction_request.lease_mileage}} miles</p>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>
+                                                                Lease term:
+                                                            </th>
 
-					<td class="jcorgFilterTextChild">
-						{{area=db(db.zipgeo.zip_code == each_request.auction_request.zip_code).select().first()}}
-						{{=area.city}}, {{=area.state_abbreviation}}
-					</td>
+                                                            <td>
+                                                                <p>{{=each_request.auction_request.lease_term}}</p>
+                                                            </td>
+                                                        </tr>
+                                                        {{pass}}
+                                                        <tr>
+                                                            <th>
+                                                                Trading in:
+                                                            </th>
 
-					<td>
-						{{=human(each_request.auction_request.auction_expires - request.now, precision=2, past_tense='{}', future_tense='{}')}}
-						{{#=each_request.auction_request.auction_expires}}
-					</td>
+                                                            <td>
+                                                                <p>{{trading=each_request.auction_request.trading_in}}
+                                                                    {{if trading:}}Yes{{else:}}No{{pass}}</p>
+                                                            </td>
+                                                        </tr>
+                                                        {{if trading:}}
+                                                        <tr>
+                                                            <th>
+                                                                Trade in description
+                                                            </th>
 
-					<td>
-						{{=each_request.auction_request.number_of_bids()}}
-					</td>
-				</tr>
-				<script>
-					$("#sifter").jcOnPageFilter({caseSensitive:false, animateHideNShow:true, hideNegatives:true, highlightColor:'lightgreen'}); {{#http://goo.gl/LYpoNj}}
-				</script>
-			{{pass}}
-		</tbody>
-	</table>
-	{{if blank_after_filter_message:}}
-		{{=blank_after_filter_message}}
-	{{pass}}
+                                                            <td>
+                                                                <p>{{=each_request.auction_request.describe_trade_in}}</p>
+                                                            </td>
+                                                        </tr>
+                                                        {{pass}}
+                                                    </table>
+
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+
+                            </tr>
+                            <script>
+                                $("#sifter").jcOnPageFilter({caseSensitive:false, animateHideNShow:true, hideNegatives:true, highlightColor:'lightgreen'}); {{#http://goo.gl/LYpoNj}}
+                            </script>
+                        {{pass}}
+                    </tbody>
+                </table>
+                {{if blank_after_filter_message:}}
+                    {{=blank_after_filter_message}}
+                {{pass}}
+            </div>
+        </div>
+    </div>
 </div>
