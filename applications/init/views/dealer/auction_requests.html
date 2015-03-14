@@ -232,9 +232,49 @@
                                 </td>
 
                                 <td>
-                                    <a class="btn btn-primary btn-trinity btn-raised btn-sm" href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" style="width:100%" title="Join this auction and submit your vehicle. Then, let the bidding begin!">Join</a>
+									<!--{{#--JOIN BUTTON AND MODAL}}-->
+									
+									<!-- {{# <a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"  style="width:100%" title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a> }}-->
+									{{matching_inventory = bool(len(each_request['matched_vehicles']) ) }}
+                                    <a class="btn btn-{{if matching_inventory:}}info{{else:}}default{{pass}} btn-trinity btn-raised btn-sm" data-toggle="modal" data-target="#join_modal_{{=each_request.auction_request.id}}" style="width:100%" title="Join this auction and submit your vehicle. Then, let the bidding begin!">Join</a>
 
-                                    <a class="btn btn-default btn-trinity btn-sm" style="margin-top: 10px;" data-toggle="modal" data-target="#modal_{{=each_request.auction_request.id}}" title="Bid request {{=str(each_request.auction_request.id).zfill(3)}} submitted by {{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}. Click to view more details.">View</a>
+									<div class="modal fade" id="join_modal_{{=each_request.auction_request.id}}" style="overflow: visible;"><!--{{#http://stackoverflow.com/questions/11899870/bootstrap-in-a-modal-dialog-how-do-i-make-the-dropdown-menu-expand-outside-the}}-->
+										<div class="modal-dialog">
+											<div class="modal-content">
+												<div class="modal-header">
+													<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+													<h4 class="modal-title">Bid your {{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make].capitalize()}} {{=each_request.auction_request.model.capitalize()}}</h4>
+												</div>
+												<div class="modal-body" style="max-height:480px;overflow-y:auto;overflow: visible;">
+												
+													<div class="dropdown" title="{{if not matching_inventory:}}You do not have any vehicles that match this request.{{pass}}">
+													  <button class="btn btn-info dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+														Choose a matched vehicle from your inventory
+														<span class="caret"></span>
+													  </button>
+													  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" style="max-height:480px;overflow-y:auto">
+														{{for each_vehicle in each_request['matched_vehicles']:}}
+															<li role="presentation"><a role="menuitem" tabindex="-1" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
+																{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
+															</a></li>
+														{{pass}}
+													  </ul>
+													</div>
+													
+													<h2 class="modal-title" style="text-align:center;">&mdash;OR&mdash;</h2>
+													
+													<a href="{{=URL('inventory', 'index')}}" class="btn btn-default btn-action btn-lg" style="width:100%;">Add a new vehicle to your inventory</a>
+
+												</div>
+												<div class="modal-footer">
+													<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+												</div>
+											</div>
+										</div>
+									</div>
+										
+									<!--{{#--INFO BUTTON AND MODAL}}-->
+                                    <a class="btn btn-default btn-trinity btn-sm" style="margin-top: 10px;" data-toggle="modal" data-target="#info_modal_{{=each_request.auction_request.id}}" title="Bid request {{=str(each_request.auction_request.id).zfill(3)}} submitted by {{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}. Click to view more details.">View</a>
 
                                     <div class="modal fade" id="modal_{{=each_request.auction_request.id}}">
                                         <div class="modal-dialog">
@@ -257,7 +297,7 @@
 
                                                         <tr>
                                                             <th>
-                                                                No. of auctions entered
+                                                                No. of auctions entered:
                                                             </th>
 
                                                             <td>
@@ -266,6 +306,17 @@
                                                             </td>
                                                         </tr>
 
+														<tr>
+															
+															<th>
+																Must match:
+															</th>
+															
+															<td>
+																<p>{{=str([each_match.capitalize() for each_match in each_request.auction_request["matching"]] ).replace("'","").replace("[","").replace("]","") }}</p>
+															</td>
+														</tr>
+														
                                                         <tr>
                                                             <th>
                                                                 Option preferences:

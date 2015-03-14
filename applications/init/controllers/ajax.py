@@ -57,6 +57,7 @@ def options_content(): #TODO get all data from single call make/model/year
 			color_codes.append(  [  1, 'Exterior color to be determined', "ff00ff", 'Exterior' , 'exterior'  ]  )
 		#color_codes.sort(key=lambda x: x[1])
 		session.color_codes = color_codes
+		#print color_codes
 		return dict(color_codes=color_codes)
 		
 	def __options__():
@@ -172,7 +173,7 @@ def dealer_radius_map(): #CACHE CACHE CACHE!!
 		else:
 			urls=[error_img%"Not a zip code."]
 
-	return dict(urls=urls, make_name=all_brands_list[make], dealer_count=len(dealers))
+	return dict(urls=urls, make_name=ALL_BRANDS_LIST[make], dealer_count=len(dealers))
 	
 #auth requires dealer or buyer or admin
 @auth.requires(request.args(0))

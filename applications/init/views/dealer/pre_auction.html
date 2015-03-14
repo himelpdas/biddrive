@@ -93,7 +93,7 @@
 						$("#"+optgroup_id).append("<option value='"+ i + "'" + selected + ">" + item['name'] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
 					});
 				</script>
-				{{bootstrap_multiselect([['auction_request_offer_options', 'Select options in this vehicle']], max_height=480)}}
+				{{BOOTSTRAP_MULTISELECT([['auction_request_offer_options', 'Select options in this vehicle']], max_height=480)}}
 				
 				<div class="form-group">
 					<label class="col-sm-3 control-label"><i class="fa fa-question-circle"  title="The total dollar value of ALL additional costs regarding this vehicle."></i> Additional costs</label>

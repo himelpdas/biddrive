@@ -1,0 +1,271 @@
+{{response.title = "Build your %s %s %s" % (year, make.title(), model.title())}}
+{{extend 'page_layout_new.html'}}
+{{#=BEAUTIFY(response._vars)}}
+
+<style>
+    body {
+        background-color: #ffffff !important;
+    }
+</style>
+
+<div>
+
+    {{ form.element("select", _name = "trim")["_class"] += " form-control" }}
+
+    {{ form.element("input", _name = "additional_costs")["_class"] += " form-control" }}
+    {{ form.element("input", _name = "vin_number")["_class"] += " form-control" }}
+    {{ form.element("textarea", _name = "additional_costs_details")["_placeholder"] = "Example: TODO" }}
+    {{ form.element("textarea", _name = "additional_costs_details")["_class"] +=  " form-control" }}
+    {{ form.element("textarea", _name = "summary")["_placeholder"] = "Example: TODO" }}
+    {{ form.element("textarea", _name = "summary")["_class"] +=  " form-control" }}
+
+    {{ form.element("select", _name = "colors")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "options")["_class"] += " form-control" }}
+    {{ form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-trinity-big" }}
+    {{ form.element("input", _type = "submit")["_id"] = "submit" }}
+    {{ form.element("input", _type = "submit")["_value"] = "Add vehicle" }}
+
+    {{=form.custom.begin}}
+
+    <div class="row" style="padding: 40px 0;">
+        <div class="col-xs-12 text-center">
+            <h2 class="color">Step 1. Describe your vehicle</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default silver-bg">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.trim['_id']}}" class="col-sm-3 control-label">Trim <i class="fa fa-question-circle" title='Select the TRIM of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a trim that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.trim}}
+
+                                    {{if form.errors['trim']:}}
+                                    <div class="alert alert-warning">{{=form.errors['trim']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.colors['_id']}}" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors <i class="fa fa-question-circle" title="Select at least one interior AND one exterior style or color you want your vehicle to have."></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.colors}}{{#logger.debug(form.errors['colors'])}}
+                                    {{if form.errors['colors']:}}
+                                    <div class="alert alert-warning">{{=form.errors['colors']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.options['_id']}}" class="col-sm-3 control-label"><i id="options_spinner" class="fa fa-spin options_spinner"></i> Options <i class="fa fa-question-circle" title="Select features you want in your car (optional). Picking too many choices here will likely reduce the number of offers you get from dealers. If you're unsure, just leave it blank!"></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.options}}
+
+                                    {{if form.errors['options']:}}
+                                    <div class="alert alert-warning">{{=form.errors['options']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="padding: 20px 0;">
+        <div class="col-xs-12 text-center">
+            <h2 class="color">Step 2. Additional info</h2>
+            <span>(This information helps us find dealers near you.)</span>
+        </div>
+    </div>
+
+	
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default silver-bg">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
+
+	                        <div class="form-group">
+                                <label for="{{=form.custom.widget.vin_number['_id']}}" class="col-sm-3 control-label"></i>VIN number <i class="fa fa-question-circle" title="TODO"></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.vin_number}}{{#logger.debug(form.errors['vin_number'])}}
+                                    {{if form.errors['vin_number']:}}
+                                    <div class="alert alert-warning">{{=form.errors['vin_number']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+						
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.summary['_id']}}" class="col-sm-3 control-label">Summary <i class="fa fa-question-circle" title='TODO'></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.summary}}
+
+                                    {{if form.errors['summary']:}}
+                                    <div class="alert alert-warning">{{=form.errors['summary']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.additional_costs['_id']}}" class="col-sm-3 control-label"></i>Additional costs <i class="fa fa-question-circle" title="TODO"></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.additional_costs}}{{#logger.debug(form.errors['additional_costs'])}}
+                                    {{if form.errors['additional_costs']:}}
+                                    <div class="alert alert-warning">{{=form.errors['additional_costs']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.additional_costs_details['_id']}}" class="col-sm-3 control-label"></i>Costs description <i class="fa fa-question-circle" title="TODO"></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.additional_costs_details}}
+
+                                    {{if form.errors['additional_costs_details']:}}
+                                    <div class="alert alert-warning">{{=form.errors['additional_costs_details']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="form-group">
+                <div class="col-sm-offset-5 col-sm-7 ">
+                    {{=form.custom.submit}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{=form.custom.end}}
+<!--{{#<h3>{{=form.errors}}</h3><h3>{{=auth.user_id}}</h3>}}-->
+
+<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-md5.js"></script> <!--{{#quick configure-less function}}{{#https://code.google.com/p/crypto-js/}}-->
+
+<script>
+//{{#client side of hmac verification used to protect against fraudulent ajax calls (perhaps by data miners)}}
+var glob_message_string = "{{=make}}"+"{{=model}}"+"{{=year}}";
+var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT IN ITS ORIGINAL FORM #HASH IS WEAK (64-bit) BUT DOES ITS JOB}}
+</script>
+
+<script type="text/javascript">
+    //{{#var stuff={{=XML(json.dumps(session.option_codes))}}
+    function load_content(){
+        //{{#hmac}}
+        var loc_token =$('#auction_request_offer_trim').val();
+        var loc_hash = CryptoJS.HmacMD5(glob_message_string+loc_token, glob_session_key ); //{{#CryptoJS.HmacMD5("Message", "Secret Passphrase");}}
+        //
+        $("#fake_submit").addClass("disabled", 250);//{{#ajax active, disable submit button}}
+        //{{#no need to reload if multiselect has values. this is due to erroneous forms, which pre-fill the multi-selects after submission}}
+        //{{#http://goo.gl/aZeO3n}} {{#if multiselect options is blank or page already loaded}}
+        //{{#shoe spinner before ajax}}
+        $('.options_spinner').addClass("fa-spinner");
+        //{{#colors}}
+        $('#auction_request_offer_colors').multiselect("disable"); //{{#the new multiselect element that the multiselect plugin creates after initialization #fade out while loading ajax}}
+        //{{#options}}
+        $('#auction_request_offer_options').multiselect("disable");
+        ////{{#ajax}}
+        $('#trim_stats').slideUp(400)
+        $.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
+            .done(function( data ) {
+                /*/{{#colors}}
+                var previous_colors_submissions = $("#auction_request_offer_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+                if (previous_colors_submissions.length==0){
+                    $.each( data.style_colors, function( i, item ) { //{{#similar to python enumerate}}
+                        $("#auction_request_offer_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
+                    });
+                };
+                /*/
+                var previous_colors_submissions = $("#auction_request_offer_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+                $("#auction_request_offer_colors").children().remove(); //{{#it appears there are no saved values from form submission}}
+                $.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
+                    var optgroup_id = "auction_request_offer_colors_" + item[4]
+                    if ($("#"+optgroup_id).length == 0) {
+                        $("#auction_request_offer_colors").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
+                    }
+                    var selected = ''
+                    previous_colors_submissions.each(function(esi, each_selected_item){
+                        if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
+                            selected = 'selected="selected"'
+                        }
+                    });
+                    $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
+                });
+                $("#auction_request_offer_colors").multiselect('rebuild');
+                $('#auction_request_offer_colors').multiselect("enable"); //{{#fade back in}}
+                //{{#options}}
+                var previous_options_submissions = $("#auction_request_offer_options option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
+                $("#auction_request_offer_options").children().remove();
+                $.each( data.option_codes, function( i, item) { //{{#similar to python enumerate}}
+                    var optgroup_id = "auction_request_offer_options_" + item[4]
+                    if ($("#"+optgroup_id).length == 0) {
+                        $("#auction_request_offer_options").append("<optgroup label='"   +   item[3]+"&#9660;"   +   "' id ='"   +   optgroup_id    +   "'></optgroup>");
+                    }
+                    var selected = ''
+                    previous_options_submissions.each(function(esi, each_selected_item){
+                        if ($(each_selected_item).attr("value") == item[0]){ //{{#this will also work}}
+                            selected = 'selected="selected"'
+                        }
+                    });
+                    $("#"+optgroup_id).append("<option value='"+ item[0] + "'" + selected + ">" + item[1] + "</option>"); //{{#using names as values NOT safe! Use IDs instead}}
+                });
+                $("#auction_request_offer_options").multiselect('rebuild');
+                $('#auction_request_offer_options').multiselect("enable"); //{{#fade back in}}
+                //{{#trim stats}}
+                $('#trim_stats').slideUp(400).html(data.style_details_html_string).slideDown(200);
+            })
+            .fail(function( xhr, status, error ) {
+                if ( status == "error" ) {
+                    var msg = "Error loading options: ";
+                    $("#ajax_failure_warning_message_container").append('<div id="ajax_failure_warning_options" class="alert alert-danger"><span id="ajax_failure_warning_options_message"></span><i class="fa fa-times-circle-o pull-right"></i></div>')
+                    $('#ajax_failure_warning_options_message').html( msg + xhr.status + " " + xhr.statusText ); //{{#TODO- implement fail element}}
+                    $('#ajax_failure_warning_options').slideDown();
+                    $('#ajax_failure_warning_options').click(function(){
+                        $(this).slideUp();
+                    });
+                }
+            })
+            .always(function(){
+                //{{#always hide spinner when done}}
+                $('.options_spinner').removeClass("fa-spinner");
+            });
+
+    //close main function
+    }
+    $('#auction_request_offer_trim').change(load_content) //{{#change color preference options when you change trim dropdown}}
+	.multiselect({ //{{#onetime styling of this single-select to match the multi-selects below}}
+				'maxHeight':480,
+				'buttonClass': 'form-control btn-primary',
+				'onDropdownShow':	 function(event) {
+						$( document ).tooltip( "destroy" ); //{{#tooltips distract in mobile}}
+				},
+				'onDropdownHide':	 function(event) {
+						$( document ).tooltip();
+				},
+			}); //use multiselect widget for consistance, though it is not actually single select
+
+    $(document).ready(function(){
+        load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
+    })
+    .ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
+        $("#fake_submit").removeClass("disabled", 250);
+    });
+</script>
+
+{{BOOTSTRAP_MULTISELECT([['auction_request_offer_colors', 'Pick interior and exterior colors'], ['auction_request_offer_options','Pick must have options (optional)']], max_height=480)}}
