@@ -72,10 +72,16 @@ def findPhotosByStyleID(style_id):
 	)
 
 def getStylesByMakeModelYear(make, model, year):
+	"""
+	Used to display menus and options via form to user
+	"""
 	if int(year) in YEAR_RANGE:
 		return ed_call(STYLES_URI%(make, model, year))['styles'] #(make, model, year)
 
 def getStyleByMakeModelYearStyleID(make, model, year, style_id):
+	"""
+	Used to check if info submitted by user is valid
+	"""
 	styles = getStylesByMakeModelYear(make, model, year)
 	for each_style in styles:
 		if int(each_style['id']) == int(style_id):

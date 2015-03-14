@@ -498,18 +498,17 @@ pass
 
                             <!-- IMAGE SLIDER -->
                             <div class="carousel-inner">
-                                {{list_of_image_types = ['exterior', 'interior', 'front', 'rear', 'tire', 'dashboard', 'passenger', 'trunk', 'underhood', 'roof', 'other']}}
+                                <!--{{#VEHICLE_IMAGE_NUMBERS = ['exterior', 'interior', 'front', 'rear', 'tire', 'dashboard', 'passenger', 'trunk', 'underhood', 'roof', 'other']}}-->
                                 {{has_images = had_active =False}}
-                                {{for n, each_image_type in enumerate(list_of_image_types):}}
-                                    {{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
+                                {{for each_image_number in VEHICLE_IMAGE_NUMBERS:}}
+                                    {{small_and_large_file_names=each_offer['ROW']['image_compressed_%s'%each_image_number]}}
                                     {{if small_and_large_file_names:}} {{#did dealer submit images?}}
                                         <div class="item {{if not had_active:}}active{{pass}}"> {{#need one active label or image won't show!}}
                                             {{had_active=True}}
-                                            {{#image_s = each_offer['exterior_images'][0]}}
                                             {{image_s = small_and_large_file_names[0]}}
                                             {{image_l = small_and_large_file_names[1]}}
                                             {{has_images=True}}
-                                            <a href="#{{=each_image_type}}_{{=each_offer['id']}}" data-toggle="modal" data-target="#{{=each_image_type}}_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
+                                            <a href="#{{=each_image_number}}_{{=each_offer['id']}}" data-toggle="modal" data-target="#{{=each_image_number}}_{{=each_offer['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
                                         </div>
                                     {{pass}}
                                 {{pass}}
@@ -760,12 +759,12 @@ pass
 
         {{#####MODALS#####}}
         {{if has_images:}} {{#cpu saver, since for loop can do the same}}
-            {{for each_image_type in list_of_image_types:}}
+            {{for each_image_number in VEHICLE_IMAGE_NUMBERS:}}
                 {{#image_s = each_offer['exterior_images'][0]}}
-                {{small_and_large_file_names=each_offer['%s_images'%each_image_type]}}
+                {{small_and_large_file_names=each_offer['%s_images'%each_image_number]}}
                 {{if small_and_large_file_names:}} {{#did dealer submit images?}}
                     {{image_l = small_and_large_file_names[1]}}
-                    <div id="{{=each_image_type}}_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_type}}_image_l_{{=each_offer['id']}}" aria-hidden="true">
+                    <div id="{{=each_image_number}}_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_number}}_image_l_{{=each_offer['id']}}" aria-hidden="true">
                       <div class="modal-dialog modal-md">
                         <div class="modal-content">
                             <div class="modal-body">

@@ -58,6 +58,9 @@ def request_by_make():
 	
 	model_styles = getStylesByMakeModelYear(make, model, year)
 	
+	make_name = model_styles[0]['make']['name']
+	model_name = model_styles[0]['model']['name']
+	
 	if not model_styles:
 		session.message='Invalid Year!'
 		redirect(URL('index.html'))
@@ -84,7 +87,7 @@ def request_by_make():
 	
 	#making sure child-inputs are enforced if parent-inputs are selected
 	if request.post_vars['funding_source'] != 'cash':  #cash 
-		db.auction_request.expected_down_payment.requires = expected_down_payment_requires
+		db.auction_request.expected_down_payment.requires = EXPECTED_DOWN_PMT_REQUIRES
 	else: #is paying in full
 		request.post_vars['financing'] = None #so erase other crap
 		request.post_vars['expected_down_payment'] = None
@@ -92,12 +95,12 @@ def request_by_make():
 		request.post_vars['lease_mileage'] = None
 	
 	if request.post_vars['funding_source'] == 'lease': #lease
-		db.auction_request.lease_term.requires = lease_term_requires #force a choice if taking a lease
-		db.auction_request.lease_mileage.requires = lease_mileage_requires #TODO MAKE LESS DRY
+		db.auction_request.lease_term.requires = LEASE_TERM_REQUIRES #force a choice if taking a lease
+		db.auction_request.lease_mileage.requires = LEASE_MILEAGE_REQUIRES #TODO MAKE LESS DRY
 		request.post_vars['financing'] = None #disable others
 		
 	if request.post_vars['funding_source'] == 'loan': #loan
-		db.auction_request.financing.requires = financing_requires
+		db.auction_request.financing.requires = FINANCING_REQUIRES
 		request.post_vars['lease_term'] = None
 		request.post_vars['lease_mileage'] = None
 		
@@ -125,12 +128,13 @@ def request_by_make():
 		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.colors ] #make a list of color names based on ids in colors field
 		db.auction_request.color_simple_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.colors ]
 	"""
-	
-	#make model names
-	db.auction_request.make_name.default = make_name = model_styles[0]['make']['name']
-	db.auction_request.model_name.default = model_name = model_styles[0]['model']['name']
-	#
+
 	def computations(form): #these defaults need form vars, so must do it in onvalidation
+		
+		#make model names
+		db.auction_request.make_name.default = make_name = model_styles[0]['make']['name']
+		db.auction_request.model_name.default = model_name = model_styles[0]['model']['name']
+		#
 		#initialize
 		trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim)
 		##trim stuff
@@ -208,7 +212,7 @@ def request_by_make():
 		db.auction_request.color_msrps.default = [ (int(float(each_color['price']['baseMSRP'])) if ('price' in each_color and 'baseMSRP' in each_color['price']) else 0 ) for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.colors ] #make a list of color names based on ids in colors field
 		db.auction_request.color_simple_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options'] if each_color['id'] in form.vars.colors ]
 		"""
-	if form.process(keepvalues=True, onvalidation=computations, hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
+	if form.process(keepvalues=True, onvalidation=lambda form:VALIDATE_VEHICLE(form, make, model, year, 'auction_request'), hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		pre_auction_id = [form.vars.id]
 		if request.post_vars['password'] or request.post_vars['email']: #can't use form.vars for some reason, probably because process removed non SQLFORM vars like email and password
 			if not auth.login_bare(request.post_vars['email'],request.post_vars['password']): #will login automatically if true

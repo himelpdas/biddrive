@@ -19,6 +19,7 @@ def auction_requests():
 	#year
 	
 	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
+	my_inventory = db(db.auction_request_offer.auction_request == None).select()
 	
 	year = request.vars['year']
 	year_range_string = map(lambda each_year: str(each_year),YEAR_RANGE) #vars come back as strings, so make YEAR_RANGE strings for easy comparison
@@ -146,9 +147,67 @@ def auction_requests():
 		total_requests = len(all_results)
 		#logger.debug(all_results[0].auction_request.id)
 		blank_after_filter_message = XML('<div class="text-light"><h4>There are %s requests on %s, but none are within your parameters.</h4><h5>Please modify your parameters or come back later.</h5></div>'%(total_requests, APP_NAME) if is_blank else '')
+	else:
+		for each_auction in auction_requests:
+			each_auction['matched_vehicles'] = []
+			for each_inventory_vehicle in my_inventory:
+				all_matched = []
+				if 'body' in each_auction.auction_request.matching:
+					if each_auction.auction_request.body == each_inventory_vehicle.body:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)
+				if 'year' in each_auction.auction_request.matching:
+					if each_auction.auction_request.year == each_inventory_vehicle.year:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)
+				if 'make' in each_auction.auction_request.matching:
+					if each_auction.auction_request.make_name == each_inventory_vehicle.make_name:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)					
+				if 'model' in each_auction.auction_request.matching:
+					if each_auction.auction_request.model_name == each_inventory_vehicle.model_name:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)	
+				if 'trim' in each_auction.auction_request.matching:
+					if each_auction.auction_request.trim_name == each_inventory_vehicle.trim_name:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)	
+				
+				if 'colors' in each_auction.auction_request.matching: #better to use name instead of ID
+					#print each_inventory_vehicle.color_names, each_auction.auction_request.color_names
+					count = []
+					for color in each_auction.auction_request.color_names: #can't use issubset because auction_request's color_names might by smaller than inventory_vehicle's
+						if color in each_inventory_vehicle.color_names:
+							count.append(1)
+					if len(count) == len(each_auction.auction_request.color_names):
+						all_matched.append(True)
+					else:
+						all_matched.append(False)	
+
+				if 'options' in each_auction.auction_request.matching: #better to use name instead of ID
+					#print each_inventory_vehicle.option_names, each_auction.auction_request.option_names
+					count = []
+					for option in each_auction.auction_request.option_names:
+						if option in each_inventory_vehicle.option_names:
+							count.append(1)
+					if len(count) == len(each_auction.auction_request.option_names):
+						all_matched.append(True)
+					else:
+						all_matched.append(False)
+								
+				if all(all_matched):
+					each_auction['matched_vehicles'].append(each_inventory_vehicle)
+					
+				print all_matched
+
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
-	for each_request in auction_requests:
-		each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.auction_request.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
+	#for each_request in auction_requests:
+	#	each_request["digitally_signed_pre_auction_url"] = URL('dealer','pre_auction', args=[each_request.auction_request.id], hmac_key=each_request.auction_request.temp_id, hash_vars=[each_request.auction_request.id]) #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
 	#####in memory sorting#####
 	if sortby == "colors-most" or sortby == "colors-least":
 		reverse = False
@@ -253,6 +312,7 @@ def auction_requests():
 
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, multiple=multiple, multiple_string='|'.join(multiple), color=color, colors_list=colors_list, trim=trim, styles_list=styles_list, blank_after_filter_message=blank_after_filter_message)
 
+"""
 #@auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
 #@auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
@@ -388,18 +448,58 @@ def pre_auction():
 	)
 	
 	return dict(form = form, my_piggy=my_piggy, options=options, option_codes=option_codes, categorized_options=CATEGORIZED_OPTIONS(auction_request), msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
-
 """
-@auth.requires(request.args(0))
-def authorize_auction_for_dealer(): #add permission and charge entry fee upon dealer agreement of terms and fees
+	
+@auth.requires(request.args(0) and request.args(1))
+@auth.requires_membership('dealers')
+def pre_auction():
+
 	auction_request_id = request.args[0]
-	if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
-		auth.add_membership('request_by_make_authorized_dealers_#%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
-		redirect(URL('pre_auction.html', args=[auction_request_id]))
-	session.message='@Invalid request ID!'
-	redirect(URL('auction_requests'))
-"""
+	inventory_vehicle_id = request.args[1]
+	
+	if db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select(): #make sure dealer did not make an offer already... if so redirect him to auction
+		redirect(URL('auction',args=[auction_request_id]))
+	auction_request = db(db.auction_request.id == auction_request_id).select().last() #ALWAYS verify existence of vars/args in database.
+	if not auction_request:
+		session.message='@Invalid request ID!'
+		redirect(URL('my_auctions'))
+	if not URL.verify(request, hmac_key=auction_request.temp_id, hash_vars=[auction_request.id]): #verifys all args (or ones specified) in a url
+		#session.message='@You are attempting to tamper with BidDrive! You have been reported.'
+		redirect(URL('my_auctions'))
+		
+	if db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
+		
+		auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
+		
+		my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
+		my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
+		db.credits_history.insert(changed = -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
+		
+		#add vehicle to auction
+		inventory_vehicle = db(db.auction_request_offer.id == inventory_vehicle_id).select().last()
+		inventory_vehicle.update_record(auction_request = auction_request_id)
+		auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
+		
+		#####send a messages to all involved in this auction#####
+		auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
+		car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
+		#send to dealers
+		me = auth.user #i'm the guy submitting this offer
+		my_initials = '%s %s'%(me.first_name.capitalize(), me.last_name.capitalize()[:1]+'.')
+		#send to dealers in the auction
+		for each_offer in auction_request_offers:
+			send_to = each_offer.auth_user
+			each_is_my_offer = me.id == send_to.id #since I'm the one submitting and it's my offer
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he= my_initials, url=URL(args=request.args, host=True, scheme=True) ) )
+		#send a copy to me
+		SEND_ALERT_TO_QUEUE(USER=me, MESSAGE_TEMPLATE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he="You", url=URL(args=request.args, host=True, scheme=True) ) )
+		#send a copy to buyer
+		SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_offer", **dict(app=APP_NAME, car=car, dealer_name = my_initials, url=URL(args=request.args, host=True, scheme=True) ) )
 
+	session.message = '$Your vehicle was submitted!'
+	redirect(
+		URL('auction', args=[auction_request_id])
+	)
 	
 #@auth.requires_login() #make dealer only
 @auth.requires(request.args(0))
@@ -880,32 +980,11 @@ def auction():
 			'interior_color' : this_interior_color,
 			'summary' : each_offer.auction_request_offer.summary,
 			'options_dict':options_dict,
-			#'exterior_image' : each_offer.auction_request_offer.exterior_image,
-			#'interior_image' : each_offer.auction_request_offer.interior_image,
-			'exterior_images' : each_offer.auction_request_offer.exterior_image_compressed,
-			'interior_images' : each_offer.auction_request_offer.interior_image_compressed,
-			#'front_image' : each_offer.auction_request_offer.front_image,
-			'front_images' : each_offer.auction_request_offer.front_image_compressed,
-			#'rear_image' : each_offer.auction_request_offer.rear_image,
-			'rear_images' : each_offer.auction_request_offer.rear_image_compressed,
-			#'tire_image' : each_offer.auction_request_offer.tire_image,
-			'tire_images' : each_offer.auction_request_offer.tire_image_compressed,
-			#'dashboard_image' : each_offer.auction_request_offer.dashboard_image,
-			'dashboard_images' : each_offer.auction_request_offer.dashboard_image_compressed,
-			#'passenger_image' : each_offer.auction_request_offer.passenger_image,
-			'passenger_images' : each_offer.auction_request_offer.passenger_image_compressed,
-			#'trunk_image' : each_offer.auction_request_offer.trunk_image,
-			'trunk_images' : each_offer.auction_request_offer.trunk_image_compressed,
-			#'underhood_image' : each_offer.auction_request_offer.underhood_image,
-			'underhood_images' : each_offer.auction_request_offer.underhood_image_compressed,
-			#'roof_image' : each_offer.auction_request_offer.roof_image,
-			'roof_images' : each_offer.auction_request_offer.roof_image_compressed,
-			#'other_image' : each_offer.auction_request_offer.other_image,
-			'other_images' : each_offer.auction_request_offer.other_image_compressed,
 			'estimation': '$%s'%msrp,
 			'offer_distance_to_auction_request': '%0.2f'%this_dealer_distance,
 			'estimation_discount_percent': '%0.2f%%'% (last_bid.estimation_discount(each_offer) if last_bid else 0.00,) ,#(100-(last_bid_price)/float(msrp)*100) #http://goo.gl/2qp8lh #http://goo.gl/6ngwCd
 			'estimation_discount_dollars':'$%s'%(int(msrp) - int(msrp if not last_bid_price else last_bid_price),),
+			'ROW' : each_offer.auction_request_offer,
 		}
 		#auction_request_offers_info.append(each_offer_dict)
 		auction_request_offers_info.update({offer_id:each_offer_dict}) #FIXED used ordered dictionary to prevent duplicates from query appearing in auction
@@ -1069,14 +1148,13 @@ def winner():
 	#details about offer
 	auction_request_offer = db(db.auction_request_offer.id == winner.auction_request_offer).select().last()
 	#get the image urls
-	list_of_image_types = ['exterior', 'interior', 'front', 'rear', 'tire', 'dashboard', 'passenger', 'trunk', 'underhood', 'roof', 'other']
 	image_urls = {}
-	for each_image_type in list_of_image_types:
-		image_filename_pair = auction_request_offer['%s_image_compressed'%each_image_type]
+	for each_image_number in VEHICLE_IMAGE_NUMBERS:
+		image_filename_pair = auction_request_offer['image_compressed_%s'%each_image_number]
 		image_s = image_filename_pair[0] if image_filename_pair else None
 		if image_s:
 			image_urls.update({
-				'%s_image_url'%each_image_type : URL('static', 'thumbnails/%s'%image_s)
+				'image_url_%s'%each_image_number : URL('static', 'thumbnails/%s'%image_s)
 			})
 	#color stuff
 	exterior_color = auction_request_offer.exterior_color_name
@@ -1143,7 +1221,6 @@ def winner():
 		vin=vin,
 		text_scrambler=text_scrambler,
 		last_bid_price=last_bid_price,
-		list_of_image_types=list_of_image_types,
 		image_urls=image_urls,
 	)
 	
