@@ -34,7 +34,7 @@ def get_most_accurate_latitude_from_address(row):
 
 ####ON VALIDATE FOR BUYER AND DEALER VEHICLE####
 
-def VALIDATE_VEHICLE(form, make, model, year, _table): #these defaults need form vars, so must do it in onvalidation
+def VALIDATE_VEHICLE(form, make, model, year, _table, _dealer=False): #these defaults need form vars, so must do it in onvalidation
 	
 	#initialize
 	trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim)
@@ -113,7 +113,10 @@ def VALIDATE_VEHICLE(form, make, model, year, _table): #these defaults need form
 	
 	#if not ('interior' in color_categories_list and 'exterior' in color_categories_list): #make sure there is at least one interior and one exterior color, or raise form error
 	if not set(['interior', 'exterior']).issubset(color_categories_list): #more flexible than above
-		form.errors.colors = "Select at least one interior color and one exterior color!" #will only show after built-in validations ex. zip code
+		form.errors.colors = "Select %sone interior color and one exterior color!" % "at least " if not _dealer else '' #will only show after built-in validations ex. zip code
+	if _dealer:
+		if len(color_categories_list) > len(set(color_categories_list)):
+			form.errors.colors = "Cannot pick multiple colors for the same category!"
 	
 	#logger.debug(form.errors)
 	db[_table].color_names.default = color_names_list

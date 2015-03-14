@@ -53,7 +53,7 @@ def vehicle():
 	
 	form = SQLFORM(db.auction_request_offer, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
-	if form.process(keepvalues=True, onvalidation=lambda form:VALIDATE_VEHICLE(form, make, model, year, 'auction_request_offer'), hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
+	if form.process(keepvalues=True, onvalidation=lambda form:VALIDATE_VEHICLE(form, make, model, year, 'auction_request_offer', _dealer=True), hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		pass
 		
 	return dict(form = form, year=year, make=make, model=model) #options=options, option_codes=option_codes,) #msrp_by_id=msrp_by_id, )
