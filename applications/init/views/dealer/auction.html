@@ -78,8 +78,8 @@ pass
                             <td>
                                 <p>
                                     <strong style="width: 65px; display:inline-block">Exterior:</strong>
-                                    {{for each_color_id in auction_request_info['colors_dict']:}}
-                                        {{each_color=auction_request_info['colors_dict'][each_color_id]}}
+                                    {{for each_color_id in auction_request_info['auction_request_colors_dict']:}}
+                                        {{each_color=auction_request_info['auction_request_colors_dict'][each_color_id]}}
                                         {{if each_color['category'] == "exterior":}}
                                             {{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
                                         {{pass}}
@@ -87,8 +87,8 @@ pass
                                 </p>
                                 <p>
                                     <strong style="width: 65px; display:inline-block">Interior:</strong>
-                                    {{for each_color_id in auction_request_info['colors_dict']:}}
-                                        {{each_color=auction_request_info['colors_dict'][each_color_id]}}
+                                    {{for each_color_id in auction_request_info['auction_request_colors_dict']:}}
+                                        {{each_color=auction_request_info['auction_request_colors_dict'][each_color_id]}}
                                         {{if each_color['category'] == "interior":}}
                                             {{=COLOR_SWATCH(each_color['hex'],each_color['name'])}}
                                         {{pass}}

@@ -561,8 +561,8 @@ def __auction_validator__():
 	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
 	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
 	
-	colors_dict = dict(map(lambda id,name,hex,category,category_name: [id,dict(name=name, hex=hex, category=category, category_name=category_name)], auction_request.colors, auction_request.color_names, auction_request.color_hexes, auction_request.color_categories, auction_request.color_category_names ) ) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
-	#colors_dict = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
+	auction_request_colors_dict = dict(map(lambda id,name,hex,category,category_name: [id,dict(name=name, hex=hex, category=category, category_name=category_name)], auction_request.colors, auction_request.color_names, auction_request.color_hexes, auction_request.color_categories, auction_request.color_category_names ) ) #dual purpose: make color names dict that each_offer below can map color-id to #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
+	#auction_request_colors_dict = OD(sorted(color_names.items(), key=lambda x: x[1])) #color_names.sort()
 		
 	is_lease = auction_request.funding_source == 'lease'
 	
@@ -588,7 +588,7 @@ def __auction_validator__():
 		auction_request_area=auction_request_area,
 		auction_request_user=auction_request_user,
 		is_lease=is_lease,
-		colors_dict=colors_dict,)
+		auction_request_colors_dict=auction_request_colors_dict,)
 
 def auction():
 	auction_validator = __auction_validator__()
@@ -613,7 +613,7 @@ def auction():
 	auction_is_completed = auction_validator['auction_is_completed']
 	auction_request_area=auction_validator['auction_request_area']
 	auction_request_user=auction_validator['auction_request_user']
-	colors_dict=auction_validator['colors_dict']
+	auction_request_colors_dict=auction_validator['auction_request_colors_dict']
 	is_lease=auction_validator['is_lease']
 	car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
 	
@@ -723,7 +723,7 @@ def auction():
 		auction_request=auction_request,
 		auth_dealer_has_unread_messages=auth_dealer_has_unread_messages,
 		auth_dealer_message_form = auth_dealer_message_form,
-		colors_dict = colors_dict,
+		auction_request_colors_dict = auction_request_colors_dict,
 		city = auction_request_area.city,
 		state = auction_request_area.state_abbreviation,
 		zip_code =  auction_request_area.zip_code,
@@ -842,19 +842,31 @@ def auction():
 		if each_is_my_offer and is_awaiting_offer and not (auction_is_completed or bidding_ended): #auction_request_expired: #FIXED: please make a bid now after buy it now pressed
 			response.message2 = "!Please make a bid now!"
 			
-		#dealer stuff
+		#dealer 
 		#this_dealer = db(db.auth_user.id == each_offer.owner_id ).select().first() or quickRaise("this_dealer not found!") #no need for further validation, assume all dealers here are real due to previous RBAC decorators and functions
 		this_dealer_distance = distance_to_auction_request(each_offer)
 		
 		#color stuff
-		this_exterior_color = {
-			'name':colors_dict[each_offer.auction_request_offer.exterior_color]['name'], #since the pictures will have colors, no need to add a color square, so just map id to name
-			'hex':colors_dict[each_offer.auction_request_offer.exterior_color]['hex']
-		}		
-		this_interior_color = {
-			'name':colors_dict[each_offer.auction_request_offer.interior_color]['name'],
-			'hex':colors_dict[each_offer.auction_request_offer.interior_color]['hex']
-		}
+		color_codes = zip(each_offer.auction_request_offer.colors, #0
+			each_offer.auction_request_offer.color_names, #1
+			each_offer.auction_request_offer.color_categories, #2
+			each_offer.auction_request_offer.color_category_names, #3
+			each_offer.auction_request_offer.color_hexes, #4
+			each_offer.auction_request_offer.color_msrps, #5
+			each_offer.auction_request_offer.color_simple_names #6
+		)
+		for each_code in color_codes:
+			if each_code[2] == "exterior":
+				this_exterior_color = {
+					'name':each_code[1],
+					'hex':each_code[4],
+				}
+			if each_code[2] == 'interior':
+				this_interior_color = {
+					'name':each_code[1],
+					'hex':each_code[4],
+				}
+
 		#message stuff buyer
 		each__message_form_buyer = ''
 		each__has_message_buyer = None
@@ -1135,7 +1147,7 @@ def winner():
 	auction_validator = __auction_validator__()
 
 	#get the color chart
-	colors=auction_validator['colors_dict']
+	colors=auction_validator['auction_request_colors_dict']
 	
 	#get the auction request
 	auction_request=auction_validator['auction_request']
