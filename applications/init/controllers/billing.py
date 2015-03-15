@@ -24,7 +24,7 @@ def buy_credits():
 		orderby=~db.credits_history.id,
 		user_signature=False
 	)
-	
+	response.title = request.function.replace("_"," ").capitalize()
 	return dict(buy_credits_urls=buy_credits_urls, my_credits=my_credits,my_credits_history_grid=my_credits_history_grid)
 
 #visit https://github.com/paypal/rest-api-sdk-python/tree/master/samples

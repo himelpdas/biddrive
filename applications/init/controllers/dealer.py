@@ -1129,12 +1129,13 @@ def my_auctions():
 				'make':each_offer.auction_request.make_name,
 				'model':each_offer.auction_request.model_name,
 				'trim':each_offer.auction_request.trim_name,
-				'buyer': '%s %s'%(auction_request_buyer.first_name.capitalize(), auction_request_buyer.last_name[:1].capitalize() ),
+				'buyer': '%s %s.'%(auction_request_buyer.first_name.capitalize(), auction_request_buyer.last_name[:1].capitalize() ),
 			},
 		}
 		
 		my_offer_summaries.append(each_offer_dict)
-	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
+	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60
+	response.title = request.function.replace("_"," ").capitalize()
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
 	
 @auth.requires(URL.verify(request, hmac_key=str(auth.user_id), salt = str(session.salt), hash_vars=[request.args(0)])) #guarantees that user clicked from auction page if this passes

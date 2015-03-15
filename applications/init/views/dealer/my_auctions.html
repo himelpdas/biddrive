@@ -1,7 +1,7 @@
 {{#VIEW}}
 {{extend 'page_layout_new.html'}}
 {{#=BEAUTIFY(my_offers)}}
-
+{{response.title = request.function.replace("_"," ").capitalize()}}
 {{show=request.vars['show']}}
 <h3><i class="fa fa-fw fa-gavel"></i> {{if show == 'won':}}Auctions you won{{elif show == 'lost':}}Auctions you didn't win{{elif show == "live":}}Live auctions you're in{{else:}}All auctions you entered{{pass}}</h3>
 <br><hr><br>
