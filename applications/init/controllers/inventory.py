@@ -1,6 +1,45 @@
+#CONTROLLER
+
 @auth.requires_membership('dealers')
 def index():
-	return dict()
+	
+	paging = PAGINATE(request.args(0),request.vars['view'])
+	
+	sortby = request.vars['sortby']
+	sorting = [["make-up", "make-down"], ["model-up", "model-down"], ["trim-up", "trim-down"], ["year-up", "year-down"] ]
+	orderby = ~db.auction_request_offer.modified_on
+	#DB LEVEL SORTING 
+	if sortby == "make-up":
+		orderby = db.auction_request_offer.make #this query causes referencing of two tables, so a join has occured
+	if sortby == "make-down":
+		orderby = ~db.auction_request_offer.make
+	if sortby == "model-up":
+		orderby = db.auction_request_offer.model
+	if sortby == "model-down":
+		orderby = ~db.auction_request_offer.model
+	if sortby == "trim-up":
+		orderby = db.auction_request_offer.trim_name
+	if sortby == "trim-down":
+		orderby = ~db.auction_request_offer.trim_name
+	if sortby == "year-up":
+		orderby = db.auction_request_offer.year
+	if sortby == "year-down":
+		orderby = ~db.auction_request_offer.year
+		
+	show = request.vars['show']
+	show_list = sorted(['unsold', 'sold', 'all'])
+	query = (db.auction_request_offer.id > 0) & (db.auction_request_offer.owner_id == auth.user_id) #must
+	left = db.auction_request.on(db.auction_request_offer.auction_request == db.auction_request.id)
+	if show in show_list[:2]: #all is inert
+		query &= db.auction_request_offer.status == show
+
+	my_inventory = db(query).select(
+		left=left, 
+		limitby = paging['limitby'],
+		orderby = orderby
+	)
+	
+	return dict(my_inventory=my_inventory, sorting=sorting, show_list=show_list, **paging)
 	
 @auth.requires(request.args(0) and request.args(1) and request.args(2))
 @auth.requires_membership('dealers')

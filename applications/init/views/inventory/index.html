@@ -1,16 +1,15 @@
 {{#VIEW}}
 {{extend 'page_layout_new.html'}}
-{{#=BEAUTIFY(my_offers)}}
-
-{{show=request.vars['show']}}
-<h3><i class="fa fa-fw fa-info-circle"></i> {{if show == 'won':}}Auctions you won{{elif show == 'lost':}}Auctions you didn't win{{elif show == "live":}}Live auctions you're in{{else:}}All auctions you entered{{pass}}</h3>
-<br><hr><br>
+<div style="overflow-y:auto";>
+	{{=BEAUTIFY(my_inventory)}}
+</div>
 
 <table class="table table-striped table-hover">
 	<thead>
 		<tr>
 			<td colspan="5">
 				<div class="pull-right">
+	
 					{{#items per page}}
 					<div class="btn-group">
 					  	<button type="button" class="btn btn-default btn-sm dropdown-toggle text-uppercase text-sm" data-toggle="dropdown">
@@ -48,61 +47,46 @@
 					  	<ul class="dropdown-menu" role="menu">
 							{{for each_show in show_list:}}
 								{{_vars.update(dict(show = each_show, sortby=request.vars['sortby'], view=request.vars['view'] or 5))}}
-								<li><a href="{{=URL(vars=_vars)}}">{{=each_show.capitalize()}} auctions</a></li>
+								<li><a href="{{=URL(vars=_vars)}}">{{=each_show.capitalize()}} vehicles</a></li>
 							{{pass}}
 						</ul>
-					</div>					
-				
+					</div>	
+
 				</div>
 			</td>
 		</tr>
 		<tr>
-			<th>You submitted a</th>
-			<th>Details</th>
-			<th>You offered</th>
+			<th>Vehicle</th>
+			<th>Auction</th>
+			<th>Your offer</th>
 			<th>Concludes in</th> <!--{{#<i class="fa fa-fw fa-info-circle"  title="Includes 24 hour winner selection period."></i>}}-->
-			<th>Go to auction</th>
+			<th>View auction</th>
 		</tr>
 	</thead>
 	<tbody>
-		{{for each_offer in my_offer_summaries:}}
+		{{for each_offer in my_inventory:}}
 			<tr>
 				<td>
-					<div>{{=each_offer['year']}} {{=each_offer['make']}} {{=each_offer['model']}}</div>
-					<p>{{=each_offer['trim']}}</p>
+					<div>{{=each_offer.auction_request_offer.year}} {{=each_offer.auction_request_offer.make_name}} {{=each_offer.auction_request_offer.model_name}} </div>
+					<p>{{=each_offer.auction_request_offer.vin_number}}</p>
 				</td>
 				<td>
-					<div>VIN: {{=each_offer['vin']}}</div>
-					<p>{{=each_offer['exterior_color']}}</p>
+					<div>Buyer {{=each_offer.auction_request.owner_id}}</div>
+					<p>Test</p>
 				</td>
 				<td>
-					<div>
-						{{=each_offer['my_last_bid_price']}}{{if each_offer['has_unread_messages']:}} <i class="fa fa-fw fa-envelope"  title="You have unread messages."></i>{{pass}}
-					</div>
-					<p>{{if each_offer['my_last_bid_time']:}}{{=each_offer['my_last_bid_time']}} ago{{else:}}--{{pass}}</p>
+					<div>Test</div>
+					<p>Test</p>
 				</td>
 				<td>
-					<div style="width:125px;">{{if each_offer['ends_in_human']:}}{{=each_offer['ends_in_human']}}{{else:}}Auction ended{{pass}}</div>
-					{{if each_offer['how_auction_ended']:}}<p>{{=each_offer['how_auction_ended']}}</p>{{pass}}
+					<div>Test</div>
+					<p>Test</p>
 				</td>
-				<td> 
-					<a class="btn btn-info" href="{{=each_offer['auction_url']}}">ID: {{=str(each_offer['auction_id']).zfill(3)}}<i class="fa fa-fw fa-arrow-right"></i></a> 
-					<!--{{#=each_offer['my_offer_id']}}
-					{{#=each_offer['auction_id']}}-->
+				<td>
+					<div>Test</div>
+					<p>Test</p>
 				</td>
 			</tr>
 		{{pass}}
 	</tbody>
 </table>
-
-{{#pagination}}
-{{#prev/next may or may not appear based on content}}
-{{#previous page}}
-{{if page:}}
-	<a href="{{=URL(args=[page-1])}}"><span class="glyphicon glyphicon-chevron-left"></span> Previous</a>
-{{pass}}
-
-{{#next page}}
-{{if len(my_offer_summaries)>items_per_page:}}
-	<a href="{{=URL(args=[page+1])}}" class="pull-right">Next <span class="glyphicon glyphicon-chevron-right"></span></a>
-{{pass}}

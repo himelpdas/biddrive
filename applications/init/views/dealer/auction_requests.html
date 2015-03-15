@@ -236,7 +236,7 @@
 									
 									<!-- {{# <a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"  style="width:100%" title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a> }}-->
 									{{matching_inventory = bool(len(each_request['matched_vehicles']) ) }}
-                                    <a class="btn btn-{{if matching_inventory:}}info{{else:}}default{{pass}} btn-trinity btn-raised btn-sm" data-toggle="modal" data-target="#join_modal_{{=each_request.auction_request.id}}" style="width:100%" title="Join this auction and submit your vehicle. Then, let the bidding begin!">Join</a>
+                                    <a class="btn btn-{{if matching_inventory:}}success{{else:}}default{{pass}} btn-trinity btn-raised btn-sm" data-toggle="modal" data-target="#join_modal_{{=each_request.auction_request.id}}" style="width:100%" title="Join this auction and submit your vehicle. Then, let the bidding begin!">Join</a>
 
 									<div class="modal fade" id="join_modal_{{=each_request.auction_request.id}}" style="overflow: visible;"><!--{{#http://stackoverflow.com/questions/11899870/bootstrap-in-a-modal-dialog-how-do-i-make-the-dropdown-menu-expand-outside-the}}-->
 										<div class="modal-dialog">
@@ -248,7 +248,7 @@
 												<div class="modal-body" style="max-height:480px;overflow-y:auto;overflow: visible;">
 												
 													<div class="dropdown" title="{{if not matching_inventory:}}You do not have any vehicles that match this request.{{pass}}">
-													  <button class="btn btn-info dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+													  <button class="btn btn-success dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
 														Choose a matched vehicle from your inventory
 														<span class="caret"></span>
 													  </button>

@@ -1,3 +1,5 @@
+#MODEL
+
 #####GENERATE BRANDSLIST#####
 ALL_BRANDS_LIST = OD() #TEMP
 for each_year in YEAR_RANGE:
@@ -715,6 +717,10 @@ db.define_table('auction_request_offer',
 	Field('owner_id', 'reference auth_user',
 		writable=False,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s')
+	),
+	Field('status',
+		requires = IS_IN_SET(['unsold', 'sold']),
+		default = 'unsold'
 	),
 	Field('vin_number',
 		requires=IS_NOT_EMPTY(), required=True

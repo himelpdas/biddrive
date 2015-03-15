@@ -1,3 +1,5 @@
+#CONTROLLER
+
 def index():
 	redirect(URL('my_auctions.html'))
 
@@ -449,7 +451,29 @@ def pre_auction():
 	
 	return dict(form = form, my_piggy=my_piggy, options=options, option_codes=option_codes, categorized_options=CATEGORIZED_OPTIONS(auction_request), msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
 """
-	
+
+def __get_each_offer_int_and_ext_colors(row_table):
+	color_codes = zip(row_table.colors, #0
+		row_table.color_names, #1
+		row_table.color_categories, #2
+		row_table.color_category_names, #3
+		row_table.color_hexes, #4
+		row_table.color_msrps, #5
+		row_table.color_simple_names #6
+	)
+	for each_code in color_codes:
+		if each_code[2] == "exterior":
+			exterior_color = {
+				'name':each_code[1],
+				'hex':each_code[4],
+			}
+		if each_code[2] == 'interior':
+			interior_color = {
+				'name':each_code[1],
+				'hex':each_code[4],
+			}
+	return [interior_color, exterior_color]
+
 @auth.requires(request.args(0) and request.args(1))
 @auth.requires_membership('dealers')
 def pre_auction():
@@ -847,26 +871,10 @@ def auction():
 		this_dealer_distance = distance_to_auction_request(each_offer)
 		
 		#color stuff
-		color_codes = zip(each_offer.auction_request_offer.colors, #0
-			each_offer.auction_request_offer.color_names, #1
-			each_offer.auction_request_offer.color_categories, #2
-			each_offer.auction_request_offer.color_category_names, #3
-			each_offer.auction_request_offer.color_hexes, #4
-			each_offer.auction_request_offer.color_msrps, #5
-			each_offer.auction_request_offer.color_simple_names #6
-		)
-		for each_code in color_codes:
-			if each_code[2] == "exterior":
-				this_exterior_color = {
-					'name':each_code[1],
-					'hex':each_code[4],
-				}
-			if each_code[2] == 'interior':
-				this_interior_color = {
-					'name':each_code[1],
-					'hex':each_code[4],
-				}
 
+		this_interior_color = __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[0]
+		this_exterior_color = __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[1]
+			
 		#message stuff buyer
 		each__message_form_buyer = ''
 		each__has_message_buyer = None
@@ -1012,29 +1020,8 @@ def auction():
 	
 @auth.requires_membership('dealers')
 def my_auctions():
-	def paginate(page, view): #adapted from web2py book
-		"""	{{#in view}}
-			{{for i,row in enumerate(rows):}}
-				{{if i==items_per_page: break}}
-				{{=row.value}}<br />
-			{{pass}}
-			{{#main}}
-			{{if page:}}
-				<a href="{{=URL(args=[page-1])}}">previous</a>
-			{{pass}}
-
-			{{if len(rows)>items_per_page:}}
-				<a href="{{=URL(args=[page+1])}}">next</a>
-			{{pass}}
-		"""
-		limits_list = [5,10,15,25,40,60]
-		if page: page=int(page)
-		else: page=0
-		items_per_page=limits_list[0] if not view else int(view)
-		limitby=(page*items_per_page,(page+1)*items_per_page+1)
-		return dict(page=page,items_per_page=items_per_page, limitby=limitby, limits_list=limits_list)
 	
-	paging = paginate(request.args(0),request.vars['view'])
+	paging = PAGINATE(request.args(0),request.vars['view'])
 	
 	sortby = request.vars['sortby']
 	sorting = [["make-up", "make-down"], ["model-up", "model-down"], ["trim-up", "trim-down"], ["year-up", "year-down"], ["expiration-up", "expiration-down"]]
@@ -1086,7 +1073,7 @@ def my_auctions():
 		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.colors, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
-		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else "No Bids!"
+		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else XML("<i>Please make a bid!</i>")
 		my_last_bid_time = human(request.now-my_last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if my_last_bid else None
 		#get the best price for this auction
 		auction_best_bid = each_offer.auction_request.lowest_offer()
@@ -1124,7 +1111,7 @@ def my_auctions():
 			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
-			'exterior_color': color_names[each_offer.auction_request_offer.exterior_color],
+			'exterior_color': __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[1]['name'],
 			'offer_expires':each_offer.auction_request.offer_expires,
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,

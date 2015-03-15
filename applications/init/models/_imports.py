@@ -1,3 +1,5 @@
+#MODEL
+
 import urllib
 import random
 import datetime
@@ -65,3 +67,25 @@ def calcDist(lat_A, long_A, lat_B, long_B): #DEPRECATED USE GEOPY NOW!
 
 	return distance
 """
+
+def PAGINATE(page, view): #adapted from web2py book
+	"""	{{#in view}}
+		{{for i,row in enumerate(rows):}}
+			{{if i==items_per_page: break}}
+			{{=row.value}}<br />
+		{{pass}}
+		{{#main}}
+		{{if page:}}
+			<a href="{{=URL(args=[page-1])}}">previous</a>
+		{{pass}}
+
+		{{if len(rows)>items_per_page:}}
+			<a href="{{=URL(args=[page+1])}}">next</a>
+		{{pass}}
+	"""
+	limits_list = [5,10,15,25,40,60]
+	if page: page=int(page)
+	else: page=0
+	items_per_page=limits_list[0] if not view else int(view)
+	limitby=(page*items_per_page,(page+1)*items_per_page+1)
+	return dict(page=page,items_per_page=items_per_page, limitby=limitby, limits_list=limits_list)
