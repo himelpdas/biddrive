@@ -1102,6 +1102,8 @@ def my_auctions():
 
 		#each_request['how_auction_ended'] = how_auction_ended
 
+		auction_request_buyer = db(db.auth_user.id == each_offer.auction_request.owner_id).select().last()
+		
 		each_offer_dict = {
 			'how_auction_ended':how_auction_ended,
 			'has_unread_messages':has_unread_messages,
@@ -1111,7 +1113,7 @@ def my_auctions():
 			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
-			'exterior_color': __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[1]['name'],
+			'exterior_color': __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[1],
 			'offer_expires':each_offer.auction_request.offer_expires,
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -1122,7 +1124,15 @@ def my_auctions():
 			'my_offer_id':each_offer.auction_request_offer.id,
 			'new_messages':0,
 			'auction_url':URL('auction', args=[each_offer.auction_request.id]),
+			'auction_request_info':{
+				'year':each_offer.auction_request.year,
+				'make':each_offer.auction_request.make_name,
+				'model':each_offer.auction_request.model_name,
+				'trim':each_offer.auction_request.trim_name,
+				'buyer': '%s %s'%(auction_request_buyer.first_name.capitalize(), auction_request_buyer.last_name[:1].capitalize() ),
+			},
 		}
+		
 		my_offer_summaries.append(each_offer_dict)
 	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60 
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
