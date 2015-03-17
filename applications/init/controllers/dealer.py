@@ -139,6 +139,7 @@ def auction_requests():
 	#####in memory filterting#####
 	#location
 	auction_requests = auction_requests.exclude(lambda row: row.auction_request['radius'] >= calcDist(my_info.latitude, my_info.longitude, row.auction_request.latitude, row.auction_request.longitude) )#remove requests not in range
+	auction_requests = auction_requests.exclude(lambda row: not bool( db( (db.auction_request_offer.auction_request == row.auction_request['id']) & (db.auction_request_offer.owner_id == auth.user_id) ).select().last() ) )#remove requests that auth dealer already joined
 	#winning #CPU INTENSIVE, did via DAL select with left outer join above instead
 	#auction_requests =auction_requests.exclude(lambda row: not db(db.auction_request_winning_offer.auction_request == row.auction_request['id']).select().first())
 	###blank message###
@@ -1167,8 +1168,9 @@ def winner():
 				'image_url_%s'%each_image_number : URL('static', 'thumbnails/%s'%image_s)
 			})
 	#color stuff
-	exterior_color = auction_request_offer.exterior_color_name
-	interior_color = auction_request_offer.interior_color_name
+
+	exterior_color = __get_each_offer_int_and_ext_colors(auction_request_offer.auction_request_offer)[0]
+	interior_color = __get_each_offer_int_and_ext_colors(auction_request_offer.auction_request_offer)[1]
 	#options stuff
 	options = {}
 	for option, category in zip(auction_request_offer.option_names, auction_request_offer.option_category_names):

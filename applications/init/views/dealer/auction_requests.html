@@ -1,7 +1,7 @@
 {{#VIEW}}
 {{response.title="Buyer Requests"}}
 {{extend 'page_layout_new.html'}}
-{{#=BEAUTIFY(response._vars}}
+{{#=BEAUTIFY(response._vars)}}
 
 {{#FILTERS}}
 
@@ -249,7 +249,7 @@
 												<div class="modal-body" style="max-height:480px;overflow-y:auto;overflow: visible;">
 												
 													<div class="dropdown" title="{{if not matching_inventory:}}You do not have any vehicles that match this request.{{pass}}">
-													  <button class="btn btn-success dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+													  <button class="btn btn-default dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
 														Choose a matched vehicle from your inventory
 														<span class="caret"></span>
 													  </button>
