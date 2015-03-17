@@ -46,7 +46,7 @@ def options_content(): #TODO get all data from single call make/model/year
 		style_colors=style['colors']
 		color_codes = []
 		for each_color in style_colors:
-			if each_color['category'] in ['Interior', 'Exterior']:
+			if each_color['category'] in ['Interior', 'Exterior', 'Roof']:
 				for each_option in each_color['options']:
 					color_codes.append(  [  each_option['id'], each_option['name'], each_option['colorChips']['primary']['hex'] if 'colorChips' in each_option else "ff00ff", each_color['category'] , each_color['category'].lower().replace(" ", "_")  ]  ) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
 					#TODO - Use rare color hex to hack a "question mark" icon over a swatch of unknown color# DONE- ff00ff magenta

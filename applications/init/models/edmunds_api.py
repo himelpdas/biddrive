@@ -36,13 +36,18 @@ def EDMUNDS_CALL(URI):
 	return EDMUNDS_CACHE(URI, lambda: ED.make_call(URI))
 	
 YEAR_RANGE=range(datetime.date.today().year-1, datetime.date.today().year+2) #minus 1 more year if it's the first 7 days of the year, so auction active requests don't disappear in searches in the new year
-MAKES_URI = '/api/vehicle/v2/makes?state=new&year=%s&view=full'
-MAKE_URI = '/api/vehicle/v2/%s?state=new&year=%s'
-STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
+MAKES_URI = '/api/vehicle/v2/makes?year=%s&view=full'
+#MAKES_URI = '/api/vehicle/v2/makes?state=new&year=%s&view=full'
+MAKE_URI = '/api/vehicle/v2/%s?year=%s'
+#MAKE_URI = '/api/vehicle/v2/%s?state=new&year=%s'
+STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?view=full'
+#STYLES_URI = '/api/vehicle/v2/%s/%s/%s/styles?state=new&view=full'
 STYLE_URI = "/api/vehicle/v2/styles/%s?view=full&fmt=json"
 COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
 COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 REVIEWS_URI = "/api/vehiclereviews/v2/styles/%s?sortby=created:ADESC&pagenum=1&pagesize=10"
+FIND_PHOTOS_BY_STYLE_ID_URI = '/v1/api/vehiclephoto/service/findphotosbystyleid'
+VIN_DECODE_URI = "/api/vehicle/v2/vins/%s?fmt=json"
 IMG_PREFIX = "http://media.ED.edmunds-media.com/"
 
 #color swatch
@@ -91,17 +96,16 @@ def GET_BRANDS_LIST(year):
 	return brands_list
 	
 def FIND_PHOTOS_BY_STYLE_ID(style_id):
-	FIND_PHOTOS_BY_STYLE_ID_URI = '/v1/api/vehiclephoto/service/FIND_PHOTOS_BY_STYLE_ID'
 	return EDMUNDS_CACHE( #cannot use ed_call
 		'photos'+str(style_id), #must be unique for each corresponding image 
 		lambda: ED.make_call(FIND_PHOTOS_BY_STYLE_ID_URI, comparator='simple', styleId=style_id)  #errors will not be cached! :)
 	)
 
-def GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year):
+def GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year, enforce_years = False):
 	"""
 	Used to display menus and options via form to user
 	"""
-	if int(year) in YEAR_RANGE:
+	if not enforce_years or int(year) in YEAR_RANGE:
 		return EDMUNDS_CALL(STYLES_URI%(make, model, year))['styles'] #(make, model, year)
 
 def GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(make, model, year, style_id):

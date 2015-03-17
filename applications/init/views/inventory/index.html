@@ -9,7 +9,30 @@
 		<tr>
 			<td colspan="4">
 				<div class="pull-left">
-					<a href="#" class="btn btn-default btn-trinity"><i class="fa fa-fw fa-plus"></i>Add vehicle</a>
+					<div class="input-group">
+						<input id="vin_input" type="text" class="form-control" placeholder="Enter VIN Number">
+						<span class="input-group-btn">
+							<button id="vin_submit" class="btn btn-trinity"><i class="fa fa-fw fa-plus"></i>Add vehicle</button>
+							<script>
+								function activate_vin_submit(inp) {
+									if (Boolean( inp.val() ) == false) {
+										$("#vin_submit").removeClass("btn-info");
+										$("#vin_submit").addClass("disabled btn-default");
+									} else {
+										$("#vin_submit").addClass("btn-info");
+										$("#vin_submit").removeClass("disabled btn-default");
+									}
+								}
+								activate_vin_submit($("#vin_input"));
+								$("#vin_input").keyup(function(evt){
+									activate_vin_submit($(evt.target));
+								})
+								$("#vin_submit").click(function(){
+									window.location.href = "{{=URL('inventory', 'vin_decode') }}/" + $("#vin_input").val();
+								})
+							</script>
+						</span>
+					</div><!-- /input-group -->					
 				</div>
 				<div class="pull-right">
 	
@@ -70,7 +93,7 @@
 			<tr>
 				<td>
 					<h4>{{=each_offer.year}} {{=each_offer.make_name}} {{=each_offer.model_name}} </h4>
-					<h5>VIN: {{=each_offer.vin_number}}</h5>
+					<h5>VIN: {{=each_offer.vin_number}} | ID: {{=str(each_offer.id).zfill(3)}}</h5>
 				</td>
 				<td>
 					<h4>{{=each_offer.trim_name}}</h4>
@@ -81,8 +104,8 @@
 					<h5>Interior: {{=COLOR_SWATCH(each_offer['interior_color']['hex'], each_offer['interior_color']['name'])}}</h5>
 				</td>
 				<td>
-					<a href="#" class="btn btn-large btn-default"><i class="fa fa-fw fa-edit"></i></a>
-					<a href="#" class="btn btn-large btn-default"><i class="fa fa-fw fa-trash-o"></i></a>
+					<a href="#" class="btn btn-large btn-default" title="Edit"><i class="fa fa-fw fa-edit"></i></a>
+					<a href="#" class="btn btn-large btn-default" title="Delete"><i class="fa fa-fw fa-trash-o"></i></a>
 				</td>
 			</tr>
 		{{pass}}

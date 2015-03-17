@@ -44,8 +44,31 @@ def index():
 		each_vehicle['interior_color'] = int_ext_colors[0]
 		each_vehicle['exterior_color'] = int_ext_colors[1]
 	
+	#for each_brand in ALL_BRANDS_LIST:
+	#
+	#	make_details = EDMUNDS_CALL(MAKE_URI%(each_brand, year))
+	
 	response.title="My inventory"
+	
 	return dict(my_inventory=my_inventory, sorting=sorting, show_list=show_list, **paging)
+	
+@auth.requires(request.args(0))
+@auth.requires_membership('dealers')
+def vin_decode():
+	clean = "".join(request.args[0].split()) #http://stackoverflow.com/questions/3739909/how-to-strip-all-whitespace-from-string
+	vehicle_info = EDMUNDS_CALL(VIN_DECODE_URI % clean)
+	if vehicle_info:
+		try:
+			make = vehicle_info['make']['niceName']
+			model = vehicle_info['model']['niceName']
+			year = vehicle_info['years'][0]['year']
+			print year, make, model
+			redirect(URL('inventory', 'vehicle', args=[year,make,model]) )
+		except NameError:
+			pass
+	session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
+	redirect(URL('inventory', 'index'))
+	
 	
 @auth.requires(request.args(0) and request.args(1) and request.args(2))
 @auth.requires_membership('dealers')
@@ -60,10 +83,12 @@ def vehicle():
 	db.auction_request_offer.model.default=model
 	#db.auction_request_offer.created_on.default=request.now #moved to model
 	
-	model_styles = GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year)
+	model_styles = EDMUNDS_CALL(STYLES_URI%(make, model, year))['styles'] #GET_STYLES_BY_MAKE_MODEL_YEAR instead to limit years
+	
+	print model_styles
 	
 	if not model_styles:
-		session.message='Invalid Year!'
+		session.message='@Invalid Year!'
 		redirect(URL('index.html'))
 		
 	trims = []

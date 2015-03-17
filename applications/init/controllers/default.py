@@ -56,7 +56,7 @@ def request_by_make():
 	db.auction_request.model.default=model
 	#db.auction_request.created_on.default=request.now #moved to model
 	
-	model_styles = GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year)
+	model_styles = GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year, enforce_years = True)
 	
 	make_name = model_styles[0]['make']['name']
 	model_name = model_styles[0]['model']['name']
