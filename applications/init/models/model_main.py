@@ -1,13 +1,18 @@
 #MODEL
 
 #####GENERATE BRANDSLIST#####
+
 ALL_BRANDS_LIST = OD() #TEMP
+
 for each_year in YEAR_RANGE:
-	ALL_BRANDS_LIST.update(getBrandsList(each_year)) #doesn't matter if each_year is int or str because getBrandsList uses string formatting
+	ALL_BRANDS_LIST.update(GET_BRANDS_LIST(each_year)) #doesn't matter if each_year is int or str because GET_BRANDS_LIST uses string formatting
 
 #useful data structure
+
 all_brands_list_sorted = sorted(ALL_BRANDS_LIST.items(), key=lambda x: x[1]) #niceName, name
+
 times_of_the_day = ['12:00 AM', '12:15 AM', '12:30 AM', '12:45 AM', '1:00 AM', '1:15 AM', '1:30 AM', '1:45 AM', '2:00 AM', '2:15 AM', '2:30 AM', '2:45 AM', '3:00 AM', '3:15 AM', '3:30 AM', '3:45 AM', '4:00 AM', '4:15 AM', '4:30 AM', '4:45 AM', '5:00 AM', '5:15 AM', '5:30 AM', '5:45 AM', '6:00 AM', '6:15 AM', '6:30 AM', '6:45 AM', '7:00 AM', '7:15 AM', '7:30 AM', '7:45 AM', '8:00 AM', '8:15 AM', '8:30 AM', '8:45 AM', '9:00 AM', '9:15 AM', '9:30 AM', '9:45 AM', '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM', '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM', '6:00 PM', '6:15 PM', '6:30 PM', '6:45 PM', '7:00 PM', '7:15 PM', '7:30 PM', '7:45 PM', '8:00 PM', '8:15 PM', '8:30 PM', '8:45 PM', '9:00 PM', '9:15 PM', '9:30 PM', '9:45 PM', '10:00 PM', '10:15 PM', '10:30 PM', '10:45 PM', '11:00 PM', '11:15 PM', '11:30 PM', '11:45 PM']
+
 days_of_the_week = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
 #####GET ACCURATE COORDINATES COMPUTE FUNCTIONS#####
@@ -32,14 +37,12 @@ def get_most_accurate_latitude_from_address(row):
 	else: #fallback to zip code accuracy if geocoding fails
 		return db(db.zipgeo.zip_code == row['zip_code']).select().first()["latitude"]
 
-##########
-
 ####ON VALIDATE FOR BUYER AND DEALER VEHICLE####
 
 def VALIDATE_VEHICLE(form, make, model, year, _table, _dealer=False): #these defaults need form vars, so must do it in onvalidation
 	
 	#initialize
-	trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim)
+	trim_data = GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(make,model,year,form.vars.trim)
 	
 	#make model names
 	db[_table].make_name.default = make_name = trim_data['make']['name']
@@ -295,7 +298,7 @@ db.define_table('auction_request',
 		required=True, #prevents None insertions! since compute is runned on insertion/update it may be possible that a failed update will result in a None. This can happen when edmunds cache fails and returns None
 		readable=False,
 		writable=False,
-		#compute = lambda row: json.dumps(getStyleByMakeModelYearStyleID(row['make'],row['model'],row['year'],row['trim'])), #FIX compute in controller only!! Since compute runs on update as well edmunds may not return data during UUID to ID conversion #no need to error check because subsequent compute fields will raise native exceptions
+		#compute = lambda row: json.dumps(GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(row['make'],row['model'],row['year'],row['trim'])), #FIX compute in controller only!! Since compute runs on update as well edmunds may not return data during UUID to ID conversion #no need to error check because subsequent compute fields will raise native exceptions
 	),#move compute to controller to prevent updating of error json returned by edmunds
 	Field('trim_name',
 		required=True,
@@ -441,7 +444,7 @@ db.define_table('auction_request',
 	),
 	Field.Method('estimation',
 		lambda row:
-			row.auction_request.trim_price + sum(row.auction_request.option_msrps)  #add up the base, the options, and the most expensive interior and exterior color choices
+			sum([sum(row.auction_request.option_msrps), row.auction_request.trim_price, sum(row.auction_request.color_msrps)])  #add up the base, the options, and the most expensive interior and exterior color choices
 	),
 	#Field user ID
 	#Block dealers
@@ -756,7 +759,7 @@ db.define_table('auction_request_offer',
 		required=True, #prevents None insertions! since compute is runned on insertion/update it may be possible that a failed update will result in a None. This can happen when edmunds cache fails and returns None
 		readable=False,
 		writable=False,
-		#compute = lambda row: json.dumps(getStyleByMakeModelYearStyleID(row['make'],row['model'],row['year'],row['trim'])), #FIX compute in controller only!! Since compute runs on update as well edmunds may not return data during UUID to ID conversion #no need to error check because subsequent compute fields will raise native exceptions
+		#compute = lambda row: json.dumps(GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(row['make'],row['model'],row['year'],row['trim'])), #FIX compute in controller only!! Since compute runs on update as well edmunds may not return data during UUID to ID conversion #no need to error check because subsequent compute fields will raise native exceptions
 	),#move compute to controller to prevent updating of error json returned by edmunds
 	Field('trim_name',
 		required=True,
@@ -843,7 +846,7 @@ db.define_table('auction_request_offer',
 	),#continue
 	Field.Method('estimation',
 		lambda row:
-			db(db.auction_request.id == row.auction_request_offer.auction_request).select().last()['trim_price'] + sum(row.auction_request_offer.option_msrps) + row.auction_request_offer.additional_costs
+			sum([row.auction_request_offer.trim_price, sum(row.auction_request_offer.option_msrps), sum(row.auction_request_offer.color_msrps), row.auction_request_offer.additional_costs])
 	), #CACHE QUERY
 	Field.Method('number_of_bids',
 		lambda row: len(db(db.auction_request_offer_bid.auction_request_offer == row.auction_request_offer.id).select())

@@ -24,7 +24,7 @@ def index():
 		
 	#response.message2="@%s is currently under development"%APP_NAME
 		
-	return dict(brands_list=getBrandsList(year), cars=getFeaturedCars())
+	return dict(brands_list=GET_BRANDS_LIST(year), cars=GET_FEATURED_CARS())
 
 '''
 def index_old():
@@ -42,7 +42,7 @@ def index_old():
 
 	response.message2="!%s is currently under development"%APP_NAME
 
-	return dict(brands_list=getBrandsList(year))
+	return dict(brands_list=GET_BRANDS_LIST(year))
 '''
 
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
@@ -56,7 +56,7 @@ def request_by_make():
 	db.auction_request.model.default=model
 	#db.auction_request.created_on.default=request.now #moved to model
 	
-	model_styles = getStylesByMakeModelYear(make, model, year)
+	model_styles = GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year)
 	
 	make_name = model_styles[0]['make']['name']
 	model_name = model_styles[0]['model']['name']
@@ -122,7 +122,7 @@ def request_by_make():
 	#moved to forms onvalidation, instead of using unvaidated post_vars! http://goo.gl/00Urs6
 	#form dependant values
 	if request.post_vars: #doesn't matter if values are un-validated here, since arguments here used the same variables in the forms, if a variable is weird from create won't succeed.
-		trim_data = getStyleByMakeModelYearStyleID(make,model,year,request.post_vars.trim) 
+		trim_data = GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(make,model,year,request.post_vars.trim) 
 		db.auction_request.trim_data.default = json.dumps(trim_data)
 		db.auction_request.trim_name.default = trim_data['name'] 
 		db.auction_request.color_names.default = [ each_color['name'] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.colors ] #make a list of color names based on ids in colors field
@@ -136,7 +136,7 @@ def request_by_make():
 		db.auction_request.model_name.default = model_name = model_styles[0]['model']['name']
 		#
 		#initialize
-		trim_data = getStyleByMakeModelYearStyleID(make,model,year,form.vars.trim)
+		trim_data = GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(make,model,year,form.vars.trim)
 		##trim stuff
 		db.auction_request.trim_data.default = json.dumps(trim_data)
 		db.auction_request.trim_name.default = trim_data['name']
@@ -443,4 +443,4 @@ def car_chooser():
 	if request.args(0):
 		year = request.args[0]
 
-	return dict(brands_list=getBrandsList(year))
+	return dict(brands_list=GET_BRANDS_LIST(year))

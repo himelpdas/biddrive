@@ -13,15 +13,15 @@ def vehicle_content():
 	if request.args(1):
 		year = request.args[1]
 	
-	make_details = ed_call(MAKE_URI%(request.args[0], year))
+	make_details = EDMUNDS_CALL(MAKE_URI%(request.args[0], year))
 	make_photos = {}
 	for each_model in make_details['models']:
 		first_image="http://placehold.it/150x100&text=Image%20Unavailable"
 		try:
-			model_styles = ed_call(STYLES_URI%(request.args[0], each_model['niceName'], year))
+			model_styles = EDMUNDS_CALL(STYLES_URI%(request.args[0], each_model['niceName'], year))
 			style_id = model_styles["styles"][0]["id"]
 			#
-			model_photos = findPhotosByStyleID(style_id) #style is not important so call it model
+			model_photos = FIND_PHOTOS_BY_STYLE_ID(style_id) #style is not important so call it model
 			photo = model_photos[0]['photoSrcs'][-1] #get any photo
 			for each_photo in model_photos[0]['photoSrcs']:
 				if each_photo.split('.')[-2].split('_')[-1] == '150':  #but change to proper ratio if found
@@ -40,7 +40,7 @@ def options_content(): #TODO get all data from single call make/model/year
 	#logger.debug("sEC:%s"%server_side_digest); logger.debug("cEC:%s"%client_side_digest)
 	if not server_side_digest == client_side_digest:
 		raise HTTP(404)
-	style = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
+	style = GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
 	(make, model, year, style_id) = (request.args[0], request.args[1], request.args[2],  request.args[3])
 	def __colors__():
 		style_colors=style['colors']
@@ -65,7 +65,7 @@ def options_content(): #TODO get all data from single call make/model/year
 		#arg 0,1,2,3 is year make model and style id, make hmac key style id, even though it doesn't matter what is used as style id, as long as they're hashed together. salt is a hidden random string defined in _imports.py
 		#if not URL.verify(request, hmac_key=request.args[3], salt = session.salt, hash_vars=[request.args[0], request.args[1], request.args[2]): #verifys all args (or ones specified) in a url
 		#	return dict()
-		trim_data = getStyleByMakeModelYearStyleID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
+		trim_data = GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
 		options = trim_data['options']
 		
 		option_codes = []
@@ -127,7 +127,7 @@ def options_content(): #TODO get all data from single call make/model/year
 
 def reviews():
 	#leave as is, no need to protect because no vals go into db
-	reviews = ed_call(REVIEWS_URI%request.args[0])
+	reviews = EDMUNDS_CALL(REVIEWS_URI%request.args[0])
 	if reviews and 'reviews' in reviews:
 		return dict(reviews = reviews['reviews'])
 	else:
@@ -136,7 +136,7 @@ def reviews():
 def style_photos():
 	#leave as is, no need to protect because no vals go into db
 	style_id = request.args[0]
-	style_photos = findPhotosByStyleID(style_id) or [] #some models doesn't return an image ex. 2014 Kia cadenza.
+	style_photos = FIND_PHOTOS_BY_STYLE_ID(style_id) or [] #some models doesn't return an image ex. 2014 Kia cadenza.
 	photos = []
 	for each_photo_set in style_photos:
 		for each_photo in each_photo_set['photoSrcs']:

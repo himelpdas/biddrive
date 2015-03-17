@@ -29,16 +29,22 @@ def index():
 	show = request.vars['show']
 	show_list = sorted(['unsold', 'sold', 'all'])
 	query = (db.auction_request_offer.id > 0) & (db.auction_request_offer.owner_id == auth.user_id) #must
-	left = db.auction_request.on(db.auction_request_offer.auction_request == db.auction_request.id)
+	#left = db.auction_request.on(db.auction_request_offer.auction_request == db.auction_request.id)
 	if show in show_list[:2]: #all is inert
 		query &= db.auction_request_offer.status == show
 
 	my_inventory = db(query).select(
-		left=left, 
+		#left=left, 
 		limitby = paging['limitby'],
 		orderby = orderby
 	)
 	
+	for each_vehicle in my_inventory:
+		int_ext_colors = GET_OFFER_ROW_INT_EXT_COLORS(each_vehicle)
+		each_vehicle['interior_color'] = int_ext_colors[0]
+		each_vehicle['exterior_color'] = int_ext_colors[1]
+	
+	response.title="My inventory"
 	return dict(my_inventory=my_inventory, sorting=sorting, show_list=show_list, **paging)
 	
 @auth.requires(request.args(0) and request.args(1) and request.args(2))
@@ -54,7 +60,7 @@ def vehicle():
 	db.auction_request_offer.model.default=model
 	#db.auction_request_offer.created_on.default=request.now #moved to model
 	
-	model_styles = getStylesByMakeModelYear(make, model, year)
+	model_styles = GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year)
 	
 	if not model_styles:
 		session.message='Invalid Year!'
@@ -95,4 +101,5 @@ def vehicle():
 	if form.process(keepvalues=True, onvalidation=lambda form:VALIDATE_VEHICLE(form, make, model, year, 'auction_request_offer', _dealer=True), hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		pass
 		
+	response.title="Add a vehicle to your inventory"
 	return dict(form = form, year=year, make=make, model=model) #options=options, option_codes=option_codes,) #msrp_by_id=msrp_by_id, )

@@ -1,8 +1,8 @@
 from edmunds import Edmunds
 
-ed = Edmunds(EDMUNDS_KEY)
+ED = Edmunds(EDMUNDS_KEY)
 
-def ed_cache(URI, function, time_expire=60*60*24): #time_expire = s * m * h = 1 day #fixed? ed cache flawed make sure data is ok
+def EDMUNDS_CACHE(URI, function, time_expire=60*60*24): #time_expire = s * m * h = 1 day #fixed? ED cache flawed make sure data is ok
 	#will call ram >> disk >> API
 	URI = repr(URI)
 	def disk():
@@ -31,9 +31,9 @@ def ed_cache(URI, function, time_expire=60*60*24): #time_expire = s * m * h = 1 
 
 	return response
 
-def ed_call(URI):
+def EDMUNDS_CALL(URI):
 	"""fewer arguments than ed_cache"""
-	return ed_cache(URI, lambda: ed.make_call(URI))
+	return EDMUNDS_CACHE(URI, lambda: ED.make_call(URI))
 	
 YEAR_RANGE=range(datetime.date.today().year-1, datetime.date.today().year+2) #minus 1 more year if it's the first 7 days of the year, so auction active requests don't disappear in searches in the new year
 MAKES_URI = '/api/vehicle/v2/makes?state=new&year=%s&view=full'
@@ -43,12 +43,38 @@ STYLE_URI = "/api/vehicle/v2/styles/%s?view=full&fmt=json"
 COLORS_URI = '/api/vehicle/v2/styles/%s/colors?category=Exterior&fmt=json'
 COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 REVIEWS_URI = "/api/vehiclereviews/v2/styles/%s?sortby=created:ADESC&pagenum=1&pagesize=10"
-IMG_PREFIX = "http://media.ed.edmunds-media.com/"
+IMG_PREFIX = "http://media.ED.edmunds-media.com/"
 
 #color swatch
+
 COLOR_SWATCH = lambda hex, title='': XML('<i class="fa {fa} fa-fw" style="color:#{hex}; text-shadow : -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;" title="{title}"></i>'.format(hex=hex,title=title, fa="fa-square" if not hex == "ff00ff" else "fa-minus-square") ) #add border so that whites can show #http://goo.gl/2j2bP #http://goo.gl/R9EI3h
+
 BULLET=XML('&nbsp;<i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;')
+
 OPTION_CATEGORIES = sorted(['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Additional Fees', 'Other'])
+
+def GET_OFFER_ROW_INT_EXT_COLORS(row_table):
+	color_codes = zip(row_table.colors, #0
+		row_table.color_names, #1
+		row_table.color_categories, #2
+		row_table.color_category_names, #3
+		row_table.color_hexes, #4
+		row_table.color_msrps, #5
+		row_table.color_simple_names #6
+	)
+	for each_code in color_codes:
+		if each_code[2] == "exterior":
+			exterior_color = {
+				'name':each_code[1],
+				'hex':each_code[4],
+			}
+		if each_code[2] == 'interior':
+			interior_color = {
+				'name':each_code[1],
+				'hex':each_code[4],
+			}
+	return [interior_color, exterior_color]
+
 def CATEGORIZED_OPTIONS(auction_request):
 	ar = auction_request
 	options_database = zip(ar.options, ar.option_names, ar.option_msrps, ar.option_descriptions, ar.option_categories, ar.option_category_names)
@@ -58,37 +84,37 @@ def CATEGORIZED_OPTIONS(auction_request):
 	#print options_dictionary
 	return options_dictionary
 
-def getBrandsList(year):
+def GET_BRANDS_LIST(year):
 	brands_list = OD()
-	makes_this_year = ed_call(MAKES_URI%year)
+	makes_this_year = EDMUNDS_CALL(MAKES_URI%year)
 	map(lambda model: brands_list.update({model['niceName']:model['name']}),makes_this_year['makes'] if makes_this_year else {}) #fixed Nonetype has no attribute __getitem__ #FIXED#TEMP HACK, should be ID:NAME but it was reversed to preserve compatibility with later code
 	return brands_list
 	
-def findPhotosByStyleID(style_id):
-	findphotosbystyleid_URI = '/v1/api/vehiclephoto/service/findphotosbystyleid'
-	return ed_cache( #cannot use ed_call
+def FIND_PHOTOS_BY_STYLE_ID(style_id):
+	FIND_PHOTOS_BY_STYLE_ID_URI = '/v1/api/vehiclephoto/service/FIND_PHOTOS_BY_STYLE_ID'
+	return EDMUNDS_CACHE( #cannot use ed_call
 		'photos'+str(style_id), #must be unique for each corresponding image 
-		lambda: ed.make_call(findphotosbystyleid_URI, comparator='simple', styleId=style_id)  #errors will not be cached! :)
+		lambda: ED.make_call(FIND_PHOTOS_BY_STYLE_ID_URI, comparator='simple', styleId=style_id)  #errors will not be cached! :)
 	)
 
-def getStylesByMakeModelYear(make, model, year):
+def GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year):
 	"""
 	Used to display menus and options via form to user
 	"""
 	if int(year) in YEAR_RANGE:
-		return ed_call(STYLES_URI%(make, model, year))['styles'] #(make, model, year)
+		return EDMUNDS_CALL(STYLES_URI%(make, model, year))['styles'] #(make, model, year)
 
-def getStyleByMakeModelYearStyleID(make, model, year, style_id):
+def GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(make, model, year, style_id):
 	"""
 	Used to check if info submitted by user is valid
 	"""
-	styles = getStylesByMakeModelYear(make, model, year)
+	styles = GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year)
 	for each_style in styles:
 		if int(each_style['id']) == int(style_id):
 			return each_style
 			#else None
 			
-def getOption(trim_data, option_type, option_id):
+def GET_OPTION(trim_data, option_type, option_id):
 	options_data = trim_data['options']
 	options = []
 	for each_option_type in options_data:
@@ -99,7 +125,7 @@ def getOption(trim_data, option_type, option_id):
 			return each_option
 			
 			
-def getMsrp(trim_data, option_ids={}):
+def GET_MSRP(trim_data, option_ids={}):
 	trim_data = json.loads(trim_data)
 	price = int(trim_data['price']['baseMSRP'])
 	options_data = trim_data['options']
@@ -115,31 +141,7 @@ def getMsrp(trim_data, option_ids={}):
 	return price
 
 
-"""
-def getColorHexByNameOrID(identifier, trim_data):
-	name_or_id="id"
-	try: int(identifier)
-	except ValueError:
-		name_or_id="name"
-	try:
-		trim_data = json.loads(trim_data)
-	except TypeError:
-		try: trim_data.keys()
-		except: raise Exception("Trim_data variable corrupt!")
-	color_hex=None
-	#for each_color in trim_data['colors'][1]['options']: #check instead to find exterior's index, since lambo doesn't have interior color, and therefore exterior is index 0, not 1... thus causing error
-	for each_color in trim_data['colors'] [[each['category']=='Exterior' for each in trim_data['colors']].index(True)] ['options']:
-		if each_color[name_or_id] == identifier:
-			color_hex = each_color['colorChips']['primary']['hex']
-			break
-	if not color_hex:
-		#raise Exception("Couldn't find color hex by name or ID!")
-		color_hex="000" #Some how, generic "Blue" (instead of Blu Mediterraneo) label was inputed into a maserati gt convertible auction request database causing an exception to be raised. A temporary fix by removing the raise and returning white worked, however investigate this further. Possible reason is Edmunds API returned Blue. Another reason could be a mix up of color_simple_names with color_pref in auction request, but this is unlikely.
-	return color_hex
-"""
-
-
-def getFeaturedCars():
+def GET_FEATURED_CARS():
      cars = []
      cars.append({
         'year' :  u'2014',

@@ -1,13 +1,16 @@
 {{#VIEW}}
 {{extend 'page_layout_new.html'}}
 <div style="overflow-y:auto";>
-	{{=BEAUTIFY(my_inventory)}}
+	{{#=BEAUTIFY(my_inventory)}}
 </div>
 
 <table class="table table-striped table-hover">
 	<thead>
 		<tr>
-			<td colspan="5">
+			<td colspan="4">
+				<div class="pull-left">
+					<a href="#" class="btn btn-default btn-trinity"><i class="fa fa-fw fa-plus"></i>Add vehicle</a>
+				</div>
 				<div class="pull-right">
 	
 					{{#items per page}}
@@ -57,34 +60,29 @@
 		</tr>
 		<tr>
 			<th>Vehicle</th>
-			<th>Auction</th>
-			<th>Your offer</th>
-			<th>Concludes in</th> <!--{{#<i class="fa fa-fw fa-info-circle"  title="Includes 24 hour winner selection period."></i>}}-->
-			<th>View auction</th>
+			<th>Trim</th>
+			<th>Colors</th>
+			<th>Action</th>
 		</tr>
 	</thead>
 	<tbody>
 		{{for each_offer in my_inventory:}}
 			<tr>
 				<td>
-					<div>{{=each_offer.auction_request_offer.year}} {{=each_offer.auction_request_offer.make_name}} {{=each_offer.auction_request_offer.model_name}} </div>
-					<p>{{=each_offer.auction_request_offer.vin_number}}</p>
+					<h4>{{=each_offer.year}} {{=each_offer.make_name}} {{=each_offer.model_name}} </h4>
+					<h5>VIN: {{=each_offer.vin_number}}</h5>
 				</td>
 				<td>
-					<div>Buyer {{=each_offer.auction_request.owner_id}}</div>
-					<p>Test</p>
+					<h4>{{=each_offer.trim_name}}</h4>
+					<h5>MSRP: ${{=each_offer.estimation()}} | {{=random.choice(range(32))}} options</h5>
 				</td>
 				<td>
-					<div>Test</div>
-					<p>Test</p>
+					<h4>Exterior: {{=COLOR_SWATCH(each_offer['exterior_color']['hex'], each_offer['exterior_color']['name'])}}</h4>
+					<h5>Interior: {{=COLOR_SWATCH(each_offer['interior_color']['hex'], each_offer['interior_color']['name'])}}</h5>
 				</td>
 				<td>
-					<div>Test</div>
-					<p>Test</p>
-				</td>
-				<td>
-					<div>Test</div>
-					<p>Test</p>
+					<a href="#" class="btn btn-large btn-default"><i class="fa fa-fw fa-edit"></i></a>
+					<a href="#" class="btn btn-large btn-default"><i class="fa fa-fw fa-trash-o"></i></a>
 				</td>
 			</tr>
 		{{pass}}

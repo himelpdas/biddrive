@@ -446,7 +446,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
         $('#auction_request_options').multiselect("disable");
         ////{{#ajax}}
         $('#trim_stats').slideUp(400)
-        $.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by getStylesByMakeModelYear(make, model, year, style_id):}}
+        $.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year, style_id):}}
             .done(function( data ) {
                 /*/{{#colors}}
                 var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}

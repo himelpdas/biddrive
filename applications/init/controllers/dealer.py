@@ -29,10 +29,10 @@ def auction_requests():
 		year=None
 		brands_list = OD() #TEMP
 		for each_year in year_range_string:
-			brands_list.update(getBrandsList(each_year)) #doesn't matter if each_year is int or str because getBrandsList uses string formatting
+			brands_list.update(GET_BRANDS_LIST(each_year)) #doesn't matter if each_year is int or str because GET_BRANDS_LIST uses string formatting
 		year_list = year_range_string #USE YEAR_LIST INSTEAD OF YEAR
 	else:
-		brands_list = getBrandsList(year)
+		brands_list = GET_BRANDS_LIST(year)
 		year_list = [year]
 	#dealer_specialty = my_info.specialty
 	#brands_list = dict([[each_niceName , brands_list[each_niceName]] for each_niceName in dealer_specialty]) #niceName, name #HACK - limit the brandslist to only whats in the dealer's speciality
@@ -49,7 +49,7 @@ def auction_requests():
 			#	query |= db.auction_request.make==each_make
 		for each_year in year_list:
 			for each_make in multiple:
-				year_models = ed_call(MAKE_URI%(each_make, each_year))
+				year_models = EDMUNDS_CALL(MAKE_URI%(each_make, each_year))
 				if year_models: #prevent new year bug that returns None
 					for each_model in year_models['models']:
 						models_list.update(
@@ -63,7 +63,7 @@ def auction_requests():
 	if model in models_list:
 		query &= db.auction_request.model==model
 		for each_year in year_list:
-			model_styles+=(ed_call( STYLES_URI%(models_list[model][1], model, each_year))['styles'])
+			model_styles+=(EDMUNDS_CALL( STYLES_URI%(models_list[model][1], model, each_year))['styles'])
 		for each_style in model_styles:
 			styles_list.update(
 				{str(each_style['id']) : '%s (%s)'%(each_style['name'], each_style['year']['year']) if not year else each_style['name']} #json returns int but request.vars returns string, make them compatible
@@ -452,28 +452,6 @@ def pre_auction():
 	
 	return dict(form = form, my_piggy=my_piggy, options=options, option_codes=option_codes, categorized_options=CATEGORIZED_OPTIONS(auction_request), msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
 """
-
-def __get_each_offer_int_and_ext_colors(row_table):
-	color_codes = zip(row_table.colors, #0
-		row_table.color_names, #1
-		row_table.color_categories, #2
-		row_table.color_category_names, #3
-		row_table.color_hexes, #4
-		row_table.color_msrps, #5
-		row_table.color_simple_names #6
-	)
-	for each_code in color_codes:
-		if each_code[2] == "exterior":
-			exterior_color = {
-				'name':each_code[1],
-				'hex':each_code[4],
-			}
-		if each_code[2] == 'interior':
-			interior_color = {
-				'name':each_code[1],
-				'hex':each_code[4],
-			}
-	return [interior_color, exterior_color]
 
 @auth.requires(request.args(0) and request.args(1))
 @auth.requires_membership('dealers')
@@ -873,8 +851,8 @@ def auction():
 		
 		#color stuff
 
-		this_interior_color = __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[0]
-		this_exterior_color = __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[1]
+		this_interior_color = GET_OFFER_ROW_INT_EXT_COLORS(each_offer.auction_request_offer)[0]
+		this_exterior_color = GET_OFFER_ROW_INT_EXT_COLORS(each_offer.auction_request_offer)[1]
 			
 		#message stuff buyer
 		each__message_form_buyer = ''
@@ -1114,7 +1092,7 @@ def my_auctions():
 			'model':each_offer.auction_request.model_name,
 			'trim':each_offer.auction_request.trim_name,
 			'vin':each_offer.auction_request_offer.vin_number,
-			'exterior_color': __get_each_offer_int_and_ext_colors(each_offer.auction_request_offer)[1],
+			'exterior_color': GET_OFFER_ROW_INT_EXT_COLORS(each_offer.auction_request_offer)[1],
 			'offer_expires':each_offer.auction_request.offer_expires,
 			'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
@@ -1169,8 +1147,8 @@ def winner():
 			})
 	#color stuff
 
-	exterior_color = __get_each_offer_int_and_ext_colors(auction_request_offer.auction_request_offer)[0]
-	interior_color = __get_each_offer_int_and_ext_colors(auction_request_offer.auction_request_offer)[1]
+	exterior_color = GET_OFFER_ROW_INT_EXT_COLORS(auction_request_offer.auction_request_offer)[0]
+	interior_color = GET_OFFER_ROW_INT_EXT_COLORS(auction_request_offer.auction_request_offer)[1]
 	#options stuff
 	options = {}
 	for option, category in zip(auction_request_offer.option_names, auction_request_offer.option_category_names):
