@@ -99,7 +99,7 @@
 				</td>
 				<td>
 					<h4>{{=each_offer.trim_name}}</h4>
-					<h5>MSRP: ${{=each_offer.estimation()}} | {{=random.choice(range(32))}} options</h5>
+					<h5>MSRP: ${{=each_offer.estimation()}} | <{{if len(each_offer.options):}}{{_tag="a"}}{{=_tag}} href="javascript:void(0)"{{else:}}{{_tag="span"}}{{=_tag}}{{pass}}  title="{{for each_option_name in each_offer.option_names:}}&#149; {{=each_option_name}}&#x0A;{{pass}}">{{=len(each_offer.options)}} options</{{=_tag}}></h5>
 				</td>
 				<td>
 					<h4>Exterior: {{=COLOR_SWATCH(each_offer['exterior_color']['hex'], each_offer['exterior_color']['name'])}}</h4>
