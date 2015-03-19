@@ -86,7 +86,7 @@ def handle_key_check():
 			if not is_open_now: #means they're closed
 				tz_country, tz_zone = winning_dealer.time_zone.split('/') 
 				schedule = ''
-				for each_day in days_of_the_week:
+				for each_day in DAYS_OF_THE_WEEK:
 					opening_time = winning_dealer['%s_opening_time'%each_day]
 					closing_time = winning_dealer['%s_closing_time'%each_day]
 					if opening_time and closing_time:

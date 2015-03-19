@@ -1,136 +1,5 @@
 #MODEL
-
-#####GENERATE BRANDSLIST#####
-
-ALL_BRANDS_LIST = OD() #TEMP
-
-for each_year in YEAR_RANGE:
-	ALL_BRANDS_LIST.update(GET_BRANDS_LIST(each_year)) #doesn't matter if each_year is int or str because GET_BRANDS_LIST uses string formatting
-
-#useful data structure
-
-all_brands_list_sorted = sorted(ALL_BRANDS_LIST.items(), key=lambda x: x[1]) #niceName, name
-
-times_of_the_day = ['12:00 AM', '12:15 AM', '12:30 AM', '12:45 AM', '1:00 AM', '1:15 AM', '1:30 AM', '1:45 AM', '2:00 AM', '2:15 AM', '2:30 AM', '2:45 AM', '3:00 AM', '3:15 AM', '3:30 AM', '3:45 AM', '4:00 AM', '4:15 AM', '4:30 AM', '4:45 AM', '5:00 AM', '5:15 AM', '5:30 AM', '5:45 AM', '6:00 AM', '6:15 AM', '6:30 AM', '6:45 AM', '7:00 AM', '7:15 AM', '7:30 AM', '7:45 AM', '8:00 AM', '8:15 AM', '8:30 AM', '8:45 AM', '9:00 AM', '9:15 AM', '9:30 AM', '9:45 AM', '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM', '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM', '6:00 PM', '6:15 PM', '6:30 PM', '6:45 PM', '7:00 PM', '7:15 PM', '7:30 PM', '7:45 PM', '8:00 PM', '8:15 PM', '8:30 PM', '8:45 PM', '9:00 PM', '9:15 PM', '9:30 PM', '9:45 PM', '10:00 PM', '10:15 PM', '10:30 PM', '10:45 PM', '11:00 PM', '11:15 PM', '11:30 PM', '11:45 PM']
-
-days_of_the_week = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-
-#####GET ACCURATE COORDINATES COMPUTE FUNCTIONS#####
-
-def get_coordinates_data(row): #geocoding allows one to turn an address into coordinates
-	us = geocoders.GeocoderDotUS() #https://code.google.com/p/geopy/wiki/GettingStarted
-	location = us.geocode("{str1} {str2} {city} {state} {zip_code}".format(str1 = row['address_line_1'], str2 = row['address_line_2'] or '', city = row['city'], state = row['state'], zip_code = row['zip_code']))
-	place, coords = location or (None, None) #fixes latitude longitude compute error when geocoding fails
-	return coords
-
-def get_most_accurate_longitude_from_address(row):
-	coords = get_coordinates_data(row)
-	if coords: # (lat, lon)
-		return coords[1]
-	else: #fallback to zip code accuracy if geocoding fails
-		return db(db.zipgeo.zip_code == row['zip_code']).select().first()["longitude"]
-
-def get_most_accurate_latitude_from_address(row):
-	coords = get_coordinates_data(row)
-	if coords: # (lat, lon)
-		return coords[0]
-	else: #fallback to zip code accuracy if geocoding fails
-		return db(db.zipgeo.zip_code == row['zip_code']).select().first()["latitude"]
-
-####ON VALIDATE FOR BUYER AND DEALER VEHICLE####
-
-def VALIDATE_VEHICLE(form, make, model, year, _table, _dealer=False): #these defaults need form vars, so must do it in onvalidation
 	
-	#initialize
-	trim_data = GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(make,model,year,form.vars.trim)
-	
-	#make model names
-	db[_table].make_name.default = make_name = trim_data['make']['name']
-	db[_table].model_name.default = model_name = trim_data['model']['name']
-	
-	#submodel
-	db[_table].body.default = trim_data['submodel']['body']
-	
-	##trim stuff
-	db[_table].trim_data.default = json.dumps(trim_data)
-	db[_table].trim_name.default = trim_data['name']
-	db[_table].trim_price.default = trim_data['price']['baseMSRP']
-	
-	##options stuff
-	option_names_list = []
-	option_msrps_list = []
-	option_descriptions_list = []
-	option_categories_list = []
-	option_category_names_list = []
-	for each_option_type in trim_data['options']:
-		for each_option in each_option_type['options']:
-			#logger.debug(each_option)
-			if str(each_option['id']) in form.vars['options']:
-				option_names_list.append(each_option['name'])
-				option_msrps_list.append(each_option['price']['baseMSRP'] if ('price' in each_option and 'baseMSRP' in each_option['price']) else 0 )
-				option_descriptions_list.append(each_option['description'] if 'description' in each_option else None) 
-				option_categories_list.append(each_option_type['category'])
-				option_category_names_list.append(each_option_type['category'].lower().replace(" ", "_"))
-	
-	#put them in db
-	db[_table].option_names.default = option_names_list
-	db[_table].option_msrps.default = option_msrps_list
-	db[_table].option_descriptions.default = option_descriptions_list
-	db[_table].option_categories.default = option_categories_list
-	db[_table].option_category_names.default = option_category_names_list
-	
-	##exterior colors
-	color_names_list = []
-	color_msrps_list = []
-	color_categories_list = []
-	color_hexes_list = []
-	color_category_names_list = []
-	color_simple_names_list = []
-	for each_color_type in trim_data['colors']:
-		for each_color_option in each_color_type['options']:
-			if each_color_option['id'] in form.vars['colors']:
-				color_names_list.append(each_color_option['name'])
-				color_msrps_list.append(int(float(each_color_option['price']['baseMSRP'])) if ('price' in each_color_option and 'baseMSRP' in each_color_option['price']) else 0)
-				if 'colorChips' in each_color_option:
-					color_hexes_list.append(each_color_option['colorChips']['primary']['hex'])
-					color_simple_names_list.append(simplecolor.predict((each_color_option['colorChips']['primary']['r'],each_color_option['colorChips']['primary']['g'],each_color_option['colorChips']['primary']['b']), each_color_option['name'])[1]) #(0.06822856993575846, 'BROWN')
-				else:
-					color_hexes_list.append('ff00ff')
-					color_simple_names_list.append('')
-				color_categories_list.append(each_color_type['category'].lower().replace(" ", "_"))
-				color_category_names_list.append(each_color_type['category'])
-	
-	#for to be determined (missing interior or exterior categories
-	if any(map(lambda each: each in ['0','1'], form.vars['colors']) ):
-		for missing_colors in ['0','1']:
-			if missing_colors in form.vars['colors']:
-				if missing_colors == '0':
-					missing_category = "Interior"				
-				if missing_colors == '1':
-					missing_category = "Exterior"
-				color_names_list.append('%s color to be determined'%missing_category)
-				color_msrps_list.append(0)
-				color_category_names_list.append(missing_category)
-				color_hexes_list.append('ff00ff')
-				color_categories_list.append(missing_category.lower().replace(" ", "_")) #id safe
-				color_simple_names_list.append('N/A')
-	#print map(lambda each: each in [0,1], form.vars['colors'])
-	
-	#if not ('interior' in color_categories_list and 'exterior' in color_categories_list): #make sure there is at least one interior and one exterior color, or raise form error
-	if not set(['interior', 'exterior']).issubset(color_categories_list): #more flexible than above
-		form.errors.colors = "Select %sone interior color and one exterior color!" % "at least " if not _dealer else '' #will only show after built-in validations ex. zip code
-	if _dealer:
-		if len(color_categories_list) > len(set(color_categories_list)):
-			form.errors.colors = "Cannot pick multiple colors for the same category!"
-	
-	#logger.debug(form.errors)
-	db[_table].color_names.default = color_names_list
-	db[_table].color_msrps.default = color_msrps_list
-	db[_table].color_hexes.default = color_hexes_list
-	db[_table].color_categories.default = color_categories_list
-	db[_table].color_category_names.default = color_category_names_list
-	db[_table].color_simple_names.default = color_simple_names_list
-
 #####DEFINE TABLES#####
 db.define_table('dealership_info',
 	Field('owner_id', db.auth_user,
@@ -151,7 +20,7 @@ db.define_table('dealership_info',
 		requires=IS_NOT_EMPTY(),
 	),	
 	Field('specialty', 'list:string',
-		requires=[IS_IN_SET(all_brands_list_sorted, zero=None, multiple=True),IS_NOT_EMPTY(error_message="You must pick at least one brand"),],
+		requires=[IS_IN_SET(ALL_BRANDS_LIST_NAME_PAIRS_SORTED, zero=None, multiple=True),IS_NOT_EMPTY(error_message="You must pick at least one brand"),],
 		widget =SQLFORM.widgets.multiple.widget
 	),	
 	Field('mission_statement', 'text',
@@ -186,46 +55,46 @@ db.define_table('dealership_info',
 		requires=IS_IN_SET(['US/Alaska', 'US/Arizona', 'US/Central', 'US/Eastern', 'US/Hawaii', 'US/Mountain', 'US/Pacific'], zero=None),
 	),
 	Field('monday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),	
 	Field('monday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),
 	Field('tuesday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),	
 	Field('tuesday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),
 	Field('wednesday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),	
 	Field('wednesday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),
 	Field('thursday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),	
 	Field('thursday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),
 	Field('friday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),	
 	Field('friday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),
 	Field('saturday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),	
 	Field('saturday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),
 	Field('sunday_opening_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),	
 	Field('sunday_closing_time',
-		requires=IS_EMPTY_OR(IS_IN_SET(times_of_the_day, zero="Unavailable")),
+		requires=IS_EMPTY_OR(IS_IN_SET(TIMES_OF_THE_DAY, zero="Unavailable")),
 	),
 	Field('longitude', 'double',
 		required=True,
@@ -247,11 +116,6 @@ db.define_table('dealership_info',
 	auth.signature,
 )
 
-EXPECTED_DOWN_PMT_REQUIRES = IS_INT_IN_RANGE(0, 100000)
-FINANCING_REQUIRES = IS_IN_SET(sorted(['Through the dealership or manufacturer', 'Self-finance (bank, credit union, etc.)']), multiple=False, zero="Choose one") #put in default controller
-LEASE_MILEAGE_REQUIRES = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multiple=False, zero="Choose one")
-LEASE_TERM_REQUIRES = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one")
-MATCHING_CATEGORIES = [['body', "Body type (E.g. SUV, Sedan, Compact, etc.)"], ['year','Year'], ['make','Make (E.g. Ford, Honda, Toyota, etc.)'], ['model','Model (E.g. Accord, Fusion, Grand Cherokee, etc.)'], ['trim','Trim (E.g. EX, LX, Sport, etc.)'], ['colors','Colors'], ['options','Options']]
 db.define_table('auction_request',
 	Field('owner_id', db.auth_user,
 		readable=False,
@@ -689,7 +553,6 @@ db.define_table('auction_request_offer',
 )
 """
 
-VEHICLE_IMAGE_NUMBERS = map(lambda x: x+1, range(10))
 
 auction_request_offer_image_fields = []	
 for each in VEHICLE_IMAGE_NUMBERS:
@@ -721,9 +584,10 @@ db.define_table('auction_request_offer',
 		writable=False,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s')
 	),
-	Field('status',
-		requires = IS_IN_SET(['unsold', 'sold']),
-		default = 'unsold'
+	Field('status', "list:string",
+		requires = [IS_IN_SET(VEHICLE_STATES,  multiple=True, zero=None), VEHICLE_STATES_VALIDATOR()],
+		default = ['unsold','new'],
+		widget=SQLFORM.widgets.multiple.widget
 	),
 	Field('vin_number',
 		requires=IS_NOT_EMPTY(), required=True

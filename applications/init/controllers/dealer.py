@@ -1228,19 +1228,19 @@ def dealer_info():
 	#4 ways to further validate: check post_vars (bad as nothing has been validated), on_validate and form.vars, custom validators, compute fields with required == True (will cause internal error instead)
 	def make_sure_opening_and_closing_times_make_sense(form):
 		x=-1; times_of_the_day_decimal=[]
-		for n, each_time in enumerate(times_of_the_day): #times_of_the_day variable is from model_edmunds.py
+		for n, each_time in enumerate(TIMES_OF_THE_DAY): #TIMES_OF_THE_DAY variable is from model_edmunds.py
 			if n%4==0:
 				x+=1
 			times_of_the_day_decimal.append(float('%s.%s'%(x,each_time.split(':')[-1].split(' ')[0])))
 		
-		times_of_the_day_to_decimal = dict(zip(times_of_the_day,times_of_the_day_decimal))
+		TIMES_OF_THE_DAY_to_decimal = dict(zip(TIMES_OF_THE_DAY,times_of_the_day_decimal))
 		
-		for each_day in days_of_the_week:
+		for each_day in DAYS_OF_THE_WEEK:
 			submitted_opening_time = form.vars['%s_opening_time'%each_day]
 			submitted_closing_time = form.vars['%s_closing_time'%each_day]
 			if not (submitted_opening_time and submitted_closing_time): #if one is closed make both closed
 				form.vars['%s_opening_time'%each_day] = form.vars['%s_closing_time'%each_day] = None
-			elif times_of_the_day_to_decimal[submitted_opening_time] > times_of_the_day_to_decimal[submitted_closing_time]:
+			elif TIMES_OF_THE_DAY_to_decimal[submitted_opening_time] > TIMES_OF_THE_DAY_to_decimal[submitted_closing_time]:
 				submitted_opening_time = form.errors['%s_opening_time'%each_day] = "Opening time cannot be after closing time!"
 				submitted_closing_time = form.errors['%s_closing_time'%each_day] = "Closing time cannot be before opening time!"
 		

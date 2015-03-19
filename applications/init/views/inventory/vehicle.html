@@ -1,6 +1,7 @@
 {{response.title = "Build your %s %s %s" % (year, make.title(), model.title())}}
 {{extend 'page_layout_new.html'}}
 {{#=BEAUTIFY(response._vars)}}
+{{#VIEW}}
 
 <style>
     body {
@@ -19,11 +20,12 @@
     {{ form.element("textarea", _name = "summary")["_placeholder"] = "Example: TODO" }}
     {{ form.element("textarea", _name = "summary")["_class"] +=  " form-control" }}
 
+    {{ form.element("select", _name = "status")["_class"] += " form-control" }}
     {{ form.element("select", _name = "colors")["_class"] += " form-control" }}
     {{ form.element("select", _name = "options")["_class"] += " form-control" }}
-    {{ form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-trinity-big" }}
+    {{ form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-info btn-trinity-big" }}
     {{ form.element("input", _type = "submit")["_id"] = "submit" }}
-    {{ form.element("input", _type = "submit")["_value"] = "Add vehicle" }}
+    {{ form.element("input", _type = "submit")["_value"] = "Add vehicle" if not edit else "Save changes" }}
 
     {{=form.custom.begin}}
 
@@ -39,8 +41,7 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
-
-                            <div class="form-group">
+							<div class="form-group">
                                 <label for="{{=form.custom.widget.trim['_id']}}" class="col-sm-3 control-label">Trim <i class="fa fa-question-circle" title='Select the TRIM of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a trim that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.trim}}
@@ -54,7 +55,7 @@
                             <div class="form-group">
                                 <label for="{{=form.custom.widget.colors['_id']}}" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors <i class="fa fa-question-circle" title="Select at least one interior AND one exterior style or color you want your vehicle to have."></i></label>
                                 <div class="col-sm-9">
-                                    {{=form.custom.widget.colors}}{{#logger.debug(form.errors['colors'])}}
+                                    {{=form.custom.widget.colors}}{{print form.errors['colors']}}
                                     {{if form.errors['colors']:}}
                                     <div class="alert alert-warning">{{=form.errors['colors']}}</div>
                                     {{pass}}
@@ -72,6 +73,17 @@
                                 </div>
                             </div>
 
+							<div class="form-group">
+								<label for="{{=form.custom.widget.status['_id']}}" class="col-sm-3 control-label">Status <i class="fa fa-question-circle" title='Select the status of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a status that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
+								<div class="col-sm-9">
+									{{=form.custom.widget.status}}
+
+									{{if form.errors['status']:}}
+									<div class="alert alert-warning">{{=form.errors['status']}}</div>
+									{{pass}}
+								</div>
+							</div>  
+							
                         </div>
                     </div>
                 </div>
@@ -140,8 +152,8 @@
                 </div>
             </div>
         </div>
-    </div>
-
+    </div>                         
+	
     <div class="row">
         <div class="col-xs-12">
             <div class="form-group">
@@ -154,12 +166,10 @@
 </div>
 
 {{=form.custom.end}}
-<!--{{#<h3>{{=form.errors}}</h3><h3>{{=auth.user_id}}</h3>}}-->
 
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-md5.js"></script> <!--{{#quick configure-less function}}{{#https://code.google.com/p/crypto-js/}}-->
 
 <script>
-//{{#client side of hmac verification used to protect against fraudulent ajax calls (perhaps by data miners)}}
 var glob_message_string = "{{=make}}"+"{{=model}}"+"{{=year}}";
 var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT IN ITS ORIGINAL FORM #HASH IS WEAK (64-bit) BUT DOES ITS JOB}}
 </script>
@@ -182,7 +192,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
         $('#auction_request_offer_options').multiselect("disable");
         ////{{#ajax}}
         $('#trim_stats').slideUp(400)
-        $.getJSON("{{=URL('ajax','options_content.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year, style_id):}}
+        $.getJSON("{{=URL('ajax','vehicle_attributes.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year, style_id):}}
             .done(function( data ) {
                 /*/{{#colors}}
                 var previous_colors_submissions = $("#auction_request_offer_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
@@ -261,11 +271,12 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 			}); //use multiselect widget for consistance, though it is not actually single select
 
     $(document).ready(function(){
-        load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
+        //load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
     })
     .ajaxComplete(function(){ //{{#listens whenever ajax active, then runs this function when ajax finished}}
-        $("#fake_submit").removeClass("disabled", 250);
+        $("fake_submit").removeClass("disabled", 250);
     });
 </script>
 
-{{BOOTSTRAP_MULTISELECT([['auction_request_offer_colors', 'Pick interior and exterior colors'], ['auction_request_offer_options','Pick must have options (optional)']], max_height=480)}}
+{{BOOTSTRAP_MULTISELECT([['auction_request_offer_colors', 'Pick interior and exterior colors'], ['auction_request_offer_options','Pick options (optional)']], max_height=480)}}
+{{BOOTSTRAP_MULTISELECT([['auction_request_offer_status', 'Choose applicable']], max_height=480, num_displayed=4)}}
