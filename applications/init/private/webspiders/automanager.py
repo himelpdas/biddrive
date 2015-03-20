@@ -97,7 +97,7 @@ class AutoManager(BaseSpider):
 		self.actions.double_click(thumbnail).perform()
 		photo = self.browser.find_element_by_id("frmDynamicDialog").get_attribute("src")
 		photo_size = int(photo.split("_")[-1].split(".")[0])
-			
+
 		#convert them to large and download
 		#from http://photos2.automanager.com/027852/1c264532de754d32aa5181c56d033723/14a9498a08_105.jpg?TS=130657930160000000
 		#to http://photos2.automanager.com/027852/1c264532de754d32aa5181c56d033723/14a9498a08_640.jpg
@@ -124,6 +124,6 @@ if __name__ == "__main__":
 		login_clientid = pyaes.AESModeOfOperationCTR(key).decrypt('G\x98\x84\x9a!.'),  
 		login_username = pyaes.AESModeOfOperationCTR(key).decrypt('\x16\xce\xde\xcbz'), 
 		login_password = pyaes.AESModeOfOperationCTR(key).decrypt('F\x98\x80\x96!*\x8d\xb6'),
-		scrape_stockid = "W0120"
+		scrape_stockid = "P0079"
 	)
 	spider.run()

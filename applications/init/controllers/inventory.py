@@ -127,12 +127,11 @@ def vehicle():
 	
 	db.auction_request_offer.auction_request.default = None
 	db.auction_request_offer.owner_id.default = auth.user_id
-
 	
-	form = SQLFORM(db.auction_request_offer, record = edit_record.id, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
+	form = SQLFORM(db.auction_request_offer, record = edit_record.id if edit else None, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
 	if form.process(keepvalues=True, onvalidation=lambda form:VALIDATE_VEHICLE(form, make, model, year, 'auction_request_offer', _dealer=True), hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		pass
 		
 	response.title="Add a vehicle to your inventory"
-	return dict(form = form, year=year, make=make, model=model, edit=edit) #options=options, option_codes=option_codes,) #msrp_by_id=msrp_by_id, )
+	return dict(form = form, year=year, make=make, model=model, edit=edit, edit_record=edit_record) #options=options, option_codes=option_codes,) #msrp_by_id=msrp_by_id, )

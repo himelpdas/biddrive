@@ -154,6 +154,47 @@
         </div>
     </div>                         
 	
+	
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default silver-bg">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
+							{{for each_image_number in VEHICLE_IMAGE_NUMBERS:}}
+								<div class="form-group">
+									<label for="{{=form.custom.widget['image_%s'%each_image_number]['_id']}}" class="col-sm-3 control-label"></i>Image {{=each_image_number}}</label>
+									<div class="col-sm-{{=4 if edit else 9}}">
+										{{=form.custom.widget["image_%s"%each_image_number]}}
+										{{if form.errors["image_%s"%each_image_number]:}}
+										<div class="alert alert-warning">{{=form.errors["image_%s"%each_image_number]}}</div>
+										{{pass}}
+									</div>
+								
+									<div class="col-sm-{{=5 if edit else 0}}">
+										{{if edit:}}
+											{{has_image =False}}
+											{{small_and_large_file_names=edit_record['image_compressed_%s'%each_image_number]}}
+											{{if small_and_large_file_names:}} {{#did dealer submit images?}}
+												{{image_s = small_and_large_file_names[0]}}
+												{{image_l = small_and_large_file_names[1]}}
+												{{has_image=True}}
+												<a href="#{{=each_image_number}}_{{=edit_record['id']}}" data-toggle="modal" data-target="#{{=each_image_number}}_{{=edit_record['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
+											{{pass}}
+											{{if not has_image:}}
+												<img src="http://placehold.it/320x240&text=No image uploaded" class="img-responsive">
+											{{pass}}
+										{{pass}}
+									</div>
+								</div>
+							{{pass}}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
     <div class="row">
         <div class="col-xs-12">
             <div class="form-group">

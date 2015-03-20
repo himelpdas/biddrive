@@ -1,4 +1,4 @@
-
+#MODEL
 db.define_table('scrape',
 	Field('owner_id', db.auth_user,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',)

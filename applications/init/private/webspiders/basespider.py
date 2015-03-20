@@ -7,13 +7,17 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 import pyaes, time, urllib, uuid, requests, json
 
+import atexit
+
 class BaseSpider():
 	def __init__(self, userid = None):
 		"""
 		Create selenium browser instance
 		"""
-		self.browser = webdriver.Chrome()
+		self.browser = webdriver.Firefox()
 		self.actions = ActionChains(self.browser) #needed to make double-click http://stackoverflow.com/questions/17870528/double-clicking-in-python-selenium
+		
+		atexit.register(self.__exit__, None, None, None) #make sure browser closes	
 		
 	def __exit__(self, type, value, traceback): #dont use del http://stackoverflow.com/questions/6104535/i-dont-understand-this-python-del-behaviour
 		"""

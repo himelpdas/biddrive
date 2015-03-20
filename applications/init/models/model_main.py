@@ -552,10 +552,16 @@ db.define_table('auction_request_offer',
 	auth.signature,
 )
 """
-
-
+	
+def printer(o, row):
+	print row
+	print "printer: %s"%o
+	return o
+	
 auction_request_offer_image_fields = []	
 for each in VEHICLE_IMAGE_NUMBERS:
+	x=lambda row, each=each: [resize_offer_image_upload(row['image_%s'%each],x=320,y=240),resize_offer_image_upload(row['image_%s'%each],x=800,y=600)] if row['image_%s'%each] else [] #[small, big],
+
 	auction_request_offer_image_fields += [
 		Field('image_%s'%each, 'upload',
 			requires=IS_EMPTY_OR(
@@ -566,9 +572,11 @@ for each in VEHICLE_IMAGE_NUMBERS:
 				)
 			)
 		),
-		Field('image_compressed_%s'%each, 'list:string', compute = 
-			lambda row: 
-				[resize_offer_image_upload(row['image_%s'],x=320,y=240),resize_offer_image_upload(row['image_%s'],x=800,y=600)] if row[''] else [] #[small, big]
+		Field('image_compressed_%s'%each, 'list:string', 
+			readable=False,
+			writable=False,
+			required=True, #EXTREME WARNING line 685, in _listify: error silently unless field is required!
+			compute = x #MUST KEEP LAMBDA OUTSIDE FIELD()
 		),
 	]
 	
