@@ -44,13 +44,22 @@ def index():
 		each_vehicle['interior_color'] = int_ext_colors[0]
 		each_vehicle['exterior_color'] = int_ext_colors[1]
 	
-	#for each_brand in ALL_BRANDS_LIST:
-	#
-	#	make_details = EDMUNDS_CALL(MAKE_URI%(each_brand, year))
+	scrape_form = SQLFORM(db.scrape, _class="form-horizontal")
+	
+	view_show_modal_on_form_fail="""
+		<script>
+			$(document).ready(function(){
+				$('#import_modal').modal('show');
+			}
+		</script>
+	"""
+		
+	if scrape_form.process(keepvalues=True, hide_error=True, message_onfailure=XML("@Errors in form. Please check it out.%s"%view_show_modal_on_form_fail) ).accepted:
+		redirect(URL("inventory","index"))
 	
 	response.title="My inventory"
 	
-	return dict(my_inventory=my_inventory, sorting=sorting, show_list=show_list, **paging)
+	return dict(my_inventory=my_inventory, sorting=sorting, show_list=show_list, scrape_form=scrape_form, **paging)
 	
 @auth.requires(request.args(0))
 @auth.requires_membership('dealers')
@@ -131,7 +140,7 @@ def vehicle():
 	form = SQLFORM(db.auction_request_offer, record = edit_record.id if edit else None, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
 	if form.process(keepvalues=True, onvalidation=lambda form:VALIDATE_VEHICLE(form, make, model, year, 'auction_request_offer', _dealer=True), hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
-		pass
+		redirect(URL("inventory","index"))
 		
 	response.title="Add a vehicle to your inventory"
 	return dict(form = form, year=year, make=make, model=model, edit=edit, edit_record=edit_record) #options=options, option_codes=option_codes,) #msrp_by_id=msrp_by_id, )

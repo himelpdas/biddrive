@@ -3,7 +3,6 @@ from gevent import monkey; monkey.patch_all()
 from basespider import *
 		
 class AutoManager(BaseSpider):
-	
 	logged_in_phrase = "Log out of WebManager"
 	edmunds_vin_decode_url = "https://api.edmunds.com/api/vehicle/v2/vins/4T1BK1EB6DU056165?manufacturerCode=3548fmt=json&api_key={api_key}"
 
@@ -117,8 +116,7 @@ class AutoManager(BaseSpider):
 		spider.scrape()
 
 if __name__ == "__main__":
-	#key = raw_input("Decrypt test account info: ")
-	key = "yearofthedragon."
+	key = raw_input("Decrypt test account info: ") #DH password + .
 	
 	spider = AutoManager(
 		login_clientid = pyaes.AESModeOfOperationCTR(key).decrypt('G\x98\x84\x9a!.'),  

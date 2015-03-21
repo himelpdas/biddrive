@@ -180,6 +180,15 @@
 												{{image_l = small_and_large_file_names[1]}}
 												{{has_image=True}}
 												<a href="#{{=each_image_number}}_{{=edit_record['id']}}" data-toggle="modal" data-target="#{{=each_image_number}}_{{=edit_record['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
+												<div id="{{=each_image_number}}_{{=edit_record['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_number}}_image_l_{{=edit_record['id']}}" aria-hidden="true">
+												  <div class="modal-dialog modal-md">
+													<div class="modal-content">
+														<div class="modal-body">
+															<img src="{{=URL('static', 'thumbnails/%s'%image_l)}}" class="img-responsive">
+														</div>
+													</div>
+												  </div>
+												</div>
 											{{pass}}
 											{{if not has_image:}}
 												<img src="http://placehold.it/320x240&text=No image uploaded" class="img-responsive">
