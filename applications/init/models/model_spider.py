@@ -1,4 +1,5 @@
 #MODEL
+
 db.define_table('scrape',
 	Field('owner_id', db.auth_user,
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s',)
@@ -16,16 +17,16 @@ db.define_table('scrape',
 		required=True,
 	),
 	Field('login_1',
-		requires = IS_EMPTY_OR(CRYPT(key='sha512:thisisthekey') )
+		requires = IS_EMPTY_OR(AES_ENCRYPTION_VALIDATOR('25f36ee9-a785-450e-a091-c7d8718f21e7') )
 	),	
 	Field('login_2',
-		requires = IS_EMPTY_OR(CRYPT(key='sha512:thisisthekey') )
+		requires = IS_EMPTY_OR(AES_ENCRYPTION_VALIDATOR('a644ae8f-759f-43ab-985c-0d20a7bf1e80') )
 	),	
 	Field('login_3',
-		requires = IS_EMPTY_OR(CRYPT(key='sha512:thisisthekey') )
+		requires = IS_EMPTY_OR(AES_ENCRYPTION_VALIDATOR('c0be32ba-a49e-47ca-927f-2a03cd90b364') )
 	),	
 	Field('login_4',
-		requires = IS_EMPTY_OR(CRYPT(key='sha512:thisisthekey') )
+		requires = IS_EMPTY_OR(AES_ENCRYPTION_VALIDATOR('3a78d1be-6ed8-4706-9ca4-38cae1d3cd71') )
 	),
 	Field('percent', 'integer', 
 		default = 0,

@@ -13,6 +13,7 @@ import simplecolor
 from collections import OrderedDict #http://bit.ly/OhPhQr
 OD = OrderedDict #shortcut
 import platform #check the platform web2py is running from
+import m2secret
 #import lookup_hash
 
 ####ENABLE LOGGING FOR Macs AND PCs, which are probably development environments####
