@@ -553,14 +553,10 @@ db.define_table('auction_request_offer',
 )
 """
 	
-def printer(o, row):
-	print row
-	print "printer: %s"%o
-	return o
-	
 auction_request_offer_image_fields = []	
+
 for each in VEHICLE_IMAGE_NUMBERS:
-	x=lambda row, each=each: [resize_offer_image_upload(row['image_%s'%each],x=320,y=240),resize_offer_image_upload(row['image_%s'%each],x=800,y=600)] if row['image_%s'%each] else [] #[small, big],
+	x=lambda row, each=each: [resize_offer_image_upload(row['image_%s'%each],x=320,y=240),resize_offer_image_upload(row['image_%s'%each],x=800,y=600)] if row['image_%s'%each] else [] #[small, big], #MUST USE each=each, or lambda will use last value of each
 
 	auction_request_offer_image_fields += [
 		Field('image_%s'%each, 'upload',
@@ -576,7 +572,7 @@ for each in VEHICLE_IMAGE_NUMBERS:
 			readable=False,
 			writable=False,
 			required=True, #EXTREME WARNING line 685, in _listify: error silently unless field is required!
-			compute = x #MUST KEEP LAMBDA OUTSIDE FIELD()
+			compute = x
 		),
 	]
 	

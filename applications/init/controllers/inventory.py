@@ -44,17 +44,30 @@ def index():
 		each_vehicle['interior_color'] = int_ext_colors[0]
 		each_vehicle['exterior_color'] = int_ext_colors[1]
 	
-	scrape_form = SQLFORM(db.scrape, _class="form-horizontal")
+	scrape_form = SPIDER_FORM_FACTORY
 	
-	view_show_modal_on_form_fail="""
-		<script>
-			$(document).ready(function(){
-				$('#import_modal').modal('show');
-			}
-		</script>
-	"""
-		
-	if scrape_form.process(keepvalues=True, hide_error=True, message_onfailure=XML("@Errors in form. Please check it out.%s"%view_show_modal_on_form_fail) ).accepted:
+	def onvalidation(form):
+		spider_class = form.vars['site']
+		spider = VIEW_SPIDER_FIELD_INFO[spider_class]
+		for each_field_number in spider:
+			field = spider[each_field_number]
+			if field:
+				if field['requires']:
+					validator = globals()[field['requires']]
+					run_validator = validator()(form.vars["field_%s"%each_field_number])
+					error_message = run_validator[1]
+					form.errors["field_%s"%each_field_number] = error_message #>>> IS_NOT_EMPTY()("") returns ('', 'Enter a value') ### >>> IS_NOT_EMPTY()("test") returns ('test', None)
+					
+	if scrape_form.process(keepvalues=True, onvalidation=onvalidation, hide_error=True, message_onfailure="@Errors in form. Please check it out.").accepted:
+		try:
+			run_spider = AutoManager(
+				field_1=form.vars['field_1'],
+				field_2=form.vars['field_2'],
+				field_3=form.vars['field_3'],
+				field_4=form.vars['field_4'],
+				field_5=form.vars['field_5'],
+				
+			)
 		redirect(URL("inventory","index"))
 	
 	response.title="My inventory"

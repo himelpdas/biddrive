@@ -24,8 +24,12 @@ if platform.system() in ["Darwin", "Windows"]:
 	#print logger.findCaller()
 ######## http://goo.gl/BAU6cF
 
+def LAMBDA_PRINTER(obj, row):
+	print row
+	print "printer: %s"%obj
+	return obj
 	
-def quickRaise(error):
+def QUICK_RAISE(error):
 	"""
 	for use with single line statements as '' or raise/exec will return syntax error
 	"""
