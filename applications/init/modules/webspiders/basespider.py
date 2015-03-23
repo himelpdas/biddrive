@@ -3,24 +3,28 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 
-import time, urllib, uuid, requests, json
+import time, urllib, uuid, requests, json, os
 
 import atexit
 
+from gluon import current #http://www.web2pyslices.com/slice/show/1522/generate-a-thumbnail-that-fits-in-a-box
+
 class BaseSpider():
 
-	def __init__(self, field_1=None, field_2=None, field_3=None, field_4=None, field_5=None, save_dir, user_id, db)
+	def __init__(self, userid, db, field_a=None, field_b=None, field_c=None, field_d=None, field_e=None):
 		"""
 		Create selenium browser instance
 		"""
-		self.field_1 = field_1
-		self.field_2 = field_2
-		self.field_3 = field_3
-		self.field_4 = field_4
-		self.field_5 = field_5
-		self.savedir = savedir
+		self.field_a = field_a
+		self.field_b = field_b
+		self.field_c = field_c
+		self.field_d = field_d
+		self.field_e = field_e
 		self.userid = userid
 		self.db = db
+		
+		self.photo_paths = []
+		self.savedir = current.request.folder + '\\uploads\\' if os.name == 'nt' else '/uploads/'
 		
 		self.browser = webdriver.Firefox()
 		self.actions = ActionChains(self.browser) #needed to make double-click http://stackoverflow.com/questions/17870528/double-clicking-in-python-selenium

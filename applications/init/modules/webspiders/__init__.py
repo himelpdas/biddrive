@@ -1,1 +1,1 @@
-
+__all__ = ["basespider","automanager"] #must include basespider as well or else it will not be in the same namespace

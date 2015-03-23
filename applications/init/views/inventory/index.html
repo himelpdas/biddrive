@@ -4,10 +4,10 @@
 	{{#=BEAUTIFY(my_inventory)}}
 </div-->
 
-{{ scrape_form.element("input", _name = "field_1")["_class"] += " form-control" }}
-{{ scrape_form.element("input", _name = "field_2")["_class"] += " form-control" }}
-{{ scrape_form.element("input", _name = "field_3")["_class"] += " form-control" }}
-{{ scrape_form.element("input", _name = "field_4")["_class"] += " form-control" }}
+{{ scrape_form.element("input", _name = "field_a")["_class"] += " form-control" }}
+{{ scrape_form.element("input", _name = "field_b")["_class"] += " form-control" }}
+{{ scrape_form.element("input", _name = "field_c")["_class"] += " form-control" }}
+{{ scrape_form.element("input", _name = "field_d")["_class"] += " form-control" }}
 {{ scrape_form.element("select", _name = "site")["_class"] += " form-control" }}
 {{ scrape_form.element("input", _type = "submit")["_class"] = " btn btn-info" }}
 {{ scrape_form.element("input", _type = "submit")["_id"] = "submit" }}
@@ -83,66 +83,66 @@
 										</div>
 									</div>
 									
-									<div id="field_1" class="row" style="display:none;" >
+									<div id="field_a" class="row" style="display:none;" >
 										<div class="form-group">
-											<label id="label_1" for="{{=scrape_form.custom.widget.field_1['_id']}}" class="col-sm-3 control-label">field 1 <i class="fa fa-question-circle" title="TODO"></i></label>
+											<label id="label_a" for="{{=scrape_form.custom.widget.field_a['_id']}}" class="col-sm-3 control-label">field 1 <i class="fa fa-question-circle" title="TODO"></i></label>
 											<div class="col-sm-9">
-												{{=scrape_form.custom.widget.field_1}}
+												{{=scrape_form.custom.widget.field_a}}
 
-											{{if scrape_form.errors['field_1']:}}
-												<div class="alert alert-warning">{{=scrape_form.errors['field_1']}}</div>
+											{{if scrape_form.errors['field_a']:}}
+												<div class="alert alert-warning">{{=scrape_form.errors['field_a']}}</div>
 											{{pass}}
 											</div>
 										</div>
 									</div>
 									
-									<div id="field_2" class="row" style="display:none;" >
+									<div id="field_b" class="row" style="display:none;" >
 										<div class="form-group">
-											<label id="label_2" for="{{=scrape_form.custom.widget.field_2['_id']}}" class="col-sm-3 control-label">field 2 <i class="fa fa-question-circle" title="TODO"></i></label>
+											<label id="label_b" for="{{=scrape_form.custom.widget.field_b['_id']}}" class="col-sm-3 control-label">field 2 <i class="fa fa-question-circle" title="TODO"></i></label>
 											<div class="col-sm-9">
-												{{=scrape_form.custom.widget.field_2}}
+												{{=scrape_form.custom.widget.field_b}}
 
-											{{if scrape_form.errors['field_2']:}}
-												<div class="alert alert-warning">{{=scrape_form.errors['field_2']}}</div>
+											{{if scrape_form.errors['field_b']:}}
+												<div class="alert alert-warning">{{=scrape_form.errors['field_b']}}</div>
 											{{pass}}
 											</div>
 										</div>
 									</div>
 									
-									<div id="field_3" class="row" style="display:none;" >
+									<div id="field_c" class="row" style="display:none;" >
 										<div class="form-group">
-											<label id="label_3" for="{{=scrape_form.custom.widget.field_3['_id']}}" class="col-sm-3 control-label">field 3 <i class="fa fa-question-circle" title="TODO"></i></label>
+											<label id="label_c" for="{{=scrape_form.custom.widget.field_c['_id']}}" class="col-sm-3 control-label">field 3 <i class="fa fa-question-circle" title="TODO"></i></label>
 											<div class="col-sm-9">
-												{{=scrape_form.custom.widget.field_3}}
+												{{=scrape_form.custom.widget.field_c}}
 
-											{{if scrape_form.errors['field_3']:}}
-												<div class="alert alert-warning">{{=scrape_form.errors['field_3']}}</div>
+											{{if scrape_form.errors['field_c']:}}
+												<div class="alert alert-warning">{{=scrape_form.errors['field_c']}}</div>
 											{{pass}}
 											</div>
 										</div>
 									</div>
 
-									<div id="field_4" class="row" style="display:none;" >
+									<div id="field_d" class="row" style="display:none;" >
 										<div class="form-group">
-											<label id="label_4" for="{{=scrape_form.custom.widget.field_4['_id']}}" class="col-sm-3 control-label">field 4 <i class="fa fa-question-circle" title="TODO"></i></label>
+											<label id="label_d" for="{{=scrape_form.custom.widget.field_d['_id']}}" class="col-sm-3 control-label">field D <i class="fa fa-question-circle" title="TODO"></i></label>
 											<div class="col-sm-9">
-												{{=scrape_form.custom.widget.field_4}}
+												{{=scrape_form.custom.widget.field_d}}
 
-											{{if scrape_form.errors['field_4']:}}
-												<div class="alert alert-warning">{{=scrape_form.errors['field_4']}}</div>
+											{{if scrape_form.errors['field_d']:}}
+												<div class="alert alert-warning">{{=scrape_form.errors['field_d']}}</div>
 											{{pass}}
 											</div>
 										</div>
 									</div>
 
-									<div id="field_5" class="row" style="display:none;" >
+									<div id="field_e" class="row" style="display:none;" >
 										<div class="form-group">
-											<label id="label_4" for="{{=scrape_form.custom.widget.field_5['_id']}}" class="col-sm-3 control-label">field 5 <i class="fa fa-question-circle" title="TODO"></i></label>
+											<label id="label_4" for="{{=scrape_form.custom.widget.field_e['_id']}}" class="col-sm-3 control-label">field E <i class="fa fa-question-circle" title="TODO"></i></label>
 											<div class="col-sm-9">
-												{{=scrape_form.custom.widget.field_5}}
+												{{=scrape_form.custom.widget.field_e}}
 
-											{{if scrape_form.errors['field_5']:}}
-												<div class="alert alert-warning">{{=scrape_form.errors['field_5']}}</div>
+											{{if scrape_form.errors['field_e']:}}
+												<div class="alert alert-warning">{{=scrape_form.errors['field_e']}}</div>
 											{{pass}}
 											</div>
 										</div>
@@ -152,17 +152,17 @@
 										spider_labels = {{=XML(json.dumps(VIEW_SPIDER_FIELD_INFO))}};
 										function show_fields(target) {
 											spider = spider_labels[$(target).val()]
-											for (number in spider) {
-												if (Boolean(spider[number]) ) {
-													$("#field_"+number).show();
-													$("#label_"+number).text(spider[number]['name']);
-													if (spider[number]['name'] == "Password"){
-														$("#no_table_field_"+number).prop("type", "password");
+											for (letter in spider) {
+												if (Boolean(spider[letter]) ) {
+													$("#field_"+letter).show();
+													$("#label_"+letter).text(spider[letter]['name']);
+													if (spider[letter]['name'] == "Password"){
+														$("#no_table_field_"+letter).prop("type", "password");
 													}else{
-														$("#no_table_field_"+number).removeProp("type");
+														$("#no_table_field_"+letter).removeProp("type");
 													}
 												} else {
-													$("#field_"+number).hide();
+													$("#field_"+letter).hide();
 												}
 											}
 										}

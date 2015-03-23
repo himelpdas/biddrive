@@ -2,19 +2,21 @@ from basespider import *
 		
 class AutoManager(BaseSpider):
 
+	name = "AutoManager"
+
 	logged_in_phrase = "Log out of WebManager"
 	
 	def __init__(self, *args, **vars):
 	
-		BaseSpider.__init__(*args, **vars)
+		BaseSpider.__init__(self, *args, **vars)
 		
-		self.login_clientid = self.field_1
+		self.login_clientid = self.field_a
 
-		self.login_username = self.field_2
+		self.login_username = self.field_b
 
-		self.login_password = self.field_3
+		self.login_password = self.field_c
 		
-		self.scrape_stockid = self.field_4
+		self.scrape_stockid = self.field_d
 		
 		self.no_crash = self.timeout(30)
 		
@@ -103,15 +105,19 @@ class AutoManager(BaseSpider):
 			split2 = split1[1].split(".")
 			photo_ext = split2[1].split("?")[0]
 			photo_url = split1[0] + "_%s."%photo_size + photo_ext
-			photo_uid = '%s_%s'%(i, str(uuid.uuid4() ) ) 
-			urllib.urlretrieve(photo_url, "%s.%s"%(photo_uid, photo_ext) ) #http://stackoverflow.com/questions/3042757/downloading-a-picture-via-urllib-and-python
-			time.sleep(0.5)
+			photo_uid = '%s_%s_%s'%(self.userid ,self.name, str(uuid.uuid4()) )
+			
+			photo_path = self.savedir + "%s.%s"%(photo_uid, photo_ext)
+			self.photo_paths += photo_path
+			
+			urllib.urlretrieve(photo_url,  photo_path) #http://stackoverflow.com/questions/3042757/downloading-a-picture-via-urllib-and-python
+			time.sleep(0.25)
 		
 	def run(self):
-		spider.login()
-		spider.navigate()
-		spider.find()
-		spider.scrape()
+		self.login()
+		self.navigate()
+		self.find()
+		self.scrape()
 
 if __name__ == "__main__":
 	import pyaes

@@ -49,25 +49,30 @@ def index():
 	def onvalidation(form):
 		spider_class = form.vars['site']
 		spider = VIEW_SPIDER_FIELD_INFO[spider_class]
-		for each_field_number in spider:
-			field = spider[each_field_number]
-			if field:
-				if field['requires']:
-					validator = globals()[field['requires']]
-					run_validator = validator()(form.vars["field_%s"%each_field_number])
+		for each_field_letter in spider:
+			each_field = spider[each_field_letter]
+			if each_field:
+				if each_field['requires']:
+					validator = globals()[each_field['requires']]
+					run_validator = validator()(form.vars["field_%s"%each_field_letter])
 					error_message = run_validator[1]
-					form.errors["field_%s"%each_field_number] = error_message #>>> IS_NOT_EMPTY()("") returns ('', 'Enter a value') ### >>> IS_NOT_EMPTY()("test") returns ('test', None)
+					if error_message:
+						form.errors["field_%s"%each_field_letter] = error_message #>>> IS_NOT_EMPTY()("") returns ('', 'Enter a value') ### >>> IS_NOT_EMPTY()("test") returns ('test', None)
 					
 	if scrape_form.process(keepvalues=True, onvalidation=onvalidation, hide_error=True, message_onfailure="@Errors in form. Please check it out.").accepted:
 		try:
-			run_spider = AutoManager(
-				field_1=form.vars['field_1'],
-				field_2=form.vars['field_2'],
-				field_3=form.vars['field_3'],
-				field_4=form.vars['field_4'],
-				field_5=form.vars['field_5'],
-				
+			start_spider = automanager.AutoManager(
+				userid=auth.user_id, 
+				db=db,
+				field_a=scrape_form.vars['field_a'],
+				field_b=scrape_form.vars['field_b'],
+				field_c=scrape_form.vars['field_c'],
+				field_d=scrape_form.vars['field_d'],
+				field_e=scrape_form.vars['field_e'],
 			)
+			start_spider.run()
+		except ZeroDivisionError:
+			print "spider failed!"
 		redirect(URL("inventory","index"))
 	
 	response.title="My inventory"
