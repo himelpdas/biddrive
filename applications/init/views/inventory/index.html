@@ -258,7 +258,7 @@
 					<h5>Interior: {{=COLOR_SWATCH(each_offer['interior_color']['hex'], each_offer['interior_color']['name'])}}</h5>
 				</td>
 				<td>
-					<a href="{{=URL('inventory','vehicle', args=[each_offer.year, each_offer.make, each_offer.model, each_offer.id])}}" class="btn btn-large btn-default" title="Edit"><i class="fa fa-fw fa-edit"></i></a>
+					<a href="{{=URL('inventory','vehicle', args=[each_offer.id])}}" class="btn btn-large btn-default" title="Edit"><i class="fa fa-fw fa-edit"></i></a>
 					<a href="#" class="btn btn-large btn-default" title="Delete"><i class="fa fa-fw fa-trash-o"></i></a>
 				</td>
 			</tr>

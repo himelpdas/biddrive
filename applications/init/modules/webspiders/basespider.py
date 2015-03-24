@@ -5,13 +5,17 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 import time, urllib, uuid, requests, json, os
 
-import atexit
+#import atexit
 
-from gluon import current #http://www.web2pyslices.com/slice/show/1522/generate-a-thumbnail-that-fits-in-a-box
+#from gluon import current #http://www.web2pyslices.com/slice/show/1522/generate-a-thumbnail-that-fits-in-a-box
 
 class BaseSpider():
 
-	def __init__(self, userid, db, field_a=None, field_b=None, field_c=None, field_d=None, field_e=None):
+	photos = []
+	VIN=""
+	description = ""
+	
+	def __init__(self, userid, folder, field_a=None, field_b=None, field_c=None, field_d=None, field_e=None):
 		"""
 		Create selenium browser instance
 		"""
@@ -21,39 +25,39 @@ class BaseSpider():
 		self.field_d = field_d
 		self.field_e = field_e
 		self.userid = userid
-		self.db = db
 		
-		self.photo_paths = []
-		self.savedir = current.request.folder + '\\uploads\\' if os.name == 'nt' else '/uploads/'
+		self.savedir = folder + '\\uploads\\' if os.name == 'nt' else '/uploads/'
 		
 		self.browser = webdriver.Firefox()
 		self.actions = ActionChains(self.browser) #needed to make double-click http://stackoverflow.com/questions/17870528/double-clicking-in-python-selenium
 		
-		atexit.register(self.__exit__, None, None, None) #make sure browser closes	
+		#atexit.register(self.__exit__, None, None, None) #make sure browser closes	
+		
+	def __enter__(self): #USE WITH THE "WITH" STATEMENT http://stackoverflow.com/questions/1984325/explaining-pythons-enter-and-exit
+		self.run()
+		return self
 		
 	def __exit__(self, type, value, traceback): #dont use del http://stackoverflow.com/questions/6104535/i-dont-understand-this-python-del-behaviour
 		"""
 		Save memory by closing browser, regardless of success
 		"""
+		self.cleanup()
 		self.browser.close()
+		
+	def cleanup(self):
+		"""
+		Get rid of the files saved by spider, 
+		since by now web2py already uploaded them in controller
+		"""
+		for each_photo in self.photos:
+			try:
+				os.remove(self.savedir + each_photo)
+			except:
+				pass
 		
 	def timeout(self, seconds):
 		for second in range(30):
 			self.time_remain = seconds
 			time.sleep(1)
 			yield True
-			
-	def decode(self):
-		"""
-		Convert a VIN into BidDrive compatible data via Edmund's API
-		"""
-		json_response = requests.get(url="https://api.edmunds.com/api/vehicle/v2/vins/{vin}?manufacturerCode=3548fmt=json&api_key={api_key}".format(vin = self.vin, api_key=EDMUNDS_KEY) )
-		vehicle = json.loads(json_response)
-		make = vehicle['make']
-		model = vehicle['mo']
-		
-		
-	def store(self):
-		pass
-		self.logout()
 		

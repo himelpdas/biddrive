@@ -25,7 +25,7 @@
     {{ form.element("select", _name = "options")["_class"] += " form-control" }}
     {{ form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-info btn-trinity-big" }}
     {{ form.element("input", _type = "submit")["_id"] = "submit" }}
-    {{ form.element("input", _type = "submit")["_value"] = "Add vehicle" if not edit else "Save changes" }}
+    {{ form.element("input", _type = "submit")["_value"] = "Add vehicle" if not editable else "Save changes" }}
 
     {{=form.custom.begin}}
 
@@ -164,35 +164,33 @@
 							{{for each_image_number in VEHICLE_IMAGE_NUMBERS:}}
 								<div class="form-group">
 									<label for="{{=form.custom.widget['image_%s'%each_image_number]['_id']}}" class="col-sm-3 control-label"></i>Image {{=each_image_number}}</label>
-									<div class="col-sm-{{=4 if edit else 9}}">
+									<div class="col-sm-{{=4 if editable else 9}}">
 										{{=form.custom.widget["image_%s"%each_image_number]}}
 										{{if form.errors["image_%s"%each_image_number]:}}
 										<div class="alert alert-warning">{{=form.errors["image_%s"%each_image_number]}}</div>
 										{{pass}}
 									</div>
 								
-									<div class="col-sm-{{=5 if edit else 0}}">
-										{{if edit:}}
-											{{has_image =False}}
-											{{small_and_large_file_names=edit_record['image_compressed_%s'%each_image_number]}}
-											{{if small_and_large_file_names:}} {{#did dealer submit images?}}
-												{{image_s = small_and_large_file_names[0]}}
-												{{image_l = small_and_large_file_names[1]}}
-												{{has_image=True}}
-												<a href="#{{=each_image_number}}_{{=edit_record['id']}}" data-toggle="modal" data-target="#{{=each_image_number}}_{{=edit_record['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
-												<div id="{{=each_image_number}}_{{=edit_record['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_number}}_image_l_{{=edit_record['id']}}" aria-hidden="true">
-												  <div class="modal-dialog modal-md">
-													<div class="modal-content">
-														<div class="modal-body">
-															<img src="{{=URL('static', 'thumbnails/%s'%image_l)}}" class="img-responsive">
-														</div>
+									<div class="col-sm-{{=5 if editable else 0}}">
+										{{has_image =False}}
+										{{small_and_large_file_names=edit_record['image_compressed_%s'%each_image_number]}}
+										{{if small_and_large_file_names:}} {{#did dealer submit images?}}
+											{{image_s = small_and_large_file_names[0]}}
+											{{image_l = small_and_large_file_names[1]}}
+											{{has_image=True}}
+											<a href="#{{=each_image_number}}_{{=edit_record['id']}}" data-toggle="modal" data-target="#{{=each_image_number}}_{{=edit_record['id']}}"><img src="{{=URL('static', 'thumbnails/%s'%image_s)}}" alt="{{=image_s}}" class="img-responsive"></a>
+											<div id="{{=each_image_number}}_{{=edit_record['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_number}}_image_l_{{=edit_record['id']}}" aria-hidden="true">
+											  <div class="modal-dialog modal-md">
+												<div class="modal-content">
+													<div class="modal-body">
+														<img src="{{=URL('static', 'thumbnails/%s'%image_l)}}" class="img-responsive">
 													</div>
-												  </div>
 												</div>
-											{{pass}}
-											{{if not has_image:}}
-												<img src="http://placehold.it/320x240&text=No image uploaded" class="img-responsive">
-											{{pass}}
+											  </div>
+											</div>
+										{{pass}}
+										{{if not has_image:}}
+											<img src="http://placehold.it/320x240&text=No image uploaded" class="img-responsive">
 										{{pass}}
 									</div>
 								</div>

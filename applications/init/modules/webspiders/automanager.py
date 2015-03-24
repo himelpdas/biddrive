@@ -88,9 +88,9 @@ class AutoManager(BaseSpider):
 		
 		#make a list of thumbnails
 		thumbnails = self.browser.find_elements_by_xpath("//img[@class='gallery-photo']")
-		thumb_urls = []
+		thumb_urls = set([])
 		for thumbnail in thumbnails:
-			thumb_urls.append(thumbnail.get_attribute("src"))
+			thumb_urls.add(thumbnail.get_attribute("src"))
 			
 		#get the large size number 
 		self.actions.double_click(thumbnail).perform()
@@ -105,12 +105,14 @@ class AutoManager(BaseSpider):
 			split2 = split1[1].split(".")
 			photo_ext = split2[1].split("?")[0]
 			photo_url = split1[0] + "_%s."%photo_size + photo_ext
-			photo_uid = '%s_%s_%s'%(self.userid ,self.name, str(uuid.uuid4()) )
 			
-			photo_path = self.savedir + "%s.%s"%(photo_uid, photo_ext)
-			self.photo_paths += photo_path
+			photo_save_uid = '%s_%s_%s'%(self.userid ,self.name, str(uuid.uuid4()) )
+			photo_save_filename = "%s.%s"%(photo_save_uid, photo_ext)
 			
-			urllib.urlretrieve(photo_url,  photo_path) #http://stackoverflow.com/questions/3042757/downloading-a-picture-via-urllib-and-python
+			photo_save_filepath = self.savedir + photo_save_filename
+			self.photos.append( photo_save_filename)
+			
+			urllib.urlretrieve(photo_url,  photo_save_filepath) #http://stackoverflow.com/questions/3042757/downloading-a-picture-via-urllib-and-python
 			time.sleep(0.25)
 		
 	def run(self):

@@ -104,6 +104,7 @@ def VALIDATE_VEHICLE(form, make, model, year, _table, _dealer=False): #these def
 	if not set(['interior', 'exterior']).issubset(color_categories_list): #more flexible than above
 		form.errors.colors = "Select %sone interior color and one exterior color!" % ("at least " if not _dealer else '') #will only show after built-in validations ex. zip code
 	if _dealer:
+		form.vars.owner_id = auth.user_id
 		if len(color_categories_list) > len(set(color_categories_list)):
 			form.errors.colors = "Cannot pick multiple colors for the same category!"
 	

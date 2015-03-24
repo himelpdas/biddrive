@@ -1,5 +1,9 @@
 #CONTROLLER
 
+null_defaults = {}
+for each_field in db.auction_request_offer.fields[1:]:
+	null_defaults.update({each_field:None})
+
 @auth.requires_membership('dealers')
 def index():
 	
@@ -60,57 +64,86 @@ def index():
 						form.errors["field_%s"%each_field_letter] = error_message #>>> IS_NOT_EMPTY()("") returns ('', 'Enter a value') ### >>> IS_NOT_EMPTY()("test") returns ('test', None)
 					
 	if scrape_form.process(keepvalues=True, onvalidation=onvalidation, hide_error=True, message_onfailure="@Errors in form. Please check it out.").accepted:
-		try:
-			start_spider = automanager.AutoManager(
+		with automanager.AutoManager(
 				userid=auth.user_id, 
-				db=db,
+				folder=request.folder,
 				field_a=scrape_form.vars['field_a'],
 				field_b=scrape_form.vars['field_b'],
 				field_c=scrape_form.vars['field_c'],
 				field_d=scrape_form.vars['field_d'],
 				field_e=scrape_form.vars['field_e'],
-			)
-			start_spider.run()
-		except ZeroDivisionError:
-			print "spider failed!"
-		redirect(URL("inventory","index"))
+			) as spider:
+				image_updates = {}
+				defaults = {}
+				defaults.update(null_defaults)
+				
+				for i, each_photo in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
+					field_number = i+1
+					upload_folder =  '\\uploads\\' if os.name == 'nt' else '/uploads/'
+					upload_path = request.folder + upload_folder
+					image_file = open(upload_path + each_photo, "rb")
+					image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
+					del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
+					image_updates.update({"image_%s"%field_number:image_upload})
+
+				defaults.update(image_updates)
+				defaults.update({'summary' : spider.description})
+				new_vehicle = db.auction_request_offer.insert(**defaults) #create a new offer, with some elements already pre-filled. Will not show up in views until form submit is executed, since onvalidation changes owner_id from None to auth_user.id
+				
+		session.flash = "$Inserted %s!"%new_vehicle
+		redirect(URL("inventory","vin_decode", args=[spider.VIN, new_vehicle]))
 	
-	response.title="My inventory"
+	response.title="My inventory" + (": %s vehicles"%show.capitalize().replace("_", " ") if show else "")
 	
 	return dict(my_inventory=my_inventory, sorting=sorting, show_list=show_list, scrape_form=scrape_form, **paging)
 	
 @auth.requires(request.args(0))
 @auth.requires_membership('dealers')
 def vin_decode():
-	clean = "".join(request.args[0].split()) #http://stackoverflow.com/questions/3739909/how-to-strip-all-whitespace-from-string
-	vehicle_info = EDMUNDS_CALL(VIN_DECODE_URI % clean)
-	if vehicle_info:
+	clean_vin = "".join(request.args[0].split()) #http://stackoverflow.com/questions/3739909/how-to-strip-all-whitespace-from-string
+	vin_info = EDMUNDS_CALL(VIN_DECODE_URI % clean_vin)
+	is_imported = request.args(1)
+	if vin_info:
 		try:
-			make = vehicle_info['make']['niceName']
-			model = vehicle_info['model']['niceName']
-			year = vehicle_info['years'][0]['year']
+			make = vin_info['make']['niceName']
+			model = vin_info['model']['niceName']
+			year = vin_info['years'][0]['year']
 			print year, make, model
-			redirect(URL('inventory', 'vehicle', args=[year,make,model]) )
-		except:
+			if is_imported:
+				vehicle = db(db.auction_request_offer.id == int(is_imported) ).select().last()
+				vehicle.update_record(make = make, model = model, year=year, vin_number = clean_vin)
+				vehicle_id = vehicle.id
+			else:
+				defaults = {}
+				defaults.update(null_defaults)
+				defaults.update(dict(make = make, model = model, year=year, vin_number = clean_vin))
+				print defaults
+				vehicle_id = db.auction_request_offer.insert( **defaults)
+			redirect(URL('inventory', 'vehicle', args=[vehicle_id]) )
+		except ZeroDivisionError:
 			pass
 	session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
 	redirect(URL('inventory', 'index'))
 	
 	
-@auth.requires(request.args(0) and request.args(1) and request.args(2))
+@auth.requires(request.args(0))
 @auth.requires_membership('dealers')
 def vehicle():
+
+	vehicle_id = int(request.args[0])
+	vehicle = db(db.auction_request_offer.id == int(vehicle_id) ).select().last()
 	
-	year = request.args[0] 
-	make = request.args[1] #VALIDATE #done via digitally signed url
-	model = request.args[2]
+	year = vehicle.year
+	make = vehicle.make
+	model = vehicle.model
+	
 	db.auction_request_offer.year.default=year
 	db.auction_request_offer.make.default=make
 	db.auction_request_offer.model.default=model
 	#db.auction_request_offer.created_on.default=request.now #moved to model
 	
-	edit_record = db(db.auction_request_offer.id == int(request.args(3) or -1)).select().last() #can't have none ID so it's safe to use request.args
-	edit = bool(edit_record)
+	edit_record = db(db.auction_request_offer.id == vehicle_id).select().last() #can't have none ID so it's safe to use request.args
+	editable = bool(edit_record.trim_data)
 	
 	model_styles = EDMUNDS_CALL(STYLES_URI%(make, model, year))['styles'] #GET_STYLES_BY_MAKE_MODEL_YEAR instead to limit years
 	
@@ -133,7 +166,7 @@ def vehicle():
 	color_codes = []
 	option_codes= [] #needed for SQLFORM to create proper IS_IN_SET widget
 	if not request.post_vars: #if get: needed to prevent use of incorrect color_codes
-		if edit:
+		if editable:
 			GET_COLOR_CODES(json.loads(edit_record['trim_data'])) #session.color_codes needed to prefill edit form data. Also make sure this isn't done in form submit, because trim_data might be different from the previous record.
 			GET_OPTION_CODES(json.loads(edit_record['trim_data']))
 		else:
@@ -155,10 +188,10 @@ def vehicle():
 	db.auction_request_offer.auction_request.default = None
 	db.auction_request_offer.owner_id.default = auth.user_id
 	
-	form = SQLFORM(db.auction_request_offer, record = edit_record.id if edit else None, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
+	form = SQLFORM(db.auction_request_offer, record = edit_record.id, _class="form-horizontal") #to add class to form #http://goo.gl/g5EMrY
 	
 	if form.process(keepvalues=True, onvalidation=lambda form:VALIDATE_VEHICLE(form, make, model, year, 'auction_request_offer', _dealer=True), hideerror=True, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
 		redirect(URL("inventory","index"))
 		
 	response.title="Add a vehicle to your inventory"
-	return dict(form = form, year=year, make=make, model=model, edit=edit, edit_record=edit_record) #options=options, option_codes=option_codes,) #msrp_by_id=msrp_by_id, )
+	return dict(form = form, year=year, make=make, model=model, editable=editable, edit_record=edit_record) #options=options, option_codes=option_codes,) #msrp_by_id=msrp_by_id, )

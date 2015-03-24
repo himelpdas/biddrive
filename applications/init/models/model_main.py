@@ -352,7 +352,7 @@ for each in VEHICLE_IMAGE_NUMBERS:
 		Field('image_compressed_%s'%each, 'list:string', 
 			readable=False,
 			writable=False,
-			required=True, #EXTREME WARNING line 685, in _listify: error silently unless field is required!
+			#required=True, #EXTREME WARNING line 685, in _listify: error silently unless field is required!
 			compute = x
 		),
 	]
