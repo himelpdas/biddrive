@@ -107,7 +107,7 @@ class AutoManager(BaseSpider):
 			photo_url = split1[0] + "_%s."%photo_size + photo_ext
 			
 			photo_save_uid = '%s_%s_%s'%(self.userid ,self.name, str(uuid.uuid4()) )
-			photo_save_filename = "%s.%s"%(photo_save_uid, photo_ext)
+			photo_save_filename = os.path.normpath("/%s.%s"%(photo_save_uid, photo_ext) )
 			
 			photo_save_filepath = self.savedir + photo_save_filename
 			self.photos.append( photo_save_filename)
@@ -129,6 +129,6 @@ if __name__ == "__main__":
 		login_clientid = pyaes.AESModeOfOperationCTR(key).decrypt('G\x98\x84\x9a!.'),  
 		login_username = pyaes.AESModeOfOperationCTR(key).decrypt('\x16\xce\xde\xcbz'), 
 		login_password = pyaes.AESModeOfOperationCTR(key).decrypt('F\x98\x80\x96!*\x8d\xb6'),
-		scrape_stockid = "P0079"
+		scrape_stockid = "A0151"
 	)
 	spider.run()

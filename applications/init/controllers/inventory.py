@@ -64,9 +64,12 @@ def index():
 						form.errors["field_%s"%each_field_letter] = error_message #>>> IS_NOT_EMPTY()("") returns ('', 'Enter a value') ### >>> IS_NOT_EMPTY()("test") returns ('test', None)
 					
 	if scrape_form.process(keepvalues=True, onvalidation=onvalidation, hide_error=True, message_onfailure="@Errors in form. Please check it out.").accepted:
+		root_folder = os.path.normpath(request.folder)
+		upload_folder =  os.path.normpath('/uploads')
+		upload_path =  root_folder + upload_folder
 		with automanager.AutoManager(
 				userid=auth.user_id, 
-				folder=request.folder,
+				savedir=upload_path,
 				field_a=scrape_form.vars['field_a'],
 				field_b=scrape_form.vars['field_b'],
 				field_c=scrape_form.vars['field_c'],
@@ -79,8 +82,6 @@ def index():
 				
 				for i, each_photo in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
 					field_number = i+1
-					upload_folder =  '\\uploads\\' if os.name == 'nt' else '/uploads/'
-					upload_path = request.folder + upload_folder
 					image_file = open(upload_path + each_photo, "rb")
 					image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
 					del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run

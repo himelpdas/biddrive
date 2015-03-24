@@ -15,7 +15,7 @@ class BaseSpider():
 	VIN=""
 	description = ""
 	
-	def __init__(self, userid, folder, field_a=None, field_b=None, field_c=None, field_d=None, field_e=None):
+	def __init__(self, userid, savedir, field_a=None, field_b=None, field_c=None, field_d=None, field_e=None):
 		"""
 		Create selenium browser instance
 		"""
@@ -26,7 +26,7 @@ class BaseSpider():
 		self.field_e = field_e
 		self.userid = userid
 		
-		self.savedir = folder + '\\uploads\\' if os.name == 'nt' else '/uploads/'
+		self.savedir = savedir
 		
 		self.browser = webdriver.Firefox()
 		self.actions = ActionChains(self.browser) #needed to make double-click http://stackoverflow.com/questions/17870528/double-clicking-in-python-selenium

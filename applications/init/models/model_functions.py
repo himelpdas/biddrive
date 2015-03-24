@@ -162,7 +162,7 @@ LEASE_TERM_REQUIRES = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "
 
 MATCHING_CATEGORIES = [['body', "Body type (E.g. SUV, Sedan, Compact, etc.)"], ['year','Year'], ['make','Make (E.g. Ford, Honda, Toyota, etc.)'], ['model','Model (E.g. Accord, Fusion, Grand Cherokee, etc.)'], ['trim','Trim (E.g. EX, LX, Sport, etc.)'], ['colors','Colors'], ['options','Options']]
 
-VEHICLE_STATES = [['unsold','Unsold'], ['sold','Sold'], ['new','New'], ['used','Used']]
+VEHICLE_STATES = [['unsold','Unsold'], ['sold','Sold'], ['new','New'], ['used','Used'], ['archived','Archived']]
 
 class VEHICLE_STATES_VALIDATOR(object): #http://brunorocha.org/python/web2py/custom-validator-for-web2py-forms.html
 	def __init__(self, error_message="Can't be %s and %s!"):
