@@ -80,7 +80,7 @@
 				</tr>
 			{{pass}}
 
-				{{int_ext_colors = GET_OFFER_ROW_INT_EXT_COLORS(each_vehicle)}}
+				{{int_ext_colors = GET_OFFER_ROW_INT_EXT_COLORS(auction_request)}}
 			
 				<tr>
 					<th>Exterior color:</th>
@@ -155,7 +155,8 @@
       </div>
       <div class="modal-body">
         <div style="text-align:center;">
-			<h3>Call us at <span class="text-info"><i class="fa fa-fw fa-phone"></i>{{=TWILIO_NUMBER}}</span> to reveal your {{=APP_NAME}} certificate of guarantee. <a class="text-light" href="javascript:void(0)" title="The purpose of this call is to validate the reservation of your {{='%s %s %s' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'])}} by briefly introducing yourself to your dealer. When your dealer answers, your certificate will automatically appear and this message will close.">Why?</a></h3>
+			{{raw_twilio_number = ''.join(TWILIO_NUMBER.split()).replace('(','').replace(')','').replace('-','')}}
+			<h3>Call us at <a class="text-info" href="skype:{{=raw_twilio_number}}?call"><i class="fa fa-fw fa-phone"></i>{{=TWILIO_NUMBER}}</a> to reveal your {{=APP_NAME}} certificate of guarantee. <a class="text-light" href="javascript:void(0)" title="The purpose of this call is to validate the reservation of your {{='%s %s %s' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'])}} by briefly introducing yourself to your dealer. When your dealer answers, your certificate will automatically appear and this message will close.">Why?</a></h3>
 			<button id="waiting_animation" type="button" class="btn btn-default disabled btn-lg">
 				<span class="glyphicon glyphicon-refresh fa-fw fa-spin"></span> Waiting for your call...
 			</button>
