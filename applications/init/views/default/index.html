@@ -209,7 +209,7 @@
                             <img alt="trinity" title="trinity" src="{{=URL('static','/ed_images/')}}{{=car['image']}}"/>
                         </div>
 
-                        <a class="" data-gall="portfolio-gallery" href="{{=URL('init','default','request_by_make', args=[ car['year'], car['make'], car['model'] ], hmac_key=str(session.salt), hash_vars=[ car['year'], car['make'], car['model'] ] )}}">
+                        <a class="" data-gall="portfolio-gallery" href="{{=URL('init','default','request_by_make', args=[ car['year'], car['make'], car['model'] ], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[ car['year'], car['make'], car['model'] ] )}}">
                             <div class="project-overlay">
                                 <div class="project-info">
                                     <div class="zoom-icon"></div>

@@ -352,7 +352,7 @@ def pre_auction():
 	if not auction_request:
 		session.message='@Invalid request ID!'
 		redirect(URL('my_auctions'))
-	if not URL.verify(request, hmac_key=auction_request.temp_id, hash_vars=[auction_request.id]): #verifys all args (or ones specified) in a url
+	if not URL.verify(request, hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[auction_request.temp_id, auction_request_id, inventory_vehicle_id]): #verifys all args (or ones specified) in a url
 		#session.message='@You are attempting to tamper with BidDrive! You have been reported.'
 		redirect(URL('my_auctions'))
 		
@@ -626,7 +626,7 @@ def auction():
 		number_of_dealers = len(auction_request_offers),
 		lowest_price = lowest_price,
 		favorite_price = favorite_price,
-		view_certificate_url = URL('dealer','winner', args=[auction_request_id], hmac_key=str(auth.user_id), hash_vars=[auction_request_id], salt=str(session.salt)) #hash_vars is like message in hmac function #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
+		view_certificate_url = URL('dealer','winner', args=[auction_request_id], hmac_key=HMAC_KEY, hash_vars=[auction_request_id, auth.user_id], salt=str(session.salt)) #hash_vars is like message in hmac function #temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.
 	)
 
 	#in memory sorting	
@@ -1013,7 +1013,7 @@ def my_auctions():
 	
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
 	
-@auth.requires(URL.verify(request, hmac_key=str(auth.user_id), salt = str(session.salt), hash_vars=[request.args(0)])) #guarantees that user clicked from auction page if this passes
+@auth.requires(URL.verify(request, hmac_key=HMAC_KEY, salt = str(session.salt), hash_vars=[request.args(0), auth.user_id])) #guarantees that user clicked from auction page if this passes
 def winner():
 	response.title="Certificate"
 	#get valuable data and validate this page

@@ -12,6 +12,11 @@ edmunds (module)
 simplecolor (custom module)
 m2secret (simpler and faster than pyaes)
 
+####server only dependancies####
+sudo apt-get install firefox
+sudo apt-get install xvfb (no GUI "headless" virtual display)
+pip install pyvirtualdisplay OR xvfbwrapper (simpler)
+
 note pythonanywhere has most modules built in, but since this is technically a shared host you can't use pip to install to root python installation
 therefore python anywhere allows installation in a local directory pip install --user
 sometimes a local pip installation might not manifest immediatley, therefore you should restart the server, if that doesn't work see if running the local web2py.py webserver does the trick.

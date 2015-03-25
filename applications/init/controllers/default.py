@@ -46,7 +46,7 @@ def index_old():
 '''
 
 @auth.requires(not auth.has_membership(role='dealers'), requires_login=False) #allowing two roles in the auction page will lead to weird results
-@auth.requires(URL.verify(request, hmac_key = str(session.salt), hash_vars=[request.args(0),request.args(1),request.args(2)]),  requires_login=False)
+@auth.requires(URL.verify(request, hmac_key = HMAC_KEY, salt = str(session.salt), hash_vars=[request.args(0),request.args(1),request.args(2)]),  requires_login=False)
 def request_by_make():
 	year = request.args[0] 
 	make = request.args[1] #VALIDATE #done via digitally signed url

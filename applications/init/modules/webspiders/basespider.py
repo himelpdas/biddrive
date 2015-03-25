@@ -3,14 +3,16 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 
-import time, urllib, uuid, requests, json, os
+import time, urllib, uuid, requests, json, os, platform
 
 #import atexit
 
 #from gluon import current #http://www.web2pyslices.com/slice/show/1522/generate-a-thumbnail-that-fits-in-a-box
 
-class BaseSpider():
+IS_SERVER = platform.system() in ["Darwin", "Windows"]
 
+class BaseSpider():
+	
 	photos = []
 	VIN=""
 	description = ""
@@ -35,6 +37,7 @@ class BaseSpider():
 		#atexit.register(self.__exit__, None, None, None) #make sure browser closes	
 		
 	def __enter__(self): #USE WITH THE "WITH" STATEMENT http://stackoverflow.com/questions/1984325/explaining-pythons-enter-and-exit
+		self.startVirtualDisplay()
 		self.run()
 		return self
 		
@@ -44,6 +47,7 @@ class BaseSpider():
 		"""
 		self.cleanup()
 		self.browser.close()
+		self.stopVirtualDisplay()
 		
 	def cleanup(self):
 		"""
@@ -55,6 +59,16 @@ class BaseSpider():
 				os.remove(self.savedir + each_photo)
 			except:
 				pass
+		
+	def startVirtualDisplay(self):
+		if IS_SERVER:
+			from pyvirtualdisplay import Display
+			self.vdisplay = Display(visible=0, size=(800, 600))
+			self.vdisplay.start()
+
+	def stopVirtualDisplay(self):
+		if IS_SERVER:
+			self.vdisplay.stop()
 		
 	def timeout(self, seconds):
 		for second in range(30):
