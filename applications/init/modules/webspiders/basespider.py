@@ -14,6 +14,7 @@ class BaseSpider():
 	photos = []
 	VIN=""
 	description = ""
+	mileage = 0
 	
 	def __init__(self, userid, savedir, field_a=None, field_b=None, field_c=None, field_d=None, field_e=None):
 		"""

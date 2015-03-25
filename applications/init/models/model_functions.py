@@ -160,22 +160,39 @@ LEASE_MILEAGE_REQUIRES = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multi
 
 LEASE_TERM_REQUIRES = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one")
 
-MATCHING_CATEGORIES = [['body', "Body type (E.g. SUV, Sedan, Compact, etc.)"], ['year','Year'], ['make','Make (E.g. Ford, Honda, Toyota, etc.)'], ['model','Model (E.g. Accord, Fusion, Grand Cherokee, etc.)'], ['trim','Trim (E.g. EX, LX, Sport, etc.)'], ['colors','Colors'], ['options','Options']]
+MATCHING_CATEGORIES = [
+	['used','Used Cars'], 
+	['new','New Cars'], 
+	['body', "Body Type    (E.g. SUV, Sedan, Compact, etc.)"], 
+	['year','Model Year'], 
+	['make','Make (E.g. Ford, Honda, Toyota, etc.)'], 
+	['model','Model (E.g. Accord, Fusion, Grand Cherokee, etc.)'], 
+	['trim','Trim (E.g. EX, LX, Sport, etc.)'], 
+	['color_names','Exact Colors (E.g. Metallic silver, pearl blue, sunset red, etc.)'], 
+	['color_simple_names','Similar Colors (E.g. Grey, blue, red, etc.)'], 
+	['options','Options']
+]
 
 VEHICLE_STATES = [['unsold','Unsold'], ['sold','Sold'], ['new','New'], ['used','Used'], ['archived','Archived']]
 
 class VEHICLE_STATES_VALIDATOR(object): #http://brunorocha.org/python/web2py/custom-validator-for-web2py-forms.html
-	def __init__(self, error_message="Can't be %s and %s!"):
+	def __init__(self, error_message=["Can't be %s and %s!", "Choose either %s or %s"]):
 		self.error_message = error_message
 
 	def __call__(self, value):
 		error = None
 		# CONDITION COMES HERE
-		#print value
 		if "new" in value and "used" in value:
-			error = self.error_message%("new", "used")
+			error = self.error_message[0]%("new", "used")
+
 		if "sold" in value and "unsold" in value:
-			error = self.error_message%("sold", "unsold")
+			error = self.error_message[0]%("sold", "unsold")
+			
+		if not any(map(lambda each: each in ["new","used"], value)):
+			error = self.error_message[1]%("new", "used")		
+			
+		if not any(map(lambda each: each in ["sold","unsold"], value)):
+			error = self.error_message[1]%("sold", "unsold")
 		# IF error != None - value is invalid 
 		return (value, error)
 		

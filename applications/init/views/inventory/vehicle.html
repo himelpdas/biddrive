@@ -15,7 +15,8 @@
 
     {{ form.element("input", _name = "additional_costs")["_class"] += " form-control" }}
     {{ form.element("input", _name = "vin_number")["_class"] += " form-control" }}
-    {{ form.element("textarea", _name = "additional_costs_details")["_placeholder"] = "Example: TODO" }}
+    {{ form.element("input", _name = "mileage")["_class"] += " form-control" }}
+    {{ form.element("textarea", _name = "additional_costs_details")["_placeholder"] = "Example: 2 year Sirius XM satellite radio subscription." }}
     {{ form.element("textarea", _name = "additional_costs_details")["_class"] +=  " form-control" }}
     {{ form.element("textarea", _name = "summary")["_placeholder"] = "Example: TODO" }}
     {{ form.element("textarea", _name = "summary")["_class"] +=  " form-control" }}
@@ -116,6 +117,17 @@
 									{{pass}}
 								</div>
 							</div>  
+							
+							<div class="form-group">
+								<label for="{{=form.custom.widget.mileage['_id']}}" class="col-sm-3 control-label">Mileage </label>
+								<div class="col-sm-9">
+									{{=form.custom.widget.mileage}}
+
+									{{if form.errors['mileage']:}}
+									<div class="alert alert-warning">{{=form.errors['mileage']}}</div>
+									{{pass}}
+								</div>
+							</div>  
 						
                             <div class="form-group">
                                 <label for="{{=form.custom.widget.summary['_id']}}" class="col-sm-3 control-label">Summary <i class="fa fa-question-circle" title='TODO'></i></label>
@@ -129,7 +141,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="{{=form.custom.widget.additional_costs['_id']}}" class="col-sm-3 control-label"></i>Additional costs <i class="fa fa-question-circle" title="TODO"></i></label>
+                                <label for="{{=form.custom.widget.additional_costs['_id']}}" class="col-sm-3 control-label"></i>Additional costs <i class="fa fa-question-circle" title="Does your vehicle come with any extra costs, services, or features that's not mentioned in this form? If so, input the total dollar amount of these additional costs."></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.additional_costs}}{{#logger.debug(form.errors['additional_costs'])}}
                                     {{if form.errors['additional_costs']:}}
@@ -139,7 +151,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="{{=form.custom.widget.additional_costs_details['_id']}}" class="col-sm-3 control-label"></i>Costs description <i class="fa fa-question-circle" title="Are there any missing features you want to describe? Describe it here."></i></label>
+                                <label for="{{=form.custom.widget.additional_costs_details['_id']}}" class="col-sm-3 control-label"></i>Costs description <i class="fa fa-question-circle" title="Describe the additional costs, services, or features in here."></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.additional_costs_details}}
 
@@ -171,14 +183,14 @@
 							{{for each_image_number in VEHICLE_IMAGE_NUMBERS:}}
 								<div class="form-group">
 									<label for="{{=form.custom.widget['image_%s'%each_image_number]['_id']}}" class="col-sm-3 control-label"></i>Image {{=each_image_number}}</label>
-									<div class="col-sm-{{=4 if editable else 9}}">
+									<div class="col-sm-4">
 										{{=form.custom.widget["image_%s"%each_image_number]}}
 										{{if form.errors["image_%s"%each_image_number]:}}
 										<div class="alert alert-warning">{{=form.errors["image_%s"%each_image_number]}}</div>
 										{{pass}}
 									</div>
 								
-									<div class="col-sm-{{=5 if editable else 0}}">
+									<div class="col-sm-5">
 										{{has_image =False}}
 										{{small_and_large_file_names=edit_record['image_compressed_%s'%each_image_number]}}
 										{{if small_and_large_file_names:}} {{#did dealer submit images?}}

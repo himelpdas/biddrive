@@ -181,13 +181,24 @@ def auction_requests():
 					else:
 						all_matched.append(False)	
 				
-				if 'colors' in each_auction.auction_request.matching: #better to use name instead of ID
+				if 'color_names' in each_auction.auction_request.matching: #better to use name instead of ID
 					#print each_inventory_vehicle.color_names, each_auction.auction_request.color_names
 					count = []
 					for color in each_auction.auction_request.color_names: #can't use issubset because auction_request's color_names might by smaller than inventory_vehicle's
 						if color in each_inventory_vehicle.color_names:
 							count.append(1)
 					if len(count) == len(each_auction.auction_request.color_names):
+						all_matched.append(True)
+					else:
+						all_matched.append(False)	
+
+				if 'color_simple_names' in each_auction.auction_request.matching: #better to use name instead of ID
+					#checks if all colors matched in auction request
+					count = []
+					for color in each_auction.auction_request.color_simple_names: #can't use issubset because auction_request's color_simple_names might by smaller than inventory_vehicle's
+						if color in each_inventory_vehicle.color_simple_names:
+							count.append(1)
+					if len(count) == len(each_auction.auction_request.color_simple_names):
 						all_matched.append(True)
 					else:
 						all_matched.append(False)	
@@ -202,6 +213,18 @@ def auction_requests():
 						all_matched.append(True)
 					else:
 						all_matched.append(False)
+
+				if 'new' in each_auction.auction_request.matching:
+					if "new" in each_inventory_vehicle.status:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)	
+
+				if 'used' in each_auction.auction_request.matching:
+					if "used" in each_inventory_vehicle.status:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)	
 								
 				if all(all_matched):
 					each_auction['matched_vehicles'].append(each_inventory_vehicle)

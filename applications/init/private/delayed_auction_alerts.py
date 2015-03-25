@@ -139,7 +139,7 @@ while True:
 				
 				alert_queue.update_record(sent_auction_ended_now=True)
 			
-			elif (request.now > (each_auction.auction_expires - datetime.timedelta(hours = 6) ) ) and alert_queue['sent_auction_ending_soon'] == False: #if it's now 6 hours or more before auction expires
+			elif ( ( (each_auction.auction_expires - datetime.timedelta(hours = 6)) < request.now < each_auction.auction_expires) ) and alert_queue['sent_auction_ending_soon'] == False: #if it's now 6 hours or more before auction expires
 				
 				delayed_alert_send(each_auction).send_auction_ending_soon()
 				

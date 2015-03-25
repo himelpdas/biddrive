@@ -70,7 +70,9 @@ class AutoManager(BaseSpider):
 	def scrape(self):
 		#get vin
 		self.VIN = self.browser.find_element_by_id("ctl00_cphMain_txtVIN").get_attribute("value") or ''
-		print self.VIN
+		#print self.VIN
+		
+		self.mileage = int(self.browser.find_element_by_id("ctl00_cphMain_txtMileage").get_attribute("value") or 0)
 		
 		#navigate to description page
 		link = self.browser.find_element_by_link_text('Description')
@@ -79,7 +81,7 @@ class AutoManager(BaseSpider):
 		
 		#get description
 		self.description = self.browser.find_element_by_id("ctl00_cphMain_txtPlainDesc").get_attribute("value") or ''
-		print self.description
+		#print self.description
 		
 		#navigate to photos page
 		link = self.browser.find_element_by_link_text('Photos')

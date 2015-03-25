@@ -68,29 +68,33 @@ def index():
 						form.errors["field_%s"%each_field_letter] = error_message #>>> IS_NOT_EMPTY()("") returns ('', 'Enter a value') ### >>> IS_NOT_EMPTY()("test") returns ('test', None)
 					
 	if scrape_form.process(keepvalues=True, onvalidation=onvalidation, hide_error=True, message_onfailure="@Errors in form. Please check it out.").accepted:
-		with automanager.AutoManager(
-				userid=auth.user_id, 
-				savedir=upload_directory,
-				field_a=scrape_form.vars['field_a'],
-				field_b=scrape_form.vars['field_b'],
-				field_c=scrape_form.vars['field_c'],
-				field_d=scrape_form.vars['field_d'],
-				field_e=scrape_form.vars['field_e'],
-			) as spider:
-				image_updates = {}
-				defaults = {}
-				defaults.update(null_defaults)
-				
-				for i, each_photo in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
-					field_number = i+1
-					image_file = open(upload_directory + each_photo, "rb")
-					image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
-					del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
-					image_updates.update({"image_%s"%field_number:image_upload})
+		try: #REMOVE FOR TESTING
+			with automanager.AutoManager(
+					userid=auth.user_id, 
+					savedir=upload_directory,
+					field_a=scrape_form.vars['field_a'],
+					field_b=scrape_form.vars['field_b'],
+					field_c=scrape_form.vars['field_c'],
+					field_d=scrape_form.vars['field_d'],
+					field_e=scrape_form.vars['field_e'],
+				) as spider:
+					image_updates = {}
+					defaults = {}
+					defaults.update(null_defaults)
+					
+					for i, each_photo in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
+						field_number = i+1
+						image_file = open(upload_directory + each_photo, "rb")
+						image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
+						del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
+						image_updates.update({"image_%s"%field_number:image_upload})
 
-				defaults.update(image_updates)
-				defaults.update({'summary' : spider.description})
-				new_vehicle = db.auction_request_offer.insert(**defaults) #create a new offer, with some elements already pre-filled. Will not show up in views until form submit is executed, since onvalidation changes owner_id from None to auth_user.id
+					defaults.update(image_updates)
+					defaults.update({'summary' : spider.description, 'status' : ['unsold','new'], 'mileage':spider.mileage, 'additional_costs':0})
+					new_vehicle = db.auction_request_offer.insert(**defaults) #create a new offer, with some elements already pre-filled. Will not show up in views until form submit is executed, since onvalidation changes owner_id from None to auth_user.id
+		except:
+			session.flash = "@Failed to import vehicle! Please double-check your information or try again later."
+			redirect(URL('inventory', 'index'))
 				
 		session.flash = "$Inserted %s!"%new_vehicle
 		redirect(URL("inventory","vin_decode", args=[spider.VIN, new_vehicle]))
@@ -118,16 +122,13 @@ def vin_decode():
 			else:
 				defaults = {}
 				defaults.update(null_defaults)
-				defaults.update(dict(make = make, model = model, year=year, vin_number = clean_vin))
-				print defaults
+				defaults.update(dict(make = make, model = model, year=year, vin_number = clean_vin, status=['unsold','new'], additional_costs=0))
 				vehicle_id = db.auction_request_offer.insert( **defaults)
 			redirect(URL('inventory', 'vehicle', args=[vehicle_id]) )
 		except ZeroDivisionError:
 			pass
-	if is_imported:
-		session.flash = "@Failed to import vehicle! Please double-check your information and try again."
-	else:
-		session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
+
+	session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
 	redirect(URL('inventory', 'index'))
 	
 @auth.requires(request.args(0))

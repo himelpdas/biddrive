@@ -352,7 +352,7 @@ for each in VEHICLE_IMAGE_NUMBERS:
 		Field('image_compressed_%s'%each, 'list:string', 
 			readable=False,
 			writable=False,
-			required=True, #EXTREME WARNING line 685, in _listify: error silently unless field is required!
+			#required=True, #EXTREME WARNING line 685, in _listify: error silently unless field is required!
 			compute = x
 		),
 	]
@@ -370,9 +370,13 @@ db.define_table('auction_request_offer',
 		requires = IS_IN_DB(db, 'dealership_info.owner_id', '%(dealership_name)s')
 	),
 	Field('status', "list:string",
-		requires = [IS_IN_SET(VEHICLE_STATES,  multiple=True, zero=None), VEHICLE_STATES_VALIDATOR()],
-		default = ['unsold','new'],
+		requires = [IS_IN_SET(VEHICLE_STATES,  multiple=True, zero=None), VEHICLE_STATES_VALIDATOR(), IS_NOT_EMPTY()],
+		required = True,
 		widget=SQLFORM.widgets.multiple.widget
+	),
+	Field('mileage', 'integer',
+		required=True,
+		requires=IS_INT_IN_RANGE(0, 1000001)
 	),
 	Field('vin_number',
 		requires=IS_NOT_EMPTY(), required=True
