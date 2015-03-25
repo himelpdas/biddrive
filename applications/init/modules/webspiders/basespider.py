@@ -9,7 +9,7 @@ import time, urllib, uuid, requests, json, os, platform
 
 #from gluon import current #http://www.web2pyslices.com/slice/show/1522/generate-a-thumbnail-that-fits-in-a-box
 
-IS_SERVER = platform.system() in ["Darwin", "Windows"]
+IS_SERVER = platform.system() not in ["Darwin", "Windows"]
 
 class BaseSpider():
 	

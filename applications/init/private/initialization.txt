@@ -11,6 +11,7 @@ smartthumb (custom module)
 edmunds (module)
 simplecolor (custom module)
 m2secret (simpler and faster than pyaes)
+selenium (automated browser used for spider)
 
 ####server only dependancies####
 sudo apt-get install firefox
