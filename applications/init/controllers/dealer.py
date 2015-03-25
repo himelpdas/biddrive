@@ -218,7 +218,7 @@ def auction_requests():
 					if "new" in each_inventory_vehicle.status or 'used' in each_inventory_vehicle.status:
 						all_matched.append(True)
 					else:
-						all_matched.append(False)	
+						all_matched.append(False)
 				elif 'new' in each_auction.auction_request.matching:
 					if "new" in each_inventory_vehicle.status:
 						all_matched.append(True)
@@ -357,7 +357,7 @@ def pre_auction():
 		session.message='@Invalid request ID!'
 		redirect(URL('my_auctions'))
 	if not URL.verify(request, hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[auction_request.temp_id, auction_request_id, inventory_vehicle_id]): #verifys all args (or ones specified) in a url
-		#session.message='@You are attempting to tamper with BidDrive! You have been reported.'
+		session.message='@URL appears invalid!'
 		redirect(URL('my_auctions'))
 		
 	if db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
