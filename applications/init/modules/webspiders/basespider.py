@@ -30,14 +30,15 @@ class BaseSpider():
 		self.userid = userid
 		
 		self.savedir = savedir
-		
+				
+		self.startVirtualDisplay()
 		self.browser = webdriver.Firefox()
+		
 		self.actions = ActionChains(self.browser) #needed to make double-click http://stackoverflow.com/questions/17870528/double-clicking-in-python-selenium
 		
 		#atexit.register(self.__exit__, None, None, None) #make sure browser closes	
 		
 	def __enter__(self): #USE WITH THE "WITH" STATEMENT http://stackoverflow.com/questions/1984325/explaining-pythons-enter-and-exit
-		self.startVirtualDisplay()
 		self.run()
 		return self
 		
