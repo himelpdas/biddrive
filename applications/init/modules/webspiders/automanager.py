@@ -116,7 +116,8 @@ class AutoManager(BaseSpider):
 			
 			self.photos.append( photo_save_filename)
 			
-			time.sleep(0.25)
+			if i+1 < len(thumb_urls):
+				time.sleep(0.55) #no need to sleep after last url downloaded
 		
 	def run(self):
 		self.login()
