@@ -128,7 +128,8 @@ db.define_table('auction_request',
 		writable=False,
 	),                                                   
 	Field('matching', 'list:string',
-		requires=IS_IN_SET(MATCHING_CATEGORIES, zero=None, multiple=True),
+		requires=[IS_IN_SET(MATCHING_CATEGORIES, zero=None, multiple=True),IS_NOT_EMPTY(error_message="Pick at least 1 criteria!")],
+		widget=SQLFORM.widgets.multiple.widget, #adding multiple requires destroys default widget, so define widget explicitly
 		default="trim",
 	),
 	Field('year', #default value in controller for validation
@@ -315,13 +316,6 @@ db.define_table('auction_request',
 	auth.signature #http://goo.gl/3u2l7r
 )
 
-"""
-	Field('image_limit', 'integer', #returns no such column error #need to add column because migrate issues #SQLITE makes it hard to add/rm columns #SQLITE DATABASE BROWSER #http://goo.gl/SbdnfH #http://goo.gl/Qua42R #ALTER TABLE auction_request ADD COLUMN image_limit INTEGER # UPDATE auction_request SET image_limit = 5
-		required = True,
-		readable=False,
-		writable=False,
-		default = 5, #raise limit when purchase made
-"""	
 #pip install pillow
 from smartthumb import * #http://goo.gl/tiSyz
 import os

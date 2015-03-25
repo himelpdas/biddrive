@@ -379,7 +379,7 @@ pass
             <div class="row">
                 {{if is_dealer:}}
                 <div class="col-sm-12">
-                    <h4 class="promo-heading white text-center">My Offer in Response to Buyer Request</h4>
+                    <h4 class="promo-heading white text-center">Offers in Response to Buyer Request</h4>
                 </div>
                 {{else:}}
                 <div class="col-xs-12 col-sm-8 col-md-9">
@@ -625,13 +625,13 @@ pass
 
                                 {{if each_offer['show_winner_btn']:}}
                                     <a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-                                        <button class="btn btn-danger btn-trinity btn-raised center-block" title="Choose this offer (auction will conclude)." onClick="return confirm('Are you sure you want to pick this as the winner (auction will conclude)?')">
+                                        <button class="btn btn-danger btn-trinity btn-raised center-block" title="Choose this offer (auction will conclude)." onClick="return confirm('Are you sure you want to pick this as the winner?\n\nThe auction will conclude if you hit yes.')">
                                             <i class="fa fa-fw fa-trophy"></i> Buy it now!
                                         </button>
                                     </a>
                                 {{elif is_owner and each_offer['show_buy_now_btn']:}} {{#only shows for buyer}}
                                     <a href="{{=URL(args=request.args,vars=dict(request.vars, winner=each_offer['id']))}}">
-                                        <button class="btn btn-success btn-trinity btn-raised center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer that is valid for less than {{=final_bid_hours_left}}. Are you sure you want to buy this now (this will conclude the auction)?')">
+                                        <button class="btn btn-success btn-trinity btn-raised center-block" title="Expires in less than {{=final_bid_hours_left}}!" onClick="return confirm('This dealer has made you a final offer that is valid for less than {{=final_bid_hours_left}}. Are you sure you want to buy this now?\n\nThe auction will conclude if you hit yes.')">
                                             <i class="fa fa-fw fa-bell"></i> Accept final offer!
                                         </button>
                                     </a>
@@ -690,7 +690,7 @@ pass
                         <div class="row" style="margin-top: 20px">
                             <div class="col-sm-12">
                                 <span class="text-bold">Description:</span>
-                                <p>{{truncate=345}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></p>
+                                <p>{{truncate=212}}{{=each_offer['summary'][:truncate]}}<span id="dotdotdot{{=counter}}">...</span><span id="untruncate{{=counter}}">{{=each_offer['summary'][truncate:]}}</span></p>
                                 <script>
                                     $("#untruncate{{=counter}}").hide();
                                 </script>
@@ -796,11 +796,11 @@ pass
         {{#####MODALS#####}}
         {{if has_images:}} {{#cpu saver, since for loop can do the same}}
             {{for each_image_number in VEHICLE_IMAGE_NUMBERS:}}
-                {{#image_s = each_offer['exterior_images'][0]}}
-                {{small_and_large_file_names=each_offer['%s_images'%each_image_number]}}
+                {{#image_s = each_offer['ROW']['exterior_images'][0]}}
+                {{small_and_large_file_names=each_offer['ROW']['image_compressed_%s'%each_image_number]}}
                 {{if small_and_large_file_names:}} {{#did dealer submit images?}}
                     {{image_l = small_and_large_file_names[1]}}
-                    <div id="{{=each_image_number}}_{{=each_offer['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_number}}_image_l_{{=each_offer['id']}}" aria-hidden="true">
+                    <div id="{{=each_image_number}}_{{=each_offer['ROW']['id']}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="{{=each_image_number}}_image_l_{{=each_offer['ROW']['id']}}" aria-hidden="true">
                       <div class="modal-dialog modal-md">
                         <div class="modal-content">
                             <div class="modal-body">

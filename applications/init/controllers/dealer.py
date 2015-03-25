@@ -21,7 +21,7 @@ def auction_requests():
 	#year
 	
 	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
-	my_inventory = db((db.auction_request_offer.auction_request == None) & ( ~db.auction_request_offer.status.contains("sold") & ~db.auction_request_offer.status.contains("archived") ) ).select()
+	my_inventory = db((db.auction_request_offer.auction_request == None) & (db.auction_request_offer.owner_id == auth.user_id) & ( ~db.auction_request_offer.status.contains("sold") & ~db.auction_request_offer.status.contains("archived") ) ).select()
 	
 	year = request.vars['year']
 	year_range_string = map(lambda each_year: str(each_year),YEAR_RANGE) #vars come back as strings, so make YEAR_RANGE strings for easy comparison
@@ -338,143 +338,6 @@ def auction_requests():
 
 	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, multiple=multiple, multiple_string='|'.join(multiple), color=color, colors_list=colors_list, trim=trim, styles_list=styles_list, blank_after_filter_message=blank_after_filter_message)
 
-"""
-#@auth.requires_login() #make dealer only
-@auth.requires(request.args(0))
-#@auth.requires(auth.has_membership(role='request_by_make_authorized_dealers_#%s'%request.args(0))) #use request.args(0) instead of [0] to return None if no args
-#@auth.requires(not db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == request.args(0))).select()) #make sure dealer did not make an offer already
-@auth.requires_membership('dealers')
-def pre_auction():
-	auction_request_id = request.args[0]
-	if db((db.auction_request_offer.owner_id == auth.user_id) & (db.auction_request_offer.auction_request == auction_request_id)).select(): #make sure dealer did not make an offer already... if so redirect him to auction
-		redirect(URL('auction',args=[auction_request_id]))
-	#if not request.args:  #make decorator http://bit.ly/1i2wbHz
-	#	session.message='No request ID!'
-	#	redirect(URL('my_auctions.html'))
-	auction_request = db(db.auction_request.id == auction_request_id).select().last() #ALWAYS verify existence of vars/args in database.
-	if not auction_request:
-		session.message='@Invalid request ID!'
-		redirect(URL('my_auctions'))
-	if not URL.verify(request, hmac_key=auction_request.temp_id, hash_vars=[auction_request.id]): #verifys all args (or ones specified) in a url
-		session.message='@You are attempting to tamper with BidDrive! You have been reported.'
-		redirect(URL('my_auctions'))
-	
-	db.auction_request_offer.auction_request.default = auction_request_id
-	db.auction_request_offer.owner_id.default = auth.user_id
-	db.auction_request_offer.owner_id.readable = False
-	db.auction_request_offer.owner_id.writable = False
-	
-	car=dict(year=auction_request.year,
-	make_name=auction_request.make_name,
-	model_name=auction_request.model_name,
-	trim_name=auction_request.trim_name)
-	
-	auction_request_area = db(db.zipgeo.zip_code == auction_request.zip_code).select().first()
-	auction_request_user = db(db.auth_user.id == auction_request.owner_id).select().first() 
-	
-	trim_data = json.loads(auction_request.trim_data)
-	options = trim_data['options']
-	option_codes = {} #SAFE to verify against user submission, since user has no influence in its data
-
-	for each_option_type in options:
-		if each_option_type['category'] in OPTION_CATEGORIES: #['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Fees', 'Other']: #TODO make this dynamic
-			for each_option in each_option_type['options']:
-				option_codes.update(
-					{each_option['id'] :
-						{
-							#'id':each_option['id'],
-							'name':each_option['name'], 
-							'description': each_option['description'] if 'description' in each_option else None, 
-							'category_name' : each_option_type['category'], 
-							'category' : each_option_type['category'].lower().replace(" ", "_"), #id-like
-							'msrp': each_option['price']['baseMSRP'] if 'price' in each_option and 'baseMSRP' in each_option['price'] else 0
-						}
-					}
-				) #["200466570", "17\" Alloy", "17\" x 7.0\" alloy wheels with 215/45R17 tires", "Exterior", "exterior"]
-	db.auction_request_offer.options.requires = IS_IN_SET(map(lambda each_option: [each_option,  option_codes[each_option]['name']], option_codes), multiple=True)
-	db.auction_request_offer.options.widget=SQLFORM.widgets.multiple.widget
-
-	#get prices
-	msrp_by_id = {'base':trim_data['price']['baseMSRP']} #TODO put in db
-	#get prices for colors
-	msrp_by_id.update(dict(zip(auction_request.colors,auction_request.color_msrps) ) )
-	#get prices for trim
-	msrp_by_id.update(dict(map(lambda each_code: [each_code, option_codes[each_code]['msrp']], option_codes) ) )
-	
-	colors = zip(auction_request.colors, auction_request.color_names, auction_request.color_categories) #OLD colors means color_ids please do sitewide replace
-	colors.sort(key = lambda each: each[1])
-	exterior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "exterior", colors))
-	#print exterior_colors
-	#logger.debug(auction_request.colors)
-	interior_colors=map(lambda each: [each[0],each[1]], filter(lambda each: each[2] == "interior", colors))
-	
-	db.auction_request_offer.exterior_color.requires = IS_IN_SET(exterior_colors, zero=None)
-	db.auction_request_offer.interior_color.requires = IS_IN_SET(interior_colors, zero=None)
-	
-	#get dealer's credits banks for view/update
-	my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
-	
-	form = SQLFORM(db.auction_request_offer, _class="form-horizontal", _id="pre_auction_form", hideerror=True) #to add class to form #http://goo.gl/g5EMrY
-				
-	def computations(form): #DONT ALLOW IF VEHICLE DOESN'T MATCH REQUEST
-		codes_to_exterior_colors = dict(exterior_colors)
-		codes_to_interior_colors = dict(interior_colors)
-		db.auction_request_offer.exterior_color_name.default = codes_to_exterior_colors[form.vars["exterior_color"]]
-		db.auction_request_offer.interior_color_name.default = codes_to_interior_colors[form.vars["interior_color"]]
-		#option db #SHOULD CAUSE INTERNAL ERROR IF USER FAKES FORM VARS, THIS IS GOOD.
-		db.auction_request_offer['option_descriptions'].default = [ option_codes[each_option_code]['description'] for each_option_code in form.vars["options"] ]
-		db.auction_request_offer['option_category_names'].default = [ option_codes[each_option_code]['category_name'] for each_option_code in form.vars["options"] ]
-		db.auction_request_offer['option_categories'].default = [ option_codes[each_option_code]['category'] for each_option_code in form.vars["options"] ]
-		db.auction_request_offer['option_names'].default = [ option_codes[each_option_code]['name'] for each_option_code in form.vars["options"] ]
-		db.auction_request_offer['option_msrps'].default = [ option_codes[each_option_code]['msrp'] for each_option_code in form.vars["options"] ]
-	
-	if form.process(onvalidation=computations, hideerror = False, message_onfailure="@Errors in form. Please check it out.").accepted: #hideerror = True to hide default error elements #change error message via form.custom
-		if request.args and db((db.auction_request.id == auction_request_id) & (db.auction_request.auction_expires > request.now )).select(): #since we're dealing with money here use all means to prevent false charges. ex. make sure auction is not expired!
-			my_piggy.update_record( credits = my_piggy.credits - CREDITS_PER_AUCTION) #remove one credit
-			db.credits_history.insert(changed = -CREDITS_PER_AUCTION, owner_id=auth.user_id, reason="Auction fee")
-			auth.add_membership('dealers_in_auction_%s'%auction_request_id, auth.user_id) #instead of form.vars.id in default/request_by_make use request.args[0]
-			#####send a messages to all involved in this auction#####
-			auction_request_offers = db((db.auction_request_offer.auction_request == auction_request_id)&(db.auction_request_offer.owner_id==db.auth_user.id)&(db.auction_request_offer.owner_id == db.dealership_info.owner_id)&(db.auction_request_offer.owner_id == db.auth_user.id)).select()#This is a multi-join versus the single join in my_auctions. join auth_table and dealership_info too since we need the first name and lat/long of dealer, instead of having to make two db queries
-			car = '%s %s %s (ID:%s)' % (auction_request['year'], auction_request['make_name'], auction_request['model_name'], auction_request['id'])
-			#send to dealers
-			me = auth.user #i'm the guy submitting this offer
-			my_initials='%s %s'%(me.first_name.capitalize(), me.last_name.capitalize()[:1]+'.')
-			#send to dealers in the auction
-			for each_offer in auction_request_offers:
-				send_to = each_offer.auth_user
-				each_is_my_offer = me.id == send_to.id #since I'm the one submitting and it's my offer
-				SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he= my_initials, url=URL(args=request.args, host=True, scheme=True) ) )
-			#send a copy to me
-			SEND_ALERT_TO_QUEUE(USER=me, MESSAGE_TEMPLATE = "DEALER_on_new_offer", **dict(app=APP_NAME, car=car, aid = auction_request['id'],  you_or_he="You", url=URL(args=request.args, host=True, scheme=True) ) )
-			#send a copy to buyer
-			SEND_ALERT_TO_QUEUE(USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_offer", **dict(app=APP_NAME, car=car, dealer_name = my_initials, url=URL(args=request.args, host=True, scheme=True) ) )
-
-		session.message = '$Your vehicle was submitted!'
-		redirect(
-			URL('auction', args=[auction_request_id])
-		)
-
-	auction_request_info = dict(
-		id = str(auction_request.id),
-		auction_requests_user_entered = len(db(db.auction_request.owner_id == auction_request_user.id).select()),
-		first_name =auction_request_user.first_name.capitalize(),
-		last_init =auction_request_user.last_name.capitalize()[:1]+'.',
-		year = auction_request.year,
-		make = auction_request.make_name,
-		model = auction_request.model_name,
-		is_lease = auction_request.funding_source == 'lease',
-		trim_name = auction_request.trim_name,
-		trim_data = trim_data,
-		auction_request=auction_request,
-		exterior_colors = exterior_colors,
-		interior_colors = interior_colors,
-		city = auction_request_area.city,
-		state = auction_request_area.state_abbreviation,
-		zip_code =  auction_request_area.zip_code,
-	)
-	
-	return dict(form = form, my_piggy=my_piggy, options=options, option_codes=option_codes, categorized_options=CATEGORIZED_OPTIONS(auction_request), msrp_by_id=msrp_by_id, auction_request_id=auction_request_id,auction_request_info=auction_request_info, **car)
-"""
 
 @auth.requires(request.args(0) and request.args(1))
 @auth.requires_membership('dealers')
@@ -1180,8 +1043,8 @@ def winner():
 			})
 	#color stuff
 
-	exterior_color = GET_OFFER_ROW_INT_EXT_COLORS(auction_request_offer.auction_request_offer)[0]
-	interior_color = GET_OFFER_ROW_INT_EXT_COLORS(auction_request_offer.auction_request_offer)[1]
+	exterior_color = GET_OFFER_ROW_INT_EXT_COLORS(auction_request_offer)[0]
+	interior_color = GET_OFFER_ROW_INT_EXT_COLORS(auction_request_offer)[1]
 	#options stuff
 	options = {}
 	for option, category in zip(auction_request_offer.option_names, auction_request_offer.option_category_names):
