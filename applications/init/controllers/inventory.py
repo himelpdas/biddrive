@@ -84,10 +84,13 @@ def index():
 					
 					for i, each_photo in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
 						field_number = i+1
-						image_file = open(upload_directory + each_photo, "rb")
-						image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
-						del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
-						image_updates.update({"image_%s"%field_number:image_upload})
+						try:
+							image_file = open(upload_directory + each_photo, "rb")
+							image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
+							del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
+							image_updates.update({"image_%s"%field_number:image_upload})
+						except IOError:
+							pass
 
 					defaults.update(image_updates)
 					defaults.update({'summary' : spider.description, 'status' : ['unsold','new'], 'mileage':spider.mileage, 'additional_costs':0})
