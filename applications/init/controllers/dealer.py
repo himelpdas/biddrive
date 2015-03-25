@@ -214,13 +214,17 @@ def auction_requests():
 					else:
 						all_matched.append(False)
 
-				if 'new' in each_auction.auction_request.matching:
+				if set(['new','used']).issubset(set(each_auction.auction_request.matching) ):
+					if "new" in each_inventory_vehicle.status or 'used' in each_inventory_vehicle.status:
+						all_matched.append(True)
+					else:
+						all_matched.append(False)	
+				elif 'new' in each_auction.auction_request.matching:
 					if "new" in each_inventory_vehicle.status:
 						all_matched.append(True)
 					else:
 						all_matched.append(False)	
-
-				if 'used' in each_auction.auction_request.matching:
+				elif 'used' in each_auction.auction_request.matching:
 					if "used" in each_inventory_vehicle.status:
 						all_matched.append(True)
 					else:
