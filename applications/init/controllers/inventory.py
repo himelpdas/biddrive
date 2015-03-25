@@ -82,15 +82,11 @@ def index():
 					defaults = {}
 					defaults.update(null_defaults)
 					
-					for i, each_photo in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
+					for i, each_photo_file in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
 						field_number = i+1
-						try:
-							image_file = open(upload_directory + each_photo, "rb")
-							image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
-							del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
-							image_updates.update({"image_%s"%field_number:image_upload})
-						except IOError:
-							pass
+						image_upload = db.auction_request_offer['image_%s'%field_number].store(each_photo_file, str(uuid.uuid4()))
+						del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
+						image_updates.update({"image_%s"%field_number:image_upload})
 
 					defaults.update(image_updates)
 					defaults.update({'summary' : spider.description, 'status' : ['unsold','new'], 'mileage':spider.mileage, 'additional_costs':0})
@@ -113,23 +109,20 @@ def vin_decode():
 	vin_info = EDMUNDS_CALL(VIN_DECODE_URI % clean_vin)
 	is_imported = request.args(1)
 	if vin_info:
-		try:
-			make = vin_info['make']['niceName']
-			model = vin_info['model']['niceName']
-			year = vin_info['years'][0]['year']
-			print year, make, model
-			if is_imported:
-				vehicle = db(db.auction_request_offer.id == int(is_imported) ).select().last()
-				vehicle.update_record(make = make, model = model, year=year, vin_number = clean_vin)
-				vehicle_id = vehicle.id
-			else:
-				defaults = {}
-				defaults.update(null_defaults)
-				defaults.update(dict(make = make, model = model, year=year, vin_number = clean_vin, status=['unsold','new'], additional_costs=0))
-				vehicle_id = db.auction_request_offer.insert( **defaults)
-			redirect(URL('inventory', 'vehicle', args=[vehicle_id]) )
-		except:# ZeroDivisionError:
-			pass
+		make = vin_info['make']['niceName']
+		model = vin_info['model']['niceName']
+		year = vin_info['years'][0]['year']
+		print year, make, model
+		if is_imported:
+			vehicle = db(db.auction_request_offer.id == int(is_imported) ).select().last()
+			vehicle.update_record(make = make, model = model, year=year, vin_number = clean_vin)
+			vehicle_id = vehicle.id
+		else:
+			defaults = {}
+			defaults.update(null_defaults)
+			defaults.update(dict(make = make, model = model, year=year, vin_number = clean_vin, status=['unsold','new'], additional_costs=0))
+			vehicle_id = db.auction_request_offer.insert( **defaults)
+		redirect(URL('inventory', 'vehicle', args=[vehicle_id]) )
 
 	session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
 	redirect(URL('inventory', 'index'))

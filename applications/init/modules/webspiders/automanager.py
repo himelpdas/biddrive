@@ -69,10 +69,16 @@ class AutoManager(BaseSpider):
 		
 	def scrape(self):
 		#get vin
-		self.VIN = self.browser.find_element_by_id("ctl00_cphMain_txtVIN").get_attribute("value") or ''
-		#print self.VIN
+		while self.no_crash.next(): #must get VIN
+			self.VIN = self.browser.find_element_by_id("ctl00_cphMain_txtVIN").get_attribute("value")
+			#print self.VIN
+			if not self.VIN:
+				pass
+			else:
+				break
 		
 		self.mileage = int(self.browser.find_element_by_id("ctl00_cphMain_txtMileage").get_attribute("value") or 0)
+		#print self.mileage
 		
 		#navigate to description page
 		link = self.browser.find_element_by_link_text('Description')
@@ -113,11 +119,14 @@ class AutoManager(BaseSpider):
 			photo_save_filepath = self.savedir + photo_save_filename
 			
 			urllib.urlretrieve(photo_url,  photo_save_filepath) #http://stackoverflow.com/questions/3042757/downloading-a-picture-via-urllib-and-python
-			
-			self.photos.append( photo_save_filename)
+			try:
+				image_file = open(photo_save_filepath, "rb")
+				self.photos.append( image_file)
+			except IOError:
+				pass
 			
 			if i+1 < len(thumb_urls):
-				time.sleep(0.55) #no need to sleep after last url downloaded
+				time.sleep(0.50) #no need to sleep after last url downloaded
 		
 	def run(self):
 		self.login()
