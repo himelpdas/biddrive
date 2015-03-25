@@ -108,11 +108,12 @@ class AutoManager(BaseSpider):
 			
 			photo_save_uid = '%s_%s_%s'%(self.userid ,self.name, str(uuid.uuid4()) )
 			photo_save_filename = os.path.normpath("/%s.%s"%(photo_save_uid, photo_ext) )
-			
 			photo_save_filepath = self.savedir + photo_save_filename
-			self.photos.append( photo_save_filename)
 			
 			urllib.urlretrieve(photo_url,  photo_save_filepath) #http://stackoverflow.com/questions/3042757/downloading-a-picture-via-urllib-and-python
+			
+			self.photos.append( photo_save_filename)
+			
 			time.sleep(0.25)
 		
 	def run(self):

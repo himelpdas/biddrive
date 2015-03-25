@@ -259,7 +259,7 @@
 				</td>
 				<td>
 					<a href="{{=URL('inventory','vehicle', args=[each_offer.id])}}" class="btn btn-large btn-default" title="Edit"><i class="fa fa-fw fa-edit"></i></a>
-					<a href="#" class="btn btn-large btn-default" title="Delete"><i class="fa fa-fw fa-trash-o"></i></a>
+					<a href="{{=URL('inventory', 'del_vehicle', args=[each_offer.id], hmac_key=HMAC_KEY, hash_vars=[each_offer.id], salt=str(session.salt) )}}" onclick="return confirm('Are you sure?')" class="btn btn-large btn-default" title="Delete"><i class="fa fa-fw fa-trash-o"></i></a>
 				</td>
 			</tr>
 		{{pass}}

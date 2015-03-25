@@ -67,6 +67,7 @@ def GET_OFFER_ROW_INT_EXT_COLORS(row_table):
 		row_table.color_msrps, #5
 		row_table.color_simple_names #6
 	)
+	interior_color = exterior_color = {'name': "", "hex":""}
 	for each_code in color_codes:
 		if each_code[2] == "exterior":
 			exterior_color = {

@@ -3,6 +3,10 @@
 null_defaults = {}
 for each_field in db.auction_request_offer.fields[1:]:
 	null_defaults.update({each_field:None})
+	
+root_directory = os.path.normpath(request.folder)
+upload_folder =  os.path.normpath('/uploads')
+upload_directory =  root_directory + upload_folder
 
 @auth.requires_membership('dealers')
 def index():
@@ -64,12 +68,9 @@ def index():
 						form.errors["field_%s"%each_field_letter] = error_message #>>> IS_NOT_EMPTY()("") returns ('', 'Enter a value') ### >>> IS_NOT_EMPTY()("test") returns ('test', None)
 					
 	if scrape_form.process(keepvalues=True, onvalidation=onvalidation, hide_error=True, message_onfailure="@Errors in form. Please check it out.").accepted:
-		root_folder = os.path.normpath(request.folder)
-		upload_folder =  os.path.normpath('/uploads')
-		upload_path =  root_folder + upload_folder
 		with automanager.AutoManager(
 				userid=auth.user_id, 
-				savedir=upload_path,
+				savedir=upload_directory,
 				field_a=scrape_form.vars['field_a'],
 				field_b=scrape_form.vars['field_b'],
 				field_c=scrape_form.vars['field_c'],
@@ -82,7 +83,7 @@ def index():
 				
 				for i, each_photo in enumerate(spider.photos[ : VEHICLE_IMAGE_NUMBERS[-1]-1]): #or else will get: Field image_compressed_11 does not belong to the table
 					field_number = i+1
-					image_file = open(upload_path + each_photo, "rb")
+					image_file = open(upload_directory + each_photo, "rb")
 					image_upload = db.auction_request_offer['image_%s'%field_number].store(image_file, str(uuid.uuid4()))
 					del defaults["image_compressed_%s"%field_number] #can't be None defaults for compute fields to run
 					image_updates.update({"image_%s"%field_number:image_upload})
@@ -123,9 +124,32 @@ def vin_decode():
 			redirect(URL('inventory', 'vehicle', args=[vehicle_id]) )
 		except ZeroDivisionError:
 			pass
-	session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
+	if is_imported:
+		session.flash = "@Failed to import vehicle! Please double-check your information and try again."
+	else:
+		session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
 	redirect(URL('inventory', 'index'))
 	
+@auth.requires(request.args(0))
+@auth.requires_membership('dealers')
+@auth.requires(URL.verify(request, hmac_key = HMAC_KEY, hash_vars=[request.args(0)], salt=str(session.salt)))
+def del_vehicle():
+	id = request.args[0]
+	record = db(db.auction_request_offer.id==int(id)).select().last()
+	compressed_image_path = root_directory + os.path.normpath("/static/thumbnails")
+	for each_number in VEHICLE_IMAGE_NUMBERS:
+		try:
+			each_image = os.path.normpath("/"+record["image_%s"%each_number])
+			os.remove(upload_directory + each_image)
+			for each_image_name in record["image_compressed_%s"%each_number]:
+				each_compressed_image = os.path.normpath("/"+each_image_name)
+				os.remove(compressed_image_path + each_compressed_image)
+		except:
+			pass
+		finally:
+			record.delete_record()
+	session.flash = "$Deleted vehicle record ID %s."%id
+	redirect(URL('inventory', 'index'))
 	
 @auth.requires(request.args(0))
 @auth.requires_membership('dealers')

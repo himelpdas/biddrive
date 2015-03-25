@@ -41,6 +41,7 @@ EDMUNDS_SECRET="zA6vs797nVgqGaSK58QJe2KW"
 AUCTION_DAYS_EXPIRE = AUCTION_FAVS_EXPIRE = 3
 AUCTION_DAYS_OFFER_ENDS = 1
 GMAPS_KEY = "AIzaSyBAnNycjSMSADu5n426xjPuT9jWWhri8xI"
+HMAC_KEY = "96be7ed1-f8f2-4776-80cf-c9de4e4785ff"
 
 if not session.salt:
 	session.salt = uuid.uuid4()
