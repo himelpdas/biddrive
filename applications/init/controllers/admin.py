@@ -199,10 +199,10 @@ def manage_offers():
 	db.auction_request_offer['option_names'].writable = False #even though it's handled in models_edmunds do it again anyway
 	db.auction_request_offer['options'].readable = False
 	db.auction_request_offer['options'].writable = False
-	db.auction_request_offer.exterior_color.readable = False
-	db.auction_request_offer.exterior_color.writable = False
-	db.auction_request_offer.exterior_color_name.readable = True
-	db.auction_request_offer.exterior_color_name.writable = False
+	db.auction_request_offer.colors.readable = False
+	db.auction_request_offer.colors.writable = False
+	db.auction_request_offer.color_names.readable = True
+	db.auction_request_offer.color_names.writable = False
 
 	if auction_id:
 		query = db.auction_request_offer.auction_request == auction_id

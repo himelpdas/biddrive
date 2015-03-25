@@ -59,6 +59,7 @@ BULLET=XML('&nbsp;<i class="fa fa-shield fa-rotate-270"></i>&nbsp;&nbsp;')
 OPTION_CATEGORIES = sorted(['Interior', 'Exterior', 'Roof', 'Interior Trim', 'Mechanical','Package', 'Safety', 'Additional Fees', 'Other'])
 
 def GET_OFFER_ROW_INT_EXT_COLORS(row_table):
+	#these values should be guaranteed
 	color_codes = zip(row_table.colors, #0
 		row_table.color_names, #1
 		row_table.color_categories, #2
@@ -67,17 +68,19 @@ def GET_OFFER_ROW_INT_EXT_COLORS(row_table):
 		row_table.color_msrps, #5
 		row_table.color_simple_names #6
 	)
-	interior_color = exterior_color = {'name': "", "hex":""}
+	interior_color = exterior_color = {'name': "", "hex":"", 'id':0}
 	for each_code in color_codes:
 		if each_code[2] == "exterior":
 			exterior_color = {
 				'name':each_code[1],
 				'hex':each_code[4],
+				'id':each_code[0],
 			}
 		if each_code[2] == 'interior':
 			interior_color = {
 				'name':each_code[1],
 				'hex':each_code[4],
+				'id':each_code[0],
 			}
 	return [interior_color, exterior_color]
 

@@ -79,15 +79,17 @@
 					<td>{{=text_scrambler(auction_request.lease_term)}} or {{text_scrambler(auction_request.lease_mileage)}}</td>
 				</tr>
 			{{pass}}
+
+				{{int_ext_colors = GET_OFFER_ROW_INT_EXT_COLORS(each_vehicle)}}
 			
 				<tr>
 					<th>Exterior color:</th>
-					<td>{{=text_scrambler(exterior_color)}}</td>
+					<td>{{=text_scrambler(int_ext_colors[0]['name'])}}</td>
 				</tr>
 				
 				<tr>
 					<th>Interior color:</th>
-					<td>{{=text_scrambler(interior_color)}}</td>
+					<td>{{=text_scrambler(int_ext_colors[1]['name'])}}</td>
 				</tr>
 
 				<tr>
