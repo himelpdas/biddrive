@@ -1,7 +1,5 @@
- {{extend 'page_layout_new.html'}}
- {{#BEAUTIFY(response._vars)}}
- <h3><i class="fa fa-fw fa-info-circle"></i> {{=heading}}</h3>
- <br><hr><br>
+{{extend 'page_layout_new.html'}}
+{{#BEAUTIFY(response._vars)}}
 {{=form.custom.begin}}
 {{ form.element("input", _name = "dealership_name")["_class"] += " form-control" }}
 {{ form.element("select", _name = "specialty")["_class"] += " form-control" }}
@@ -29,9 +27,10 @@
 {{ form.element("select", _name = "sunday_opening_time")["_class"] += " form-control" }}
 {{ form.element("select", _name = "sunday_closing_time")["_class"] += " form-control" }}
 {{ form.element("input", _type = "submit")["_id"] = "submit" }}
-{{ form.element("input", _type = "submit")["_class"] = " btn  btn-default pull-right" }}
+{{ form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-default pull-right" }}
 {{#FURTHER CSS IN static/css/_custom.css}}
- <div class="row-fluid">
+
+<div class="row-fluid">
 	<div class="col-xs-12 col-sm-7">				
 		<div class="form-group">
 			<label class="col-sm-3 control-label">Dealership name</label>
@@ -313,11 +312,11 @@
 	</div>
 </div>
 {{=form.custom.end}}
- <script>
+<script>
 	$("#dealership_info_office_phone").mask('9-999-999-9999'); //http://bit.ly/1ck85cy
- </script>
+</script>
 
- {{BOOTSTRAP_MULTISELECT([['dealership_info_specialty', 'Pick the brands you sell']], max_height=240)}}
+{{BOOTSTRAP_MULTISELECT([['dealership_info_specialty', 'Pick the brands you sell']], max_height=240)}}
 
 <!--{{"""}}
  <script>

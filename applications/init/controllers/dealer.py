@@ -1114,7 +1114,17 @@ def my_auctions():
 		
 		my_offer_summaries.append(each_offer_dict)
 	#IN MEMORY SORTING is considered safe because we have limitby'd the offers to maximum of 60
+
 	response.title = request.function.replace("_"," ").capitalize()
+	if show == 'won':
+		response.title += ": Auctions I won"
+	elif show == 'lost':
+		response.title += ": Auctions I didn't win"
+	elif show == "live":
+		response.title += ": Live auctions I'm in"
+	else:
+		response.title += ": All auctions I entered"
+	
 	return dict(my_offer_summaries = my_offer_summaries, sorting=sorting, show_list=show_list, **paging)
 	
 @auth.requires(URL.verify(request, hmac_key=str(auth.user_id), salt = str(session.salt), hash_vars=[request.args(0)])) #guarantees that user clicked from auction page if this passes

@@ -41,6 +41,17 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
+							
+	                        <div class="form-group">
+                                <label for="{{=form.custom.widget.vin_number['_id']}}" class="col-sm-3 control-label"></i>VIN <i class="fa fa-question-circle" title="TODO"></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.vin_number}}{{#logger.debug(form.errors['vin_number'])}}
+                                    {{if form.errors['vin_number']:}}
+                                    <div class="alert alert-warning">{{=form.errors['vin_number']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+							
 							<div class="form-group">
                                 <label for="{{=form.custom.widget.trim['_id']}}" class="col-sm-3 control-label">Trim <i class="fa fa-question-circle" title='Select the TRIM of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a trim that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
                                 <div class="col-sm-9">
@@ -72,17 +83,6 @@
                                     {{pass}}
                                 </div>
                             </div>
-
-							<div class="form-group">
-								<label for="{{=form.custom.widget.status['_id']}}" class="col-sm-3 control-label">Status <i class="fa fa-question-circle" title='Select the status of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a status that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
-								<div class="col-sm-9">
-									{{=form.custom.widget.status}}
-
-									{{if form.errors['status']:}}
-									<div class="alert alert-warning">{{=form.errors['status']}}</div>
-									{{pass}}
-								</div>
-							</div>  
 							
                         </div>
                     </div>
@@ -106,15 +106,16 @@
                     <div class="row">
                         <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> {{#http://goo.gl/qZqegs}}
 
-	                        <div class="form-group">
-                                <label for="{{=form.custom.widget.vin_number['_id']}}" class="col-sm-3 control-label"></i>VIN number <i class="fa fa-question-circle" title="TODO"></i></label>
-                                <div class="col-sm-9">
-                                    {{=form.custom.widget.vin_number}}{{#logger.debug(form.errors['vin_number'])}}
-                                    {{if form.errors['vin_number']:}}
-                                    <div class="alert alert-warning">{{=form.errors['vin_number']}}</div>
-                                    {{pass}}
-                                </div>
-                            </div>
+							<div class="form-group">
+								<label for="{{=form.custom.widget.status['_id']}}" class="col-sm-3 control-label">Status <i class="fa fa-question-circle" title='Choose the status of your vehicle. If you select "Sold" or "Archived", it will be hidden from your list of biddable vehicles.'></i></label>
+								<div class="col-sm-9">
+									{{=form.custom.widget.status}}
+
+									{{if form.errors['status']:}}
+									<div class="alert alert-warning">{{=form.errors['status']}}</div>
+									{{pass}}
+								</div>
+							</div>  
 						
                             <div class="form-group">
                                 <label for="{{=form.custom.widget.summary['_id']}}" class="col-sm-3 control-label">Summary <i class="fa fa-question-circle" title='TODO'></i></label>
@@ -138,7 +139,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="{{=form.custom.widget.additional_costs_details['_id']}}" class="col-sm-3 control-label"></i>Costs description <i class="fa fa-question-circle" title="TODO"></i></label>
+                                <label for="{{=form.custom.widget.additional_costs_details['_id']}}" class="col-sm-3 control-label"></i>Costs description <i class="fa fa-question-circle" title="Are there any missing features you want to describe? Describe it here."></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.additional_costs_details}}
 
@@ -154,6 +155,12 @@
         </div>
     </div>                         
 	
+    <div class="row" style="padding: 20px 0;">
+        <div class="col-xs-12 text-center">
+            <h2 class="color">Step 3. Photos</h2>
+            <span>(Upload photos to improve your bid's appearance.)</span>
+        </div>
+    </div>
 	
     <div class="row">
         <div class="col-xs-12">
