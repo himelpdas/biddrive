@@ -125,7 +125,7 @@ def vin_decode():
 				defaults.update(dict(make = make, model = model, year=year, vin_number = clean_vin, status=['unsold','new'], additional_costs=0))
 				vehicle_id = db.auction_request_offer.insert( **defaults)
 			redirect(URL('inventory', 'vehicle', args=[vehicle_id]) )
-		except ZeroDivisionError:
+		except:# ZeroDivisionError:
 			pass
 
 	session.flash = "@Failed to decode VIN number! Please double-check VIN and try again."
