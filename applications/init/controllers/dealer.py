@@ -21,7 +21,12 @@ def auction_requests():
 	#year
 	
 	my_info = db(db.dealership_info.owner_id == auth.user_id).select().first()
-	my_inventory = db((db.auction_request_offer.auction_request == None) & (db.auction_request_offer.owner_id == auth.user_id) & ( ~db.auction_request_offer.status.contains("sold") & ~db.auction_request_offer.status.contains("archived") ) ).select()
+	my_inventory = db(
+		#(db.auction_request_offer.auction_request == None) & #UNCOMMENT IF YOU DON'T WANT REPEAT LIVE VEHICLES
+		(db.auction_request_offer.owner_id == auth.user_id) &  
+		(~db.auction_request_offer.status.contains("sold")) & 
+		(~db.auction_request_offer.status.contains("archived")) 
+	) .select()
 	
 	year = request.vars['year']
 	year_range_string = map(lambda each_year: str(each_year),YEAR_RANGE) #vars come back as strings, so make YEAR_RANGE strings for easy comparison

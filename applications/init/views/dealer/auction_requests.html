@@ -277,7 +277,7 @@
 									<!--{{#--INFO BUTTON AND MODAL}}-->
                                     <a class="btn btn-default btn-trinity btn-sm" style="margin-top: 10px;" data-toggle="modal" data-target="#info_modal_{{=each_request.auction_request.id}}" title="Bid request {{=str(each_request.auction_request.id).zfill(3)}} submitted by {{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}. Click to view more details.">View</a>
 
-                                    <div class="modal fade" id="modal_{{=each_request.auction_request.id}}">
+                                    <div class="modal fade" id="info_modal_{{=each_request.auction_request.id}}">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-header">
