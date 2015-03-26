@@ -98,7 +98,7 @@ def handle_key_check():
 				resp.say("Thank you. I will now connect you to your winning dealer. Please hold for up to 5 minutes.")
 				
 				auction_request = db(db.auction_request.id == winning_offer.auction_request).select().last()
-				color_ids_to_color_simple_names = dict(zip(auction_request.colors, map(lambda each_color: ' ' if each_color == "N/A" else each_color, winning_offer.color_simple_names) ) ) #Turn N/A into ' ' so speechbot can skip. #dict(map(lambda id,name: [id,name], auction_request.colors, auction_request.color_simple_names))
+				color_ids_to_color_simple_names = dict(zip(winning_offer.colors, map(lambda each_color: ' ' if each_color == "N/A" else each_color, winning_offer.color_simple_names) ) ) #Turn N/A into ' ' so speechbot can skip. #dict(map(lambda id,name: [id,name], auction_request.colors, auction_request.color_simple_names))
 				
 				try:
 					winning_offer_exterior_color_simple_name = color_ids_to_color_simple_names[GET_OFFER_ROW_INT_EXT_COLORS(winning_offer)[1]['id'] ]
