@@ -11,7 +11,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-sm-12">
-                    <h1 class="main-heading white text-center">{{=response.title}}</h1>
+                    <h1 class="main-heading white text-center">{{=response.title or request.function.capitalize().replace('_', ' ')}}</h1>
                 </div>
             </div>
         </div>
