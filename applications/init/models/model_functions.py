@@ -151,9 +151,9 @@ def GET_OPTION_CODES(style):
 	return dict(option_codes = option_codes)
 	
 BUYER_QUESTIONS = [
-	["recent_college_grad",  "A recent college grad (within past 6 months)"],
-	["serviceman_or_veteran", "An active in the U.S. military or a U.S. Military veteran"],
-	["first_time_car_buyer", "A First time car buyer"]
+	["recent_college_grad",  "I'm recent college grad (within past 6 months)"],
+	["serviceman_or_veteran", "I'm active in the U.S. military or a U.S. Military veteran"],
+	["first_time_car_buyer", "I'm a first time car buyer"]
 ]
 	
 EXPECTED_DOWN_PMT_REQUIRES = IS_INT_IN_RANGE(0, 100000)
