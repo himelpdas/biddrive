@@ -18,6 +18,7 @@
     {{ form.element("select", _name = "funding_source")["_class"] += " form-control" }}
     {{ form.element("select", _name = "lease_term")["_class"] += " form-control" }}
     {{ form.element("select", _name = "lease_mileage")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "questions")["_class"] += " form-control" }}
 
     {{ form.element("textarea", _name = "describe_trade_in")["_class"] += " form-control" }}
     {{ form.element("textarea", _name = "describe_trade_in")["_placeholder"] = "Example: Red %s Honda Accord LX with 130k miles (mostly highway). It runs great with no mechanical or electrical problems. New tires and battery. It has a spoiler and clean tan leather interior with 6 disc CD changer. It has 5 or 6 quarter-sized dents and several visible scratches on the outside."%(datetime.datetime.now().year-10) }}
@@ -102,7 +103,7 @@
     <div class="row" style="padding: 20px 0;">
         <div class="col-xs-12 text-center">
             <h2 class="color">Step 2. Specify your request</h2>
-            <span>(This information helps us find the best vehicles for you.)</span>
+            <span>(This information helps us match the best vehicles for you.)</span>
         </div>
     </div>
 
@@ -143,7 +144,7 @@
                             </div>
 							
                             <div class="form-group">
-                                <label for="{{=form.custom.widget.matching['_id']}}" class="col-sm-3 control-label">Must match <i class="fa fa-question-circle" title='Choose how you want us to find the best vehicles for you. For example, if you choose only "Body type", a Honda Accord request may get matched with a Honda Accord, a Toyota Camry, a Ford Fusion, etc.'></i></label>
+                                <label for="{{=form.custom.widget.matching['_id']}}" class="col-sm-3 control-label">Must match <i class="fa fa-question-circle" title='Choose the way you want us to match the vehicles for you. For example, if you choose only "Body type", a Honda Accord request may get matched with a Honda Accord, a Toyota Camry, a Ford Fusion, etc. Picking too many choices may result in fewer bids!'></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.matching}}
 
@@ -260,6 +261,18 @@
                                     {{pass}}
                                 </div>
                             </div>
+							
+                            <div class="form-group">
+                                <label  for="{{=form.custom.widget.questions['_id']}}" class="col-sm-3 control-label">About you <i class="fa fa-question-circle" title="This lets dealers get to know you a little before making their bid."></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.questions}}
+
+                                    {{if form.errors['questions']:}}
+                                    <div class="alert alert-warning">{{=form.errors['questions']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>
+							
                             <script>
                                 //functions
                                 function funding_source_additional_questions(that){
@@ -317,7 +330,7 @@
 
             <div class="form-group">
                 <div class="col-sm-offset-5 col-sm-7 ">
-                    {{"""}}
+                    <!--{{"""}}
                     {{=form.custom.submit}}
                     <script type="text/javascript">
                         $('#submit').click(function(e) {
@@ -325,7 +338,7 @@
                             $('#login_modal').modal('show');
                         });
                     </script>
-                    {{"""}}
+                    {{"""}}-->
                     <button id="fake_submit" type="button" class="btn btn-trinity btn-trinity-big btn-raised">Submit</button>
                 </div>
 
@@ -554,6 +567,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 
 {{BOOTSTRAP_MULTISELECT([['auction_request_colors', 'Pick interior and exterior colors'], ['auction_request_options','Choose options (optional)']], max_height=480)}}
 {{BOOTSTRAP_MULTISELECT([['auction_request_matching', 'Select the specificity of your request']], max_height=480, num_displayed=1)}}
+{{BOOTSTRAP_MULTISELECT([['auction_request_questions', 'Choose what best describes you']], max_height=480, num_displayed=1)}}
 
 <script>
     function load_radius_map(){

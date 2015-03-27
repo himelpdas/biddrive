@@ -357,6 +357,19 @@ pass
 							</td>
 						</tr>
 					{{pass}}
+                        <tr>
+                            <th>
+                                About
+                            </th>
+
+                            <td>
+                                {{for each_answer in auction_request_info['answers']:}}
+								<p>
+									{{=each_answer}}
+                                </p>
+								{{pass}}
+                            </td>
+                        </tr>
 					</table>
 				</div>
 				<div class="modal-footer">

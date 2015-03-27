@@ -300,7 +300,7 @@ def faq():
 
 @auth.requires_login()
 def after_login_portal():
-	session.message = "!Successfully logged in. Welcome %s!"%auth.user.first_name.capitalize()
+	session.message = '!<i class="fa fa-fw fa-thumbs-up"></i> Successfully logged in. Welcome <b>%s</b>!'%auth.user.first_name.capitalize()
 	if AUTH_DEALER:
 		redirect(URL('dealer', 'auction_requests'))
 	elif AUTH_ADMIN:

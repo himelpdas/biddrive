@@ -248,8 +248,8 @@ LOADING_FUNFACTS=[
 	"60 million cars are produced in a single year.",
 	"Volkswagen named several of its cars after wind. Passat - a German word for trade wind; Golf - Gulf stream; Polo - polar winds; Jetta - jet stream.",
 	"In the year 1916, 55 per cent of the cars in the world were Model T Ford, which is still an unbroken record.",
-	"The first road-worthy cars used a lever instead of a steering wheel to steer. It had a design and functioning like that of a joy stick",
-	"As a young man, Henry Ford used to repair watches for his friends and family using tools he made himself. He used a corset stay as tweezers and a filed shingle nail as a screwdriver.",
+	"The first road-worthy cars used a lever instead of a steering wheel to steer. It had a design and functioning like that of a joy stick.",
+	"As a young man, Henry Ford used to repair watches for his friends and family using tools he made himself.",
 ]
 
 """

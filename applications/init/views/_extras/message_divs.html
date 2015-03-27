@@ -10,13 +10,13 @@
 			{{id="alert{}".format(alertIndex)}}
 			{{alertIndex += 1}}
 			{{if each[:1] == "$":}} {{#if first letter dollar sign then activate success div}}
-				<div id="{{=id}}" class="alert_headers alert alert-success">{{=each[1:]}} <!--{{# "$" use for good news}}-->
+				<div id="{{=id}}" class="alert_headers alert alert-success">{{=XML(each[1:])}} <!--{{# "$" use for good news}}-->
 			{{elif each[:1] == "!":}}
-				<div id="{{=id}}" class="alert_headers alert alert-warning">{{=each[1:]}} <!--{{# "!" use for important news}}-->
+				<div id="{{=id}}" class="alert_headers alert alert-warning">{{=XML(each[1:])}} <!--{{# "!" use for important news}}-->
 			{{elif each[:1] == "@":}}
-				<div id="{{=id}}" class="alert_headers alert alert-danger">{{=each[1:]}} <!--{{# "@" use for errors and dangerous news}}-->
+				<div id="{{=id}}" class="alert_headers alert alert-danger">{{=XML(each[1:])}} <!--{{# "@" use for errors and dangerous news}}-->
 			{{else:}}
-				<div id="{{=id}}" class="alert_headers alert alert-info" style="position:relative;top:0px;">{{=each}} <!-- {{# "&" use for informing}}-->
+				<div id="{{=id}}" class="alert_headers alert alert-info" style="position:relative;top:0px;">{{=XML(each)}} <!-- {{# "&" use for informing}}-->
 			{{pass}}
 					<i class="fa fa-times-circle-o pull-right" onclick="$('#{{=id}}').hide()"></i>
 				</div>

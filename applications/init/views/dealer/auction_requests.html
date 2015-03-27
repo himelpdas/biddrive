@@ -422,6 +422,19 @@
                                                             </td>
                                                         </tr>
                                                         {{pass}}
+														<tr>
+															<th>
+																About
+															</th>
+
+															<td>
+																{{for each_answer in each_request.auction_request['questions']:}}
+																<p>
+																	{{=each_answer.capitalize().replace("_"," ")}}
+																</p>
+																{{pass}}
+															</td>
+														</tr>
                                                     </table>
 
                                                 </div>
