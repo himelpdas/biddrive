@@ -251,13 +251,13 @@ def pre_auction():
 			MESSAGE_TEMPLATE= "DEALER_on_new_request",
 			**dict(app=APP_NAME, 
 				she="%s %s."%(auction_request.auth_user.first_name.capitalize(), auction_request.auth_user.last_name[:1].capitalize() ), 
-				year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name, url=URL('default', 'auction', args=[auction_request_id], host=True, scheme=True), )
+				year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name, url=URL('dealer', 'auction_requests', host=True, scheme=True), )
 		)
 	#send email to owner reminding him he created an auction
 	SEND_ALERT_TO_QUEUE(
 		USER=auth.user,
 		MESSAGE_TEMPLATE= "BUYER_on_new_request",
-		**dict(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name, mile = auction_request.auction_request.radius, zip=auction_request.auction_request.zip_code, url=URL('default', 'auction', args=[auction_request_id], host=True, scheme=True), )
+		**dict(app=APP_NAME, year=auction_request.auction_request.year, make=auction_request.auction_request.make_name, model=auction_request.auction_request.model_name, mile = auction_request.auction_request.radius, zip=auction_request.auction_request.zip_code, url=URL('dealer', 'auction', args=[auction_request_id], host=True, scheme=True), )
 	)
 	session.message="$Request completed! Dealers nearby were notified."
 	redirect(
