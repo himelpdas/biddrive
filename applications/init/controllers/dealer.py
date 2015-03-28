@@ -330,6 +330,9 @@ def auction_requests():
 		],
 	]
 	
+	#get dealer's credits banks for view/update
+	my_piggy = db(db.credits.owner_id==auth.user_id).select().last()
+	
 	#
 	response.title = "Auction requests"
 	name=" ".join(map(lambda word: word.capitalize(), my_info.dealership_name.split(' '))) # converts bobs kia to Bobs Kia
@@ -346,7 +349,7 @@ def auction_requests():
 	response.message = '<i class="fa fa-fw fa-map-marker"></i> Showing <B>%s</b> %s buyer%s who %s near <b>%s</b> in %s, %s.'% (number, car ,plural, verb, name, city, state)
 	#
 
-	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, multiple=multiple, multiple_string='|'.join(multiple), color=color, colors_list=colors_list, trim=trim, styles_list=styles_list, blank_after_filter_message=blank_after_filter_message)
+	return dict(auction_requests=auction_requests, columns = columns, years_list = year_range_string, brands_list=brands_list, year=year, model=model, sortby=sortby, models_list=models_list, multiple=multiple, multiple_string='|'.join(multiple), color=color, colors_list=colors_list, trim=trim, styles_list=styles_list, blank_after_filter_message=blank_after_filter_message, my_piggy=my_piggy)
 
 
 @auth.requires(request.args(0) and request.args(1))

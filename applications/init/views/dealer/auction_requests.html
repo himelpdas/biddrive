@@ -249,17 +249,17 @@
 												<div class="modal-body" style="max-height:480px;overflow-y:auto;overflow: visible;">
 												
 													<div class="dropdown" title="{{if not matching_inventory:}}You do not have any vehicles that match this request.{{pass}}">
-													  <button class="btn btn-default dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
-														Choose a matched vehicle from your inventory
-														<span class="caret"></span>
-													  </button>
-													  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" style="max-height:480px;overflow-y:auto">
-														{{for each_vehicle in each_request['matched_vehicles']:}}
-															<li role="presentation"><a role="menuitem" tabindex="-1" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
-																{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
-															</a></li>
-														{{pass}}
-													  </ul>
+														<button class="btn btn-default dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+															Choose a matched vehicle from your inventory
+															<span class="caret"></span>
+														</button>
+														<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" style="max-height:480px;overflow-y:auto">
+															{{for each_vehicle in each_request['matched_vehicles']:}}
+																<li role="presentation"><a role="menuitem" tabindex="-1" class="to_auction_links" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
+																	{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
+																</a></li>
+															{{pass}}
+														</ul>
 													</div>
 													
 													<h2 class="modal-title" style="text-align:center;">&mdash;OR&mdash;</h2>
@@ -461,3 +461,15 @@
         </div>
     </div>
 </div>
+
+<script>
+	$(".to_auction_links").click(function(evt){
+		evt.preventDefault()
+		var message = "{{=XML('''<p>You will now be charged <b>%s credits</b> <i>(auction fee)</i> to enter this auction. If you win this auction and the buyer initiates contact, you will be charged an additional <b>%s credits</b> <i>(success fee)</i>.</p> <h5 class='pull-right'>You have <b>%s credits remaining</b>.</h5>'''%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS, my_piggy.credits) ) }}" <!--{{#MUST use XML() to style bootbox http://goo.gl/7OaP6m}}-->
+		bootbox.confirm(message, function(agreed){
+			if (agreed){
+				window.location.href = $(evt.target).attr('href'); //{{#needs id needs form befoe it to work}}
+			}
+		})
+	});
+</script>
