@@ -390,13 +390,8 @@ pass
     <section class="inner-section color-bg  pad-top-eighth pad-bottom-eighth">
         <div class="container">
             <div class="row">
-                {{if is_dealer:}}
-                <div class="col-sm-12">
-                    <h4 class="promo-heading white text-center">Offers in Response to Buyer Request</h4>
-                </div>
-                {{else:}}
                 <div class="col-xs-12 col-sm-8 col-md-9">
-                    <h4 class="promo-heading white"  style="display: inline-block; padding-top: 10px;">Offers Received from Dealers</h4>
+                    <h4 class="promo-heading white"  style="display: inline-block; padding-top: 10px;">{{if is_dealer:}}Offers in Response to Buyer Request{{else:}}Offers Received from Dealers{{pass}}</h4>
                 </div>
                 <div class="col-xs-12 col-sm-4 col-md-3 text-center">
                     <div class="btn-group">
@@ -417,7 +412,6 @@ pass
                         </ul>
                     </div>
                 </div>
-                {{pass}}
             </div>
         </div>
     </section>
@@ -467,8 +461,8 @@ pass
                      </div>
                 </div>
             </div>
-            <div class="panel-body">
-                {{if bid_form:}}
+            <div class="panel-body" {{if each_offer['each_is_my_offer']:}}style="background-color:#EBF4FA;"{{pass}}>
+                {{if bid_form and each_offer['each_is_my_offer']:}}
                     <div class="row" style="margin-bottom: 20px;">
                         <div class="col-xs-12">
                             {{=bid_form.custom.begin}}
@@ -693,7 +687,7 @@ pass
                                     {{else:}}
                                         <div title="We'll let you know when something happens."> <!--{{#keep disabled in divs so title/tooltip works}}-->
                                             <button class="btn btn-default btn-trinity btn-raised disabled center-block">
-                                                <i class="fa fa-fw fa-ban"></i> No action
+                                                <i class="fa fa-fw fa-asterisk"></i> Nothing new
                                             </button>
                                         </div>
                                     {{pass}}
