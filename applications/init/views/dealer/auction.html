@@ -482,7 +482,7 @@ pass
                                             <span class="input-group-btn">
 
                                                 {{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
-                                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours" }}
+                                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours  (up to %s hours)"%int(auction_request_info['ends_in_seconds']/3600) }}
                                                 {{bid_form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-primary" + (" btn-danger" if form_is_final_bid else "")  }}
                                                 {{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if form_is_final_bid else "Place Bid!") }}
                                                 {{=bid_form.custom.submit}}
