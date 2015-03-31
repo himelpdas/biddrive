@@ -169,7 +169,6 @@ def request_by_make():
 		db.auction_request.color_simple_names.default = [ simplecolor.predict( (each_color['colorChips']['primary']['r'],each_color['colorChips']['primary']['g'],each_color['colorChips']['primary']['b']), each_color['name'])[1] for each_color in trim_data['colors'][1]['options'] if each_color['id'] in request.post_vars.colors ]
 	"""
 
-	def computations(form): #these defaults need form vars, so must do it in onvalidation
 		
 		#make model names
 		db.auction_request.make_name.default = make_name = model_styles[0]['make']['name']
