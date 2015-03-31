@@ -23,8 +23,46 @@ def index():
 		year = request.args[0]
 		
 	#response.message2="@%s is currently under development"%APP_NAME
+	
+	def recently_sold():
+		recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id != None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 50))
 		
-	return dict(brands_list=GET_BRANDS_LIST(year), cars=GET_FEATURED_CARS())
+		if len(recent_requests) < 10: #show unsold vehicles if sold vehicles too few
+			recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id == None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 50))
+		
+		recent_vehicles_json = set([])
+			
+		for each_request in recent_requests:
+			first_image=None
+			try:
+				model_photos = FIND_PHOTOS_BY_STYLE_ID(each_request.auction_request.trim)
+				photo = model_photos[0]['photoSrcs'][-1] #get any photo
+				for each_photo in model_photos[0]['photoSrcs']:
+					if each_photo.split('.')[-2].split('_')[-1] == '815':  #but change to proper ratio if found
+						photo = each_photo
+				first_image = 'http://media.ed.edmunds-media.com'+photo  #errors will not be cached! :)
+			except Exception, e:
+				logger.exception(e)
+				pass
+			if first_image: #only show if image available
+				recent_vehicles_json.add(json.dumps(dict( #must dump to json as set does not support dicts
+					image = first_image,
+					year = each_request.auction_request.year, 
+					make = each_request.auction_request.make_name ,
+					model = each_request.auction_request.model_name,
+					body = each_request.auction_request.body,
+				)))
+			
+			
+		recent_vehicles = map(lambda each: json.loads(each),recent_vehicles_json) #turn back to dict
+
+		recent_vehicles_bodies = set(map(lambda each: each['body'],recent_vehicles))
+		
+		return recent_vehicles, recent_vehicles_bodies
+	
+	recent_data = cache.disk('index_recently_sold', recently_sold, time_expire=60 )
+	
+	return dict(brands_list=GET_BRANDS_LIST(year), cars = recent_data[0], bodies=recent_data[1]) #cars=GET_FEATURED_CARS())
 
 '''
 def index_old():

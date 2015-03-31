@@ -148,7 +148,7 @@ def GET_MSRP(trim_data, option_ids={}):
 					price+=int(each_option['price']['baseMSRP'] if 'price' in each_option else 0)
 	return price
 
-
+"""
 def GET_FEATURED_CARS():
      cars = []
      cars.append({
@@ -236,7 +236,7 @@ def GET_FEATURED_CARS():
         'image' : u'2013_nissan_370z_coupe_touring_fq_oem_2_815.jpg'
      })
      return cars
-	 
+"""	 
 LOADING_FUNFACTS=[
 	"In 1902 the first speeding ticket was issued.", 
 	"19 people can be crammed into a smart car.", 

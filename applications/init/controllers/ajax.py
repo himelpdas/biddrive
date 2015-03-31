@@ -28,7 +28,8 @@ def vehicle_content():
 					photo = each_photo
 			first_image = 'http://media.ed.edmunds-media.com'+photo  #errors will not be cached! :)
 		except Exception, e:
-			logger.exception(e)
+			#logger.exception(e)
+			pass
 		finally:
 			make_photos.update({each_model['niceName']:first_image})
 
