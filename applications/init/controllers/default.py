@@ -62,7 +62,7 @@ def index():
 		
 		return recent_vehicles, recent_vehicles_bodies
 	
-	recent_data = cache.disk('index_recently_sold', recently_sold, time_expire=60 )
+	recent_data = cache.disk('index_recently_sold', recently_sold, time_expire=60*15 )
 	
 	return dict(brands_list=GET_BRANDS_LIST(year), cars = recent_data[0], bodies=recent_data[1]) #cars=GET_FEATURED_CARS())
 
