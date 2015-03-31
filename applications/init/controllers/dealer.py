@@ -844,7 +844,7 @@ def auction():
 		send_to = each_offer.auth_user #each offer in this auction will get an email if conditions are met
 		this_dealer_name='%s %s'%(send_to.first_name.capitalize(), send_to.last_name.capitalize()[:1]+'.')
 		if session.BROADCAST_FAVORITE_ALERT:
-			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_favorite", **dict(app=APP_NAME, each_is_favorite=each_is_favorite, buyer=auction_request_user, you_or_him='you' if each_is_favorite else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
+			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_favorite", **dict(app=APP_NAME, each_is_favorite=each_is_favorite, buyer='%s %s'%(auction_request_user.first_name.capitalize(), auction_request_user.last_name.capitalize()[:1]+'.'), you_or_him='you' if each_is_favorite else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_WINNER_ALERT:
 			SEND_ALERT_TO_QUEUE(USER=send_to, MESSAGE_TEMPLATE = "DEALER_on_new_winner", **dict(app=APP_NAME, each_is_winning_offer=each_is_winning_offer, buyer='%s %s'%(auction_request_user.first_name.capitalize(), auction_request_user.last_name.capitalize()[:1]+'.'), you_or_him='you' if each_is_winning_offer else 'dealer %s'%this_dealer_name, car=car, url=URL(args=request.args, host=True, scheme=True) ) )
 		if session.BROADCAST_BID_ALERT:
