@@ -197,7 +197,8 @@
 })(); {{#self executing func #http://goo.gl/2fJHT}}
 </script>
 {{"""}}-->
-<script>{{#polling to see whether connection was made #http://goo.gl/17YuW}}
+<script>
+//{{#polling to see whether connection was made #http://goo.gl/17YuW}}
 setInterval(function(){
 	$.ajax({ url: "{{=URL('init', 'ajax', 'contact_made.json', args=[winner_code])}}{{#TODO hmac enforce}}", success: function(data){
         //Update your dashboard gauge

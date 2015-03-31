@@ -166,3 +166,13 @@ def contact_made():
 	if winning_choice and bool(winning_choice.contact_made):
 		status = 'success'
 	return dict(status=status)
+	
+def auction_alerts():
+	auction_request_id = request.args(0)
+	user_id = request.args(1)
+	latest_message = db((db.auction_request_ajax_alerts.auction_request == auction_request_id) & (db.auction_request_ajax_alerts.owner_id == user_id)& (db.auction_request_ajax_alerts.checked == False)).select().last()
+	if latest_message:
+		latest_message.update_record(checked=True)
+		return dict(id=latest_message.id, message=latest_message.message)
+	else:
+		return dict(id=0, message="")

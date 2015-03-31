@@ -1,3 +1,4 @@
+#scheduler.py
 from gluon.scheduler import Scheduler
 
 #QUEUE_EXPIRES = datetime.timedelta(days=1)
@@ -43,7 +44,7 @@ def send_sms_task(contact, shortmessage):
 	
 scheduler = Scheduler(db) #from gluon.scheduler import Scheduler
 			
-def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLATE = None, **MESSAGE_VARS): #setting OVERRIDE_ALERT_SETTING to false means check USERs alert settings before sending
+def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, AUCTION_ID=None, USER=None, MESSAGE_TEMPLATE = None, **MESSAGE_VARS): #setting OVERRIDE_ALERT_SETTING to false means check USERs alert settings before sending
 	MESSAGE_DATA = {
 		"GENERIC_welcome_to_biddrive": lambda: dict(
 			SUBJECT="Welcome to BidDrive, {first_name}!".format(**MESSAGE_VARS),
@@ -55,7 +56,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL="http://www.biddrive.com/",
 		),
 		"BUYER_on_new_request" : lambda: dict( #need to use lambda because not all {variables} will be available from the dealer, default, and admin controllers... a keyerror would occur
-			SUBJECT  =  "{app}: You requested a {year} {make} {model} near your area!".format(**MESSAGE_VARS), 
+			SUBJECT  =  "{app} alert: You requested a {year} {make} {model} near your area!".format(**MESSAGE_VARS), 
 			MESSAGE =  "Within a {mile} mile radius of {zip}.".format(**MESSAGE_VARS), 
 			MESSAGE_TITLE =  XML("You requested a <i>{year} <b>{make}</b> {model}</i>.".format(**MESSAGE_VARS) ),
 			WHAT_NOW =  "Stay tuned for offers!", 
@@ -64,7 +65,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL =  "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_request" : lambda: dict(
-			SUBJECT  =  "{app}: {she} requested a {year} {make} {model} near your area.".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: {she} requested a {year} {make} {model} near your area.".format(**MESSAGE_VARS),
 			MESSAGE =  XML("There is a new request for a <i>{year} <b>{make}</b> {model}</i>.".format(**MESSAGE_VARS) ),
 			MESSAGE_TITLE = "{she} wants a new {make}!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Hurry! Other nearby dealers {make} have been alerted as well.".format(**MESSAGE_VARS),
@@ -73,7 +74,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_approved_dealership" : lambda: dict(
-			SUBJECT  =  "{app}: Your application has just been approved!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: Your application has just been approved!".format(**MESSAGE_VARS),
 			MESSAGE =  "Your request to join the {app} dealer network was approved! So what now?".format(**MESSAGE_VARS),
 			MESSAGE_TITLE = "Congratulations! You are now an approved dealer!",
 			WHAT_NOW = "Click the button below to look for potential buyers.",
@@ -82,7 +83,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_offer" : lambda: dict(
-			SUBJECT  =  "{app}: {you_or_he} submitted a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: {you_or_he} submitted a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{you_or_he} joined auction {aid} just moments ago! So what now?".format(**MESSAGE_VARS),
 			MESSAGE_TITLE = XML("{you_or_he} submitted a <i>{car}</i>!".format(**MESSAGE_VARS)),
 			WHAT_NOW = "Compare offers from other dealers and adjust your price!",
@@ -91,7 +92,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"BUYER_on_new_offer" : lambda: dict(
-			SUBJECT  =  "{app}: A new dealer ({dealer_name}) just submitted a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: A new dealer ({dealer_name}) just submitted a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{dealer_name} joined your auction just moments ago! So what now?".format(**MESSAGE_VARS),
 			MESSAGE_TITLE = "A dealer submitted a {car}!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Say hello!",
@@ -100,7 +101,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"BUYER_on_new_bid" : lambda: dict(
-			SUBJECT  =  "{app}: {dealer_name} {change} the {car} price to {price}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: {dealer_name} {change} the {car} price to {price}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{dealer_name} {change} the price to {price}. So what now?".format(**MESSAGE_VARS),
 			MESSAGE_TITLE = XML("A dealer {change} the price for the <i>{car}</i>!".format(**MESSAGE_VARS)),
 			WHAT_NOW = "This was the dealer's final bid!" if MESSAGE_VARS['form_is_final_bid'] else "Let other dealers know if you like it!",
@@ -109,7 +110,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"BUYER_on_recieve_message" : lambda: dict(
-			SUBJECT  =  "{app}: You have a new message about the {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: You have a new message about the {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("A dealer for a <i>{car}</i> sent <b>you</b> a message.".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "You have a new message!",
 			WHAT_NOW = "{he} wrote:".format(**MESSAGE_VARS),
@@ -118,7 +119,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_recieve_message" : lambda: dict(
-			SUBJECT  =  "{app}: You have a new message about the {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: You have a new message about the {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("The buyer for a <i>{car}</i> sent <b>you</b> a message.".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "You have a new message!",
 			WHAT_NOW = "{he} wrote:".format(**MESSAGE_VARS),
@@ -127,7 +128,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),		
 		"BUYER_on_new_favorite" : lambda: dict(
-			SUBJECT  =  "{app}: A new favorite was chosen for a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: A new favorite was chosen for a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("Dealers in your auction were alerted about your favorite <i>{car}</i> offer. So what now?".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "You picked a new favorite!",
 			WHAT_NOW = "Dealers have been alerted!",
@@ -136,7 +137,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),		
 		"DEALER_on_new_favorite" : lambda: dict(
-			SUBJECT  =  "{app}: A new favorite was chosen for a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: A new favorite was chosen for a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("The buyer for a <i>{car}</i> picked <b>{you_or_him}</b> as the favorite! So what now?".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "{buyer} picked a new favorite!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Act fast!" if not MESSAGE_VARS['each_is_favorite'] else 'Keep it up!',
@@ -145,7 +146,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"BUYER_on_new_winner" : lambda: dict(
-			SUBJECT  =  "{app}: A winner was chosen for a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: A winner was chosen for a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("You chose a winning {car}! So what now?".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "You picked a winner!",
 			WHAT_NOW = "Connect with the dealer to get your certificate.",
@@ -154,7 +155,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_winner" : lambda: dict(
-			SUBJECT  =  "{app}: {buyer} picked {you_or_him} as the winner for a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: {buyer} picked {you_or_him} as the winner for a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  XML("The buyer for a <i>{car}</i> picked <b>{you_or_him}</b> as the winner! So what now?".format(**MESSAGE_VARS)),
 			MESSAGE_TITLE = "{buyer} picked a new winner!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Try again! You'll have better luck next time." if not MESSAGE_VARS['each_is_winning_offer'] else "Wait for the buyer's call!",
@@ -163,7 +164,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_bid" : lambda: dict(
-			SUBJECT  =  "{app}: {dealer} {change} the {car} bid price to ${price}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: {dealer} {change} the {car} bid price to ${price}!".format(**MESSAGE_VARS),
 			MESSAGE_TITLE =  "{dealer} {change} the price for the {car}!".format(**MESSAGE_VARS),
 			MESSAGE = XML("The price was {change} to <b>${price}!</b>".format(**MESSAGE_VARS)),
 			WHAT_NOW = "Other dealers have been alerted as well!",
@@ -172,6 +173,14 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, USER=None, MESSAGE_TEMPLAT
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 	}
+	
+	if AUCTION_ID:
+		db.auction_request_ajax_alerts.insert(
+			auction_request =AUCTION_ID,
+			owner_id = USER.id,
+			message = MESSAGE_DATA[MESSAGE_TEMPLATE]()["SUBJECT"],
+			checked = False,
+		)
 
 	if OVERRIDE_ALERT_SETTING or USER.enable_email_alerts:
 		scheduler.queue_task(
@@ -200,5 +209,13 @@ db.define_table('delayed_auction_alert_queue',
 	Field('auction_request', db.auction_request),
 	Field('sent_auction_ending_soon', 'boolean', default = False),
 	Field('sent_auction_ended_now', 'boolean', default = False),
+	auth.signature,
+)
+
+db.define_table("auction_request_ajax_alerts",
+	Field('auction_request',db.auction_request),
+	Field('owner_id', db.auth_user),
+	Field('message',),
+	Field('checked','boolean'),
 	auth.signature,
 )

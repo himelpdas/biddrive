@@ -899,3 +899,19 @@ pass
 		$('.error').attr({'style':'color:red;'});
 	});
 </script>
+
+<script>
+setInterval(function(){
+	latest_id = 0;
+	$.ajax({ url: "{{=URL('init', 'ajax', 'auction_alerts.json', args=[auction_request_info['id'], auth.user_id])}}{{#TODO hmac enforce}}", success: function(data){
+        //Update your dashboard gauge
+        if (data['id'] > latest_id){
+			$("#ajax_failure_warning_message_container").append(
+				'<div id="{{=id}}" class="alert_headers alert alert-info">'+data['message']+'<a class="pull-right" href="#" onclick="location.reload()"><b>Refresh Page</b> <i class="fa fa-fw fa-refresh"></i></a></div>'
+			);
+			init_alert_headers();
+			latest_id = data['id'];
+		}
+    }, dataType: "json"});
+}, 15000);
+</script>
