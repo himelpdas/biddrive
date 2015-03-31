@@ -9,6 +9,8 @@
 ## - call exposes all registered services (none by default)
 #########################################################################
 
+INDEX_MAX_RECENT_VEHICLES = 24
+
 def index():
 	"""
 	example action using the internationalization operator T and flash
@@ -25,10 +27,10 @@ def index():
 	#response.message2="@%s is currently under development"%APP_NAME
 	
 	def recently_sold():
-		recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id != None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 50))
+		recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id != None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 100)) #dont need the entire list, so limitby
 		
-		if len(recent_requests) < 25: #show unsold vehicles if sold vehicles too few
-			recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id == None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 50))
+		if len(recent_requests) < 12: #show unsold vehicles if sold vehicles too few
+			recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id == None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 100))
 		
 		recent_vehicles_json = set([])
 			
@@ -54,7 +56,7 @@ def index():
 				)))
 			
 			
-		recent_vehicles = map(lambda each: json.loads(each),recent_vehicles_json) #turn back to dict
+		recent_vehicles = map(lambda each: json.loads(each),recent_vehicles_json)[:INDEX_MAX_RECENT_VEHICLES] #turn back to dict
 
 		recent_vehicles_bodies = set(map(lambda each: each['body'],recent_vehicles))
 		
