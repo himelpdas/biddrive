@@ -27,7 +27,7 @@ def index():
 	def recently_sold():
 		recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id != None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 50))
 		
-		if len(recent_requests) < 10: #show unsold vehicles if sold vehicles too few
+		if len(recent_requests) < 25: #show unsold vehicles if sold vehicles too few
 			recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id == None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), orderby=~db.auction_request.id, limitby=(0, 50))
 		
 		recent_vehicles_json = set([])
