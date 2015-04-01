@@ -50,8 +50,10 @@ def index():
 				recent_vehicles_json.add(json.dumps(dict( #must dump to json as set does not support dicts
 					image = first_image,
 					year = each_request.auction_request.year, 
-					make = each_request.auction_request.make_name ,
-					model = each_request.auction_request.model_name,
+					make = each_request.auction_request.make ,
+					make_name = each_request.auction_request.make_name ,
+					model = each_request.auction_request.model,
+					model_name = each_request.auction_request.model_name,
 					body = each_request.auction_request.body,
 				)))
 			
