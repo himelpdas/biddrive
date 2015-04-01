@@ -520,7 +520,10 @@ pass
                         {{=bid_form.custom.end}}
                     </div>
                 {{pass}}
-
+				<div class="row">
+					{{_trim=each_offer['ROW']['trim_name'].split("(");trim_details = _trim[1].replace(")",""); trim_name=_trim[0]}}
+					<div class="col-xs-12"><h5 title="{{=trim_details}}"><i class="fa fa-fw fa-car"></i> {{=each_offer['ROW']['year']}} <b>{{=each_offer['ROW']['make_name']}} {{=each_offer['ROW']['model_name']}}</b> <i>{{=trim_name}}</i></h5></div>
+				</div>
                 <div class="row">
                     <div class="col-sm-4 hidden-xs">
                         <div id="images_{{=each_offer['id']}}" class="carousel slide" data-ride="carousel">
