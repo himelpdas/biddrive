@@ -437,7 +437,7 @@ pass
 
                             {{if is_owner and not (auction_request_expired or auction_is_completed):}}
 
-                            <button class="btn btn-default" onClick="favConfirm('Are you sure you want to pick this as your favorite?','{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}')" title="Favorite this bid"><i class="fa fa-fw fa-heart"></i></button>
+                            <button class="btn btn-default" onClick="favConfirm('Are you sure you want to pick this as your favorite?','{{=URL(args=request.args,vars=dict(request.vars, favorite=each_offer['id']))}}')" title="Favorite this bid. This will pressure other dealers to tantalize their offers."><i class="fa fa-fw fa-heart"></i></button>
                             <script>
                                 function favConfirm(msg, submitUrl) {
                                     var isConfirmed=confirm(msg);
