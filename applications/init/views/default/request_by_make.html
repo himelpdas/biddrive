@@ -62,7 +62,7 @@
                     <div class="row">
                         <div class="col-xs-12 col-md-offset-1 col-md-9 col-md-offset-2"> <!--{{#http://goo.gl/qZqegs}}-->
 							
-							<div class="form-group">
+							<div class="_options form-group">
                                 <label for="{{=form.custom.widget.trim['_id']}}" class="col-sm-3 control-label">Trim <i class="fa fa-question-circle" title='Select the TRIM of your vehicle. For example: "LX 4Dr Sedan 1.8L 6cyl 6A" would mean you are picking a trim that is a 4 door sedan with a 1.8 liter 6 cylinder engine with a 6 speed automatic transmission (6M would mean 6 speed manual).'></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.trim}}
@@ -73,7 +73,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <div id="_colors" class="form-group">
                                 <label for="{{=form.custom.widget.colors['_id']}}" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors <i class="fa fa-question-circle" title="Select at least one interior AND one exterior style or color you want your vehicle to have."></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.colors}}{{#logger.debug(form.errors['colors'])}}
@@ -83,7 +83,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <div class="_options form-group">
                                 <label for="{{=form.custom.widget.options['_id']}}" class="col-sm-3 control-label"><i id="options_spinner" class="fa fa-spin options_spinner"></i> Options <i class="fa fa-question-circle" title="Select features you want in your car (optional)."></i></label>
                                 <div class="col-sm-9">
                                     {{=form.custom.widget.options}}
@@ -445,6 +445,9 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 
 <script type="text/javascript">
     //{{#var stuff={{=XML(json.dumps(session.option_codes))}}
+	
+	msrp_by_id = {};
+	
     function load_content(){
         //{{#hmac}}
         var loc_token =$('#auction_request_trim').val();
@@ -471,6 +474,8 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                     });
                 };
                 /*/
+				msrp_by_id = data.msrp_by_id; savings_factor = data.savings_factor;
+				
                 var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
                 $("#auction_request_colors").children().remove(); //{{#it appears there are no saved values from form submission}}
                 $.each( data.color_codes, function( i, item) { //{{#similar to python enumerate}}
@@ -602,3 +607,33 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
         }
     });
 </script>
+
+<script>
+	function int_to_dollar(integer){
+		return integer.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+	}
+	function update_estimation(){
+		var msrp = 0;
+		//var msrp = msrp + msrp_by_id[$("#auction_request_color").val()] + msrp_by_id[$("#auction_request_offer_interior_color").val()]; //{{#note val returns ids not names}}
+		var options_list = $("._options li.active").map(function(){return $(this).children().children().children().attr('value') }); //{{#map runs a function on each element}} {{#tested with alert( $(this).children().children().children().attr('value') ) }}
+		options_list.map( function(item, identifier) {
+			msrp = msrp + msrp_by_id[parseInt(identifier)];
+			//{{#alert(identifier + ":"+ msrp_by_id[parseInt(identifier)]);}}
+		});
+		var colors_list = $("#_colors li.active").map(function(){return $(this).children().children().children().attr('value') });
+		var total_color_price = 0
+		colors_list.map(function(item, identifier) {
+			total_color_price = total_color_price + msrp_by_id[parseInt(identifier)];
+		});
+		average_color_price = parseInt(total_color_price / colors_list.length); //{{#lazy but no one will care}}
+		var msrp = msrp + average_color_price;
+		var savings = parseInt(msrp * savings_factor);
+		var estimate = msrp - savings;
+		//{{#msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_additional_costs").val() || 0)) || 0);}} //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
+		$('#msrp').html(int_to_dollar(msrp)); //http://stackoverflow.com/questions/13621769/adding-comma-as-thousands-separator-javascript-output-being-deleted-instead
+		$('#savings').html(int_to_dollar(savings));
+		$('#estimate').html(int_to_dollar(estimate));
+	}
+	$("#auction_request_colors").change(update_estimation);
+	$("#auction_request_options").change(update_estimation);
+</script><!-- {{#http://goo.gl/IpBLpn http://goo.gl/cB089T http://goo.gl/IpBLpn http://goo.gl/WvuDbj http://goo.gl/HwI81Q}} -->
