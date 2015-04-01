@@ -38,12 +38,13 @@ def vehicle_content():
 def vehicle_attributes(): #TODO get all data from single call make/model/year
 	server_side_digest = hmac.new(str(hash(session.salt)), '%s%s%s%s'%(request.args[0], request.args[1], request.args[2], request.args[3])).hexdigest() #Prevents XSS #http://goo.gl/BtlcAZ #Make, Model, Year, StyleID, 4 = SESSION_ID #hmac.new("Secret Passphrase", Message);
 	client_side_digest = request.args[-1]
-	#logger.debug("sEC:%s"%server_side_digest); logger.debug("cEC:%s"%client_side_digest)
-	if not server_side_digest == client_side_digest:
+	if not server_side_digest == client_side_digest:	#logger.debug("sEC:%s"%server_side_digest); logger.debug("cEC:%s"%client_side_digest)
 		raise HTTP(404)
+	
 	style = GET_STYLES_BY_MAKE_MODEL_YEAR_STYLE_ID(request.args[0], request.args[1], request.args[2], request.args[3]) #TODO DIGITALLY SIGN!!
+	
 	(make, model, year, style_id) = (request.args[0], request.args[1], request.args[2],  request.args[3])
-
+	
 	def __style_details__(): #OLD#getting details by style id rather than parsing through make/model/year makes it harder for hackers to fake get values# FIXED WITH DIGITALLY SIGNED URLS
 		#NO NEED TO HMAC VERIFY IT IS DONE IN colors AND options, ONLY DO IN CLIENT VIEW #DRY?
 		style_colors = GET_COLOR_CODES(style)
@@ -53,16 +54,6 @@ def vehicle_attributes(): #TODO get all data from single call make/model/year
 		for each_option in GET_OPTION_CODES(style)['option_codes']:
 			if each_option[2] and each_option[2] != each_option[1]:
 				options_descriptions.append([each_option[1],each_option[2]]) #append name and description
-
-		msrp = int(style['price']['baseMSRP'])
-		biddrive_estimate = int(int(style['price']['baseMSRP'])-random.randrange(3000,6000))
-
-		stats = dict(
-			base_msrp = ['Base MSRP', "${:,.0f}".format(msrp)],
-			estimate = ['%s price (est.)'%APP_NAME.replace('(Alpha)', ''), "${:,.0f}".format(biddrive_estimate)],
-			savings = ["Savings (est.)", "${:,.0f}".format(msrp - biddrive_estimate)],
-		)
-		stats=OD(sorted(stats.items(), key=lambda t: t[1][0])) #sort by 'Cylinders' not 'v'
 
 		details = dict(
 			mpg_city = ['MPG city, hwy' , '%s, %s'%(style['MPG']['city'] if 'MPG' in style and 'city' in style['MPG'] else 'N/A', style['MPG']['highway'] if 'MPG' in style and 'highway' in style['MPG'] else 'N/A')],
@@ -83,10 +74,36 @@ def vehicle_attributes(): #TODO get all data from single call make/model/year
 			#doors = ['Doors' , style['numOfDoors']],
 		)
 
-		return dict(stats = stats, details=details, options_descriptions=options_descriptions, make = make, model = model, year = year, style_id = style_id)
+		return dict( details=details, options_descriptions=options_descriptions, make = make, model = model, year = year, style_id = style_id)
+	
+	@cache('calculate_savings_factor', time_expire=60*60, cache_model=cache.ram)
+	def __calculate_savings_factor__():
+		recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id != None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), limitby=(0, 500))
+		total_savings_factors = 0
+		for each_request in recent_requests:
+			winning_offer = db(db.auction_request_offer_bid.auction_request_offer == each_request.auction_request_winning_offer.auction_request_offer).select().last()
+			total_savings_factors += 1 - winning_offer.bid / float(each_request.estimation())
+		average_savings_factor = total_savings_factors / (len(recent_requests) or 1)
+		return average_savings_factor
+			
+	trim_msrp = int(style['price']['baseMSRP'])
+		
+	msrp_by_id = {int(style_id):trim_msrp}
+		
+	for each_option_type in style['options']:
+		for each_option in each_option_type['options']:
+			msrp_by_id.update({
+				each_option['id'] : each_option['price']['baseMSRP'] if 'price' in each_option and 'baseMSRP' in each_option['price'] else 0
+			})
+			
+	for each_color_type in style['colors']:
+		for each_color in each_color_type['options']:
+			msrp_by_id.update({
+				each_color['id'] : each_color['price']['baseMSRP'] if 'price' in each_color and 'baseMSRP' in each_color['price'] else 0
+			})
 	
 	return dict(
-		color_codes=GET_COLOR_CODES(style)['color_codes'], option_codes = GET_OPTION_CODES(style)['option_codes'], style_details_html_string=XML(response.render('ajax/style_details.html', __style_details__() ) ),
+		msrp_by_id=msrp_by_id, savings_factor = __calculate_savings_factor__(), color_codes=GET_COLOR_CODES(style)['color_codes'], option_codes = GET_OPTION_CODES(style)['option_codes'], style_details_html_string=XML(response.render('ajax/style_details.html', __style_details__() ) ),
 	)
 
 def reviews():
