@@ -81,8 +81,11 @@ def vehicle_attributes(): #TODO get all data from single call make/model/year
 		recent_requests = db((db.auction_request.id > 0) & (db.auction_request_winning_offer.id != None)).select(left = db.auction_request_winning_offer.on(db.auction_request_winning_offer.auction_request == db.auction_request.id), limitby=(0, 500))
 		total_savings_factors = 0
 		for each_request in recent_requests:
-			winning_offer = db(db.auction_request_offer_bid.auction_request_offer == each_request.auction_request_winning_offer.auction_request_offer).select().last()
-			total_savings_factors += 1 - winning_offer.bid / float(each_request.estimation())
+			try:
+				winning_offer = db(db.auction_request_offer_bid.auction_request_offer == each_request.auction_request_winning_offer.auction_request_offer).select().last()
+				total_savings_factors += 1 - winning_offer.bid / float(each_request.estimation())
+			except:
+				pass
 		average_savings_factor = total_savings_factors / (len(recent_requests) or 1)
 		return average_savings_factor
 			
