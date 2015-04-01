@@ -474,7 +474,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                     });
                 };
                 /*/
-				msrp_by_id = data.msrp_by_id; savings_factor = data.savings_factor;
+				msrp_by_id = data.msrp_by_id; savings_factor = data.savings_factor; //{{#alert(data.savings_factor);}}
 				
                 var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
                 $("#auction_request_colors").children().remove(); //{{#it appears there are no saved values from form submission}}

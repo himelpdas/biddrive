@@ -83,10 +83,10 @@ def vehicle_attributes(): #TODO get all data from single call make/model/year
 		for each_request in recent_requests:
 			try:
 				winning_offer = db(db.auction_request_offer_bid.auction_request_offer == each_request.auction_request_winning_offer.auction_request_offer).select().last()
-				total_savings_factors += 1 - winning_offer.bid / float(each_request.estimation())
+				total_savings_factors += 1 - winning_offer.bid / float(each_request.auction_request.estimation())
 			except:
 				pass
-		average_savings_factor = total_savings_factors / (len(recent_requests) or 1)
+		average_savings_factor = total_savings_factors / (float(len(recent_requests)) or 1)
 		return average_savings_factor
 			
 	trim_msrp = int(style['price']['baseMSRP'])
