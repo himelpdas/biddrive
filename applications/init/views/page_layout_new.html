@@ -32,7 +32,7 @@
 {{#enable prettier jquery UI tooltips}}
 <script>
 
-	//{{# $(":submit").click(function(){ }} //not good because :submit will select anything inside a form, input[type="submit"] more specific to submit buttons
+	//{{# $(":submit").click(function(){ }} //{{#not good because :submit will select anything inside a form, input[type="submit"] more specific to submit buttons}}
 	$('[type="submit"]').click(function(){
 		$('.modal').modal('hide'); //{{# hide all modals for loading_modal below}}
 		

@@ -466,14 +466,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
         $('#trim_stats').slideUp(400)
         $.getJSON("{{=URL('ajax','vehicle_attributes.json', args=[make, model, year])}}{{='/'}}" + loc_token + "/" + loc_hash) //{{#and the style id (loc_token) needed by GET_STYLES_BY_MAKE_MODEL_YEAR(make, model, year, style_id):}}
             .done(function( data ) {
-                /*/{{#colors}}
-                var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
-                if (previous_colors_submissions.length==0){
-                    $.each( data.style_colors, function( i, item ) { //{{#similar to python enumerate}}
-                        $("#auction_request_colors").append("<option value='"+ item['id'] + "'>" + item['name'] + "</option>") //{{#using names as values NOT safe! Use IDs instead}}
-                    });
-                };
-                /*/
+
 				msrp_by_id = data.msrp_by_id; savings_factor = data.savings_factor; //{{#alert(data.savings_factor);}}
 				
                 var previous_colors_submissions = $("#auction_request_colors option:selected"); //{{#see if there was a previous submission, which occurs only on erroneous form submission http://goo.gl/iGhKER http://goo.gl/A6MOz}}
@@ -548,7 +541,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
                 }
             }
         );
-    //close main function
+    //{{#close main function}}
     }
     $('#auction_request_trim').change(load_content) //{{#change color preference options when you change trim dropdown}}
 	.multiselect({ //{{#onetime styling of this single-select to match the multi-selects below}}
@@ -560,7 +553,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 				'onDropdownHide':	 function(event) {
 						$( document ).tooltip();
 				},
-			}); //use multiselect widget for consistance, though it is not actually single select
+			}); //{{#use multiselect widget for consistance, though it is not actually single select}}
 
     $(document).ready(function(){
         load_content(); //{{#first ajax call based on initial trim selection //remove during testing}} {{#VERY IMPORTANT For the value preservation logic on form submission error to work, you must make sure document is ready or else the multiselect options will be empty (at first) and will force the load Function to activate, thereby clearing the previous selected options from the multiselect}}
@@ -614,7 +607,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 	}
 	function update_estimation(){
 		var msrp = 0;
-		//var msrp = msrp + msrp_by_id[$("#auction_request_color").val()] + msrp_by_id[$("#auction_request_offer_interior_color").val()]; //{{#note val returns ids not names}}
+		//{{#var msrp = msrp + msrp_by_id[$("#auction_request_color").val()] + msrp_by_id[$("#auction_request_offer_interior_color").val()];}} //{{#note val returns ids not names}}
 		var options_list = $("._options li.active").map(function(){return $(this).children().children().children().attr('value') }); //{{#map runs a function on each element}} {{#tested with alert( $(this).children().children().children().attr('value') ) }}
 		options_list.map( function(item, identifier) {
 			msrp = msrp + msrp_by_id[parseInt(identifier)];
@@ -630,7 +623,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 		var savings = parseInt(msrp * savings_factor);
 		var estimate = msrp - savings;
 		//{{#msrp = msrp + (Math.abs(parseInt($("#auction_request_offer_additional_costs").val() || 0)) || 0);}} //{{#((0 if blank) 0 if can't turn into int) #add the dealer-level fees}}
-		$('#msrp').html(int_to_dollar(msrp)); //http://stackoverflow.com/questions/13621769/adding-comma-as-thousands-separator-javascript-output-being-deleted-instead
+		$('#msrp').html(int_to_dollar(msrp)); //{{#http://stackoverflow.com/questions/13621769/adding-comma-as-thousands-separator-javascript-output-being-deleted-instead}}
 		$('#savings').html(int_to_dollar(savings));
 		$('#estimate').html(int_to_dollar(estimate));
 	}
