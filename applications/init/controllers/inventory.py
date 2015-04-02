@@ -105,7 +105,8 @@ def index():
 @auth.requires(request.args(0))
 @auth.requires_membership('dealers')
 def vin_decode():
-	clean_vin = "".join(request.args[0].split()) #http://stackoverflow.com/questions/3739909/how-to-strip-all-whitespace-from-string
+	clean_vin = "".join(request.args[0].split()).replace("_","") #odd behavior: %20KNDJT2A56C7438499 gets passed as _KNDJT2A56C7438499 in request.args, so replace '_' with '' as quickfix #http://stackoverflow.com/questions/3739909/how-to-strip-all-whitespace-from-string
+	#print clean_vin
 	vin_info = EDMUNDS_CALL(VIN_DECODE_URI % clean_vin)
 	is_imported = request.args(1)
 	if vin_info:
