@@ -285,7 +285,7 @@ def auction_history():
 		auction_is_completed = (a_winning_offer or each_request.offer_expired())
 		ends_in_human=False
 		if not auction_is_completed:
-			ends_in_human = human(each_request.offer_expires - request.now, precision=3, past_tense='{}', future_tense='{}')
+			ends_in_human = human(each_request.auction_expires - request.now, precision=3, past_tense='{}', future_tense='{}')
 		#ends_in_human = ends_in_human if ends_in_human else "Auction ended" #COMMENT OUT IF HANDLED IN VIEW
 		each_request['ends_in_human'] = ends_in_human
 		each_request['auction_url']=URL('dealer','auction', args=[each_request.id])
