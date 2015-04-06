@@ -248,16 +248,30 @@
 												</div>
 												<div class="modal-body" style="max-height:480px;overflow-y:auto;overflow: visible;">
 												
-													<div class="dropdown" title="{{if not matching_inventory:}}You do not have any vehicles that match this request.{{pass}}">
-														<button class="btn btn-default dropdown-toggle btn-lg {{if not matching_inventory:}}disabled{{pass}}"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
-															Choose a matched vehicle from your inventory
+													<div class="dropdown">
+														<button class="btn btn-default dropdown-toggle btn-lg"  style="width:100%;" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+															Choose a vehicle from your inventory
 															<span class="caret"></span>
 														</button>
 														<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" style="max-height:480px;overflow-y:auto">
+															<li role="presentation" class="dropdown-header"><span style="font-size:large;"><i class="fa fa-fw fa-thumbs-up"></i>Perfectly matching vehicles from your inventory &mdash;</span></li>
 															{{for each_vehicle in each_request['matched_vehicles']:}}
 																<li role="presentation"><a role="menuitem" tabindex="-1" class="to_auction_links" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
 																	{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
 																</a></li>
+															{{pass}}
+															{{if not each_request['matched_vehicles']:}}
+																<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">You do not have any vehicles that match this request</a></li>
+															{{pass}}
+
+															<li role="presentation" class="dropdown-header"><span style="font-size:large;"><i class="fa fa-fw fa-warning"></i>Non-matching vehicles from your inventory &mdash;</span></li>
+															{{for each_vehicle in each_request['not_matched_vehicles']:}}
+																<li role="presentation"><a role="menuitem" tabindex="-1" class="to_auction_links_not_matched" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
+																	{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
+																</a></li>
+															{{pass}}
+															{{if not each_request['not_matched_vehicles']:}}
+																<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">{{if matching_inventory:}}All your vehicles have already matched{{else:}}You do not have any vehicles in your inventory{{pass}}</a></li>
 															{{pass}}
 														</ul>
 													</div>
@@ -275,14 +289,14 @@
 									</div>
 										
 									<!--{{#--INFO BUTTON AND MODAL}}-->
-                                    <a class="btn btn-default btn-trinity btn-sm" style="margin-top: 10px;" data-toggle="modal" data-target="#info_modal_{{=each_request.auction_request.id}}" title="Bid request {{=str(each_request.auction_request.id).zfill(3)}} submitted by {{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}. Click to view more details.">View</a>
+                                    <a class="btn btn-default btn-trinity btn-sm" style="margin-top: 10px;" data-toggle="modal" data-target="#info_modal_{{=each_request.auction_request.id}}" title="Bid request {{=str(each_request.auction_request.id).zfill(3)}} submitted by {{=each_request.auth_user.first_name.capitalize()}} {{=each_request.auth_user.last_name[:1].capitalize()}}. Click to view more details.">About</a>
 
                                     <div class="modal fade" id="info_modal_{{=each_request.auction_request.id}}">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-header">
                                                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                                                    <h4 class="modal-title">Buyer Request: {{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make].capitalize()}} {{=each_request.auction_request.model.capitalize()}}</h4>
+                                                    <h4 class="modal-title">Buyer for the {{=each_request.auction_request.year}} {{=brands_list[each_request.auction_request.make].capitalize()}} {{=each_request.auction_request.model.capitalize()}}</h4>
                                                 </div>
                                                 <div class="modal-body" style="max-height:480px;overflow-y:auto;">
                                                     <table class="table">
@@ -310,11 +324,15 @@
 														<tr>
 															
 															<th>
-																Must match:
+																Demands:
 															</th>
 															
 															<td>
-																<p>{{=str([each_match.capitalize() for each_match in each_request.auction_request["matching"]] ).replace("'","").replace("[","").replace("]","") }}</p>
+																{{for each_match in each_request.auction_request["matching"]:}}
+																	<p>
+																		 {{=BULLET}}{{=MATCHING_CATEGORIES_DICT[each_match]}}
+																	</p>
+																{{pass}}
 															</td>
 														</tr>
 														
@@ -340,7 +358,7 @@
 
                                                         <tr>
                                                             <th>
-                                                                Credit score
+                                                                Credit score:
                                                             </th>
 
                                                             <td>
@@ -414,7 +432,7 @@
                                                         {{if trading:}}
                                                         <tr>
                                                             <th>
-                                                                Trade in description
+                                                                Trade in description:
                                                             </th>
 
                                                             <td>
@@ -424,13 +442,13 @@
                                                         {{pass}}
 														<tr>
 															<th>
-																About
+																About:
 															</th>
 
 															<td>
 																{{for each_answer in each_request.auction_request['questions']:}}
 																<p>
-																	{{=each_answer.capitalize().replace("_"," ")}}
+																	{{=BULLET}}{{=BUYER_QUESTIONS_DICT[each_answer]}}
 																</p>
 																{{pass}}
 															</td>
@@ -463,13 +481,23 @@
 </div>
 
 <script>
-	$(".to_auction_links").click(function(evt){
-		evt.preventDefault()
-		var message = "{{=XML('''<p>You will now be charged <b>%s credits</b> <i>(auction fee)</i> to enter this auction. If you win this auction and the buyer initiates contact, you will be charged an additional <b>%s credits</b> <i>(success fee)</i>.</p> <h5 class='pull-right'>You have <b>%s credits remaining</b>.</h5>'''%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS, my_piggy.credits) ) }}" <!--{{#MUST use XML() to style bootbox http://goo.gl/7OaP6m}}-->
-		bootbox.confirm(message, function(agreed){
-			if (agreed){
-				window.location.href = $(evt.target).attr('href'); //{{#needs id needs form befoe it to work}}
-			}
-		})
-	});
+function to_auction_warning_message(evt){
+	evt.preventDefault();
+	
+	var class_name = $(evt.target).attr('class');
+	var pre_message = ""
+	
+	if (class_name == "to_auction_links_not_matched") {
+		pre_message = "{{=XML('''<h5 class='text-danger'><b>Warning:</b> This vehicle is NOT a perfect match with the buyer's request. The buyer may ignore your offer if the vehicle is very different from his/her request. Please consider this risk before continuing!</h5>''')}}";
+	}
+	
+	var message = pre_message+"{{=XML('''<p>You will now be charged <b>%s credits</b> <i>(auction fee)</i> to enter this auction. If you win this auction and the buyer initiates contact, you will be charged an additional <b>%s credits</b> <i>(success fee)</i>.</p> <h5 class='pull-right'>You have <b>%s credits remaining</b>.</h5>'''%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS, my_piggy.credits) ) }}" <!--{{#MUST use XML() to style bootbox http://goo.gl/7OaP6m}}-->
+	bootbox.confirm(message, function(agreed){
+		if (agreed){
+			window.location.href = $(evt.target).attr('href'); //{{#needs id needs form befoe it to work}}
+		}
+	})
+}
+	$(".to_auction_links").click(to_auction_warning_message);
+	$(".to_auction_links_not_matched").click(to_auction_warning_message);
 </script>

@@ -35,11 +35,15 @@ def index():
 		orderby = ~db.auction_request_offer.year
 		
 	show = request.vars['show']
+	if not show or not show in map(lambda each_pair: each_pair[0], VEHICLE_STATES):
+		show = "all"
 	show_list = sorted( map(lambda x: x[0],VEHICLE_STATES) + ["all"])
 	query = (db.auction_request_offer.id > 0) & (db.auction_request_offer.owner_id == auth.user_id) #must
 	#left = db.auction_request.on(db.auction_request_offer.auction_request == db.auction_request.id)
-	if (not show in [None, "all"]) and (show in show_list[:2]): #all is inert
+	if (not show == "all") and (show in show_list[:2]): #all is inert
 		query &= db.auction_request_offer.status.contains(show)
+	else:
+		query &= ~db.auction_request_offer.status.contains('archived') #don't show archived by default
 
 	my_inventory = db(query).select(
 		#left=left, 

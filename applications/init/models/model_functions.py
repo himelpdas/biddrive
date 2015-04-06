@@ -155,6 +155,7 @@ BUYER_QUESTIONS = [
 	["serviceman_or_veteran", "I'm active in the U.S. military or a U.S. Military veteran"],
 	["first_time_car_buyer", "I'm a first time car buyer"]
 ]
+BUYER_QUESTIONS_DICT = dict(BUYER_QUESTIONS)
 	
 EXPECTED_DOWN_PMT_REQUIRES = IS_INT_IN_RANGE(0, 100000)
 
@@ -165,19 +166,21 @@ LEASE_MILEAGE_REQUIRES = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multi
 LEASE_TERM_REQUIRES = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one")
 
 MATCHING_CATEGORIES = [
-	['used','Used Cars'], 
-	['new','New Cars'], 
-	['body', "Body Type    (E.g. SUV, Sedan, Compact, etc.)"], 
-	['year','Model Year'], 
-	['make','Make (E.g. Ford, Honda, Toyota, etc.)'], 
-	['model','Model (E.g. Accord, Fusion, Grand Cherokee, etc.)'], 
-	['trim','Trim (E.g. EX, LX, Sport, etc.)'], 
-	['color_names','Exact Colors (E.g. Metallic silver, pearl blue, sunset red, etc.)'], 
-	['color_simple_names','Similar Colors (E.g. Grey, blue, red, etc.)'], 
-	['options','Options']
+	['used','I want Used Cars'], 
+	['new','I want New Cars'], 
+	['body', 'I want bids of the same Body Type    (E.g. SUV, Sedan, Compact, etc.)'], 
+	['year','I want bids of the same Model Year'], 
+	['make','I want bids of the same Make (E.g. Ford, Honda, Toyota, etc.)'], 
+	['model','I want bids of the same Model (E.g. Accord, Fusion, Grand Cherokee, etc.)'], 
+	['trim','I want bids of the same Trim (E.g. EX, LX, Sport, etc.)'], 
+	['color_names','I want bids with the Exact Colors (E.g. Metallic silver, pearl blue, sunset red, etc.)'], 
+	['color_simple_names','I want bids with Similar Colors (E.g. Grey, blue, red, etc.)'], 
+	['options','I want bids with the same Options']
 ]
+MATCHING_CATEGORIES_DICT = dict(MATCHING_CATEGORIES)
 
 VEHICLE_STATES = [['unsold','Unsold'], ['sold','Sold'], ['new','New'], ['used','Used'], ['archived','Archived']]
+VEHICLE_STATES_DICT = dict(VEHICLE_STATES)
 
 class VEHICLE_STATES_VALIDATOR(object): #http://brunorocha.org/python/web2py/custom-validator-for-web2py-forms.html
 	def __init__(self, error_message=["Can't be %s and %s!", "Choose either %s or %s"]):

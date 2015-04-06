@@ -863,7 +863,7 @@ pass
                                 {{pass}}
                             </div>
                         </div>
-                    {{#print "is message form: %s"%bool(message_form)}}
+                    <!--{{#print "is message form: %s"%bool(message_form)}}-->
                     {{if bool(message_form):}}
                         <br><hr><br>
                         {{message_form.element("textarea", _name = "message")["_class"] += " form-control" }}
@@ -875,7 +875,7 @@ pass
                             <div class="modal-body">
                                 {{=message_form.custom.widget.message}}
                                 <br>
-                                <div class="text-danger pull-left">DO NOT share personal information through here! Messages are reviewed by administrators. Violating this rule may result in a ban!</div>
+                                <div class="text-danger pull-left">DO NOT share identifiable information through here! Messages are reviewed by administrators. Violating this rule may result in a disqualification from this auction!</div>
                                 <br>
                             </div>
                             <div class="modal-footer">

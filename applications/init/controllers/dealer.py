@@ -158,6 +158,7 @@ def auction_requests():
 	else:
 		for each_auction in auction_requests:
 			each_auction['matched_vehicles'] = []
+			each_auction['not_matched_vehicles'] = my_inventory
 			for each_inventory_vehicle in my_inventory:
 				all_matched = []
 				if 'body' in each_auction.auction_request.matching:
@@ -239,7 +240,8 @@ def auction_requests():
 				if all(all_matched):
 					each_auction['matched_vehicles'].append(each_inventory_vehicle)
 					
-				print all_matched
+					each_auction['not_matched_vehicles'] = filter(lambda each_matched_vehicle: each_matched_vehicle.id != each_inventory_vehicle.id, each_auction['not_matched_vehicles'])
+				#print all_matched
 
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	#for each_request in auction_requests:
