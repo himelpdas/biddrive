@@ -954,7 +954,7 @@ def my_auctions():
 		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.colors, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
-		my_last_bid_price = "${:,}".format(my_last_bid.bid) if my_last_bid else XML("<i>Please make a bid!</i>")
+		my_last_bid_price = "${:,}".format(my_last_bid.bid) if my_last_bid else XML("<i>You didn't put a bid!</i>")
 		my_last_bid_time = human(request.now-my_last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if my_last_bid else None
 		#get the best price for this auction
 		#auction_best_bid = each_offer.auction_request.lowest_offer()
