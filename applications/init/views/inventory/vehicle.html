@@ -67,7 +67,7 @@
                             <div class="form-group">
                                 <label for="{{=form.custom.widget.colors['_id']}}" class="col-sm-3 control-label"><i id="colors_spinner" class="fa fa-spin options_spinner"></i> Colors <i class="fa fa-question-circle" title="Select at least one interior AND one exterior style or color you want your vehicle to have."></i></label>
                                 <div class="col-sm-9">
-                                    {{=form.custom.widget.colors}}{{print form.errors['colors']}}
+                                    {{=form.custom.widget.colors}}{{#print form.errors['colors']}}
                                     {{if form.errors['colors']:}}
                                     <div class="alert alert-warning">{{=form.errors['colors']}}</div>
                                     {{pass}}

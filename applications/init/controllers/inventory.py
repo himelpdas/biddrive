@@ -117,7 +117,7 @@ def vin_decode():
 		make = vin_info['make']['niceName']
 		model = vin_info['model']['niceName']
 		year = vin_info['years'][0]['year']
-		print year, make, model
+		#print year, make, model
 		if is_imported:
 			vehicle = db(db.auction_request_offer.id == int(is_imported) ).select().last()
 			vehicle.update_record(make = make, model = model, year=year, vin_number = clean_vin)

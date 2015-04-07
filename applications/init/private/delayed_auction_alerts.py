@@ -163,6 +163,6 @@ while True:
 	#	to="himeldas@live.com", #TODO change to "admin@biddrive.com"
 	#	subject="OK in delayed_auction_alerts.py",
 	#	message="Uptime: %s minutes."%str(delayed_alert_timeout*delayed_alert_iterations/60.0),
-	)
+	#)
 		
 	time.sleep(delayed_alert_timeout)
