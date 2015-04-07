@@ -307,7 +307,7 @@ def auction_history():
 		
 		#time remaining logic
 		bidding_has_ended = each_request.auction_expired()
-		="Auction ended"
+		ends_in_human="Auction ended"
 		if not bidding_has_ended:
 			time_delta_remaining = each_request.auction_expires - request.now
 			ends_in_human = human(time_delta_remaining, precision=3, past_tense='{}', future_tense='{}')
