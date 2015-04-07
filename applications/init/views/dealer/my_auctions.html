@@ -57,8 +57,8 @@
 			<th>Buyer requested a</th>
 			<th>You submitted a</th>
 			<th>You bided</th>
-			<th>Winner ETA</th> <!--{{#<i class="fa fa-fw fa-info-circle"  title="Includes 24 hour winner selection period."></i>}}-->
-			<th>Go to auction</th>
+			<th>Time remaining</th> <!--{{#<i class="fa fa-fw fa-info-circle"  title="Includes 24 hour winner selection period."></i>}}-->
+			<th>To auction</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -81,7 +81,8 @@
 					<h5>{{if each_offer['my_last_bid_time']:}}{{=each_offer['my_last_bid_time']}} ago{{else:}}--{{pass}}</h5>
 				</td>
 				<td>
-					<h4 style="width:125px;">{{if each_offer['ends_in_human']:}}{{=each_offer['ends_in_human']}}{{else:}}<i>{{if each_offer['how_auction_ended']:}}{{=each_offer['how_auction_ended']}}{{else:}}Auction ended{{pass}}</i>{{pass}}</h4>
+					<h4 style="width:125px;">{{=each_offer['ends_in_human']}}</h4>
+					<h5><i>{{=each_offer['how_auction_ended']}}</i></h5>
 				</td>
 				<td> 
 					<a class="btn btn-info" href="{{=each_offer['auction_url']}}">ID {{=str(each_offer['auction_id']).zfill(3)}}<i class="fa fa-fw fa-arrow-right"></i></a> 

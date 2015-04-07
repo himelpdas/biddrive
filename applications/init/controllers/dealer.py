@@ -954,17 +954,11 @@ def my_auctions():
 		color_names = dict(map(lambda id,name: [id,name], each_offer.auction_request.colors, each_offer.auction_request.color_names)) #since the dealers color must've been in the choices in the auction request, it is safe to use the auction request data as a reference rather than the API
 		#get this dealers last bid on this auction
 		my_last_bid = each_offer.auction_request_offer.latest_bid()
-		my_last_bid_price = '$%s'%my_last_bid.bid if my_last_bid else XML("<i>Please make a bid!</i>")
+		my_last_bid_price = "${:,}".format(my_last_bid.bid) if my_last_bid else XML("<i>Please make a bid!</i>")
 		my_last_bid_time = human(request.now-my_last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if my_last_bid else None
 		#get the best price for this auction
-		auction_best_bid = each_offer.auction_request.lowest_offer()
-		auction_best_price = '$%s'%auction_best_bid.bid if auction_best_bid else "No Bids!"
-		
-		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_offer.auction_request.id).select().last()
-		auction_is_completed = (a_winning_offer or each_offer.auction_request.offer_expired())
-		ends_in_human=False
-		if not auction_is_completed:
-			ends_in_human = human(each_offer.auction_request.offer_expires - request.now, precision=3, past_tense='{}', future_tense='{}')
+		#auction_best_bid = each_offer.auction_request.lowest_offer()
+		#auction_best_price = '$%s'%auction_best_bid.bid if auction_best_bid else "No Bids!"
 		
 		has_unread_messages = False
 		highest_message_for_this_offer = db(db.auction_request_offer_message.auction_request_offer == each_offer.auction_request_offer.id).select().last()
@@ -973,22 +967,29 @@ def my_auctions():
 			if my_highest_message_for_this_offer['highest_id'] < highest_message_for_this_offer.id:
 				has_unread_messages = True
 				
-		how_auction_ended = False
+		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_offer.auction_request.id).select().last()
+		auction_is_completed = (a_winning_offer or each_offer.auction_request.offer_expired())
+		how_auction_ended = "Awaiting winner"
 		if a_winning_offer and a_winning_offer['auction_request_offer'] in db((db.auction_request_offer.auction_request == each_offer.auction_request.id)&(db.auction_request_offer.owner_id == auth.user_id)).select(): #see if logged in dealer has a winning offer in this auction request. #OLD- Make sure you turn None into [] or in test will fail
 			how_auction_ended = 'You are the winner!' 
 		elif db(db.auction_request_winning_offer.auction_request == each_offer.auction_request.id).select():
 			how_auction_ended = 'A winner was chosen'
-		elif not ends_in_human: #that means time ran out so auction ended but no winner chosen
+		elif auction_is_completed: #that means time ran out so auction ended but no winner chosen
 			how_auction_ended = "There are no winners"
 
-		#each_request['how_auction_ended'] = how_auction_ended
-
+		bidding_has_ended = each_offer.auction_request.auction_expired()
+		ends_in_human="Auction ended"
+		if not bidding_has_ended:
+			time_delta_remaining = each_offer.auction_request.auction_expires - request.now
+			ends_in_human = human(time_delta_remaining, precision=3, past_tense='{}', future_tense='{}')
+			ends_in_human = XML("<span class='%s'>%s</span>"%("text-danger" if (not auction_is_completed and time_delta_remaining.total_seconds() < 21600) else '',ends_in_human))
+			
 		auction_request_buyer = db(db.auth_user.id == each_offer.auction_request.owner_id).select().last()
 		
 		each_offer_dict = {
 			'how_auction_ended':how_auction_ended,
 			'has_unread_messages':has_unread_messages,
-			'ends_in_human': ends_in_human if ends_in_human else "Auction ended",
+			'ends_in_human': ends_in_human,
 			'year':each_offer.auction_request_offer.year,
 			'make':each_offer.auction_request_offer.make_name,
 			'model':each_offer.auction_request_offer.model_name,
@@ -996,7 +997,7 @@ def my_auctions():
 			'vin':each_offer.auction_request_offer.vin_number,
 			'exterior_color': GET_OFFER_ROW_INT_EXT_COLORS(each_offer.auction_request_offer)[1],
 			'offer_expires':each_offer.auction_request.offer_expires,
-			'auction_best_price': auction_best_price,
+			#'auction_best_price': auction_best_price,
 			'my_last_bid_price': my_last_bid_price,
 			'my_last_bid_time': my_last_bid_time,
 			'auction_bids':each_offer.auction_request.number_of_bids(),

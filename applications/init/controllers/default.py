@@ -280,31 +280,40 @@ def auction_history():
 			if my_highest_message_for_this_auction.highest_id < highest_message_for_this_auction.id:
 				has_unread_messages = True
 		each_request['has_unread_messages'] = has_unread_messages
-		#####ended logic#####
-		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_request.id).select().last()
-		auction_is_completed = (a_winning_offer or each_request.offer_expired())
-		ends_in_human=False
-		if not auction_is_completed:
-			ends_in_human = human(each_request.auction_expires - request.now, precision=3, past_tense='{}', future_tense='{}')
-		#ends_in_human = ends_in_human if ends_in_human else "Auction ended" #COMMENT OUT IF HANDLED IN VIEW
-		each_request['ends_in_human'] = ends_in_human
+
+		#auction URL
 		each_request['auction_url']=URL('dealer','auction', args=[each_request.id])
+
 		#colors logic
 		trim_data= json.loads(each_request['trim_data'])
 		each_request['color_names_and_codes'] = []
+
 		#last bid logic
 		last_bid = db(db.auction_request_offer_bid.auction_request == each_request.id).select().last()
-		last_bid_price = '$%s'%last_bid.bid if last_bid else "No Bids!"
+		last_bid_price = "${:,}".format(last_bid.bid) if last_bid else "No Bids!"
 		each_request['last_bid_price'] = last_bid_price
-		last_bid_time = human(request.now-last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if last_bid else None
+		last_bid_time = "%s ago"%human(request.now-last_bid.created_on, precision=2, past_tense='{}', future_tense='{}') if last_bid else "--"
 		each_request['last_bid_time'] = last_bid_time
-		#how auction ended
-		how_auction_ended = False
+
+		#how auction ended logic
+		a_winning_offer = db(db.auction_request_winning_offer.auction_request == each_request.id).select().last()
+		auction_is_completed = (a_winning_offer or each_request.offer_expired())
+		how_auction_ended = XML("<i class='fa fa-fw fa-clock-o'></i> Awaiting your winner")
 		if db(db.auction_request_winning_offer.auction_request == each_request['id']).select().last():
-			how_auction_ended = 'You picked a winner!' 
-		elif not ends_in_human: #that means time ran out so auction ended but no winner chosen
-			how_auction_ended = "No winner was chosen"
+			how_auction_ended = XML("<i class='fa fa-fw fa-trophy'></i> You selected a winner!")
+		elif auction_is_completed: #that means time ran out so auction ended but no winner chosen
+			how_auction_ended = XML("<i class='fa fa-fw fa-thumbs-down'></i> You didn't pick a winner")
 		each_request['how_auction_ended'] = how_auction_ended
+		
+		#time remaining logic
+		bidding_has_ended = each_request.auction_expired()
+		ends_in_human="Auction ended"
+		if not bidding_has_ended:
+			time_delta_remaining = each_request.auction_expires - request.now
+			ends_in_human = human(time_delta_remaining, precision=3, past_tense='{}', future_tense='{}')
+			#print ends_in_human, time_delta_remaining.total_seconds()
+		each_request['ends_in_human'] = XML("<span class='%s'>%s</span>"%("text-danger" if (not auction_is_completed and time_delta_remaining.total_seconds() < 21600) else '',ends_in_human))
+
 		#color stuff done in view
 	return dict(my_auctions=my_auctions,heading =heading)
 
