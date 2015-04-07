@@ -224,18 +224,18 @@ pass
                     <script src="{{=URL('static','js/jquery.countdown.js')}}"></script>
                     <script type="text/javascript">
                         $('#clock').countdown({
-                            'date': new Date({{=(int(time.time()) + abs(clock))*1000}}), {{#add seconds remaining to epoch time, and times by thousand to get milliseconds which javascript Date object needs http://goo.gl/OGWwz}}
+                            'date': new Date({{=(int(time.time()) + abs(clock))*1000}}), //{{#add seconds remaining to epoch time, and times by thousand to get milliseconds which javascript Date object needs http://goo.gl/OGWwz}}
                                 'render': function(data) {
                             var el = $(this.el);
-                            el.empty() {{#empty element and reappend the data below. without empty it would duplicate itself every second}}
+                            el.empty() //{{#empty element and reappend the data below. without empty it would duplicate itself every second}}
                             $(el).append(this.leadingZeros(data.days, 2) + " days : ");
                             $(el).append(this.leadingZeros(data.hours, 2) + " hours : ");
                             $(el).append(this.leadingZeros(data.min, 2) + " min : ");
                             $(el).append(this.leadingZeros(data.sec, 2) + " sec ");
                         },
                             'onEnd': function(){
-                                {{if clock:}} {{#prevent infinite loop when time left is already zero from controller}}
-                                location.reload(); {{#http://goo.gl/Um9jh}}
+                                {{if clock:}} //{{#prevent infinite loop when time left is already zero from controller}}
+                                location.reload(); //{{#http://goo.gl/Um9jh}}
                                 {{pass}}
                                 },
                                 });
@@ -447,11 +447,9 @@ pass
                                 }
                             </script>
                             {{else:}}
-                            <button type="button" class="btn btn-default" title="{{=is_was}} the buyer's favorite!">
                                 {{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart"></i>
-                                {{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>
+                                {{else:}}&nbsp;<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>
                                 {{pass}}
-                            </button>
                             {{pass}}
                             {{if is_owner:}}
                                 <button type="button" class="btn btn-default" title="Send a message to this dealer" data-toggle="modal" data-target="#message_form_{{=each_offer['id']}}"><i class="fa fa-fw fa-envelope {{if each_offer['each__has_message_buyer']:}}blink{{pass}}"></i></button>
