@@ -307,13 +307,13 @@ def auction_history():
 		
 		#time remaining logic
 		bidding_has_ended = each_request.auction_expired()
-		ends_in_human="Auction ended"
+		="Auction ended"
 		if not bidding_has_ended:
 			time_delta_remaining = each_request.auction_expires - request.now
 			ends_in_human = human(time_delta_remaining, precision=3, past_tense='{}', future_tense='{}')
 			#print ends_in_human, time_delta_remaining.total_seconds()
-			each_request['ends_in_human'] = XML("<span class='%s'>%s</span>"%("text-danger" if (not auction_is_completed and time_delta_remaining.total_seconds() < 21600) else '',ends_in_human))
-
+			ends_in_human = XML("<span class='%s'>%s</span>"%("text-danger" if (not auction_is_completed and time_delta_remaining.total_seconds() < 21600) else '',ends_in_human))
+		each_request['ends_in_human'] = ends_in_human
 		#color stuff done in view
 	return dict(my_auctions=my_auctions,heading =heading)
 
