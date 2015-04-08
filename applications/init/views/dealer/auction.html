@@ -446,9 +446,9 @@ pass
                                     }
                                 }
                             </script>
-                            {{else:}}
-                                {{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart"></i>
-                                {{else:}}&nbsp;<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>
+                            {{else:}}&nbsp;&nbsp;
+                                {{if each_offer['each_is_favorite']:}}<i class="fa fa-fw fa-heart" title="{{=is_was}} the buyer's favorite!"></i>
+                                {{else:}}<i class="fa fa-fw fa-heart-o" title="{{=is_was}} not the buyer's favorite."></i>
                                 {{pass}}
                             {{pass}}
                             {{if is_owner:}}
