@@ -83,9 +83,9 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, AUCTION_ID=None, USER=None
 			CLICK_HERE_URL = "{url}".format(**MESSAGE_VARS),
 		),
 		"DEALER_on_new_offer" : lambda: dict(
-			SUBJECT  =  "{app} alert: {you_or_he} submitted a {car}!".format(**MESSAGE_VARS),
+			SUBJECT  =  "{app} alert: {you_or_he} submitted a vehicle for the {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{you_or_he} joined auction {aid} just moments ago! So what now?".format(**MESSAGE_VARS),
-			MESSAGE_TITLE = XML("{you_or_he} submitted a <i>{car}</i>!".format(**MESSAGE_VARS)),
+			MESSAGE_TITLE = XML("{you_or_he} just submitted a vehicle for the <i>{car}</i> request!".format(**MESSAGE_VARS)),
 			WHAT_NOW = "Compare offers from other dealers and adjust your price!",
 			INSTRUCTIONS = "Don't worry, we will alert you when offer prices change.",
 			CLICK_HERE = "Go to auction",
@@ -94,7 +94,7 @@ def SEND_ALERT_TO_QUEUE(OVERRIDE_ALERT_SETTING=False, AUCTION_ID=None, USER=None
 		"BUYER_on_new_offer" : lambda: dict(
 			SUBJECT  =  "{app} alert: A new dealer ({dealer_name}) just submitted a {car}!".format(**MESSAGE_VARS),
 			MESSAGE =  "{dealer_name} joined your auction just moments ago! So what now?".format(**MESSAGE_VARS),
-			MESSAGE_TITLE = "A dealer submitted a {car}!".format(**MESSAGE_VARS),
+			MESSAGE_TITLE = "A dealer just submitted a vehicle for your {car} request!".format(**MESSAGE_VARS),
 			WHAT_NOW = "Say hello!",
 			INSTRUCTIONS = "You can message this or any other dealer at any time during the duration of this auction.",
 			CLICK_HERE = "Go to auction",
