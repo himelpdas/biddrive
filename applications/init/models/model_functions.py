@@ -165,19 +165,20 @@ LEASE_MILEAGE_REQUIRES = IS_IN_SET(sorted(['12,000', '15,000', '18,000']), multi
 
 LEASE_TERM_REQUIRES = IS_IN_SET(sorted(["24 months", "36 months", "39 months", "42 months", "48 months", "Lowest payments"]), multiple=False, zero="Choose one")
 
-MATCHING_CATEGORIES = [
-	['used','I want Used Cars'], 
-	['new','I want New Cars'], 
-	['body', 'I want bids of the same Body Type    (E.g. SUV, Sedan, Compact, etc.)'], 
-	['year','I want bids of the same Model Year'], 
-	['make','I want bids of the same Make (E.g. Ford, Honda, Toyota, etc.)'], 
-	['model','I want bids of the same Model (E.g. Accord, Fusion, Grand Cherokee, etc.)'], 
-	['trim','I want bids of the same Trim (E.g. EX, LX, Sport, etc.)'], 
-	['color_names','I want bids with the Exact Colors (E.g. Metallic silver, pearl blue, sunset red, etc.)'], 
-	['color_simple_names','I want bids with Similar Colors (E.g. Grey, blue, red, etc.)'], 
-	['options','I want bids with the same Options']
+FLEXIBILITY_CATEGORIES = [
+	['used','Are you also interested in Used Cars? (Uncheck if you only want New Cars.)'], 
+	#['new','I want New Cars'], 
+	['body', 'Are you open to other Body Types? (E.g. SUV, Sedan, Compact, etc.)'], 
+	['year','Are you open to other Years? (E.g. %s'%( ("%s, "*len(YEAR_RANGE) )%tuple(YEAR_RANGE) + "etc.)")], 
+	['make','Are you open to other Brands? (E.g. Ford, Honda, Toyota, etc.)'], 
+	['model','Are you open to other Models? (E.g. Accord, Fusion, Grand Cherokee, etc.)'], 
+	['trim','Are you open to other Trims? (E.g. EX, LX, Sport, etc.)'], 
+	#['color_names','I want bids with the Exact Colors (E.g. Metallic silver, pearl blue, sunset red, etc.)'], 
+	#['color_simple_names','I want bids with Similar Colors (E.g. Grey, blue, red, etc.)'], 
+	['color_simple_names','Are you open to different Colors than the ones you chose?'], 
+	['options','Are you alright with some of the Options you chose being unavailable?']
 ]
-MATCHING_CATEGORIES_DICT = dict(MATCHING_CATEGORIES)
+FLEXIBILITY_CATEGORIES_DICT = dict(map(lambda each_pair: [each_pair[0], each_pair[1].split("(")[0].replace("?",".").replace("Are you","The buyer is <b>not</b>").replace("you","he/she")], FLEXIBILITY_CATEGORIES))
 
 VEHICLE_STATES = [['unsold','Unsold'], ['sold','Sold'], ['new','New'], ['used','Used'], ['archived','Archived']]
 VEHICLE_STATES_DICT = dict(VEHICLE_STATES)

@@ -180,6 +180,7 @@
                     </thead>
 
                     <tbody>
+						<script>demands_not_met_reasons = {};demands_not_met_reasons_dict = {{=XML(json.dumps(FLEXIBILITY_CATEGORIES_DICT))}}</script>
                         {{for each_request in auction_requests:}}
                             <tr class="jcorgFilterTextParent">
                                 <td class="jcorgFilterTextChild">
@@ -236,8 +237,8 @@
 									<!--{{#--JOIN BUTTON AND MODAL}}-->
 									
 									<!-- {{# <a href="{{=each_request.digitally_signed_pre_auction_url}}" id="to_pre_auction_button_{{=each_request.auction_request.id}}" class="btn btn-default btn-sm btn-action"  style="width:100%" title="Join auction {{=str(each_request.auction_request.id).zfill(3)}}">Join<i class="fa fa-fw fa-arrow-right text-info"></i></a> }}-->
-									{{matching_inventory = bool(len(each_request['matched_vehicles']) ) }}
-                                    <a class="btn btn-{{if matching_inventory:}}success{{else:}}default{{pass}} btn-trinity btn-raised btn-sm" data-toggle="modal" data-target="#join_modal_{{=each_request.auction_request.id}}" style="width:100%" title="Join this auction and submit your vehicle. Then, let the bidding begin!">Join</a>
+									{{matched_inventory = bool(len(each_request['matched_vehicles']) ) }}
+                                    <a class="btn btn-{{if matched_inventory:}}success{{else:}}default{{pass}} btn-trinity btn-raised btn-sm" data-toggle="modal" data-target="#join_modal_{{=each_request.auction_request.id}}" style="width:100%" title="Join this auction and submit your vehicle. Then, let the bidding begin!">Join</a>
 
 									<div class="modal fade" id="join_modal_{{=each_request.auction_request.id}}" style="overflow: visible;"><!--{{#http://stackoverflow.com/questions/11899870/bootstrap-in-a-modal-dialog-how-do-i-make-the-dropdown-menu-expand-outside-the}}-->
 										<div class="modal-dialog">
@@ -256,7 +257,7 @@
 														<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" style="max-height:480px;overflow-y:auto">
 															<li role="presentation" class="dropdown-header"><span style="font-size:large;"><i class="fa fa-fw fa-thumbs-up"></i>Perfectly matching vehicles from your inventory &mdash;</span></li>
 															{{for each_vehicle in each_request['matched_vehicles']:}}
-																<li role="presentation"><a role="menuitem" tabindex="-1" class="to_auction_links" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
+																<li role="presentation"><a id="vehicle_{{=each_vehicle['id']}}" role="menuitem" tabindex="-1" class="to_auction_links" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
 																	{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
 																</a></li>
 															{{pass}}
@@ -266,12 +267,17 @@
 
 															<li role="presentation" class="dropdown-header"><span style="font-size:large;"><i class="fa fa-fw fa-warning"></i>Non-matching vehicles from your inventory &mdash;</span></li>
 															{{for each_vehicle in each_request['not_matched_vehicles']:}}
-																<li role="presentation"><a role="menuitem" tabindex="-1" class="to_auction_links_not_matched" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
+																<li role="presentation"><a id="vehicle_{{=each_vehicle['id']}}" role="menuitem" tabindex="-1" class="to_auction_links_not_matched" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
 																	{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
+																	
+																	<script>
+																		demands_not_met_reasons["vehicle_{{=each_vehicle['id']}}"] = {{=XML(json.dumps(each_vehicle['demands_not_met_reasons']))}};
+																	</script>
+																	
 																</a></li>
 															{{pass}}
 															{{if not each_request['not_matched_vehicles']:}}
-																<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">{{if matching_inventory:}}All your vehicles have already matched{{else:}}You do not have any vehicles in your inventory{{pass}}</a></li>
+																<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">{{if matched_inventory:}}All your vehicles have already matched{{else:}}You do not have any vehicles in your inventory{{pass}}</a></li>
 															{{pass}}
 														</ul>
 													</div>
@@ -328,9 +334,11 @@
 															</th>
 															
 															<td>
-																{{for each_match in each_request.auction_request["matching"]:}}
+																{{for each_pair in FLEXIBILITY_CATEGORIES:}}
+																	{{choice = each_pair[0]}}
+																	{{question = each_pair[1].split("(")[0]}}
 																	<p>
-																		 {{=BULLET}}{{=MATCHING_CATEGORIES_DICT[each_match]}}
+																		 {{=BULLET}}{{=question}} {{if choice in each_request.auction_request["flexibility"]:}}<span class="text-success">YES</span>{{else:}}<span class="text-danger">NO</span>{{pass}}
 																	</p>
 																{{pass}}
 															</td>
@@ -488,10 +496,17 @@ function to_auction_warning_message(evt){
 	var pre_message = ""
 	
 	if (class_name == "to_auction_links_not_matched") {
-		pre_message = "{{=XML('''<h5 class='text-danger'><b>Warning:</b> This vehicle is NOT a perfect match with the buyer's request. The buyer may ignore your offer if the vehicle is very different from his/her request. Please consider this risk before continuing!</h5>''')}}";
+		var id_name = evt.target.id;
+		pre_message = "<h5 class='text-danger'><b>Warning:</b> This vehicle is NOT a perfect match with the buyer's request. The buyer may ignore your offer if the vehicle is very different from his/her request. Please consider the following <u>incompatabilities with your vehicle</u> before continuing:</h5>";
+		reasons =  demands_not_met_reasons[id_name]
+		pre_message = pre_message + "<ul>"
+		for (reason_number in reasons) {
+			pre_message = pre_message+"<li><span style='font-size:small'>"+demands_not_met_reasons_dict[reasons[reason_number]]+"</span></li>"
+		}
+		pre_message = pre_message + "</ul>"
 	}
 	
-	var message = pre_message+"{{=XML('''<p>You will now be charged <b>%s credits</b> <i>(auction fee)</i> to enter this auction. If you win this auction and the buyer initiates contact, you will be charged an additional <b>%s credits</b> <i>(success fee)</i>.</p> <h5 class='pull-right'>You have <b>%s credits remaining</b>.</h5>'''%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS, my_piggy.credits) ) }}" <!--{{#MUST use XML() to style bootbox http://goo.gl/7OaP6m}}-->
+	var message = pre_message+"{{=XML('''<p>If you press OK, you will be immediately charged <b>%s credits</b> <i>(auction fee)</i> and be redirected to this auction. If you win this auction and the buyer initiates contact, you will be eventually charged an additional <b>%s credits</b> <i>(success fee)</i>.</p> <h5 class='pull-right'>You have <b>%s credits remaining</b>.</h5>'''%(CREDITS_PER_AUCTION, CREDITS_PER_SUCCESS, my_piggy.credits) ) }}" <!--{{#MUST use XML() to style bootbox http://goo.gl/7OaP6m}}-->
 	bootbox.confirm(message, function(agreed){
 		if (agreed){
 			window.location.href = $(evt.target).attr('href'); //{{#needs id needs form befoe it to work}}

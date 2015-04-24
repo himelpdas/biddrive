@@ -160,34 +160,41 @@ def auction_requests():
 			each_auction['matched_vehicles'] = []
 			each_auction['not_matched_vehicles'] = my_inventory
 			for each_inventory_vehicle in my_inventory:
-				all_matched = []
-				if 'body' in each_auction.auction_request.matching:
+				demands_met = []
+				demands_not_met_reasons = []
+				if not 'body' in each_auction.auction_request.flexibility:
 					if each_auction.auction_request.body == each_inventory_vehicle.body:
-						all_matched.append(True)
+						demands_met.append(True)
 					else:
-						all_matched.append(False)
-				if 'year' in each_auction.auction_request.matching:
+						demands_met.append(False)
+						demands_not_met_reasons.append("body")
+				if not 'year' in each_auction.auction_request.flexibility:
 					if each_auction.auction_request.year == each_inventory_vehicle.year:
-						all_matched.append(True)
+						demands_met.append(True)
 					else:
-						all_matched.append(False)
-				if 'make' in each_auction.auction_request.matching:
+						demands_met.append(False)
+						demands_not_met_reasons.append("year")
+				if not 'make' in each_auction.auction_request.flexibility:
 					if each_auction.auction_request.make_name == each_inventory_vehicle.make_name:
-						all_matched.append(True)
+						demands_met.append(True)
 					else:
-						all_matched.append(False)					
-				if 'model' in each_auction.auction_request.matching:
+						demands_met.append(False)	
+						demands_not_met_reasons.append("make")
+				if not 'model' in each_auction.auction_request.flexibility:
 					if each_auction.auction_request.model_name == each_inventory_vehicle.model_name:
-						all_matched.append(True)
+						demands_met.append(True)
 					else:
-						all_matched.append(False)	
-				if 'trim' in each_auction.auction_request.matching:
+						demands_met.append(False)	
+						demands_not_met_reasons.append("model")
+				if not 'trim' in each_auction.auction_request.flexibility:
 					if each_auction.auction_request.trim_name == each_inventory_vehicle.trim_name:
-						all_matched.append(True)
+						demands_met.append(True)
 					else:
-						all_matched.append(False)	
+						demands_met.append(False)	
+						demands_not_met_reasons.append("trim")
 				
-				if 'color_names' in each_auction.auction_request.matching: #better to use name instead of ID
+				"""
+				if 'color_names' in each_auction.auction_request.flexibility: #better to use name instead of ID
 					#print each_inventory_vehicle.color_names, each_auction.auction_request.color_names
 					count = []
 					for color in each_auction.auction_request.color_names: #can't use issubset because auction_request's color_names might by smaller than inventory_vehicle's
@@ -197,51 +204,66 @@ def auction_requests():
 						all_matched.append(True)
 					else:
 						all_matched.append(False)	
+				"""
 
-				if 'color_simple_names' in each_auction.auction_request.matching: #better to use name instead of ID
+				if not 'color_simple_names' in each_auction.auction_request.flexibility: #must be exact #better to use name instead of ID, as different year models may have same name but different id
 					#checks if all colors matched in auction request
 					count = []
-					for color in each_auction.auction_request.color_simple_names: #can't use issubset because auction_request's color_simple_names might by smaller than inventory_vehicle's
-						if color in each_inventory_vehicle.color_simple_names:
+					for color_name_and_cat in zip(each_auction.auction_request.color_simple_names, each_auction.auction_request.color_category_names): #can't use issubset because auction_request's color_simple_names might by smaller than inventory_vehicle's
+						if color_name_and_cat in zip(each_inventory_vehicle.color_simple_names, each_inventory_vehicle.color_category_names):
 							count.append(1)
-					if len(count) == len(each_auction.auction_request.color_simple_names):
-						all_matched.append(True)
+					if len(count) == 2: #if both int and ext colors match
+						demands_met.append(True)
 					else:
-						all_matched.append(False)	
+						demands_met.append(False)	
+						demands_not_met_reasons.append("color_simple_names")
 
-				if 'options' in each_auction.auction_request.matching: #better to use name instead of ID
-					#print each_inventory_vehicle.option_names, each_auction.auction_request.option_names
+				if not 'options' in each_auction.auction_request.flexibility: #must be exact #better to use name instead of ID, as different year models may have same name but different id
+					#checks if all colors matched in auction request
 					count = []
-					for option in each_auction.auction_request.option_names:
-						if option in each_inventory_vehicle.option_names:
+					for option_name_and_cat in each_auction.auction_request.options: #can't use issubset because auction_request's options might by smaller than inventory_vehicle's
+						if option_name_and_cat in each_inventory_vehicle.options:
 							count.append(1)
-					if len(count) == len(each_auction.auction_request.option_names):
-						all_matched.append(True)
+					if len(count) == len(each_auction.auction_request.options): #if both int and ext colors match
+						demands_met.append(True)
 					else:
-						all_matched.append(False)
+						demands_met.append(False)	
+						demands_not_met_reasons.append("options")
 
-				if set(['new','used']).issubset(set(each_auction.auction_request.matching) ):
+				"""
+				if set(['new','used']).issubset(set(each_auction.auction_request.flexibility) ):
 					if "new" in each_inventory_vehicle.status or 'used' in each_inventory_vehicle.status:
 						all_matched.append(True)
 					else:
 						all_matched.append(False)
 				else: 
-					if 'new' in each_auction.auction_request.matching:
+					if 'new' in each_auction.auction_request.flexibility:
 						if "new" in each_inventory_vehicle.status:
 							all_matched.append(True)
 						else:
 							all_matched.append(False)	
-					if 'used' in each_auction.auction_request.matching:
+					if 'used' in each_auction.auction_request.flexibility:
 						if "used" in each_inventory_vehicle.status:
 							all_matched.append(True)
 						else:
 							all_matched.append(False)	
+				"""
+												
+				if not 'used' in each_auction.auction_request.flexibility:
+					if not "used" in each_inventory_vehicle.status:
+						demands_met.append(True)
+					else:
+						demands_met.append(False)
+						demands_not_met_reasons.append("used")
+					
+				each_inventory_vehicle['demands_not_met_reasons'] = demands_not_met_reasons
 								
-				if all(all_matched):
+				print demands_met				
+				
+				if all(demands_met):
 					each_auction['matched_vehicles'].append(each_inventory_vehicle)
 					
 					each_auction['not_matched_vehicles'] = filter(lambda each_matched_vehicle: each_matched_vehicle.id != each_inventory_vehicle.id, each_auction['not_matched_vehicles'])
-				#print all_matched
 
 	#####DIGITALLY SIGNED URL##### #to prevent a malicious dealer from submitting an offer to a completely different auction id, than what was originally clicked in auction requests. First solution was to use RBAC, but hacker can simply loop through all the ids in the auction request and visit the RBAC url
 	#for each_request in auction_requests:

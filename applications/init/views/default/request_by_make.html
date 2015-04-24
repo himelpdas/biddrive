@@ -11,7 +11,7 @@
 <div id="request_by_make">
 
     {{ form.element("select", _name = "trim")["_class"] += " form-control" }}
-    {{ form.element("select", _name = "matching")["_class"] += " form-control" }}
+    {{ form.element("select", _name = "flexibility")["_class"] += " form-control" }}
 
     {{ form.element("select", _name = "FICO_credit_score")["_class"] += " form-control" }}
     {{ form.element("select", _name = "financing")["_class"] += " form-control" }}
@@ -93,6 +93,18 @@
                                     {{pass}}
                                 </div>
                             </div>
+							
+                            <div class="form-group">
+                                <label for="{{=form.custom.widget.flexibility['_id']}}" class="col-sm-3 control-label">Flexibility <i class="fa fa-question-circle" title='Choose how specific you want your bids to be. As a rule of thumb, the more you choose here, the more bids you will receive. Conversely, the fewer you choose, the more exact your bids will be.'></i></label>
+                                <div class="col-sm-9">
+                                    {{=form.custom.widget.flexibility}}
+
+                                    {{if form.errors['flexibility']:}}
+                                    <div class="alert alert-warning">{{=form.errors['flexibility']}}</div>
+                                    {{pass}}
+                                </div>
+                            </div>       
+							
                         </div>
                     </div>
                 </div>
@@ -102,8 +114,8 @@
 
     <div class="row" style="padding: 20px 0;">
         <div class="col-xs-12 text-center">
-            <h2 class="color">Step 2. Specify your request</h2>
-            <span>(This information helps us match the best vehicles near you.)</span>
+            <h2 class="color">Step 2. Where do you live?</h2>
+            <span>(This information helps us find dealers near you.)</span>
         </div>
     </div>
 
@@ -141,18 +153,7 @@
                                     <div class="alert alert-warning">{{=form.errors['radius']}}</div>
                                     {{pass}}
                                 </div>
-                            </div>
-							
-                            <div class="form-group">
-                                <label for="{{=form.custom.widget.matching['_id']}}" class="col-sm-3 control-label">Must match <i class="fa fa-question-circle" title='Choose the way you want us to match the vehicles for you. For example, if you choose only "Body type", a Honda Accord request may get matched with a Honda Accord, a Toyota Camry, a Ford Fusion, etc. Picking too many choices may result in fewer bids!'></i></label>
-                                <div class="col-sm-9">
-                                    {{=form.custom.widget.matching}}
-
-                                    {{if form.errors['matching']:}}
-                                    <div class="alert alert-warning">{{=form.errors['matching']}}</div>
-                                    {{pass}}
-                                </div>
-                            </div>                
+                            </div>         
 							
                         </div>
                     </div>
@@ -564,7 +565,7 @@ var glob_session_key = "{{=hash(session.salt)}}"; //{{#NEVER EXPOSE SESSION.SALT
 </script>
 
 {{BOOTSTRAP_MULTISELECT([['auction_request_colors', 'Pick interior and exterior colors'], ['auction_request_options','Choose options (optional)']], max_height=480)}}
-{{BOOTSTRAP_MULTISELECT([['auction_request_matching', 'Select the specificity of your request']], max_height=480, num_displayed=1)}}
+{{BOOTSTRAP_MULTISELECT([['auction_request_flexibility', 'Select the specificity of your request']], max_height=480, num_displayed=0)}}
 {{BOOTSTRAP_MULTISELECT([['auction_request_questions', 'Choose what best describes you']], max_height=480, num_displayed=1)}}
 
 <script>
