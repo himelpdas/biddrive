@@ -326,23 +326,6 @@
                                                                     {{=entered}}{{numero=str(entered)[-1]}}{{numeros=str(entered)[-2:]}}{{if numero == '1' and numeros != '11':}}st{{elif numero == '2' and numeros != '12':}}nd{{elif numero == '3' and numeros != '13':}}rd{{else:}}th{{pass}} auction</p>
                                                             </td>
                                                         </tr>
-
-														<tr>
-															
-															<th>
-																Demands:
-															</th>
-															
-															<td>
-																{{for each_pair in FLEXIBILITY_CATEGORIES:}}
-																	{{choice = each_pair[0]}}
-																	{{question = each_pair[1].split("(")[0]}}
-																	<p>
-																		 {{=BULLET}}{{=question}} {{if choice in each_request.auction_request["flexibility"]:}}<span class="text-success">YES</span>{{else:}}<span class="text-danger">NO</span>{{pass}}
-																	</p>
-																{{pass}}
-															</td>
-														</tr>
 														
                                                         <tr>
                                                             <th>
@@ -363,6 +346,23 @@
                                                                 {{pass}}
                                                             </td>
                                                         </tr>
+														
+														<tr>
+															
+															<th>
+																Flexibility:
+															</th>
+															
+															<td>
+																{{for each_pair in FLEXIBILITY_CATEGORIES:}}
+																	{{choice = each_pair[0]}}
+																	{{question = each_pair[1].split("(")[0]}}
+																	<p>
+																		 {{=BULLET}}{{=question}} {{if choice in each_request.auction_request["flexibility"]:}}<span class="text-success">YES</span>{{else:}}<span class="text-danger">NO</span>{{pass}}
+																	</p>
+																{{pass}}
+															</td>
+														</tr>
 
                                                         <tr>
                                                             <th>
