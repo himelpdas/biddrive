@@ -258,7 +258,7 @@
 															<li role="presentation" class="dropdown-header"><span style="font-size:large;"><i class="fa fa-fw fa-thumbs-up"></i>Perfectly matching vehicles from your inventory &mdash;</span></li>
 															{{for each_vehicle in each_request['matched_vehicles']:}}
 																<li role="presentation"><a id="vehicle_{{=each_vehicle['id']}}" role="menuitem" tabindex="-1" class="to_auction_links" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
-																	{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
+																	{{=BULLET}}{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
 																</a></li>
 															{{pass}}
 															{{if not each_request['matched_vehicles']:}}
@@ -268,7 +268,7 @@
 															<li role="presentation" class="dropdown-header"><span style="font-size:large;"><i class="fa fa-fw fa-warning"></i>Non-matching vehicles from your inventory &mdash;</span></li>
 															{{for each_vehicle in each_request['not_matched_vehicles']:}}
 																<li role="presentation"><a id="vehicle_{{=each_vehicle['id']}}" role="menuitem" tabindex="-1" class="to_auction_links_not_matched" href="{{=URL('dealer','pre_auction', args=[each_request.auction_request.id, each_vehicle.id], hmac_key=HMAC_KEY, salt=str(session.salt), hash_vars=[each_request.auction_request.temp_id, each_request.auction_request.id, each_vehicle.id])}}"> <!--{{#temp_id is a uuid # hmac key, hash_vars and salt all gets hashed together to generate a hash string, and must match with string of the same arguments passed through a hash function. #Note, the digital signature is verified via the URL.verify function. URL.verify also takes the hmac_key, salt, and hash_vars arguments described above, and their values must match the values that were passed to the URL function when the digital signature was created in order to verify the URL.}}-->
-																	{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
+																	{{=BULLET}}{{=each_vehicle['year']}} {{=each_vehicle['make_name']}} {{=each_vehicle['model_name']}} {{=each_vehicle['trim_name']}} ({{=each_vehicle['id']}})
 																	
 																	<script>
 																		demands_not_met_reasons["vehicle_{{=each_vehicle['id']}}"] = {{=XML(json.dumps(each_vehicle['demands_not_met_reasons']))}};
@@ -363,7 +363,21 @@
 																{{pass}}
 															</td>
 														</tr>
+														
+														<tr>
+															<th>
+																About:
+															</th>
 
+															<td>
+																{{for each_answer in each_request.auction_request['questions']:}}
+																<p>
+																	{{=BULLET}}{{=BUYER_QUESTIONS_DICT[each_answer]}}
+																</p>
+																{{pass}}
+															</td>
+														</tr>
+														
                                                         <tr>
                                                             <th>
                                                                 Credit score:
@@ -448,19 +462,6 @@
                                                             </td>
                                                         </tr>
                                                         {{pass}}
-														<tr>
-															<th>
-																About:
-															</th>
-
-															<td>
-																{{for each_answer in each_request.auction_request['questions']:}}
-																<p>
-																	{{=BULLET}}{{=BUYER_QUESTIONS_DICT[each_answer]}}
-																</p>
-																{{pass}}
-															</td>
-														</tr>
                                                     </table>
 
                                                 </div>

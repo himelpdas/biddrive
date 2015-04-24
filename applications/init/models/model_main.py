@@ -130,7 +130,7 @@ db.define_table('auction_request',
 	Field('flexibility', 'list:string',
 		requires=[IS_IN_SET(FLEXIBILITY_CATEGORIES, zero=None, multiple=True),IS_NOT_EMPTY(error_message="Pick at least 1 criteria!")],
 		widget=SQLFORM.widgets.multiple.widget, #adding multiple requires destroys default widget, so define widget explicitly
-		default="trim",
+		default=["trim","options","color_simple_names", "used"],
 	),
 	Field('year', #default value in controller for validation
 		readable=False,
