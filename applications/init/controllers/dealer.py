@@ -557,9 +557,18 @@ def auction():
 				db.auction_request_offer_bid.end_sooner_in_hours.requires = IS_INT_IN_RANGE(1, (auction_request_ends-request.now).total_seconds()/3600.0)
 				final_message = "!This was your final bid! The buyer has been notified."
 			#make sure new bid can't be higher than previous
-			my_previous_bid = db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select().last()
-			highest_bid_allowed = my_previous_bid.bid if my_previous_bid else (5000 if is_lease else 1000000)
-			db.auction_request_offer_bid.bid.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(49 if is_lease else 999, highest_bid_allowed)]
+			##my_previous_bid = db((db.auction_request_offer_bid.owner_id == auth.user_id) & (db.auction_request_offer_bid.auction_request == auction_request_id)).select().last()
+			#highest_bid_allowed = my_previous_bid.bid if my_previous_bid else (5000 if is_lease else 1000000)
+
+			if is_lease:
+				highest_bid_allowed = 5000
+				db.auction_request_offer_bid.months.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(1,97)]
+				db.auction_request_offer_bid.residual.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(1,20000)]
+				db.auction_request_offer_bid.cash_due_at_signing.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(1,20000)]
+			else:
+				highest_bid_allowed = 1000000
+			db.auction_request_offer_bid.bid.requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(49 if is_lease else 1000, highest_bid_allowed)]
+			
 			#bid form
 			db.auction_request_offer_bid.auction_request.default = auction_request_id
 			db.auction_request_offer_bid.auction_request_offer.default = my_auction_request_offer_id
@@ -572,7 +581,7 @@ def auction():
 				response.message = '$Your new bid is $%s.'%form_bid_price #redirect not needed since we're dealing with POST
 				#alert buyer about lower bid from this dealer
 				bidding_dealer_name='%s %s'%(auth.user.first_name.capitalize(), auth.user.last_name.capitalize()[:1]+'.')
-				SEND_ALERT_TO_QUEUE(AUCTION_ID = auction_request_id, USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/month' if is_lease else ''), app=APP_NAME, change="finalized" if form_is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, form_is_final_bid=form_is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
+				SEND_ALERT_TO_QUEUE(AUCTION_ID = auction_request_id, USER=auction_request_user, MESSAGE_TEMPLATE = "BUYER_on_new_bid", **dict(price="$%s%s"%(form_bid_price,  '/ month' if is_lease else ''), app=APP_NAME, change="finalized" if form_is_final_bid else "dropped", dealer_name= bidding_dealer_name, car=car, form_is_final_bid=form_is_final_bid, url = URL(args=request.args, host=True, scheme=True) ) )
 				#broadcast to dealers
 				session.BROADCAST_BID_ALERT=form_bid_price #also True
 				if final_message:
@@ -896,6 +905,7 @@ def auction():
 			'is_not_awaiting_offer':is_not_awaiting_offer,
 			'is_awaiting_offer': not is_not_awaiting_offer,
 			'last_bid_price' : last_bid_price,
+			'last_bid':last_bid,
 			'last_bid_ago':last_bid_ago,
 			'dealer_rating':'N/A',
 			'number_of_bids' : number_of_bids,
@@ -1057,6 +1067,8 @@ def winner():
 	response.title="Certificate"
 	#get valuable data and validate this page
 	auction_validator = __auction_validator__()
+	
+	is_lease = auction_validator['is_lease']
 
 	#get the color chart
 	colors=auction_validator['auction_request_colors_dict']
@@ -1092,7 +1104,7 @@ def winner():
 		)
 	#prices stuff
 	last_bid = auction_request_offer.latest_bid()
-	last_bid_price = ('$%s'%last_bid.bid) if not auction_validator['is_lease'] else ('$%s per month'%last_bid.bid)
+	last_bid_price = ('$%s'%last_bid.bid) if not is_lease else ('$%s per month'%last_bid.bid)
 	
 	#vin number
 	vin = auction_request_offer.vin_number
@@ -1146,6 +1158,7 @@ def winner():
 		vin=vin,
 		text_scrambler=text_scrambler,
 		last_bid_price=last_bid_price,
+		is_lease=is_lease,
 		image_urls=image_urls,
 	)
 	

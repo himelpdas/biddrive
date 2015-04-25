@@ -429,7 +429,15 @@ pass
 
                 <div class="row">
                     <div class="col-xs-8 col-sm-10">
-                        <strong style="font-size:large;">{{if each_offer['is_not_awaiting_offer']:}}<i class="fa fa-fw fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} {{if auction_request_info['is_lease']:}}/Month{{pass}}{{else:}}<i class="fa fa-fw fa-clock-o"></i> Awaiting{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
+                        <strong style="font-size:large;">
+							{{if each_offer['is_not_awaiting_offer']:}}
+								<i class="fa fa-fw fa-dollar"></i> {{="{:,}".format(each_offer['last_bid_price'])}} 
+								{{if auction_request_info['is_lease']:}}
+									/ <a href='javascript:void(0);' title="{{if each_offer['last_bid']:}} &#149;Term: {{=each_offer['last_bid'].months}} months &#149;Residual: ${{=each_offer['last_bid'].residual}} &#149;Cash due at signing: ${{=each_offer['last_bid'].cash_due_at_signing}}{{else:}}{{=''}}{{pass}}">Month <i class="fa fa-warning fa-fw"></i></a>
+								{{pass}}
+							{{else:}}
+								<i class="fa fa-fw fa-clock-o"></i> Awaiting
+							{{pass}}</strong> <span class="text-light">bid from {{=each_offer['dealer_first_name'].capitalize()}} in <strong>{{=each_offer['dealer_area']}}</strong></span>{{#http://goo.gl/aOI4}}
                     </div>
                     <div class="col-xs-4 col-sm-2">
                         <div class="btn-group btn-group-xs pull-right" role="group">
@@ -467,7 +475,7 @@ pass
                                 <div class="row">
                                     <div class="col-xs-offset-3 col-xs-6">
                                         {{if bid_form.errors['bid']:}}
-                                        <div class="alert alert-warning text-center">Error: {{=bid_form.errors['bid']}}</div>
+                                        <div class="alert alert-warning text-center">Bid error: {{=bid_form.errors['bid']}}</div>
                                         {{pass}}
                                     </div>
                                 </div>
@@ -479,8 +487,6 @@ pass
                                             {{=bid_form.custom.widget.bid}}
                                             <span class="input-group-btn">
 
-                                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
-                                                {{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours  (up to %s hours)"%(int(auction_request_info['ends_in_seconds']/3600)-1) }}
                                                 {{bid_form.element("input", _type = "submit")["_class"] = " btn btn-trinity btn-primary" + (" btn-danger" if form_is_final_bid else "")  }}
                                                 {{bid_form.element("input", _type = "submit")["_value"] = ("Final bid!" if form_is_final_bid else "Place Bid!") }}
                                                 {{=bid_form.custom.submit}}
@@ -497,23 +503,66 @@ pass
                                         </div>
                                     </div>
                                 </div>
+								{{if auction_request_info['is_lease']:}}
                                 <div class="row">
-                                    <div class="col-xs-12 col-sm-offset-4 col-sm-4">
-
-                                        {{if form_is_final_bid:}}
-                                            <div id="final_bid_hours_header" style="padding-top:10px;"> {{#if there is an error with the subform, don't auto hide the subform}}
-                                                <i class="fa fa-fw fa-bell"></i>End my offer in
-                                            </div>
-                                            <div id="final_bid_hours_form">
-                                                {{=bid_form.custom.widget.end_sooner_in_hours}}
-                                                {{if bid_form.errors['end_sooner_in_hours']:}}
-                                                    <div class="alert alert-warning">{{=bid_form.errors['end_sooner_in_hours']}}</div>
-                                                {{pass}}
-                                            </div>
-                                        {{pass}}
-
+                                    <div class="col-xs-12 col-sm-4">
+										<div id="final_bid_hours_header" style="padding-top:10px;">
+											<i class="fa fa-fw fa-calendar"></i>Term
+										</div>
+										<div id="lease_condtions_form">
+											{{bid_form.element("input", _name = "months")["_class"] += " form-control" }}
+											{{bid_form.element("input", _name = "months")["_placeholder"] = "Months" }}
+											{{=bid_form.custom.widget.months}}
+											{{if bid_form.errors['months']:}}
+												<div class="alert alert-warning">{{=bid_form.errors['months']}}</div>
+											{{pass}}
+										</div>
+                                    </div>                                   
+									<div class="col-xs-12 col-sm-4">
+										<div id="final_bid_hours_header" style="padding-top:10px;">
+											<i class="fa fa-fw fa-money"></i>Residual
+										</div>
+										<div id="lease_condtions_form">
+											{{bid_form.element("input", _name = "residual")["_class"] += " form-control" }}
+											{{bid_form.element("input", _name = "residual")["_placeholder"] = "$$$" }}
+											{{=bid_form.custom.widget.residual}}
+											{{if bid_form.errors['residual']:}}
+												<div class="alert alert-warning">{{=bid_form.errors['residual']}}</div>
+											{{pass}}
+										</div>
+                                    </div>								
+									<div class="col-xs-12 col-sm-4">
+										<div id="final_bid_hours_header" style="padding-top:10px;">
+											<i class="fa fa-fw fa-pencil"></i>Cash due at signing
+										</div>
+										<div id="lease_condtions_form">
+											{{bid_form.element("input", _name = "cash_due_at_signing")["_class"] += " form-control" }}
+											{{bid_form.element("input", _name = "cash_due_at_signing")["_placeholder"] = "$$$" }}
+											{{=bid_form.custom.widget.cash_due_at_signing}}
+											{{if bid_form.errors['cash_due_at_signing']:}}
+												<div class="alert alert-warning">{{=bid_form.errors['cash_due_at_signing']}}</div>
+											{{pass}}
+										</div>
                                     </div>
                                 </div>
+								{{pass}}								
+								{{if form_is_final_bid:}}
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-offset-4 col-sm-4">
+										<div id="final_bid_hours_header" style="padding-top:10px;"> <!--{{#if there is an error with the subform, don't auto hide the subform}}-->
+											<i class="fa fa-fw fa-bell"></i>End my offer in
+										</div>
+										<div id="final_bid_hours_form">
+											{{bid_form.element("input", _name = "end_sooner_in_hours")["_class"] += " form-control" }}
+											{{bid_form.element("input", _name = "end_sooner_in_hours")["_placeholder"] = "Hours  (up to %s hours)"%(int(auction_request_info['ends_in_seconds']/3600)-1) }}
+											{{=bid_form.custom.widget.end_sooner_in_hours}}
+											{{if bid_form.errors['end_sooner_in_hours']:}}
+												<div class="alert alert-warning">{{=bid_form.errors['end_sooner_in_hours']}}</div>
+											{{pass}}
+										</div>
+                                    </div>
+                                </div>
+								{{pass}}
                             </div>
                         {{=bid_form.custom.end}}
                     </div>

@@ -525,6 +525,16 @@ db.define_table('auction_request_offer_bid', #MUST find bids by using minimum 2/
 	),
 	Field('bid', 'integer',
 		requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(999, 1000000)]
+	),	
+	Field('months', 'integer', #months
+		#requires = [IS_NOT_EMPTY(),IS_INT_IN_RANGE(0, 72)]
+		default =None,
+	),	
+	Field('residual', 'integer', #$
+		default =None,
+	),	
+	Field('cash_due_at_signing', 'integer', #$
+		default =None,
 	),
 	Field('end_sooner_in_hours', 'integer',
 		#requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, 72)) #hours #handle in controller

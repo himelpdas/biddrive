@@ -70,7 +70,17 @@
 
 				<tr>
 					<th>Price lock:</th>
-					<td>{{=text_scrambler(last_bid_price)}}</td>
+					<td>
+						<b>{{=text_scrambler(last_bid_price)}}</b>
+						{{if is_lease:}}
+						<br>Conditions:
+							<ul>
+								<li>Term: {{=text_scrambler(last_bid.months)}} months</li>
+								<li>Residual: ${{=text_scrambler(last_bid.residual)}}</li>
+								<li>Cash due at signing: ${{=text_scrambler(last_bid.cash_due_at_signing)}}</li>
+							</ul>
+						{{pass}}
+					</td>
 				</tr>			
 				
 			{{if is_lease:}}
