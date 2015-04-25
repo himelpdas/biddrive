@@ -831,12 +831,12 @@ def auction():
 			if a_winning_offer:
 				response.message = '$You picked a winner! Click the "Winner!" button below to connect with the dealer and view your certificate!' #keep as response.message so it always shows
 			#blinking new message stuff
-			highest_message_id_that_owner_read = db((db.auction_request_unread_messages.auction_request_offer == offer_id) & (db.auction_request_unread_messages.owner_id==auth.user_id)).select().last() or {'highest_id':None} #'owner_id': None, for debug
-			if highest_message_id_that_owner_read and highest_message_in_this_offer:
-				if highest_message_id_that_owner_read['highest_id'] < highest_message_in_this_offer.id:
+			highest_message_id_that_buyer_read = db((db.auction_request_unread_messages.auction_request_offer == offer_id) & (db.auction_request_unread_messages.owner_id==auth.user_id)).select().last() or {'highest_id':None} #'owner_id': None, for debug
+			if highest_message_id_that_buyer_read and highest_message_in_this_offer:
+				if highest_message_id_that_buyer_read['highest_id'] < highest_message_in_this_offer.id:
 					each__has_message_buyer =True
 					
-			#print '%s by %s:\nnew_message:%s\nhighest_message_id_that_owner_read.highest_id:%s\nhighest_message_in_this_offer:%s\neach__has_message_buyer:%s\n###'%(offer_id, auth.user_id, 'new_message_process.__dict__', highest_message_id_that_owner_read['highest_id'], highest_message_in_this_offer['id'], each__has_message_buyer)
+			#print '%s by %s:\nnew_message:%s\nhighest_message_id_that_buyer_read.highest_id:%s\nhighest_message_in_this_offer:%s\neach__has_message_buyer:%s\n###'%(offer_id, auth.user_id, 'new_message_process.__dict__', highest_message_id_that_buyer_read['highest_id'], highest_message_in_this_offer['id'], each__has_message_buyer)
 			
 			#favorite insert stuff
 			new_favorite_choice = int(request.vars['favorite'] or 0)
@@ -870,7 +870,7 @@ def auction():
 					response.message3 = "@Buyer did not pick a winner."
 				
 		#message stuff dealer, keep below SQLFORM so that new messages show on submission
-		offer_messages = db(db.auction_request_offer_message.auction_request_offer == offer_id).select(orderby=~db.auction_request_offer_message.id)
+		offer_messages = db( (db.auction_request_offer_message.auction_request_offer == offer_id) & (db.auction_request_offer_message.auction_request == auction_request_id) ).select(orderby=~db.auction_request_offer_message.id)
 		for each_message in offer_messages:
 			if each_message.owner_id == auction_request.owner_id:
 				each_message.is_auction_requester = True
