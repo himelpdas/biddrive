@@ -1153,7 +1153,6 @@ def winner():
 		options= options,
 		dealer=dealer,
 		dealership = dealership,
-		is_lease = auction_validator['is_lease'],
 		map_url=map_url,
 		vin=vin,
 		text_scrambler=text_scrambler,
