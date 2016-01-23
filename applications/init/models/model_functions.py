@@ -151,7 +151,7 @@ def GET_OPTION_CODES(style):
 	return dict(option_codes = option_codes)
 	
 BUYER_QUESTIONS = [
-	["recent_college_grad",  "I'm recent college grad (within past 6 months)"],
+	["recent_college_grad",  "I'm a recent college graduate (within past 6 months)"],
 	["serviceman_or_veteran", "I'm active in the U.S. military or a U.S. Military veteran"],
 	["first_time_car_buyer", "I'm a first time car buyer"]
 ]
