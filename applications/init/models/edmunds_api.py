@@ -48,7 +48,7 @@ COLOR_URI = "/api/vehicle/v2/colors/%s?fmt=json"
 REVIEWS_URI = "/api/vehiclereviews/v2/styles/%s?sortby=created:ADESC&pagenum=1&pagesize=10"
 FIND_PHOTOS_BY_STYLE_ID_URI = '/v1/api/vehiclephoto/service/findphotosbystyleid'
 VIN_DECODE_URI = "/api/vehicle/v2/vins/%s?fmt=json"
-IMG_PREFIX = "http://media.ED.edmunds-media.com/"
+IMG_PREFIX = "http://media.ed.edmunds-media.com"
 
 #color swatch
 

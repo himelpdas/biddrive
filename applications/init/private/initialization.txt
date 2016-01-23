@@ -1,7 +1,7 @@
 ####dependancies####
 pip
 pytz
-Pillow
+Pillow (http://stackoverflow.com/questions/33404394/python-ubuntu-error-install-pillow-3-0-0)
 requests
 twilio
 paypalrestsdk
@@ -10,7 +10,7 @@ motionless and gployencode (modules)
 smartthumb (custom module)
 edmunds (module)
 simplecolor (custom module)
-m2secret (simpler and faster than pyaes)
+m2secret (simpler and faster than pyaes) (needs sudo apt-get install swig libssl-dev) (also this http://stackoverflow.com/questions/31762106/swig-unable-to-find-openssl-conf) (also http://stackoverflow.com/questions/10547332/install-m2crypto-on-a-virtualenv-without-system-packages)
 selenium (automated browser used for spider)
 
 ####server only dependancies####

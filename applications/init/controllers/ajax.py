@@ -26,7 +26,7 @@ def vehicle_content():
 			for each_photo in model_photos[0]['photoSrcs']:
 				if each_photo.split('.')[-2].split('_')[-1] == '150':  #but change to proper ratio if found
 					photo = each_photo
-			first_image = 'http://media.ed.edmunds-media.com'+photo  #errors will not be cached! :)
+			first_image = IMG_PREFIX+photo  #errors will not be cached! :)
 		except Exception, e:
 			#logger.exception(e)
 			pass
